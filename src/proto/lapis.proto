@@ -1,0 +1,22 @@
+package lapis;
+
+
+message SystemConfProto {
+  //rank for coordinator
+  required int32 coordinator = 1; 
+  //start rank for worker, both start and end ranks are included.
+  required int32 worker_start = 2; 
+  //end rank for worker
+  required int32 worker_end = 3; 
+
+  //if the following fields are omitted, then use the setting of workers
+
+  //start rank for distributed memory table
+  optional int32 memory_start = 4; 
+  //end rank for distributed memory table
+  optional int32 memory_end = 5; 
+  //start rank for distributed disk table
+  optional int32 disk_start = 6; 
+  //end rank for distributed disk table
+  optional int32 disk_end = 7; 
+}

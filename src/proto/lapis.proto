@@ -50,8 +50,21 @@ message RGBDatum {
   required string content = 4;
 }
 
+message ParamProto {
+  required string name = 1;
+  optional string initializer = 2;
+  // for vector, shape is <1, n>; for matrix, it is <m, n>
+  repeated int32 shape = 3;
+  optional string partitioner = 4; // e.g., row or column partition
+}
+
+message LayerProto {
+  repeated ParamProto params = 1;
+}
+
 message ModelConfProto {
   // model name
   optional string name = 1;
   repeated DataProto data = 2;
+  repeated LayerProto layers = 3;
 }

@@ -28,14 +28,22 @@ int Coordinator::LoadData() {
   return 0;
 }
 
-int PartitionInitModel() {
+// no model splitting currently
+// init parameters and put them into distributed memory
+// send whole copy of modelConfigProto to each worker
+int InitSplitModel() {
   for (LayerProto& layer_proto : model_conf_proto_.layers()) {
     for (ParameterProto& param_proto : layer_proto.parameters()) {
-      Parameter param(param_proto);
-      for (auto& record : param.partition())
-        distributed_memory_.put(record.first, record.second);
+      Parameter param = param_factory_generate(param_proto.splitter_name);
+      string k, v;
+      while (param.next_split(&k, &v))
+        distributed_memory_.put(k, v);
     }
   }
+
+  // TODO (Anh), mpi wrapper for sending message to all workers
+  send2allWorkers(model_conf_proto_.serializeToString());
+
   return 0;
 }
 
@@ -43,6 +51,6 @@ int PartitionInitModel() {
 // the coordinator to finish the initialization work, i.e. what Run() does
 void Coordinator::Run() {
   LoadData();
-  PartitionInitModel();
+  InitSplitModel();
 }
 }  // namespace lapis

@@ -1,12 +1,18 @@
 Lapis
 =====
 
-distributed deep learning system
+Distributed deep learning system
 
-please follow the google's c plus plus coding style, including the naming,
+
+Coding
+===
+Please follow the google's c plus plus coding style, including the naming,
 header files, formatting, comments, etc.
-http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#The__define_Guard
-the cpplint.py can help to detect lines that does not follow the style.
+http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
 
-external libraries include gflag (commandline parsing), glog (logging),
+The cpplint.py can help to detect lines that do not follow the style.
+
+External libraries include gflag (commandline parsing), glog (logging),
 google-protobuf (configuration).
+
+C++11 features are used.

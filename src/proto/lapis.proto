@@ -21,7 +21,7 @@ message SystemConfProto {
   optional int32 disk_end = 7;
 }
 
-message DataProto {
+message DataMetaProto {
   required string name = 1;
   required string parser = 2;
   optional string path = 3;
@@ -33,6 +33,21 @@ message DataProto {
   }
 
   optional DataType type = 5;
+
+  // following three fields will be used for rgb image feature
+  optional int32 channels = 6;
+  optional int32 height = 7;
+  optional int32 width = 8;
+}
+
+message RGBDatum {
+  optional int32 channels = 1 [default = 3];
+
+  // size of the cropped image, default setting is no crop
+  optional int32 height = 2 [default = 0];
+  optional int32 width = 3 [default = 0];
+
+  required string content = 4;
 }
 
 message ModelConfProto {

@@ -7,8 +7,7 @@
 #include "memory/distributed_memory.h"
 
 namespace lapis {
-class Coordinator
-{
+class Coordinator {
  public:
   Coordinator(const GlobalContext& global_context,
               const DistributedMemory& distibuted_memory);
@@ -32,4 +31,4 @@ class Coordinator
 
 }  // namespace lapis
 
-#endif  //INCLUDE_COORDINATOR_COORDINATOR_H_
+#endif  // INCLUDE_COORDINATOR_COORDINATOR_H_

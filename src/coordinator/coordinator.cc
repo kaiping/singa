@@ -14,17 +14,25 @@ Coordinator::Coordinator(const GlobalContext& global_context,
 }
 
 int Coordinator::LoadData() {
-  for (DataProto& data_source : model_conf_proto.data())
-    distributed_disk_.LoadData(data_source);
+  // TODO(all) in this implementation, the distributed_disk has to join tables
+  // on worker nodes. <filename, rgb>---<filename, label>
+  for (DataMetaProto& data_source : model_conf_proto.data()) {
+    // TODO(wangwei) create the factory in main.cc
+    DataReaderInterface reader = data_reader_factory.get[data_source.type()];
+    reader.init(data_source);
+    string k, v;
+    while (reader.next(k, v) > 0)
+      distributed_disk_.put(k, v);
+  }
 
   return 0;
 }
 
 int PartitionInitModel() {
-  for (LayerProto& layer_proto : model_conf_proto_.layers()){
+  for (LayerProto& layer_proto : model_conf_proto_.layers()) {
     for (ParameterProto& param_proto : layer_proto.parameters()) {
       Parameter param(param_proto);
-      for (auto& record: param.partition())
+      for (auto& record : param.partition())
         distributed_memory_.put(record.first, record.second);
     }
   }

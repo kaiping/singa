@@ -36,7 +36,7 @@ int InitSplitModel() {
     for (ParameterProto& param_proto : layer_proto.parameters()) {
       Parameter param = param_factory_generate(param_proto.splitter_name);
       string k, v;
-      while (param.next_split(&k, &v))
+      while (param.next(&k, &v))
         distributed_memory_.put(k, v);
     }
   }

@@ -15,7 +15,7 @@ class Parameter {
   explicit Parameter(ParamProto& param_proto): shape_(param_proto.shape()),
       initializer_(param_proto.initializer()), name_(param_proto.name()){}
   void init();
-  virtual bool next_split(std::string* k, std::string* v);
+  virtual bool next(std::string* k, std::string* v);
 
  protected:
   vector<float> content_;

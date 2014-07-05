@@ -16,7 +16,7 @@ class RowParameter : public Parameter {
     row_ = 0;
   }
 
-  virtual bool next_split(std::string* k, std::string* v);
+  virtual bool next(std::string* k, std::string* v);
 
  private:
   int row_;

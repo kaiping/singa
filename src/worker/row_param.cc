@@ -4,11 +4,15 @@
 #include "worker/row_param.h"
 
 namespace lapis {
+void RowParam::init(const ParamProto& param_proto) {
+  Param::init(param_proto);
+  row_ = 0;
+}
 // current implementation only considers matrix and vector params
 // both params' shapes have length of 2.
 // for vector, it is <1, n>; for matrix, it is <m, n>
 // TODO(wangwei) support other paramters, e.g., scalar and tensor
-bool Parameter::next_split(string* k, string* v) {
+bool RowParam::next(string* k, string* v) {
   // vector param
   if (row_ >= shape_[0])
     return false;
@@ -24,6 +28,10 @@ bool Parameter::next_split(string* k, string* v) {
 
   return true;
 }
+
+// group the parameter from distributed memory based on the keys
+// std::vector<string>* RowParam::GenerateGroupKeys() {
+// }
 }  // namespace lapis
 
 

@@ -10,13 +10,11 @@
 // child paramter class, split based on the last axis, i.e., row for matrix;
 // if the parameter is a vector, then itself is the only splitter
 namespace lapis {
-class RowParameter : public Parameter {
+class RowParam: public Param{
  public:
-  explicit RowParameter(const ParamProto& param_proto): Parameter(param_proto) {
-    row_ = 0;
-  }
-
+  virtual void init(const ParamProto& param_proto);
   virtual bool next(std::string* k, std::string* v);
+  virtual void fetch();
 
  private:
   int row_;

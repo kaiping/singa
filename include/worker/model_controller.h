@@ -3,6 +3,8 @@
 
 #ifndef INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #define INCLUDE_WORKER_MODEL_CONTROLLER_H_
+#include <vector>
+#include "worker/layer.h"
 
 namespace lapis {
 class ModelController {
@@ -12,10 +14,7 @@ class ModelController {
 
  private:
   ModelConfProto model_conf_proto_;
-
-
 };
-
 }  // namespace lapis
 #endif  // INCLUDE_WORKER_MODEL_CONTROLLER_H_
 

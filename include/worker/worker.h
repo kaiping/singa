@@ -14,6 +14,7 @@ class Worker {
 
  private:
   ModelController model_controller_;
+};
 }  // namespace lapis
 
 

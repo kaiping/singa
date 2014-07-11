@@ -12,18 +12,22 @@
 
 
 namespace lapis {
-typedef Matrix<float, Eigen::Dynamic, Eigen::Dynamic,
-        Eigen::RowMajor> MatrixType;
-typedef Map<Matrix> MapMatrixType;
-typedef Map<Eigen::RowVectorXf> MapVectorType;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic,
+                      Eigen::RowMajor> MatrixType;
+typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic,
+                     Eigen::RowMajor> ArrayType;
+typedef Eigen::Map<MatrixType> MapMatrixType;
+typedef Eigen::Map<ArrayType> MapArrayType;
+typedef Eigen::Map<Eigen::RowVectorXf> MapVectorType;
 class Layer {
  public:
   // mem of blobs are allocated by whom producing them
   virtual void init(const LayerProto& layer_proto,
                     std::map<string, Edge*>* edges);
 
-  virtual void forward() = 0;
-  virtual void backward() = 0;
+  virtual void Forward() = 0;
+  virtual void Backward() = 0;
+  virtual void ComputeParamUpdates(const StochasticGradientDescent& sgd) = 0;
  protected:
   vector<Param*> params_;
   vector<Blob*> data_;

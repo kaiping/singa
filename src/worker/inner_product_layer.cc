@@ -19,26 +19,27 @@ void InnerProductLayer::setup(const LayerProto& layer_proto,
   }
 
   CHECK_EQ(params.size(), 2) << "Inner product layer has more than 2 params\n";
+  Param * weight, *bias;
   if (params[0]->shape().size() == 2) {
-    new (&weight_)MapMatrixType(params[0].content(),
-                                params[0].shape[0],
-                                params[0].shape[1]);
-    new (&weight_grad_)MapMatrixType(params[0].grad(),
-                                params[0].shape[0],
-                                params[0].shape[1]);
-    new (&bias_)MapVectorType(params[1].content(), params[1].shape[0]);
-    new (&bias_grad_)MapVectorType(params[1].grad(), params[1].shape[0]);
-
+    weight_param_ = &params[0];
+    bias_param_ = &params[1];
   } else {
-    new (&weight_)MapMatrixType(params[1].content(),
-                                params[1].shape[0],
-                                params[1].shape[1]);
-    new (&weight_grad_)MapMatrixType(params[1].grad(),
-                                params[1].shape[0],
-                                params[1].shape[1]);
-    new (&bias_)MapVectorType(params[0].content(), params[0].shape[0]);
-    new (&bias_grad_)MapVectorType(params[0].grad(), params[0].shape[0]);
+    weight_param_ = &params[0];
+    bias_param_ = &params[1];
   }
+  new (&weight_)MapMatrixType(weight_param_->content(),
+                              weight_param_->shape[0],
+                              weight_param_->shape[1]);
+  new (&weight_grad_)MapMatrixType(weight_param_->grad(),
+                                    weight_param_->shape[0],
+                                    weight_param_->shape[1]);
+  new (&weight_history_grad_)MapMatrixType(weight_param_->history_grad_(),
+                                            weight_param_->shape[0],
+                                            weight_param_->shape[1]);
+  new (&bias_)MapVectorType(bias_param_->content(), bias_param_->shape[0]);
+  new (&bias_grad_)MapVectorType(bias_param_->grad(), bias_param_->shape[0]);
+  new (&bias_history_grad_)MapVectorType(bias_param_->history_grad_(),
+                                         bias_param_->shape[0]);
 
   Blob* blob = out_edges_[0].Blob();
   new (&out_) MapMatrixType(blob->content(), blob->num(), blob->width());
@@ -48,11 +49,11 @@ void InnerProductLayer::setup(const LayerProto& layer_proto,
   new (&in_grad_) MapMatrixType(blob->grad(), blob->num(), blob->width());
 }
 
-void InnerProductLayer::forward() {
+void InnerProductLayer::Forward() {
   out_.noalias() = (in_ * weight_).rowwise() + bias_;
 }
 
-void InnerProductLayer::backward() {
+void InnerProductLayer::Backward() {
   // calc gradient of W and b
   weight_grad_.noalias() = in_.transpose() * out_grad_;
   bias_grad_ = out_grad_.colwise().sum();
@@ -60,4 +61,28 @@ void InnerProductLayer::backward() {
   in_grad_.noalias() = out_grad_ * weight_.transpose();
 }
 
+void InnerProductLayer::ComputeParamUpdates(const SGD& sgd) {
+  // compute updates for weight
+  float momentum = sgd->momentum() * weight_param_.momentum();
+  float learning_rate = sgd->learning_rate() * weight_param_.learning_rate();
+  float weight_decay = sgd->weight_decay() * weight_param_.weight_decay();
+  if (momentum > 0)
+    weight_history_grad_ *= momentum;
+  if (weight_decay > 0)
+    weight_history_grad_ -= (weight_grad_ + weight_decay * weight_)
+                            * learning_rate;
+  else
+    weight_history_grad_ -= weight_grad_ * learning_rate;
+
+  // compute updates for bias
+  momentum = sgd->momentum() * bias_param_.momentum();
+  learning_rate = sgd->learning_rate() * bias_param_.learning_rate();
+  weight_decay = sgd->weight_decay() * bias_param_.weight_decay();
+  if (momentum > 0)
+    bias_history_grad_ *= momentum;
+  if (weight_decay > 0)
+    bias_history_grad_ -= (bias_grad_ + bias_decay * bias_) * learning_rate;
+  else
+    bias_history_grad_ -= bias_grad_ * learning_rate;
+}
 }  // namespace lapis

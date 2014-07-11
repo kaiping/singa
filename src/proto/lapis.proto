@@ -74,9 +74,42 @@ message LayerProto {
   repeated Edgeroto in_edges = 5;
 }
 
+// stochastic gradient
+message SGDProto {
+  required float base_learning_rate = 1;
+  optional float base_momentum = 2;
+  optional float base_weight_decay = 3;
+  optional float final_momentum = 4;
+  optional float final_learning_rate = 5;
+  optional float final_weight_decay = 6;
+  optional int learning_rate_change_steps = 7;
+  optional int momentum_change_steps = 8;
+  optional int weight_decay_change_steps = 9;
+
+  enum ChangeProto {
+    FIXED = 0;
+    INVERSE_T = 1;
+    EXPONENTIAL = 2;
+    LINEAR = 3;
+  }
+
+  optional ChangeProto learning_rate_change = 10 [default = INVERSE_T];
+  optional ChangeProto weight_decay_change = 11 [default = FIXED];
+  optional ChangeProto momentum_change = 12 [default = FIXED];
+
+  optional int total_batches = 13;
+  optional int checkpoint_after = 14;
+  optional int checkpoint_every = 15;
+  optional string checkpoint_prefix  = 16;
+
+  optional int display_after = 17;
+  optional int display_every = 18;
+}
+
 message ModelConfProto {
   // model name
   optional string name = 1;
   repeated DataMetaProto data = 2;
   repeated LayerProto layers = 3;
+  required SGDProto sgd = 4;
 }

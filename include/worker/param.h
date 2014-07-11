@@ -17,7 +17,8 @@ class Param{
   virtual void fetch() = 0;
 
  protected:
-  float* content_, *grad_;
+  float* content_, *grad_, *history_grad_;
+  float learning_rate_, weight_decay_;
   std::vector<int> shape_;
   std::string initializer_;
   std::string name_;  // name of the parameter, e.g., 'weight', 'bias'

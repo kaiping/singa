@@ -11,15 +11,25 @@
 namespace lapis{
 	class DistributedMemory : private boost::noncopyable{
 	 public:
+		void Init();
+
 		template<class K, class V>
-		TypedGlobalTable<K, V>* CreateTable(int id, int shards, const GlobalContext& context);
+		TypedGlobalTable<K, V>* CreateTable(int id, const GlobalContext& context);
 
 		void AssignTables();  //  assign tables to clients
 
 		static DistributedMemory* Get();
 
 	 private:
+		//assign which worker owning this (table,shard)
+		void assign_worker(int table, int shard);
+
+		void send_table_assignments();
+
 		bool is_client_started_ = false;
+		bool is_initialized = false;
+
+		NetworkThread* net_;
 		DistributedMemory();
 	};
 

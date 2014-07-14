@@ -20,6 +20,11 @@ class GlobalContext {
                          const char * model_conf_path);
   inline bool IsRoleOf(const Role& role, int rank);
 
+  //  total number of servers running the MPI process
+  //  include servers of all roles.
+  //  This can be accessed by NetworkThread::size()
+  int num_servers();
+
   int num_memory_servers() { return num_memory_servers_; }
   int num_disk_servers() { return num_disk_servers_; }
   const char* model_conf_path() {return model_conf_path_; }

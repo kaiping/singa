@@ -24,6 +24,10 @@ class GlobalContext {
   int num_disk_servers() { return num_disk_servers_; }
   const char* model_conf_path() {return model_conf_path_; }
 
+  //  number of keys
+  int num_keys();
+  static GlobalContext* Get();
+
  private:
   // map from role to (start_rank, end_rank) pair
   std::map<Role, std::pair<int, int> > role_rank_;

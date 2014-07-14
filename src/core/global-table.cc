@@ -20,10 +20,6 @@ LocalTable *GlobalTable::get_partition(int shard) {
   return partitions_[shard];
 }
 
-TableIterator* GlobalTable::get_iterator(int shard) {
-  return partitions_[shard]->get_iterator();
-}
-
 bool GlobalTable::is_local_shard(int shard) {
   return owner(shard) == worker_id_;
 }
@@ -101,47 +97,6 @@ bool GlobalTable::get_remote(int shard, const StringPiece& k, string* v) {
   return true;
 }
 
-void GlobalTable::start_checkpoint(const string& f) {
-  for (int i = 0; i < partitions_.size(); ++i) {
-    LocalTable *t = partitions_[i];
-
-    if (is_local_shard(i)) {
-      t->start_checkpoint(f + StringPrintf(".%05d-of-%05d", i, partitions_.size()));
-    }
-  }
-}
-
-void GlobalTable::write_delta(const TableData& d) {
-  if (!is_local_shard(d.shard())) {
-    LOG_EVERY_N(INFO, 1000) << "Ignoring delta write for forwarded data";
-    return;
-  }
-
-  partitions_[d.shard()]->write_delta(d);
-}
-
-void GlobalTable::finish_checkpoint() {
-  for (int i = 0; i < partitions_.size(); ++i) {
-    LocalTable *t = partitions_[i];
-
-    if (is_local_shard(i)) {
-      t->finish_checkpoint();
-    }
-  }
-}
-
-void GlobalTable::restore(const string& f) {
-  for (int i = 0; i < partitions_.size(); ++i) {
-    LocalTable *t = partitions_[i];
-
-    if (is_local_shard(i)) {
-      t->restore(f + StringPrintf(".%05d-of-%05d", i, partitions_.size()));
-    } else {
-      t->clear();
-    }
-  }
-}
-
 void GlobalTable::handle_get(const HashGet& get_req, TableData *get_resp) {
   boost::recursive_mutex::scoped_lock sl(mutex());
 
@@ -191,7 +146,6 @@ void GlobalTable::SendUpdates() {
       t->clear();
     }
   }
-
   pending_writes_ = 0;
 }
 
@@ -207,7 +161,7 @@ int GlobalTable::pending_write_bytes() {
   return s;
 }
 
-void GlobalTable::ApplyUpdates(const dsm::TableData& req) {
+void GlobalTable::ApplyUpdates(const lapis::TableData& req) {
   boost::recursive_mutex::scoped_lock sl(mutex());
 
   if (!is_local_shard(req.shard())) {
@@ -220,12 +174,4 @@ void GlobalTable::ApplyUpdates(const dsm::TableData& req) {
   partitions_[req.shard()]->ApplyUpdates(&c);
 }
 
-void GlobalTable::get_local(const StringPiece &k, string* v) {
-  int shard = get_shard_str(k);
-  CHECK(is_local_shard(shard));
-
-  LocalTable *h = (LocalTable*)partitions_[shard];
-
-  v->assign(h->get_str(k));
-}
 }

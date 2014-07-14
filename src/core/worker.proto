@@ -1,4 +1,4 @@
-package dsm;
+package lapis;
 
 import "common.proto";
 option optimize_for = SPEED;

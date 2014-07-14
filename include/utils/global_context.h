@@ -13,7 +13,7 @@ enum Role {
   kMemoryServer,
   kDiskServer
 };
-
+template<class K, class V>
 class GlobalContext {
  public:
   explicit GlobalContext(const char* system_conf_path,
@@ -28,6 +28,11 @@ class GlobalContext {
   int num_keys();
   static GlobalContext* Get();
 
+  Sharder<K>* sharder(){ return sharder_; }
+  Accumulator<V>* accumulator() { return accumulator_; }
+  Marshal<K>* key_marshal() { return key_marshal_; }
+  Marshal<V>* value_marshal() { return value_marshal_; }
+
  private:
   // map from role to (start_rank, end_rank) pair
   std::map<Role, std::pair<int, int> > role_rank_;
@@ -37,6 +42,13 @@ class GlobalContext {
   int num_disk_servers;
 
   const char* model_conf_path_;
+
+  //for configuring the table
+  Sharder<K>* sharder_;
+  Accumulator<V>* accumulator_;
+  Marshal<K>* key_marshal_;
+  Marshal<V>* value_marshal_;
+
 };
 }  // namespace lapis
 

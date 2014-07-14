@@ -1,4 +1,4 @@
-package dsm;
+package lapis;
 
 enum MessageTypes {  
   MTYPE_PUT_REQUEST = 1;  

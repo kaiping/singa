@@ -26,33 +26,33 @@ private:
 #pragma pack(pop)
 
 public:
-  struct Iterator : public TypedTableIterator<K, V> {
-    Iterator(SparseTable<K, V>& parent) : pos(-1), parent_(parent) { Next(); }
+  struct Iterator {
+      Iterator(SparseTable<K, V>& parent) : pos(-1), parent_(parent) { Next(); }
 
-    void Next() {
-      do {
-        ++pos;
-      } while (pos < parent_.size_ && !parent_.buckets_[pos].in_use);
-    }
+      void Next() {
+        do {
+          ++pos;
+        } while (pos < parent_.size_ && !parent_.buckets_[pos].in_use);
+      }
 
-    bool done() {
-      return pos == parent_.size_;
-    }
+      bool done() {
+        return pos == parent_.size_;
+      }
 
-    const K& key() { return parent_.buckets_[pos].k; }
-    V& value() { return parent_.buckets_[pos].v; }
+      const K& key() { return parent_.buckets_[pos].k; }
+      V& value() { return parent_.buckets_[pos].v; }
 
-    void key_str(string* k) {
-      return ((Marshal<K>*)parent_.info_->key_marshal)->marshal(key(), k);
-    }
+      void key_str(string* k) {
+        return ((Marshal<K>*)parent_.info_->key_marshal)->marshal(key(), k);
+      }
 
-    void value_str(string *v) {
-      return ((Marshal<V>*)parent_.info_->value_marshal)->marshal(value(), v);
-    }
+      void value_str(string *v) {
+        return ((Marshal<V>*)parent_.info_->value_marshal)->marshal(value(), v);
+      }
 
-    int pos;
-    SparseTable<K, V> &parent_;
-  };
+      int pos;
+      SparseTable<K, V> &parent_;
+    };
 
   struct Factory : public TableFactory {
     TableBase* New() { return new SparseTable<K, V>(); }
@@ -84,32 +84,32 @@ public:
     entries_ = 0;
   }
 
-  TableIterator *get_iterator() {
-      return new Iterator(*this);
+  Iterator *get_iterator() {
+        return new Iterator(*this);
   }
 
   void Serialize(TableCoder *out);
   void ApplyUpdates(TableCoder *in);
 
   bool contains_str(const StringPiece& s) {
-    K k;
-    ((Marshal<K>*)info_->key_marshal)->unmarshal(s, &k);
-    return contains(k);
-  }
+      K k;
+      ((Marshal<K>*)info_->key_marshal)->unmarshal(s, &k);
+      return contains(k);
+    }
 
   string get_str(const StringPiece &s) {
-    K k;
-    ((Marshal<K>*)info_->key_marshal)->unmarshal(s, &k);
-    string out;
-    ((Marshal<V>*)info_->value_marshal)->marshal(get(k), &out);
-    return out;
+      K k;
+      ((Marshal<K>*)info_->key_marshal)->unmarshal(s, &k);
+      string out;
+      ((Marshal<V>*)info_->value_marshal)->marshal(get(k), &out);
+      return out;
   }
 
   void update_str(const StringPiece& kstr, const StringPiece &vstr) {
-    K k; V v;
-    ((Marshal<K>*)info_->key_marshal)->unmarshal(kstr, &k);
-    ((Marshal<V>*)info_->value_marshal)->unmarshal(vstr, &v);
-    update(k, v);
+      K k; V v;
+      ((Marshal<K>*)info_->key_marshal)->unmarshal(kstr, &k);
+      ((Marshal<V>*)info_->value_marshal)->unmarshal(vstr, &v);
+      update(k, v);
   }
 
 private:
@@ -154,7 +154,7 @@ SparseTable<K, V>::SparseTable(int size)
 
 template <class K, class V>
 void SparseTable<K, V>::Serialize(TableCoder *out) {
-  Iterator *i = (Iterator*)get_iterator();
+  Iterator *i = get_iterator();
   string k, v;
   while (!i->done()) {
     k.clear(); v.clear();

@@ -4,7 +4,7 @@
 #include "worker/row_param.h"
 
 namespace lapis {
-void RowParam::init(const ParamProto& param_proto) {
+void RowParam::init(const ParamProto &param_proto) {
   Param::init(param_proto);
   row_ = 0;
 }
@@ -12,7 +12,7 @@ void RowParam::init(const ParamProto& param_proto) {
 // both params' shapes have length of 2.
 // for vector, it is <1, n>; for matrix, it is <m, n>
 // TODO(wangwei) support other paramters, e.g., scalar and tensor
-bool RowParam::next(string* k, string* v) {
+bool RowParam::next(string *k, string *v) {
   // vector param
   if (row_ >= shape_[0])
     return false;
@@ -23,7 +23,7 @@ bool RowParam::next(string* k, string* v) {
     *k = name_ + string(row);
     *v = new vector<float>(content_.begin() + row_ * shape_[1],
                            content_.begin() + (row_ + 1) * shape[1]);
-    row + =1;
+    row + = 1;
   }
 
   return true;

@@ -21,7 +21,7 @@ message SystemConfProto {
   optional int32 disk_end = 7;
 }
 
-message DataMetaProto {
+message DataSourceProto {
   required string name = 1;
   required string parser = 2;
   optional string path = 3;
@@ -56,22 +56,38 @@ message ParamProto {
   // for vector, shape is <1, n>; for matrix, it is <m, n>
   repeated int32 shape = 3;
   optional string partitioner = 4; // e.g., row or column partition
+  optional float content = 5 [packed = true];
 }
 
 
-// both edge and layer may have params and data blob
+// both edge and layer only have params
 message EdgeProto {
   optional string name = 1;
-  repeated ParamProto params = 2;
-  optional BlobProto blob = 3;
+  required string type = 2;
+  repeated ParamProto param = 3;
+  optional bool directed = 4 [default = false];
 }
 
 message LayerProto {
   required string name = 1;
-  repeated ParamProto params = 2;
-  optional BlobProto blob = 3;
-  repeated EdgeProto out_edges = 4;
-  repeated Edgeroto in_edges = 5;
+  required int32 num_output = 2;
+  required string type = 3;
+  /*
+  enum Activation {
+    LOGISTIC = 0;
+    RELU = 1;
+    SOFTMAX = 2;
+    LINEAR = 3;
+  }
+  */
+  repeated ParamProto param  = 4;
+  repeated string out_edge = 5;
+  repeated string in_edge = 6;
+}
+
+message NetProto {
+  repeated LayerProto layer = 3;
+  repeated EdgeProto edge  = 4;
 }
 
 // stochastic gradient
@@ -82,9 +98,9 @@ message SGDProto {
   optional float final_momentum = 4;
   optional float final_learning_rate = 5;
   optional float final_weight_decay = 6;
-  optional int learning_rate_change_steps = 7;
-  optional int momentum_change_steps = 8;
-  optional int weight_decay_change_steps = 9;
+  optional int32 learning_rate_change_steps = 7;
+  optional int32 momentum_change_steps = 8;
+  optional int32 weight_decay_change_steps = 9;
 
   enum ChangeProto {
     FIXED = 0;
@@ -93,23 +109,53 @@ message SGDProto {
     LINEAR = 3;
   }
 
-  optional ChangeProto learning_rate_change = 10 [default = INVERSE_T];
-  optional ChangeProto weight_decay_change = 11 [default = FIXED];
-  optional ChangeProto momentum_change = 12 [default = FIXED];
+  optional ChangeProto learning_rate_change_steps = 10 [default = INVERSE_T];
+  optional ChangeProto weight_decay_change_steps = 11 [default = FIXED];
+  optional ChangeProto momentum_change_steps = 12 [default = FIXED];
 
-  optional int total_batches = 13;
-  optional int checkpoint_after = 14;
-  optional int checkpoint_every = 15;
-  optional string checkpoint_prefix  = 16;
+  optional int32 total_steps = 13;
+  // batchsize is the num of instances processed per step
+  optional int32 batchsize = 14;
+}
 
-  optional int display_after = 17;
-  optional int display_every = 18;
+
+message PerformanceProto {
+  optional float precision = 1;
+  optional float recall = 2;
+  optional float map = 3;
+  optional float precision50 = 4;
+}
+
+message TrainerProto {
+  // optimizer, may support lbfgs later
+  optional SGDProto sgd = 1;
+
+  // start the checkpoint operation after this num steps
+  optional int32 checkpoint_after_steps = 2;
+  // frequency of checkpoint
+  optional int32 checkpoint_every_steps = 3;
+  // path prefix for the checkpoint file
+  optional string checkpoint_prefix  = 4;
+  // the time of checkpoint
+  optional int32 checkpoint_step = 5;
+  // start display after this num steps
+  optional int32 display_after_steps = 6;
+  // frequency of display
+  optional int32 display_every_steps = 7;
+
+  repeated DataSourceProto train_data = 8;
+  repeated DataSourceProto validation_data = 9;
+  repeated DataSourceProto test_data = 10;
+
+  //optional PerformanceProto train_perf = 11;
+  //optional PerformanceProto validation_perf = 12;
+  //optional PerformanceProto test_perf = 13;
+  optional string perf_prefix = 14;
 }
 
 message ModelConfProto {
   // model name
   optional string name = 1;
-  repeated DataMetaProto data = 2;
-  repeated LayerProto layers = 3;
-  required SGDProto sgd = 4;
+  required NetProto net = 2;
+  required Trainer trainer = 3;
 }

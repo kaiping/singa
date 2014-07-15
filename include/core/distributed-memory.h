@@ -31,9 +31,6 @@ namespace lapis{
 	 public:
 		~DistributedMemoryManager();
 
-		template<class K, class V>
-		TypedGlobalTable<K, V>* CreateTable(int id, const TypedGlobalContext& typed_context);
-
 		void AssignTables();  //  assign tables to clients
 
 		static DistributedMemoryManager* Get();
@@ -48,7 +45,6 @@ namespace lapis{
 		vector<ServerState*> server_states_;
 
 		NetworkThread* net_;
-		GlobalContext* context_;
 
 		void Init();
 
@@ -60,6 +56,10 @@ namespace lapis{
 			delete server_states_[i];
 		}
 	}
+
+	template<class K, class V>
+			TypedGlobalTable<K, V>* CreateTable(int id, const TypedGlobalContext& typed_context);
+
 }  //  namespace lapis
 
 #endif  //  INCLUDE_CORE_DISTRIBUTED-MEMORY_H_

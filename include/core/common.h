@@ -1,5 +1,8 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-// piccolo/common.h
+//  Copyright © 2014 Anh Dinh. All Rights Reserved.
+//  piccolo/common.h
+
+//  this header file is included in all upper-layer code
+//  InitServers() is called before any table related operations.
 
 #ifndef INCLUDE_CORE_COMMON_H_
 #define INCLUDE_CORE_COMMON_H_
@@ -24,6 +27,11 @@
 #include "core/static-initializers.h"
 #include "core/stringpiece.h"
 #include "core/timer.h"
+#include "core/distributed-memory.h"
+#include "core/memory-server.h"
+#include "core/tabley-registry"
+#include "core/rpc.h"
+#include "core/file.h"
 
 using std::map;
 using std::vector;
@@ -35,7 +43,10 @@ using std::tr1::unordered_set;
 
 namespace lapis {
 
-void Init(int argc, char** argv);
+//  start servers on MPI process, either memory server of manager
+//  called once for every process, NULL is returned if
+//  the current process is not the manager.
+DistributedMemoryManager* InitServers(int argc, char** argv);
 
 void Sleep(double t);
 

@@ -26,6 +26,8 @@
 #include "core/file.h"
 #include "core/common.pb.h"
 
+DECLARE_bool(sync_update);
+
 namespace lapis {
 
 typedef google::protobuf::Message Message;

@@ -5,7 +5,7 @@
 #include "global_context.h"
 
 namespace lapis{
-	MemoryServer::MemoryServer(){
+	void MemoryServer::Init(){
 		net_ = NetworkThread::Get();
 		server_id_ = net_->id();
 		manager_id_ = net_->size()-1;
@@ -29,7 +29,6 @@ namespace lapis{
 		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_ReQUEST,
 												boost::bind(&MemoryServer::HandleGetRequest, this));
 	}
-
 
 	void MemoryServer::HandleShardAssignment(){
 		CHECK(GlobalContext::Get()->IsRoleOf(Role.kMemoryServer, id())) << "Assign table to wrong server " << id();

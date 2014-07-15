@@ -22,6 +22,8 @@ class MemoryServer : private boost::noncopyable{
 		MemoryServer();
 		~MemoryServer(){}
 
+		void Init();
+
 		int id(){ return server_id_; }
 
 		//  update ownership of the partition. Only memory server
@@ -43,6 +45,9 @@ class MemoryServer : private boost::noncopyable{
 		NetworkThread* net_;
 		GlobalContext* context_;
 };
+
+	//  start memory server, only if rank < size()-1
+	bool StartMemoryServer();
 
 }  //  namespace lapis
 

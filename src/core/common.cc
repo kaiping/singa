@@ -17,10 +17,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-//#include <google/profiler.h>
-//#include <google/heap-profiler.h>
-//#include <google/malloc_extension.h>
-
 #include <lzo/lzo1x.h>
 #include <mpi.h>
 
@@ -39,22 +35,18 @@ void Sleep(double t) {
   nanosleep(&req, NULL);
 }
 
-void Init(int argc, char** argv) {
+//  this is called once for every MPI process
+DistributedMemoryManager* InitServers(int argc, char** argv) {
   FLAGS_logtostderr = true;
   FLAGS_logbuflevel = -1;
-
-  CHECK_EQ(lzo_init(), 0);
 
   google::SetUsageMessage("%s: invoke from mpirun, using --runner to select control function.");
   google::ParseCommandLineFlags(&argc, &argv, false);
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
- 
+
+  //  no initializer registered
   RunInitializers();
-
-
-  // If we are not running in the context of MPI, go ahead and invoke
-  // mpirun to start ourselves up.
 
   // Assumed that we launch using MPI command
   /*
@@ -77,7 +69,18 @@ void Init(int argc, char** argv) {
   }
   */
 
+  //  start network thread for this process
   NetworkThread::Init();
+  NetworkThread* net = NetworkThread::Get();
+
+  //  return DistributedMemoryManager for rank size()-1
+  //  else, initialize MemoryServer and return null;
+  if (net->id()==(net->size()-1))
+	  return DistributedMemoryManager::Get();
+  else{
+	  (new MemoryServer())->Init();
+	  return NULL;
+  }
 }
 
 }

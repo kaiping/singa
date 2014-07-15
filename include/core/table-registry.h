@@ -3,9 +3,9 @@
 
 #include "core/common.h"
 #include "core/table.h"
-#include "global-table.h"
-#include "local-table.h"
-#include "sparse-table.h"
+#include "core/global-table.h"
+#include "core/local-table.h"
+#include "core/sparse-table.h"
 
 namespace lapis {
 

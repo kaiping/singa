@@ -12,7 +12,7 @@ namespace lapis{
 	//  also init vector of ClientStates for all memory server
 	void DistributedMemoryManager::Init(){
 		net_ = NetworkThread::Get();
-		context_ = GlobalContext::Get();
+		GlobalContext* context_ = GlobalContext::Get();
 
 		for (int i = 0; i < net_.size()-1; ++i) {
 		   RegisterWorkerRequest req;
@@ -30,22 +30,6 @@ namespace lapis{
 		return dm;
 	}
 
-	template<class K, class V>
-	TypedGlobalTable<K, V>* DistributedMemoryManager::CreateTable(int id,
-	                                            const TypedGlobaclContext<K,V>& type_context){
-	  TableDescriptor *info = new TableDescriptor(id, context_->num_memory_servers());
-	  info->key_marshal = type_context.key_marshal();
-	  info->value_marshal = type_context.value_marshal();
-	  info->sharder = type_context.sharder();
-	  info->accum = type_context.accumulator();
-
-	  info->partition_factory = new typename SparseTable<K, V>::Factory;
-
-	  TypedGlobalTable<K, V> *t = new TypedGlobalTable<K, V>();
-	  t->Init(info);
-	  TableRegistry::Get()->tables().insert(make_pair(info->table_id, t));
-	  return t;
-	}
 
 	//  assigning which workers own which shards
 	void DistributedMemoryManager::AssignTables(){
@@ -88,4 +72,21 @@ namespace lapis{
 		  }
 		  net_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 	}
+
+	template<class K, class V>
+		TypedGlobalTable<K, V>* CreateTable(int id,
+		                                            const TypedGlobaclContext<K,V>& type_context){
+		  TableDescriptor *info = new TableDescriptor(id, GlobalContext::Get()->num_memory_servers());
+		  info->key_marshal = type_context.key_marshal();
+		  info->value_marshal = type_context.value_marshal();
+		  info->sharder = type_context.sharder();
+		  info->accum = type_context.accumulator();
+
+		  info->partition_factory = new typename SparseTable<K, V>::Factory;
+
+		  TypedGlobalTable<K, V> *t = new TypedGlobalTable<K, V>();
+		  t->Init(info);
+		  TableRegistry::Get()->tables().insert(make_pair(info->table_id, t));
+		  return t;
+		}
 }

@@ -16,12 +16,6 @@ DECLARE_bool(sync_update);
 
 namespace lapis {
 
-struct Header {
-  Header() : sync_request(0), sync_reply(0) {}
-  bool sync_request;
-  bool sync_reply;
-};
-
 // Represents an active RPC to a remote peer.
 struct RPCRequest : private boost::noncopyable {
   int target;
@@ -33,7 +27,7 @@ struct RPCRequest : private boost::noncopyable {
   MPI::Status status;
   double start_time;
 
-  RPCRequest(int target, int method, const Message& msg, Header h=Header());
+  RPCRequest(int target, int method, const Message& msg);
   ~RPCRequest();
 
   //  if message has been sent successfully
@@ -51,12 +45,10 @@ struct TaggedMessage : private boost::noncopyable{
 RPCRequest::~RPCRequest() {}
 
 // Send the given message type and data to this peer.
-RPCRequest::RPCRequest(int tgt, int method, const Message& ureq, Header h) {
+RPCRequest::RPCRequest(int tgt, int method, const Message& ureq) {
   failures = 0;
   target = tgt;
   rpc_type = method;
-
-  payload.append((char*)&h, sizeof(Header));
   ureq.AppendToString(&payload);
 }
 
@@ -143,12 +135,6 @@ void NetworkThread::NetworkLoop() {
 
       world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
 
-      Header *h = (Header*)&data[0];
-      if (h->sync_request) {
-        EmptyMessage msg;
-        Send(source, MTYPE_SYNC_REPLY, msg);
-      }
-
       CHECK_LT(source, kMaxHosts);
 
       //  put request to the queue
@@ -203,9 +189,8 @@ void NetworkThread::ProcessRequest(const TaggedMessage& t_msg){
 		CHECK_EQ(t_msg.tag, MTYPE_PUT_REQUEST);
 		message.reset(new TableData());
 	}
-	message->ParseFromArray(t_msg.data.data()+sizeof(Header), t_msg.data.size() - sizeof(Header));
+	message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
 	handles_[t_msg.tag](message);
-
 }
 
 //  for now, only PUT_RESPONSE message are being pulled from this.
@@ -220,7 +205,7 @@ bool NetworkThread::check_queue(int src, int type, Message* data) {
 
     const string& s = q.front();
     if (data) {
-      data->ParseFromArray(s.data() + sizeof(Header), s.size() - sizeof(Header));
+      data->ParseFromArray(s.data(), s.size());
     }
 
     q.pop_front();
@@ -280,15 +265,16 @@ void NetworkThread::Flush() {
   }
 }
 
+//  broadcast to all non-coordinator servers: 0-(size-1)
 void NetworkThread::Broadcast(int method, const Message& msg) {
-  for (int i = 1; i < world_->Get_size(); ++i) {
+  for (int i = 0; i < size()-1; ++i) {
     Send(i, method, msg);
   }
 }
 
 void NetworkThread::SyncBroadcast(int method, int reply, const Message& msg) {
   Broadcast(method, msg);
-  WaitForSync(reply, world_->Get_size() - 1);
+  WaitForSync(reply, size() - 1);
 }
 
 void NetworkThread::WaitForSync(int reply, int count) {
@@ -319,7 +305,7 @@ void RequestQueue::ExtractKey(int tag, string data, string* key){
 	else
 		message.reset(new TableData());
 
-	message.ParseFromArray(data.data()+sizeof(Header), data.size() - sizeof(Header));
+	message.ParseFromArray(data.data(), data.size());
 	*key = msg.key();
 }
 
@@ -436,7 +422,12 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* msg){
 			  message->data = q_msg.data;
 			  put_queues_[key_index].pop_front();
 			  counter++;
-			  if (count==num_mem_servers){
+			  if (is_first_update){
+				  is_put = false;
+				  counter = 0;
+				  is_first_update = false;
+			  }
+			  if (count==num_mem_servers_){
 				  is_put = false;
 				  counter=0;
 			  }
@@ -452,7 +443,7 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* msg){
 			  message->data = q_msg.data;
 			  get_queues_[key_index].pop_front();
 			  counter++;
-			  if (count==num_mem_servers){
+			  if (count==num_mem_servers_){
 			  	  is_put = true;
 			  	  counter=0;
 			  }

@@ -68,7 +68,7 @@ void GlobalTable::resize(int64_t new_size) {
   }
 }
 
-void GlobalTable::set_worker(Worker* w) {
+void GlobalTable::set_worker(MemoryServer* w) {
   w_ = w;
   worker_id_ = w->id();
 }
@@ -80,14 +80,12 @@ bool GlobalTable::get_remote(int shard, const StringPiece& k, string* v) {
   req.set_key(k.AsString());
   req.set_table(info().table_id);
   req.set_shard(shard);
+  req.set_source(worker_id_);
 
   int peer = w_->peer_for_shard(info().table_id, shard);
 
-  DCHECK_GE(peer, 0);
-  DCHECK_LT(peer, MPI::COMM_WORLD.Get_size() - 1) << endl;
-
-  NetworkThread::Get()->Send(peer + 1, MTYPE_GET_REQUEST, req);
-  NetworkThread::Get()->Read(peer + 1, MTYPE_GET_RESPONSE, &resp);
+  NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
+  NetworkThread::Get()->Read(peer, MTYPE_GET_RESPONSE, &resp);
 
   if (resp.missing_key()) {
     return false;
@@ -124,7 +122,7 @@ void GlobalTable::SendUpdates() {
   for (int i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
 
-    if (!is_local_shard(i) && (get_partition_info(i)->dirty || !t->empty())) {
+    if (!is_local_shard(i) && !t->empty()) {
       // Always send at least one chunk, to ensure that we clear taint on
       // tables we own.
       do {
@@ -132,7 +130,6 @@ void GlobalTable::SendUpdates() {
         put.set_shard(i);
         put.set_source(w_->id());
         put.set_table(id());
-        put.set_epoch(w_->epoch());
 
         RPCTableCoder c(&put);
         t->Serialize(&c);

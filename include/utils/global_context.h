@@ -13,7 +13,8 @@ enum Role {
   kMemoryServer,
   kDiskServer
 };
-template<class K, class V>
+
+//  assume that the coordinator's rank is (num_servers()-1)
 class GlobalContext {
  public:
   explicit GlobalContext(const char* system_conf_path,
@@ -33,11 +34,6 @@ class GlobalContext {
   int num_keys();
   static GlobalContext* Get();
 
-  Sharder<K>* sharder(){ return sharder_; }
-  Accumulator<V>* accumulator() { return accumulator_; }
-  Marshal<K>* key_marshal() { return key_marshal_; }
-  Marshal<V>* value_marshal() { return value_marshal_; }
-
  private:
   // map from role to (start_rank, end_rank) pair
   std::map<Role, std::pair<int, int> > role_rank_;
@@ -48,13 +44,27 @@ class GlobalContext {
 
   const char* model_conf_path_;
 
-  //for configuring the table
-  Sharder<K>* sharder_;
-  Accumulator<V>* accumulator_;
-  Marshal<K>* key_marshal_;
-  Marshal<V>* value_marshal_;
-
 };
+
+// for configuring the table
+template<class K, class V>
+class TypedGlobalContext:
+	public:
+	  TypedGlobalContext(Sharder<K>* s, Accumulator<V>* a, Marshal<K>* km, Marshal<V>* vm):
+		  sharder_(s),accumulator_(a), key_marshal_(km), value_marshal_(vm){}
+
+	  Sharder<K>* sharder(){ return sharder_; }
+	  Accumulator<V>* accumulator() { return accumulator_; }
+	  Marshal<K>* key_marshal() { return key_marshal_; }
+	  Marshal<V>* value_marshal() { return value_marshal_; }
+
+	private:
+	  Sharder<K>* sharder_;
+	  Accumulator<V>* accumulator_;
+	  Marshal<K>* key_marshal_;
+	  Marshal<V>* value_marshal_;
+};
+
 }  // namespace lapis
 
 #endif  // INCLUDE_UTILS_GLOBAL_CONTEXT_H_

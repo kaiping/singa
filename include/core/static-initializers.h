@@ -1,5 +1,8 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
-// piccolo/tuple.h
+// from piccolo
+
+//  register codes (REGISTER_INITIALIZER) that can be run by calling the
+//	global function: RunInitializer
 
 #ifndef INCLUDE_CORE_STATIC_INITIALIZERS_H_
 #define INCLUDE_CORE_STATIC_INITIALIZERS_H_
@@ -40,11 +43,9 @@ struct CodeHelper {
   virtual void Run() = 0;
 };
 
-class TestHelper : public CodeHelper {};
 class InitHelper : public CodeHelper {};
 
-extern void RunInitializers();
-extern void RunTests();
+void RunInitializers();
 
 }  // namespace lapis
 
@@ -55,7 +56,6 @@ struct k ## CodeHelper : public type {\
 };\
 REGISTER(type, k, new k ## CodeHelper);
 
-#define REGISTER_TEST(k, code) REGISTER_CODE(lapis::TestHelper, k, code);
 #define REGISTER_INITIALIZER(k, code) REGISTER_CODE(lapis::InitHelper, k, code);
 
 #endif  // INCLUDE_CORE_STATIC-INITIALIZERS_H_

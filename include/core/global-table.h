@@ -18,18 +18,14 @@ public:
   virtual ~GlobalTable();
 
   struct PartitionInfo {
-    PartitionInfo() : dirty(false), tainted(false), owner(-1) {}
-    bool dirty;
-    bool tainted;
+    PartitionInfo() :owner(-1) {}
     int owner;
-    ShardInfo sinfo;
   };
 
   virtual PartitionInfo* get_partition_info(int shard) {
     return &partinfo_[shard];
   }
 
-  bool tainted(int shard) { return get_partition_info(shard)->tainted; }
   int owner(int shard) { return get_partition_info(shard)->owner; }
 
   LocalTable *get_partition(int shard);
@@ -68,11 +64,11 @@ protected:
   volatile int pending_writes_;
   boost::recursive_mutex m_;
 
-  friend class Worker;
-  Worker *w_;
+  friend class MemoryServer;
+  MemoryServer *w_;
 
 
-  void set_worker(Worker *w);
+  void set_worker(MemoryServer *w);
 
   // Fetch key k from the node owning it.  Returns true if the key exists.
   bool get_remote(int shard, const StringPiece &k, string* v);
@@ -176,12 +172,6 @@ template<class K, class V>
 V TypedGlobalTable<K, V>::get(const K &k) {
   int shard = this->get_shard(k);
 
-  // If we received a get for this shard; but we haven't received all of the
-  // data for it yet. Continue reading from other workers until we do.
-  while (tainted(shard)) {
-    this->HandlePutRequests();
-    sched_yield();
-  }
 
   if (is_local_shard(shard)) {
     return get_local(k);
@@ -197,13 +187,6 @@ V TypedGlobalTable<K, V>::get(const K &k) {
 template<class K, class V>
 bool TypedGlobalTable<K, V>::contains(const K &k) {
   int shard = this->get_shard(k);
-
-  // If we received a request for this shard; but we haven't received all of the
-  // data for it yet. Continue reading from other workers until we do.
-  while (tainted(shard)) {
-    this->HandlePutRequests();
-    sched_yield();
-  }
 
   if (is_local_shard(shard)) {
     //    boost::recursive_mutex::scoped_lock sl(mutex());

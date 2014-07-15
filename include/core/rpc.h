@@ -71,10 +71,10 @@ class NetworkThread {
   typedef boost::function<void ()> Callback;
 
   //  callback to handle put/get requests
-  typedef boost::function<void (const Message&)> Handle;
+  typedef boost::function<void (const Message*)> Handle;
 
   void RegisterCallback(int message_type, Callback cb) {callbacks_[message_type] = cb;}
-  void RegisterMessageHandler(int message_type, Handle cb) {handles_[message_type] = cb;}
+  void RegisterRequestHandler(int message_type, Handle cb) {handles_[message_type] = cb;}
 
  private:
   static const int kMaxHosts = 512;
@@ -135,7 +135,7 @@ class NetworkThread {
 
 class RequestQueue{
  public:
-  MessageQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0) {}
+  MessageQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
 
   virtual void NextRequest(TaggedMessage* msg)=0;
   virtual void Enqueue(int tag, string data)=0;
@@ -150,6 +150,8 @@ class RequestQueue{
   Lock key_locks_;
 
   boost::recursive_mutex whole_queue_lock_;
+
+  bool is_first_update_;
 
   int num_keys_;
   int num_mem_servers_;

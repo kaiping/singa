@@ -24,17 +24,6 @@ void StringPiece::strip() {
   while (len > 0 && isspace(data[len - 1])) {  --len; }
 }
 
-static void StringPieceTestStrip() {
-  StringPiece p = "abc def;";
-  p.strip();
-  CHECK_EQ(p.AsString(), "abc def;");
-
-  StringPiece q = "   abc def;   ";
-  q.strip();
-  CHECK_EQ(q.AsString(), "abc def;");
-}
-REGISTER_TEST(StringPieceStrip, StringPieceTestStrip());
-
 vector<StringPiece> StringPiece::split(StringPiece sp, StringPiece delim) {
   vector<StringPiece> out;
   const char* c = sp.data;
@@ -65,15 +54,6 @@ vector<StringPiece> StringPiece::split(StringPiece sp, StringPiece delim) {
 
   return out;
 }
-
-static void StringPieceTestSplit() {
-  vector<StringPiece> sp = StringPiece::split("a,b,c,d", ",");
-  CHECK_EQ(sp[0].AsString(), "a");
-  CHECK_EQ(sp[1].AsString(), "b");
-  CHECK_EQ(sp[2].AsString(), "c");
-  CHECK_EQ(sp[3].AsString(), "d");
-}
-REGISTER_TEST(StringPieceSplit, StringPieceTestSplit());
 
 string StringPrintf(StringPiece fmt, ...) {
   va_list l;

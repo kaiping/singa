@@ -50,12 +50,8 @@ message TableData {
   
   optional bytes table_data = 5;
   repeated Arg kv_data = 6;
-  
-  optional int32 epoch = 11;
-  optional int32 marker = 12 [default = -1];
-  
-  
-  optional bool missing_key = 13;
+   
+  optional bool missing_key = 7;
 }
 
 

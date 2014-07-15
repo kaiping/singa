@@ -52,26 +52,4 @@ private:
 
 }  // namespace lapis
 
-#define EVERY_N(interval, operation)\
-{ static int COUNT = 0;\
-  if (COUNT++ % interval == 0) {\
-    operation;\
-  }\
-}
-
-#define PERIODIC(interval, operation)\
-{ static int64_t last = 0;\
-  static int64_t cycles = (int64_t)(interval * get_processor_frequency());\
-  static int COUNT = 0; \
-  ++COUNT; \
-  int64_t now = rdtsc(); \
-  if (now - last > cycles) {\
-    last = now;\
-    operation;\
-    COUNT = 0;\
-  }\
-}
-
-
-
 #endif  // INCLUDE_CORE_TIMER_H_

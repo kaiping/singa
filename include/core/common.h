@@ -37,68 +37,7 @@ namespace lapis {
 
 void Init(int argc, char** argv);
 
-uint64_t get_memory_rss();
-uint64_t get_memory_total();
-
 void Sleep(double t);
-
-double get_processor_frequency();
-
-// Log-bucketed histogram.
-class Histogram {
-public:
-  Histogram() : count(0) {}
-
-  void add(double val);
-  string summary();
-
-  int bucketForVal(double v);
-  double valForBucket(int b);
-
-  int getCount() { return count; }
-private:
-
-  int count;
-  vector<int> buckets;
-  static const double kMinVal;
-  static const double kLogBase;
-};
-
-class SpinLock {
-public:
-  SpinLock() : d(0) {}
-  void lock() volatile;
-  void unlock() volatile;
-private:
-  volatile int d;
-};
-
-static double rand_double() {
-  return double(random()) / RAND_MAX;
-}
-
-// Simple wrapper around a string->double map.
-struct Stats {
-  double& operator[](const string& key) {
-    return p_[key];
-  }
-
-  string ToString(string prefix) {
-    string out;
-    for (unordered_map<string, double>::iterator i = p_.begin(); i != p_.end(); ++i) {
-      out += StringPrintf("%s -- %s : %.2f\n", prefix.c_str(), i->first.c_str(), i->second);
-    }
-    return out;
-  }
-
-  void Merge(Stats &other) {
-    for (unordered_map<string, double>::iterator i = other.p_.begin(); i != other.p_.end(); ++i) {
-      p_[i->first] += i->second;
-    }
-  }
-private:
-  unordered_map<string, double> p_;
-};
 
 template <class V>
 struct Accumulator {
@@ -109,6 +48,42 @@ template <class K>
 struct Sharder {
   virtual int operator()(const K& k, int shards) = 0;
 };
+
+#ifndef SWIG
+// Commonly used accumulation operators.
+template <class V>
+struct Accumulators {
+  struct Min : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = std::min(*a, b); }
+  };
+
+  struct Max : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = std::max(*a, b); }
+  };
+
+  struct Sum : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = *a + b; }
+  };
+
+  struct Replace : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = b; }
+  };
+};
+
+struct Sharding {
+  struct String  : public Sharder<string> {
+    int operator()(const string& k, int shards) { return StringPiece(k).hash() % shards; }
+  };
+
+  struct Mod : public Sharder<int> {
+    int operator()(const int& key, int shards) { return key % shards; }
+  };
+
+  struct UintMod : public Sharder<uint32_t> {
+    int operator()(const uint32_t& key, int shards) { return key % shards; }
+  };
+};
+#endif
 
 template <class T, class Enable = void>
 struct Marshal {
@@ -141,35 +116,5 @@ string marshal(Marshal<T>* m, const T& t) { string out; m->marshal(t, &out); ret
 
 template <class T>
 T unmarshal(Marshal<T>* m, const StringPiece& s) { T out; m->unmarshal(s, &out); return out; }
-
-static vector<int> range(int from, int to, int step=1) {
-  vector<int> out;
-  for (int i = from; i < to; ++i) {
-    out.push_back(i);
-  }
-  return out;
-}
-
-static vector<int> range(int to) {
-  return range(0, to);
-}
-}  // namespace lapis
-
-#define IN(container, item) (std::find(container.begin(), container.end(), item) != container.end())
-#define COMPILE_ASSERT(x) extern int __dummy[(int)x]
-
-#include "core/tuple.h"
-
-#ifndef SWIG
-// operator<< overload to allow protocol buffers to be output from the logging methods.
-#include <google/protobuf/message.h>
-namespace std{
-static ostream & operator<< (ostream &out, const google::protobuf::Message &q) {
-  string s = q.ShortDebugString();
-  out << s;
-  return out;
-}
-}
-#endif
 
 #endif  // INCLUDE_CORE_COMMON_H_

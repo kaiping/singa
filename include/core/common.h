@@ -22,7 +22,6 @@
 #include "glog/logging.h"
 #include "google/gflags.h"
 
-#include "core/common.pb.h"
 #include "core/hash.h"
 #include "core/static-initializers.h"
 #include "core/stringpiece.h"
@@ -32,6 +31,7 @@
 #include "core/tabley-registry"
 #include "core/rpc.h"
 #include "core/file.h"
+#include "common.pb.h"
 
 using std::map;
 using std::vector;
@@ -46,7 +46,11 @@ namespace lapis {
 //  start servers on MPI process, either memory server of manager
 //  called once for every process, NULL is returned if
 //  the current process is not the manager.
-DistributedMemoryManager* InitServers(int argc, char** argv);
+void InitServers(int argc, char** argv);
+
+//  true if the current process is the memory manager,
+//	false if it is a memory server
+bool IsDistributedMemoryManager();
 
 void Sleep(double t);
 

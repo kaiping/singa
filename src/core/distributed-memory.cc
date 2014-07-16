@@ -10,7 +10,14 @@ namespace lapis{
 	//  init network, wait for all the non-coordinator servers
 	//  to register.
 	//  also init vector of ClientStates for all memory server
+	DistributedMemoryManager* DistributedMemoryManager::dmm_;
+
 	void DistributedMemoryManager::Init(){
+		dm_ = new DistributedMemoryManager();
+	}
+
+	void DistributedMemoryManager::StartMemoryManager(){
+
 		net_ = NetworkThread::Get();
 		GlobalContext* context_ = GlobalContext::Get();
 
@@ -24,12 +31,6 @@ namespace lapis{
 			   server_states_.push_back(new ServerState(i));
 		}
 	}
-
-	DistributedMemoryManager* DistributedMemoryManager::Get(){
-		static DistributedMemoryManager* dm = new DistributedMemoryManager();
-		return dm;
-	}
-
 
 	//  assigning which workers own which shards
 	void DistributedMemoryManager::AssignTables(){
@@ -71,6 +72,14 @@ namespace lapis{
 		    }
 		  }
 		  net_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
+	}
+
+	//  send MTYPE_WORKER_SHUTDOWN messages to other
+	//  do not have to wait, simply exit.
+	void DistributedMemoryManager::ShutdownServers(){
+		EmptyMessage message;
+		for (int i=0; i<net_->size()-1; i++)
+			net_->Send(i, MTYPE_WORKER_SHUTDOWN, message);
 	}
 
 	template<class K, class V>

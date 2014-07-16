@@ -2,6 +2,7 @@
 #include "core/file.h"
 #include "static-initializers.h"
 #include "core/rpc.h"
+#include "common.pb.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +37,7 @@ void Sleep(double t) {
 }
 
 //  this is called once for every MPI process
-DistributedMemoryManager* InitServers(int argc, char** argv) {
+void InitServers(int argc, char** argv) {
   FLAGS_logtostderr = true;
   FLAGS_logbuflevel = -1;
 
@@ -71,16 +72,17 @@ DistributedMemoryManager* InitServers(int argc, char** argv) {
 
   //  start network thread for this process
   NetworkThread::Init();
-  NetworkThread* net = NetworkThread::Get();
 
-  //  return DistributedMemoryManager for rank size()-1
-  //  else, initialize MemoryServer and return null;
-  if (net->id()==(net->size()-1))
-	  return DistributedMemoryManager::Get();
+  if (IsDistributedMemoryManager()){
+	  DistributedMemoryManager::Init();
+	  DistributedMemoryManager::Get()->StartMemoryManager();
+  }
   else{
-	  (new MemoryServer())->Init();
-	  return NULL;
+	  (new MemoryServer())->StartMemoryServer();
   }
 }
 
+bool IsDistributedMemoryManager(){
+	return NetworkThread::Get()->id() == (NetworkThread::Get()->size()-1);
+}
 }

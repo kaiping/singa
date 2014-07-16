@@ -58,13 +58,29 @@ message ParamProto {
   optional string partitioner = 4; // e.g., row or column partition
 }
 
+message BlobProto{
+}
+
+// both edge and layer may have params and data blob
+message EdgeProto {
+  optional string name = 1;
+  repeated ParamProto params = 2;
+  optional BlobProto blob = 3;
+}
+
+
+
 message LayerProto {
-  repeated ParamProto params = 1;
+  required string name = 1;
+  repeated ParamProto params = 2;
+  optional BlobProto blob = 3;
+  repeated EdgeProto out_edges = 4;
+  repeated EdgeProto in_edges = 5;
 }
 
 message ModelConfProto {
   // model name
   optional string name = 1;
-  repeated DataProto data = 2;
+  repeated DataMetaProto data = 2;
   repeated LayerProto layers = 3;
 }

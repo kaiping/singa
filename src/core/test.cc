@@ -16,11 +16,15 @@ DEFINE_bool(sync_update, false, "Synchronous put/update queue");
 int main(int argc*, char** argv){
 	TypedGlobalContext<int, int> typed_g_context(new Sharding::Mod,
 									new Accumulator<int>::Sum, new Marshall<int>, new Marshall<int>);
-	TypedGlobalTable<int, int>* test_table = CreateTable(0, typed_g_context);
-	DistributedMemoryManager* dmm = InitServers(argc, argv);
 
-	if (dmm!=NULL){
-		dmm->AssignTables();
+	TypedGlobalTable<int, int>* test_table = CreateTable(0, typed_g_context);
+
+	InitServers(argc, argv);
+
+	if (IsDistributedMemoryManager()){
+		DistributedMemoryManager::Get()->AssignTables();
+
+		//put, update then get
 		for (int i=0; i<100; i++)
 			test_table->put(i,i);
 
@@ -31,7 +35,10 @@ int main(int argc*, char** argv){
 			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
 
 		// then send message to flush/stop other workers
+		if (IsDistributedMemoryManager())
+			DistributedMemoryManager::Get()->ShutdownServers();
 	}
+
 }
 
 

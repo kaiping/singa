@@ -4,8 +4,9 @@
 #include "table-registry.h"
 #include "global_context.h"
 
+
 namespace lapis{
-	void MemoryServer::Init(){
+	void MemoryServer::StartMemoryServer(){
 		net_ = NetworkThread::Get();
 		server_id_ = net_->id();
 		manager_id_ = net_->size()-1;
@@ -24,6 +25,9 @@ namespace lapis{
 		// register callbacks
 		NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
 		                                        boost::bind(&MemoryServer::HandleShardAssignment, this));
+		NetworkThread::Get()->RegisterCallback(MTYPE_WORKER_SHUTDOWN,
+												boost::bind(&MemoryServer::HandleServerShutdown, this));
+
 		NetworkThread::Get()->RegisterRequestHandler(MTYPE_PUT_REQUEST,
 		                                        boost::bind(&MemoryServer::HandleUpdateRequest, this));
 		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_ReQUEST,
@@ -34,17 +38,21 @@ namespace lapis{
 		CHECK(GlobalContext::Get()->IsRoleOf(Role.kMemoryServer, id())) << "Assign table to wrong server " << id();
 
 		ShardAssignmentRequest shard_req;
-		while (net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req)) {
-			//  request read from DistributedMemoryManager
-			for (int i = 0; i < shard_req.assign_size(); ++i) {
-				const ShardAssignment &a = shard_req.assign(i);
-				GlobalTable *t = TableRegistry::Get()->table(a.table());
+		net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req))
+		//  request read from DistributedMemoryManager
 
-				t->get_partition_info(a.shard())->owner = a.new_worker();
+		for (int i = 0; i < shard_req.assign_size(); ++i) {
+			const ShardAssignment &a = shard_req.assign(i);
+			GlobalTable *t = TableRegistry::Get()->table(a.table());
+			t->get_partition_info(a.shard())->owner = a.new_worker();
 
-				EmptyMessage empty;
-				network_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
-			}
+			EmptyMessage empty;
+			network_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+		}
+	}
+
+	void MemoryServer::HandleServerShutdown(){
+		net_->Shutdown();
 	}
 
 	//  respond to request

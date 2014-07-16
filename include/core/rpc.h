@@ -24,7 +24,6 @@
 
 #include "core/common.h"
 #include "core/file.h"
-#include "core/common.pb.h"
 
 DECLARE_bool(sync_update);
 
@@ -86,7 +85,9 @@ class NetworkThread {
 
   static NetworkThread* net_;
 
-  bool running_;
+  //  set to false when receiving MTYPE_WORKER_SHUTDOWN from the manager
+  //  shared by the receiving thread and processing thread.
+  volatile bool running_;
 
   Callback callbacks_[kMaxMethods];
   Handle handles_[kMaxMethods];

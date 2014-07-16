@@ -252,7 +252,6 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 
 void NetworkThread::Shutdown() {
   if (running_) {
-    Flush();
     running_ = false;
     MPI_Finalize();
   }
@@ -285,17 +284,15 @@ void NetworkThread::WaitForSync(int reply, int count) {
   }
 }
 
+static void ShutdownMPI() {
+  NetworkThread::Get()->Shutdown();
+}
 
 NetworkThread* NetworkThread::net_;
 void NetworkThread::Init() {
   net_ = new NetworkThread();
   atexit(&ShutdownMPI);
 }
-
-static void ShutdownMPI() {
-  NetworkThread::Get()->Shutdown();
-}
-
 
 void RequestQueue::ExtractKey(int tag, string data, string* key){
 	boost::scoped_ptr<Messag> message;

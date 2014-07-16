@@ -12,8 +12,7 @@
 #include "core/table.h"
 #include "global-table.h"
 #include "local-table.h"
-
-#include "core/worker.pb.h"
+#include "worker.pb.h"
 
 namespace lapis{
 
@@ -22,7 +21,7 @@ class MemoryServer : private boost::noncopyable{
 		MemoryServer();
 		~MemoryServer(){}
 
-		void Init();
+		void StartMemoryServer();
 
 		int id(){ return server_id_; }
 
@@ -30,6 +29,9 @@ class MemoryServer : private boost::noncopyable{
 		//  storing the data will received this
 		//  assignment happens only once at the beginning
 		void HandleShardAssignment();
+
+		//  shutdown gracefully
+		void HandleServerShutdown();
 
 		void HandleUpdateRequest(const Message* message);
 		void HandleGetRequest(const Message* message);

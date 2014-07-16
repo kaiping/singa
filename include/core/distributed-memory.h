@@ -31,9 +31,17 @@ namespace lapis{
 	 public:
 		~DistributedMemoryManager();
 
+		static void Init();
+
+		//  start the manager
+		void StartMemoryManager();
+
 		void AssignTables();  //  assign tables to clients
 
-		static DistributedMemoryManager* Get();
+		//  must be called at the end
+		void ShutdownServers(); //  shut down other clients
+
+		static DistributedMemoryManager* Get(){ return dmm_; }
 
 	 private:
 		//  assign which worker owning this (table,shard)
@@ -46,9 +54,9 @@ namespace lapis{
 
 		NetworkThread* net_;
 
-		void Init();
+		static DistributedMemoryManager* dmm_;
 
-		DistributedMemoryManager() {Init(); }
+		DistributedMemoryManager();
 	};
 
 	DistributedMemoryManager::~DistributedMemoryManager(){

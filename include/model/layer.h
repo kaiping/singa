@@ -29,6 +29,10 @@ enum class TrainAlgorithm;
  */
 class Trainer;
 /**
+ * forward declaration of Edge.
+ */
+class Edge;
+/**
  * Base layer class.
  * Child layers should implement the ::Forward(), ::Backward() functions for
  * backpropagation method;
@@ -76,9 +80,10 @@ class Layer {
    * Combine momentum, learning rate, weight decay, etc,  with the gradients
    * of parameters associated with this layer
    * @param trainer Trainer pointer which provides the hyper-parameters for
-   * computing updates
+   * computing updates; May need cast it into SGDTrainer, to get momentum,
+   * weight_decay, etc.
    */
-  virtual void ComputeParamUpdates(const Trainer *trainer) = 0;
+  virtual void ComputeParamUpdates(const Trainer *trainer);
   /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -88,12 +93,12 @@ class Layer {
    * Return true for layers accept input data, e.g., DataLayer,
    * false for all other layer
    */
-  virtual inline bool HasInput() = 0;
+  virtual bool HasInput() = 0;
   /**
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual inline Blob &Feature(Edge *edge) = 0;
+  virtual Blob *Feature(Edge *edge) = 0;
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -102,20 +107,36 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual inline Blob &Gradient(Edge *edge) = 0;
+  virtual Blob *Gradient(Edge *edge) = 0;
   /**
    * Return parameters of this layer
    */
-  std::vector<Param*>& Params() {return params_;}
+  std::vector<Param *> &Params() {
+    return params_;
+  }
   /**
    * Return name of this layer
    */
-  inline const std::string &Name();
+  const std::string &Name() {
+    return name_;
+  }
+  /**
+   * Return outgoing edges
+   */
+  std::vector<Edge *> &Out_edges() {
+    return out_edges_;
+  }
+  /**
+   * Return incoming edges
+   */
+  std::vector<Edge *> &In_edges() {
+    return in_edges_;
+  }
 
  protected:
   std::vector<Edge *> out_edges_;
   std::vector<Edge *> in_edges_;
-  std::vector<Param*> params_ ;
+  std::vector<Param *> params_ ;
   std::string name_;
 };
 
@@ -143,7 +164,7 @@ class LayerFactory {
   /**
    * static method to get instance of this factory
    */
-  static LayerFactory* Instance();
+  static LayerFactory *Instance();
   /**
    * Register user defined layer, i.e., add the layer type/identifier and a
    * function which creats an instance of the layer. This function is called by
@@ -157,11 +178,11 @@ class LayerFactory {
    * create a layer  instance by providing its type
    * @param type the identifier of the layer to be created
    */
-  Layer* Create(const std::string id);
+  Layer *Create(const std::string id);
 
  private:
   //! To avoid creating multiple instances of this factory in the program
-  LayerFactory(){}
+  LayerFactory() {}
   //! Map that stores the registered Layers
   std::map<std::string, std::function<Layer*(void)>> layer_map_;
 };

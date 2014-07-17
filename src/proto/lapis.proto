@@ -84,6 +84,7 @@ message LayerProto {
   repeated ParamProto param  = 4;
   repeated string out_edge = 5;
   repeated string in_edge = 6;
+  optional string data_source =7;
 }
 
 message NetProto {
@@ -116,7 +117,9 @@ message SGDProto {
 
   optional int32 total_steps = 13;
   // batchsize is the num of instances processed per step
-  optional int32 batchsize = 14;
+  optional int32 train_batchsize = 14;
+  optional int32 validation_batchsize = 15;
+  optional int32 test_batchsize = 16;
 }
 
 

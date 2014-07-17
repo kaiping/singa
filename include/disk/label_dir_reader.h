@@ -13,9 +13,9 @@ namespace lapis {
 class LabelDirReader : public DataReaderInterface<string, string> {
  public:
   // filenames will not be used, and should be NULL
-  virtual void init(const DataMetaProto& meta,
-                    const std::vector<std::string>& filenames = NULL);
-  virtual int next(string* k, string* v);
+  virtual void init(const DataMetaProto &meta,
+                    const std::vector<std::string> &filenames = NULL);
+  virtual int next(string *k, string *v);
  private:
   ~LabelDirReader();
   const std::string path_;

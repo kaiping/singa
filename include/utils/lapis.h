@@ -3,10 +3,13 @@
 #ifndef UTILS_LAPIS_H_
 #define UTILS_LAPIS_H_
 
+#include "Eigen/Core"
+#include "Eigen/Dense"
+
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic,
-                      Eigen::RowMajor> MatrixType;
+        Eigen::RowMajor> MatrixType;
 typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic,
-                     Eigen::RowMajor> ArrayType;
+        Eigen::RowMajor> ArrayType;
 typedef Eigen::Map<MatrixType> MapMatrixType;
 typedef Eigen::Map<ArrayType> MapArrayType;
 typedef Eigen::Map<Eigen::RowVectorXf> MapVectorType;

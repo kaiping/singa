@@ -5,7 +5,7 @@
 #include "utils/global_context.h"
 #include "utils/start_deamon.h"
 
-int startDeamon(const char* system_conf_path, const char* model_conf_path) {
+int startDeamon(const char *system_conf_path, const char *model_conf_path) {
   LOG(INFO) << "Starting deamon...\n";
   lapis::GlobalContext global_context(system_conf_path, model_conf_path);
   // TODO(Anh) may from a wrapper .h file for mpi functions.

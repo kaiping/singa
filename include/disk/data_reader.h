@@ -25,11 +25,11 @@ class DataReaderInterface {
   // source, e.g., the label source of imagenet is like: <image filename,
   // labelid>, and the feature source is a directory (i.e., the path)
   // contains all images.
-  virtual void init(const DataMetaProto* meta,
-                    const std::vector<std::string>& filenames = NULL) = 0;
+  virtual void init(const DataMetaProto *meta,
+                    const std::vector<std::string> &filenames = NULL) = 0;
   // return true if not at the end of reading, otherwise return false
   // the record is parsed and serialized into k and v
-  virtual bool next(std::string* k, std::string* v) = 0;
+  virtual bool next(std::string *k, std::string *v) = 0;
 };
 }  // namespace lapis
 

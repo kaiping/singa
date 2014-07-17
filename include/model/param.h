@@ -23,8 +23,19 @@ class Param {
   //! Marshal properties of this parameter into google protobuf
   virtual void ToProto(ParamProto *param_proto);
   //! Return data pointer for this parameter
-  float *Content() {
+  const float *Content() const {
     return content_.Content();
+  }
+  float *MutableContent() const {
+    return content_.MutableContent();
+  }
+
+  const float *Gradient() const {
+    return grad_.Content();
+  }
+
+  float *MutableGradient() const {
+    return grad_.MutableContent();
   }
   //! Return num of rows for matrix parameters
   const int Rows() {
@@ -61,7 +72,7 @@ class Param {
  */
 class ParamInitFactory {
  public:
-  static ParamInitFactory* Instance();
+  static ParamInitFactory *Instance();
   /**
    * Register the init function.
    * This method is called by the register macro REGISTER_PARAM_INIT_FUNC
@@ -69,11 +80,11 @@ class ParamInitFactory {
    * field in ParamProto
    * @param func std::function object
    */
-  void RegisterInitFunc(std::string id, std::function<void(Param*)> &func);
-  std::function<void(Param*)>& Get(std::string id);
+  void RegisterInitFunc(std::string id, std::function<void(Param *)> &func);
+  std::function<void(Param *)> &Get(std::string id);
  private:
-  ParamInitFactory(){}
-  std::map<std::string, std::function<void(Param*)>> map_;
+  ParamInitFactory() {}
+  std::map<std::string, std::function<void(Param *)>> map_;
 };
 }  // namespace lapis
 

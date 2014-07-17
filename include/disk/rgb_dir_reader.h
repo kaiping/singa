@@ -11,9 +11,9 @@
 namespace lapis {
 class RGBDirReader : public DataReaderInterface<string, string> {
  public:
-  virtual void init(const DataMetaProto& meta,
-                    const std::vector<std::string>& filenames = NULL);
-  virtual int next(std::string* k, std::string* v);
+  virtual void init(const DataMetaProto &meta,
+                    const std::vector<std::string> &filenames = NULL);
+  virtual int next(std::string *k, std::string *v);
 
  private:
   const vector<string> filenames_;

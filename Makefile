@@ -10,8 +10,8 @@ LIBRARY_DIRS := /home/wangwei/install/lib64 /home/wangwei/install/lib
 # folder for compiled file
 BUILD_DIR := build
 
-CXXFLAGS := -Wall -g -std=c++11 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
-LIBRARYS := glog gflag
+CXXFLAGS := -Wall -g -fPIC -std=c++11 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
+LIBRARYS := glog #gflag
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 					$(foreach library, $(LIBRARYS), -l$(library))
 
@@ -23,13 +23,18 @@ FILTER_SRCS := src/coordinator/coordinator.cc \
 							src/main.cc \
 							src/utils/start_deamon.cc \
 							src/utils/global_cotext.cc \
-							src/model/row_param.cc
+							src/model/row_param.cc \
+							src/disk/label_dir_reader.cc \
+							src/disk/rgb_dir_reader.cc
 LAPIS_SRCS := $(shell find src/ ! -name "test_*.cc" -name "*.cc")
 LAPIS_SRCS :=$(filter-out $(FILTER_SRCS), $(LAPIS_SRCS))
 FILTER_HDRS := include/coordinator/coordinator.h \
 							include/worker/worker.h \
 							include/utils/global_cotext.h \
-							include/model/row_param.h
+							include/model/row_param.h \
+							include/disk/label_dir_reader.h \
+							include/disk/rgb_dir_reader.h
+
 LAPIS_HDRS := $(shell find include/ -name "*.h")
 LAPIS_HDRS := $(filter-out $(FILTER_HDRS), $(LAPIS_HDRS))
 
@@ -84,3 +89,15 @@ $(TEST_BINS): $(BUILD_DIR)/bin/src/test/%.bin: $(BUILD_DIR)/src/test/%.o
 
 $(BUILD_DIR)/src/test/%.o: src/test/%.cc
 	$(CXX) $< $(CXXFLAGS) -c -o $@
+
+###############################################################################
+# Utility commands for formatting and lint
+###############################################################################
+ORIGS := $(shell find . -name *.orig)
+FL_HDRS := $(shell find include *.h -not \( -path "include/Eigen" -prune \) -type f )
+FL_SRCS :=$(shell find src -name *.cc)
+#astyle --options astyle.conf $(Astyle_Hdrs)
+format: $(FL_HDRS) $(FL_SRCS)
+	@echo $(ORIGS)
+	@echo $(FL_HDRS)
+	@echo $(FL_SRCS)

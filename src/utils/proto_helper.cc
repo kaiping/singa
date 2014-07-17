@@ -15,30 +15,30 @@ using google::protobuf::io::FileOutputStream;
 using google::protobuf::io::ZeroCopyInputStream;
 using std::fstream;
 namespace lapis {
-void ReadProtoFromTextFile(const char* filename, Message* proto) {
+void ReadProtoFromTextFile(const char *filename, Message *proto) {
   int fd = open(filename, O_RDONLY);
   CHECK_NE(fd, -1) << "File not found: " << filename;
-  FileInputStream* input = new FileInputStream(fd);
+  FileInputStream *input = new FileInputStream(fd);
   CHECK(google::protobuf::TextFormat::Parse(input, proto));
   delete input;
   close(fd);
 }
 
-void WriteProtoToTextFile(const Message& proto, const char* filename) {
-  int fd = open(filename, O_WRONLY|O_CREAT);
+void WriteProtoToTextFile(const Message &proto, const char *filename) {
+  int fd = open(filename, O_WRONLY | O_CREAT);
   CHECK_NE(fd, -1) << "File not created: " << filename;
-  FileOutputStream* output = new FileOutputStream(fd);
+  FileOutputStream *output = new FileOutputStream(fd);
   CHECK(google::protobuf::TextFormat::Print(proto, output));
   delete output;
   close(fd);
 }
 
-void ReadProtoFromBinaryFile(const char* filename, Message* proto) {
-  fstream input(filename, fstream::in |fstream::binary);
+void ReadProtoFromBinaryFile(const char *filename, Message *proto) {
+  fstream input(filename, fstream::in | fstream::binary);
   CHECK(proto->ParseFromIstream(&input));
 }
 
-void WriteProtoToBinaryFile(const Message& proto, const char* filename) {
+void WriteProtoToBinaryFile(const Message &proto, const char *filename) {
   fstream output(filename, fstream::out | fstream::trunc | fstream::binary);
   CHECK(proto.SerializeToOstream(&output));
 }

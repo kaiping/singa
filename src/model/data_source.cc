@@ -3,15 +3,15 @@
 
 #include "model/data_source.h"
 namespace lapis {
-DataSource::DataSource(const DataSourceProto& ds_proto) {
+DataSource::DataSource(const DataSourceProto &ds_proto) {
 
 }
 
-void DataSource::GetData(Blob* blob) {
+void DataSource::GetData(Blob *blob) {
 
 }
 
-void DataSource::ToProto(DataSourceProto* ds_proto) {
+void DataSource::ToProto(DataSourceProto *ds_proto) {
   ds_proto->set_name(name_);
   ds_proto->set_parser(parser_);
   ds_proto->set_path(path_);

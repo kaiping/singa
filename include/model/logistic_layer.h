@@ -22,12 +22,12 @@ class LogisticLayer : public Layer {
    * LayerFactory will create an instance of this layer based on this
    * identifier
    */
-  static const string kLogisticLayer = "Logistic";
+  static const std::string kLogisticLayer;
 
   virtual void Init(const LayerProto &layer_proto,
-                    const map<string, Edge *> &edge_map);
-  virtual void Setup(int batchsize, Trainer::Algorithm alg,
-                     const vector<DataSource *> &sources) = 0;
+                    const std::map<std::string, Edge *> &edge_map);
+  virtual void Setup(int batchsize, TrainAlgorithm alg,
+                     const std::vector<DataSource *> &sources) = 0;
   /**
    * There may be multiple incoming edges, it sums data/activations from all
    * incoming edges as the activation and then applies the logistic function.
@@ -40,9 +40,17 @@ class LogisticLayer : public Layer {
   virtual void Backward();
   virtual void ComputeParamUpdates(const Trainer *trainer);
   virtual void ToProto(LayerProto *layer_proto);
-  virtual inline bool HasInput();
-  virtual inline Blob &Feature(Edge *edge);
-  virtual inline Blob &Gradient(Edge *edge);
+  virtual bool HasInput() {
+    return false;
+  }
+  virtual Blob *Feature(Edge *edge) {
+    // TODO(wangwei) return pos_feature_ or neg_feature_ for PCD/CD algorithm
+    return &feature_;
+  }
+
+  virtual Blob *Gradient(Edge *edge) {
+    return &activation_grad_;
+  }
 
  private:
   //! used in backpropagation method

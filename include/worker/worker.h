@@ -7,9 +7,9 @@
 namespace lapis {
 class Worker {
  public:
-  Worker(const DistributedMemory* dm,
-         const DistributedDisk* dd,
-         const GlobalContext* gc);
+  Worker(const DistributedMemory *dm,
+         const DistributedDisk *dd,
+         const GlobalContext *gc);
   void run();
 
  private:

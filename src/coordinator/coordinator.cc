@@ -6,9 +6,9 @@
 #include "proto/lapis.pb.h"
 
 namespace lapis {
-Coordinator::Coordinator(const GlobalContext& global_context,
-                         const DistributedMemory& distributed_memory)
-    :global_context_(global_context), distibuted_memory_(distibuted_memory) {
+Coordinator::Coordinator(const GlobalContext &global_context,
+                         const DistributedMemory &distributed_memory)
+  : global_context_(global_context), distibuted_memory_(distibuted_memory) {
   LOG(INFO) << "starting coordinator...\n";
   ReadProtoFromTextFile(global_context_.model_conf_path, &model_conf_proto_);
 }
@@ -16,7 +16,7 @@ Coordinator::Coordinator(const GlobalContext& global_context,
 int Coordinator::LoadData() {
   // TODO(all) in this implementation, the distributed_disk has to join tables
   // on worker nodes. <filename, rgb>---<filename, label>
-  for (DataMetaProto& data_source : model_conf_proto.data()) {
+  for (DataMetaProto &data_source : model_conf_proto.data()) {
     // TODO(wangwei) create the factory in main.cc
     DataReaderInterface reader = data_reader_factory.get[data_source.type()];
     reader.init(data_source);
@@ -32,8 +32,8 @@ int Coordinator::LoadData() {
 // init parameters and put them into distributed memory
 // send whole copy of modelConfigProto to each worker
 int InitSplitModel() {
-  for (LayerProto& layer_proto : model_conf_proto_.layers()) {
-    for (ParameterProto& param_proto : layer_proto.parameters()) {
+  for (LayerProto &layer_proto : model_conf_proto_.layers()) {
+    for (ParameterProto &param_proto : layer_proto.parameters()) {
       Parameter param = param_factory_generate(param_proto.splitter_name);
       string k, v;
       while (param.next(&k, &v))

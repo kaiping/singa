@@ -4,14 +4,17 @@
 #ifndef INCLUDE_MODEL_EDGE_H_
 #define INCLUDE_MODEL_EDGE_H_
 #include <string>
+#include "model/trainer.h"
 #include "model/blob.h"
 #include "model/layer.h"
 #include "model/param.h"
 #include "proto/lapis.pb.h"
 
 namespace lapis {
-//! forward declaration for Layer
+//! forward declaration for Layer.
 class Layer;
+//! forward declaration for Trainer.
+class Trainer;
 /**
  * Base edge class.
  * One edge connects two layers. The edge can be directed, e.g., in feed
@@ -46,12 +49,27 @@ class Edge {
    * Backward propagate gradient, read gradient from src and write to dest
    * @param src_grad read gradient/feature from src
    * @param dest_fea feature from the src layer
-   * @param dest_grad write the comptued gradient to dest_grad
+   * @param dest_grad write the comptued gradient to dest_grad, if no need to
+   * compute that gradient, then set dest_grad=nullptr
    * @param overwrite if true overwrite dest_grad otherwise add it
    */
   virtual void Backward(const Blob *src_grad, const Blob *dest_fea,
-                        Blob *dest_grad) = 0;
-  std::vector<Param*>& Params(){return params_;}
+                        Blob *dest_grad, bool overwrite) = 0;
+
+  /**
+   * Combine hyper-paramters, e.g., momentum, learning rate, to compute
+   * gradients of parameters associated with this edge, which will be
+   * used to update the parameters. If there is no parameters, then do nothing.
+   * @param trainer contains hyper-parameters. May cast it into specific
+   * trainer, e.g., SGDTrainer, to get momentum and weight_decay, etc.
+   */
+  virtual void ComputeParamUpdates(const Trainer *trainer);
+  /**
+   * Return parameters associated this edge
+   */
+  std::vector<Param *> &Params() {
+    return params_;
+  }
   /**
    * return the other side of this edge w.r.t, layer
    * @param layer one side of the edge
@@ -69,7 +87,7 @@ class Edge {
    * Set bottom end of this edge
    */
   void SetBottom(Layer *bottom) {
-    bottom_=bottom;
+    bottom_ = bottom;
   }
   const Layer *Top() {
     return top_;
@@ -77,7 +95,7 @@ class Edge {
   const Layer *Bottom() {
     return bottom_;
   }
-  const std::string& Name() {
+  const std::string &Name() {
     return name_;
   }
 
@@ -91,8 +109,56 @@ class Edge {
    * highest (top) layer to an input layer (bottom), as in AutoEncoder.
    */
   Layer *top_, * bottom_;
-  std::vector<Param*> params_ ;
+  std::vector<Param *> params_ ;
   std::string name_;
+};
+
+
+/****************************************************************************/
+/**
+ * Register Edge with identifier ID
+ * @param ID identifier of the edge e.g., InnerProduct, i.e., the type field
+ * in EdgeProto
+ * @param EDGE the child edge class
+ */
+#define REGISTER_EDGE(ID, EDGE) EdgeFactory::Instance()->\
+  RegisterCreateFunction(ID,[](void)-> Edge* {return new EDGE();});
+
+/**
+ * Factory for creating edge based on user provided edge type/identifier.
+ * Users are required to register user-defined edges before creating instances
+ * of them during runtime. For example, if you define a new Edge FooEdge with
+ * identifier "Foo", then you can use it in your net by 1) configure your
+ * edge proto with the type field to be "Foo". 2) register it (e.g., at the
+ * start of the program). Then your FooEdge will be created by calling
+ * EdgeFactory::Instance()->Create("Foo");
+ */
+class EdgeFactory {
+ public:
+  /**
+   * static method to get instance of this factory
+   */
+  static EdgeFactory *Instance();
+  /**
+   * Register user defined edge, i.e., add the edge type/identifier and a
+   * function which creats an instance of the edge. This function is called by
+   * the REGISTER_EDGE macro.
+   * @param id identifier of the edge, every edge has a type to identify it
+   * @param create_function a function that creates a edge instance
+   */
+  void RegisterCreateFunction(const std::string id,
+                              std::function<Edge*(void)> create_function);
+  /**
+   * create a layer  instance by providing its type
+   * @param type the identifier of the layer to be created
+   */
+  Edge *Create(const std::string id);
+
+ private:
+  //! To avoid creating multiple instances of this factory in the program
+  EdgeFactory() {}
+  //! Map that stores the registered Layers
+  std::map<std::string, std::function<Edge*(void)>> layer_map_;
 };
 
 }  // namespace lapis

@@ -11,14 +11,32 @@
 namespace lapis {
 class DataSource {
  public:
-  explicit DataSource(const DataSourceProto& ds_proto);
-  void ToProto(DataSourceProto* ds_proto);
+  explicit DataSource(const DataSourceProto &ds_proto);
+  void ToProto(DataSourceProto *ds_proto);
   /**
    * Put one batch is data into blob
    * @param blob where the next batch of data will be put
    */
-  void GetData(Blob* blob);
-  int Batchsize() {return batchsize_;}
+  void GetData(Blob *blob);
+  const int Batchsize() {
+    return batchsize_;
+  }
+  const int Size() {
+    return size_;
+  }
+  const int Channels() {
+    return channels_;
+  }
+  const int Height() {
+    return height_;
+  }
+  const int Width() {
+    return width_;
+  }
+  const std::string &Name() {
+    return name_;
+  }
+
  private:
   //! current batch id
   int batchid_;

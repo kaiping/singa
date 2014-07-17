@@ -45,13 +45,24 @@ class Blob {
    */
   void Reshape(int num, int channel, int height, int width);
 
-  float* Content() {return content_;}
-  int Height() {return height_;}
-  int Width() {return width_;}
-  int Size() {return size_;}
+  const float *Content() const {
+    return content_;
+  }
+  float *MutableContent() const {
+    return content_;
+  }
+  const int Height() const {
+    return height_;
+  }
+  const int Width() const {
+    return width_;
+  }
+  const int Size() const {
+    return size_;
+  }
 
  private:
-  int size_, num_,channels_, height_, width_;
+  int size_, num_, channels_, height_, width_;
   float *content_;
 };
 

@@ -8,8 +8,8 @@
 namespace lapis {
 class ModelController {
  public:
-  void GetParams(const std::vector<Param*>& params);
-  void UpdateParams(const std::vector<Param*>& params);
+  void GetParams(const std::vector<Param *> &params);
+  void UpdateParams(const std::vector<Param *> &params);
  private:
   ModelConfProto model_conf_proto_;
 };

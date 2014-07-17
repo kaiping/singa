@@ -10,10 +10,10 @@
 namespace lapis {
 
 void InitDataSource(
-    const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
-    std::vector<DataSource *> *sources) {
+  const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
+  std::vector<DataSource *> *sources) {
   for (auto &proto : protos) {
-    DataSource* ds=new DataSource(proto);
+    DataSource *ds = new DataSource(proto);
     sources->push_back(ds);
   }
 }

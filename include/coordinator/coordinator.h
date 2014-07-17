@@ -9,8 +9,8 @@
 namespace lapis {
 class Coordinator {
  public:
-  Coordinator(const GlobalContext& global_context,
-              const DistributedMemory& distibuted_memory);
+  Coordinator(const GlobalContext &global_context,
+              const DistributedMemory &distibuted_memory);
   ~Coordinator();
 
   // load all data into distributed disk

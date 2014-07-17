@@ -11,8 +11,8 @@ namespace lapis {
 void Layer::Init(const LayerProto &layer_proto,
                  const std::map<std::string, Edge *> &edge_map) {
   name_ = layer_proto.name();
-  for (auto& edge_name : layer_proto.out_edge()) {
-    CHECK(edge_map.find(edge_name)!= edge_map.end())
+  for (auto &edge_name : layer_proto.out_edge()) {
+    CHECK(edge_map.find(edge_name) != edge_map.end())
         << "No out going edge named '" << edge_name
         << "' for layer '" << name_ << "\n";
     Edge *edge = edge_map.at(edge_name);
@@ -22,7 +22,7 @@ void Layer::Init(const LayerProto &layer_proto,
   }
 
   for (std::string edge_name : layer_proto.in_edge()) {
-    CHECK(edge_map.find(edge_name)!=edge_map.end())
+    CHECK(edge_map.find(edge_name) != edge_map.end())
         << "No incoming edge named '" << edge_name
         << "' for layer '" << name_ << "\n";
     Edge *edge = edge_map.at(edge_name);
@@ -40,26 +40,26 @@ void Layer::ToProto(LayerProto *proto) {
     proto->add_out_edge(edge->Name());
 }
 
-inline const std::string &Layer::Name() {
-  return name_;
+void Layer::ComputeParamUpdates(const Trainer *trainer) {
+  LOG(INFO) << "Layer " << name_ << " has no parameters to update\n";
 }
 
 /**********************************************
  * Implementation for LayerFactory
  *********************************************/
-LayerFactory* LayerFactory::Instance() {
+LayerFactory *LayerFactory::Instance() {
   static LayerFactory factory;
   return &factory;
 }
 
 void LayerFactory::RegisterCreateFunction(
-    const std::string id,
-    std::function<Layer*(void)> create_function) {
-  layer_map_[id]=create_function;
+  const std::string id,
+  std::function<Layer*(void)> create_function) {
+  layer_map_[id] = create_function;
 }
 
-Layer* LayerFactory::Create(const std::string id) {
-  Layer* instance = nullptr;
+Layer *LayerFactory::Create(const std::string id) {
+  Layer *instance = nullptr;
 
   auto it = layer_map_.find(id);
   if (it != layer_map_.end())

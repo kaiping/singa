@@ -1,6 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-11 13:58
 
+#include <math.h>
+#include <glog/logging.h>
 #include "model/sgd_trainer.h"
 
 namespace lapis {
@@ -18,15 +20,15 @@ SGDTrainer::~SGDTrainer() {
 void SGDTrainer::BackPropagation(Net *net, const int step) {
   std::vector<Layer *> layers = net->Layers();
   std::vector<Edge *> edges = net->Edges();
-  std::vector<Param*> params=net->Params();
+  std::vector<Param *> params = net->Params();
   // get newest parameters for layers and edges
-  model_controller_.GetParam(params)
+  model_controller_.GetParams(params);
 
   for (auto layer : layers)
     layer->Forward();
 
-  for (auto layer = layers.rbegin(); layer != layer.rend(); layer++)
-    layer->Backward();
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
+    (*layer)->Backward();
 
   UpdateHyperParams(step_);
   for (auto edge : edges) {
@@ -43,10 +45,10 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
 
 void SGDTrainer::Train(Net *net, const int step) {
   if (phase_ != TrainPhase::kTrain) {
-    for(auto layer : net->Layers()) {
+    for (auto layer : net->Layers()) {
       if (layer->HasInput())
-        layer->Setup(train_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
-                 train_data_);
+        layer->Setup(sgd_proto_.train_batchsize(), TrainAlgorithm::kBackPropagation,
+                     train_data_);
     }
   }
   BackPropagation(net, step);
@@ -54,10 +56,11 @@ void SGDTrainer::Train(Net *net, const int step) {
 
 void SGDTrainer::Validate(Net *net) {
   if (phase_ != TrainPhase::kValidation) {
-    for(auto layer : net->Layers()) {
+    for (auto layer : net->Layers()) {
       if (layer->HasInput())
-        layer->Setup(validation_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
-                 validation_data_);
+        layer->Setup(sgd_proto_.validation_batchsize(),
+                     TrainAlgorithm::kBackPropagation,
+                     validation_data_);
     }
   }
   // TODO(wangwei) forward only
@@ -65,10 +68,10 @@ void SGDTrainer::Validate(Net *net) {
 
 void SGDTrainer::Test(Net *net) {
   if (phase_ != TrainPhase::kTest) {
-    for(auto layer : net->Layers()) {
+    for (auto layer : net->Layers()) {
       if (layer->HasInput())
-        layer->Setup(test_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
-                 test_data_);
+        layer->Setup(sgd_proto_.test_batchsize(), TrainAlgorithm::kBackPropagation,
+                     test_data_);
     }
   }
   // TODO(wangwei) forward only
@@ -80,7 +83,7 @@ void SGDTrainer::ToProto(TrainerProto *proto) {
 }
 
 bool SGDTrainer::HasFinished(int step) {
-  if (step >= sgd_proto.total_steps())
+  if (step >= sgd_proto_.total_steps())
     return true;
   else
     return false;
@@ -102,7 +105,7 @@ float SGDTrainer::UpdateHyperParam(int step, SGDProto_ChangeProto change,
   }
   case SGDProto_ChangeProto_EXPONENTIAL: {
     CHECK_EQ(base_val, 2 * final_val) << "final value should be the half\n";
-    ret = base_val / pwer(2, step_ * 1. / change_steps);
+    ret = base_val / pow(2, step_ * 1. / change_steps);
     break;
   }
   case SGDProto_ChangeProto_INVERSE_T: {

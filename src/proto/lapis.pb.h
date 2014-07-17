@@ -947,6 +947,18 @@ class LayerProto : public ::google::protobuf::Message {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& in_edge() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_in_edge();
 
+  // optional string data_source = 7;
+  inline bool has_data_source() const;
+  inline void clear_data_source();
+  static const int kDataSourceFieldNumber = 7;
+  inline const ::std::string& data_source() const;
+  inline void set_data_source(const ::std::string& value);
+  inline void set_data_source(const char* value);
+  inline void set_data_source(const char* value, size_t size);
+  inline ::std::string* mutable_data_source();
+  inline ::std::string* release_data_source();
+  inline void set_allocated_data_source(::std::string* data_source);
+
   // @@protoc_insertion_point(class_scope:lapis.LayerProto)
  private:
   inline void set_has_name();
@@ -955,6 +967,8 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_num_output();
   inline void set_has_type();
   inline void clear_has_type();
+  inline void set_has_data_source();
+  inline void clear_has_data_source();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -963,10 +977,11 @@ class LayerProto : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto > param_;
   ::google::protobuf::RepeatedPtrField< ::std::string> out_edge_;
   ::google::protobuf::RepeatedPtrField< ::std::string> in_edge_;
+  ::std::string* data_source_;
   ::google::protobuf::int32 num_output_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -1246,12 +1261,26 @@ class SGDProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 total_steps() const;
   inline void set_total_steps(::google::protobuf::int32 value);
 
-  // optional int32 batchsize = 14;
-  inline bool has_batchsize() const;
-  inline void clear_batchsize();
-  static const int kBatchsizeFieldNumber = 14;
-  inline ::google::protobuf::int32 batchsize() const;
-  inline void set_batchsize(::google::protobuf::int32 value);
+  // optional int32 train_batchsize = 14;
+  inline bool has_train_batchsize() const;
+  inline void clear_train_batchsize();
+  static const int kTrainBatchsizeFieldNumber = 14;
+  inline ::google::protobuf::int32 train_batchsize() const;
+  inline void set_train_batchsize(::google::protobuf::int32 value);
+
+  // optional int32 validation_batchsize = 15;
+  inline bool has_validation_batchsize() const;
+  inline void clear_validation_batchsize();
+  static const int kValidationBatchsizeFieldNumber = 15;
+  inline ::google::protobuf::int32 validation_batchsize() const;
+  inline void set_validation_batchsize(::google::protobuf::int32 value);
+
+  // optional int32 test_batchsize = 16;
+  inline bool has_test_batchsize() const;
+  inline void clear_test_batchsize();
+  static const int kTestBatchsizeFieldNumber = 16;
+  inline ::google::protobuf::int32 test_batchsize() const;
+  inline void set_test_batchsize(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:lapis.SGDProto)
  private:
@@ -1281,8 +1310,12 @@ class SGDProto : public ::google::protobuf::Message {
   inline void clear_has_momentum_change();
   inline void set_has_total_steps();
   inline void clear_has_total_steps();
-  inline void set_has_batchsize();
-  inline void clear_has_batchsize();
+  inline void set_has_train_batchsize();
+  inline void clear_has_train_batchsize();
+  inline void set_has_validation_batchsize();
+  inline void clear_has_validation_batchsize();
+  inline void set_has_test_batchsize();
+  inline void clear_has_test_batchsize();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -1299,10 +1332,12 @@ class SGDProto : public ::google::protobuf::Message {
   int weight_decay_change_;
   int momentum_change_;
   ::google::protobuf::int32 total_steps_;
-  ::google::protobuf::int32 batchsize_;
+  ::google::protobuf::int32 train_batchsize_;
+  ::google::protobuf::int32 validation_batchsize_;
+  ::google::protobuf::int32 test_batchsize_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(16 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -3137,6 +3172,76 @@ LayerProto::mutable_in_edge() {
   return &in_edge_;
 }
 
+// optional string data_source = 7;
+inline bool LayerProto::has_data_source() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void LayerProto::set_has_data_source() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void LayerProto::clear_has_data_source() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void LayerProto::clear_data_source() {
+  if (data_source_ != &::google::protobuf::internal::kEmptyString) {
+    data_source_->clear();
+  }
+  clear_has_data_source();
+}
+inline const ::std::string& LayerProto::data_source() const {
+  return *data_source_;
+}
+inline void LayerProto::set_data_source(const ::std::string& value) {
+  set_has_data_source();
+  if (data_source_ == &::google::protobuf::internal::kEmptyString) {
+    data_source_ = new ::std::string;
+  }
+  data_source_->assign(value);
+}
+inline void LayerProto::set_data_source(const char* value) {
+  set_has_data_source();
+  if (data_source_ == &::google::protobuf::internal::kEmptyString) {
+    data_source_ = new ::std::string;
+  }
+  data_source_->assign(value);
+}
+inline void LayerProto::set_data_source(const char* value, size_t size) {
+  set_has_data_source();
+  if (data_source_ == &::google::protobuf::internal::kEmptyString) {
+    data_source_ = new ::std::string;
+  }
+  data_source_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* LayerProto::mutable_data_source() {
+  set_has_data_source();
+  if (data_source_ == &::google::protobuf::internal::kEmptyString) {
+    data_source_ = new ::std::string;
+  }
+  return data_source_;
+}
+inline ::std::string* LayerProto::release_data_source() {
+  clear_has_data_source();
+  if (data_source_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = data_source_;
+    data_source_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void LayerProto::set_allocated_data_source(::std::string* data_source) {
+  if (data_source_ != &::google::protobuf::internal::kEmptyString) {
+    delete data_source_;
+  }
+  if (data_source) {
+    set_has_data_source();
+    data_source_ = data_source;
+  } else {
+    clear_has_data_source();
+    data_source_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
 // -------------------------------------------------------------------
 
 // NetProto
@@ -3484,26 +3589,70 @@ inline void SGDProto::set_total_steps(::google::protobuf::int32 value) {
   total_steps_ = value;
 }
 
-// optional int32 batchsize = 14;
-inline bool SGDProto::has_batchsize() const {
+// optional int32 train_batchsize = 14;
+inline bool SGDProto::has_train_batchsize() const {
   return (_has_bits_[0] & 0x00002000u) != 0;
 }
-inline void SGDProto::set_has_batchsize() {
+inline void SGDProto::set_has_train_batchsize() {
   _has_bits_[0] |= 0x00002000u;
 }
-inline void SGDProto::clear_has_batchsize() {
+inline void SGDProto::clear_has_train_batchsize() {
   _has_bits_[0] &= ~0x00002000u;
 }
-inline void SGDProto::clear_batchsize() {
-  batchsize_ = 0;
-  clear_has_batchsize();
+inline void SGDProto::clear_train_batchsize() {
+  train_batchsize_ = 0;
+  clear_has_train_batchsize();
 }
-inline ::google::protobuf::int32 SGDProto::batchsize() const {
-  return batchsize_;
+inline ::google::protobuf::int32 SGDProto::train_batchsize() const {
+  return train_batchsize_;
 }
-inline void SGDProto::set_batchsize(::google::protobuf::int32 value) {
-  set_has_batchsize();
-  batchsize_ = value;
+inline void SGDProto::set_train_batchsize(::google::protobuf::int32 value) {
+  set_has_train_batchsize();
+  train_batchsize_ = value;
+}
+
+// optional int32 validation_batchsize = 15;
+inline bool SGDProto::has_validation_batchsize() const {
+  return (_has_bits_[0] & 0x00004000u) != 0;
+}
+inline void SGDProto::set_has_validation_batchsize() {
+  _has_bits_[0] |= 0x00004000u;
+}
+inline void SGDProto::clear_has_validation_batchsize() {
+  _has_bits_[0] &= ~0x00004000u;
+}
+inline void SGDProto::clear_validation_batchsize() {
+  validation_batchsize_ = 0;
+  clear_has_validation_batchsize();
+}
+inline ::google::protobuf::int32 SGDProto::validation_batchsize() const {
+  return validation_batchsize_;
+}
+inline void SGDProto::set_validation_batchsize(::google::protobuf::int32 value) {
+  set_has_validation_batchsize();
+  validation_batchsize_ = value;
+}
+
+// optional int32 test_batchsize = 16;
+inline bool SGDProto::has_test_batchsize() const {
+  return (_has_bits_[0] & 0x00008000u) != 0;
+}
+inline void SGDProto::set_has_test_batchsize() {
+  _has_bits_[0] |= 0x00008000u;
+}
+inline void SGDProto::clear_has_test_batchsize() {
+  _has_bits_[0] &= ~0x00008000u;
+}
+inline void SGDProto::clear_test_batchsize() {
+  test_batchsize_ = 0;
+  clear_has_test_batchsize();
+}
+inline ::google::protobuf::int32 SGDProto::test_batchsize() const {
+  return test_batchsize_;
+}
+inline void SGDProto::set_test_batchsize(::google::protobuf::int32 value) {
+  set_has_test_batchsize();
+  test_batchsize_ = value;
 }
 
 // -------------------------------------------------------------------

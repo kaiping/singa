@@ -32,7 +32,7 @@ class SGDTrainer : public Trainer {
   void BackPropagation(Net *net, const int step);
 
  private:
-  float learning_rate_, mometum_, weight_decay_;
+  float learning_rate_, momentum_, weight_decay_;
   SGDProto sgd_proto_;
 };
 

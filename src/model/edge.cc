@@ -1,6 +1,7 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 11:42
 
+#include <glog/logging.h>
 #include "model/edge.h"
 
 namespace lapis {
@@ -9,6 +10,10 @@ void Edge::Init(const EdgeProto &edge_proto) {
 }
 void Edge::ToProto(EdgeProto *edge_proto) {
   edge_proto->set_name(name_);
+}
+
+void Edge::ComputeParamUpdates(const Trainer *trainer) {
+  LOG(INFO) << "Edge " << name_ << " has no parameters\n";
 }
 /*
 inline Layer *Edge::OtherSide(const Layer *layer) {

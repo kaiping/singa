@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 #include "proto/lapis.pb.h"
 #include "model/blob.h"
 
@@ -43,6 +44,35 @@ class Param {
   float learning_rate_, weight_decay_;
   std::string initializer_;
   std::string name_;  //!< name of the parameter, e.g., 'weight', 'bias'
+};
+
+
+/**
+ * macro for register parameter init functions
+ * @param TYPE the identifier of this init function
+ * @param FUNC  the init function
+ */
+#define REGISTER_PARAM_INIT_FUNC(TYPE, FUNC) \
+  ParamInitFactory::Instance()->RegisterInitFunc(TYPE, FUNC)
+/**
+ * Parameter initialization function factory.
+ * It registers the user defined parameter initialization functions at runtime.
+ * It also return this function when the function identifier is provided
+ */
+class ParamInitFactory {
+ public:
+  static ParamInitFactory* Instance();
+  /**
+   * Register the init function.
+   * This method is called by the register macro REGISTER_PARAM_INIT_FUNC
+   * @param type identifier the function, e.g, "Gaussian"
+   * @param func std::function object
+   */
+  void RegisterInitFunc(std::string type, std::function<void(Blob*)> &func);
+  std::function<void(Blob*)>& Get(std::string type);
+ private:
+  ParamInitFactory(){}
+  std::map<std::string, std::function<void(Blob*)>> map_;
 };
 }  // namespace lapis
 

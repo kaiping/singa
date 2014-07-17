@@ -1,7 +1,7 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 11:42
 
-#include "worker/edge.h"
+#include "model/edge.h"
 
 namespace lapis {
 void Edge::Init(const EdgeProto &edge_proto) {
@@ -10,7 +10,7 @@ void Edge::Init(const EdgeProto &edge_proto) {
 void Edge::ToProto(EdgeProto *edge_proto) {
   edge_proto->set_name(name_);
 }
-
+/*
 inline Layer *Edge::OtherSide(const Layer *layer) {
   return top_ == layer ? bottom_ : top_;
 }
@@ -20,14 +20,11 @@ inline void Edge::SetTop(const Layer *top) {
 inline void Edge::SetTop(const Layer *bottom) {
   bottom_ = bottom;
 }
-inline const Edge::Layer *Top() {
+inline const Layer *Edge::Top() {
   return top_;
 }
-inline const Edge::Layer *Bottom() {
+inline const Layer* Edge::Bottom() {
   return bottom_;
 }
-inline const string &Name() {
-  return name_;
-}
-
+*/
 }  // namespace lapis

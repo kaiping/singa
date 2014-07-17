@@ -1,7 +1,6 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 13:18
 
-#include<worker/net.h>
 
 namespace lapis {
 // visited all out going layers and then push current layer into the stack
@@ -69,12 +68,16 @@ void Net::Init(const NetProto &net_proto) {
     edge->Init(edge_proto);
     edges_->push_back(edge);
     edge_map[edge->name()] = edge;
+    for(auto* param : edge->Params())
+      params_.push_back(param);
   }
 
   for (auto &layer_proto : net_proto.layers()) {
     Layer *layer = LayerFactory::Instance().CreateLayer(layer_proto.type());
     layer->Init(layer_proto, edge_map);
     layers_->push_back(layer);
+    for(auto* param : layer->Params())
+      params_.push_back(param);
   }
   topology_sort(layers);
 }

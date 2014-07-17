@@ -4,15 +4,30 @@
 #ifndef INCLUDE_MODEL_LAYER_H_
 #define INCLUDE_MODEL_LAYER_H_
 
-#include <Eigen/Core>
 #include <vector>
 #include <string>
 #include <map>
+#include <functional>
 #include "proto/lapis.pb.h"
 #include "model/edge.h"
+#include "model/trainer.h"
+#include "model/data_source.h"
+#include "model/param.h"
 
+/**
+ * \file this file includes the declarations of both Layer and LayerFactory
+ */
 
 namespace lapis {
+
+/**
+ * forward declaration of TrainAlgorithm.
+ */
+enum class TrainAlgorithm;
+/**
+ * forward declaration of Trainer.
+ */
+class Trainer;
 /**
  * Base layer class.
  * Child layers should implement the ::Forward(), ::Backward() functions for
@@ -35,7 +50,7 @@ class Layer {
    * @param edge_map a map from edge name to the edge object.
    */
   virtual void Init(const LayerProto &layer_proto,
-                    const map<string, Edge *> &edge_map);
+                    const std::map<std::string, Edge *> &edge_map);
   /**
    * allocate memory for storing activations/features/gradients, etc.
    * @param batchsize num of instances processed in one mini-batch
@@ -43,8 +58,8 @@ class Layer {
    * TODO (wangwei), add support for Contrastive Divergence
    * @param sources data providers, can be null for layers do not accept inputs
    */
-  virtual void Setup(int batchsize, Trainer::Algorithm alg,
-                     const vector<DataSource *> &sources) = 0;
+  virtual void Setup(int batchsize, TrainAlgorithm alg,
+                     const std::vector<DataSource *> &sources) = 0;
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
@@ -89,30 +104,66 @@ class Layer {
    */
   virtual inline Blob &Gradient(Edge *edge) = 0;
   /**
-   * Add out going edge
-   * @param edge out going edge associated with this layer
+   * Return parameters of this layer
    */
-  void AddOutEdge(const Edge *edge) {
-    out_edges_.push_back(edge);
-  }
-  /**
-   * Add incoming edge
-   * @param edge incoming edge associated with this layer
-   */
-  void AddInEdge(const Edge *edge) {
-    in_edges_.push_back(edge);
-  }
+  std::vector<Param*>& Params() {return params_;}
   /**
    * Return name of this layer
    */
-  const string &Name() {
-    return name_;
-  }
+  inline const std::string &Name();
 
  protected:
-  vector<Edge *> out_edges_;
-  vector<Edge *> in_edges_;
-  string name_;
+  std::vector<Edge *> out_edges_;
+  std::vector<Edge *> in_edges_;
+  std::vector<Param*> params_ ;
+  std::string name_;
+};
+
+/****************************************************************************/
+/**
+ * Register Layer with identifier TYPE
+ * @param TYPE identifier of the layer e.g., Logistic, i.e., the type field
+ * in LayerProto
+ * @param LAYER the child layer class
+ */
+#define REGISTER_LAYER(TYPE, LAYER) LayerFactory::Instance()->\
+  RegisterCreateFunction(TYPE,[](void)-> Layer* {return new LAYER();});
+
+/**
+ * Factory for creating layer based on user provided layer type/identifier.
+ * Users are required to register user-defined layers before creating instances
+ * of them during runtime. For example, if you define a new Layer FooLayer with
+ * identifier "Foo", then you can use it in your net by 1) configure your
+ * layer proto with the type field to be "Foo". 2) register it (e.g., at the
+ * start of the program). Then your FooLayer will be created by calling
+ * LayerFactory::Instance()->Create("Foo");
+ */
+class LayerFactory {
+ public:
+  /**
+   * static method to get instance of this factory
+   */
+  static LayerFactory* Instance();
+  /**
+   * Register user defined layer, i.e., add the layer type/identifier and a
+   * function which creats an instance of the layer. This function is called by
+   * the REGISTER_LAYER macro.
+   * @param type identifier of the layer, every layer has a type to identify it
+   * @param create_function a function that creates a layer instance
+   */
+  void RegisterCreateFunction(const std::string type,
+                              std::function<Layer*(void)> create_function);
+  /**
+   * create a layer  instance by providing its type
+   * @param type the identifier of the layer to be created
+   */
+  Layer* Create(const std::string type);
+
+ private:
+  //! To avoid creating multiple instances of this factory in the program
+  LayerFactory(){}
+  //! Map that stores the registered Layers
+  std::map<std::string, std::function<Layer*(void)>> layer_map_;
 };
 
 }  // namespace lapis

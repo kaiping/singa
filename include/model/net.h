@@ -5,23 +5,35 @@
 #define INCLUDE_MODEL_NET_H_
 
 #include <vector>
+#include "model/layer.h"
+#include "model/edge.h"
+#include "model/param.h"
 namespace lapis {
+/**
+ * Forward declaration of Edge and Layer
+ */
+class Edge;
+class Layer;
 /**
  * The neural network consists of Layers and Edges.
  */
 class Net {
  public:
   void Init(const NetProto &net);
-  inline vector<Layer *> &Layers() {
+  std::vector<Layer *> &Layers() {
     return layers_;
   }
-  inline vector<Edge *> &Edges() {
+  std::vector<Edge *> &Edges() {
     return edges_;
   }
+  std::vector<Param* >& Params() {
+    return params_;
+  }
  private:
-  vector<Layer *> layers_;
-  vector<Edge *> edges_;
-}
+  std::vector<Layer *> layers_;
+  std::vector<Edge *> edges_;
+  std::vector<Param *> params_ ;
+};
 
 }  // namespace lapis
 #endif  // INCLUDE_MODEL_NET_H_

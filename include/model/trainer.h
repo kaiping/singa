@@ -6,8 +6,25 @@
 #include <string>
 #include <vector>
 #include "proto/lapis.pb.h"
+#include "model/net.h"
+#include "model/data_source.h"
+#include "worker/model_controller.h"
 
 namespace lapis {
+/**
+  * there are three phases, i.e., training, validation, and test
+  */
+enum class TrainPhase {
+  kTrain = 0,
+  kValidation = 1,
+  kTest = 2
+};
+enum class TrainAlgorithm {
+  kBackPropagation,
+  kCD,
+  kPCD
+};
+
 /**
  * The base trainer class.
  * Child class has to implement the ::Init(), ::Train(), ::Validation(),
@@ -17,11 +34,6 @@ namespace lapis {
  */
 class Trainer {
  public:
-  enum class Algorithm {
-    kBackPropagation,
-    kCD,
-    kPCD
-  };
   /**
    * init fields of the trainer
    * @param trainer_proto user configuration for the trainer
@@ -58,68 +70,50 @@ class Trainer {
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
    */
-  const bool CheckpointNow(const int step) {
-    if (checkpoint_after_steps_ > 0 && step >= checkpoint_after_steps_) {
-      if ((step - checkpoint_every_steps_) % checkpoint_every_steps_ == 0)
-        return true;
-    }
-    return false;
-  }
-
+  inline const bool CheckpointNow(const int step);
   /**
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().
    */
-  void IncStep() {
-    step_++;
-  }
+  inline void IncStep();
   /**
    * return the current training step
    * the ::Train() has been called such num of times
    */
-
-  const int Step() {
-    return step_;
-  }
-  /**
-   * there are three phases, i.e., training, validation, and test
-   */
-  enum class Phase {
-    kTrain = 0;
-    kValidation = 1;
-    kTest = 2;
-  };
-
+  inline const int Step();
  protected:
   //! current phase, need this field to change the data sources for input layer
-  Phase phase_;
+  TrainPhase phase_;
   //! current training step, e.g., such num of mini-batches have been processed
   int step_;
   //! start checkpoint after this num of steps
   int checkpoint_after_steps_;
   //! frequency for checkpoint
   int checkpoint_every_steps_;
-  //! time/step for this checkpoint
+  //! when recovered from the checkpoint, the step_ will be set to this value;
   int checkpoint_step_;
   //! path prefix (i.e., directory) for the checkpoint files
-  string checkpoint_prefix_;
+  std::string checkpoint_prefix_;
 
   //! start display after this num of steps
   int display_after_steps_;
   //! display frequency
   int display_every_steps_;
   //! path prefix (i.e., directory) for the displayed images
-  string display_prefix_;
+  std::string display_prefix_;
 
   //! data providers for training, see DataSource
-  vector<DataSource *> train_data_;
+  std::vector<DataSource *> train_data_;
   //! data providers for validation, see DataSource
-  vector<DataSource *> validation_data_;
+  std::vector<DataSource *> validation_data_;
   //! data providers for test, see DataSource
-  vector<DataSource *> test_data_;
+  std::vector<DataSource *> test_data_;
 
   //! path prefix for Performance
-  string perf_prefix_;
+  std::string perf_prefix_;
+
+  //! ModelController to provide parameters and input features
+  ModelController model_controller_;
 };
 
 }  // namespace lapis

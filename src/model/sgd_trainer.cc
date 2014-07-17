@@ -5,20 +5,20 @@
 
 namespace lapis {
 
-SGDTrainer::Init(const TrainerProto &trainer_proto) {
+void SGDTrainer::Init(const TrainerProto &trainer_proto) {
   Trainer::Init(trainer_proto);
   // take over the control for this pointer
-  sgd_proto_ = trainer_proto.release_sgd();
+  sgd_proto_ = trainer_proto.sgd();
 }
 
-~SGDTrainer::SGDTrainer() {
-  sgd_proto_->Clear();
-  delete sgd_proto_;
+SGDTrainer::~SGDTrainer() {
+  sgd_proto_.Clear();
 }
 
 void SGDTrainer::BackPropagation(Net *net, const int step) {
-  vector<Layer *> layers = net->layers();
-  vector<Edge *> edges = net->edges();
+  std::vector<Layer *> layers = net->Layers();
+  std::vector<Edge *> edges = net->Edges();
+  std::vector<Param*> params=net->Params();
   // get newest parameters for layers and edges
   model_controller_.GetParam(params)
 
@@ -38,36 +38,45 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
 
   // update parameters either locally or distributedly depending on the
   // system (single machine or a cluster)
-  model_controller_.UpdateParams(layers, edges);
+  model_controller_.UpdateParams(params);
 }
 
 void SGDTrainer::Train(Net *net, const int step) {
-  if (phase_ != Phase::kTrain) {
-    layer->Setup(train_data_[0].Batchsize(), Algorithm::BackPropagation,
+  if (phase_ != TrainPhase::kTrain) {
+    for(auto layer : net->Layers()) {
+      if (layer->HasInput())
+        layer->Setup(train_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
                  train_data_);
+    }
   }
   BackPropagation(net, step);
 }
 
 void SGDTrainer::Validate(Net *net) {
-  if (phase_ != Phase::kValidation) {
-    layer->Setup(validation_data_[0].Batchsize(), Algorithm::BackPropagation,
+  if (phase_ != TrainPhase::kValidation) {
+    for(auto layer : net->Layers()) {
+      if (layer->HasInput())
+        layer->Setup(validation_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
                  validation_data_);
+    }
   }
   // TODO(wangwei) forward only
 }
 
 void SGDTrainer::Test(Net *net) {
-  if (phase_ != Phase::kTest) {
-    layer->Setup(test_data_[0].Batchsize(), Algorithm::BackPropagation,
+  if (phase_ != TrainPhase::kTest) {
+    for(auto layer : net->Layers()) {
+      if (layer->HasInput())
+        layer->Setup(test_data_[0].Batchsize(), TrainAlgorithm::kBackPropagation,
                  test_data_);
+    }
   }
   // TODO(wangwei) forward only
 }
 
 void SGDTrainer::ToProto(TrainerProto *proto) {
   Trainer::ToProto(proto);
-  proto->set_allocated_sgd(sgd_proto_);
+  proto->set_allocated_sgd(&sgd_proto_);
 }
 
 bool SGDTrainer::HasFinished(int step) {

@@ -12,7 +12,7 @@ void InnerProductEdge::Init(const EdgeProto &edge_proto,
   //! match the parameter based on shape
   auto &param0 = edge_proto.param().Get(0);
   auto &param1 = edge_proto.param().Get(1);
-  if (shape0.size() == 2) {
+  if (param0.shape().size() == 2) {
     weight.Init(param0);
     bias.Init(param1);
   } else {

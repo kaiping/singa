@@ -5,8 +5,8 @@
 #define INCLUDE_MODEL_SGD_TRAINER_H_
 
 #include <vector>
-#include "worker/param.h"
-#include "worker/trainer.h"
+#include "model/param.h"
+#include "model/trainer.h"
 #include "proto/lapis.pb.h"
 
 namespace lapis {
@@ -20,7 +20,7 @@ class SGDTrainer : public Trainer {
   virtual void Train(Net *net, const int step);
   virtual void Validate(Net *net);
   virtual void Test(Net *net);
-  virtual void ToProto(TrainProto *proto);
+  virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished(const int step);
 
   void UpdateHyperParams(const int step);
@@ -29,9 +29,11 @@ class SGDTrainer : public Trainer {
   float UpdateHyperParam(int step, SGDProto_ChangeProto change,
                          int change_steps, float base_val, float final_val);
 
+  void BackPropagation(Net *net, const int step);
+
  private:
   float learning_rate_, mometum_, weight_decay_;
-  SGDProto *sgd_proto_;
+  SGDProto sgd_proto_;
 };
 
 }  // namespace lapis

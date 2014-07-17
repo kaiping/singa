@@ -26,18 +26,19 @@ message DataSourceProto {
   required string parser = 2;
   optional string path = 3;
   optional int64 size = 4;
+  optional int64 num = 5;
 
   enum DataType {
     FEATURE = 0;
     LABEL = 1;
   }
 
-  optional DataType type = 5;
+  optional DataType type = 6;
 
   // following three fields will be used for rgb image feature
-  optional int32 channels = 6;
-  optional int32 height = 7;
-  optional int32 width = 8;
+  optional int32 channels = 7;
+  optional int32 height = 8;
+  optional int32 width = 9;
 }
 
 message RGBDatum {
@@ -52,20 +53,20 @@ message RGBDatum {
 
 message ParamProto {
   required string name = 1;
-  optional string initializer = 2;
-  // for vector, shape is <1, n>; for matrix, it is <m, n>
+  optional string initializer = 2 [default="Zero"];
+  // for vector, shape is <n>; for matrix, it is <m, n>
   repeated int32 shape = 3;
   optional string partitioner = 4; // e.g., row or column partition
-  optional float content = 5 [packed = true];
+  repeated float content = 5 [packed = true];
 }
 
 
 // both edge and layer only have params
 message EdgeProto {
-  optional string name = 1;
+  required string name = 1;
   required string type = 2;
   repeated ParamProto param = 3;
-  optional bool directed = 4 [default = false];
+  optional bool directed = 4 [default = true];
 }
 
 message LayerProto {
@@ -93,8 +94,8 @@ message NetProto {
 // stochastic gradient
 message SGDProto {
   required float base_learning_rate = 1;
-  optional float base_momentum = 2;
-  optional float base_weight_decay = 3;
+  optional float base_momentum = 2 [default=0];
+  optional float base_weight_decay = 3 [default=0];
   optional float final_momentum = 4;
   optional float final_learning_rate = 5;
   optional float final_weight_decay = 6;
@@ -109,9 +110,9 @@ message SGDProto {
     LINEAR = 3;
   }
 
-  optional ChangeProto learning_rate_change_steps = 10 [default = INVERSE_T];
-  optional ChangeProto weight_decay_change_steps = 11 [default = FIXED];
-  optional ChangeProto momentum_change_steps = 12 [default = FIXED];
+  optional ChangeProto learning_rate_change= 10 [default = INVERSE_T];
+  optional ChangeProto weight_decay_change= 11 [default = FIXED];
+  optional ChangeProto momentum_change= 12 [default = FIXED];
 
   optional int32 total_steps = 13;
   // batchsize is the num of instances processed per step
@@ -131,31 +132,33 @@ message TrainerProto {
   optional SGDProto sgd = 1;
 
   // start the checkpoint operation after this num steps
-  optional int32 checkpoint_after_steps = 2;
+  optional int32 checkpoint_after_steps = 2 [default=0];
   // frequency of checkpoint
-  optional int32 checkpoint_every_steps = 3;
+  optional int32 checkpoint_every_steps = 3 [default=0];
   // path prefix for the checkpoint file
-  optional string checkpoint_prefix  = 4;
+  optional string checkpoint_prefix  = 4 [default="tmp/checkpoint"];
   // the time of checkpoint
-  optional int32 checkpoint_step = 5;
+  optional int32 checkpoint_step = 5 [default=0];
   // start display after this num steps
-  optional int32 display_after_steps = 6;
+  optional int32 display_after_steps = 6 [default=0];
   // frequency of display
-  optional int32 display_every_steps = 7;
+  optional int32 display_every_steps = 7 [default=0];
+  // path prefix for the display file
+  optional string display_prefix = 8 [default="tmp/display"];
 
-  repeated DataSourceProto train_data = 8;
-  repeated DataSourceProto validation_data = 9;
-  repeated DataSourceProto test_data = 10;
+  repeated DataSourceProto train_data = 9;
+  repeated DataSourceProto validation_data = 10;
+  repeated DataSourceProto test_data = 11;
 
   //optional PerformanceProto train_perf = 11;
   //optional PerformanceProto validation_perf = 12;
   //optional PerformanceProto test_perf = 13;
-  optional string perf_prefix = 14;
+  optional string perf_prefix = 14 [default="tmp/performance"];
 }
 
 message ModelConfProto {
   // model name
   optional string name = 1;
   required NetProto net = 2;
-  required Trainer trainer = 3;
+  required TrainerProto trainer = 3;
 }

@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 
-#include "proto/lapis.proto.h"
+#include "proto/lapis.pb.h"
 
 namespace lapis {
 /**
@@ -15,7 +15,6 @@ namespace lapis {
  */
 class Blob {
  public:
-  explicit Blob(const BlobProto &blob_proto);
   /**
    * allocate memory of size length, e.g., for the bias parameter
    * do nothing if it is of exactly the same shape
@@ -45,13 +44,15 @@ class Blob {
    * @param width e.g., num of cols of the weight matrix
    */
   void Reshape(int num, int channel, int height, int width);
-  void SetZero();
+
+  float* Content() {return content_;}
+  int Height() {return height_;}
+  int Width() {return width_;}
+  int Size() {return size_;}
 
  private:
-  int size_;
+  int size_, num_,channels_, height_, width_;
   float *content_;
-  vector<int> shape_;
-  std::string name_;
 };
 
 }  // namespace lapis

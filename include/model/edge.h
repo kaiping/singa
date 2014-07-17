@@ -3,10 +3,15 @@
 
 #ifndef INCLUDE_MODEL_EDGE_H_
 #define INCLUDE_MODEL_EDGE_H_
-#include <vector>
 #include <string>
+#include "model/blob.h"
+#include "model/layer.h"
+#include "model/param.h"
+#include "proto/lapis.pb.h"
 
 namespace lapis {
+//! forward declaration for Layer
+class Layer;
 /**
  * Base edge class.
  * One edge connects two layers. The edge can be directed, e.g., in feed
@@ -46,22 +51,35 @@ class Edge {
    */
   virtual void Backward(const Blob *src_grad, const Blob *dest_fea,
                         Blob *dest_grad) = 0;
+  std::vector<Param*>& Params(){return params_;}
   /**
    * return the other side of this edge w.r.t, layer
    * @param layer one side of the edge
    */
-  inline Layer *OtherSide(const Layer *layer);
+  Layer *OtherSide(const Layer *layer) {
+    return top_ == layer ? bottom_ : top_;
+  }
   /**
    * Set top end of this edge
    */
-  inline void SetTop(const Layer *top);
+  void SetTop(Layer *top) {
+    top_ = top;
+  }
   /**
    * Set bottom end of this edge
    */
-  inline void SetBottom(const Layer *bottom);
-  inline const Layer *Top();
-  inline const Layer *Bottom();
-  inline const string Name();
+  void SetBottom(Layer *bottom) {
+    bottom_=bottom;
+  }
+  const Layer *Top() {
+    return top_;
+  }
+  const Layer *Bottom() {
+    return bottom_;
+  }
+  const std::string& Name() {
+    return name_;
+  }
 
  protected:
   /**
@@ -73,7 +91,8 @@ class Edge {
    * highest (top) layer to an input layer (bottom), as in AutoEncoder.
    */
   Layer *top_, * bottom_;
-  string name_;
+  std::vector<Param*> params_ ;
+  std::string name_;
 };
 
 }  // namespace lapis

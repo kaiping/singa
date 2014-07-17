@@ -121,13 +121,13 @@ class Layer {
 
 /****************************************************************************/
 /**
- * Register Layer with identifier TYPE
- * @param TYPE identifier of the layer e.g., Logistic, i.e., the type field
+ * Register Layer with identifier ID
+ * @param ID identifier of the layer e.g., Logistic, i.e., the type field
  * in LayerProto
  * @param LAYER the child layer class
  */
-#define REGISTER_LAYER(TYPE, LAYER) LayerFactory::Instance()->\
-  RegisterCreateFunction(TYPE,[](void)-> Layer* {return new LAYER();});
+#define REGISTER_LAYER(ID, LAYER) LayerFactory::Instance()->\
+  RegisterCreateFunction(ID,[](void)-> Layer* {return new LAYER();});
 
 /**
  * Factory for creating layer based on user provided layer type/identifier.
@@ -148,16 +148,16 @@ class LayerFactory {
    * Register user defined layer, i.e., add the layer type/identifier and a
    * function which creats an instance of the layer. This function is called by
    * the REGISTER_LAYER macro.
-   * @param type identifier of the layer, every layer has a type to identify it
+   * @param id identifier of the layer, every layer has a type to identify it
    * @param create_function a function that creates a layer instance
    */
-  void RegisterCreateFunction(const std::string type,
+  void RegisterCreateFunction(const std::string id,
                               std::function<Layer*(void)> create_function);
   /**
    * create a layer  instance by providing its type
    * @param type the identifier of the layer to be created
    */
-  Layer* Create(const std::string type);
+  Layer* Create(const std::string id);
 
  private:
   //! To avoid creating multiple instances of this factory in the program

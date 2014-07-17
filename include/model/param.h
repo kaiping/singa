@@ -52,8 +52,8 @@ class Param {
  * @param TYPE the identifier of this init function
  * @param FUNC  the init function
  */
-#define REGISTER_PARAM_INIT_FUNC(TYPE, FUNC) \
-  ParamInitFactory::Instance()->RegisterInitFunc(TYPE, FUNC)
+#define REGISTER_PARAM_INIT_FUNC(ID, FUNC) \
+  ParamInitFactory::Instance()->RegisterInitFunc(ID, FUNC)
 /**
  * Parameter initialization function factory.
  * It registers the user defined parameter initialization functions at runtime.
@@ -65,14 +65,15 @@ class ParamInitFactory {
   /**
    * Register the init function.
    * This method is called by the register macro REGISTER_PARAM_INIT_FUNC
-   * @param type identifier the function, e.g, "Gaussian"
+   * @param id identifier the function, e.g, "Gaussian", i.e., the initializer
+   * field in ParamProto
    * @param func std::function object
    */
-  void RegisterInitFunc(std::string type, std::function<void(Blob*)> &func);
-  std::function<void(Blob*)>& Get(std::string type);
+  void RegisterInitFunc(std::string id, std::function<void(Param*)> &func);
+  std::function<void(Param*)>& Get(std::string id);
  private:
   ParamInitFactory(){}
-  std::map<std::string, std::function<void(Blob*)>> map_;
+  std::map<std::string, std::function<void(Param*)>> map_;
 };
 }  // namespace lapis
 

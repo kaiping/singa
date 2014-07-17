@@ -53,15 +53,15 @@ LayerFactory* LayerFactory::Instance() {
 }
 
 void LayerFactory::RegisterCreateFunction(
-    const std::string type,
+    const std::string id,
     std::function<Layer*(void)> create_function) {
-  layer_map_[type]=create_function;
+  layer_map_[id]=create_function;
 }
 
-Layer* LayerFactory::Create(const std::string type) {
+Layer* LayerFactory::Create(const std::string id) {
   Layer* instance = nullptr;
 
-  auto it = layer_map_.find(type);
+  auto it = layer_map_.find(id);
   if (it != layer_map_.end())
     instance = it->second();
   if (instance != nullptr)

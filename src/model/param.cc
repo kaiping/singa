@@ -25,7 +25,7 @@ void Param::Init(const ParamProto &param_proto) {
   name_ = param_proto.name();
 
   // initialize the parameter
-  ParamInitFactory::Instance()->Get(param_proto.initializer())(&content_);
+  ParamInitFactory::Instance()->Get(param_proto.initializer())(this);
 }
 
 /**************************************************************************
@@ -37,14 +37,14 @@ ParamInitFactory* ParamInitFactory::Instance() {
   return &factory;
 }
 
-void ParamInitFactory::RegisterInitFunc(std::string type,
-    std::function<void(Blob*)> &func){
-  map_[type]=func;
+void ParamInitFactory::RegisterInitFunc(std::string id,
+    std::function<void(Param*)> &func){
+  map_[id]=func;
 }
 
-std::function<void(Blob*)>& ParamInitFactory::Get(std::string type) {
-  CHECK(map_.find(type)!=map_.end())<<"The initialization function "<<type
+std::function<void(Blob*)>& ParamInitFactory::Get(std::string id) {
+  CHECK(map_.find(id)!=map_.end())<<"The initialization function "<<type
     <<" has not been registered\n";
-  return map_[type];
+  return map_[id];
 }
 }  // namespace lapis

@@ -1,5 +1,5 @@
-#include "global-table.h"
-#include "core/slave.h"
+#include "core/global-table.h"
+#include "core/memory-server.h"
 
 static const int kMaxNetworkPending = 1 << 26;
 static const int kMaxNetworkChunk = 1 << 20;
@@ -7,7 +7,6 @@ static const int kMaxNetworkChunk = 1 << 20;
 namespace lapis {
 
 void GlobalTable::UpdatePartitions(const ShardInfo& info) {
-  partinfo_[info.shard()].sinfo.CopyFrom(info);
 }
 
 GlobalTable::~GlobalTable() {
@@ -39,7 +38,8 @@ int64_t GlobalTable::shard_size(int shard) {
   if (is_local_shard(shard)) {
     return partitions_[shard]->size();
   } else {
-    return partinfo_[shard].sinfo.entries();
+    //return partinfo_[shard].sinfo.entries();
+	  return 0;
   }
 }
 
@@ -82,7 +82,7 @@ bool GlobalTable::get_remote(int shard, const StringPiece& k, string* v) {
   req.set_shard(shard);
   req.set_source(worker_id_);
 
-  int peer = w_->peer_for_shard(info().table_id, shard);
+  int peer = w_->peer_for_partition(info().table_id, shard);
 
   NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
   NetworkThread::Get()->Read(peer, MTYPE_GET_RESPONSE, &resp);
@@ -113,9 +113,6 @@ void GlobalTable::handle_get(const HashGet& get_req, TableData *get_resp) {
   }
 }
 
-void GlobalTable::HandlePutRequests() {
-  w_->HandlePutRequests();
-}
 
 void GlobalTable::SendUpdates() {
   TableData put;

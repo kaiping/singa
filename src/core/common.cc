@@ -1,8 +1,7 @@
 #include "core/common.h"
-#include "core/file.h"
-#include "static-initializers.h"
 #include "core/rpc.h"
-#include "common.pb.h"
+#include "core/distributed-memory.h"
+#include "core/memory-server.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,39 +49,20 @@ void InitServers(int argc, char** argv) {
   RunInitializers();
 
   // Assumed that we launch using MPI command
-  /*
-  if (!getenv("OMPI_UNIVERSE_SIZE")) {
-    string cmd = StringPrintf("mpirun "
-                              " -hostfile %s"
-                              " -bycore"
-                              " -nooversubscribe"
-                              " -n %d"
-                              " %s"
-                              " --log_prefix=false ",
-                              FLAGS_hostfile.c_str(),
-                              FLAGS_workers,
-                              JoinString(&argv[0], &argv[argc]).c_str()
-                              );
-
-    LOG(INFO) << "Invoking MPI..." << cmd;
-    system(cmd.c_str());
-    exit(0);
-  }
-  */
-
   //  start network thread for this process
   NetworkThread::Init();
 
   if (IsDistributedMemoryManager()){
-	  DistributedMemoryManager::Init();
-	  DistributedMemoryManager::Get()->StartMemoryManager();
+  		  DistributedMemoryManager::Init();
+  		  DistributedMemoryManager::Get()->StartMemoryManager();
   }
   else{
-	  (new MemoryServer())->StartMemoryServer();
+  	  (new MemoryServer())->StartMemoryServer();
   }
 }
 
 bool IsDistributedMemoryManager(){
-	return NetworkThread::Get()->id() == (NetworkThread::Get()->size()-1);
+		return NetworkThread::Get()->id() == (NetworkThread::Get()->size()-1);
 }
+
 }

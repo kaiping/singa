@@ -1,33 +1,25 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
 
 //  implementing distributed memory interface
-
-#include "distributed-memory.h"
+#include "core/distributed-memory.h"
+#include "core/rpc.h"
+#include "core/worker.pb.h"
+#include "utils/global_context.h";
+#include "core/table-registry.h"
 
 namespace lapis{
 
-
-	//  init network, wait for all the non-coordinator servers
-	//  to register.
-	//  also init vector of ClientStates for all memory server
-	DistributedMemoryManager* DistributedMemoryManager::dmm_;
-
-	void DistributedMemoryManager::Init(){
-		dm_ = new DistributedMemoryManager();
-	}
-
 	void DistributedMemoryManager::StartMemoryManager(){
-
 		net_ = NetworkThread::Get();
 		GlobalContext* context_ = GlobalContext::Get();
 
-		for (int i = 0; i < net_.size()-1; ++i) {
+		for (int i = 0; i < net_->size()-1; ++i) {
 		   RegisterWorkerRequest req;
 		   int src = 0;
-		   network_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
+		   net_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
 
 		   //  adding memory server.
-		   if (context_->IsRoleOf(Role.kMemoryServer, i))
+		   if (context_->IsRoleOf(kMemoryServer, i))
 			   server_states_.push_back(new ServerState(i));
 		}
 	}
@@ -47,11 +39,11 @@ namespace lapis{
 
 	//  memory servers are specified in global context
 	void DistributedMemoryManager::assign_worker(int table, int shard){
-		  for (int i = 0; i < server_states.size(); ++i) {
+		  for (int i = 0; i < server_states_.size(); ++i) {
 		    ServerState& server = *server_states_[i];
-		    if (server.shard_id==-1){ //  this server is availabe
+		    if (server.shard_id==-1){ //  this server is availabeq
 		    	server.shard_id = shard;
-		    	server.local_shards.insert(TaskId(table, shard));
+		    	server.local_shards.insert(new TaskId(table, shard));
 		    	return;
 		    }
 		  }
@@ -62,13 +54,14 @@ namespace lapis{
 	//  then broadcast this to all servers (including non-memory servers)
 	void DistributedMemoryManager::send_table_assignments(){
 		  ShardAssignmentRequest req;
-		  for (int i = 0; i < sever_states_.size(); ++i) {
+		  for (int i = 0; i < server_states_.size(); ++i) {
 		    ServerState& server = *server_states_[i];
-		    for (set<TaskId>::iterator j = server.local_shards.begin(); j != server.local_shards.end(); ++j) {
+		    for (unordered_set<TaskId*>::const_iterator j = server.local_shards.begin(); j != server.local_shards.end(); ++j) {
 		      ShardAssignment* s  = req.add_assign();
 		      s->set_new_worker(server.server_id);
-		      s->set_table(j->table);
-		      s->set_shard(j->shard);
+		      s->set_table((*j)->table);
+		      s->set_shard((*j)->shard);
+		      delete (*j);
 		    }
 		  }
 		  net_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
@@ -82,20 +75,8 @@ namespace lapis{
 			net_->Send(i, MTYPE_WORKER_SHUTDOWN, message);
 	}
 
-	template<class K, class V>
-		TypedGlobalTable<K, V>* CreateTable(int id,
-		                                            const TypedGlobaclContext<K,V>& type_context){
-		  TableDescriptor *info = new TableDescriptor(id, GlobalContext::Get()->num_memory_servers());
-		  info->key_marshal = type_context.key_marshal();
-		  info->value_marshal = type_context.value_marshal();
-		  info->sharder = type_context.sharder();
-		  info->accum = type_context.accumulator();
-
-		  info->partition_factory = new typename SparseTable<K, V>::Factory;
-
-		  TypedGlobalTable<K, V> *t = new TypedGlobalTable<K, V>();
-		  t->Init(info);
-		  TableRegistry::Get()->tables().insert(make_pair(info->table_id, t));
-		  return t;
+		void DistributedMemoryManager::Init(){
+			dmm_ = new DistributedMemoryManager();
 		}
+
 }

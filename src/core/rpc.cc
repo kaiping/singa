@@ -6,6 +6,7 @@
 #include "core/rpc.h"
 #include "core/common.h"
 #include "core/common.pb.h"
+#include "core/worker.pb.h"
 #include "utils/global_context.h"
 
 
@@ -31,16 +32,18 @@ struct RPCRequest : private boost::noncopyable {
   ~RPCRequest();
 
   //  if message has been sent successfully
-  bool finished(){return mpi_req->Test(status); }
+  bool finished(){return mpi_req.Test(status); }
 };
 
 struct TaggedMessage : private boost::noncopyable{
 	int tag;
 	string data;
 
+	TaggedMessage();
+
 	TaggedMessage(int t, const string& dat);
 	~TaggedMessage();
-}
+};
 
 RPCRequest::~RPCRequest() {}
 
@@ -56,7 +59,7 @@ TaggedMessage::~TaggedMessage(){}
 
 TaggedMessage::TaggedMessage(int t, const string& dat){
 	tag = t;
-	data = da;
+	data = dat;
 }
 
 NetworkThread::NetworkThread() {
@@ -71,22 +74,22 @@ NetworkThread::NetworkThread() {
 
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
-  sender_and_receiver_thread_ = new boost::thread(&NetworkThread::NetworkLoop, this);
-  processing_thread_ = new boost:thread(&NetworkThread::ProcessLoop, this);
+  sender_and_reciever_thread_ = new boost::thread(&NetworkThread::NetworkLoop, this);
+  processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
 
   id_ = world_->Get_rank();
 
   for (int i = 0; i < kMaxMethods; ++i) {
     callbacks_[i] = NULL;
-    handles_[i] = NULL:
+    handles_[i] = NULL;
   }
 
  //  initialize message queue
   GlobalContext* gc = GlobalContext::Get();
   if (FLAGS_sync_update)
-	  message_queue_ = new AsynMessageQueue(gc->num_keys(), gc->num_memory_servers());
+	  request_queue_ = new AsyncRequestQueue(gc->num_keys(), gc->num_memory_servers());
   else
-	  message_queue_ = new SyncMessageQueue(gc->num_keys(), gc->num_memory_servers());
+	  request_queue_ = new SyncRequestQueue(gc->num_keys(), gc->num_memory_servers());
 }
 
 bool NetworkThread::active() const {
@@ -142,7 +145,7 @@ void NetworkThread::NetworkLoop() {
     	  request_queue_->Enqueue(tag, data);
       else{ //  put reponse, etc. to the response queue. This is read
     	    //  actively by the client
-    	  boost::recursive_mutex::scoped_lock sl(response_queue_lock_[tag]);
+    	  boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
     	  response_queue_[tag][source].push_back(data);
       }
 
@@ -190,14 +193,14 @@ void NetworkThread::ProcessRequest(const TaggedMessage& t_msg){
 		message.reset(new TableData());
 	}
 	message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
-	handles_[t_msg.tag](message);
+	handles_[t_msg.tag](message.get());
 }
 
 //  for now, only PUT_RESPONSE message are being pulled from this.
 bool NetworkThread::check_queue(int src, int type, Message* data) {
   CHECK_EQ(type, MTYPE_GET_RESPONSE) << "only GET_RESPONSE is pulled from the response queue";
 
-  Queue& q = incoming[type][src];
+  Queue& q = response_queue_[type][src];
   if (!q.empty()) {
     boost::recursive_mutex::scoped_lock sl(response_queue_locks_[type]);
     if (q.empty())
@@ -295,15 +298,18 @@ void NetworkThread::Init() {
 }
 
 void RequestQueue::ExtractKey(int tag, string data, string* key){
-	boost::scoped_ptr<Messag> message;
+	if (tag==MTYPE_GET_REQUEST){
+		HashGet message;
+		message.ParseFromArray(data.data(), data.size());
+		*key = message.key();
+	}
+	else if (tag==MTYPE_PUT_REQUEST){
+		TableData message;
+		message.ParseFromArray(data.data(), data.size());
 
-	if (tag==MTYPE_GET_REQUEST)
-		message.reset(new HashGet());
-	else
-		message.reset(new TableData());
+		*key = message.key();
+	}
 
-	message.ParseFromArray(data.data(), data.size());
-	*key = msg.key();
 }
 
 //  put the TaggedMessage into the synchronous queues, one queue
@@ -319,18 +325,18 @@ void SyncRequestQueue::Enqueue(int tag, string& data){
 		if (key_map_.find(key)==key_map_.end()){
 			//if not in the queue yet, insert
 			request_queues_.push_back(Queue());
-			key_locks_.push_back(boost::recursive_mutex());
+			key_locks_.push_back(new boost::recursive_mutex());
 			// queue index of this key
 			key_map_[key] = request_queues_.size()-1;
 		}
 	}
 	Queue& key_queue = request_queues_[key_map_[key]];
-	boost::recursive_mutex& key_lock = key_locks_[key_map[key]];
+	boost::recursive_mutex& key_lock = *(key_locks_[key_map_[key]]);
 
 	//  now insert to the queue
 	{
 		boost::recursive_mutex::scoped_lock sl(key_lock);
-		key_queue.push_back(TaggedMessage(tag,data));
+		key_queue.push_back(new TaggedMessage(tag,data));
 	}
 }
 
@@ -340,15 +346,16 @@ void SyncRequestQueue::NextRequest(TaggedMessage* message){
 	//get lock of the current key;
 	bool success = false;
 	while (!success){
-	  boost::recursive_mutex& key_lock = key_locks_[key_index_];
+	  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 	  Queue& key_queue = request_queues_[key_index_];
 	  {
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
 		  if (!key_queue.empty()){
-			  TaggedMessage& q_msg = key_queue.front();
-			  message->tag = q_msg.tag;
-			  message->data = q_msg.data;
+			  TaggedMessage* q_msg = key_queue.front();
+			  message->tag = q_msg->tag;
+			  message->data = q_msg->data;
 			  key_queue.pop_front();
+			  delete (q_msg);
 			  success=true;
 		  }
 	  }
@@ -356,7 +363,7 @@ void SyncRequestQueue::NextRequest(TaggedMessage* message){
 	}
 }
 
-void AsyncRequestQueue:Enqueue(int tag, string& data){
+void AsyncRequestQueue::Enqueue(int tag, string& data){
 	 // extract the key
 	 string key;
 	 ExtractKey(tag, data, &key);
@@ -368,17 +375,17 @@ void AsyncRequestQueue:Enqueue(int tag, string& data){
 			//if not in the queue yet (never seen this key before)
 			put_queues_.push_back(Queue());
 			get_queues_.push_back(Queue());
-			key_locks_.push_back(boost::recursive_mutex());
+			key_locks_.push_back(new boost::recursive_mutex());
 			access_counters_.push_back(0);
-			is_in_put_queue_.push_back(true);
+			is_in_put_queue_.push_back(1);
 
 			// queue index of this key
 			key_map_[key] = put_queues_.size()-1;
 		}
 	}
 
-	int idx = key_map[key];
-	boost::recursive_mutex& key_lock = key_locks_[idx];
+	int idx = key_map_[key];
+	boost::recursive_mutex& key_lock = *(key_locks_[idx]);
 
 	//  now insert to the queue
 	{
@@ -386,10 +393,10 @@ void AsyncRequestQueue:Enqueue(int tag, string& data){
 		CHECK_LT(get_queues_.size(), num_mem_servers_);
 		CHECK_LT(put_queues_.size(), num_mem_servers_);
 		if (tag==MTYPE_GET_REQUEST)
-			get_queues_[idx].push_back(TaggedMessage(tag,data));
+			get_queues_[idx].push_back(new TaggedMessage(tag,data));
 		else{
 			CHECK_EQ(tag, MTYPE_PUT_REQUEST);
-			put_queues_[idx].push_back(TaggedMessage(tag,data));
+			put_queues_[idx].push_back(new TaggedMessage(tag,data));
 		}
 	}
 }
@@ -397,53 +404,55 @@ void AsyncRequestQueue:Enqueue(int tag, string& data){
 //  switching between put and get message queue.
 //  guarantee: at queue X, return num_mem_servers_ messages before
 //  switching to queue Y
-void AsyncRequestQueue::NextRequest(TaggedMessage* msg){
+void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 	//get lock of the current key;
 	bool success = false;
 	while (!success){
-	  boost::recursive_mutex& key_lock = key_locks_[key_index_];
+	  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 	  //Queue& key_queue = request_queues_[key_index_];
 	  {
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
-		  int& counter = access_counters_[key_index];
-		  bool& is_put = is_in_put_queue_[key_index];
+		  int& counter = access_counters_[key_index_];
+		  int& is_put = is_in_put_queue_[key_index_];
 		  //are we in put queue or in get queue?
 		  if (is_put){
-			  if (put_queues_[key_index].empty()){
-				  key_index++;
+			  if (put_queues_[key_index_].empty()){
+				  key_index_++;
 				  continue;
 			  }
 
-			  TaggedMessage& q_msg = put_queues_[key_index].front();
-			  message->tag = q_msg.tag;
-			  message->data = q_msg.data;
-			  put_queues_[key_index].pop_front();
+			  TaggedMessage* q_msg = put_queues_[key_index_].front();
+			  message->tag = q_msg->tag;
+			  message->data = q_msg->data;
+			  put_queues_[key_index_].pop_front();
 			  counter++;
-			  if (is_first_update){
-				  is_put = false;
+			  if (is_first_update_){
+				  is_put = 0;
 				  counter = 0;
-				  is_first_update = false;
+				  is_first_update_ = false;
 			  }
-			  if (count==num_mem_servers_){
-				  is_put = false;
+			  if (counter==num_mem_servers_){
+				  is_put = 0;
 				  counter=0;
 			  }
+			  delete q_msg;
 			  success=true;
 		  }
 		  else{ //  in get queue
-			  if (get_queues_[key_index].empty()){
-				  key_index++;
+			  if (get_queues_[key_index_].empty()){
+				  key_index_++;
 				  continue;
 			  }
-			  TaggedMessage& q_msg = get_queues_[key_index].front();
-			  message->tag = q_msg.tag;
-			  message->data = q_msg.data;
-			  get_queues_[key_index].pop_front();
+			  TaggedMessage* q_msg = get_queues_[key_index_].front();
+			  message->tag = q_msg->tag;
+			  message->data = q_msg->data;
+			  get_queues_[key_index_].pop_front();
 			  counter++;
-			  if (count==num_mem_servers_){
-			  	  is_put = true;
+			  if (counter==num_mem_servers_){
+			  	  is_put = 1;
 			  	  counter=0;
 			  }
+			  delete q_msg;
 			  success=true;
 		  }
 	  }

@@ -9,7 +9,7 @@
 
 namespace lapis {
 
-class Worker;
+class MemoryServer;
 
 class GlobalTable :
   public TableBase {
@@ -39,7 +39,6 @@ public:
   // Handle updates from the master or other workers.
   void SendUpdates();
   void ApplyUpdates(const TableData& req);
-  void HandlePutRequests();
   void UpdatePartitions(const ShardInfo& sinfo);
 
   int pending_write_bytes();

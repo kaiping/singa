@@ -37,7 +37,7 @@ message MethodStats {
 message HashGet {
   required uint32 table = 1;
   required uint32 shard = 2;
-  required unit32 source = 3; 
+  required uint32 source = 3; 
   optional bytes key = 4;
   optional uint32 index = 5;
 }
@@ -47,11 +47,12 @@ message TableData {
   required uint32 table = 2;
   required uint32 shard = 3;
   required bool done = 4;
+  required bytes key = 5; 
   
-  optional bytes table_data = 5;
-  repeated Arg kv_data = 6;
+  optional bytes table_data = 6;
+  repeated Arg kv_data = 7;
    
-  optional bool missing_key = 7;
+  optional bool missing_key = 8;
 }
 
 

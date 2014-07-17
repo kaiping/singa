@@ -17,13 +17,15 @@
 #ifndef INCLUDE_CORE_RPC_H_
 #define INCLUDE_CORE_RPC_H_
 
+#include "core/common.h"
+#include "core/file.h"
+#include "core/common.pb.h"
+
 #include <boost/thread.hpp>
 #include <boost/function.hpp>
 #include <google/protobuf/message.h>
 #include <mpi.h>
 
-#include "core/common.h"
-#include "core/file.h"
 
 DECLARE_bool(sync_update);
 
@@ -34,9 +36,60 @@ typedef google::protobuf::Message Message;
 // Wrapper of the network message
 struct RPCRequest;
 
-struct TaggedMessage;
-
 class RequestQueue;
+class TaggedMessage;
+
+class RequestQueue{
+ public:
+  RequestQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
+
+  virtual void NextRequest(TaggedMessage* msg);
+  virtual void Enqueue(int tag, string data);
+
+  void ExtractKey(int tag, string data, string* key);
+
+  typedef deque<TaggedMessage*> Queue;
+  typedef vector<boost::recursive_mutex*> Lock;
+
+ protected:
+
+  //mapping key(string) to lock
+    Lock key_locks_;
+    boost::recursive_mutex whole_queue_lock_;
+
+  map<string, int> key_map_;
+
+  bool is_first_update_;
+
+  int num_keys_;
+  int num_mem_servers_;
+  int key_index_;
+};
+
+//  synchronous queue
+class SyncRequestQueue: public RequestQueue{
+ public:
+  SyncRequestQueue(int num_keys, int ns): RequestQueue(num_keys, ns){}
+  void NextRequest(TaggedMessage* msg);
+  void Enqueue(int tag, string& data);
+ private:
+
+  vector<Queue> request_queues_;
+};
+
+//  asynchronous queue
+class AsyncRequestQueue: public RequestQueue{
+ public:
+	AsyncRequestQueue(int num_keys, int ns): RequestQueue(num_keys, ns) {}
+  void NextRequest(TaggedMessage* msg);
+  void Enqueue(int tag, string& data);
+ private:
+
+  vector<Queue> put_queues_, get_queues_;
+  vector<int> access_counters_;
+  vector<int> is_in_put_queue_;
+};
+
 
 // Hackery to get around mpi's unhappiness with threads.  This thread
 // simply polls MPI continuously for any kind of update and adds it to
@@ -54,8 +107,6 @@ class NetworkThread {
 
   void Broadcast(int method, const Message& msg);
   void SyncBroadcast(int method, int reply, const Message& msg);
-
-  RPCRequest *NextRequest(){return request_queue_->NextRequest();}
 
   void Flush();
   void Shutdown();
@@ -77,6 +128,7 @@ class NetworkThread {
   void RegisterCallback(int message_type, Callback cb) {callbacks_[message_type] = cb;}
   void RegisterRequestHandler(int message_type, Handle cb) {handles_[message_type] = cb;}
 
+  bool active() const;
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;
@@ -104,7 +156,8 @@ class NetworkThread {
   //received locks, one for each kMaxHosts
   boost::recursive_mutex response_queue_locks_[kMaxMethods];
 
-  mutable boost::thread* sender_and_reciever_thread_, processing_thread_;
+  mutable boost::thread* sender_and_reciever_thread_;
+  mutable boost::thread* processing_thread_;
 
 
   //request (put/get) queue
@@ -136,52 +189,6 @@ class NetworkThread {
   NetworkThread();
 };
 
-class RequestQueue{
- public:
-  MessageQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
-
-  virtual void NextRequest(TaggedMessage* msg)=0;
-  virtual void Enqueue(int tag, string data)=0;
- private:
-  void ExtractKey(int tag, string data, string* key);
-
-  typedef deque<TaggedMessage> Queue;
-  typedef vector<boost::recursive_mutex> Lock;
-
-  map<string, int> key_map_;
-  //mapping key(string) to lock
-  Lock key_locks_;
-
-  boost::recursive_mutex whole_queue_lock_;
-
-  bool is_first_update_;
-
-  int num_keys_;
-  int num_mem_servers_;
-  int key_index_;
-};
-
-//  synchronous queue
-class SyncRequestQueue: public RequestQueue{
- public:
-  SyncMessageQueue(int num_keys, int ns): MessageQueue(num_keys, ns){}
-  void NextRequest(TaggedMessage* msg);
-  void Enqueue(int tag, string& data);
- private:
-  vector<Queue> request_queues_;
-};
-
-//  asynchronous queue
-class AsyncRequestQueue: public RequestQueue{
- public:
-  AsyncMessageQueue(int num_keys, int ns): RequestQueue(num_keys, ns) {}
-  void NextRequest(TaggedMessage* msg);
-  void Enqueue(int tag, string& data);
- private:
-  vector<Queue> put_queues_, get_queues_;
-  vector<int> access_counters_;
-  vector<bool> is_in_put_queue_;
-};
 }  // namespace lapis
 
 #endif  // INCLUDE_CORE_RPC_H_

@@ -3,7 +3,7 @@
 
 #include "utils/global_context.h"
 #include "proto/lapis.pb.h"
-#include "proto/proto_helper.h"
+#include "utils/proto_helper.h"
 
 namespace lapis {
 GlobalContext::GlobalContext(const char* system_conf_path,

@@ -1,8 +1,8 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
 
 #include "core/memory-server.h"
-#include "table-registry.h"
-#include "global_context.h"
+#include "core/table-registry.h"
+#include "utils/global_context.h"
 
 
 namespace lapis{
@@ -20,7 +20,7 @@ namespace lapis{
 		//  register to the manager
 		 RegisterWorkerRequest req;
 		 req.set_id(server_id_);
-		 network_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
+		 net_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
 
 		// register callbacks
 		NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
@@ -29,25 +29,25 @@ namespace lapis{
 												boost::bind(&MemoryServer::HandleServerShutdown, this));
 
 		NetworkThread::Get()->RegisterRequestHandler(MTYPE_PUT_REQUEST,
-		                                        boost::bind(&MemoryServer::HandleUpdateRequest, this));
-		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_ReQUEST,
-												boost::bind(&MemoryServer::HandleGetRequest, this));
+		                                        boost::bind(&MemoryServer::HandleUpdateRequest, this, _1));
+		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_REQUEST,
+												boost::bind(&MemoryServer::HandleGetRequest, this, _1));
 	}
 
 	void MemoryServer::HandleShardAssignment(){
-		CHECK(GlobalContext::Get()->IsRoleOf(Role.kMemoryServer, id())) << "Assign table to wrong server " << id();
+		CHECK(GlobalContext::Get()->IsRoleOf(kMemoryServer, id())) << "Assign table to wrong server " << id();
 
 		ShardAssignmentRequest shard_req;
-		net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req))
+		net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req);
 		//  request read from DistributedMemoryManager
 
-		for (int i = 0; i < shard_req.assign_size(); ++i) {
+		for (int i = 0; i < shard_req.assign_size(); i++) {
 			const ShardAssignment &a = shard_req.assign(i);
 			GlobalTable *t = TableRegistry::Get()->table(a.table());
 			t->get_partition_info(a.shard())->owner = a.new_worker();
 
 			EmptyMessage empty;
-			network_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+			net_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
 		}
 	}
 
@@ -57,8 +57,8 @@ namespace lapis{
 
 	//  respond to request
 	void MemoryServer::HandleGetRequest(const Message* message){
-		HashGet* get_req = static_cast<HashGet*>(message);
-		Tabledata get_resp;
+		const HashGet* get_req = static_cast<const HashGet*>(message);
+		TableData get_resp;
 
 		// prepare
 		get_resp.Clear();
@@ -79,9 +79,9 @@ namespace lapis{
 	void MemoryServer::HandleUpdateRequest(const Message* message){
 		boost::recursive_mutex::scoped_lock sl(state_lock_);
 
-		TableData* put = static_cast<TableData*>(message);
+		const TableData* put = static_cast<const TableData*>(message);
 
-		GlobalTable *t = TableRegistry::Get()->table(put.table());
+		GlobalTable *t = TableRegistry::Get()->table(put->table());
 		t->ApplyUpdates(*put);
 	}
 

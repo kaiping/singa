@@ -6,9 +6,12 @@
 #ifndef INCLUDE_CORE_DISTRIBUTED-MEMORY_H_
 #define INCLUDE_CORE_DISTRIBUTED-MEMORY_H_
 
-#include "table-registry.h"
+#include <vector>
+#include <tr1/unordered_set>
 
 namespace lapis{
+	class NetworkThread;
+
 	//  represent the (table, shard) tuple
 	struct TaskId{
 		int table;
@@ -22,12 +25,12 @@ namespace lapis{
 	struct ServerState{
 		int server_id;
 		int shard_id;
-		set<TaskId> local_shards;
+		std::tr1::unordered_set<TaskId*> local_shards;
 
 		ServerState(int id): server_id(id), shard_id(-1){}
 	};
 
-	class DistributedMemoryManager : private boost::noncopyable{
+	class DistributedMemoryManager{
 	 public:
 		~DistributedMemoryManager();
 
@@ -50,7 +53,7 @@ namespace lapis{
 		void send_table_assignments();
 
 		//  keep track of the table assignments, only to the memory servers
-		vector<ServerState*> server_states_;
+		std::vector<ServerState*> server_states_;
 
 		NetworkThread* net_;
 
@@ -59,14 +62,13 @@ namespace lapis{
 		DistributedMemoryManager();
 	};
 
+	DistributedMemoryManager* DistributedMemoryManager::dmm_;
+
 	DistributedMemoryManager::~DistributedMemoryManager(){
 		for (int i=0; i<server_states_.size(); i++){
 			delete server_states_[i];
 		}
 	}
-
-	template<class K, class V>
-			TypedGlobalTable<K, V>* CreateTable(int id, const TypedGlobalContext& typed_context);
 
 }  //  namespace lapis
 

@@ -1,6 +1,6 @@
 #include "core/stringpiece.h"
 #include "core/hash.h"
-#include "static-initializers.h"
+#include "core/static-initializers.h"
 
 #include "glog/logging.h"
 

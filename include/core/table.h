@@ -8,7 +8,41 @@
 
 namespace lapis {
 
+
 struct TableBase;
+
+template <class V>
+struct Accumulators {
+  struct Min : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = std::min(*a, b); }
+  };
+
+  struct Max : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = std::max(*a, b); }
+  };
+
+  struct Sum : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = *a + b; }
+  };
+
+  struct Replace : public Accumulator<V> {
+    void Accumulate(V* a, const V& b) { *a = b; }
+  };
+};
+
+struct Sharding {
+  struct String  : public Sharder<string> {
+    int operator()(const string& k, int shards) { return StringPiece(k).hash() % shards; }
+  };
+
+  struct Mod : public Sharder<int> {
+    int operator()(const int& key, int shards) { return key % shards; }
+  };
+
+  struct UintMod : public Sharder<uint32_t> {
+    int operator()(const uint32_t& key, int shards) { return key % shards; }
+  };
+};
 
 struct TableFactory {
   virtual TableBase* New() = 0;

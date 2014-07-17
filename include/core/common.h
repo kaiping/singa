@@ -10,28 +10,26 @@
 #include <time.h>
 #include <vector>
 #include <string>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
-#include <boost/type_traits.hpp>
-#include <boost/utility/enable_if.hpp>
 
 #include "glog/logging.h"
 #include "google/gflags.h"
 
+#include "core/common.pb.h"
 #include "core/hash.h"
 #include "core/static-initializers.h"
 #include "core/stringpiece.h"
 #include "core/timer.h"
-#include "core/distributed-memory.h"
-#include "core/memory-server.h"
-#include "core/tabley-registry"
-#include "core/rpc.h"
-#include "core/file.h"
-#include "common.pb.h"
+
+#include <tr1/unordered_map>
+#include <tr1/unordered_set>
+
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 
 using std::map;
 using std::vector;
@@ -64,41 +62,9 @@ struct Sharder {
   virtual int operator()(const K& k, int shards) = 0;
 };
 
-#ifndef SWIG
+//#ifndef SWIG
 // Commonly used accumulation operators.
-template <class V>
-struct Accumulators {
-  struct Min : public Accumulator<V> {
-    void Accumulate(V* a, const V& b) { *a = std::min(*a, b); }
-  };
-
-  struct Max : public Accumulator<V> {
-    void Accumulate(V* a, const V& b) { *a = std::max(*a, b); }
-  };
-
-  struct Sum : public Accumulator<V> {
-    void Accumulate(V* a, const V& b) { *a = *a + b; }
-  };
-
-  struct Replace : public Accumulator<V> {
-    void Accumulate(V* a, const V& b) { *a = b; }
-  };
-};
-
-struct Sharding {
-  struct String  : public Sharder<string> {
-    int operator()(const string& k, int shards) { return StringPiece(k).hash() % shards; }
-  };
-
-  struct Mod : public Sharder<int> {
-    int operator()(const int& key, int shards) { return key % shards; }
-  };
-
-  struct UintMod : public Sharder<uint32_t> {
-    int operator()(const uint32_t& key, int shards) { return key % shards; }
-  };
-};
-#endif
+//#endif
 
 template <class T, class Enable = void>
 struct Marshal {
@@ -131,5 +97,20 @@ string marshal(Marshal<T>* m, const T& t) { string out; m->marshal(t, &out); ret
 
 template <class T>
 T unmarshal(Marshal<T>* m, const StringPiece& s) { T out; m->unmarshal(s, &out); return out; }
+
+}
+#include "core/tuple.h"
+
+#ifndef SWIG
+// operator<< overload to allow protocol buffers to be output from the logging methods.
+#include <google/protobuf/message.h>
+namespace std{
+static ostream & operator<< (ostream &out, const google::protobuf::Message &q) {
+  string s = q.ShortDebugString();
+  out << s;
+  return out;
+}
+}
+#endif
 
 #endif  // INCLUDE_CORE_COMMON_H_

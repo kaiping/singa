@@ -1,4 +1,4 @@
-#include "static-initializers.h"
+#include "core/static-initializers.h"
 
 #include <stdio.h>
 

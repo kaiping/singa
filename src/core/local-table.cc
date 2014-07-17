@@ -16,7 +16,9 @@ bool RPCTableCoder::ReadEntry(string *k, string *v) {
   return false;
 }
 
+//  assume that only 1 key per update
 void RPCTableCoder::WriteEntry(StringPiece k, StringPiece v) {
+  t_->set_key(k.AsString());
   Arg *a = t_->add_kv_data();
   a->set_key(k.data, k.len);
   a->set_value(v.data, v.len);

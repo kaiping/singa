@@ -48,23 +48,6 @@ class GlobalContext {
   const char* model_conf_path_;
 
 };
-
-template<class T> struct Sharder;
-
-template<class T> struct Accumulator;
-template<class T> struct Marshal;
-
-// for configuring the table
-template<class K, class V>
-struct TypedGlobalContext{
-	  TypedGlobalContext(Sharder<K>* s, Accumulator<V>* a, Marshal<K>* km, Marshal<V>* vm):
-		  sharder_(s),accumulator_(a), key_marshal_(km), value_marshal_(vm){}
-	  Sharder<K>* sharder_;
-	  Accumulator<V>* accumulator_;
-	  Marshal<K>* key_marshal_;
-	  Marshal<V>* value_marshal_;
-};
-
 }  // namespace lapis
 
 #endif  // INCLUDE_UTILS_GLOBAL_CONTEXT_H_

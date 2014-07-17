@@ -4,16 +4,17 @@
 #ifndef INCLUDE_CORE_FILE_H_
 #define INCLUDE_CORE_FILE_H_
 
-#include <lzo/lzo1x.h>
-#include <stdio.h>
-#include <glob.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "boost/noncopyable.hpp"
 #include "core/common.h"
 #include "core/common.pb.h"
+#include <lzo/lzo1x.h>
+
+#include <stdio.h>
+#include <glob.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 
 namespace google { namespace protobuf { class Message; } }
@@ -189,12 +190,12 @@ class LZOFile : public File, private boost::noncopyable {
   }
 
   bool read_line(string *out) {
-    LOG(FATAL) << "Not implemented";
+    //LOG(FATAL) << "Not implemented";
   }
 
   virtual int read(char *buffer, int len);
   virtual int write(const char* buffer, int len);
-  void seek(int64_t pos) { LOG(FATAL) << "Not seekable."; }
+  void seek(int64_t pos) {} //LOG(FATAL) << "Not seekable."; }
   uint64_t tell() { return pos_; }
 
   const char* name() { return f_->name(); }

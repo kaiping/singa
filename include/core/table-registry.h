@@ -26,6 +26,10 @@ private:
   Map tmap_;
 };
 
+template<class K, class V>
+TypedGlobalTable<K, V>* CreateTable(int id, int num_shards, Sharder<K>* skey,
+										Accumulator<V>* accum, Marshal<K>* mkey, Marshal<V>* mval);
+
 }  // namespace lapis
 
 #endif  // INCLUDE_CORE_TABLE-REGISTRY_H_

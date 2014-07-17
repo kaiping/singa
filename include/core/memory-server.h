@@ -10,9 +10,9 @@
 #include "core/common.h"
 #include "core/rpc.h"
 #include "core/table.h"
-#include "global-table.h"
-#include "local-table.h"
-#include "worker.pb.h"
+#include "core/global-table.h"
+#include "core/local-table.h"
+#include "core/worker.pb.h"
 
 namespace lapis{
 
@@ -35,9 +35,10 @@ class MemoryServer : private boost::noncopyable{
 
 		void HandleUpdateRequest(const Message* message);
 		void HandleGetRequest(const Message* message);
-	private:
+
 		//  id of the peer responsible for storing the partition
 		int peer_for_partition(int table, int shard);
+	private:
 
 		int server_id_;
 		int manager_id_;
@@ -45,7 +46,6 @@ class MemoryServer : private boost::noncopyable{
 		mutable boost::recursive_mutex state_lock_;
 
 		NetworkThread* net_;
-		GlobalContext* context_;
 };
 
 	//  start memory server, only if rank < size()-1

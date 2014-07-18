@@ -53,7 +53,7 @@ message RGBDatum {
 
 message ParamProto {
   required string name = 1;
-  optional string initializer = 2 [default="Zero"];
+  optional string initializer = 2 [default = "Zero"];
   // for vector, shape is <n>; for matrix, it is <m, n>
   repeated int32 shape = 3;
   optional string partitioner = 4; // e.g., row or column partition
@@ -84,7 +84,7 @@ message LayerProto {
   repeated ParamProto param  = 4;
   repeated string out_edge = 5;
   repeated string in_edge = 6;
-  optional string data_source =7;
+  optional string data_source = 7;
 }
 
 message NetProto {
@@ -95,8 +95,8 @@ message NetProto {
 // stochastic gradient
 message SGDProto {
   required float base_learning_rate = 1;
-  optional float base_momentum = 2 [default=0];
-  optional float base_weight_decay = 3 [default=0];
+  optional float base_momentum = 2 [default = 0];
+  optional float base_weight_decay = 3 [default = 0];
   optional float final_momentum = 4;
   optional float final_learning_rate = 5;
   optional float final_weight_decay = 6;
@@ -111,9 +111,9 @@ message SGDProto {
     LINEAR = 3;
   }
 
-  optional ChangeProto learning_rate_change= 10 [default = INVERSE_T];
-  optional ChangeProto weight_decay_change= 11 [default = FIXED];
-  optional ChangeProto momentum_change= 12 [default = FIXED];
+  optional ChangeProto learning_rate_change = 10 [default = INVERSE_T];
+  optional ChangeProto weight_decay_change = 11 [default = FIXED];
+  optional ChangeProto momentum_change = 12 [default = FIXED];
 
   optional int32 total_steps = 13;
   // batchsize is the num of instances processed per step
@@ -135,19 +135,19 @@ message TrainerProto {
   optional SGDProto sgd = 1;
 
   // start the checkpoint operation after this num steps
-  optional int32 checkpoint_after_steps = 2 [default=0];
+  optional int32 checkpoint_after_steps = 2 [default = 0];
   // frequency of checkpoint
-  optional int32 checkpoint_every_steps = 3 [default=0];
+  optional int32 checkpoint_every_steps = 3 [default = 0];
   // path prefix for the checkpoint file
-  optional string checkpoint_prefix  = 4 [default="tmp/checkpoint"];
+  optional string checkpoint_prefix  = 4 [default = "tmp/checkpoint"];
   // the time of checkpoint
-  optional int32 checkpoint_step = 5 [default=0];
+  optional int32 checkpoint_step = 5 [default = 0];
   // start display after this num steps
-  optional int32 display_after_steps = 6 [default=0];
+  optional int32 display_after_steps = 6 [default = 0];
   // frequency of display
-  optional int32 display_every_steps = 7 [default=0];
+  optional int32 display_every_steps = 7 [default = 0];
   // path prefix for the display file
-  optional string display_prefix = 8 [default="tmp/display"];
+  optional string display_prefix = 8 [default = "tmp/display"];
 
   repeated DataSourceProto train_data = 9;
   repeated DataSourceProto validation_data = 10;
@@ -156,7 +156,7 @@ message TrainerProto {
   //optional PerformanceProto train_perf = 11;
   //optional PerformanceProto validation_perf = 12;
   //optional PerformanceProto test_perf = 13;
-  optional string perf_prefix = 14 [default="tmp/performance"];
+  optional string perf_prefix = 14 [default = "tmp/performance"];
 }
 
 message ModelConfProto {

@@ -12,7 +12,7 @@
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "model.conf", "DL model configuration file");
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   google::InitGoogleLoggin(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   // TODO(by wangwei) register partition/fileparser/layer classes

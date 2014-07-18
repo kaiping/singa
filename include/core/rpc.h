@@ -36,15 +36,15 @@ typedef google::protobuf::Message Message;
 // Wrapper of the network message
 struct RPCRequest;
 
-class RequestQueue;
 class TaggedMessage;
 
 class RequestQueue{
  public:
   RequestQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
+  ~RequestQueue(){}
 
-  virtual void NextRequest(TaggedMessage* msg);
-  virtual void Enqueue(int tag, string data);
+  virtual void NextRequest(TaggedMessage* msg){}
+  virtual void Enqueue(int tag, string& data){}
 
   void ExtractKey(int tag, string data, string* key);
 

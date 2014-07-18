@@ -5,10 +5,13 @@
 #include "proto/lapis.pb.h"
 #include "utils/proto_helper.h"
 
+DEFINE_string(system_conf_path, "", ""); 
+DEFINE_string(model_conf_path, "", ""); 
 namespace lapis {
 GlobalContext::GlobalContext(const char* system_conf_path,
                              const char* model_conf_path)
     :model_conf_path_(model_conf_path) {
+/*
   SystemConfProto system_conf;
   ReadProtoFromTextFile(system_conf_path, &system_conf);
 
@@ -34,9 +37,10 @@ GlobalContext::GlobalContext(const char* system_conf_path,
                      role_rank_[kDiskServer].first + 1;
 
   num_keys_ = FLAGS_num_keys;
+*/
 }
 
-inline bool GlobalContext::IsRoleOf(const Role& role, int rank) {
+bool GlobalContext::IsRoleOf(const Role& role, int rank) {
   if (rank <= role_rank_[role].second && rank >= role_rank_[role].first)
     return true;
   else

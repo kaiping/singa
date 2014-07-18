@@ -22,7 +22,7 @@ int main(int argc, char** argv){
 
 	TypedGlobalTable<int, int>* test_table =
 		CreateTable(0, 2, new Sharding::Mod, new Accumulators<int>::Sum, new Marshal<int>, new Marshal<int>);
-/*
+
 	InitServers(argc, argv);
 
 
@@ -33,17 +33,20 @@ int main(int argc, char** argv){
 		for (int i=0; i<100; i++)
 			test_table->put(i,i);
 
+		/*
 		for (int i=0; i<100; i++)
 			test_table->update(i, 2*i);
 
 		for (int i=0; i<100; i++)
 			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
 
+
 		// then send message to flush/stop other workers
 		if (IsDistributedMemoryManager())
 			DistributedMemoryManager::Get()->ShutdownServers();
-	}*/
-	//std::cout << "Hello worldi, there " << std::endl;
+		*/
+	}
+	std::cout << "Hello worldi, there " << std::endl;
 }
 
 

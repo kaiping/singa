@@ -11,6 +11,7 @@ namespace lapis{
 		server_id_ = net_->id();
 		manager_id_ = net_->size()-1;
 
+		LOG(INFO) << StringPrintf("************* STARTING MEMORY SERVER ON PROCESS %d", id());
 		//  set itself as the current worker for the table
 		TableRegistry::Map &t = TableRegistry::Get()->tables();
 		for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
@@ -21,6 +22,8 @@ namespace lapis{
 		 RegisterWorkerRequest req;
 		 req.set_id(server_id_);
 		 net_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
+
+		 LOG(INFO) << StringPrintf("************* SENDING REGISTER_WORKER FROM PROCESS %d", id());
 
 		// register callbacks
 		NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,

@@ -18,7 +18,6 @@ namespace lapis{
 
 class MemoryServer : private boost::noncopyable{
 	public:
-		MemoryServer();
 		~MemoryServer(){}
 
 		void StartMemoryServer();

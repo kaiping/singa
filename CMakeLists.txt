@@ -3,7 +3,7 @@ cmake_policy(SET CMP0014 OLD)
 
 project (LAPIS) 
 
-set(ENV{LANG} "C")
+#set(ENV{LANG} "C")
 
 find_package(SWIG REQUIRED)
 find_package(PythonLibs REQUIRED)

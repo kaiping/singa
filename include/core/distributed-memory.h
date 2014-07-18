@@ -59,16 +59,8 @@ namespace lapis{
 
 		static DistributedMemoryManager* dmm_;
 
-		DistributedMemoryManager();
+		DistributedMemoryManager(){}
 	};
-
-	DistributedMemoryManager* DistributedMemoryManager::dmm_;
-
-	DistributedMemoryManager::~DistributedMemoryManager(){
-		for (int i=0; i<server_states_.size(); i++){
-			delete server_states_[i];
-		}
-	}
 
 }  //  namespace lapis
 

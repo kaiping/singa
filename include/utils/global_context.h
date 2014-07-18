@@ -24,7 +24,7 @@ class GlobalContext {
  public:
   explicit GlobalContext(const char* system_conf_path,
                          const char * model_conf_path);
-  inline bool IsRoleOf(const Role& role, int rank);
+  bool IsRoleOf(const Role& role, int rank);
 
 
   int num_memory_servers() { return num_memory_servers_; }

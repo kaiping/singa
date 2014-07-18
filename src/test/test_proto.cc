@@ -8,7 +8,7 @@ namespace lapis {
 
 TEST(ProtoTest, ReadFromFile) {
   ModelConfProto model;
-  lapis::ReadProtoFromTextFile("data/model.conf", &model);
+  lapis::ReadProtoFromTextFile("src/test/data/model.conf", &model);
   EXPECT_STREQ("simple_autoencoder", model.name().c_str());
 
   NetProto net = model.net();
@@ -35,9 +35,9 @@ TEST(ProtoTest, ReadFromFile) {
   EXPECT_EQ(2, trainer.checkpoint_after_steps());
   EXPECT_EQ(2, trainer.checkpoint_every_steps());
   SGDProto sgd = trainer.sgd();
-  EXPECT_EQ(0.1, sgd.base_learning_rate());
-  EXPECT_EQ(0.5, sgd.base_momentum());
-  EXPECT_EQ(0.9, sgd.final_momentum());
+  EXPECT_EQ(0.1f, sgd.base_learning_rate());
+  EXPECT_EQ(0.5f, sgd.base_momentum());
+  EXPECT_EQ(0.9f, sgd.final_momentum());
   EXPECT_EQ(10, sgd.momentum_change_steps());
 }
 

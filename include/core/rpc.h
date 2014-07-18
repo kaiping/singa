@@ -111,6 +111,9 @@ class NetworkThread {
   void Flush();
   void Shutdown();
 
+  //  wait till all threads terminate
+  void WaitTillFinish();
+
   int id() { return id_; }
   int size() const { return world_->Get_size(); }
 
@@ -145,7 +148,7 @@ class NetworkThread {
   Handle handles_[kMaxMethods];
 
   //queues of sent messages
-  vector<RPCRequest*> pending_sends_;
+  deque<RPCRequest*> pending_sends_;
   unordered_set<RPCRequest*> active_sends_;
 
   int id_;

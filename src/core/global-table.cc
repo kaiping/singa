@@ -118,14 +118,14 @@ void GlobalTable::SendUpdates() {
   TableData put;
   for (int i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
-
     if (!is_local_shard(i) && !t->empty()) {
       // Always send at least one chunk, to ensure that we clear taint on
       // tables we own.
       do {
         put.Clear();
         put.set_shard(i);
-        put.set_source(w_->id());
+        //put.set_source(w_->id());
+        put.set_source(worker_id_);
         put.set_table(id());
 
         RPCTableCoder c(&put);
@@ -134,7 +134,7 @@ void GlobalTable::SendUpdates() {
 
         put.set_done(true);
 
-        NetworkThread::Get()->Send(owner(i) + 1, MTYPE_PUT_REQUEST, put);
+        NetworkThread::Get()->Send(owner(i), MTYPE_PUT_REQUEST, put);
       } while(!t->empty());
 
       t->clear();

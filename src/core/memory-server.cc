@@ -11,7 +11,6 @@ namespace lapis{
 		server_id_ = net_->id();
 		manager_id_ = net_->size()-1;
 
-		LOG(INFO) << StringPrintf("************* STARTING MEMORY SERVER ON PROCESS %d", id());
 		//  set itself as the current worker for the table
 		TableRegistry::Map &t = TableRegistry::Get()->tables();
 		for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
@@ -23,7 +22,6 @@ namespace lapis{
 		 req.set_id(server_id_);
 		 net_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
 
-		 LOG(INFO) << StringPrintf("************* SENDING REGISTER_WORKER FROM PROCESS %d", id());
 
 		// register callbacks
 		NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
@@ -35,6 +33,9 @@ namespace lapis{
 		                                        boost::bind(&MemoryServer::HandleUpdateRequest, this, _1));
 		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_REQUEST,
 												boost::bind(&MemoryServer::HandleGetRequest, this, _1));
+
+
+		NetworkThread::Get()->WaitTillFinish();
 	}
 
 	void MemoryServer::HandleShardAssignment(){
@@ -51,6 +52,8 @@ namespace lapis{
 
 			EmptyMessage empty;
 			net_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+
+			LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
 		}
 	}
 
@@ -86,6 +89,10 @@ namespace lapis{
 
 		GlobalTable *t = TableRegistry::Get()->table(put->table());
 		t->ApplyUpdates(*put);
+		int key = 0;
+		key = *reinterpret_cast<const int*>((new StringPiece(put->key()))->data);
+		LOG(INFO) << StringPrintf("Process %d updated with "
+				"TableData of key %d", NetworkThread::Get()->id(), key);
 	}
 
 	int MemoryServer::peer_for_partition(int table, int shard){

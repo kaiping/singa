@@ -89,7 +89,6 @@ NetworkThread::NetworkThread() {
   else
 	  request_queue_ = new AsyncRequestQueue(gc->num_keys(), gc->num_memory_servers());
 
-  LOG(INFO) << "START NETWORK THREAD >>>>><<<<<<<<<, of ID " << id();
 }
 
 bool NetworkThread::active() const {
@@ -112,7 +111,8 @@ void NetworkThread::CollectActive() {
         LOG(INFO) << "Send " << MP(id(), r->target) << " of size " << r->payload.size()
                   << " succeeded after " << r->failures << " failures.";
       }
-      LOG(INFO) << StringPrintf("============ Finished send to %d of size %d ", r->target, r->payload.size());
+      if (r->rpc_type==MTYPE_PUT_REQUEST)
+          	  LOG(INFO) << StringPrintf("Process %d: SENDING PUT to process %d +++++ SUCCEEDED" , id_, r->target);
       delete r;
       i = active_sends_.erase(i);
       continue;
@@ -125,7 +125,6 @@ void NetworkThread::CollectActive() {
 //  are added to the queue. Other requests (shard assignment, etc.)
 //  are processed right away
 void NetworkThread::NetworkLoop() {
-	LOG(INFO) << StringPrintf("IN PROCESS %d NETWORK LOOP", id());
   while (running_) {
     MPI::Status st;
 
@@ -134,18 +133,22 @@ void NetworkThread::NetworkLoop() {
       int source = st.Get_source();
       int bytes = st.Get_count(MPI::BYTE);
 
-      if (tag==MTYPE_REGISTER_WORKER)
-    	  LOG(INFO) << StringPrintf("++++++++++++ RECIEVED REGISGER_WORKER FROM PROCESS %d", source);
       string data;
       data.resize(bytes);
 
       world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
 
-      CHECK_LT(source, kMaxHosts);
-
+      if (tag==MTYPE_SHARD_ASSIGNMENT)
+    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED SHARD_ASSIGNMENT REQUEST", id_);
+      else if (tag==MTYPE_WORKER_SHUTDOWN)
+    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED WORKER_SHUTDOWN REQUEST", id_);
+      else if (tag==MTYPE_GET_RESPONSE)
+    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED GET_RESPONSE REQUEST", id_);
       //  put request to the queue
-      if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST)
+      if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST){
+    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED PUT/GET REQUEST", id_);
     	  request_queue_->Enqueue(tag, data);
+      }
       else{ //  put reponse, etc. to the response queue. This is read
     	    //  actively by the client
     	  boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
@@ -164,11 +167,15 @@ void NetworkThread::NetworkLoop() {
     //  push the send queue through
     while (!pending_sends_.empty()) {
       boost::recursive_mutex::scoped_lock sl(send_lock);
-      RPCRequest* s = pending_sends_.back();
-      pending_sends_.pop_back();
+      RPCRequest* s = pending_sends_.front();
+      pending_sends_.pop_front();
       s->start_time = Now();
       s->mpi_req = world_->Isend(
           s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
+      if (s->rpc_type==MTYPE_PUT_REQUEST)
+    	  LOG(INFO) << StringPrintf("Process %d: SENDING PUT to process %d", id_, s->target);
+      if (s->rpc_type==MTYPE_WORKER_SHUTDOWN)
+          	  LOG(INFO) << StringPrintf("Process %d: SENDING WORKER_SHUTDOWN to process %d", id_, s->target);
       active_sends_.insert(s);
     }
 
@@ -179,8 +186,8 @@ void NetworkThread::NetworkLoop() {
 //  loop through the request queue and process messages
 //  get the next message, then invoke call back
 void NetworkThread::ProcessLoop(){
-	LOG(INFO) << StringPrintf("IN PROCESS %d PROCESS LOOP", id());
 	while(running_){
+		LOG(INFO) << StringPrintf("^^^^^^^^^ GETTING NEXT REQUEST TO PROCESS AT PROCESS %d", NetworkThread::Get()->id());
 		TaggedMessage msg;
 		request_queue_->NextRequest(&msg);
 		ProcessRequest(msg);
@@ -197,6 +204,7 @@ void NetworkThread::ProcessRequest(const TaggedMessage& t_msg){
 	}
 	message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
 	handles_[t_msg.tag](message.get());
+	LOG(INFO) << StringPrintf("^^^^^^^^^ PROCESSED PUT/GET REQUEST AT PROCESS %d", NetworkThread::Get()->id());
 }
 
 //  for now, only PUT_RESPONSE message are being pulled from this.
@@ -225,9 +233,6 @@ void NetworkThread::Read(int desired_src, int type, Message* data, int *source) 
   while (!TryRead(desired_src, type, data, source)) {
     Sleep(FLAGS_sleep_time);
   }
-
-  if (type==MTYPE_REGISTER_WORKER)
-  		LOG(INFO) << StringPrintf("PROCESS %d READ message of type MTYPE_REGISTER_WORKER", id());
 }
 
 //  non-blocking read
@@ -293,8 +298,12 @@ void NetworkThread::WaitForSync(int reply, int count) {
   }
 }
 
+void NetworkThread::WaitTillFinish(){
+	sender_and_reciever_thread_->join();
+	processing_thread_->join();
+}
+
 static void ShutdownMPI() {
-	LOG(INFO) << "NOOOOOOOOOOOOOO, SHUTDOWN MPI, PROCESS " << NetworkThread::Get()->id();
   NetworkThread::Get()->Shutdown();
 }
 
@@ -350,17 +359,15 @@ void SyncRequestQueue::Enqueue(int tag, string& data){
 //  get the next request, by going through the request queue,
 //  key by key
 void SyncRequestQueue::NextRequest(TaggedMessage* message){
+
 	//get lock of the current key;
 	bool success = false;
-	LOG(INFO) << StringPrintf("^^^^^^^^^ ABOUT TO GET NEXT REQUEST, AT PROCESS %d", NetworkThread::Get()->id());
 	while (!success){
 		while (key_locks_.empty() && request_queues_.empty())
 			Sleep(FLAGS_sleep_time);
-
-		LOG(INFO) << StringPrintf("^^^^^^^^^ TRYING TO GET NEXT REQUEST, AT PROCESS %d", NetworkThread::Get()->id());
-	  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 	  Queue& key_queue = request_queues_[key_index_];
 	  {
+		  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
 		  if (!key_queue.empty()){
 			  TaggedMessage* q_msg = key_queue.front();
@@ -371,7 +378,8 @@ void SyncRequestQueue::NextRequest(TaggedMessage* message){
 			  success=true;
 		  }
 	  }
-	  key_index_++;
+	  key_index_ = (key_index_+1)%request_queues_.size();
+	  Sleep(FLAGS_sleep_time);
 	}
 }
 
@@ -420,16 +428,16 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 	//get lock of the current key;
 	bool success = false;
 	while (!success){
-	  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 	  //Queue& key_queue = request_queues_[key_index_];
 	  {
+		  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
 		  int& counter = access_counters_[key_index_];
 		  int& is_put = is_in_put_queue_[key_index_];
 		  //are we in put queue or in get queue?
 		  if (is_put){
 			  if (put_queues_[key_index_].empty()){
-				  key_index_++;
+				  key_index_ = (key_index_+1)%get_queues_.size();
 				  continue;
 			  }
 
@@ -452,7 +460,7 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 		  }
 		  else{ //  in get queue
 			  if (get_queues_[key_index_].empty()){
-				  key_index_++;
+				  key_index_ = (key_index_+1)%get_queues_.size();
 				  continue;
 			  }
 			  TaggedMessage* q_msg = get_queues_[key_index_].front();
@@ -468,7 +476,8 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 			  success=true;
 		  }
 	  }
-	  key_index_++;
+	  key_index_ = (key_index_+1)%get_queues_.size();
+	  Sleep(FLAGS_sleep_time);
 	}
 }
 

@@ -26,8 +26,15 @@ namespace lapis{
 		   net_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
 
 		   //  adding memory server.
-		   if (context_->IsRoleOf(kMemoryServer, i))
+		   if (context_->IsRoleOf(kMemoryServer, i)){
 			   server_states_.push_back(new ServerState(i));
+		   }
+		}
+		LOG(INFO) << StringPrintf(" All servers registered and started up");
+		//  set itself as the current worker for the table
+		TableRegistry::Map &t = TableRegistry::Get()->tables();
+		for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
+		    i->second->worker_id_ = NetworkThread::Get()->id();
 		}
 	}
 
@@ -42,19 +49,19 @@ namespace lapis{
 
 		//  then send table assignment
 		send_table_assignments();
+
 	}
 
-	//  memory servers are specified in global context
+	//  memory servers are specified in global context. Round-robin assignment
 	void DistributedMemoryManager::assign_worker(int table, int shard){
-		  for (int i = 0; i < server_states_.size(); ++i) {
-		    ServerState& server = *server_states_[i];
-		    if (server.shard_id==-1){ //  this server is availabeq
-		    	server.shard_id = shard;
-		    	server.local_shards.insert(new TaskId(table, shard));
-		    	return;
-		    }
-		  }
-		  LOG(FATAL) << "Out of distributed memory servers to assign tables";
+		static int server_idx = 0;
+
+		ServerState& server = *server_states_[server_idx];
+		LOG(INFO) << StringPrintf("ASSIGNING TABLE (%d,%d) to SERVER %d", table, shard, server_states_[server_idx]->server_id);
+		server.shard_id = shard;
+		server.local_shards.insert(new TaskId(table, shard));
+		server_idx = (server_idx+1) % server_states_.size();
+		return;
 	}
 
 	//  construct ShardAssignment message containing assignment of all tables
@@ -68,9 +75,15 @@ namespace lapis{
 		      s->set_new_worker(server.server_id);
 		      s->set_table((*j)->table);
 		      s->set_shard((*j)->shard);
+
+		      //  update local tables
+		      GlobalTable *t = TableRegistry::Get()->table((*j)->table);
+		      t->get_partition_info((*j)->shard)->owner = server.server_id;
+
 		      delete (*j);
 		    }
 		  }
+
 		  net_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 	}
 

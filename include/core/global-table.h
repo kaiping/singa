@@ -141,15 +141,14 @@ V TypedGlobalTable<K, V>::get_local(const K& k) {
 // and the update is queued for transmission to the owner.
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
-  LOG(FATAL) << "Need to implement.";
   int shard = this->get_shard(k);
-
   //  boost::recursive_mutex::scoped_lock sl(mutex());
   partition(shard)->put(k, v);
 
   //  always send
-  if (!is_local_shard(shard))
+  if (!is_local_shard(shard)){
 	  SendUpdates();
+  }
 
 }
 

@@ -30,7 +30,7 @@ int main(int argc, char** argv){
 		DistributedMemoryManager::Get()->AssignTables();
 
 		//put, update then get
-		for (int i=0; i<100; i++)
+		for (int i=0; i<10; i++)
 			test_table->put(i,i);
 
 		/*
@@ -40,13 +40,19 @@ int main(int argc, char** argv){
 		for (int i=0; i<100; i++)
 			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
 
+		*/
+		sleep(10);
 
 		// then send message to flush/stop other workers
 		if (IsDistributedMemoryManager())
-			DistributedMemoryManager::Get()->ShutdownServers();
-		*/
+				DistributedMemoryManager::Get()->ShutdownServers();
+
+		while (true){
+			sleep(10);
+		}
+
 	}
-	std::cout << "Hello worldi, there " << std::endl;
+	LOG(INFO)<< StringPrintf("$$$$$$$$$$ PROCESS %d finished", NetworkThread::Get()->id());
 }
 
 

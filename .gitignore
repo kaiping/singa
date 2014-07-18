@@ -1,1 +1,8 @@
 *.txt
+*.orig
+*.swp
+*.o
+*.bin
+*.a
+*.so
+cscope.*

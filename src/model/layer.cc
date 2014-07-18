@@ -59,15 +59,9 @@ void LayerFactory::RegisterCreateFunction(
 }
 
 Layer *LayerFactory::Create(const std::string id) {
-  Layer *instance = nullptr;
-
-  auto it = layer_map_.find(id);
-  if (it != layer_map_.end())
-    instance = it->second();
-  if (instance != nullptr)
-    return instance;
-  else
-    return nullptr;
+  CHECK(layer_map_.find(id) != layer_map_.end())
+    << "The initialization function " << id << " has not been registered\n";
+  return layer_map_[id];
 }
 
 }  // namespace lapis

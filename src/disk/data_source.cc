@@ -3,6 +3,9 @@
 
 #include "model/data_source.h"
 namespace lapis {
+/*****************************************************************************
+ * Implementation for DataSource
+ ****************************************************************************/
 DataSource::DataSource(const DataSourceProto &ds_proto) {
 }
 
@@ -20,4 +23,5 @@ void DataSource::ToProto(DataSourceProto *ds_proto) {
   ds_proto->set_height(height_);
   ds_proto->set_width(width_);
 }
+
 }  // namespace lapis

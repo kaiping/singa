@@ -148,7 +148,7 @@ class Layer {
  * @param LAYER the child layer class
  */
 #define REGISTER_LAYER(ID, LAYER) LayerFactory::Instance()->\
-  RegisterCreateFunction(ID, [](void)-> Layer* {return new LAYER();});
+  RegisterCreateFunction(ID, [](void)-> Layer* {return new LAYER();})
 
 /**
  * Factory for creating layer based on user provided layer type/identifier.

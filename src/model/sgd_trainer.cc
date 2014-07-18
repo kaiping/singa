@@ -11,6 +11,7 @@ void SGDTrainer::Init(const TrainerProto &trainer_proto) {
   Trainer::Init(trainer_proto);
   // take over the control for this pointer
   sgd_proto_ = trainer_proto.sgd();
+  phase_ = TrainPhase::kTest;
 }
 
 SGDTrainer::~SGDTrainer() {
@@ -46,10 +47,9 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
 void SGDTrainer::Train(Net *net, const int step) {
   if (phase_ != TrainPhase::kTrain) {
     for (auto layer : net->Layers()) {
-      if (layer->HasInput())
-        layer->Setup(sgd_proto_.train_batchsize(),
-                     TrainAlgorithm::kBackPropagation,
-                     train_data_);
+      layer->Setup(sgd_proto_.train_batchsize(),
+                   TrainAlgorithm::kBackPropagation,
+                   train_data_);
     }
   }
   BackPropagation(net, step);
@@ -58,10 +58,9 @@ void SGDTrainer::Train(Net *net, const int step) {
 void SGDTrainer::Validate(Net *net) {
   if (phase_ != TrainPhase::kValidation) {
     for (auto layer : net->Layers()) {
-      if (layer->HasInput())
-        layer->Setup(sgd_proto_.validation_batchsize(),
-                     TrainAlgorithm::kBackPropagation,
-                     validation_data_);
+      layer->Setup(sgd_proto_.validation_batchsize(),
+                    TrainAlgorithm::kBackPropagation,
+                    validation_data_);
     }
   }
   // TODO(wangwei) forward only
@@ -70,10 +69,9 @@ void SGDTrainer::Validate(Net *net) {
 void SGDTrainer::Test(Net *net) {
   if (phase_ != TrainPhase::kTest) {
     for (auto layer : net->Layers()) {
-      if (layer->HasInput())
-        layer->Setup(sgd_proto_.test_batchsize(),
-                     TrainAlgorithm::kBackPropagation,
-                     test_data_);
+      layer->Setup(sgd_proto_.test_batchsize(),
+                   TrainAlgorithm::kBackPropagation,
+                   test_data_);
     }
   }
   // TODO(wangwei) forward only

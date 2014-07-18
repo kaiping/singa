@@ -7,12 +7,15 @@ namespace lapis {
 void Blob::Reshape(int length) {
   Reshape(0, length);
 }
+
 void Blob::Reshape(int height, int width) {
   Reshape(0, height, width);
 }
+
 void Blob::Reshape(int num, int height, int width) {
   Reshape(num, 0, height, width);
 }
+
 void Blob::Reshape(int num, int channels, int height, int width) {
   num_ = num;
   channels_ = channels;

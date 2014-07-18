@@ -35,6 +35,7 @@ TEST(ProtoTest, ReadFromFile) {
   EXPECT_EQ(2, trainer.checkpoint_after_steps());
   EXPECT_EQ(2, trainer.checkpoint_every_steps());
   SGDProto sgd = trainer.sgd();
+  // must write 0.1f instead of 0.1
   EXPECT_EQ(0.1f, sgd.base_learning_rate());
   EXPECT_EQ(0.5f, sgd.base_momentum());
   EXPECT_EQ(0.9f, sgd.final_momentum());

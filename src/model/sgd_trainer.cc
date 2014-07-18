@@ -47,7 +47,8 @@ void SGDTrainer::Train(Net *net, const int step) {
   if (phase_ != TrainPhase::kTrain) {
     for (auto layer : net->Layers()) {
       if (layer->HasInput())
-        layer->Setup(sgd_proto_.train_batchsize(), TrainAlgorithm::kBackPropagation,
+        layer->Setup(sgd_proto_.train_batchsize(),
+                     TrainAlgorithm::kBackPropagation,
                      train_data_);
     }
   }
@@ -70,7 +71,8 @@ void SGDTrainer::Test(Net *net) {
   if (phase_ != TrainPhase::kTest) {
     for (auto layer : net->Layers()) {
       if (layer->HasInput())
-        layer->Setup(sgd_proto_.test_batchsize(), TrainAlgorithm::kBackPropagation,
+        layer->Setup(sgd_proto_.test_batchsize(),
+                     TrainAlgorithm::kBackPropagation,
                      test_data_);
     }
   }

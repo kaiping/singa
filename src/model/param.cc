@@ -37,8 +37,8 @@ ParamInitFactory *ParamInitFactory::Instance() {
   return &factory;
 }
 
-void ParamInitFactory::RegisterInitFunc(std::string id,
-                                        std::function<void(Param *)> &func) {
+void ParamInitFactory::RegisterInitFunc(
+  std::string id, const std::function<void(Param *)> &func) {
   map_[id] = func;
 }
 

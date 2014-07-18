@@ -37,6 +37,7 @@ class InnerProductEdge : public Edge {
                         Blob *dest_grad, bool overwrite);
 
   virtual void ComputeParamUpdates(const Trainer *trainer);
+
  private:
   Param weight_, bias_;
 };

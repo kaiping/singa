@@ -51,23 +51,19 @@ enum DataSourceProto_DataType {
   DataSourceProto_DataType_LABEL = 1
 };
 bool DataSourceProto_DataType_IsValid(int value);
-const DataSourceProto_DataType DataSourceProto_DataType_DataType_MIN =
-  DataSourceProto_DataType_FEATURE;
-const DataSourceProto_DataType DataSourceProto_DataType_DataType_MAX =
-  DataSourceProto_DataType_LABEL;
-const int DataSourceProto_DataType_DataType_ARRAYSIZE =
-  DataSourceProto_DataType_DataType_MAX + 1;
+const DataSourceProto_DataType DataSourceProto_DataType_DataType_MIN = DataSourceProto_DataType_FEATURE;
+const DataSourceProto_DataType DataSourceProto_DataType_DataType_MAX = DataSourceProto_DataType_LABEL;
+const int DataSourceProto_DataType_DataType_ARRAYSIZE = DataSourceProto_DataType_DataType_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor *DataSourceProto_DataType_descriptor();
-inline const ::std::string &DataSourceProto_DataType_Name(
-  DataSourceProto_DataType value) {
+const ::google::protobuf::EnumDescriptor* DataSourceProto_DataType_descriptor();
+inline const ::std::string& DataSourceProto_DataType_Name(DataSourceProto_DataType value) {
   return ::google::protobuf::internal::NameOfEnum(
-           DataSourceProto_DataType_descriptor(), value);
+    DataSourceProto_DataType_descriptor(), value);
 }
 inline bool DataSourceProto_DataType_Parse(
-  const ::std::string &name, DataSourceProto_DataType *value) {
+    const ::std::string& name, DataSourceProto_DataType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<DataSourceProto_DataType>(
-           DataSourceProto_DataType_descriptor(), name, value);
+    DataSourceProto_DataType_descriptor(), name, value);
 }
 enum SGDProto_ChangeProto {
   SGDProto_ChangeProto_FIXED = 0,
@@ -76,23 +72,19 @@ enum SGDProto_ChangeProto {
   SGDProto_ChangeProto_LINEAR = 3
 };
 bool SGDProto_ChangeProto_IsValid(int value);
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN =
-  SGDProto_ChangeProto_FIXED;
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX =
-  SGDProto_ChangeProto_LINEAR;
-const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE =
-  SGDProto_ChangeProto_ChangeProto_MAX + 1;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_FIXED;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_LINEAR;
+const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE = SGDProto_ChangeProto_ChangeProto_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor *SGDProto_ChangeProto_descriptor();
-inline const ::std::string &SGDProto_ChangeProto_Name(SGDProto_ChangeProto
-    value) {
+const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor();
+inline const ::std::string& SGDProto_ChangeProto_Name(SGDProto_ChangeProto value) {
   return ::google::protobuf::internal::NameOfEnum(
-           SGDProto_ChangeProto_descriptor(), value);
+    SGDProto_ChangeProto_descriptor(), value);
 }
 inline bool SGDProto_ChangeProto_Parse(
-  const ::std::string &name, SGDProto_ChangeProto *value) {
+    const ::std::string& name, SGDProto_ChangeProto* value) {
   return ::google::protobuf::internal::ParseNamedEnum<SGDProto_ChangeProto>(
-           SGDProto_ChangeProto_descriptor(), name, value);
+    SGDProto_ChangeProto_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -101,51 +93,48 @@ class SystemConfProto : public ::google::protobuf::Message {
   SystemConfProto();
   virtual ~SystemConfProto();
 
-  SystemConfProto(const SystemConfProto &from);
+  SystemConfProto(const SystemConfProto& from);
 
-  inline SystemConfProto &operator=(const SystemConfProto &from) {
+  inline SystemConfProto& operator=(const SystemConfProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const SystemConfProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SystemConfProto& default_instance();
 
-  void Swap(SystemConfProto *other);
+  void Swap(SystemConfProto* other);
 
   // implements Message ----------------------------------------------
 
-  SystemConfProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const SystemConfProto &from);
-  void MergeFrom(const SystemConfProto &from);
+  SystemConfProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const SystemConfProto& from);
+  void MergeFrom(const SystemConfProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -237,7 +226,7 @@ class SystemConfProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static SystemConfProto *default_instance_;
+  static SystemConfProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -246,51 +235,48 @@ class DataSourceProto : public ::google::protobuf::Message {
   DataSourceProto();
   virtual ~DataSourceProto();
 
-  DataSourceProto(const DataSourceProto &from);
+  DataSourceProto(const DataSourceProto& from);
 
-  inline DataSourceProto &operator=(const DataSourceProto &from) {
+  inline DataSourceProto& operator=(const DataSourceProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const DataSourceProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataSourceProto& default_instance();
 
-  void Swap(DataSourceProto *other);
+  void Swap(DataSourceProto* other);
 
   // implements Message ----------------------------------------------
 
-  DataSourceProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const DataSourceProto &from);
-  void MergeFrom(const DataSourceProto &from);
+  DataSourceProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DataSourceProto& from);
+  void MergeFrom(const DataSourceProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -308,15 +294,15 @@ class DataSourceProto : public ::google::protobuf::Message {
     DataSourceProto_DataType_DataType_MAX;
   static const int DataType_ARRAYSIZE =
     DataSourceProto_DataType_DataType_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor *
+  static inline const ::google::protobuf::EnumDescriptor*
   DataType_descriptor() {
     return DataSourceProto_DataType_descriptor();
   }
-  static inline const ::std::string &DataType_Name(DataType value) {
+  static inline const ::std::string& DataType_Name(DataType value) {
     return DataSourceProto_DataType_Name(value);
   }
-  static inline bool DataType_Parse(const ::std::string &name,
-                                    DataType *value) {
+  static inline bool DataType_Parse(const ::std::string& name,
+      DataType* value) {
     return DataSourceProto_DataType_Parse(name, value);
   }
 
@@ -326,37 +312,37 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
-  inline const ::std::string &name() const;
-  inline void set_name(const ::std::string &value);
-  inline void set_name(const char *value);
-  inline void set_name(const char *value, size_t size);
-  inline ::std::string *mutable_name();
-  inline ::std::string *release_name();
-  inline void set_allocated_name(::std::string *name);
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
   // required string parser = 2;
   inline bool has_parser() const;
   inline void clear_parser();
   static const int kParserFieldNumber = 2;
-  inline const ::std::string &parser() const;
-  inline void set_parser(const ::std::string &value);
-  inline void set_parser(const char *value);
-  inline void set_parser(const char *value, size_t size);
-  inline ::std::string *mutable_parser();
-  inline ::std::string *release_parser();
-  inline void set_allocated_parser(::std::string *parser);
+  inline const ::std::string& parser() const;
+  inline void set_parser(const ::std::string& value);
+  inline void set_parser(const char* value);
+  inline void set_parser(const char* value, size_t size);
+  inline ::std::string* mutable_parser();
+  inline ::std::string* release_parser();
+  inline void set_allocated_parser(::std::string* parser);
 
   // optional string path = 3;
   inline bool has_path() const;
   inline void clear_path();
   static const int kPathFieldNumber = 3;
-  inline const ::std::string &path() const;
-  inline void set_path(const ::std::string &value);
-  inline void set_path(const char *value);
-  inline void set_path(const char *value, size_t size);
-  inline ::std::string *mutable_path();
-  inline ::std::string *release_path();
-  inline void set_allocated_path(::std::string *path);
+  inline const ::std::string& path() const;
+  inline void set_path(const ::std::string& value);
+  inline void set_path(const char* value);
+  inline void set_path(const char* value, size_t size);
+  inline ::std::string* mutable_path();
+  inline ::std::string* release_path();
+  inline void set_allocated_path(::std::string* path);
 
   // optional int64 size = 4;
   inline bool has_size() const;
@@ -423,9 +409,9 @@ class DataSourceProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string *name_;
-  ::std::string *parser_;
-  ::std::string *path_;
+  ::std::string* name_;
+  ::std::string* parser_;
+  ::std::string* path_;
   ::google::protobuf::int64 size_;
   ::google::protobuf::int64 num_;
   int type_;
@@ -441,7 +427,7 @@ class DataSourceProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static DataSourceProto *default_instance_;
+  static DataSourceProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -450,51 +436,48 @@ class RGBDatum : public ::google::protobuf::Message {
   RGBDatum();
   virtual ~RGBDatum();
 
-  RGBDatum(const RGBDatum &from);
+  RGBDatum(const RGBDatum& from);
 
-  inline RGBDatum &operator=(const RGBDatum &from) {
+  inline RGBDatum& operator=(const RGBDatum& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const RGBDatum &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const RGBDatum& default_instance();
 
-  void Swap(RGBDatum *other);
+  void Swap(RGBDatum* other);
 
   // implements Message ----------------------------------------------
 
-  RGBDatum *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const RGBDatum &from);
-  void MergeFrom(const RGBDatum &from);
+  RGBDatum* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const RGBDatum& from);
+  void MergeFrom(const RGBDatum& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -527,13 +510,13 @@ class RGBDatum : public ::google::protobuf::Message {
   inline bool has_content() const;
   inline void clear_content();
   static const int kContentFieldNumber = 4;
-  inline const ::std::string &content() const;
-  inline void set_content(const ::std::string &value);
-  inline void set_content(const char *value);
-  inline void set_content(const char *value, size_t size);
-  inline ::std::string *mutable_content();
-  inline ::std::string *release_content();
-  inline void set_allocated_content(::std::string *content);
+  inline const ::std::string& content() const;
+  inline void set_content(const ::std::string& value);
+  inline void set_content(const char* value);
+  inline void set_content(const char* value, size_t size);
+  inline ::std::string* mutable_content();
+  inline ::std::string* release_content();
+  inline void set_allocated_content(::std::string* content);
 
   // @@protoc_insertion_point(class_scope:lapis.RGBDatum)
  private:
@@ -550,7 +533,7 @@ class RGBDatum : public ::google::protobuf::Message {
 
   ::google::protobuf::int32 channels_;
   ::google::protobuf::int32 height_;
-  ::std::string *content_;
+  ::std::string* content_;
   ::google::protobuf::int32 width_;
 
   mutable int _cached_size_;
@@ -561,7 +544,7 @@ class RGBDatum : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static RGBDatum *default_instance_;
+  static RGBDatum* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -570,51 +553,48 @@ class ParamProto : public ::google::protobuf::Message {
   ParamProto();
   virtual ~ParamProto();
 
-  ParamProto(const ParamProto &from);
+  ParamProto(const ParamProto& from);
 
-  inline ParamProto &operator=(const ParamProto &from) {
+  inline ParamProto& operator=(const ParamProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const ParamProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ParamProto& default_instance();
 
-  void Swap(ParamProto *other);
+  void Swap(ParamProto* other);
 
   // implements Message ----------------------------------------------
 
-  ParamProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const ParamProto &from);
-  void MergeFrom(const ParamProto &from);
+  ParamProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ParamProto& from);
+  void MergeFrom(const ParamProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -626,25 +606,25 @@ class ParamProto : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
-  inline const ::std::string &name() const;
-  inline void set_name(const ::std::string &value);
-  inline void set_name(const char *value);
-  inline void set_name(const char *value, size_t size);
-  inline ::std::string *mutable_name();
-  inline ::std::string *release_name();
-  inline void set_allocated_name(::std::string *name);
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
   // optional string initializer = 2 [default = "Zero"];
   inline bool has_initializer() const;
   inline void clear_initializer();
   static const int kInitializerFieldNumber = 2;
-  inline const ::std::string &initializer() const;
-  inline void set_initializer(const ::std::string &value);
-  inline void set_initializer(const char *value);
-  inline void set_initializer(const char *value, size_t size);
-  inline ::std::string *mutable_initializer();
-  inline ::std::string *release_initializer();
-  inline void set_allocated_initializer(::std::string *initializer);
+  inline const ::std::string& initializer() const;
+  inline void set_initializer(const ::std::string& value);
+  inline void set_initializer(const char* value);
+  inline void set_initializer(const char* value, size_t size);
+  inline ::std::string* mutable_initializer();
+  inline ::std::string* release_initializer();
+  inline void set_allocated_initializer(::std::string* initializer);
 
   // repeated int32 shape = 3;
   inline int shape_size() const;
@@ -653,22 +633,22 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 shape(int index) const;
   inline void set_shape(int index, ::google::protobuf::int32 value);
   inline void add_shape(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField<::google::protobuf::int32> &
-  shape() const;
-  inline ::google::protobuf::RepeatedField<::google::protobuf::int32> *
-  mutable_shape();
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+      shape() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+      mutable_shape();
 
   // optional string partitioner = 4;
   inline bool has_partitioner() const;
   inline void clear_partitioner();
   static const int kPartitionerFieldNumber = 4;
-  inline const ::std::string &partitioner() const;
-  inline void set_partitioner(const ::std::string &value);
-  inline void set_partitioner(const char *value);
-  inline void set_partitioner(const char *value, size_t size);
-  inline ::std::string *mutable_partitioner();
-  inline ::std::string *release_partitioner();
-  inline void set_allocated_partitioner(::std::string *partitioner);
+  inline const ::std::string& partitioner() const;
+  inline void set_partitioner(const ::std::string& value);
+  inline void set_partitioner(const char* value);
+  inline void set_partitioner(const char* value, size_t size);
+  inline ::std::string* mutable_partitioner();
+  inline ::std::string* release_partitioner();
+  inline void set_allocated_partitioner(::std::string* partitioner);
 
   // repeated float content = 5 [packed = true];
   inline int content_size() const;
@@ -677,10 +657,10 @@ class ParamProto : public ::google::protobuf::Message {
   inline float content(int index) const;
   inline void set_content(int index, float value);
   inline void add_content(float value);
-  inline const ::google::protobuf::RepeatedField<float> &
-  content() const;
-  inline ::google::protobuf::RepeatedField<float> *
-  mutable_content();
+  inline const ::google::protobuf::RepeatedField< float >&
+      content() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_content();
 
   // @@protoc_insertion_point(class_scope:lapis.ParamProto)
  private:
@@ -693,12 +673,12 @@ class ParamProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string *name_;
-  ::std::string *initializer_;
-  static ::std::string *_default_initializer_;
-  ::google::protobuf::RepeatedField<::google::protobuf::int32> shape_;
-  ::std::string *partitioner_;
-  ::google::protobuf::RepeatedField<float> content_;
+  ::std::string* name_;
+  ::std::string* initializer_;
+  static ::std::string* _default_initializer_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shape_;
+  ::std::string* partitioner_;
+  ::google::protobuf::RepeatedField< float > content_;
   mutable int _content_cached_byte_size_;
 
   mutable int _cached_size_;
@@ -709,7 +689,7 @@ class ParamProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static ParamProto *default_instance_;
+  static ParamProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -718,51 +698,48 @@ class EdgeProto : public ::google::protobuf::Message {
   EdgeProto();
   virtual ~EdgeProto();
 
-  EdgeProto(const EdgeProto &from);
+  EdgeProto(const EdgeProto& from);
 
-  inline EdgeProto &operator=(const EdgeProto &from) {
+  inline EdgeProto& operator=(const EdgeProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const EdgeProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const EdgeProto& default_instance();
 
-  void Swap(EdgeProto *other);
+  void Swap(EdgeProto* other);
 
   // implements Message ----------------------------------------------
 
-  EdgeProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const EdgeProto &from);
-  void MergeFrom(const EdgeProto &from);
+  EdgeProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const EdgeProto& from);
+  void MergeFrom(const EdgeProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -774,37 +751,37 @@ class EdgeProto : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
-  inline const ::std::string &name() const;
-  inline void set_name(const ::std::string &value);
-  inline void set_name(const char *value);
-  inline void set_name(const char *value, size_t size);
-  inline ::std::string *mutable_name();
-  inline ::std::string *release_name();
-  inline void set_allocated_name(::std::string *name);
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
   // required string type = 2;
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 2;
-  inline const ::std::string &type() const;
-  inline void set_type(const ::std::string &value);
-  inline void set_type(const char *value);
-  inline void set_type(const char *value, size_t size);
-  inline ::std::string *mutable_type();
-  inline ::std::string *release_type();
-  inline void set_allocated_type(::std::string *type);
+  inline const ::std::string& type() const;
+  inline void set_type(const ::std::string& value);
+  inline void set_type(const char* value);
+  inline void set_type(const char* value, size_t size);
+  inline ::std::string* mutable_type();
+  inline ::std::string* release_type();
+  inline void set_allocated_type(::std::string* type);
 
   // repeated .lapis.ParamProto param = 3;
   inline int param_size() const;
   inline void clear_param();
   static const int kParamFieldNumber = 3;
-  inline const ::lapis::ParamProto &param(int index) const;
-  inline ::lapis::ParamProto *mutable_param(int index);
-  inline ::lapis::ParamProto *add_param();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> &
-  param() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> *
-  mutable_param();
+  inline const ::lapis::ParamProto& param(int index) const;
+  inline ::lapis::ParamProto* mutable_param(int index);
+  inline ::lapis::ParamProto* add_param();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
+      param() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
+      mutable_param();
 
   // optional bool directed = 4 [default = true];
   inline bool has_directed() const;
@@ -824,9 +801,9 @@ class EdgeProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string *name_;
-  ::std::string *type_;
-  ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> param_;
+  ::std::string* name_;
+  ::std::string* type_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto > param_;
   bool directed_;
 
   mutable int _cached_size_;
@@ -837,7 +814,7 @@ class EdgeProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static EdgeProto *default_instance_;
+  static EdgeProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -846,51 +823,48 @@ class LayerProto : public ::google::protobuf::Message {
   LayerProto();
   virtual ~LayerProto();
 
-  LayerProto(const LayerProto &from);
+  LayerProto(const LayerProto& from);
 
-  inline LayerProto &operator=(const LayerProto &from) {
+  inline LayerProto& operator=(const LayerProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const LayerProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LayerProto& default_instance();
 
-  void Swap(LayerProto *other);
+  void Swap(LayerProto* other);
 
   // implements Message ----------------------------------------------
 
-  LayerProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const LayerProto &from);
-  void MergeFrom(const LayerProto &from);
+  LayerProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const LayerProto& from);
+  void MergeFrom(const LayerProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -902,13 +876,13 @@ class LayerProto : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
-  inline const ::std::string &name() const;
-  inline void set_name(const ::std::string &value);
-  inline void set_name(const char *value);
-  inline void set_name(const char *value, size_t size);
-  inline ::std::string *mutable_name();
-  inline ::std::string *release_name();
-  inline void set_allocated_name(::std::string *name);
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
   // required int32 num_output = 2;
   inline bool has_num_output() const;
@@ -921,71 +895,69 @@ class LayerProto : public ::google::protobuf::Message {
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 3;
-  inline const ::std::string &type() const;
-  inline void set_type(const ::std::string &value);
-  inline void set_type(const char *value);
-  inline void set_type(const char *value, size_t size);
-  inline ::std::string *mutable_type();
-  inline ::std::string *release_type();
-  inline void set_allocated_type(::std::string *type);
+  inline const ::std::string& type() const;
+  inline void set_type(const ::std::string& value);
+  inline void set_type(const char* value);
+  inline void set_type(const char* value, size_t size);
+  inline ::std::string* mutable_type();
+  inline ::std::string* release_type();
+  inline void set_allocated_type(::std::string* type);
 
   // repeated .lapis.ParamProto param = 4;
   inline int param_size() const;
   inline void clear_param();
   static const int kParamFieldNumber = 4;
-  inline const ::lapis::ParamProto &param(int index) const;
-  inline ::lapis::ParamProto *mutable_param(int index);
-  inline ::lapis::ParamProto *add_param();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> &
-  param() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> *
-  mutable_param();
+  inline const ::lapis::ParamProto& param(int index) const;
+  inline ::lapis::ParamProto* mutable_param(int index);
+  inline ::lapis::ParamProto* add_param();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
+      param() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
+      mutable_param();
 
   // repeated string out_edge = 5;
   inline int out_edge_size() const;
   inline void clear_out_edge();
   static const int kOutEdgeFieldNumber = 5;
-  inline const ::std::string &out_edge(int index) const;
-  inline ::std::string *mutable_out_edge(int index);
-  inline void set_out_edge(int index, const ::std::string &value);
-  inline void set_out_edge(int index, const char *value);
-  inline void set_out_edge(int index, const char *value, size_t size);
-  inline ::std::string *add_out_edge();
-  inline void add_out_edge(const ::std::string &value);
-  inline void add_out_edge(const char *value);
-  inline void add_out_edge(const char *value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField<::std::string> &out_edge()
-  const;
-  inline ::google::protobuf::RepeatedPtrField<::std::string> *mutable_out_edge();
+  inline const ::std::string& out_edge(int index) const;
+  inline ::std::string* mutable_out_edge(int index);
+  inline void set_out_edge(int index, const ::std::string& value);
+  inline void set_out_edge(int index, const char* value);
+  inline void set_out_edge(int index, const char* value, size_t size);
+  inline ::std::string* add_out_edge();
+  inline void add_out_edge(const ::std::string& value);
+  inline void add_out_edge(const char* value);
+  inline void add_out_edge(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& out_edge() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_out_edge();
 
   // repeated string in_edge = 6;
   inline int in_edge_size() const;
   inline void clear_in_edge();
   static const int kInEdgeFieldNumber = 6;
-  inline const ::std::string &in_edge(int index) const;
-  inline ::std::string *mutable_in_edge(int index);
-  inline void set_in_edge(int index, const ::std::string &value);
-  inline void set_in_edge(int index, const char *value);
-  inline void set_in_edge(int index, const char *value, size_t size);
-  inline ::std::string *add_in_edge();
-  inline void add_in_edge(const ::std::string &value);
-  inline void add_in_edge(const char *value);
-  inline void add_in_edge(const char *value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField<::std::string> &in_edge()
-  const;
-  inline ::google::protobuf::RepeatedPtrField<::std::string> *mutable_in_edge();
+  inline const ::std::string& in_edge(int index) const;
+  inline ::std::string* mutable_in_edge(int index);
+  inline void set_in_edge(int index, const ::std::string& value);
+  inline void set_in_edge(int index, const char* value);
+  inline void set_in_edge(int index, const char* value, size_t size);
+  inline ::std::string* add_in_edge();
+  inline void add_in_edge(const ::std::string& value);
+  inline void add_in_edge(const char* value);
+  inline void add_in_edge(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& in_edge() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_in_edge();
 
   // optional string data_source = 7;
   inline bool has_data_source() const;
   inline void clear_data_source();
   static const int kDataSourceFieldNumber = 7;
-  inline const ::std::string &data_source() const;
-  inline void set_data_source(const ::std::string &value);
-  inline void set_data_source(const char *value);
-  inline void set_data_source(const char *value, size_t size);
-  inline ::std::string *mutable_data_source();
-  inline ::std::string *release_data_source();
-  inline void set_allocated_data_source(::std::string *data_source);
+  inline const ::std::string& data_source() const;
+  inline void set_data_source(const ::std::string& value);
+  inline void set_data_source(const char* value);
+  inline void set_data_source(const char* value, size_t size);
+  inline ::std::string* mutable_data_source();
+  inline ::std::string* release_data_source();
+  inline void set_allocated_data_source(::std::string* data_source);
 
   // @@protoc_insertion_point(class_scope:lapis.LayerProto)
  private:
@@ -1000,12 +972,12 @@ class LayerProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string *name_;
-  ::std::string *type_;
-  ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> param_;
-  ::google::protobuf::RepeatedPtrField<::std::string> out_edge_;
-  ::google::protobuf::RepeatedPtrField<::std::string> in_edge_;
-  ::std::string *data_source_;
+  ::std::string* name_;
+  ::std::string* type_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto > param_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> out_edge_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> in_edge_;
+  ::std::string* data_source_;
   ::google::protobuf::int32 num_output_;
 
   mutable int _cached_size_;
@@ -1016,7 +988,7 @@ class LayerProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static LayerProto *default_instance_;
+  static LayerProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1025,51 +997,48 @@ class NetProto : public ::google::protobuf::Message {
   NetProto();
   virtual ~NetProto();
 
-  NetProto(const NetProto &from);
+  NetProto(const NetProto& from);
 
-  inline NetProto &operator=(const NetProto &from) {
+  inline NetProto& operator=(const NetProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const NetProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const NetProto& default_instance();
 
-  void Swap(NetProto *other);
+  void Swap(NetProto* other);
 
   // implements Message ----------------------------------------------
 
-  NetProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const NetProto &from);
-  void MergeFrom(const NetProto &from);
+  NetProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const NetProto& from);
+  void MergeFrom(const NetProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -1081,33 +1050,33 @@ class NetProto : public ::google::protobuf::Message {
   inline int layer_size() const;
   inline void clear_layer();
   static const int kLayerFieldNumber = 3;
-  inline const ::lapis::LayerProto &layer(int index) const;
-  inline ::lapis::LayerProto *mutable_layer(int index);
-  inline ::lapis::LayerProto *add_layer();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::LayerProto> &
-  layer() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::LayerProto> *
-  mutable_layer();
+  inline const ::lapis::LayerProto& layer(int index) const;
+  inline ::lapis::LayerProto* mutable_layer(int index);
+  inline ::lapis::LayerProto* add_layer();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >&
+      layer() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >*
+      mutable_layer();
 
   // repeated .lapis.EdgeProto edge = 4;
   inline int edge_size() const;
   inline void clear_edge();
   static const int kEdgeFieldNumber = 4;
-  inline const ::lapis::EdgeProto &edge(int index) const;
-  inline ::lapis::EdgeProto *mutable_edge(int index);
-  inline ::lapis::EdgeProto *add_edge();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::EdgeProto> &
-  edge() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::EdgeProto> *
-  mutable_edge();
+  inline const ::lapis::EdgeProto& edge(int index) const;
+  inline ::lapis::EdgeProto* mutable_edge(int index);
+  inline ::lapis::EdgeProto* add_edge();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
+      edge() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
+      mutable_edge();
 
   // @@protoc_insertion_point(class_scope:lapis.NetProto)
  private:
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::google::protobuf::RepeatedPtrField<::lapis::LayerProto> layer_;
-  ::google::protobuf::RepeatedPtrField<::lapis::EdgeProto> edge_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto > layer_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto > edge_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
@@ -1117,7 +1086,7 @@ class NetProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static NetProto *default_instance_;
+  static NetProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1126,51 +1095,48 @@ class SGDProto : public ::google::protobuf::Message {
   SGDProto();
   virtual ~SGDProto();
 
-  SGDProto(const SGDProto &from);
+  SGDProto(const SGDProto& from);
 
-  inline SGDProto &operator=(const SGDProto &from) {
+  inline SGDProto& operator=(const SGDProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const SGDProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SGDProto& default_instance();
 
-  void Swap(SGDProto *other);
+  void Swap(SGDProto* other);
 
   // implements Message ----------------------------------------------
 
-  SGDProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const SGDProto &from);
-  void MergeFrom(const SGDProto &from);
+  SGDProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const SGDProto& from);
+  void MergeFrom(const SGDProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -1190,15 +1156,15 @@ class SGDProto : public ::google::protobuf::Message {
     SGDProto_ChangeProto_ChangeProto_MAX;
   static const int ChangeProto_ARRAYSIZE =
     SGDProto_ChangeProto_ChangeProto_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor *
+  static inline const ::google::protobuf::EnumDescriptor*
   ChangeProto_descriptor() {
     return SGDProto_ChangeProto_descriptor();
   }
-  static inline const ::std::string &ChangeProto_Name(ChangeProto value) {
+  static inline const ::std::string& ChangeProto_Name(ChangeProto value) {
     return SGDProto_ChangeProto_Name(value);
   }
-  static inline bool ChangeProto_Parse(const ::std::string &name,
-                                       ChangeProto *value) {
+  static inline bool ChangeProto_Parse(const ::std::string& name,
+      ChangeProto* value) {
     return SGDProto_ChangeProto_Parse(name, value);
   }
 
@@ -1378,7 +1344,7 @@ class SGDProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static SGDProto *default_instance_;
+  static SGDProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1387,51 +1353,48 @@ class PerformanceProto : public ::google::protobuf::Message {
   PerformanceProto();
   virtual ~PerformanceProto();
 
-  PerformanceProto(const PerformanceProto &from);
+  PerformanceProto(const PerformanceProto& from);
 
-  inline PerformanceProto &operator=(const PerformanceProto &from) {
+  inline PerformanceProto& operator=(const PerformanceProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const PerformanceProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PerformanceProto& default_instance();
 
-  void Swap(PerformanceProto *other);
+  void Swap(PerformanceProto* other);
 
   // implements Message ----------------------------------------------
 
-  PerformanceProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const PerformanceProto &from);
-  void MergeFrom(const PerformanceProto &from);
+  PerformanceProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const PerformanceProto& from);
+  void MergeFrom(const PerformanceProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -1493,7 +1456,7 @@ class PerformanceProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static PerformanceProto *default_instance_;
+  static PerformanceProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1502,51 +1465,48 @@ class TrainerProto : public ::google::protobuf::Message {
   TrainerProto();
   virtual ~TrainerProto();
 
-  TrainerProto(const TrainerProto &from);
+  TrainerProto(const TrainerProto& from);
 
-  inline TrainerProto &operator=(const TrainerProto &from) {
+  inline TrainerProto& operator=(const TrainerProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const TrainerProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TrainerProto& default_instance();
 
-  void Swap(TrainerProto *other);
+  void Swap(TrainerProto* other);
 
   // implements Message ----------------------------------------------
 
-  TrainerProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const TrainerProto &from);
-  void MergeFrom(const TrainerProto &from);
+  TrainerProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TrainerProto& from);
+  void MergeFrom(const TrainerProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -1558,10 +1518,10 @@ class TrainerProto : public ::google::protobuf::Message {
   inline bool has_sgd() const;
   inline void clear_sgd();
   static const int kSgdFieldNumber = 1;
-  inline const ::lapis::SGDProto &sgd() const;
-  inline ::lapis::SGDProto *mutable_sgd();
-  inline ::lapis::SGDProto *release_sgd();
-  inline void set_allocated_sgd(::lapis::SGDProto *sgd);
+  inline const ::lapis::SGDProto& sgd() const;
+  inline ::lapis::SGDProto* mutable_sgd();
+  inline ::lapis::SGDProto* release_sgd();
+  inline void set_allocated_sgd(::lapis::SGDProto* sgd);
 
   // optional int32 checkpoint_after_steps = 2 [default = 0];
   inline bool has_checkpoint_after_steps() const;
@@ -1581,13 +1541,13 @@ class TrainerProto : public ::google::protobuf::Message {
   inline bool has_checkpoint_prefix() const;
   inline void clear_checkpoint_prefix();
   static const int kCheckpointPrefixFieldNumber = 4;
-  inline const ::std::string &checkpoint_prefix() const;
-  inline void set_checkpoint_prefix(const ::std::string &value);
-  inline void set_checkpoint_prefix(const char *value);
-  inline void set_checkpoint_prefix(const char *value, size_t size);
-  inline ::std::string *mutable_checkpoint_prefix();
-  inline ::std::string *release_checkpoint_prefix();
-  inline void set_allocated_checkpoint_prefix(::std::string *checkpoint_prefix);
+  inline const ::std::string& checkpoint_prefix() const;
+  inline void set_checkpoint_prefix(const ::std::string& value);
+  inline void set_checkpoint_prefix(const char* value);
+  inline void set_checkpoint_prefix(const char* value, size_t size);
+  inline ::std::string* mutable_checkpoint_prefix();
+  inline ::std::string* release_checkpoint_prefix();
+  inline void set_allocated_checkpoint_prefix(::std::string* checkpoint_prefix);
 
   // optional int32 checkpoint_step = 5 [default = 0];
   inline bool has_checkpoint_step() const;
@@ -1614,61 +1574,61 @@ class TrainerProto : public ::google::protobuf::Message {
   inline bool has_display_prefix() const;
   inline void clear_display_prefix();
   static const int kDisplayPrefixFieldNumber = 8;
-  inline const ::std::string &display_prefix() const;
-  inline void set_display_prefix(const ::std::string &value);
-  inline void set_display_prefix(const char *value);
-  inline void set_display_prefix(const char *value, size_t size);
-  inline ::std::string *mutable_display_prefix();
-  inline ::std::string *release_display_prefix();
-  inline void set_allocated_display_prefix(::std::string *display_prefix);
+  inline const ::std::string& display_prefix() const;
+  inline void set_display_prefix(const ::std::string& value);
+  inline void set_display_prefix(const char* value);
+  inline void set_display_prefix(const char* value, size_t size);
+  inline ::std::string* mutable_display_prefix();
+  inline ::std::string* release_display_prefix();
+  inline void set_allocated_display_prefix(::std::string* display_prefix);
 
   // repeated .lapis.DataSourceProto train_data = 9;
   inline int train_data_size() const;
   inline void clear_train_data();
   static const int kTrainDataFieldNumber = 9;
-  inline const ::lapis::DataSourceProto &train_data(int index) const;
-  inline ::lapis::DataSourceProto *mutable_train_data(int index);
-  inline ::lapis::DataSourceProto *add_train_data();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
-  train_data() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
-  mutable_train_data();
+  inline const ::lapis::DataSourceProto& train_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_train_data(int index);
+  inline ::lapis::DataSourceProto* add_train_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      train_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_train_data();
 
   // repeated .lapis.DataSourceProto validation_data = 10;
   inline int validation_data_size() const;
   inline void clear_validation_data();
   static const int kValidationDataFieldNumber = 10;
-  inline const ::lapis::DataSourceProto &validation_data(int index) const;
-  inline ::lapis::DataSourceProto *mutable_validation_data(int index);
-  inline ::lapis::DataSourceProto *add_validation_data();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
-  validation_data() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
-  mutable_validation_data();
+  inline const ::lapis::DataSourceProto& validation_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_validation_data(int index);
+  inline ::lapis::DataSourceProto* add_validation_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      validation_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_validation_data();
 
   // repeated .lapis.DataSourceProto test_data = 11;
   inline int test_data_size() const;
   inline void clear_test_data();
   static const int kTestDataFieldNumber = 11;
-  inline const ::lapis::DataSourceProto &test_data(int index) const;
-  inline ::lapis::DataSourceProto *mutable_test_data(int index);
-  inline ::lapis::DataSourceProto *add_test_data();
-  inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
-  test_data() const;
-  inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
-  mutable_test_data();
+  inline const ::lapis::DataSourceProto& test_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_test_data(int index);
+  inline ::lapis::DataSourceProto* add_test_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      test_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_test_data();
 
   // optional string perf_prefix = 14 [default = "tmp/performance"];
   inline bool has_perf_prefix() const;
   inline void clear_perf_prefix();
   static const int kPerfPrefixFieldNumber = 14;
-  inline const ::std::string &perf_prefix() const;
-  inline void set_perf_prefix(const ::std::string &value);
-  inline void set_perf_prefix(const char *value);
-  inline void set_perf_prefix(const char *value, size_t size);
-  inline ::std::string *mutable_perf_prefix();
-  inline ::std::string *release_perf_prefix();
-  inline void set_allocated_perf_prefix(::std::string *perf_prefix);
+  inline const ::std::string& perf_prefix() const;
+  inline void set_perf_prefix(const ::std::string& value);
+  inline void set_perf_prefix(const char* value);
+  inline void set_perf_prefix(const char* value, size_t size);
+  inline ::std::string* mutable_perf_prefix();
+  inline ::std::string* release_perf_prefix();
+  inline void set_allocated_perf_prefix(::std::string* perf_prefix);
 
   // @@protoc_insertion_point(class_scope:lapis.TrainerProto)
  private:
@@ -1693,20 +1653,20 @@ class TrainerProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::lapis::SGDProto *sgd_;
+  ::lapis::SGDProto* sgd_;
   ::google::protobuf::int32 checkpoint_after_steps_;
   ::google::protobuf::int32 checkpoint_every_steps_;
-  ::std::string *checkpoint_prefix_;
-  static ::std::string *_default_checkpoint_prefix_;
+  ::std::string* checkpoint_prefix_;
+  static ::std::string* _default_checkpoint_prefix_;
   ::google::protobuf::int32 checkpoint_step_;
   ::google::protobuf::int32 display_after_steps_;
-  ::std::string *display_prefix_;
-  static ::std::string *_default_display_prefix_;
-  ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> train_data_;
-  ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> validation_data_;
-  ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> test_data_;
-  ::std::string *perf_prefix_;
-  static ::std::string *_default_perf_prefix_;
+  ::std::string* display_prefix_;
+  static ::std::string* _default_display_prefix_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > train_data_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > validation_data_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > test_data_;
+  ::std::string* perf_prefix_;
+  static ::std::string* _default_perf_prefix_;
   ::google::protobuf::int32 display_every_steps_;
 
   mutable int _cached_size_;
@@ -1717,7 +1677,7 @@ class TrainerProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static TrainerProto *default_instance_;
+  static TrainerProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1726,51 +1686,48 @@ class ModelConfProto : public ::google::protobuf::Message {
   ModelConfProto();
   virtual ~ModelConfProto();
 
-  ModelConfProto(const ModelConfProto &from);
+  ModelConfProto(const ModelConfProto& from);
 
-  inline ModelConfProto &operator=(const ModelConfProto &from) {
+  inline ModelConfProto& operator=(const ModelConfProto& from) {
     CopyFrom(from);
     return *this;
   }
 
-  inline const ::google::protobuf::UnknownFieldSet &unknown_fields() const {
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
 
-  inline ::google::protobuf::UnknownFieldSet *mutable_unknown_fields() {
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
 
-  static const ::google::protobuf::Descriptor *descriptor();
-  static const ModelConfProto &default_instance();
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ModelConfProto& default_instance();
 
-  void Swap(ModelConfProto *other);
+  void Swap(ModelConfProto* other);
 
   // implements Message ----------------------------------------------
 
-  ModelConfProto *New() const;
-  void CopyFrom(const ::google::protobuf::Message &from);
-  void MergeFrom(const ::google::protobuf::Message &from);
-  void CopyFrom(const ModelConfProto &from);
-  void MergeFrom(const ModelConfProto &from);
+  ModelConfProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ModelConfProto& from);
+  void MergeFrom(const ModelConfProto& from);
   void Clear();
   bool IsInitialized() const;
 
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream *input);
+      ::google::protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream *output) const;
-  ::google::protobuf::uint8 *SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8 *output) const;
-  int GetCachedSize() const {
-    return _cached_size_;
-  }
- private:
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
- public:
+  public:
 
   ::google::protobuf::Metadata GetMetadata() const;
 
@@ -1782,31 +1739,31 @@ class ModelConfProto : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
-  inline const ::std::string &name() const;
-  inline void set_name(const ::std::string &value);
-  inline void set_name(const char *value);
-  inline void set_name(const char *value, size_t size);
-  inline ::std::string *mutable_name();
-  inline ::std::string *release_name();
-  inline void set_allocated_name(::std::string *name);
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
 
   // required .lapis.NetProto net = 2;
   inline bool has_net() const;
   inline void clear_net();
   static const int kNetFieldNumber = 2;
-  inline const ::lapis::NetProto &net() const;
-  inline ::lapis::NetProto *mutable_net();
-  inline ::lapis::NetProto *release_net();
-  inline void set_allocated_net(::lapis::NetProto *net);
+  inline const ::lapis::NetProto& net() const;
+  inline ::lapis::NetProto* mutable_net();
+  inline ::lapis::NetProto* release_net();
+  inline void set_allocated_net(::lapis::NetProto* net);
 
   // required .lapis.TrainerProto trainer = 3;
   inline bool has_trainer() const;
   inline void clear_trainer();
   static const int kTrainerFieldNumber = 3;
-  inline const ::lapis::TrainerProto &trainer() const;
-  inline ::lapis::TrainerProto *mutable_trainer();
-  inline ::lapis::TrainerProto *release_trainer();
-  inline void set_allocated_trainer(::lapis::TrainerProto *trainer);
+  inline const ::lapis::TrainerProto& trainer() const;
+  inline ::lapis::TrainerProto* mutable_trainer();
+  inline ::lapis::TrainerProto* release_trainer();
+  inline void set_allocated_trainer(::lapis::TrainerProto* trainer);
 
   // @@protoc_insertion_point(class_scope:lapis.ModelConfProto)
  private:
@@ -1819,9 +1776,9 @@ class ModelConfProto : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string *name_;
-  ::lapis::NetProto *net_;
-  ::lapis::TrainerProto *trainer_;
+  ::std::string* name_;
+  ::lapis::NetProto* net_;
+  ::lapis::TrainerProto* trainer_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
@@ -1831,7 +1788,7 @@ class ModelConfProto : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_lapis_2eproto();
 
   void InitAsDefaultInstance();
-  static ModelConfProto *default_instance_;
+  static ModelConfProto* default_instance_;
 };
 // ===================================================================
 
@@ -2014,49 +1971,48 @@ inline void DataSourceProto::clear_name() {
   }
   clear_has_name();
 }
-inline const ::std::string &DataSourceProto::name() const {
+inline const ::std::string& DataSourceProto::name() const {
   return *name_;
 }
-inline void DataSourceProto::set_name(const ::std::string &value) {
+inline void DataSourceProto::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void DataSourceProto::set_name(const char *value) {
+inline void DataSourceProto::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void DataSourceProto::set_name(const char *value, size_t size) {
+inline void DataSourceProto::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
-  name_->assign(reinterpret_cast<const char *>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *DataSourceProto::mutable_name() {
+inline ::std::string* DataSourceProto::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
-inline ::std::string *DataSourceProto::release_name() {
+inline ::std::string* DataSourceProto::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = name_;
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_name(::std::string *name) {
+inline void DataSourceProto::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
@@ -2065,8 +2021,7 @@ inline void DataSourceProto::set_allocated_name(::std::string *name) {
     name_ = name;
   } else {
     clear_has_name();
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2086,49 +2041,48 @@ inline void DataSourceProto::clear_parser() {
   }
   clear_has_parser();
 }
-inline const ::std::string &DataSourceProto::parser() const {
+inline const ::std::string& DataSourceProto::parser() const {
   return *parser_;
 }
-inline void DataSourceProto::set_parser(const ::std::string &value) {
+inline void DataSourceProto::set_parser(const ::std::string& value) {
   set_has_parser();
   if (parser_ == &::google::protobuf::internal::kEmptyString) {
     parser_ = new ::std::string;
   }
   parser_->assign(value);
 }
-inline void DataSourceProto::set_parser(const char *value) {
+inline void DataSourceProto::set_parser(const char* value) {
   set_has_parser();
   if (parser_ == &::google::protobuf::internal::kEmptyString) {
     parser_ = new ::std::string;
   }
   parser_->assign(value);
 }
-inline void DataSourceProto::set_parser(const char *value, size_t size) {
+inline void DataSourceProto::set_parser(const char* value, size_t size) {
   set_has_parser();
   if (parser_ == &::google::protobuf::internal::kEmptyString) {
     parser_ = new ::std::string;
   }
-  parser_->assign(reinterpret_cast<const char *>(value), size);
+  parser_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *DataSourceProto::mutable_parser() {
+inline ::std::string* DataSourceProto::mutable_parser() {
   set_has_parser();
   if (parser_ == &::google::protobuf::internal::kEmptyString) {
     parser_ = new ::std::string;
   }
   return parser_;
 }
-inline ::std::string *DataSourceProto::release_parser() {
+inline ::std::string* DataSourceProto::release_parser() {
   clear_has_parser();
   if (parser_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = parser_;
-    parser_ = const_cast<::std::string *>
-              (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = parser_;
+    parser_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_parser(::std::string *parser) {
+inline void DataSourceProto::set_allocated_parser(::std::string* parser) {
   if (parser_ != &::google::protobuf::internal::kEmptyString) {
     delete parser_;
   }
@@ -2137,8 +2091,7 @@ inline void DataSourceProto::set_allocated_parser(::std::string *parser) {
     parser_ = parser;
   } else {
     clear_has_parser();
-    parser_ = const_cast<::std::string *>
-              (&::google::protobuf::internal::kEmptyString);
+    parser_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2158,49 +2111,48 @@ inline void DataSourceProto::clear_path() {
   }
   clear_has_path();
 }
-inline const ::std::string &DataSourceProto::path() const {
+inline const ::std::string& DataSourceProto::path() const {
   return *path_;
 }
-inline void DataSourceProto::set_path(const ::std::string &value) {
+inline void DataSourceProto::set_path(const ::std::string& value) {
   set_has_path();
   if (path_ == &::google::protobuf::internal::kEmptyString) {
     path_ = new ::std::string;
   }
   path_->assign(value);
 }
-inline void DataSourceProto::set_path(const char *value) {
+inline void DataSourceProto::set_path(const char* value) {
   set_has_path();
   if (path_ == &::google::protobuf::internal::kEmptyString) {
     path_ = new ::std::string;
   }
   path_->assign(value);
 }
-inline void DataSourceProto::set_path(const char *value, size_t size) {
+inline void DataSourceProto::set_path(const char* value, size_t size) {
   set_has_path();
   if (path_ == &::google::protobuf::internal::kEmptyString) {
     path_ = new ::std::string;
   }
-  path_->assign(reinterpret_cast<const char *>(value), size);
+  path_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *DataSourceProto::mutable_path() {
+inline ::std::string* DataSourceProto::mutable_path() {
   set_has_path();
   if (path_ == &::google::protobuf::internal::kEmptyString) {
     path_ = new ::std::string;
   }
   return path_;
 }
-inline ::std::string *DataSourceProto::release_path() {
+inline ::std::string* DataSourceProto::release_path() {
   clear_has_path();
   if (path_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = path_;
-    path_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = path_;
+    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_path(::std::string *path) {
+inline void DataSourceProto::set_allocated_path(::std::string* path) {
   if (path_ != &::google::protobuf::internal::kEmptyString) {
     delete path_;
   }
@@ -2209,8 +2161,7 @@ inline void DataSourceProto::set_allocated_path(::std::string *path) {
     path_ = path;
   } else {
     clear_has_path();
-    path_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2273,7 +2224,7 @@ inline void DataSourceProto::clear_type() {
   clear_has_type();
 }
 inline ::lapis::DataSourceProto_DataType DataSourceProto::type() const {
-  return static_cast<::lapis::DataSourceProto_DataType>(type_);
+  return static_cast< ::lapis::DataSourceProto_DataType >(type_);
 }
 inline void DataSourceProto::set_type(::lapis::DataSourceProto_DataType value) {
   assert(::lapis::DataSourceProto_DataType_IsValid(value));
@@ -2433,49 +2384,48 @@ inline void RGBDatum::clear_content() {
   }
   clear_has_content();
 }
-inline const ::std::string &RGBDatum::content() const {
+inline const ::std::string& RGBDatum::content() const {
   return *content_;
 }
-inline void RGBDatum::set_content(const ::std::string &value) {
+inline void RGBDatum::set_content(const ::std::string& value) {
   set_has_content();
   if (content_ == &::google::protobuf::internal::kEmptyString) {
     content_ = new ::std::string;
   }
   content_->assign(value);
 }
-inline void RGBDatum::set_content(const char *value) {
+inline void RGBDatum::set_content(const char* value) {
   set_has_content();
   if (content_ == &::google::protobuf::internal::kEmptyString) {
     content_ = new ::std::string;
   }
   content_->assign(value);
 }
-inline void RGBDatum::set_content(const char *value, size_t size) {
+inline void RGBDatum::set_content(const char* value, size_t size) {
   set_has_content();
   if (content_ == &::google::protobuf::internal::kEmptyString) {
     content_ = new ::std::string;
   }
-  content_->assign(reinterpret_cast<const char *>(value), size);
+  content_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *RGBDatum::mutable_content() {
+inline ::std::string* RGBDatum::mutable_content() {
   set_has_content();
   if (content_ == &::google::protobuf::internal::kEmptyString) {
     content_ = new ::std::string;
   }
   return content_;
 }
-inline ::std::string *RGBDatum::release_content() {
+inline ::std::string* RGBDatum::release_content() {
   clear_has_content();
   if (content_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = content_;
-    content_ = const_cast<::std::string *>
-               (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = content_;
+    content_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void RGBDatum::set_allocated_content(::std::string *content) {
+inline void RGBDatum::set_allocated_content(::std::string* content) {
   if (content_ != &::google::protobuf::internal::kEmptyString) {
     delete content_;
   }
@@ -2484,8 +2434,7 @@ inline void RGBDatum::set_allocated_content(::std::string *content) {
     content_ = content;
   } else {
     clear_has_content();
-    content_ = const_cast<::std::string *>
-               (&::google::protobuf::internal::kEmptyString);
+    content_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2509,49 +2458,48 @@ inline void ParamProto::clear_name() {
   }
   clear_has_name();
 }
-inline const ::std::string &ParamProto::name() const {
+inline const ::std::string& ParamProto::name() const {
   return *name_;
 }
-inline void ParamProto::set_name(const ::std::string &value) {
+inline void ParamProto::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void ParamProto::set_name(const char *value) {
+inline void ParamProto::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void ParamProto::set_name(const char *value, size_t size) {
+inline void ParamProto::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
-  name_->assign(reinterpret_cast<const char *>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *ParamProto::mutable_name() {
+inline ::std::string* ParamProto::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
-inline ::std::string *ParamProto::release_name() {
+inline ::std::string* ParamProto::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = name_;
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void ParamProto::set_allocated_name(::std::string *name) {
+inline void ParamProto::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
@@ -2560,8 +2508,7 @@ inline void ParamProto::set_allocated_name(::std::string *name) {
     name_ = name;
   } else {
     clear_has_name();
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2581,48 +2528,48 @@ inline void ParamProto::clear_initializer() {
   }
   clear_has_initializer();
 }
-inline const ::std::string &ParamProto::initializer() const {
+inline const ::std::string& ParamProto::initializer() const {
   return *initializer_;
 }
-inline void ParamProto::set_initializer(const ::std::string &value) {
+inline void ParamProto::set_initializer(const ::std::string& value) {
   set_has_initializer();
   if (initializer_ == _default_initializer_) {
     initializer_ = new ::std::string;
   }
   initializer_->assign(value);
 }
-inline void ParamProto::set_initializer(const char *value) {
+inline void ParamProto::set_initializer(const char* value) {
   set_has_initializer();
   if (initializer_ == _default_initializer_) {
     initializer_ = new ::std::string;
   }
   initializer_->assign(value);
 }
-inline void ParamProto::set_initializer(const char *value, size_t size) {
+inline void ParamProto::set_initializer(const char* value, size_t size) {
   set_has_initializer();
   if (initializer_ == _default_initializer_) {
     initializer_ = new ::std::string;
   }
-  initializer_->assign(reinterpret_cast<const char *>(value), size);
+  initializer_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *ParamProto::mutable_initializer() {
+inline ::std::string* ParamProto::mutable_initializer() {
   set_has_initializer();
   if (initializer_ == _default_initializer_) {
     initializer_ = new ::std::string(*_default_initializer_);
   }
   return initializer_;
 }
-inline ::std::string *ParamProto::release_initializer() {
+inline ::std::string* ParamProto::release_initializer() {
   clear_has_initializer();
   if (initializer_ == _default_initializer_) {
     return NULL;
   } else {
-    ::std::string *temp = initializer_;
-    initializer_ = const_cast<::std::string *>(_default_initializer_);
+    ::std::string* temp = initializer_;
+    initializer_ = const_cast< ::std::string*>(_default_initializer_);
     return temp;
   }
 }
-inline void ParamProto::set_allocated_initializer(::std::string *initializer) {
+inline void ParamProto::set_allocated_initializer(::std::string* initializer) {
   if (initializer_ != _default_initializer_) {
     delete initializer_;
   }
@@ -2631,7 +2578,7 @@ inline void ParamProto::set_allocated_initializer(::std::string *initializer) {
     initializer_ = initializer;
   } else {
     clear_has_initializer();
-    initializer_ = const_cast<::std::string *>(_default_initializer_);
+    initializer_ = const_cast< ::std::string*>(_default_initializer_);
   }
 }
 
@@ -2651,11 +2598,11 @@ inline void ParamProto::set_shape(int index, ::google::protobuf::int32 value) {
 inline void ParamProto::add_shape(::google::protobuf::int32 value) {
   shape_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<::google::protobuf::int32> &
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
 ParamProto::shape() const {
   return shape_;
 }
-inline ::google::protobuf::RepeatedField<::google::protobuf::int32> *
+inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
 ParamProto::mutable_shape() {
   return &shape_;
 }
@@ -2676,49 +2623,48 @@ inline void ParamProto::clear_partitioner() {
   }
   clear_has_partitioner();
 }
-inline const ::std::string &ParamProto::partitioner() const {
+inline const ::std::string& ParamProto::partitioner() const {
   return *partitioner_;
 }
-inline void ParamProto::set_partitioner(const ::std::string &value) {
+inline void ParamProto::set_partitioner(const ::std::string& value) {
   set_has_partitioner();
   if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
     partitioner_ = new ::std::string;
   }
   partitioner_->assign(value);
 }
-inline void ParamProto::set_partitioner(const char *value) {
+inline void ParamProto::set_partitioner(const char* value) {
   set_has_partitioner();
   if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
     partitioner_ = new ::std::string;
   }
   partitioner_->assign(value);
 }
-inline void ParamProto::set_partitioner(const char *value, size_t size) {
+inline void ParamProto::set_partitioner(const char* value, size_t size) {
   set_has_partitioner();
   if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
     partitioner_ = new ::std::string;
   }
-  partitioner_->assign(reinterpret_cast<const char *>(value), size);
+  partitioner_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *ParamProto::mutable_partitioner() {
+inline ::std::string* ParamProto::mutable_partitioner() {
   set_has_partitioner();
   if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
     partitioner_ = new ::std::string;
   }
   return partitioner_;
 }
-inline ::std::string *ParamProto::release_partitioner() {
+inline ::std::string* ParamProto::release_partitioner() {
   clear_has_partitioner();
   if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = partitioner_;
-    partitioner_ = const_cast<::std::string *>
-                   (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = partitioner_;
+    partitioner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void ParamProto::set_allocated_partitioner(::std::string *partitioner) {
+inline void ParamProto::set_allocated_partitioner(::std::string* partitioner) {
   if (partitioner_ != &::google::protobuf::internal::kEmptyString) {
     delete partitioner_;
   }
@@ -2727,8 +2673,7 @@ inline void ParamProto::set_allocated_partitioner(::std::string *partitioner) {
     partitioner_ = partitioner;
   } else {
     clear_has_partitioner();
-    partitioner_ = const_cast<::std::string *>
-                   (&::google::protobuf::internal::kEmptyString);
+    partitioner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2748,11 +2693,11 @@ inline void ParamProto::set_content(int index, float value) {
 inline void ParamProto::add_content(float value) {
   content_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField<float> &
+inline const ::google::protobuf::RepeatedField< float >&
 ParamProto::content() const {
   return content_;
 }
-inline ::google::protobuf::RepeatedField<float> *
+inline ::google::protobuf::RepeatedField< float >*
 ParamProto::mutable_content() {
   return &content_;
 }
@@ -2777,49 +2722,48 @@ inline void EdgeProto::clear_name() {
   }
   clear_has_name();
 }
-inline const ::std::string &EdgeProto::name() const {
+inline const ::std::string& EdgeProto::name() const {
   return *name_;
 }
-inline void EdgeProto::set_name(const ::std::string &value) {
+inline void EdgeProto::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void EdgeProto::set_name(const char *value) {
+inline void EdgeProto::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void EdgeProto::set_name(const char *value, size_t size) {
+inline void EdgeProto::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
-  name_->assign(reinterpret_cast<const char *>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *EdgeProto::mutable_name() {
+inline ::std::string* EdgeProto::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
-inline ::std::string *EdgeProto::release_name() {
+inline ::std::string* EdgeProto::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = name_;
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void EdgeProto::set_allocated_name(::std::string *name) {
+inline void EdgeProto::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
@@ -2828,8 +2772,7 @@ inline void EdgeProto::set_allocated_name(::std::string *name) {
     name_ = name;
   } else {
     clear_has_name();
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2849,49 +2792,48 @@ inline void EdgeProto::clear_type() {
   }
   clear_has_type();
 }
-inline const ::std::string &EdgeProto::type() const {
+inline const ::std::string& EdgeProto::type() const {
   return *type_;
 }
-inline void EdgeProto::set_type(const ::std::string &value) {
+inline void EdgeProto::set_type(const ::std::string& value) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   type_->assign(value);
 }
-inline void EdgeProto::set_type(const char *value) {
+inline void EdgeProto::set_type(const char* value) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   type_->assign(value);
 }
-inline void EdgeProto::set_type(const char *value, size_t size) {
+inline void EdgeProto::set_type(const char* value, size_t size) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
-  type_->assign(reinterpret_cast<const char *>(value), size);
+  type_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *EdgeProto::mutable_type() {
+inline ::std::string* EdgeProto::mutable_type() {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   return type_;
 }
-inline ::std::string *EdgeProto::release_type() {
+inline ::std::string* EdgeProto::release_type() {
   clear_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = type_;
-    type_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = type_;
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void EdgeProto::set_allocated_type(::std::string *type) {
+inline void EdgeProto::set_allocated_type(::std::string* type) {
   if (type_ != &::google::protobuf::internal::kEmptyString) {
     delete type_;
   }
@@ -2900,8 +2842,7 @@ inline void EdgeProto::set_allocated_type(::std::string *type) {
     type_ = type;
   } else {
     clear_has_type();
-    type_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2912,20 +2853,20 @@ inline int EdgeProto::param_size() const {
 inline void EdgeProto::clear_param() {
   param_.Clear();
 }
-inline const ::lapis::ParamProto &EdgeProto::param(int index) const {
+inline const ::lapis::ParamProto& EdgeProto::param(int index) const {
   return param_.Get(index);
 }
-inline ::lapis::ParamProto *EdgeProto::mutable_param(int index) {
+inline ::lapis::ParamProto* EdgeProto::mutable_param(int index) {
   return param_.Mutable(index);
 }
-inline ::lapis::ParamProto *EdgeProto::add_param() {
+inline ::lapis::ParamProto* EdgeProto::add_param() {
   return param_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
 EdgeProto::param() const {
   return param_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
 EdgeProto::mutable_param() {
   return &param_;
 }
@@ -2972,49 +2913,48 @@ inline void LayerProto::clear_name() {
   }
   clear_has_name();
 }
-inline const ::std::string &LayerProto::name() const {
+inline const ::std::string& LayerProto::name() const {
   return *name_;
 }
-inline void LayerProto::set_name(const ::std::string &value) {
+inline void LayerProto::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void LayerProto::set_name(const char *value) {
+inline void LayerProto::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void LayerProto::set_name(const char *value, size_t size) {
+inline void LayerProto::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
-  name_->assign(reinterpret_cast<const char *>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *LayerProto::mutable_name() {
+inline ::std::string* LayerProto::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
-inline ::std::string *LayerProto::release_name() {
+inline ::std::string* LayerProto::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = name_;
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void LayerProto::set_allocated_name(::std::string *name) {
+inline void LayerProto::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
@@ -3023,8 +2963,7 @@ inline void LayerProto::set_allocated_name(::std::string *name) {
     name_ = name;
   } else {
     clear_has_name();
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -3066,49 +3005,48 @@ inline void LayerProto::clear_type() {
   }
   clear_has_type();
 }
-inline const ::std::string &LayerProto::type() const {
+inline const ::std::string& LayerProto::type() const {
   return *type_;
 }
-inline void LayerProto::set_type(const ::std::string &value) {
+inline void LayerProto::set_type(const ::std::string& value) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   type_->assign(value);
 }
-inline void LayerProto::set_type(const char *value) {
+inline void LayerProto::set_type(const char* value) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   type_->assign(value);
 }
-inline void LayerProto::set_type(const char *value, size_t size) {
+inline void LayerProto::set_type(const char* value, size_t size) {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
-  type_->assign(reinterpret_cast<const char *>(value), size);
+  type_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *LayerProto::mutable_type() {
+inline ::std::string* LayerProto::mutable_type() {
   set_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     type_ = new ::std::string;
   }
   return type_;
 }
-inline ::std::string *LayerProto::release_type() {
+inline ::std::string* LayerProto::release_type() {
   clear_has_type();
   if (type_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = type_;
-    type_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = type_;
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void LayerProto::set_allocated_type(::std::string *type) {
+inline void LayerProto::set_allocated_type(::std::string* type) {
   if (type_ != &::google::protobuf::internal::kEmptyString) {
     delete type_;
   }
@@ -3117,8 +3055,7 @@ inline void LayerProto::set_allocated_type(::std::string *type) {
     type_ = type;
   } else {
     clear_has_type();
-    type_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -3129,20 +3066,20 @@ inline int LayerProto::param_size() const {
 inline void LayerProto::clear_param() {
   param_.Clear();
 }
-inline const ::lapis::ParamProto &LayerProto::param(int index) const {
+inline const ::lapis::ParamProto& LayerProto::param(int index) const {
   return param_.Get(index);
 }
-inline ::lapis::ParamProto *LayerProto::mutable_param(int index) {
+inline ::lapis::ParamProto* LayerProto::mutable_param(int index) {
   return param_.Mutable(index);
 }
-inline ::lapis::ParamProto *LayerProto::add_param() {
+inline ::lapis::ParamProto* LayerProto::add_param() {
   return param_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
 LayerProto::param() const {
   return param_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::ParamProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
 LayerProto::mutable_param() {
   return &param_;
 }
@@ -3154,40 +3091,39 @@ inline int LayerProto::out_edge_size() const {
 inline void LayerProto::clear_out_edge() {
   out_edge_.Clear();
 }
-inline const ::std::string &LayerProto::out_edge(int index) const {
+inline const ::std::string& LayerProto::out_edge(int index) const {
   return out_edge_.Get(index);
 }
-inline ::std::string *LayerProto::mutable_out_edge(int index) {
+inline ::std::string* LayerProto::mutable_out_edge(int index) {
   return out_edge_.Mutable(index);
 }
-inline void LayerProto::set_out_edge(int index, const ::std::string &value) {
+inline void LayerProto::set_out_edge(int index, const ::std::string& value) {
   out_edge_.Mutable(index)->assign(value);
 }
-inline void LayerProto::set_out_edge(int index, const char *value) {
+inline void LayerProto::set_out_edge(int index, const char* value) {
   out_edge_.Mutable(index)->assign(value);
 }
-inline void LayerProto::set_out_edge(int index, const char *value,
-                                     size_t size) {
+inline void LayerProto::set_out_edge(int index, const char* value, size_t size) {
   out_edge_.Mutable(index)->assign(
-    reinterpret_cast<const char *>(value), size);
+    reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *LayerProto::add_out_edge() {
+inline ::std::string* LayerProto::add_out_edge() {
   return out_edge_.Add();
 }
-inline void LayerProto::add_out_edge(const ::std::string &value) {
+inline void LayerProto::add_out_edge(const ::std::string& value) {
   out_edge_.Add()->assign(value);
 }
-inline void LayerProto::add_out_edge(const char *value) {
+inline void LayerProto::add_out_edge(const char* value) {
   out_edge_.Add()->assign(value);
 }
-inline void LayerProto::add_out_edge(const char *value, size_t size) {
-  out_edge_.Add()->assign(reinterpret_cast<const char *>(value), size);
+inline void LayerProto::add_out_edge(const char* value, size_t size) {
+  out_edge_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField<::std::string> &
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 LayerProto::out_edge() const {
   return out_edge_;
 }
-inline ::google::protobuf::RepeatedPtrField<::std::string> *
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 LayerProto::mutable_out_edge() {
   return &out_edge_;
 }
@@ -3199,39 +3135,39 @@ inline int LayerProto::in_edge_size() const {
 inline void LayerProto::clear_in_edge() {
   in_edge_.Clear();
 }
-inline const ::std::string &LayerProto::in_edge(int index) const {
+inline const ::std::string& LayerProto::in_edge(int index) const {
   return in_edge_.Get(index);
 }
-inline ::std::string *LayerProto::mutable_in_edge(int index) {
+inline ::std::string* LayerProto::mutable_in_edge(int index) {
   return in_edge_.Mutable(index);
 }
-inline void LayerProto::set_in_edge(int index, const ::std::string &value) {
+inline void LayerProto::set_in_edge(int index, const ::std::string& value) {
   in_edge_.Mutable(index)->assign(value);
 }
-inline void LayerProto::set_in_edge(int index, const char *value) {
+inline void LayerProto::set_in_edge(int index, const char* value) {
   in_edge_.Mutable(index)->assign(value);
 }
-inline void LayerProto::set_in_edge(int index, const char *value, size_t size) {
+inline void LayerProto::set_in_edge(int index, const char* value, size_t size) {
   in_edge_.Mutable(index)->assign(
-    reinterpret_cast<const char *>(value), size);
+    reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *LayerProto::add_in_edge() {
+inline ::std::string* LayerProto::add_in_edge() {
   return in_edge_.Add();
 }
-inline void LayerProto::add_in_edge(const ::std::string &value) {
+inline void LayerProto::add_in_edge(const ::std::string& value) {
   in_edge_.Add()->assign(value);
 }
-inline void LayerProto::add_in_edge(const char *value) {
+inline void LayerProto::add_in_edge(const char* value) {
   in_edge_.Add()->assign(value);
 }
-inline void LayerProto::add_in_edge(const char *value, size_t size) {
-  in_edge_.Add()->assign(reinterpret_cast<const char *>(value), size);
+inline void LayerProto::add_in_edge(const char* value, size_t size) {
+  in_edge_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField<::std::string> &
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 LayerProto::in_edge() const {
   return in_edge_;
 }
-inline ::google::protobuf::RepeatedPtrField<::std::string> *
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 LayerProto::mutable_in_edge() {
   return &in_edge_;
 }
@@ -3252,49 +3188,48 @@ inline void LayerProto::clear_data_source() {
   }
   clear_has_data_source();
 }
-inline const ::std::string &LayerProto::data_source() const {
+inline const ::std::string& LayerProto::data_source() const {
   return *data_source_;
 }
-inline void LayerProto::set_data_source(const ::std::string &value) {
+inline void LayerProto::set_data_source(const ::std::string& value) {
   set_has_data_source();
   if (data_source_ == &::google::protobuf::internal::kEmptyString) {
     data_source_ = new ::std::string;
   }
   data_source_->assign(value);
 }
-inline void LayerProto::set_data_source(const char *value) {
+inline void LayerProto::set_data_source(const char* value) {
   set_has_data_source();
   if (data_source_ == &::google::protobuf::internal::kEmptyString) {
     data_source_ = new ::std::string;
   }
   data_source_->assign(value);
 }
-inline void LayerProto::set_data_source(const char *value, size_t size) {
+inline void LayerProto::set_data_source(const char* value, size_t size) {
   set_has_data_source();
   if (data_source_ == &::google::protobuf::internal::kEmptyString) {
     data_source_ = new ::std::string;
   }
-  data_source_->assign(reinterpret_cast<const char *>(value), size);
+  data_source_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *LayerProto::mutable_data_source() {
+inline ::std::string* LayerProto::mutable_data_source() {
   set_has_data_source();
   if (data_source_ == &::google::protobuf::internal::kEmptyString) {
     data_source_ = new ::std::string;
   }
   return data_source_;
 }
-inline ::std::string *LayerProto::release_data_source() {
+inline ::std::string* LayerProto::release_data_source() {
   clear_has_data_source();
   if (data_source_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = data_source_;
-    data_source_ = const_cast<::std::string *>
-                   (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = data_source_;
+    data_source_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void LayerProto::set_allocated_data_source(::std::string *data_source) {
+inline void LayerProto::set_allocated_data_source(::std::string* data_source) {
   if (data_source_ != &::google::protobuf::internal::kEmptyString) {
     delete data_source_;
   }
@@ -3303,8 +3238,7 @@ inline void LayerProto::set_allocated_data_source(::std::string *data_source) {
     data_source_ = data_source;
   } else {
     clear_has_data_source();
-    data_source_ = const_cast<::std::string *>
-                   (&::google::protobuf::internal::kEmptyString);
+    data_source_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -3319,20 +3253,20 @@ inline int NetProto::layer_size() const {
 inline void NetProto::clear_layer() {
   layer_.Clear();
 }
-inline const ::lapis::LayerProto &NetProto::layer(int index) const {
+inline const ::lapis::LayerProto& NetProto::layer(int index) const {
   return layer_.Get(index);
 }
-inline ::lapis::LayerProto *NetProto::mutable_layer(int index) {
+inline ::lapis::LayerProto* NetProto::mutable_layer(int index) {
   return layer_.Mutable(index);
 }
-inline ::lapis::LayerProto *NetProto::add_layer() {
+inline ::lapis::LayerProto* NetProto::add_layer() {
   return layer_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::LayerProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >&
 NetProto::layer() const {
   return layer_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::LayerProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >*
 NetProto::mutable_layer() {
   return &layer_;
 }
@@ -3344,20 +3278,20 @@ inline int NetProto::edge_size() const {
 inline void NetProto::clear_edge() {
   edge_.Clear();
 }
-inline const ::lapis::EdgeProto &NetProto::edge(int index) const {
+inline const ::lapis::EdgeProto& NetProto::edge(int index) const {
   return edge_.Get(index);
 }
-inline ::lapis::EdgeProto *NetProto::mutable_edge(int index) {
+inline ::lapis::EdgeProto* NetProto::mutable_edge(int index) {
   return edge_.Mutable(index);
 }
-inline ::lapis::EdgeProto *NetProto::add_edge() {
+inline ::lapis::EdgeProto* NetProto::add_edge() {
   return edge_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::EdgeProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
 NetProto::edge() const {
   return edge_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::EdgeProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
 NetProto::mutable_edge() {
   return &edge_;
 }
@@ -3515,8 +3449,7 @@ inline void SGDProto::clear_learning_rate_change_steps() {
 inline ::google::protobuf::int32 SGDProto::learning_rate_change_steps() const {
   return learning_rate_change_steps_;
 }
-inline void SGDProto::set_learning_rate_change_steps(::google::protobuf::int32
-    value) {
+inline void SGDProto::set_learning_rate_change_steps(::google::protobuf::int32 value) {
   set_has_learning_rate_change_steps();
   learning_rate_change_steps_ = value;
 }
@@ -3538,8 +3471,7 @@ inline void SGDProto::clear_momentum_change_steps() {
 inline ::google::protobuf::int32 SGDProto::momentum_change_steps() const {
   return momentum_change_steps_;
 }
-inline void SGDProto::set_momentum_change_steps(::google::protobuf::int32
-    value) {
+inline void SGDProto::set_momentum_change_steps(::google::protobuf::int32 value) {
   set_has_momentum_change_steps();
   momentum_change_steps_ = value;
 }
@@ -3561,8 +3493,7 @@ inline void SGDProto::clear_weight_decay_change_steps() {
 inline ::google::protobuf::int32 SGDProto::weight_decay_change_steps() const {
   return weight_decay_change_steps_;
 }
-inline void SGDProto::set_weight_decay_change_steps(::google::protobuf::int32
-    value) {
+inline void SGDProto::set_weight_decay_change_steps(::google::protobuf::int32 value) {
   set_has_weight_decay_change_steps();
   weight_decay_change_steps_ = value;
 }
@@ -3582,10 +3513,9 @@ inline void SGDProto::clear_learning_rate_change() {
   clear_has_learning_rate_change();
 }
 inline ::lapis::SGDProto_ChangeProto SGDProto::learning_rate_change() const {
-  return static_cast<::lapis::SGDProto_ChangeProto>(learning_rate_change_);
+  return static_cast< ::lapis::SGDProto_ChangeProto >(learning_rate_change_);
 }
-inline void SGDProto::set_learning_rate_change(::lapis::SGDProto_ChangeProto
-    value) {
+inline void SGDProto::set_learning_rate_change(::lapis::SGDProto_ChangeProto value) {
   assert(::lapis::SGDProto_ChangeProto_IsValid(value));
   set_has_learning_rate_change();
   learning_rate_change_ = value;
@@ -3606,10 +3536,9 @@ inline void SGDProto::clear_weight_decay_change() {
   clear_has_weight_decay_change();
 }
 inline ::lapis::SGDProto_ChangeProto SGDProto::weight_decay_change() const {
-  return static_cast<::lapis::SGDProto_ChangeProto>(weight_decay_change_);
+  return static_cast< ::lapis::SGDProto_ChangeProto >(weight_decay_change_);
 }
-inline void SGDProto::set_weight_decay_change(::lapis::SGDProto_ChangeProto
-    value) {
+inline void SGDProto::set_weight_decay_change(::lapis::SGDProto_ChangeProto value) {
   assert(::lapis::SGDProto_ChangeProto_IsValid(value));
   set_has_weight_decay_change();
   weight_decay_change_ = value;
@@ -3630,7 +3559,7 @@ inline void SGDProto::clear_momentum_change() {
   clear_has_momentum_change();
 }
 inline ::lapis::SGDProto_ChangeProto SGDProto::momentum_change() const {
-  return static_cast<::lapis::SGDProto_ChangeProto>(momentum_change_);
+  return static_cast< ::lapis::SGDProto_ChangeProto >(momentum_change_);
 }
 inline void SGDProto::set_momentum_change(::lapis::SGDProto_ChangeProto value) {
   assert(::lapis::SGDProto_ChangeProto_IsValid(value));
@@ -3699,8 +3628,7 @@ inline void SGDProto::clear_validation_batchsize() {
 inline ::google::protobuf::int32 SGDProto::validation_batchsize() const {
   return validation_batchsize_;
 }
-inline void SGDProto::set_validation_batchsize(::google::protobuf::int32
-    value) {
+inline void SGDProto::set_validation_batchsize(::google::protobuf::int32 value) {
   set_has_validation_batchsize();
   validation_batchsize_ = value;
 }
@@ -3837,21 +3765,21 @@ inline void TrainerProto::clear_sgd() {
   if (sgd_ != NULL) sgd_->::lapis::SGDProto::Clear();
   clear_has_sgd();
 }
-inline const ::lapis::SGDProto &TrainerProto::sgd() const {
+inline const ::lapis::SGDProto& TrainerProto::sgd() const {
   return sgd_ != NULL ? *sgd_ : *default_instance_->sgd_;
 }
-inline ::lapis::SGDProto *TrainerProto::mutable_sgd() {
+inline ::lapis::SGDProto* TrainerProto::mutable_sgd() {
   set_has_sgd();
   if (sgd_ == NULL) sgd_ = new ::lapis::SGDProto;
   return sgd_;
 }
-inline ::lapis::SGDProto *TrainerProto::release_sgd() {
+inline ::lapis::SGDProto* TrainerProto::release_sgd() {
   clear_has_sgd();
-  ::lapis::SGDProto *temp = sgd_;
+  ::lapis::SGDProto* temp = sgd_;
   sgd_ = NULL;
   return temp;
 }
-inline void TrainerProto::set_allocated_sgd(::lapis::SGDProto *sgd) {
+inline void TrainerProto::set_allocated_sgd(::lapis::SGDProto* sgd) {
   delete sgd_;
   sgd_ = sgd;
   if (sgd) {
@@ -3878,8 +3806,7 @@ inline void TrainerProto::clear_checkpoint_after_steps() {
 inline ::google::protobuf::int32 TrainerProto::checkpoint_after_steps() const {
   return checkpoint_after_steps_;
 }
-inline void TrainerProto::set_checkpoint_after_steps(::google::protobuf::int32
-    value) {
+inline void TrainerProto::set_checkpoint_after_steps(::google::protobuf::int32 value) {
   set_has_checkpoint_after_steps();
   checkpoint_after_steps_ = value;
 }
@@ -3901,8 +3828,7 @@ inline void TrainerProto::clear_checkpoint_every_steps() {
 inline ::google::protobuf::int32 TrainerProto::checkpoint_every_steps() const {
   return checkpoint_every_steps_;
 }
-inline void TrainerProto::set_checkpoint_every_steps(::google::protobuf::int32
-    value) {
+inline void TrainerProto::set_checkpoint_every_steps(::google::protobuf::int32 value) {
   set_has_checkpoint_every_steps();
   checkpoint_every_steps_ = value;
 }
@@ -3923,50 +3849,48 @@ inline void TrainerProto::clear_checkpoint_prefix() {
   }
   clear_has_checkpoint_prefix();
 }
-inline const ::std::string &TrainerProto::checkpoint_prefix() const {
+inline const ::std::string& TrainerProto::checkpoint_prefix() const {
   return *checkpoint_prefix_;
 }
-inline void TrainerProto::set_checkpoint_prefix(const ::std::string &value) {
+inline void TrainerProto::set_checkpoint_prefix(const ::std::string& value) {
   set_has_checkpoint_prefix();
   if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
     checkpoint_prefix_ = new ::std::string;
   }
   checkpoint_prefix_->assign(value);
 }
-inline void TrainerProto::set_checkpoint_prefix(const char *value) {
+inline void TrainerProto::set_checkpoint_prefix(const char* value) {
   set_has_checkpoint_prefix();
   if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
     checkpoint_prefix_ = new ::std::string;
   }
   checkpoint_prefix_->assign(value);
 }
-inline void TrainerProto::set_checkpoint_prefix(const char *value,
-    size_t size) {
+inline void TrainerProto::set_checkpoint_prefix(const char* value, size_t size) {
   set_has_checkpoint_prefix();
   if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
     checkpoint_prefix_ = new ::std::string;
   }
-  checkpoint_prefix_->assign(reinterpret_cast<const char *>(value), size);
+  checkpoint_prefix_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *TrainerProto::mutable_checkpoint_prefix() {
+inline ::std::string* TrainerProto::mutable_checkpoint_prefix() {
   set_has_checkpoint_prefix();
   if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
     checkpoint_prefix_ = new ::std::string(*_default_checkpoint_prefix_);
   }
   return checkpoint_prefix_;
 }
-inline ::std::string *TrainerProto::release_checkpoint_prefix() {
+inline ::std::string* TrainerProto::release_checkpoint_prefix() {
   clear_has_checkpoint_prefix();
   if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
     return NULL;
   } else {
-    ::std::string *temp = checkpoint_prefix_;
-    checkpoint_prefix_ = const_cast<::std::string *>(_default_checkpoint_prefix_);
+    ::std::string* temp = checkpoint_prefix_;
+    checkpoint_prefix_ = const_cast< ::std::string*>(_default_checkpoint_prefix_);
     return temp;
   }
 }
-inline void TrainerProto::set_allocated_checkpoint_prefix(
-  ::std::string *checkpoint_prefix) {
+inline void TrainerProto::set_allocated_checkpoint_prefix(::std::string* checkpoint_prefix) {
   if (checkpoint_prefix_ != _default_checkpoint_prefix_) {
     delete checkpoint_prefix_;
   }
@@ -3975,7 +3899,7 @@ inline void TrainerProto::set_allocated_checkpoint_prefix(
     checkpoint_prefix_ = checkpoint_prefix;
   } else {
     clear_has_checkpoint_prefix();
-    checkpoint_prefix_ = const_cast<::std::string *>(_default_checkpoint_prefix_);
+    checkpoint_prefix_ = const_cast< ::std::string*>(_default_checkpoint_prefix_);
   }
 }
 
@@ -4018,8 +3942,7 @@ inline void TrainerProto::clear_display_after_steps() {
 inline ::google::protobuf::int32 TrainerProto::display_after_steps() const {
   return display_after_steps_;
 }
-inline void TrainerProto::set_display_after_steps(::google::protobuf::int32
-    value) {
+inline void TrainerProto::set_display_after_steps(::google::protobuf::int32 value) {
   set_has_display_after_steps();
   display_after_steps_ = value;
 }
@@ -4041,8 +3964,7 @@ inline void TrainerProto::clear_display_every_steps() {
 inline ::google::protobuf::int32 TrainerProto::display_every_steps() const {
   return display_every_steps_;
 }
-inline void TrainerProto::set_display_every_steps(::google::protobuf::int32
-    value) {
+inline void TrainerProto::set_display_every_steps(::google::protobuf::int32 value) {
   set_has_display_every_steps();
   display_every_steps_ = value;
 }
@@ -4063,49 +3985,48 @@ inline void TrainerProto::clear_display_prefix() {
   }
   clear_has_display_prefix();
 }
-inline const ::std::string &TrainerProto::display_prefix() const {
+inline const ::std::string& TrainerProto::display_prefix() const {
   return *display_prefix_;
 }
-inline void TrainerProto::set_display_prefix(const ::std::string &value) {
+inline void TrainerProto::set_display_prefix(const ::std::string& value) {
   set_has_display_prefix();
   if (display_prefix_ == _default_display_prefix_) {
     display_prefix_ = new ::std::string;
   }
   display_prefix_->assign(value);
 }
-inline void TrainerProto::set_display_prefix(const char *value) {
+inline void TrainerProto::set_display_prefix(const char* value) {
   set_has_display_prefix();
   if (display_prefix_ == _default_display_prefix_) {
     display_prefix_ = new ::std::string;
   }
   display_prefix_->assign(value);
 }
-inline void TrainerProto::set_display_prefix(const char *value, size_t size) {
+inline void TrainerProto::set_display_prefix(const char* value, size_t size) {
   set_has_display_prefix();
   if (display_prefix_ == _default_display_prefix_) {
     display_prefix_ = new ::std::string;
   }
-  display_prefix_->assign(reinterpret_cast<const char *>(value), size);
+  display_prefix_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *TrainerProto::mutable_display_prefix() {
+inline ::std::string* TrainerProto::mutable_display_prefix() {
   set_has_display_prefix();
   if (display_prefix_ == _default_display_prefix_) {
     display_prefix_ = new ::std::string(*_default_display_prefix_);
   }
   return display_prefix_;
 }
-inline ::std::string *TrainerProto::release_display_prefix() {
+inline ::std::string* TrainerProto::release_display_prefix() {
   clear_has_display_prefix();
   if (display_prefix_ == _default_display_prefix_) {
     return NULL;
   } else {
-    ::std::string *temp = display_prefix_;
-    display_prefix_ = const_cast<::std::string *>(_default_display_prefix_);
+    ::std::string* temp = display_prefix_;
+    display_prefix_ = const_cast< ::std::string*>(_default_display_prefix_);
     return temp;
   }
 }
-inline void TrainerProto::set_allocated_display_prefix(::std::string
-    *display_prefix) {
+inline void TrainerProto::set_allocated_display_prefix(::std::string* display_prefix) {
   if (display_prefix_ != _default_display_prefix_) {
     delete display_prefix_;
   }
@@ -4114,7 +4035,7 @@ inline void TrainerProto::set_allocated_display_prefix(::std::string
     display_prefix_ = display_prefix;
   } else {
     clear_has_display_prefix();
-    display_prefix_ = const_cast<::std::string *>(_default_display_prefix_);
+    display_prefix_ = const_cast< ::std::string*>(_default_display_prefix_);
   }
 }
 
@@ -4125,21 +4046,20 @@ inline int TrainerProto::train_data_size() const {
 inline void TrainerProto::clear_train_data() {
   train_data_.Clear();
 }
-inline const ::lapis::DataSourceProto &TrainerProto::train_data(
-  int index) const {
+inline const ::lapis::DataSourceProto& TrainerProto::train_data(int index) const {
   return train_data_.Get(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::mutable_train_data(int index) {
+inline ::lapis::DataSourceProto* TrainerProto::mutable_train_data(int index) {
   return train_data_.Mutable(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::add_train_data() {
+inline ::lapis::DataSourceProto* TrainerProto::add_train_data() {
   return train_data_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
 TrainerProto::train_data() const {
   return train_data_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
 TrainerProto::mutable_train_data() {
   return &train_data_;
 }
@@ -4151,22 +4071,20 @@ inline int TrainerProto::validation_data_size() const {
 inline void TrainerProto::clear_validation_data() {
   validation_data_.Clear();
 }
-inline const ::lapis::DataSourceProto &TrainerProto::validation_data(
-  int index) const {
+inline const ::lapis::DataSourceProto& TrainerProto::validation_data(int index) const {
   return validation_data_.Get(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::mutable_validation_data(
-  int index) {
+inline ::lapis::DataSourceProto* TrainerProto::mutable_validation_data(int index) {
   return validation_data_.Mutable(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::add_validation_data() {
+inline ::lapis::DataSourceProto* TrainerProto::add_validation_data() {
   return validation_data_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
 TrainerProto::validation_data() const {
   return validation_data_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
 TrainerProto::mutable_validation_data() {
   return &validation_data_;
 }
@@ -4178,21 +4096,20 @@ inline int TrainerProto::test_data_size() const {
 inline void TrainerProto::clear_test_data() {
   test_data_.Clear();
 }
-inline const ::lapis::DataSourceProto &TrainerProto::test_data(
-  int index) const {
+inline const ::lapis::DataSourceProto& TrainerProto::test_data(int index) const {
   return test_data_.Get(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::mutable_test_data(int index) {
+inline ::lapis::DataSourceProto* TrainerProto::mutable_test_data(int index) {
   return test_data_.Mutable(index);
 }
-inline ::lapis::DataSourceProto *TrainerProto::add_test_data() {
+inline ::lapis::DataSourceProto* TrainerProto::add_test_data() {
   return test_data_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> &
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
 TrainerProto::test_data() const {
   return test_data_;
 }
-inline ::google::protobuf::RepeatedPtrField<::lapis::DataSourceProto> *
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
 TrainerProto::mutable_test_data() {
   return &test_data_;
 }
@@ -4213,49 +4130,48 @@ inline void TrainerProto::clear_perf_prefix() {
   }
   clear_has_perf_prefix();
 }
-inline const ::std::string &TrainerProto::perf_prefix() const {
+inline const ::std::string& TrainerProto::perf_prefix() const {
   return *perf_prefix_;
 }
-inline void TrainerProto::set_perf_prefix(const ::std::string &value) {
+inline void TrainerProto::set_perf_prefix(const ::std::string& value) {
   set_has_perf_prefix();
   if (perf_prefix_ == _default_perf_prefix_) {
     perf_prefix_ = new ::std::string;
   }
   perf_prefix_->assign(value);
 }
-inline void TrainerProto::set_perf_prefix(const char *value) {
+inline void TrainerProto::set_perf_prefix(const char* value) {
   set_has_perf_prefix();
   if (perf_prefix_ == _default_perf_prefix_) {
     perf_prefix_ = new ::std::string;
   }
   perf_prefix_->assign(value);
 }
-inline void TrainerProto::set_perf_prefix(const char *value, size_t size) {
+inline void TrainerProto::set_perf_prefix(const char* value, size_t size) {
   set_has_perf_prefix();
   if (perf_prefix_ == _default_perf_prefix_) {
     perf_prefix_ = new ::std::string;
   }
-  perf_prefix_->assign(reinterpret_cast<const char *>(value), size);
+  perf_prefix_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *TrainerProto::mutable_perf_prefix() {
+inline ::std::string* TrainerProto::mutable_perf_prefix() {
   set_has_perf_prefix();
   if (perf_prefix_ == _default_perf_prefix_) {
     perf_prefix_ = new ::std::string(*_default_perf_prefix_);
   }
   return perf_prefix_;
 }
-inline ::std::string *TrainerProto::release_perf_prefix() {
+inline ::std::string* TrainerProto::release_perf_prefix() {
   clear_has_perf_prefix();
   if (perf_prefix_ == _default_perf_prefix_) {
     return NULL;
   } else {
-    ::std::string *temp = perf_prefix_;
-    perf_prefix_ = const_cast<::std::string *>(_default_perf_prefix_);
+    ::std::string* temp = perf_prefix_;
+    perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
     return temp;
   }
 }
-inline void TrainerProto::set_allocated_perf_prefix(::std::string
-    *perf_prefix) {
+inline void TrainerProto::set_allocated_perf_prefix(::std::string* perf_prefix) {
   if (perf_prefix_ != _default_perf_prefix_) {
     delete perf_prefix_;
   }
@@ -4264,7 +4180,7 @@ inline void TrainerProto::set_allocated_perf_prefix(::std::string
     perf_prefix_ = perf_prefix;
   } else {
     clear_has_perf_prefix();
-    perf_prefix_ = const_cast<::std::string *>(_default_perf_prefix_);
+    perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
   }
 }
 
@@ -4288,49 +4204,48 @@ inline void ModelConfProto::clear_name() {
   }
   clear_has_name();
 }
-inline const ::std::string &ModelConfProto::name() const {
+inline const ::std::string& ModelConfProto::name() const {
   return *name_;
 }
-inline void ModelConfProto::set_name(const ::std::string &value) {
+inline void ModelConfProto::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void ModelConfProto::set_name(const char *value) {
+inline void ModelConfProto::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
-inline void ModelConfProto::set_name(const char *value, size_t size) {
+inline void ModelConfProto::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
-  name_->assign(reinterpret_cast<const char *>(value), size);
+  name_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string *ModelConfProto::mutable_name() {
+inline ::std::string* ModelConfProto::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
-inline ::std::string *ModelConfProto::release_name() {
+inline ::std::string* ModelConfProto::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string *temp = name_;
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void ModelConfProto::set_allocated_name(::std::string *name) {
+inline void ModelConfProto::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
@@ -4339,8 +4254,7 @@ inline void ModelConfProto::set_allocated_name(::std::string *name) {
     name_ = name;
   } else {
     clear_has_name();
-    name_ = const_cast<::std::string *>
-            (&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -4358,21 +4272,21 @@ inline void ModelConfProto::clear_net() {
   if (net_ != NULL) net_->::lapis::NetProto::Clear();
   clear_has_net();
 }
-inline const ::lapis::NetProto &ModelConfProto::net() const {
+inline const ::lapis::NetProto& ModelConfProto::net() const {
   return net_ != NULL ? *net_ : *default_instance_->net_;
 }
-inline ::lapis::NetProto *ModelConfProto::mutable_net() {
+inline ::lapis::NetProto* ModelConfProto::mutable_net() {
   set_has_net();
   if (net_ == NULL) net_ = new ::lapis::NetProto;
   return net_;
 }
-inline ::lapis::NetProto *ModelConfProto::release_net() {
+inline ::lapis::NetProto* ModelConfProto::release_net() {
   clear_has_net();
-  ::lapis::NetProto *temp = net_;
+  ::lapis::NetProto* temp = net_;
   net_ = NULL;
   return temp;
 }
-inline void ModelConfProto::set_allocated_net(::lapis::NetProto *net) {
+inline void ModelConfProto::set_allocated_net(::lapis::NetProto* net) {
   delete net_;
   net_ = net;
   if (net) {
@@ -4396,22 +4310,21 @@ inline void ModelConfProto::clear_trainer() {
   if (trainer_ != NULL) trainer_->::lapis::TrainerProto::Clear();
   clear_has_trainer();
 }
-inline const ::lapis::TrainerProto &ModelConfProto::trainer() const {
+inline const ::lapis::TrainerProto& ModelConfProto::trainer() const {
   return trainer_ != NULL ? *trainer_ : *default_instance_->trainer_;
 }
-inline ::lapis::TrainerProto *ModelConfProto::mutable_trainer() {
+inline ::lapis::TrainerProto* ModelConfProto::mutable_trainer() {
   set_has_trainer();
   if (trainer_ == NULL) trainer_ = new ::lapis::TrainerProto;
   return trainer_;
 }
-inline ::lapis::TrainerProto *ModelConfProto::release_trainer() {
+inline ::lapis::TrainerProto* ModelConfProto::release_trainer() {
   clear_has_trainer();
-  ::lapis::TrainerProto *temp = trainer_;
+  ::lapis::TrainerProto* temp = trainer_;
   trainer_ = NULL;
   return temp;
 }
-inline void ModelConfProto::set_allocated_trainer(::lapis::TrainerProto
-    *trainer) {
+inline void ModelConfProto::set_allocated_trainer(::lapis::TrainerProto* trainer) {
   delete trainer_;
   trainer_ = trainer;
   if (trainer) {
@@ -4431,13 +4344,11 @@ namespace google {
 namespace protobuf {
 
 template <>
-inline const EnumDescriptor
-*GetEnumDescriptor<::lapis::DataSourceProto_DataType>() {
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::DataSourceProto_DataType>() {
   return ::lapis::DataSourceProto_DataType_descriptor();
 }
 template <>
-inline const EnumDescriptor
-*GetEnumDescriptor<::lapis::SGDProto_ChangeProto>() {
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SGDProto_ChangeProto>() {
   return ::lapis::SGDProto_ChangeProto_descriptor();
 }
 

@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include <functional>
 #include "proto/lapis.pb.h"
 #include "model/blob.h"
@@ -80,7 +81,8 @@ class ParamInitFactory {
    * field in ParamProto
    * @param func std::function object
    */
-  void RegisterInitFunc(std::string id, std::function<void(Param *)> &func);
+  void RegisterInitFunc(std::string id,
+                        const std::function<void(Param *)> &func);
   std::function<void(Param *)> &Get(std::string id);
  private:
   ParamInitFactory() {}

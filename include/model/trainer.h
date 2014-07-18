@@ -85,6 +85,7 @@ class Trainer {
    * the ::Train() has been called such num of times
    */
   inline const int Step();
+
  protected:
   //! current phase, need this field to change the data sources for input layer
   TrainPhase phase_;

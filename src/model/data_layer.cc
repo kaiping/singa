@@ -26,8 +26,8 @@ void DataLayer::Setup(int batchsize, TrainAlgorithm alg,
       break;
     }
   }
-  CHECK(data_source_ != nullptr) << "Cannot find data source for layer '" << name_
-                                 << "'\n";
+  CHECK(data_source_ != nullptr) << "Cannot find data source for layer '"
+                                 << name_ << "'\n";
   data_.Reshape(batchsize, data_source_->Channels(), data_source_->Height(),
                 data_source_->Width());
 }
@@ -38,7 +38,8 @@ void DataLayer::Forward() {
 
 void DataLayer::Backward() {
   for (Edge *edge : out_edges_) {
-    edge->Backward(edge->OtherSide(this)->Gradient(edge), &data_, nullptr, true);
+    edge->Backward(edge->OtherSide(this)->Gradient(edge), &data_,
+                   nullptr, true);
   }
 }
 

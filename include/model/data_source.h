@@ -1,8 +1,9 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-16 22:00
 
-#ifndef INCLUDE_MODEL_DATA_SOURCE_H
-#define INCLUDE_MODEL_DATA_SOURCE_H
+#ifndef INCLUDE_MODEL_DATA_SOURCE_H_
+#define INCLUDE_MODEL_DATA_SOURCE_H_
+#include <string>
 
 #include "model/blob.h"
 #include "proto/lapis.pb.h"
@@ -58,4 +59,4 @@ class DataSource {
 
 }  // namespace lapis
 
-#endif  // INCLUDE_MODEL_DATA_SOURCE_H
+#endif  // INCLUDE_MODEL_DATA_SOURCE_H_

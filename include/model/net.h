@@ -33,7 +33,7 @@ class Net {
  private:
   std::vector<Layer *> layers_;
   std::vector<Edge *> edges_;
-  std::vector<Param *> params_ ;
+  std::vector<Param *> params_;
 };
 
 }  // namespace lapis

@@ -24,7 +24,7 @@ void topology_sort_inner(Layer *layer,
 
 // sort to make `bottom' layers be placed in the front positions
 // forward propagation will be processed based on this order
-void topology_sort(std::vector<Layer *> &layers) {
+void topology_sort(std::vector<Layer *> *layers) {
   // adjacent list from upper layers to lower layers
   std::map<Layer *, std::vector<Layer *>> adjacent_list;
   std::map<Layer *, bool> visited;
@@ -32,7 +32,7 @@ void topology_sort(std::vector<Layer *> &layers) {
 
   // prepare adjacent list; input layers will be processed firstly,
   // hence no need to sort them (mark them as visited)
-  for (Layer *layer : layers) {
+  for (Layer *layer : *layers) {
     if (layer->HasInput()) {
       visited[layer] = true;
       input_layers.push_back(layer);
@@ -50,17 +50,17 @@ void topology_sort(std::vector<Layer *> &layers) {
   // the `top' layer in the net will be placed at the bottom of the stack
   // and then be processed (i.e., forward) at last
   std::stack<Layer *> stack;
-  for (Layer *layer : layers) {
+  for (Layer *layer : *layers) {
     if (visited[layer] == false)
       topology_sort_inner(layer, adjacent_list, &visited, &stack);
   }
 
-  layers.clear();
+  layers->clear();
   // input layers are placed at front to be processed firstly
   for (auto layer : input_layers)
-    layers.push_back(layer);
+    layers->push_back(layer);
   while (!stack.empty()) {
-    layers.push_back(stack.top());
+    layers->push_back(stack.top());
     stack.pop();
   }
 }
@@ -83,7 +83,7 @@ void Net::Init(const NetProto &net_proto) {
     for (auto *param : layer->Params())
       params_.push_back(param);
   }
-  topology_sort(layers_);
+  topology_sort(&layers_);
 }
 
 void Net::ToProto(NetProto *net_proto) {

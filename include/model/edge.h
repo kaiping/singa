@@ -4,6 +4,9 @@
 #ifndef INCLUDE_MODEL_EDGE_H_
 #define INCLUDE_MODEL_EDGE_H_
 #include <string>
+#include <map>
+#include <vector>
+
 #include "model/trainer.h"
 #include "model/blob.h"
 #include "model/layer.h"
@@ -109,7 +112,7 @@ class Edge {
    * highest (top) layer to an input layer (bottom), as in AutoEncoder.
    */
   Layer *top_, * bottom_;
-  std::vector<Param *> params_ ;
+  std::vector<Param *> params_;
   std::string name_;
 };
 
@@ -122,7 +125,7 @@ class Edge {
  * @param EDGE the child edge class
  */
 #define REGISTER_EDGE(ID, EDGE) EdgeFactory::Instance()->\
-  RegisterCreateFunction(ID,[](void)-> Edge* {return new EDGE();});
+  RegisterCreateFunction(ID, [](void)-> Edge* {return new EDGE();});
 
 /**
  * Factory for creating edge based on user provided edge type/identifier.

@@ -4,11 +4,9 @@
 #include "model/data_source.h"
 namespace lapis {
 DataSource::DataSource(const DataSourceProto &ds_proto) {
-
 }
 
 void DataSource::GetData(Blob *blob) {
-
 }
 
 void DataSource::ToProto(DataSourceProto *ds_proto) {

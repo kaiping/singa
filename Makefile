@@ -97,12 +97,12 @@ $(BUILD_DIR)/src/test/%.o: src/test/%.cc
 # Formatting and lint, target is flint
 ###############################################################################
 # files genreated by astyle, to be deleted
-ORIGS := $(shell find . -name *.orig -type f)
+ORIGS := $(shell find . -name "*.orig" -type f)
 # header files, with Eigen/ ignored
-FL_HDRS := $(shell find include -path "include/Eigen" -prune \
-						-o \( -name "*.h" -type f \) -print )
+FL_HDRS := $(shell find include -path "include/Eigen"  -prune \
+						-o \( -name "*.h" ! -name "*.pb.h" -type f \) -print )
 # cc files
-FL_SRCS :=$(shell find src -name "*.cc" -type f )
+FL_SRCS :=$(shell find src -name "*.cc" ! -name "*.pb.cc" -type f )
 
 flint: $(FL_HDRS) $(FL_SRCS)
 	astyle --options=astyle.conf $(FL_HDRS)

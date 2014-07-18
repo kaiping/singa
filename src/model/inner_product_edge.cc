@@ -38,7 +38,8 @@ void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
   MapMatrixType fea((const_cast<Blob *>(src))->MutableContent(), src->Height(),
                     src->Width());
   MapMatrixType act(dest->MutableContent(), dest->Width(), dest->Width());
-  MapMatrixType weight(weight_.MutableContent(), weight_.Rows(), weight_.Cols());
+  MapMatrixType weight(weight_.MutableContent(),
+                       weight_.Rows(), weight_.Cols());
   MapVectorType bias(bias_.MutableContent(), bias_.Length());
 
   if (overwrite)
@@ -55,7 +56,8 @@ void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
                     dest_fea->Width());
   MapMatrixType weight_grad(weight_.MutableGradient(), weight_.Rows(),
                             weight_.Cols());
-  MapMatrixType weight(weight_.MutableContent(), weight_.Rows(), weight_.Cols());
+  MapMatrixType weight(weight_.MutableContent(), weight_.Rows(),
+                       weight_.Cols());
   MapVectorType bias_grad(bias_.MutableGradient(), bias_.Length());
 
   weight_grad.noalias() = fea.transpose() * act_grad;

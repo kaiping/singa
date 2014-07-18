@@ -41,7 +41,7 @@ int InitSplitModel() {
     }
   }
 
-  // TODO (Anh), mpi wrapper for sending message to all workers
+  // TODO(Anh) mpi wrapper for sending message to all workers
   send2allWorkers(model_conf_proto_.serializeToString());
 
   return 0;

@@ -7,7 +7,6 @@
 #include <utility>
 #include <gflags/gflags.h>
 
-DECLARE_int32(num_keys);
 DECLARE_string(system_conf_path);
 DECLARE_string(model_conf_path);
 
@@ -31,8 +30,7 @@ class GlobalContext {
   int num_disk_servers() { return num_disk_servers_; }
   const char* model_conf_path() {return model_conf_path_; }
 
-  //  number of keys
-  int num_keys(){ return num_keys_; }
+
   static GlobalContext* Get();
 
  private:
@@ -42,8 +40,6 @@ class GlobalContext {
   int num_memory_servers_;
   // # of nodes have disk tables
   int num_disk_servers_;
-
-  int num_keys_;
 
   const char* model_conf_path_;
 

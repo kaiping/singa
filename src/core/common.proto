@@ -17,6 +17,7 @@ enum MessageTypes {
   MTYPE_WORKER_APPLY = 10;
   MTYPE_WORKER_APPLY_DONE = 11;
 
+  MTYPE_WORKER_END = 12; 
 };
 
 message EmptyMessage {}

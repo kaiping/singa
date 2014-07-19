@@ -28,6 +28,9 @@ DEFINE_int32(workers, 2, "");
 
 namespace lapis {
 
+DistributedMemoryManager *manager;
+MemoryServer *server;
+
 void Sleep(double t) {
   timespec req;
   req.tv_sec = (int)t;
@@ -54,11 +57,21 @@ void InitServers(int argc, char** argv) {
 
   if (IsDistributedMemoryManager()){
   		  DistributedMemoryManager::Init();
-  		  DistributedMemoryManager::Get()->StartMemoryManager();
+  		  manager = DistributedMemoryManager::Get();
+  		  manager->StartMemoryManager();
   }
   else{
-  	  (new MemoryServer())->StartMemoryServer();
+	  server = new MemoryServer();
+	  server->StartMemoryServer();
   }
+}
+
+//  shutdown the servers
+void Finish(){
+	if (IsDistributedMemoryManager())
+		manager->ShutdownServers();
+	else
+		server->ShutdownMemoryServer();
 }
 
 bool IsDistributedMemoryManager(){

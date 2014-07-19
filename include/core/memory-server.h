@@ -22,6 +22,9 @@ class MemoryServer : private boost::noncopyable{
 
 		void StartMemoryServer();
 
+		//  sends signals to the manager and ends gracefully
+		void ShutdownMemoryServer();
+
 		int id(){ return server_id_; }
 
 		//  update ownership of the partition. Only memory server
@@ -37,6 +40,7 @@ class MemoryServer : private boost::noncopyable{
 
 		//  id of the peer responsible for storing the partition
 		int peer_for_partition(int table, int shard);
+
 	private:
 
 		int server_id_;

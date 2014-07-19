@@ -85,9 +85,9 @@ NetworkThread::NetworkThread() {
  //  initialize message queue
   GlobalContext* gc = GlobalContext::Get();
   if (FLAGS_sync_update)
-	  request_queue_ = new SyncRequestQueue(gc->num_keys(), gc->num_memory_servers());
+	  request_queue_ = new SyncRequestQueue(gc->num_memory_servers());
   else
-	  request_queue_ = new AsyncRequestQueue(gc->num_keys(), gc->num_memory_servers());
+	  request_queue_ = new AsyncRequestQueue(gc->num_memory_servers());
 
 }
 
@@ -111,8 +111,6 @@ void NetworkThread::CollectActive() {
         LOG(INFO) << "Send " << MP(id(), r->target) << " of size " << r->payload.size()
                   << " succeeded after " << r->failures << " failures.";
       }
-      if (r->rpc_type==MTYPE_PUT_REQUEST)
-          	  LOG(INFO) << StringPrintf("Process %d: SENDING PUT to process %d +++++ SUCCEEDED" , id_, r->target);
       delete r;
       i = active_sends_.erase(i);
       continue;
@@ -142,11 +140,10 @@ void NetworkThread::NetworkLoop() {
     	  LOG(INFO) << StringPrintf("Process %d: RECEIVED SHARD_ASSIGNMENT REQUEST", id_);
       else if (tag==MTYPE_WORKER_SHUTDOWN)
     	  LOG(INFO) << StringPrintf("Process %d: RECEIVED WORKER_SHUTDOWN REQUEST", id_);
-      else if (tag==MTYPE_GET_RESPONSE)
-    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED GET_RESPONSE REQUEST", id_);
+
+
       //  put request to the queue
       if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST){
-    	  LOG(INFO) << StringPrintf("Process %d: RECEIVED PUT/GET REQUEST", id_);
     	  request_queue_->Enqueue(tag, data);
       }
       else{ //  put reponse, etc. to the response queue. This is read
@@ -172,10 +169,6 @@ void NetworkThread::NetworkLoop() {
       s->start_time = Now();
       s->mpi_req = world_->Isend(
           s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
-      if (s->rpc_type==MTYPE_PUT_REQUEST)
-    	  LOG(INFO) << StringPrintf("Process %d: SENDING PUT to process %d", id_, s->target);
-      if (s->rpc_type==MTYPE_WORKER_SHUTDOWN)
-          	  LOG(INFO) << StringPrintf("Process %d: SENDING WORKER_SHUTDOWN to process %d", id_, s->target);
       active_sends_.insert(s);
     }
 
@@ -187,7 +180,6 @@ void NetworkThread::NetworkLoop() {
 //  get the next message, then invoke call back
 void NetworkThread::ProcessLoop(){
 	while(running_){
-		LOG(INFO) << StringPrintf("^^^^^^^^^ GETTING NEXT REQUEST TO PROCESS AT PROCESS %d", NetworkThread::Get()->id());
 		TaggedMessage msg;
 		request_queue_->NextRequest(&msg);
 		ProcessRequest(msg);
@@ -204,7 +196,6 @@ void NetworkThread::ProcessRequest(const TaggedMessage& t_msg){
 	}
 	message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
 	handles_[t_msg.tag](message.get());
-	LOG(INFO) << StringPrintf("^^^^^^^^^ PROCESSED PUT/GET REQUEST AT PROCESS %d", NetworkThread::Get()->id());
 }
 
 //  for now, only PUT_RESPONSE message are being pulled from this.
@@ -265,6 +256,7 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 }
 
 void NetworkThread::Shutdown() {
+	LOG(INFO) << StringPrintf("Process %d is shutting down ... ", id());
   if (running_) {
     running_ = false;
     MPI_Finalize();
@@ -296,11 +288,6 @@ void NetworkThread::WaitForSync(int reply, int count) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);
     --count;
   }
-}
-
-void NetworkThread::WaitTillFinish(){
-	sender_and_reciever_thread_->join();
-	processing_thread_->join();
 }
 
 static void ShutdownMPI() {
@@ -427,9 +414,14 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 	//get lock of the current key;
 	bool success = false;
+	LOG(INFO) << StringPrintf(" GETTING NEXT REQUEST >>>> ");
 	while (!success){
+		while (key_locks_.empty() && put_queues_.empty())
+					Sleep(FLAGS_sleep_time);
+
 	  //Queue& key_queue = request_queues_[key_index_];
 	  {
+			LOG(INFO) << "key_idx " << key_index_ << " is in get queue? "<< is_in_put_queue_[key_index_];
 		  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
 		  int& counter = access_counters_[key_index_];
@@ -479,6 +471,10 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 	  key_index_ = (key_index_+1)%get_queues_.size();
 	  Sleep(FLAGS_sleep_time);
 	}
+	if (message->tag==MTYPE_PUT_REQUEST)
+		LOG(INFO) << StringPrintf(" GOT NEXT PUT REQUEST >>>> ");
+	if (message->tag==MTYPE_GET_REQUEST)
+			LOG(INFO) << StringPrintf(" GOT NEXT GET REQUEST >>>> ");
 }
 
 }

@@ -24,18 +24,23 @@ namespace lapis{
 
 
 		// register callbacks
-		NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
+		net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
 		                                        boost::bind(&MemoryServer::HandleShardAssignment, this));
-		NetworkThread::Get()->RegisterCallback(MTYPE_WORKER_SHUTDOWN,
-												boost::bind(&MemoryServer::HandleServerShutdown, this));
 
-		NetworkThread::Get()->RegisterRequestHandler(MTYPE_PUT_REQUEST,
+		net_->RegisterRequestHandler(MTYPE_PUT_REQUEST,
 		                                        boost::bind(&MemoryServer::HandleUpdateRequest, this, _1));
-		NetworkThread::Get()->RegisterRequestHandler(MTYPE_GET_REQUEST,
+		net_->RegisterRequestHandler(MTYPE_GET_REQUEST,
 												boost::bind(&MemoryServer::HandleGetRequest, this, _1));
 
+	}
 
-		NetworkThread::Get()->WaitTillFinish();
+	void MemoryServer::ShutdownMemoryServer(){
+		net_->Flush();
+		net_->Send(manager_id_, MTYPE_WORKER_END, EmptyMessage());
+		EmptyMessage msg;
+		int src=0;
+		net_->Read(manager_id_, MTYPE_WORKER_SHUTDOWN, &msg, &src);
+		net_->Shutdown();
 	}
 
 	void MemoryServer::HandleShardAssignment(){
@@ -57,10 +62,6 @@ namespace lapis{
 		}
 	}
 
-	void MemoryServer::HandleServerShutdown(){
-		net_->Shutdown();
-	}
-
 	//  respond to request
 	void MemoryServer::HandleGetRequest(const Message* message){
 		const HashGet* get_req = static_cast<const HashGet*>(message);
@@ -72,6 +73,7 @@ namespace lapis{
 		get_resp.set_table(get_req->table());
 		get_resp.set_shard(-1);
 		get_resp.set_done(true);
+		get_resp.set_key(get_req->key());
 
 		// fill data
 		{
@@ -91,8 +93,6 @@ namespace lapis{
 		t->ApplyUpdates(*put);
 		int key = 0;
 		key = *reinterpret_cast<const int*>((new StringPiece(put->key()))->data);
-		LOG(INFO) << StringPrintf("Process %d updated with "
-				"TableData of key %d", NetworkThread::Get()->id(), key);
 	}
 
 	int MemoryServer::peer_for_partition(int table, int shard){

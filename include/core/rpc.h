@@ -40,7 +40,7 @@ class TaggedMessage;
 
 class RequestQueue{
  public:
-  RequestQueue(int num_keys, int ns): num_keys_(num_keys), num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
+  RequestQueue(int ns): num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
   ~RequestQueue(){}
 
   virtual void NextRequest(TaggedMessage* msg){}
@@ -61,7 +61,6 @@ class RequestQueue{
 
   bool is_first_update_;
 
-  int num_keys_;
   int num_mem_servers_;
   int key_index_;
 };
@@ -69,7 +68,7 @@ class RequestQueue{
 //  synchronous queue
 class SyncRequestQueue: public RequestQueue{
  public:
-  SyncRequestQueue(int num_keys, int ns): RequestQueue(num_keys, ns){}
+  SyncRequestQueue(int ns): RequestQueue(ns){}
   void NextRequest(TaggedMessage* msg);
   void Enqueue(int tag, string& data);
  private:
@@ -80,7 +79,7 @@ class SyncRequestQueue: public RequestQueue{
 //  asynchronous queue
 class AsyncRequestQueue: public RequestQueue{
  public:
-	AsyncRequestQueue(int num_keys, int ns): RequestQueue(num_keys, ns) {}
+	AsyncRequestQueue(int ns): RequestQueue(ns) {}
   void NextRequest(TaggedMessage* msg);
   void Enqueue(int tag, string& data);
  private:
@@ -110,9 +109,6 @@ class NetworkThread {
 
   void Flush();
   void Shutdown();
-
-  //  wait till all threads terminate
-  void WaitTillFinish();
 
   int id() { return id_; }
   int size() const { return world_->Get_size(); }

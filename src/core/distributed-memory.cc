@@ -57,7 +57,7 @@ namespace lapis{
 		static int server_idx = 0;
 
 		ServerState& server = *server_states_[server_idx];
-		LOG(INFO) << StringPrintf("ASSIGNING TABLE (%d,%d) to SERVER %d", table, shard, server_states_[server_idx]->server_id);
+		LOG(INFO) << StringPrintf("Assigning table (%d,%d) to server %d", table, shard, server_states_[server_idx]->server_id);
 		server.shard_id = shard;
 		server.local_shards.insert(new TaskId(table, shard));
 		server_idx = (server_idx+1) % server_states_.size();
@@ -87,16 +87,26 @@ namespace lapis{
 		  net_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 	}
 
+	//  wait for MTYPE_WORKER_END from other servers
 	//  send MTYPE_WORKER_SHUTDOWN messages to other
 	//  do not have to wait, simply exit.
 	void DistributedMemoryManager::ShutdownServers(){
-		EmptyMessage message;
-		for (int i=0; i<net_->size()-1; i++)
-			net_->Send(i, MTYPE_WORKER_SHUTDOWN, message);
+
+		for (int i=0; i<net_->size()-1; i++){
+			EmptyMessage end_msg;
+			int src=0;
+			net_->Read(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src);
+		}
+
+		EmptyMessage shutdown_msg;
+		for (int i=0; i<net_->size()-1; i++){
+			net_->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
+		}
+		net_->Flush();
 	}
 
-		void DistributedMemoryManager::Init(){
-			dmm_ = new DistributedMemoryManager();
-		}
+	void DistributedMemoryManager::Init(){
+		dmm_ = new DistributedMemoryManager();
+	}
 
 }

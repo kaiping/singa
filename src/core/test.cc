@@ -3,7 +3,7 @@
 //
 //  the command to run this should be:
 //		mpirun -hostfile <host> -bycore -nooversubscribe
-//				-n <num_servers> [-nosyn] test
+//				-n <num_servers> test -sync_update
 
 
 #include "core/common.h"
@@ -29,30 +29,38 @@ int main(int argc, char** argv){
 	if (IsDistributedMemoryManager()){
 		DistributedMemoryManager::Get()->AssignTables();
 
+		LOG(INFO) << StringPrintf("Process %d: put:", NetworkThread::Get()->id());
 		//put, update then get
 		for (int i=0; i<10; i++)
 			test_table->put(i,i);
 
-		/*
-		for (int i=0; i<100; i++)
-			test_table->update(i, 2*i);
+		LOG(INFO) << StringPrintf("Process %d: Done put ...", NetworkThread::Get()->id());
 
-		for (int i=0; i<100; i++)
+
+		LOG(INFO) << StringPrintf("Process %d: get:", NetworkThread::Get()->id());
+		for (int i=0; i<10; i++)
 			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
+		LOG(INFO) << StringPrintf("Process %d: Done get ...", NetworkThread::Get()->id());
 
-		*/
-		sleep(10);
 
-		// then send message to flush/stop other workers
-		if (IsDistributedMemoryManager())
-				DistributedMemoryManager::Get()->ShutdownServers();
+		LOG(INFO) << StringPrintf("Process %d: update:", NetworkThread::Get()->id());
+		for (int i=0; i<10; i++)
+			test_table->update(i, 2*i);
+		LOG(INFO) << StringPrintf("Process %d: Done update ...", NetworkThread::Get()->id());
 
-		while (true){
-			sleep(10);
-		}
+
+		LOG(INFO) << StringPrintf("Process %d: get:", NetworkThread::Get()->id());
+		for (int i=0; i<10; i++)
+				std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
+		LOG(INFO) << StringPrintf("Process %d: Done get ...", NetworkThread::Get()->id());
+
 
 	}
-	LOG(INFO)<< StringPrintf("$$$$$$$$$$ PROCESS %d finished", NetworkThread::Get()->id());
+	else{ // worker, sleep while the network thread is processing put/get
+		Sleep(15);
+	}
+
+	Finish();
 }
 
 

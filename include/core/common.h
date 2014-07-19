@@ -46,6 +46,9 @@ namespace lapis {
 //  the current process is not the manager.
 void InitServers(int argc, char** argv);
 
+//  called at the end.
+void Finish();
+
 //  true if the current process is the memory manager,
 //	false if it is a memory server
 bool IsDistributedMemoryManager();

@@ -133,7 +133,6 @@ void GlobalTable::SendUpdates() {
         t->clear();
 
         put.set_done(true);
-
         NetworkThread::Get()->Send(owner(i), MTYPE_PUT_REQUEST, put);
       } while(!t->empty());
 

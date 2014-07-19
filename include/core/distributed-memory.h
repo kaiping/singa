@@ -41,7 +41,8 @@ namespace lapis{
 
 		void AssignTables();  //  assign tables to clients
 
-		//  must be called at the end
+		//  must be called at the end. wait till receiving
+		//  signals from the servers before end
 		void ShutdownServers(); //  shut down other clients
 
 		static DistributedMemoryManager* Get(){ return dmm_; }

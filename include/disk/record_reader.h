@@ -60,7 +60,7 @@ class RecordReader {
    * Reset to read from the beginning.
    * Sometimes we need to go through the dataset multiple times.
    */
-  virtual void Reset();
+  virtual void Reset()=0;
   /**
    * Return offset of the record to be read.
    * offset to the begin to a file if data is from a single file; otherwise

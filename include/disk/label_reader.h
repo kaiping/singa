@@ -17,13 +17,14 @@ class LabelReader : public RecordReader {
   // filenames will not be used, and should be NULL
   //
   virtual void Init(const std::string path_prefix,
-                    const std::vector<std::string> &path_suffix);
+                    const std::vector<std::string> &path_suffix
+                    int offset);
 
   virtual bool ReadNextRecord(std::string *key, float *val);
+  virtual int Offset();
   ~LabelReader();
  private:
-  const std::string full_path_;
-  std::ifstream *fin_;
+  std::ifstream is_;
 };
 
 }  // namespace lapis

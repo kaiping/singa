@@ -37,9 +37,14 @@ class RecordReader {
    * labelid>. The feature source is a directory of images, hence the
    * path_prefix is the image directory, and the path_suffix is the
    * image_filename from the label source file.
+   * @param offset the offset to the begin to a file if data is from a single
+   * file; otherwise the offset to the first file in t he file list (e.g., the
+   * list provided by path_suffix). if not =0, the reader is restored from some
+   * checkpoint.
    */
   virtual void Init(const std::string path_prefix,
-                    const std::vector<std::string> &path_suffix) = 0;
+                    const std::vector<std::string> &path_suffix,
+                    int offset =0) = 0;
   /**
    * Read next data record (e.g., one image or label).
    * @param key the identifier of the record.
@@ -48,6 +53,15 @@ class RecordReader {
    * @return true if not at the end of reading, otherwise return false
    */
   virtual bool ReadNextRecord(std::string *key, float *val) = 0;
+
+  /**
+   * Return offset of the record to be read.
+   * offset to the begin to a file if data is from a single file; otherwise
+   * the offset to the first file in the file list (e.g., the list provided by
+   * path_suffix). It will be checkpointed by the DataSource when doing
+   * checkpoint.
+   */
+  virtual int Offset()=0;
 };
 
 /*****************************************************************************/

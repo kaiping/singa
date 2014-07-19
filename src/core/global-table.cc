@@ -74,6 +74,7 @@ void GlobalTable::set_worker(MemoryServer* w) {
 }
 
 bool GlobalTable::get_remote(int shard, const StringPiece& k, string* v) {
+
   HashGet req;
   TableData resp;
 

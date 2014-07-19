@@ -142,6 +142,8 @@ V TypedGlobalTable<K, V>::get_local(const K& k) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   int shard = this->get_shard(k);
+  int key = k; 
+  
   //  boost::recursive_mutex::scoped_lock sl(mutex());
   partition(shard)->put(k, v);
 

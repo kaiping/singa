@@ -160,7 +160,6 @@ void NetworkThread::NetworkLoop() {
     } else {
       Sleep(FLAGS_sleep_time);
     }
-
     //  push the send queue through
     while (!pending_sends_.empty()) {
       boost::recursive_mutex::scoped_lock sl(send_lock);
@@ -312,7 +311,6 @@ void RequestQueue::ExtractKey(int tag, string data, string* key){
 
 		*key = message.key();
 	}
-
 }
 
 //  put the TaggedMessage into the synchronous queues, one queue
@@ -374,7 +372,6 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 	 // extract the key
 	 string key;
 	 ExtractKey(tag, data, &key);
-
 	 //  check the key map, and get the appropriate queue + lock
 	{
 		boost::recursive_mutex::scoped_lock sl(whole_queue_lock_);
@@ -385,7 +382,7 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 			key_locks_.push_back(new boost::recursive_mutex());
 			access_counters_.push_back(0);
 			is_in_put_queue_.push_back(1);
-
+			is_first_update_.push_back(true); 
 			// queue index of this key
 			key_map_[key] = put_queues_.size()-1;
 		}
@@ -393,7 +390,6 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 
 	int idx = key_map_[key];
 	boost::recursive_mutex& key_lock = *(key_locks_[idx]);
-
 	//  now insert to the queue
 	{
 		boost::recursive_mutex::scoped_lock sl(key_lock);
@@ -414,34 +410,28 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 	//get lock of the current key;
 	bool success = false;
-	LOG(INFO) << StringPrintf(" GETTING NEXT REQUEST >>>> ");
 	while (!success){
 		while (key_locks_.empty() && put_queues_.empty())
-					Sleep(FLAGS_sleep_time);
+			Sleep(FLAGS_sleep_time);
 
 	  //Queue& key_queue = request_queues_[key_index_];
 	  {
-			LOG(INFO) << "key_idx " << key_index_ << " is in get queue? "<< is_in_put_queue_[key_index_];
 		  boost::recursive_mutex& key_lock = *(key_locks_[key_index_]);
 		  boost::recursive_mutex::scoped_lock sl(key_lock);
 		  int& counter = access_counters_[key_index_];
 		  int& is_put = is_in_put_queue_[key_index_];
 		  //are we in put queue or in get queue?
 		  if (is_put){
-			  if (put_queues_[key_index_].empty()){
-				  key_index_ = (key_index_+1)%get_queues_.size();
-				  continue;
-			  }
-
+			  if (!put_queues_[key_index_].empty()){
 			  TaggedMessage* q_msg = put_queues_[key_index_].front();
 			  message->tag = q_msg->tag;
 			  message->data = q_msg->data;
 			  put_queues_[key_index_].pop_front();
 			  counter++;
-			  if (is_first_update_){
+			  if (is_first_update_[key_index_]){
 				  is_put = 0;
 				  counter = 0;
-				  is_first_update_ = false;
+				  is_first_update_[key_index_] = 0;
 			  }
 			  if (counter==num_mem_servers_){
 				  is_put = 0;
@@ -449,12 +439,10 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 			  }
 			  delete q_msg;
 			  success=true;
+			}
 		  }
 		  else{ //  in get queue
-			  if (get_queues_[key_index_].empty()){
-				  key_index_ = (key_index_+1)%get_queues_.size();
-				  continue;
-			  }
+			  if (!get_queues_[key_index_].empty()){
 			  TaggedMessage* q_msg = get_queues_[key_index_].front();
 			  message->tag = q_msg->tag;
 			  message->data = q_msg->data;
@@ -463,18 +451,17 @@ void AsyncRequestQueue::NextRequest(TaggedMessage* message){
 			  if (counter==num_mem_servers_){
 			  	  is_put = 1;
 			  	  counter=0;
+
 			  }
 			  delete q_msg;
 			  success=true;
+			}
 		  }
 	  }
 	  key_index_ = (key_index_+1)%get_queues_.size();
 	  Sleep(FLAGS_sleep_time);
 	}
-	if (message->tag==MTYPE_PUT_REQUEST)
-		LOG(INFO) << StringPrintf(" GOT NEXT PUT REQUEST >>>> ");
-	if (message->tag==MTYPE_GET_REQUEST)
-			LOG(INFO) << StringPrintf(" GOT NEXT GET REQUEST >>>> ");
+
 }
 
 }

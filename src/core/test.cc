@@ -31,18 +31,17 @@ int main(int argc, char** argv){
 
 		LOG(INFO) << StringPrintf("Process %d: put:", NetworkThread::Get()->id());
 		//put, update then get
-		for (int i=0; i<10; i++)
+		for (int i=0; i<100; i++)
 			test_table->put(i,i);
 
 		LOG(INFO) << StringPrintf("Process %d: Done put ...", NetworkThread::Get()->id());
-
-
+		
 		LOG(INFO) << StringPrintf("Process %d: get:", NetworkThread::Get()->id());
-		for (int i=0; i<10; i++)
+		for (int i=0; i<100; i++)
 			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
 		LOG(INFO) << StringPrintf("Process %d: Done get ...", NetworkThread::Get()->id());
 
-
+/*
 		LOG(INFO) << StringPrintf("Process %d: update:", NetworkThread::Get()->id());
 		for (int i=0; i<10; i++)
 			test_table->update(i, 2*i);
@@ -53,7 +52,7 @@ int main(int argc, char** argv){
 		for (int i=0; i<10; i++)
 				std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
 		LOG(INFO) << StringPrintf("Process %d: Done get ...", NetworkThread::Get()->id());
-
+*/
 
 	}
 	else{ // worker, sleep while the network thread is processing put/get

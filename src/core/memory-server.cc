@@ -66,7 +66,6 @@ namespace lapis{
 	void MemoryServer::HandleGetRequest(const Message* message){
 		const HashGet* get_req = static_cast<const HashGet*>(message);
 		TableData get_resp;
-
 		// prepare
 		get_resp.Clear();
 		get_resp.set_source(server_id_);

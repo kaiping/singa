@@ -40,7 +40,7 @@ class TaggedMessage;
 
 class RequestQueue{
  public:
-  RequestQueue(int ns): num_mem_servers_(ns), key_index_(0), is_first_update_(true) {}
+  RequestQueue(int ns): num_mem_servers_(ns), key_index_(0) {}
   ~RequestQueue(){}
 
   virtual void NextRequest(TaggedMessage* msg){}
@@ -58,8 +58,6 @@ class RequestQueue{
     boost::recursive_mutex whole_queue_lock_;
 
   map<string, int> key_map_;
-
-  bool is_first_update_;
 
   int num_mem_servers_;
   int key_index_;
@@ -87,6 +85,7 @@ class AsyncRequestQueue: public RequestQueue{
   vector<Queue> put_queues_, get_queues_;
   vector<int> access_counters_;
   vector<int> is_in_put_queue_;
+  vector<int> is_first_update_; 
 };
 
 

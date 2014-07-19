@@ -26,10 +26,13 @@ class RecordReader {
    * Initialization
    * The reader will locate one input file (e.g., an image) based on the prefix
    * and one element from suffix.
-   * @param path_prefix a file path if all data is in the single file;
-   * it is also possible that path_prefix is a directory, e.g., under which
-   * are image files. if the it is a directory, then for each path_suffix, they
-   * construct a full path to an input file (e.g., an image)
+   * @param ds_proto provide meta info about the dataset, e.g., the path prefix
+   * , i.e., the folder, where the images are located, or a full path for the
+   * single label file.  If the path_prefix is a directory, then for each
+   * path_suffix, they construct a full path to an input file (e.g., an image)
+   * Besides, it also has shape/size info about the expected input data, e.g.,
+   * the width and height of rgb image, based on which the reader may resize
+   * the input image.
    * @param path_suffix, each suffix can be a full path or the last part of a
    * full path. For the imagenet dataset, the label source is in a single file,
    * hence the path_prefix is the full label file path, path_suffix is empty.
@@ -42,7 +45,7 @@ class RecordReader {
    * list provided by path_suffix). if not =0, the reader is restored from some
    * checkpoint.
    */
-  virtual void Init(const std::string path_prefix,
+  virtual void Init(const DataSourceProto &ds_proto,
                     const std::vector<std::string> &path_suffix,
                     int offset =0) = 0;
   /**
@@ -53,7 +56,11 @@ class RecordReader {
    * @return true if not at the end of reading, otherwise return false
    */
   virtual bool ReadNextRecord(std::string *key, float *val) = 0;
-
+  /**
+   * Reset to read from the beginning.
+   * Sometimes we need to go through the dataset multiple times.
+   */
+  virtual void Reset();
   /**
    * Return offset of the record to be read.
    * offset to the begin to a file if data is from a single file; otherwise

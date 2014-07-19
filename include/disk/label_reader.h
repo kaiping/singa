@@ -6,7 +6,7 @@
 #include <ifstream>
 #include <string>
 #include <vector>
-#include "disk/record_reader_reader.h"
+#include "disk/record_reader.h"
 
 namespace lapis {
 /**
@@ -15,12 +15,20 @@ namespace lapis {
 class LabelReader : public RecordReader {
  public:
   // filenames will not be used, and should be NULL
-  //
-  virtual void Init(const std::string path_prefix,
+  virtual void Init(const DataSourceProto &ds_proto,
                     const std::vector<std::string> &path_suffix
-                    int offset);
+                    int offset=0);
 
+  /**
+   * Read the label for the next record.
+   * The label is of type int in the file, hence we have to convert it into
+   * float, and set val.
+   * @param key the identifier of the record, e.g., suffix of the path of the
+   * image file.
+   * @param val the label
+   */
   virtual bool ReadNextRecord(std::string *key, float *val);
+  virtual void Reset();
   virtual int Offset();
   ~LabelReader();
  private:

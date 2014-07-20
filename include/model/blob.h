@@ -16,7 +16,7 @@ namespace lapis {
 class Blob {
  public:
   Blob(): num_(0), channels_(0), height_(0),
-          width_(0), content_(nullptr) {}
+    width_(0), content_(nullptr) {}
   /**
    * allocate memory of size length, e.g., for the bias parameter
    * do nothing if it is of exactly the same shape
@@ -78,7 +78,7 @@ class Blob {
    * Return the total size in terms of floats
    */
   const int Length() const {
-    return num_*channels_*height_*width_;
+    return num_ * channels_ * height_ * width_;
   }
 
  private:

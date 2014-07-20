@@ -4,7 +4,7 @@
 #define INCLUDE_DISK_FEATURE_READER_H_
 #include <vector>
 #include <string>
-#include <fstream>
+#include <fstream> // #NOLINT
 
 #include "disk/record_reader.h"
 

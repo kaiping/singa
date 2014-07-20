@@ -375,7 +375,7 @@ void protobuf_AddDesc_lapis_2eproto() {
     "oto\022\014\n\004name\030\001 \002(\t\022\016\n\006reader\030\002 \002(\t\022\014\n\004pat"
     "h\030\003 \001(\t\022\014\n\004size\030\004 \001(\003\022-\n\004type\030\005 \001(\0162\037.la"
     "pis.DataSourceProto.DataType\022\023\n\010channels"
-    "\030\006 \001(\005:\0010\022\021\n\006height\030\007 \001(\005:\0010\022\020\n\005width\030\010 "
+    "\030\006 \001(\005:\0011\022\021\n\006height\030\007 \001(\005:\0010\022\020\n\005width\030\010 "
     "\001(\005:\0010\"\"\n\010DataType\022\013\n\007FEATURE\020\000\022\t\n\005LABEL"
     "\020\001\"U\n\010RGBDatum\022\023\n\010channels\030\001 \001(\005:\0013\022\021\n\006h"
     "eight\030\002 \001(\005:\0010\022\020\n\005width\030\003 \001(\005:\0010\022\017\n\007cont"
@@ -969,7 +969,7 @@ void DataSourceProto::SharedCtor() {
   path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   size_ = GOOGLE_LONGLONG(0);
   type_ = 0;
-  channels_ = 0;
+  channels_ = 1;
   height_ = 0;
   width_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -1033,7 +1033,7 @@ void DataSourceProto::Clear() {
     }
     size_ = GOOGLE_LONGLONG(0);
     type_ = 0;
-    channels_ = 0;
+    channels_ = 1;
     height_ = 0;
     width_ = 0;
   }
@@ -1134,7 +1134,7 @@ bool DataSourceProto::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 channels = 6 [default = 0];
+      // optional int32 channels = 6 [default = 1];
       case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
@@ -1238,7 +1238,7 @@ void DataSourceProto::SerializeWithCachedSizes(
       5, this->type(), output);
   }
 
-  // optional int32 channels = 6 [default = 0];
+  // optional int32 channels = 6 [default = 1];
   if (has_channels()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->channels(), output);
   }
@@ -1302,7 +1302,7 @@ void DataSourceProto::SerializeWithCachedSizes(
       5, this->type(), target);
   }
 
-  // optional int32 channels = 6 [default = 0];
+  // optional int32 channels = 6 [default = 1];
   if (has_channels()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->channels(), target);
   }
@@ -1362,7 +1362,7 @@ int DataSourceProto::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
     }
 
-    // optional int32 channels = 6 [default = 0];
+    // optional int32 channels = 6 [default = 1];
     if (has_channels()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(

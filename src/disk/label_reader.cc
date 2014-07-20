@@ -13,9 +13,9 @@ void LabelReader::Init(const DataSourceProto &ds_proto,
                        << ds_proto.path() << "\n";
   if (offset > 0) {
     is_.seekg(0, is_.end);
-    int length = is_.tellg();
-    CHECK_LE(offset, length) << "the offset " << offset
-                             << " should be < the file size " << length << "\n";
+    int size = is_.tellg();
+    CHECK_LE(offset, size) << "the offset " << offset
+                           << " should be < the file size " << size << "\n";
     is_.seekg(offset, is_.beg);
   }
 }

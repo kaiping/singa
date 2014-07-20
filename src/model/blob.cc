@@ -17,7 +17,8 @@ void Blob::Reshape(int num, int height, int width) {
 }
 
 void Blob::Reshape(int num, int channels, int height, int width) {
-  if (num_!=num || channels_!=channels || height_!=height || width_ !=width) {
+  if (num_ != num || channels_ != channels || height_ != height
+      || width_ != width) {
     num_ = num;
     channels_ = channels;
     height_ = height;

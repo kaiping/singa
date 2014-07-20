@@ -3,7 +3,7 @@
 
 #ifndef INCLUDE_DISK_LABEL_READER_H_
 #define INCLUDE_DISK_LABEL_READER_H_
-#include <fstream>
+#include <fstream> // #NOLINT
 #include <string>
 #include <vector>
 #include "disk/record_reader.h"

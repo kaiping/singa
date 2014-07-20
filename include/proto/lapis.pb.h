@@ -358,7 +358,7 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::lapis::DataSourceProto_DataType type() const;
   inline void set_type(::lapis::DataSourceProto_DataType value);
 
-  // optional int32 channels = 6 [default = 0];
+  // optional int32 channels = 6 [default = 1];
   inline bool has_channels() const;
   inline void clear_channels();
   static const int kChannelsFieldNumber = 6;
@@ -2200,7 +2200,7 @@ inline void DataSourceProto::set_type(::lapis::DataSourceProto_DataType value) {
   type_ = value;
 }
 
-// optional int32 channels = 6 [default = 0];
+// optional int32 channels = 6 [default = 1];
 inline bool DataSourceProto::has_channels() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
@@ -2211,7 +2211,7 @@ inline void DataSourceProto::clear_has_channels() {
   _has_bits_[0] &= ~0x00000020u;
 }
 inline void DataSourceProto::clear_channels() {
-  channels_ = 0;
+  channels_ = 1;
   clear_has_channels();
 }
 inline ::google::protobuf::int32 DataSourceProto::channels() const {

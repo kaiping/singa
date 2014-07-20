@@ -35,7 +35,7 @@ message DataSourceProto {
   optional DataType type = 5;
 
   // following three fields will be used for rgb image feature
-  optional int32 channels = 6 [default = 0];
+  optional int32 channels = 6 [default = 1];
   optional int32 height = 7 [default = 0];
   // for one dimension feature, this is the length of the feature
   optional int32 width = 8 [default = 0];

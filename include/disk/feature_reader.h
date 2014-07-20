@@ -1,7 +1,12 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-19 15:22
+#ifndef INCLUDE_DISK_FEATURE_READER_H_
+#define INCLUDE_DISK_FEATURE_READER_H_
+#include <vector>
+#include <string>
+#include <fstream>
 
-#include "record_reader.h"
+#include "disk/record_reader.h"
 
 namespace lapis {
 /**
@@ -20,7 +25,7 @@ class FeatureReader : public RecordReader {
    */
   virtual void Init(const DataSourceProto &ds_proto,
                     const std::vector<std::string> &path_suffix,
-                    int offset =0);
+                    int offset = 0);
 
   /**
    * Read next feature.
@@ -37,6 +42,7 @@ class FeatureReader : public RecordReader {
    */
   virtual int Offset();
   ~FeatureReader();
+
  private:
   /**
    * length of the feature, should be configured at the width field in
@@ -44,6 +50,8 @@ class FeatureReader : public RecordReader {
    */
   int length_;
   std::ifstream is_;
-}
+};
 
 }  // namespace lapis
+
+#endif  // INCLUDE_DISK_FEATURE_READER_H_

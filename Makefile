@@ -26,9 +26,7 @@ LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 FILTER_HDRS := include/coordinator/coordinator.h \
 							include/worker/worker.h \
 							include/utils/global_cotext.h \
-							include/model/row_param.h \
-							include/disk/label_dir_reader.h \
-							include/disk/rgb_dir_reader.h
+							include/model/row_param.h
 
 LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
 LAPIS_HDRS := $(filter-out $(FILTER_HDRS), $(LAPIS_HDRS))
@@ -38,9 +36,8 @@ FILTER_SRCS := src/coordinator/coordinator.cc \
 							src/main.cc \
 							src/utils/start_deamon.cc \
 							src/utils/global_cotext.cc \
-							src/model/row_param.cc \
-							src/disk/label_dir_reader.cc \
-							src/disk/rgb_dir_reader.cc
+							src/model/row_param.cc
+
 LAPIS_SRCS := $(shell find src/ -path "src/test" -prune -o -name "*.cc" -print)
 LAPIS_SRCS :=$(filter-out $(FILTER_SRCS), $(LAPIS_SRCS))
 

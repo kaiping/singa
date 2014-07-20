@@ -3,7 +3,7 @@
 
 #ifndef INCLUDE_DISK_LABEL_READER_H_
 #define INCLUDE_DISK_LABEL_READER_H_
-#include <ifstream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include "disk/record_reader.h"
@@ -16,8 +16,8 @@ class LabelReader : public RecordReader {
  public:
   // filenames will not be used, and should be NULL
   virtual void Init(const DataSourceProto &ds_proto,
-                    const std::vector<std::string> &path_suffix
-                    int offset=0);
+                    const std::vector<std::string> &path_suffix,
+                    int offset = 0);
 
   /**
    * Read the label for the next record.

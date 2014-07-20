@@ -20,13 +20,13 @@ void EuclideanLossEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
 }
 void EuclideanLossEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
                                  Blob *dest_grad, bool overwrite) {
-  MapMatrixType predict(dest_fea->MutableContent(), dest_fea->Height(),
-                        dest_fea->Width());
+  MapMatrixType predict(dest_fea->mutable_content(), dest_fea->height(),
+                        dest_fea->width());
   //! here src_grad is actually the input data/label from DataLayer
-  MapMatrixType data(src_grad->MutableContent(), src_grad->Height(),
-                     src_grad->Width());
-  MapMatrixType fea_grad(dest_grad->MutableContent(), dest_grad->Height(),
-                         dest_grad->Width());
+  MapMatrixType data(src_grad->mutable_content(), src_grad->height(),
+                     src_grad->width());
+  MapMatrixType fea_grad(dest_grad->mutable_content(), dest_grad->height(),
+                         dest_grad->width());
   if (overwrite)
     fea_grad = (predict - data) / predict.rows();
   else

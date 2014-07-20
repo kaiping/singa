@@ -6,15 +6,16 @@
 namespace lapis {
 
 void LabelReader::Init(const DataSourceProto &ds_proto,
-                       const vector<std::string> &suffix,
-                       int offset = 0) {
-  is_.open(ds_proto.prefix);
-  CHECK(is_.is_open())<<"Error open the label file "<<prefix<<"\n";
-  if (offset>0) {
-    is_.seekg(0, is.end);
-    int length=is_.tellg();
-    CHECK_LE(offset, length) << "the offset "<<offset
-                             <<" should be < the file size "<<length<<"\n";
+                       const std::vector<std::string> &suffix,
+                       int offset) {
+  is_.open(ds_proto.path());
+  CHECK(is_.is_open()) << "Error open the label file "
+                       << ds_proto.path() << "\n";
+  if (offset > 0) {
+    is_.seekg(0, is_.end);
+    int length = is_.tellg();
+    CHECK_LE(offset, length) << "the offset " << offset
+                             << " should be < the file size " << length << "\n";
     is_.seekg(offset, is_.beg);
   }
 }
@@ -23,8 +24,8 @@ bool LabelReader::ReadNextRecord(std::string *key, float *val) {
   if (is_.eof())
     return false;
   int v;
-  fin_ >> *k >> v;
-  *val= (float) v;
+  is_ >> *key >> v;
+  *val = static_cast<float> (v);
   return true;
 }
 

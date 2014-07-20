@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-16 22:00
 
-#ifndef INCLUDE_MODEL_DATA_SOURCE_H_
-#define INCLUDE_MODEL_DATA_SOURCE_H_
+#ifndef INCLUDE_DISK_DATA_SOURCE_H_
+#define INCLUDE_DISK_DATA_SOURCE_H_
 #include <string>
 
 #include "model/blob.h"
@@ -51,12 +51,12 @@ class DataSource {
   std::string path_;
   //! identifier of the data source
   std::string name_;
-  //! parser name for this data source
-  std::string parser_;
+  //! reader name for this data source
+  std::string reader_;
   //! properties for rgs image feature
   int channels_, height_, width_;
 };
 
 }  // namespace lapis
 
-#endif  // INCLUDE_MODEL_DATA_SOURCE_H_
+#endif  // INCLUDE_DISK_DATA_SOURCE_H_

@@ -59,8 +59,8 @@ void SGDTrainer::Validate(Net *net) {
   if (phase_ != TrainPhase::kValidation) {
     for (auto layer : net->Layers()) {
       layer->Setup(sgd_proto_.validation_batchsize(),
-                    TrainAlgorithm::kBackPropagation,
-                    validation_data_);
+                   TrainAlgorithm::kBackPropagation,
+                   validation_data_);
     }
   }
   // TODO(wangwei) forward only

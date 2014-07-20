@@ -320,17 +320,17 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // required string parser = 2;
-  inline bool has_parser() const;
-  inline void clear_parser();
-  static const int kParserFieldNumber = 2;
-  inline const ::std::string& parser() const;
-  inline void set_parser(const ::std::string& value);
-  inline void set_parser(const char* value);
-  inline void set_parser(const char* value, size_t size);
-  inline ::std::string* mutable_parser();
-  inline ::std::string* release_parser();
-  inline void set_allocated_parser(::std::string* parser);
+  // required string reader = 2;
+  inline bool has_reader() const;
+  inline void clear_reader();
+  static const int kReaderFieldNumber = 2;
+  inline const ::std::string& reader() const;
+  inline void set_reader(const ::std::string& value);
+  inline void set_reader(const char* value);
+  inline void set_reader(const char* value, size_t size);
+  inline ::std::string* mutable_reader();
+  inline ::std::string* release_reader();
+  inline void set_allocated_reader(::std::string* reader);
 
   // optional string path = 3;
   inline bool has_path() const;
@@ -351,38 +351,31 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 size() const;
   inline void set_size(::google::protobuf::int64 value);
 
-  // optional int64 num = 5;
-  inline bool has_num() const;
-  inline void clear_num();
-  static const int kNumFieldNumber = 5;
-  inline ::google::protobuf::int64 num() const;
-  inline void set_num(::google::protobuf::int64 value);
-
-  // optional .lapis.DataSourceProto.DataType type = 6;
+  // optional .lapis.DataSourceProto.DataType type = 5;
   inline bool has_type() const;
   inline void clear_type();
-  static const int kTypeFieldNumber = 6;
+  static const int kTypeFieldNumber = 5;
   inline ::lapis::DataSourceProto_DataType type() const;
   inline void set_type(::lapis::DataSourceProto_DataType value);
 
-  // optional int32 channels = 7;
+  // optional int32 channels = 6 [default = 0];
   inline bool has_channels() const;
   inline void clear_channels();
-  static const int kChannelsFieldNumber = 7;
+  static const int kChannelsFieldNumber = 6;
   inline ::google::protobuf::int32 channels() const;
   inline void set_channels(::google::protobuf::int32 value);
 
-  // optional int32 height = 8;
+  // optional int32 height = 7 [default = 0];
   inline bool has_height() const;
   inline void clear_height();
-  static const int kHeightFieldNumber = 8;
+  static const int kHeightFieldNumber = 7;
   inline ::google::protobuf::int32 height() const;
   inline void set_height(::google::protobuf::int32 value);
 
-  // optional int32 width = 9;
+  // optional int32 width = 8 [default = 0];
   inline bool has_width() const;
   inline void clear_width();
-  static const int kWidthFieldNumber = 9;
+  static const int kWidthFieldNumber = 8;
   inline ::google::protobuf::int32 width() const;
   inline void set_width(::google::protobuf::int32 value);
 
@@ -390,14 +383,12 @@ class DataSourceProto : public ::google::protobuf::Message {
  private:
   inline void set_has_name();
   inline void clear_has_name();
-  inline void set_has_parser();
-  inline void clear_has_parser();
+  inline void set_has_reader();
+  inline void clear_has_reader();
   inline void set_has_path();
   inline void clear_has_path();
   inline void set_has_size();
   inline void clear_has_size();
-  inline void set_has_num();
-  inline void clear_has_num();
   inline void set_has_type();
   inline void clear_has_type();
   inline void set_has_channels();
@@ -410,17 +401,16 @@ class DataSourceProto : public ::google::protobuf::Message {
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
-  ::std::string* parser_;
+  ::std::string* reader_;
   ::std::string* path_;
   ::google::protobuf::int64 size_;
-  ::google::protobuf::int64 num_;
   int type_;
   ::google::protobuf::int32 channels_;
   ::google::protobuf::int32 height_;
   ::google::protobuf::int32 width_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -2025,73 +2015,73 @@ inline void DataSourceProto::set_allocated_name(::std::string* name) {
   }
 }
 
-// required string parser = 2;
-inline bool DataSourceProto::has_parser() const {
+// required string reader = 2;
+inline bool DataSourceProto::has_reader() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void DataSourceProto::set_has_parser() {
+inline void DataSourceProto::set_has_reader() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void DataSourceProto::clear_has_parser() {
+inline void DataSourceProto::clear_has_reader() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void DataSourceProto::clear_parser() {
-  if (parser_ != &::google::protobuf::internal::kEmptyString) {
-    parser_->clear();
+inline void DataSourceProto::clear_reader() {
+  if (reader_ != &::google::protobuf::internal::kEmptyString) {
+    reader_->clear();
   }
-  clear_has_parser();
+  clear_has_reader();
 }
-inline const ::std::string& DataSourceProto::parser() const {
-  return *parser_;
+inline const ::std::string& DataSourceProto::reader() const {
+  return *reader_;
 }
-inline void DataSourceProto::set_parser(const ::std::string& value) {
-  set_has_parser();
-  if (parser_ == &::google::protobuf::internal::kEmptyString) {
-    parser_ = new ::std::string;
+inline void DataSourceProto::set_reader(const ::std::string& value) {
+  set_has_reader();
+  if (reader_ == &::google::protobuf::internal::kEmptyString) {
+    reader_ = new ::std::string;
   }
-  parser_->assign(value);
+  reader_->assign(value);
 }
-inline void DataSourceProto::set_parser(const char* value) {
-  set_has_parser();
-  if (parser_ == &::google::protobuf::internal::kEmptyString) {
-    parser_ = new ::std::string;
+inline void DataSourceProto::set_reader(const char* value) {
+  set_has_reader();
+  if (reader_ == &::google::protobuf::internal::kEmptyString) {
+    reader_ = new ::std::string;
   }
-  parser_->assign(value);
+  reader_->assign(value);
 }
-inline void DataSourceProto::set_parser(const char* value, size_t size) {
-  set_has_parser();
-  if (parser_ == &::google::protobuf::internal::kEmptyString) {
-    parser_ = new ::std::string;
+inline void DataSourceProto::set_reader(const char* value, size_t size) {
+  set_has_reader();
+  if (reader_ == &::google::protobuf::internal::kEmptyString) {
+    reader_ = new ::std::string;
   }
-  parser_->assign(reinterpret_cast<const char*>(value), size);
+  reader_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* DataSourceProto::mutable_parser() {
-  set_has_parser();
-  if (parser_ == &::google::protobuf::internal::kEmptyString) {
-    parser_ = new ::std::string;
+inline ::std::string* DataSourceProto::mutable_reader() {
+  set_has_reader();
+  if (reader_ == &::google::protobuf::internal::kEmptyString) {
+    reader_ = new ::std::string;
   }
-  return parser_;
+  return reader_;
 }
-inline ::std::string* DataSourceProto::release_parser() {
-  clear_has_parser();
-  if (parser_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* DataSourceProto::release_reader() {
+  clear_has_reader();
+  if (reader_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = parser_;
-    parser_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = reader_;
+    reader_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_parser(::std::string* parser) {
-  if (parser_ != &::google::protobuf::internal::kEmptyString) {
-    delete parser_;
+inline void DataSourceProto::set_allocated_reader(::std::string* reader) {
+  if (reader_ != &::google::protobuf::internal::kEmptyString) {
+    delete reader_;
   }
-  if (parser) {
-    set_has_parser();
-    parser_ = parser;
+  if (reader) {
+    set_has_reader();
+    reader_ = reader;
   } else {
-    clear_has_parser();
-    parser_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_reader();
+    reader_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2187,37 +2177,15 @@ inline void DataSourceProto::set_size(::google::protobuf::int64 value) {
   size_ = value;
 }
 
-// optional int64 num = 5;
-inline bool DataSourceProto::has_num() const {
+// optional .lapis.DataSourceProto.DataType type = 5;
+inline bool DataSourceProto::has_type() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void DataSourceProto::set_has_num() {
+inline void DataSourceProto::set_has_type() {
   _has_bits_[0] |= 0x00000010u;
 }
-inline void DataSourceProto::clear_has_num() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void DataSourceProto::clear_num() {
-  num_ = GOOGLE_LONGLONG(0);
-  clear_has_num();
-}
-inline ::google::protobuf::int64 DataSourceProto::num() const {
-  return num_;
-}
-inline void DataSourceProto::set_num(::google::protobuf::int64 value) {
-  set_has_num();
-  num_ = value;
-}
-
-// optional .lapis.DataSourceProto.DataType type = 6;
-inline bool DataSourceProto::has_type() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void DataSourceProto::set_has_type() {
-  _has_bits_[0] |= 0x00000020u;
-}
 inline void DataSourceProto::clear_has_type() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void DataSourceProto::clear_type() {
   type_ = 0;
@@ -2232,15 +2200,15 @@ inline void DataSourceProto::set_type(::lapis::DataSourceProto_DataType value) {
   type_ = value;
 }
 
-// optional int32 channels = 7;
+// optional int32 channels = 6 [default = 0];
 inline bool DataSourceProto::has_channels() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void DataSourceProto::set_has_channels() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void DataSourceProto::clear_has_channels() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void DataSourceProto::clear_channels() {
   channels_ = 0;
@@ -2254,15 +2222,15 @@ inline void DataSourceProto::set_channels(::google::protobuf::int32 value) {
   channels_ = value;
 }
 
-// optional int32 height = 8;
+// optional int32 height = 7 [default = 0];
 inline bool DataSourceProto::has_height() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void DataSourceProto::set_has_height() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void DataSourceProto::clear_has_height() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void DataSourceProto::clear_height() {
   height_ = 0;
@@ -2276,15 +2244,15 @@ inline void DataSourceProto::set_height(::google::protobuf::int32 value) {
   height_ = value;
 }
 
-// optional int32 width = 9;
+// optional int32 width = 8 [default = 0];
 inline bool DataSourceProto::has_width() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void DataSourceProto::set_has_width() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void DataSourceProto::clear_has_width() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void DataSourceProto::clear_width() {
   width_ = 0;

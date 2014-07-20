@@ -12,10 +12,9 @@
 namespace lapis {
 class RGBImageReader : public RecordReader {
  public:
-
   virtual void Init(const DataSourceProto &ds_proto,
                     const std::vector<std::string> &path_suffix,
-                    int offset =0);
+                    int offset = 0);
   /**
    * Read next image.
    * @param key the path suffix that can identify this image

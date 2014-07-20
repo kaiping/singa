@@ -7,7 +7,7 @@
 #include <vector>
 #include "proto/lapis.pb.h"
 #include "model/net.h"
-#include "model/data_source.h"
+#include "disk/data_source.h"
 #include "worker/model_controller.h"
 
 namespace lapis {

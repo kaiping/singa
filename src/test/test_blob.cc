@@ -8,53 +8,56 @@ namespace lapis {
 class BlobTest : public ::testing::Test {
  public:
   BlobTest() : blob1(new Blob()), blob2(new Blob()) {}
-  ~BlobTest() {delete blob1; delete blob2;}
- private:
+  ~BlobTest() {
+    delete blob1;
+    delete blob2;
+  }
+ protected:
   Blob *blob1, *blob2;
   Blob blob3, blob4;
 };
 
 TEST_F(BlobTest, Constructor) {
-  EXPECT_EQ(blob1->Size(), 0);
-  EXPECT_EQ(blob1->Width(), 0);
-  EXPECT_EQ(blob1->Height(), 0);
+  EXPECT_EQ(blob1->Length(), 0);
+  EXPECT_EQ(blob1->width(), 0);
+  EXPECT_EQ(blob1->height(), 0);
 
-  EXPECT_EQ(blob3.Size(), 0);
-  EXPECT_EQ(blob3.Width(), 0);
-  EXPECT_EQ(blob3.Height(), 0);
+  EXPECT_EQ(blob3.Length(), 0);
+  EXPECT_EQ(blob3.width(), 0);
+  EXPECT_EQ(blob3.height(), 0);
 
-  EXPECT_TRUE(blob2->Content==nullptr);
-  EXPECT_TRUE(blob4.Content==nullptr);
+  EXPECT_TRUE(blob2->content() == nullptr);
+  EXPECT_TRUE(blob4.content() == nullptr);
 }
 
 TEST_F(BlobTest, TestReshape) {
   blob1->Reshape(10);
-  EXPECT_EQ(blob1->Size(), 10);
-  EXPECT_EQ(blob1->Num(), 1);
-  EXPECT_EQ(blob1->Height(), 1);
-  EXPECT_EQ(blob1->Width(), 10);
-  EXPECT_EQ(blob1->Content()!=nullptr);
+  EXPECT_EQ(blob1->Length(), 10);
+  EXPECT_EQ(blob1->num(), 1);
+  EXPECT_EQ(blob1->height(), 1);
+  EXPECT_EQ(blob1->width(), 10);
+  EXPECT_TRUE(blob1->content() != nullptr);
 
-  blob2->Reshape(3,4);
-  EXPECT_EQ(blob2->Size(), 12);
-  EXPECT_EQ(blob2->Num(), 1);
-  EXPECT_EQ(blob2->Height(), 3);
-  EXPECT_EQ(blob2->Width(), 4);
-  EXPECT_TRUE(blob2->Content()!=nullptr);
+  blob2->Reshape(3, 4);
+  EXPECT_EQ(blob2->Length(), 12);
+  EXPECT_EQ(blob2->num(), 1);
+  EXPECT_EQ(blob2->height(), 3);
+  EXPECT_EQ(blob2->width(), 4);
+  EXPECT_TRUE(blob2->content() != nullptr);
 
-  blob3.Reshape(3,4,5);
-  EXPECT_EQ(blob3.Size(), 60);
-  EXPECT_EQ(blob3.Num(), 3);
-  EXPECT_EQ(blob3.Height(), 4);
-  EXPECT_EQ(blob3.Width(), 5);
-  EXPECT_TRUE(blob3.Content()!=nullptr);
+  blob3.Reshape(3, 4, 5);
+  EXPECT_EQ(blob3.Length(), 60);
+  EXPECT_EQ(blob3.num(), 3);
+  EXPECT_EQ(blob3.height(), 4);
+  EXPECT_EQ(blob3.width(), 5);
+  EXPECT_TRUE(blob3.content() != nullptr);
 
-  blob4.Reshape(3,4,5,6);
-  EXPECT_EQ(blob4.Size(), 360);
-  EXPECT_EQ(blob4.Num(), 3);
-  EXPECT_EQ(blob4.Height(), 5);
-  EXPECT_EQ(blob4.Width(), 6);
-  EXPECT_TRUE(blob4.Content()!=nullptr);
+  blob4.Reshape(3, 4, 5, 6);
+  EXPECT_EQ(blob4.Length(), 360);
+  EXPECT_EQ(blob4.num(), 3);
+  EXPECT_EQ(blob4.height(), 5);
+  EXPECT_EQ(blob4.width(), 6);
+  EXPECT_TRUE(blob4.content() != nullptr);
 }
 
-}
+}  // namespace lapis

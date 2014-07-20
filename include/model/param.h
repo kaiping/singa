@@ -25,30 +25,30 @@ class Param {
   virtual void ToProto(ParamProto *param_proto);
   //! Return data pointer for this parameter
   const float *Content() const {
-    return content_.Content();
+    return content_.content();
   }
   float *MutableContent() const {
-    return content_.MutableContent();
+    return content_.mutable_content();
   }
 
   const float *Gradient() const {
-    return grad_.Content();
+    return grad_.content();
   }
 
   float *MutableGradient() const {
-    return grad_.MutableContent();
+    return grad_.mutable_content();
   }
   //! Return num of rows for matrix parameters
   const int Rows() {
-    return content_.Height();
+    return content_.height();
   }
   //! Return num of columns for matrix parameters
   const int Cols() {
-    return content_.Width();
+    return content_.width();
   }
   //! Return num of floats for vector parameters
   const int Length() {
-    return content_.Size();
+    return content_.Length();
   }
 
  protected:

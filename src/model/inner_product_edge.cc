@@ -35,9 +35,8 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
 }
 
 void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  MapMatrixType fea((const_cast<Blob *>(src))->MutableContent(), src->Height(),
-                    src->Width());
-  MapMatrixType act(dest->MutableContent(), dest->Width(), dest->Width());
+  MapMatrixType fea(src->mutable_content(), src->height(), src->width());
+  MapMatrixType act(dest->mutable_content(), dest->width(), dest->width());
   MapMatrixType weight(weight_.MutableContent(),
                        weight_.Rows(), weight_.Cols());
   MapVectorType bias(bias_.MutableContent(), bias_.Length());
@@ -50,10 +49,10 @@ void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
 
 void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
                                 Blob *dest_grad, bool overwrite) {
-  MapMatrixType act_grad(src_grad->MutableContent(), src_grad->Height(),
-                         src_grad->Width());
-  MapMatrixType fea(dest_fea->MutableContent(), dest_fea->Width(),
-                    dest_fea->Width());
+  MapMatrixType act_grad(src_grad->mutable_content(), src_grad->height(),
+                         src_grad->width());
+  MapMatrixType fea(dest_fea->mutable_content(), dest_fea->width(),
+                    dest_fea->width());
   MapMatrixType weight_grad(weight_.MutableGradient(), weight_.Rows(),
                             weight_.Cols());
   MapMatrixType weight(weight_.MutableContent(), weight_.Rows(),
@@ -65,8 +64,8 @@ void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   if (dest_grad != nullptr) {
-    MapMatrixType fea_grad(dest_grad->MutableContent(), dest_grad->Height(),
-                           dest_grad->Width());
+    MapMatrixType fea_grad(dest_grad->mutable_content(), dest_grad->height(),
+                           dest_grad->width());
     if (overwrite)
       fea_grad.noalias() = act_grad * weight.transpose();
     else

@@ -12,7 +12,7 @@ namespace lapis {
 void RGBImageReader::Init(const DataSourceProto &ds_proto,
                           const std::vector<std::string> &path_suffix,
                           int offset =0) {
-  path_prefix_=ds_proto.path_prefix();
+  path_prefix_=ds_proto.path();
   width_=ds_proto.width();
   height=ds_proto.height();
   if (path_suffix.empty()) {

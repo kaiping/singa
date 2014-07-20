@@ -34,8 +34,8 @@ void LogisticLayer::ToProto(LayerProto *layer_proto) {
 }
 
 void LogisticLayer::Forward() {
-  MapArrayType act(activation_.MutableContent(), activation_.Height(),
-                   activation_.Width());
+  MapArrayType act(activation_.mutable_content(), activation_.height(),
+                   activation_.width());
   CHECK_GE(in_edges_.size(),
            1) << "logistic layer must have >=1 incoming edges\n";
 
@@ -47,8 +47,8 @@ void LogisticLayer::Forward() {
     edge->Forward(edge->OtherSide(this)->Feature(edge), &activation_, false);
   }
 
-  MapArrayType fea(feature_.MutableContent(), feature_.Height(),
-                   feature_.Width());
+  MapArrayType fea(feature_.mutable_content(), feature_.height(),
+                   feature_.width());
   fea = (-act).exp();
   fea = 1. / (1. + fea);
 }
@@ -65,13 +65,14 @@ void LogisticLayer::Backward() {
     edge->Backward(edge->OtherSide(this)->Gradient(edge), &feature_,
                    &feature_grad_, false);
   }
-  MapArrayType act_grad(activation_grad_.MutableContent(),
-                        activation_grad_.Height(),
-                        activation_grad_.Width());
-  MapArrayType fea_grad(feature_grad_.MutableContent(), feature_grad_.Height(),
-                        feature_grad_.Width());
-  MapArrayType fea(feature_.MutableContent(), feature_.Height(),
-                   feature_.Width());
+  MapArrayType act_grad(activation_grad_.mutable_content(),
+                        activation_grad_.height(),
+                        activation_grad_.width());
+  MapArrayType fea_grad(feature_grad_.mutable_content(),
+                        feature_grad_.height(),
+                        feature_grad_.width());
+  MapArrayType fea(feature_.mutable_content(), feature_.height(),
+                   feature_.width());
   act_grad = fea_grad * fea * (1 - fea);
 }
 

@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-06-28 19:57
 
-#ifndef INCLUDE_DISK_DATA_READER_H_
-#define INCLUDE_DISK_DATA_READER_H_
+#ifndef INCLUDE_DISK_RECORD_READER_H_
+#define INCLUDE_DISK_RECORD_READER_H_
 
 #include <string>
 #include <vector>
@@ -47,7 +47,7 @@ class RecordReader {
    */
   virtual void Init(const DataSourceProto &ds_proto,
                     const std::vector<std::string> &path_suffix,
-                    int offset =0) = 0;
+                    int offset = 0) = 0;
   /**
    * Read next data record (e.g., one image or label).
    * @param key the identifier of the record.
@@ -60,7 +60,7 @@ class RecordReader {
    * Reset to read from the beginning.
    * Sometimes we need to go through the dataset multiple times.
    */
-  virtual void Reset()=0;
+  virtual void Reset() = 0;
   /**
    * Return offset of the record to be read.
    * offset to the begin to a file if data is from a single file; otherwise
@@ -68,7 +68,7 @@ class RecordReader {
    * path_suffix). It will be checkpointed by the DataSource when doing
    * checkpoint.
    */
-  virtual int Offset()=0;
+  virtual int Offset() = 0;
 };
 
 /*****************************************************************************/
@@ -100,30 +100,30 @@ class RecordReaderFactory {
    * Static method to get instance of this factory, there should be only one
    * instance of this factory.
    */
-   static RecordReaderFactory *Instance();
+  static RecordReaderFactory *Instance();
 
-   /**
-    * Register user defined reader, i.e., add the reader class with its
-    * identifier (the reader field in DataSourceProto) into a inner map.
-    * Later, the factory can then create an instance of the reader based on its
-    * identifier. This function will be called by the REGISTER_READER macro.
-    */
-   void RegisterCreateFunction(
-       const std::string id,
-       std::function<RecordReader*(void)> create_function);
-   /**
-    * Create an instance the child RecordReader of identifier being id.
-    * @param id the identifier of the child RecordReader.
-    */
-   RecordReader *Create(const std::string id);
+  /**
+   * Register user defined reader, i.e., add the reader class with its
+   * identifier (the reader field in DataSourceProto) into a inner map.
+   * Later, the factory can then create an instance of the reader based on its
+   * identifier. This function will be called by the REGISTER_READER macro.
+   */
+  void RegisterCreateFunction(
+    const std::string id,
+    std::function<RecordReader*(void)> create_function);
+  /**
+   * Create an instance the child RecordReader of identifier being id.
+   * @param id the identifier of the child RecordReader.
+   */
+  RecordReader *Create(const std::string id);
 
  private:
   //! To avoid creating multiple instances of this factory in the program.
   RecordReaderFactory() {}
   //! Map from reader identifier to reader creating function.
-  std::map<string, std::function<RecordReader*(void)>> reader_map_ ;
+  std::map<std::string, std::function<RecordReader*(void)>> reader_map_;
 };
 
 }  // namespace lapis
 
-#endif  // INCLUDE_DISK_DATA_READER_H_
+#endif  // INCLUDE_DISK_RECORD_READER_H_

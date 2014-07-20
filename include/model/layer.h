@@ -11,8 +11,8 @@
 #include "proto/lapis.pb.h"
 #include "model/edge.h"
 #include "model/trainer.h"
-#include "model/data_source.h"
 #include "model/param.h"
+#include "disk/data_source.h"
 
 /**
  * \file this file includes the declarations of both Layer and LayerFactory

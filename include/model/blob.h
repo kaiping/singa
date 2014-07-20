@@ -15,7 +15,8 @@ namespace lapis {
  */
 class Blob {
  public:
-   Blob():num_(0), channels_(0), height_(0), width_(0), content_(nullptr) {}
+  Blob(): num_(0), channels_(0), height_(0),
+          width_(0), content_(nullptr) {}
   /**
    * allocate memory of size length, e.g., for the bias parameter
    * do nothing if it is of exactly the same shape
@@ -46,24 +47,42 @@ class Blob {
    */
   void Reshape(int num, int channel, int height, int width);
 
-  const float *Content() const {
+  const float *content() const {
     return content_;
   }
-  float *MutableContent() const {
+  float *mutable_content() const {
     return content_;
   }
-  const int Height() const {
+  /**
+   * Return num of instances stored in this blob
+   */
+  const int num() const {
+    return num_;
+  }
+  /**
+   * For image data, it is the height of the image;
+   * For matrix parameters, it is the num of rows in the matrix;
+   */
+  const int height() const {
     return height_;
   }
-  const int Width() const {
+  /**
+   * For image data, it is the width of the image;
+   * For matrix parameters, it is the num of cols in the matrix;
+   */
+  const int width() const {
     return width_;
   }
-  const int Size() const {
-    return size_;
+
+  /**
+   * Return the total size in terms of floats
+   */
+  const int Length() const {
+    return num_*channels_*height_*width_;
   }
 
  private:
-  int size_, num_, channels_, height_, width_;
+  int num_, channels_, height_, width_;
   float *content_;
 };
 

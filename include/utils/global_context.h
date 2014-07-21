@@ -9,6 +9,7 @@
 
 DECLARE_string(system_conf_path);
 DECLARE_string(model_conf_path);
+DECLARE_int32(num_server);
 
 namespace lapis {
 enum Role {
@@ -26,7 +27,7 @@ class GlobalContext {
   bool IsRoleOf(const Role& role, int rank);
 
 
-  int num_memory_servers() { return num_memory_servers_; }
+  int num_memory_servers() { return FLAGS_num_server; }
   int num_disk_servers() { return num_disk_servers_; }
   const char* model_conf_path() {return model_conf_path_; }
 

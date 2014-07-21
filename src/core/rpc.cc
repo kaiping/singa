@@ -393,10 +393,16 @@ void AsyncRequestQueue::Enqueue(int tag, string& data){
 	//  now insert to the queue
 	{
 		boost::recursive_mutex::scoped_lock sl(key_lock);
-		CHECK_LT(get_queues_.size(), num_mem_servers_);
-		CHECK_LT(put_queues_.size(), num_mem_servers_);
-		if (tag==MTYPE_GET_REQUEST)
+		if (tag==MTYPE_PUT_REQUEST)
+			CHECK_LT(put_queues_[idx].size(), num_mem_servers_) << "failed at key index " << idx;
+		else if (tag==MTYPE_GET_REQUEST)
+			CHECK_LT(get_queues_[idx].size(), num_mem_servers_) << "failed at key index " << idx;
+
+
+		if (tag==MTYPE_GET_REQUEST){
 			get_queues_[idx].push_back(new TaggedMessage(tag,data));
+
+		}
 		else{
 			CHECK_EQ(tag, MTYPE_PUT_REQUEST);
 			put_queues_[idx].push_back(new TaggedMessage(tag,data));

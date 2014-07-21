@@ -19,18 +19,16 @@ class FeatureReaderTest : public ::testing::Test {
     std::string path = "src/test/data/feature_reader.dat";
     ds.set_path(path);
     ds.set_width(5);
-
     std::ofstream out(path, std::ofstream::binary | std::ofstream::out);
     // note if the precision (6) of out is not changed, then 100000.1f will be
     // 100000 in the file
-    out << 0.1f << " " << 1.1f << " " <<4.1f << " " << 0.0f << " "<< 100.1f
+    out << 0.1f << " " << 1.1f << " " << 4.1f << " " << 0.0f << " " << 100.1f
         << std::endl;
     out << " " << 0.4f << " " << 1.4f << " " << 4.4f << " " << 0.0f << " " <<
         100.4f;
     out << " " << -0.4f << " " << -1.4f << " " << -4.4f << " " << 0.0f << " "
         << -100.4f;
     out.close();
-
     std::vector<std::string> vec;;
     reader.Init(ds, vec, 0);
   }
@@ -42,14 +40,12 @@ class FeatureReaderTest : public ::testing::Test {
 TEST_F(FeatureReaderTest, ReadNextRecord) {
   std::string key;
   float *val = new float[5];
-
   reader.ReadNextRecord(&key, val);
   EXPECT_EQ(0.1f, val[0]);
   EXPECT_EQ(1.1f, val[1]);
   EXPECT_EQ(4.1f, val[2]);
   EXPECT_EQ(0.0f, val[3]);
   EXPECT_EQ(100.1f, val[4]);
-
   reader.ReadNextRecord(&key, val);
   reader.ReadNextRecord(&key, val);
   EXPECT_EQ(-0.4f, val[0]);

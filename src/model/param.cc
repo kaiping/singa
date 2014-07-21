@@ -23,7 +23,6 @@ void Param::Init(const ParamProto &param_proto) {
     history_grad_.Reshape(l);
   }
   name_ = param_proto.name();
-
   // initialize the parameter
   ParamInitFactory::Instance()->Get(param_proto.initializer())(this);
 }

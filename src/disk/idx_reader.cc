@@ -20,7 +20,8 @@ template<class Val> inline Val ntohx(const Val &in) {
   return *(reinterpret_cast<Val *>(out));
 }
 
-template<> inline unsigned char ntohx<unsigned char>(const unsigned char &v ) {
+template<> inline unsigned char ntohx<unsigned char>(const unsigned char
+    &v ) { //NOLINT
   return v;
 }
 template<> inline uint16_t ntohx<uint16_t>(const uint16_t &v) {
@@ -51,7 +52,8 @@ template<class Val> inline Val htonx(const Val &in) {
   return *(reinterpret_cast<Val *>(out));
 }
 
-template<> inline unsigned char htonx<unsigned char>(const unsigned char &v ) {
+template<> inline unsigned char htonx<unsigned char>(const unsigned char
+    &v ) { //NOLINT
   return v;
 }
 template<> inline uint16_t htonx<uint16_t>(const uint16_t &v) {
@@ -80,7 +82,7 @@ template<> inline float htonx<float>(const float &v) {
  * Implementation for IDXReader
  ****************************************************************************/
 
-const std::string IDXReader::id_="IDXReader";
+const std::string IDXReader::id_ = "IDXReader";
 void IDXReader::Init(const DataSourceProto &ds_proto,
                      const std::vector<std::string> &suffix,
                      int offset) {
@@ -117,7 +119,6 @@ void IDXReader::Init(const DataSourceProto &ds_proto,
   CHECK_EQ(length_, ds_length)
       << "The length of one record from the idx file is "
       << length_ << " , while that from the DataSourceProto is " << ds_length;
-
   switch (type_) {
   case kIDX_ubyte: {
     num_bytes_ = length_;

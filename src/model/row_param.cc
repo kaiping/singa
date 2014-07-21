@@ -25,7 +25,6 @@ bool RowParam::next(string *k, string *v) {
                            content_.begin() + (row_ + 1) * shape[1]);
     row + = 1;
   }
-
   return true;
 }
 

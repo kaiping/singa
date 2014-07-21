@@ -40,7 +40,6 @@ void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
   MapMatrixType weight(weight_.MutableContent(),
                        weight_.Rows(), weight_.Cols());
   MapVectorType bias(bias_.MutableContent(), bias_.Length());
-
   if (overwrite)
     act.noalias() = (fea * weight).rowwise() + bias;
   else
@@ -58,7 +57,6 @@ void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
   MapMatrixType weight(weight_.MutableContent(), weight_.Rows(),
                        weight_.Cols());
   MapVectorType bias_grad(bias_.MutableGradient(), bias_.Length());
-
   weight_grad.noalias() = fea.transpose() * act_grad;
   bias_grad = act_grad.colwise().sum();
   // if dest_grad is nullptr, then we only compute gradients for parameters

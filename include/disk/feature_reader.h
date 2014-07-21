@@ -42,14 +42,16 @@ class FeatureReader : public RecordReader {
    */
   virtual int Offset();
 
-  virtual std::string id() { return id_;}
+  virtual std::string id() {
+    return id_;
+  }
   ~FeatureReader();
 
  private:
   /**
     * Identifier of this reader
     */
-   static const std::string id_;
+  static const std::string id_;
 
   /**
    * length of the feature, should be configured at the width field in

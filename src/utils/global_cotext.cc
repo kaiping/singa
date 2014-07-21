@@ -11,7 +11,6 @@ GlobalContext::GlobalContext(const char *system_conf_path,
   : model_conf_path_(model_conf_path) {
   SystemConfProto system_conf;
   ReadProtoFromTextFile(system_conf_path, &system_conf);
-
   role_rank_[kCoordinator] = std::make_pair(system_conf.coordinator(),
                              system_conf.coordinator());
   role_rank_[kWoker] = std::make_pair(system_conf.worker_start(),
@@ -21,13 +20,11 @@ GlobalContext::GlobalContext(const char *system_conf_path,
                                 system_conf.memory_end());
   else
     role_rank_[kMemoryServer] = role_rank_[kWorker];
-
   if (system_conf.has_disk_start() && system_conf.has_disk_end())
     role_rank_[kDiskServer] = std::make_pair(system_conf.disk_start(),
                               system_conf.disk_end());
   else
     role_rank_[kDiskServer] = role_rank_[kWorker];
-
   num_memory_servers_ = role_rank_[kMemoryServer].second -
                         role[kMemoryServer].first + 1;
   num_disk_servers_ = role_rank_[kDiskServer].second -

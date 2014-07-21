@@ -7,7 +7,7 @@
 
 namespace lapis {
 
-const std::string FeatureReader::id_="FeatureReader";
+const std::string FeatureReader::id_ = "FeatureReader";
 
 void FeatureReader::Init(const DataSourceProto &ds_proto,
                          const std::vector<std::string> &suffix,

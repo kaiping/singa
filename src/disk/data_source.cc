@@ -8,10 +8,10 @@ namespace lapis {
  * Implementation for DataSource
  ****************************************************************************/
 void DataSource::Init(const DataSourceProto &ds_proto) {
-  size_=ds_proto.size();
-  name_=ds_proto.name();
-  offset_=ds_proto.offset();
-  //record_size_=channels_*height_*width_*sizeof(float);
+  size_ = ds_proto.size();
+  name_ = ds_proto.name();
+  offset_ = ds_proto.offset();
+  // record_size_=channels_*height_*width_*sizeof(float);
 }
 
 void DataSource::ToProto(DataSourceProto *ds_proto) {

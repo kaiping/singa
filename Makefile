@@ -18,7 +18,8 @@ CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 ###############################################################################
 # Build core of Lapis into .a and .so library
 ###############################################################################
-LIBRARIES := glog protobuf #gflag
+LIBRARIES := glog protobuf boost_system boost_regex boost_filesystem \
+						opencv_highgui opencv_imgproc opencv_core #gflag
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 
@@ -97,7 +98,7 @@ TEST_SRCS :=$(filter-out $(TEST_MAIN), $(TEST_SRCS))
 TEST_OBJS := $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o))
 TEST_BINS := $(addprefix $(BUILD_DIR)/bin/, $(TEST_SRCS:.cc=.bin))
 
-test: lapis.a lapis.so $(TEST_BINS)
+test: lapis.a lapis.so $(TEST_BINS) $(LAPIS_SRCS) $(LAPIS_HDRS)
 
 $(TEST_BINS): $(BUILD_DIR)/bin/src/test/%.bin: $(BUILD_DIR)/src/test/%.o
 	$(CXX) $(TEST_MAIN) $< lapis.a -o $@ $(CXXFLAGS) $(TEST_LDFLAGS)

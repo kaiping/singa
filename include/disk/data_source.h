@@ -5,7 +5,8 @@
 #define INCLUDE_DISK_DATA_SOURCE_H_
 #include <string>
 #include <memory>
-
+#include <map>
+#include <vector>
 #include "model/blob.h"
 #include "proto/lapis.pb.h"
 
@@ -30,7 +31,7 @@ class DataSource {
    * or distributed disk.
    * @param blob where the next batch of data will be put
    */
-  virtual void GetData(Blob *blob)=0;
+  virtual void GetData(Blob *blob) = 0;
   /**
    * TODO(wnagwei) Load data and return the keys of all records.
    * if the distributed disk is not available, it will be loaded into single
@@ -42,25 +43,25 @@ class DataSource {
    * @return the keys of records which specifies the order records read.
    */
   virtual const std::shared_ptr<StringVec> &LoadData(
-      const std::shared_ptr<StringVec>&  keys)=0;
+    const std::shared_ptr<StringVec>  &keys) = 0;
 
   /**
    * Return the identifier of the DataSource
    */
-  virtual const std::string &id()=0;
+  virtual const std::string &id() = 0;
 
   /**
    * Return the number of channels, e.g., 3 for rgb data
    */
-  virtual int channels()=0;
+  virtual int channels() = 0;
   /**
    * Return the height of the record, e.g., the height of an image
    */
-  virtual int height()=0;
+  virtual int height() = 0;
   /**
    * Return the width of the record, e.g., the width of an image
    */
-  virtual int width()=0;
+  virtual int width() = 0;
   /*
   virtual bool has_channels()=0;
   virtual bool has_height()=0;
@@ -70,17 +71,23 @@ class DataSource {
   /**
    * Return name of this data source
    */
-  const std::string &name() { return name_; }
+  const std::string &name() {
+    return name_;
+  }
   /**
    * Return number of instances of this data source.
    */
-  const int size() { return size_; }
+  const int size() {
+    return size_;
+  }
   /**
    * Return the offset (or id) of current record to the first record.
    * This offset may be used by the Trainer to check whether all data sources
    * are in sync.
    */
-  int offset() {return offset_;}
+  int offset() {
+    return offset_;
+  }
 
  protected:
   //! total number of instances/images

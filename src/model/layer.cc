@@ -20,7 +20,6 @@ void Layer::Init(const LayerProto &layer_proto,
     if (edge->Bottom() == nullptr)
       edge->SetBottom(this);
   }
-
   for (std::string edge_name : layer_proto.in_edge()) {
     CHECK(edge_map.find(edge_name) != edge_map.end())
         << "No incoming edge named '" << edge_name

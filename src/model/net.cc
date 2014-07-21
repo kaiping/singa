@@ -29,7 +29,6 @@ void topology_sort(std::vector<Layer *> *layers) {
   std::map<Layer *, std::vector<Layer *>> adjacent_list;
   std::map<Layer *, bool> visited;
   std::vector<Layer *> input_layers;
-
   // prepare adjacent list; input layers will be processed firstly,
   // hence no need to sort them (mark them as visited)
   for (Layer *layer : *layers) {
@@ -54,7 +53,6 @@ void topology_sort(std::vector<Layer *> *layers) {
     if (visited[layer] == false)
       topology_sort_inner(layer, adjacent_list, &visited, &stack);
   }
-
   layers->clear();
   // input layers are placed at front to be processed firstly
   for (auto layer : input_layers)
@@ -75,7 +73,6 @@ void Net::Init(const NetProto &net_proto) {
     for (auto *param : edge->Params())
       params_.push_back(param);
   }
-
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
     layer->Init(layer_proto, edge_map);

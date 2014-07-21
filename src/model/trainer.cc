@@ -22,21 +22,17 @@ void InitDataSource(
 void Trainer::Init(const TrainerProto &trainer_proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = trainer_proto.checkpoint_step();
-
   checkpoint_after_steps_ = trainer_proto.checkpoint_after_steps();
   checkpoint_every_steps_ = trainer_proto.checkpoint_every_steps();
   //! last checkpoint step
   checkpoint_step_ = trainer_proto.checkpoint_step();
   checkpoint_prefix_ = trainer_proto.checkpoint_prefix();
-
   display_after_steps_ = trainer_proto.display_after_steps();
   display_every_steps_ = trainer_proto.display_every_steps();
   display_prefix_ = trainer_proto.display_prefix();
-
   InitDataSource(trainer_proto.train_data(), &train_data_);
   InitDataSource(trainer_proto.validation_data(), &validation_data_);
   InitDataSource(trainer_proto.test_data(), &test_data_);
-
   perf_prefix_ = trainer_proto.perf_prefix();
 }
 
@@ -45,11 +41,9 @@ void Trainer::ToProto(TrainerProto *proto) {
   proto->set_checkpoint_every_steps(checkpoint_every_steps_);
   proto->set_checkpoint_step(checkpoint_step_);
   proto->set_checkpoint_prefix(checkpoint_prefix_);
-
   proto->set_display_after_steps(display_after_steps_);
   proto->set_display_every_steps(display_every_steps_);
   proto->set_display_prefix(display_prefix_);
-
   proto->clear_train_data();
   for (DataSource *ds : train_data_) {
     DataSourceProto *ds_proto = proto->add_train_data();

@@ -38,21 +38,29 @@ class LabelSource : public DataSource {
    * distributed disk.
    */
   virtual const std::shared_ptr<StringVec> &LoadData(
-      const std::shared_ptr<StringVec>&  keys);
+    const std::shared_ptr<StringVec>  &keys);
 
   /**
    * channel, height, width are all assumed to be 1.
    */
-  virtual int channels() {  return 1;}
-  virtual int height() { return 1;}
-  virtual int width() {return 1;}
+  virtual int channels() {
+    return 1;
+  }
+  virtual int height() {
+    return 1;
+  }
+  virtual int width() {
+    return 1;
+  }
   /*
   virtual bool has_channels() {return true;}
   virtual bool has_height() {return true;}
   virtual bool has_width() {return true;}
   */
 
-  virtual const std::string &id() {return id_;}
+  virtual const std::string &id() {
+    return id_;
+  }
   static const std::string id_;
 
  private:

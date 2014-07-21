@@ -73,7 +73,7 @@ class RecordReader {
    * Return the identifier of this reader, will be used to set the id reader
    * filed in DataSourceProto.
    */
-  virtual std::string id()=0;
+  virtual std::string id() = 0;
 };
 
 /*****************************************************************************/

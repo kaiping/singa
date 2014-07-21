@@ -45,7 +45,9 @@ class IDXReader : public RecordReader {
    * Return the offset from the current record to the first record.
    */
   virtual int Offset();
-  virtual std::string id() { return id_;}
+  virtual std::string id() {
+    return id_;
+  }
   ~IDXReader();
 
   enum IDXDataType {

@@ -22,7 +22,6 @@ int startDeamon(const char *system_conf_path, const char *model_conf_path) {
                                   global_cotext);
     coordinator.run();
   }
-
   if (global_context.IsRoleOf(lapis::kWorker, rank)) {
     LOG(INFO) << "Start worker of rank " << rank << "\n";
     // TODO(wangwei) Worker

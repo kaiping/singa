@@ -38,7 +38,6 @@ void LogisticLayer::Forward() {
                    activation_.width());
   CHECK_GE(in_edges_.size(),
            1) << "logistic layer must have >=1 incoming edges\n";
-
   auto it = in_edges_.begin();
   Edge *edge = (*it);
   edge->Forward(edge->OtherSide(this)->Feature(edge), &activation_, true);
@@ -46,7 +45,6 @@ void LogisticLayer::Forward() {
     edge = *it;
     edge->Forward(edge->OtherSide(this)->Feature(edge), &activation_, false);
   }
-
   MapArrayType fea(feature_.mutable_content(), feature_.height(),
                    feature_.width());
   fea = (-act).exp();
@@ -55,7 +53,6 @@ void LogisticLayer::Forward() {
 
 void LogisticLayer::Backward() {
   CHECK_GE(out_edges_.size(), 1) << "logistic layer must have >=1 out edges\n";
-
   auto it = out_edges_.begin();
   Edge *edge = *it;
   edge->Backward(edge->OtherSide(this)->Gradient(edge), &feature_,

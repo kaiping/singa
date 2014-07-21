@@ -22,38 +22,35 @@ class LabelSourceTest : public ::testing::Test {
 };
 
 TEST_F(LabelSourceTest, LoadData) {
-  auto ptr2names=ls.LoadData(nullptr);
+  auto ptr2names = ls.LoadData(nullptr);
   EXPECT_EQ(12, ptr2names->size());
-  EXPECT_STREQ("img0.jpg", ptr2names->at(0).c_str());
-  EXPECT_STREQ("img1.jpg", ptr2names->at(1).c_str());
-  EXPECT_STREQ("img5.jpg", ptr2names->at(5).c_str());
-  EXPECT_STREQ("img10.jpg", ptr2names->at(10).c_str());
-  EXPECT_STREQ("img11.jpg", ptr2names->at(11).c_str());
+  EXPECT_STREQ("img0.JPEG", ptr2names->at(0).c_str());
+  EXPECT_STREQ("img1.JPEG", ptr2names->at(1).c_str());
+  EXPECT_STREQ("img5.JPEG", ptr2names->at(5).c_str());
+  EXPECT_STREQ("img10.JPEG", ptr2names->at(10).c_str());
+  EXPECT_STREQ("img11.JPEG", ptr2names->at(11).c_str());
 }
 
 TEST_F(LabelSourceTest, GetData) {
   ls.LoadData(nullptr);
   Blob b;
-  b.Reshape(5,1,1);
+  b.Reshape(5, 1, 1);
   ls.GetData(&b);
-  const float* val=b.content();
+  const float *val = b.content();
   EXPECT_EQ(0.0f, val[0]);
   EXPECT_EQ(1.0f, val[1]);
   EXPECT_EQ(4.0f, val[2]);
   EXPECT_EQ(9.0f, val[3]);
   EXPECT_EQ(16.0f, val[4]);
-
   ls.GetData(&b);
   EXPECT_EQ(4.0f, val[0]);
   EXPECT_EQ(5.0f, val[1]);
   EXPECT_EQ(6.0f, val[2]);
   EXPECT_EQ(7.0f, val[3]);
   EXPECT_EQ(8.0f, val[4]);
-
   ls.GetData(&b);
   EXPECT_EQ(1.0f, val[0]);
   EXPECT_EQ(2.0f, val[1]);
-
   EXPECT_EQ(0.0f, val[2]);
   EXPECT_EQ(1.0f, val[3]);
   EXPECT_EQ(4.0f, val[4]);

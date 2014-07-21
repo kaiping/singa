@@ -24,7 +24,6 @@ int Coordinator::LoadData() {
     while (reader.next(k, v) > 0)
       distributed_disk_.put(k, v);
   }
-
   return 0;
 }
 
@@ -40,10 +39,8 @@ int InitSplitModel() {
         distributed_memory_.put(k, v);
     }
   }
-
   // TODO(Anh) mpi wrapper for sending message to all workers
   send2allWorkers(model_conf_proto_.serializeToString());
-
   return 0;
 }
 

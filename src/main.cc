@@ -16,8 +16,6 @@ int main(int argc, char **argv) {
   google::InitGoogleLoggin(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   // TODO(by wangwei) register partition/fileparser/layer classes
-
   startDaemon(FLAGS_system_conf.c_str(), FLAGS_model_conf.c_str());
-
   return 0;
 }

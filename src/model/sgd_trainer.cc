@@ -24,13 +24,10 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
   std::vector<Param *> params = net->Params();
   // get newest parameters for layers and edges
   model_controller_.GetParams(params);
-
   for (auto layer : layers)
     layer->Forward();
-
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
     (*layer)->Backward();
-
   UpdateHyperParams(step_);
   for (auto edge : edges) {
     edge->ComputeParamUpdates(this);
@@ -38,7 +35,6 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
   for (auto layer : layers) {
     layer->ComputeParamUpdates(this);
   }
-
   // update parameters either locally or distributedly depending on the
   // system (single machine or a cluster)
   model_controller_.UpdateParams(params);

@@ -29,14 +29,28 @@ class RGBDirSource : public DataSource {
    * function
    */
   virtual const std::shared_ptr<StringVec> &LoadData(
-      const std::shared_ptr<StringVec>&  keys);
-  virtual int channels() { return 3;}
-  virtual int height() {return height_;}
-  virtual int width() {return width_;}
-  virtual bool has_channels() {return true;}
-  virtual bool has_height() {return true;}
-  virtual bool has_width() {return true;}
-  virtual const std::string &id() {return id_;}
+    const std::shared_ptr<StringVec>  &keys);
+  virtual int channels() {
+    return 3;
+  }
+  virtual int height() {
+    return height_;
+  }
+  virtual int width() {
+    return width_;
+  }
+  virtual bool has_channels() {
+    return true;
+  }
+  virtual bool has_height() {
+    return true;
+  }
+  virtual bool has_width() {
+    return true;
+  }
+  virtual const std::string &id() {
+    return id_;
+  }
 
   //! the identifier, i.e., "RGBSource"
   static const std::string id_;

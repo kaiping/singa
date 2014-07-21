@@ -41,9 +41,16 @@ class FeatureReader : public RecordReader {
    * Return the offset in terms of position in the ifstream.
    */
   virtual int Offset();
+
+  virtual std::string id() { return id_;}
   ~FeatureReader();
 
  private:
+  /**
+    * Identifier of this reader
+    */
+   static const std::string id_;
+
   /**
    * length of the feature, should be configured at the width field in
    * DataSourceProto

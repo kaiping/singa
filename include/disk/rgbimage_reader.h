@@ -28,6 +28,7 @@ class RGBImageReader : public RecordReader {
    */
   virtual void Reset();
   virtual int Offset();
+  virtual std::string id() {return id_;}
 
  private:
   /**

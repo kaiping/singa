@@ -30,8 +30,10 @@ class LabelReader : public RecordReader {
   virtual bool ReadNextRecord(std::string *key, float *val);
   virtual void Reset();
   virtual int Offset();
+  virtual std::string id() {return id_;}
   ~LabelReader();
  private:
+  static const std::string id_;
   std::ifstream is_;
 };
 

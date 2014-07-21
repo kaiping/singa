@@ -79,6 +79,8 @@ template<> inline float htonx<float>(const float &v) {
 /*****************************************************************************
  * Implementation for IDXReader
  ****************************************************************************/
+
+const std::string IDXReader::id_="IDXReader";
 void IDXReader::Init(const DataSourceProto &ds_proto,
                      const std::vector<std::string> &suffix,
                      int offset) {

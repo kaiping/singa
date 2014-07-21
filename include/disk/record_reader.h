@@ -69,6 +69,11 @@ class RecordReader {
    * checkpoint.
    */
   virtual int Offset() = 0;
+  /**
+   * Return the identifier of this reader, will be used to set the id reader
+   * filed in DataSourceProto.
+   */
+  virtual std::string id()=0;
 };
 
 /*****************************************************************************/

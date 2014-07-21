@@ -4,7 +4,7 @@
 #include <glog/logging.h>
 #include "disk/label_reader.h"
 namespace lapis {
-
+const std::string IDXReader::id_="IDXReader";
 void LabelReader::Init(const DataSourceProto &ds_proto,
                        const std::vector<std::string> &suffix,
                        int offset) {

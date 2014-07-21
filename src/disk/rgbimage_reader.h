@@ -9,6 +9,7 @@
 #include "disk/rgbimage_reader.h"
 
 namespace lapis {
+const std::string RGBImageReader::id_="RGBImageReader";
 void RGBImageReader::Init(const DataSourceProto &ds_proto,
                           const std::vector<std::string> &path_suffix,
                           int offset =0) {

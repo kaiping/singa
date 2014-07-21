@@ -38,23 +38,24 @@ class DataSource {
     return name_;
   }
 
+  ~DataSource();
  private:
   //! current batch id
-  int batchid_;
+  // int batchid_;
   //! num of instances per batch
-  int batchsize_;
+  // int batchsize_;
   //! total number of instances/images
   int size_;
-  //! data source type
-  DataSourceProto_DataType type_;
   //! the path of the data source file
   std::string path_;
   //! identifier of the data source
   std::string name_;
-  //! reader name for this data source
-  std::string reader_;
   //! properties for rgs image feature
   int channels_, height_, width_;
+  //! data source type
+  // DataSourceProto_DataType type_;
+  //! record reader
+  RecordReader *reader_;
 };
 
 }  // namespace lapis

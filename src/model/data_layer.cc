@@ -21,15 +21,15 @@ void DataLayer::ToProto(LayerProto *layer_proto) {
 void DataLayer::Setup(int batchsize, TrainAlgorithm alg,
                       const std::vector<DataSource *> &sources) {
   for (auto *source : sources) {
-    if (source->Name() == data_source_name_) {
+    if (source->name() == data_source_name_) {
       data_source_ = source;
       break;
     }
   }
   CHECK(data_source_ != nullptr) << "Cannot find data source for layer '"
                                  << name_ << "'\n";
-  data_.Reshape(batchsize, data_source_->Channels(), data_source_->Height(),
-                data_source_->Width());
+  data_.Reshape(batchsize, data_source_->channels(), data_source_->height(),
+                data_source_->width());
 }
 
 void DataLayer::Forward() {

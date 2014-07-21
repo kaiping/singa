@@ -320,17 +320,17 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // required string reader = 2;
-  inline bool has_reader() const;
-  inline void clear_reader();
-  static const int kReaderFieldNumber = 2;
-  inline const ::std::string& reader() const;
-  inline void set_reader(const ::std::string& value);
-  inline void set_reader(const char* value);
-  inline void set_reader(const char* value, size_t size);
-  inline ::std::string* mutable_reader();
-  inline ::std::string* release_reader();
-  inline void set_allocated_reader(::std::string* reader);
+  // required string id = 2;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 2;
+  inline const ::std::string& id() const;
+  inline void set_id(const ::std::string& value);
+  inline void set_id(const char* value);
+  inline void set_id(const char* value, size_t size);
+  inline ::std::string* mutable_id();
+  inline ::std::string* release_id();
+  inline void set_allocated_id(::std::string* id);
 
   // optional string path = 3;
   inline bool has_path() const;
@@ -379,12 +379,19 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 width() const;
   inline void set_width(::google::protobuf::int32 value);
 
+  // optional int64 offset = 9 [default = 0];
+  inline bool has_offset() const;
+  inline void clear_offset();
+  static const int kOffsetFieldNumber = 9;
+  inline ::google::protobuf::int64 offset() const;
+  inline void set_offset(::google::protobuf::int64 value);
+
   // @@protoc_insertion_point(class_scope:lapis.DataSourceProto)
  private:
   inline void set_has_name();
   inline void clear_has_name();
-  inline void set_has_reader();
-  inline void clear_has_reader();
+  inline void set_has_id();
+  inline void clear_has_id();
   inline void set_has_path();
   inline void clear_has_path();
   inline void set_has_size();
@@ -397,20 +404,23 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_height();
   inline void set_has_width();
   inline void clear_has_width();
+  inline void set_has_offset();
+  inline void clear_has_offset();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
-  ::std::string* reader_;
+  ::std::string* id_;
   ::std::string* path_;
   ::google::protobuf::int64 size_;
   int type_;
   ::google::protobuf::int32 channels_;
   ::google::protobuf::int32 height_;
   ::google::protobuf::int32 width_;
+  ::google::protobuf::int64 offset_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -2015,73 +2025,73 @@ inline void DataSourceProto::set_allocated_name(::std::string* name) {
   }
 }
 
-// required string reader = 2;
-inline bool DataSourceProto::has_reader() const {
+// required string id = 2;
+inline bool DataSourceProto::has_id() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void DataSourceProto::set_has_reader() {
+inline void DataSourceProto::set_has_id() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void DataSourceProto::clear_has_reader() {
+inline void DataSourceProto::clear_has_id() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void DataSourceProto::clear_reader() {
-  if (reader_ != &::google::protobuf::internal::kEmptyString) {
-    reader_->clear();
+inline void DataSourceProto::clear_id() {
+  if (id_ != &::google::protobuf::internal::kEmptyString) {
+    id_->clear();
   }
-  clear_has_reader();
+  clear_has_id();
 }
-inline const ::std::string& DataSourceProto::reader() const {
-  return *reader_;
+inline const ::std::string& DataSourceProto::id() const {
+  return *id_;
 }
-inline void DataSourceProto::set_reader(const ::std::string& value) {
-  set_has_reader();
-  if (reader_ == &::google::protobuf::internal::kEmptyString) {
-    reader_ = new ::std::string;
+inline void DataSourceProto::set_id(const ::std::string& value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
   }
-  reader_->assign(value);
+  id_->assign(value);
 }
-inline void DataSourceProto::set_reader(const char* value) {
-  set_has_reader();
-  if (reader_ == &::google::protobuf::internal::kEmptyString) {
-    reader_ = new ::std::string;
+inline void DataSourceProto::set_id(const char* value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
   }
-  reader_->assign(value);
+  id_->assign(value);
 }
-inline void DataSourceProto::set_reader(const char* value, size_t size) {
-  set_has_reader();
-  if (reader_ == &::google::protobuf::internal::kEmptyString) {
-    reader_ = new ::std::string;
+inline void DataSourceProto::set_id(const char* value, size_t size) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
   }
-  reader_->assign(reinterpret_cast<const char*>(value), size);
+  id_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* DataSourceProto::mutable_reader() {
-  set_has_reader();
-  if (reader_ == &::google::protobuf::internal::kEmptyString) {
-    reader_ = new ::std::string;
+inline ::std::string* DataSourceProto::mutable_id() {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
   }
-  return reader_;
+  return id_;
 }
-inline ::std::string* DataSourceProto::release_reader() {
-  clear_has_reader();
-  if (reader_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* DataSourceProto::release_id() {
+  clear_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = reader_;
-    reader_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = id_;
+    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_reader(::std::string* reader) {
-  if (reader_ != &::google::protobuf::internal::kEmptyString) {
-    delete reader_;
+inline void DataSourceProto::set_allocated_id(::std::string* id) {
+  if (id_ != &::google::protobuf::internal::kEmptyString) {
+    delete id_;
   }
-  if (reader) {
-    set_has_reader();
-    reader_ = reader;
+  if (id) {
+    set_has_id();
+    id_ = id;
   } else {
-    clear_has_reader();
-    reader_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_id();
+    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2264,6 +2274,28 @@ inline ::google::protobuf::int32 DataSourceProto::width() const {
 inline void DataSourceProto::set_width(::google::protobuf::int32 value) {
   set_has_width();
   width_ = value;
+}
+
+// optional int64 offset = 9 [default = 0];
+inline bool DataSourceProto::has_offset() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void DataSourceProto::set_has_offset() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void DataSourceProto::clear_has_offset() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void DataSourceProto::clear_offset() {
+  offset_ = GOOGLE_LONGLONG(0);
+  clear_has_offset();
+}
+inline ::google::protobuf::int64 DataSourceProto::offset() const {
+  return offset_;
+}
+inline void DataSourceProto::set_offset(::google::protobuf::int64 value) {
+  set_has_offset();
+  offset_ = value;
 }
 
 // -------------------------------------------------------------------

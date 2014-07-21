@@ -87,15 +87,16 @@ void protobuf_AssignDesc_lapis_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(SystemConfProto));
   DataSourceProto_descriptor_ = file->message_type(1);
-  static const int DataSourceProto_offsets_[8] = {
+  static const int DataSourceProto_offsets_[9] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, name_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, reader_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, path_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, size_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, channels_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, height_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, width_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, offset_),
   };
   DataSourceProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -371,58 +372,59 @@ void protobuf_AddDesc_lapis_2eproto() {
     "\022\023\n\013coordinator\030\001 \002(\005\022\024\n\014worker_start\030\002 "
     "\002(\005\022\022\n\nworker_end\030\003 \002(\005\022\024\n\014memory_start\030"
     "\004 \001(\005\022\022\n\nmemory_end\030\005 \001(\005\022\022\n\ndisk_start\030"
-    "\006 \001(\005\022\020\n\010disk_end\030\007 \001(\005\"\330\001\n\017DataSourcePr"
-    "oto\022\014\n\004name\030\001 \002(\t\022\016\n\006reader\030\002 \002(\t\022\014\n\004pat"
-    "h\030\003 \001(\t\022\014\n\004size\030\004 \001(\003\022-\n\004type\030\005 \001(\0162\037.la"
-    "pis.DataSourceProto.DataType\022\023\n\010channels"
-    "\030\006 \001(\005:\0011\022\021\n\006height\030\007 \001(\005:\0010\022\020\n\005width\030\010 "
-    "\001(\005:\0010\"\"\n\010DataType\022\013\n\007FEATURE\020\000\022\t\n\005LABEL"
-    "\020\001\"U\n\010RGBDatum\022\023\n\010channels\030\001 \001(\005:\0013\022\021\n\006h"
-    "eight\030\002 \001(\005:\0010\022\020\n\005width\030\003 \001(\005:\0010\022\017\n\007cont"
-    "ent\030\004 \002(\t\"n\n\nParamProto\022\014\n\004name\030\001 \002(\t\022\031\n"
-    "\013initializer\030\002 \001(\t:\004Zero\022\r\n\005shape\030\003 \003(\005\022"
-    "\023\n\013partitioner\030\004 \001(\t\022\023\n\007content\030\005 \003(\002B\002\020"
-    "\001\"a\n\tEdgeProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002"
-    "(\t\022 \n\005param\030\003 \003(\0132\021.lapis.ParamProto\022\026\n\010"
-    "directed\030\004 \001(\010:\004true\"\226\001\n\nLayerProto\022\014\n\004n"
-    "ame\030\001 \002(\t\022\022\n\nnum_output\030\002 \002(\005\022\014\n\004type\030\003 "
-    "\002(\t\022 \n\005param\030\004 \003(\0132\021.lapis.ParamProto\022\020\n"
-    "\010out_edge\030\005 \003(\t\022\017\n\007in_edge\030\006 \003(\t\022\023\n\013data"
-    "_source\030\007 \001(\t\"L\n\010NetProto\022 \n\005layer\030\003 \003(\013"
-    "2\021.lapis.LayerProto\022\036\n\004edge\030\004 \003(\0132\020.lapi"
-    "s.EdgeProto\"\203\005\n\010SGDProto\022\032\n\022base_learnin"
-    "g_rate\030\001 \002(\002\022\030\n\rbase_momentum\030\002 \001(\002:\0010\022\034"
-    "\n\021base_weight_decay\030\003 \001(\002:\0010\022\026\n\016final_mo"
-    "mentum\030\004 \001(\002\022\033\n\023final_learning_rate\030\005 \001("
-    "\002\022\032\n\022final_weight_decay\030\006 \001(\002\022\"\n\032learnin"
-    "g_rate_change_steps\030\007 \001(\005\022\035\n\025momentum_ch"
-    "ange_steps\030\010 \001(\005\022!\n\031weight_decay_change_"
-    "steps\030\t \001(\005\022D\n\024learning_rate_change\030\n \001("
-    "\0162\033.lapis.SGDProto.ChangeProto:\tINVERSE_"
-    "T\022\?\n\023weight_decay_change\030\013 \001(\0162\033.lapis.S"
-    "GDProto.ChangeProto:\005FIXED\022;\n\017momentum_c"
-    "hange\030\014 \001(\0162\033.lapis.SGDProto.ChangeProto"
-    ":\005FIXED\022\023\n\013total_steps\030\r \001(\005\022\027\n\017train_ba"
-    "tchsize\030\016 \001(\005\022\034\n\024validation_batchsize\030\017 "
-    "\001(\005\022\026\n\016test_batchsize\030\020 \001(\005\"D\n\013ChangePro"
-    "to\022\t\n\005FIXED\020\000\022\r\n\tINVERSE_T\020\001\022\017\n\013EXPONENT"
-    "IAL\020\002\022\n\n\006LINEAR\020\003\"W\n\020PerformanceProto\022\021\n"
-    "\tprecision\030\001 \001(\002\022\016\n\006recall\030\002 \001(\002\022\013\n\003map\030"
-    "\003 \001(\002\022\023\n\013precision50\030\004 \001(\002\"\314\003\n\014TrainerPr"
-    "oto\022\034\n\003sgd\030\001 \001(\0132\017.lapis.SGDProto\022!\n\026che"
-    "ckpoint_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoi"
-    "nt_every_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_pr"
-    "efix\030\004 \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint"
-    "_step\030\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 "
-    "\001(\005:\0010\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#"
-    "\n\016display_prefix\030\010 \001(\t:\013tmp/display\022*\n\nt"
-    "rain_data\030\t \003(\0132\026.lapis.DataSourceProto\022"
-    "/\n\017validation_data\030\n \003(\0132\026.lapis.DataSou"
-    "rceProto\022)\n\ttest_data\030\013 \003(\0132\026.lapis.Data"
-    "SourceProto\022$\n\013perf_prefix\030\016 \001(\t:\017tmp/pe"
-    "rformance\"b\n\016ModelConfProto\022\014\n\004name\030\001 \001("
-    "\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007train"
-    "er\030\003 \002(\0132\023.lapis.TrainerProto", 2229);
+    "\006 \001(\005\022\020\n\010disk_end\030\007 \001(\005\"\347\001\n\017DataSourcePr"
+    "oto\022\014\n\004name\030\001 \002(\t\022\n\n\002id\030\002 \002(\t\022\014\n\004path\030\003 "
+    "\001(\t\022\014\n\004size\030\004 \001(\003\022-\n\004type\030\005 \001(\0162\037.lapis."
+    "DataSourceProto.DataType\022\023\n\010channels\030\006 \001"
+    "(\005:\0011\022\021\n\006height\030\007 \001(\005:\0010\022\020\n\005width\030\010 \001(\005:"
+    "\0010\022\021\n\006offset\030\t \001(\003:\0010\"\"\n\010DataType\022\013\n\007FEA"
+    "TURE\020\000\022\t\n\005LABEL\020\001\"U\n\010RGBDatum\022\023\n\010channel"
+    "s\030\001 \001(\005:\0013\022\021\n\006height\030\002 \001(\005:\0010\022\020\n\005width\030\003"
+    " \001(\005:\0010\022\017\n\007content\030\004 \002(\t\"n\n\nParamProto\022\014"
+    "\n\004name\030\001 \002(\t\022\031\n\013initializer\030\002 \001(\t:\004Zero\022"
+    "\r\n\005shape\030\003 \003(\005\022\023\n\013partitioner\030\004 \001(\t\022\023\n\007c"
+    "ontent\030\005 \003(\002B\002\020\001\"a\n\tEdgeProto\022\014\n\004name\030\001 "
+    "\002(\t\022\014\n\004type\030\002 \002(\t\022 \n\005param\030\003 \003(\0132\021.lapis"
+    ".ParamProto\022\026\n\010directed\030\004 \001(\010:\004true\"\226\001\n\n"
+    "LayerProto\022\014\n\004name\030\001 \002(\t\022\022\n\nnum_output\030\002"
+    " \002(\005\022\014\n\004type\030\003 \002(\t\022 \n\005param\030\004 \003(\0132\021.lapi"
+    "s.ParamProto\022\020\n\010out_edge\030\005 \003(\t\022\017\n\007in_edg"
+    "e\030\006 \003(\t\022\023\n\013data_source\030\007 \001(\t\"L\n\010NetProto"
+    "\022 \n\005layer\030\003 \003(\0132\021.lapis.LayerProto\022\036\n\004ed"
+    "ge\030\004 \003(\0132\020.lapis.EdgeProto\"\203\005\n\010SGDProto\022"
+    "\032\n\022base_learning_rate\030\001 \002(\002\022\030\n\rbase_mome"
+    "ntum\030\002 \001(\002:\0010\022\034\n\021base_weight_decay\030\003 \001(\002"
+    ":\0010\022\026\n\016final_momentum\030\004 \001(\002\022\033\n\023final_lea"
+    "rning_rate\030\005 \001(\002\022\032\n\022final_weight_decay\030\006"
+    " \001(\002\022\"\n\032learning_rate_change_steps\030\007 \001(\005"
+    "\022\035\n\025momentum_change_steps\030\010 \001(\005\022!\n\031weigh"
+    "t_decay_change_steps\030\t \001(\005\022D\n\024learning_r"
+    "ate_change\030\n \001(\0162\033.lapis.SGDProto.Change"
+    "Proto:\tINVERSE_T\022\?\n\023weight_decay_change\030"
+    "\013 \001(\0162\033.lapis.SGDProto.ChangeProto:\005FIXE"
+    "D\022;\n\017momentum_change\030\014 \001(\0162\033.lapis.SGDPr"
+    "oto.ChangeProto:\005FIXED\022\023\n\013total_steps\030\r "
+    "\001(\005\022\027\n\017train_batchsize\030\016 \001(\005\022\034\n\024validati"
+    "on_batchsize\030\017 \001(\005\022\026\n\016test_batchsize\030\020 \001"
+    "(\005\"D\n\013ChangeProto\022\t\n\005FIXED\020\000\022\r\n\tINVERSE_"
+    "T\020\001\022\017\n\013EXPONENTIAL\020\002\022\n\n\006LINEAR\020\003\"W\n\020Perf"
+    "ormanceProto\022\021\n\tprecision\030\001 \001(\002\022\016\n\006recal"
+    "l\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precision50\030\004 \001("
+    "\002\"\314\003\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017.lapis."
+    "SGDProto\022!\n\026checkpoint_after_steps\030\002 \001(\005"
+    ":\0010\022!\n\026checkpoint_every_steps\030\003 \001(\005:\0010\022)"
+    "\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/checkpoin"
+    "t\022\032\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n\023display"
+    "_after_steps\030\006 \001(\005:\0010\022\036\n\023display_every_s"
+    "teps\030\007 \001(\005:\0010\022#\n\016display_prefix\030\010 \001(\t:\013t"
+    "mp/display\022*\n\ntrain_data\030\t \003(\0132\026.lapis.D"
+    "ataSourceProto\022/\n\017validation_data\030\n \003(\0132"
+    "\026.lapis.DataSourceProto\022)\n\ttest_data\030\013 \003"
+    "(\0132\026.lapis.DataSourceProto\022$\n\013perf_prefi"
+    "x\030\016 \001(\t:\017tmp/performance\"b\n\016ModelConfPro"
+    "to\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.Ne"
+    "tProto\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerP"
+    "roto", 2244);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lapis.proto", &protobuf_RegisterTypes);
   SystemConfProto::default_instance_ = new SystemConfProto();
@@ -939,13 +941,14 @@ const int DataSourceProto::DataType_ARRAYSIZE;
 #endif  // _MSC_VER
 #ifndef _MSC_VER
 const int DataSourceProto::kNameFieldNumber;
-const int DataSourceProto::kReaderFieldNumber;
+const int DataSourceProto::kIdFieldNumber;
 const int DataSourceProto::kPathFieldNumber;
 const int DataSourceProto::kSizeFieldNumber;
 const int DataSourceProto::kTypeFieldNumber;
 const int DataSourceProto::kChannelsFieldNumber;
 const int DataSourceProto::kHeightFieldNumber;
 const int DataSourceProto::kWidthFieldNumber;
+const int DataSourceProto::kOffsetFieldNumber;
 #endif  // !_MSC_VER
 
 DataSourceProto::DataSourceProto()
@@ -965,13 +968,14 @@ DataSourceProto::DataSourceProto(const DataSourceProto& from)
 void DataSourceProto::SharedCtor() {
   _cached_size_ = 0;
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  reader_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   size_ = GOOGLE_LONGLONG(0);
   type_ = 0;
   channels_ = 1;
   height_ = 0;
   width_ = 0;
+  offset_ = GOOGLE_LONGLONG(0);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -983,8 +987,8 @@ void DataSourceProto::SharedDtor() {
   if (name_ != &::google::protobuf::internal::kEmptyString) {
     delete name_;
   }
-  if (reader_ != &::google::protobuf::internal::kEmptyString) {
-    delete reader_;
+  if (id_ != &::google::protobuf::internal::kEmptyString) {
+    delete id_;
   }
   if (path_ != &::google::protobuf::internal::kEmptyString) {
     delete path_;
@@ -1021,9 +1025,9 @@ void DataSourceProto::Clear() {
         name_->clear();
       }
     }
-    if (has_reader()) {
-      if (reader_ != &::google::protobuf::internal::kEmptyString) {
-        reader_->clear();
+    if (has_id()) {
+      if (id_ != &::google::protobuf::internal::kEmptyString) {
+        id_->clear();
       }
     }
     if (has_path()) {
@@ -1036,6 +1040,9 @@ void DataSourceProto::Clear() {
     channels_ = 1;
     height_ = 0;
     width_ = 0;
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    offset_ = GOOGLE_LONGLONG(0);
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -1059,19 +1066,19 @@ bool DataSourceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_reader;
+        if (input->ExpectTag(18)) goto parse_id;
         break;
       }
 
-      // required string reader = 2;
+      // required string id = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_reader:
+         parse_id:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_reader()));
+                input, this->mutable_id()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->reader().data(), this->reader().length(),
+            this->id().data(), this->id().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
@@ -1178,6 +1185,22 @@ bool DataSourceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(72)) goto parse_offset;
+        break;
+      }
+
+      // optional int64 offset = 9 [default = 0];
+      case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_offset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &offset_)));
+          set_has_offset();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -1209,13 +1232,13 @@ void DataSourceProto::SerializeWithCachedSizes(
       1, this->name(), output);
   }
 
-  // required string reader = 2;
-  if (has_reader()) {
+  // required string id = 2;
+  if (has_id()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->reader().data(), this->reader().length(),
+      this->id().data(), this->id().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      2, this->reader(), output);
+      2, this->id(), output);
   }
 
   // optional string path = 3;
@@ -1253,6 +1276,11 @@ void DataSourceProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->width(), output);
   }
 
+  // optional int64 offset = 9 [default = 0];
+  if (has_offset()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(9, this->offset(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1271,14 +1299,14 @@ void DataSourceProto::SerializeWithCachedSizes(
         1, this->name(), target);
   }
 
-  // required string reader = 2;
-  if (has_reader()) {
+  // required string id = 2;
+  if (has_id()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->reader().data(), this->reader().length(),
+      this->id().data(), this->id().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->reader(), target);
+        2, this->id(), target);
   }
 
   // optional string path = 3;
@@ -1317,6 +1345,11 @@ void DataSourceProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->width(), target);
   }
 
+  // optional int64 offset = 9 [default = 0];
+  if (has_offset()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(9, this->offset(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1335,11 +1368,11 @@ int DataSourceProto::ByteSize() const {
           this->name());
     }
 
-    // required string reader = 2;
-    if (has_reader()) {
+    // required string id = 2;
+    if (has_id()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->reader());
+          this->id());
     }
 
     // optional string path = 3;
@@ -1384,6 +1417,15 @@ int DataSourceProto::ByteSize() const {
     }
 
   }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    // optional int64 offset = 9 [default = 0];
+    if (has_offset()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int64Size(
+          this->offset());
+    }
+
+  }
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -1413,8 +1455,8 @@ void DataSourceProto::MergeFrom(const DataSourceProto& from) {
     if (from.has_name()) {
       set_name(from.name());
     }
-    if (from.has_reader()) {
-      set_reader(from.reader());
+    if (from.has_id()) {
+      set_id(from.id());
     }
     if (from.has_path()) {
       set_path(from.path());
@@ -1433,6 +1475,11 @@ void DataSourceProto::MergeFrom(const DataSourceProto& from) {
     }
     if (from.has_width()) {
       set_width(from.width());
+    }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_offset()) {
+      set_offset(from.offset());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -1459,13 +1506,14 @@ bool DataSourceProto::IsInitialized() const {
 void DataSourceProto::Swap(DataSourceProto* other) {
   if (other != this) {
     std::swap(name_, other->name_);
-    std::swap(reader_, other->reader_);
+    std::swap(id_, other->id_);
     std::swap(path_, other->path_);
     std::swap(size_, other->size_);
     std::swap(type_, other->type_);
     std::swap(channels_, other->channels_);
     std::swap(height_, other->height_);
     std::swap(width_, other->width_);
+    std::swap(offset_, other->offset_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

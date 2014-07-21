@@ -13,7 +13,8 @@ void InitDataSource(
   const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
   std::vector<DataSource *> *sources) {
   for (auto &proto : protos) {
-    DataSource *ds = new DataSource(proto);
+    DataSource *ds = DataSourceFactory::Instance()->Create(proto.id());
+    ds->Init(proto);
     sources->push_back(ds);
   }
 }

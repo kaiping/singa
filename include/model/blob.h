@@ -15,7 +15,7 @@ namespace lapis {
  */
 class Blob {
  public:
-  Blob(): num_(0), channels_(0), height_(0),
+  Blob(): size_(0), channels_(0), height_(0),
     width_(0), content_(nullptr) {}
   /**
    * allocate memory of size length, e.g., for the bias parameter
@@ -56,8 +56,8 @@ class Blob {
   /**
    * Return num of instances stored in this blob
    */
-  const int num() const {
-    return num_;
+  const int size() const {
+    return size_;
   }
   /**
    * For image data, it is the height of the image;
@@ -78,11 +78,11 @@ class Blob {
    * Return the total size in terms of floats
    */
   const int Length() const {
-    return num_ * channels_ * height_ * width_;
+    return size_ * channels_ * height_ * width_;
   }
 
  private:
-  int num_, channels_, height_, width_;
+  int size_, channels_, height_, width_;
   float *content_;
 };
 

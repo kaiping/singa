@@ -8,18 +8,18 @@ void Blob::Reshape(int length) {
   Reshape(1, length);
 }
 
-void Blob::Reshape(int height, int width) {
-  Reshape(1, height, width);
+void Blob::Reshape(int size, int width) {
+  Reshape(size, 1, width);
 }
 
-void Blob::Reshape(int num, int height, int width) {
-  Reshape(num, 1, height, width);
+void Blob::Reshape(int size, int height, int width) {
+  Reshape(size, 1, height, width);
 }
 
-void Blob::Reshape(int num, int channels, int height, int width) {
-  if (num_ != num || channels_ != channels || height_ != height
+void Blob::Reshape(int size, int channels, int height, int width) {
+  if (size_ != size || channels_ != channels || height_ != height
       || width_ != width) {
-    num_ = num;
+    size_ = size;
     channels_ = channels;
     height_ = height;
     width_ = width;

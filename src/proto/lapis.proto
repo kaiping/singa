@@ -55,12 +55,37 @@ message RGBDatum {
 }
 
 message ParamProto {
-  required string name = 1;
-  optional string initializer = 2 [default = "Zero"];
+  optional string name = 1;
   // for vector, shape is <n>; for matrix, it is <m, n>
-  repeated int32 shape = 3;
-  optional string partitioner = 4; // e.g., row or column partition
-  repeated float content = 5 [packed = true];
+  repeated int32 shape = 2;
+
+  enum InitMethod {
+    kConstant = 0;
+    kGaussain = 1;
+    kUniform = 2;
+    kPretrained = 3;
+    // from Toronto Convnet, let a=1/sqrt(fan_in), w*=a after generating from
+    // Gaussian distribution
+    kGaussainSqrtFanIn = 4;
+    // from Toronto Convnet, rectified linear activation, let
+    // a=sqrt(3)/sqrt(fan_in), range is [-a, +a]
+    kUniformSqrtFanIn = 5;
+    // from Theano MLP tutorial, let a=1/sqrt(fan_in+fan_out). for tanh
+    // activation, range is [-6a, +6a], for sigmoid activation, range is
+    // [-24a, +24a], put the scale factor to value field.
+    // <a href="http://deeplearning.net/tutorial/mlp.html"> Theano MLP</a>
+    kUniformSqrtFanInOut = 6;
+  }
+  optional InitMethod init_method = 3 [default = kConstant];
+  optional float value = 4 [default = 0];
+  optional float low = 5 [default = -1];
+  optional float high = 6 [default = 1];
+  optional float mean = 7 [default = 0];
+  optional float std = 8 [default = 1];
+  // optional string partitioner = 4; // e.g., row or column partition
+
+  repeated float content = 9 [packed = true];
+  repeated float history = 10 [packed = true];
 }
 
 
@@ -108,15 +133,15 @@ message SGDProto {
   optional int32 weight_decay_change_steps = 9;
 
   enum ChangeProto {
-    FIXED = 0;
-    INVERSE_T = 1;
-    EXPONENTIAL = 2;
-    LINEAR = 3;
+    kFixed = 0;
+    kInverse_t= 1;
+    kExponential = 2;
+    kLinear = 3;
   }
 
-  optional ChangeProto learning_rate_change = 10 [default = INVERSE_T];
-  optional ChangeProto weight_decay_change = 11 [default = FIXED];
-  optional ChangeProto momentum_change = 12 [default = FIXED];
+  optional ChangeProto learning_rate_change = 10 [default = kInverse_t];
+  optional ChangeProto weight_decay_change = 11 [default = kFixed];
+  optional ChangeProto momentum_change = 12 [default = kFixed];
 
   optional int32 total_steps = 13;
   // batchsize is the num of instances processed per step

@@ -29,5 +29,8 @@ void Blob::Reshape(int size, int channels, int height, int width) {
     content_ = new float[length];
   }
 }
+void Blob::set_content(const float *other) {
+  memcpy(content_, other, sizeof(float)*Length());
+}
 
 }  // namespace lapis

@@ -5,7 +5,7 @@
 #define INCLUDE_MODEL_BLOB_H_
 
 #include <vector>
-#include <string>
+#include <cstring>
 
 #include "proto/lapis.pb.h"
 
@@ -53,6 +53,7 @@ class Blob {
   float *mutable_content() const {
     return content_;
   }
+  void set_content(const float *other);
   /**
    * Return num of instances stored in this blob
    */

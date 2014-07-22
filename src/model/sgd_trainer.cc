@@ -90,21 +90,21 @@ float SGDTrainer::UpdateHyperParam(int step, SGDProto_ChangeProto change,
                                    float base_val, float final_val) {
   float ret = 0.;
   switch (change) {
-  case SGDProto_ChangeProto_FIXED: {
+  case SGDProto::kFixed: {
     ret = base_val;
     break;
   }
-  case SGDProto_ChangeProto_LINEAR: {
+  case SGDProto::kLinear: {
     float r = step * 1.0  / change_steps;
     ret = (1.0 - r) * base_val + r * final_val;
     break;
   }
-  case SGDProto_ChangeProto_EXPONENTIAL: {
+  case SGDProto::kExponential: {
     CHECK_EQ(base_val, 2 * final_val) << "final value should be the half\n";
     ret = base_val / pow(2, step_ * 1. / change_steps);
     break;
   }
-  case SGDProto_ChangeProto_INVERSE_T: {
+  case SGDProto::kInverse_t: {
     CHECK_EQ(base_val, 2 * final_val) << "final value should be the half\n";
     ret = base_val / (1. + step_ * 1. / change_steps);
     break;

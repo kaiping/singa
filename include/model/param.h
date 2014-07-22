@@ -8,7 +8,10 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <random>
+
 #include "proto/lapis.pb.h"
+#include "utils/lapis.h"
 #include "model/blob.h"
 
 // Base paramter class.
@@ -20,9 +23,9 @@ class Param {
    * Set properties of this parameter from ParamProto, allocate
    * corresponding memory and initialize the parameter
    */
-  virtual void Init(const ParamProto &param_proto);
+  virtual void Init(const ParamProto &proto);
   //! Marshal properties of this parameter into google protobuf
-  virtual void ToProto(ParamProto *param_proto);
+  virtual void ToProto(ParamProto *proto);
   //! Return data pointer for this parameter
   const float *Content() const {
     return content_.content();
@@ -52,10 +55,24 @@ class Param {
   }
 
  protected:
+  /**
+   * Fill in the val with data generated from a uniform distribution
+   * @param low the lower boundary of the uniform distribution
+   * @param high the upper boundary of the uniform distribution
+   * @param factor the generated data is multiplied to this number
+   * @param val float array to store the generated data
+   */
+  void FillUniformData(float low, float high, float factor, float *val);
+  /**
+   * Similar to ::FillGaussainData(), except the data are generated from
+   * Gaussain distribution.
+   */
+  void FillGaussainData(float mean, float std, float factor, float *val);
+
   Blob content_, grad_, history_grad_;
-  float learning_rate_, weight_decay_;
   std::string initializer_;
   std::string name_;  //!< name of the parameter, e.g., 'weight', 'bias'
+  float learning_rate_, weight_decay_;
 };
 
 

@@ -34,6 +34,13 @@ void DataSource::GetData(Blob *blob) {
  * Implementation of DataSourceFactory
  ****************************************************************************/
 DataSourceFactory *DataSourceFactory::Instance() {
+  /**
+   * using shared_ptr
+   * static std::shared_ptr<DataSourceFactory> factory;
+   * if (!factory.Get())
+   *   factory.reset(new DataSourceFactory());
+   * return factory;
+   */
   static DataSourceFactory factory;
   return &factory;
 }

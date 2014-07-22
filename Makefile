@@ -18,8 +18,8 @@ CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 ###############################################################################
 # Build core of Lapis into .a and .so library
 ###############################################################################
-LIBRARIES := glog protobuf boost_system boost_regex boost_filesystem \
-						opencv_highgui opencv_imgproc opencv_core #gflag
+LIBRARIES := glog protobuf boost_system boost_regex \
+						boost_filesystem opencv_highgui opencv_imgproc opencv_core #gflag
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 

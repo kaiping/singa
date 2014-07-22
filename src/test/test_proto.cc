@@ -23,7 +23,7 @@ TEST(ProtoTest, ReadFromFile) {
   EXPECT_STREQ("InnerProduct", edge2.type().c_str());
   EXPECT_EQ(2, edge2.param().size());
   ParamProto param = edge2.param().Get(0);
-  EXPECT_STREQ("Gaussian", param.initializer().c_str());
+  EXPECT_TRUE(ParamProto::kGaussain== param.init_method());
   EXPECT_EQ(2, param.shape().size());
   EXPECT_EQ(2, param.shape().Get(0));
   TrainerProto trainer = model.trainer();

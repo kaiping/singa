@@ -65,15 +65,39 @@ inline bool DataSourceProto_DataType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<DataSourceProto_DataType>(
     DataSourceProto_DataType_descriptor(), name, value);
 }
+enum ParamProto_InitMethod {
+  ParamProto_InitMethod_kConstant = 0,
+  ParamProto_InitMethod_kGaussain = 1,
+  ParamProto_InitMethod_kUniform = 2,
+  ParamProto_InitMethod_kPretrained = 3,
+  ParamProto_InitMethod_kGaussainSqrtFanIn = 4,
+  ParamProto_InitMethod_kUniformSqrtFanIn = 5,
+  ParamProto_InitMethod_kUniformSqrtFanInOut = 6
+};
+bool ParamProto_InitMethod_IsValid(int value);
+const ParamProto_InitMethod ParamProto_InitMethod_InitMethod_MIN = ParamProto_InitMethod_kConstant;
+const ParamProto_InitMethod ParamProto_InitMethod_InitMethod_MAX = ParamProto_InitMethod_kUniformSqrtFanInOut;
+const int ParamProto_InitMethod_InitMethod_ARRAYSIZE = ParamProto_InitMethod_InitMethod_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* ParamProto_InitMethod_descriptor();
+inline const ::std::string& ParamProto_InitMethod_Name(ParamProto_InitMethod value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    ParamProto_InitMethod_descriptor(), value);
+}
+inline bool ParamProto_InitMethod_Parse(
+    const ::std::string& name, ParamProto_InitMethod* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ParamProto_InitMethod>(
+    ParamProto_InitMethod_descriptor(), name, value);
+}
 enum SGDProto_ChangeProto {
-  SGDProto_ChangeProto_FIXED = 0,
-  SGDProto_ChangeProto_INVERSE_T = 1,
-  SGDProto_ChangeProto_EXPONENTIAL = 2,
-  SGDProto_ChangeProto_LINEAR = 3
+  SGDProto_ChangeProto_kFixed = 0,
+  SGDProto_ChangeProto_kInverse_t = 1,
+  SGDProto_ChangeProto_kExponential = 2,
+  SGDProto_ChangeProto_kLinear = 3
 };
 bool SGDProto_ChangeProto_IsValid(int value);
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_FIXED;
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_LINEAR;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_kFixed;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kLinear;
 const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE = SGDProto_ChangeProto_ChangeProto_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor();
@@ -600,9 +624,38 @@ class ParamProto : public ::google::protobuf::Message {
 
   // nested types ----------------------------------------------------
 
+  typedef ParamProto_InitMethod InitMethod;
+  static const InitMethod kConstant = ParamProto_InitMethod_kConstant;
+  static const InitMethod kGaussain = ParamProto_InitMethod_kGaussain;
+  static const InitMethod kUniform = ParamProto_InitMethod_kUniform;
+  static const InitMethod kPretrained = ParamProto_InitMethod_kPretrained;
+  static const InitMethod kGaussainSqrtFanIn = ParamProto_InitMethod_kGaussainSqrtFanIn;
+  static const InitMethod kUniformSqrtFanIn = ParamProto_InitMethod_kUniformSqrtFanIn;
+  static const InitMethod kUniformSqrtFanInOut = ParamProto_InitMethod_kUniformSqrtFanInOut;
+  static inline bool InitMethod_IsValid(int value) {
+    return ParamProto_InitMethod_IsValid(value);
+  }
+  static const InitMethod InitMethod_MIN =
+    ParamProto_InitMethod_InitMethod_MIN;
+  static const InitMethod InitMethod_MAX =
+    ParamProto_InitMethod_InitMethod_MAX;
+  static const int InitMethod_ARRAYSIZE =
+    ParamProto_InitMethod_InitMethod_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  InitMethod_descriptor() {
+    return ParamProto_InitMethod_descriptor();
+  }
+  static inline const ::std::string& InitMethod_Name(InitMethod value) {
+    return ParamProto_InitMethod_Name(value);
+  }
+  static inline bool InitMethod_Parse(const ::std::string& name,
+      InitMethod* value) {
+    return ParamProto_InitMethod_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
 
-  // required string name = 1;
+  // optional string name = 1;
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
@@ -614,22 +667,10 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // optional string initializer = 2 [default = "Zero"];
-  inline bool has_initializer() const;
-  inline void clear_initializer();
-  static const int kInitializerFieldNumber = 2;
-  inline const ::std::string& initializer() const;
-  inline void set_initializer(const ::std::string& value);
-  inline void set_initializer(const char* value);
-  inline void set_initializer(const char* value, size_t size);
-  inline ::std::string* mutable_initializer();
-  inline ::std::string* release_initializer();
-  inline void set_allocated_initializer(::std::string* initializer);
-
-  // repeated int32 shape = 3;
+  // repeated int32 shape = 2;
   inline int shape_size() const;
   inline void clear_shape();
-  static const int kShapeFieldNumber = 3;
+  static const int kShapeFieldNumber = 2;
   inline ::google::protobuf::int32 shape(int index) const;
   inline void set_shape(int index, ::google::protobuf::int32 value);
   inline void add_shape(::google::protobuf::int32 value);
@@ -638,22 +679,52 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
       mutable_shape();
 
-  // optional string partitioner = 4;
-  inline bool has_partitioner() const;
-  inline void clear_partitioner();
-  static const int kPartitionerFieldNumber = 4;
-  inline const ::std::string& partitioner() const;
-  inline void set_partitioner(const ::std::string& value);
-  inline void set_partitioner(const char* value);
-  inline void set_partitioner(const char* value, size_t size);
-  inline ::std::string* mutable_partitioner();
-  inline ::std::string* release_partitioner();
-  inline void set_allocated_partitioner(::std::string* partitioner);
+  // optional .lapis.ParamProto.InitMethod init_method = 3 [default = kConstant];
+  inline bool has_init_method() const;
+  inline void clear_init_method();
+  static const int kInitMethodFieldNumber = 3;
+  inline ::lapis::ParamProto_InitMethod init_method() const;
+  inline void set_init_method(::lapis::ParamProto_InitMethod value);
 
-  // repeated float content = 5 [packed = true];
+  // optional float value = 4 [default = 0];
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 4;
+  inline float value() const;
+  inline void set_value(float value);
+
+  // optional float low = 5 [default = -1];
+  inline bool has_low() const;
+  inline void clear_low();
+  static const int kLowFieldNumber = 5;
+  inline float low() const;
+  inline void set_low(float value);
+
+  // optional float high = 6 [default = 1];
+  inline bool has_high() const;
+  inline void clear_high();
+  static const int kHighFieldNumber = 6;
+  inline float high() const;
+  inline void set_high(float value);
+
+  // optional float mean = 7 [default = 0];
+  inline bool has_mean() const;
+  inline void clear_mean();
+  static const int kMeanFieldNumber = 7;
+  inline float mean() const;
+  inline void set_mean(float value);
+
+  // optional float std = 8 [default = 1];
+  inline bool has_std() const;
+  inline void clear_std();
+  static const int kStdFieldNumber = 8;
+  inline float std() const;
+  inline void set_std(float value);
+
+  // repeated float content = 9 [packed = true];
   inline int content_size() const;
   inline void clear_content();
-  static const int kContentFieldNumber = 5;
+  static const int kContentFieldNumber = 9;
   inline float content(int index) const;
   inline void set_content(int index, float value);
   inline void add_content(float value);
@@ -662,27 +733,52 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< float >*
       mutable_content();
 
+  // repeated float history = 10 [packed = true];
+  inline int history_size() const;
+  inline void clear_history();
+  static const int kHistoryFieldNumber = 10;
+  inline float history(int index) const;
+  inline void set_history(int index, float value);
+  inline void add_history(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      history() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_history();
+
   // @@protoc_insertion_point(class_scope:lapis.ParamProto)
  private:
   inline void set_has_name();
   inline void clear_has_name();
-  inline void set_has_initializer();
-  inline void clear_has_initializer();
-  inline void set_has_partitioner();
-  inline void clear_has_partitioner();
+  inline void set_has_init_method();
+  inline void clear_has_init_method();
+  inline void set_has_value();
+  inline void clear_has_value();
+  inline void set_has_low();
+  inline void clear_has_low();
+  inline void set_has_high();
+  inline void clear_has_high();
+  inline void set_has_mean();
+  inline void clear_has_mean();
+  inline void set_has_std();
+  inline void clear_has_std();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
-  ::std::string* initializer_;
-  static ::std::string* _default_initializer_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shape_;
-  ::std::string* partitioner_;
+  int init_method_;
+  float value_;
+  float low_;
+  float high_;
+  float mean_;
+  float std_;
   ::google::protobuf::RepeatedField< float > content_;
   mutable int _content_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > history_;
+  mutable int _history_cached_byte_size_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -1143,10 +1239,10 @@ class SGDProto : public ::google::protobuf::Message {
   // nested types ----------------------------------------------------
 
   typedef SGDProto_ChangeProto ChangeProto;
-  static const ChangeProto FIXED = SGDProto_ChangeProto_FIXED;
-  static const ChangeProto INVERSE_T = SGDProto_ChangeProto_INVERSE_T;
-  static const ChangeProto EXPONENTIAL = SGDProto_ChangeProto_EXPONENTIAL;
-  static const ChangeProto LINEAR = SGDProto_ChangeProto_LINEAR;
+  static const ChangeProto kFixed = SGDProto_ChangeProto_kFixed;
+  static const ChangeProto kInverse_t = SGDProto_ChangeProto_kInverse_t;
+  static const ChangeProto kExponential = SGDProto_ChangeProto_kExponential;
+  static const ChangeProto kLinear = SGDProto_ChangeProto_kLinear;
   static inline bool ChangeProto_IsValid(int value) {
     return SGDProto_ChangeProto_IsValid(value);
   }
@@ -1233,21 +1329,21 @@ class SGDProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 weight_decay_change_steps() const;
   inline void set_weight_decay_change_steps(::google::protobuf::int32 value);
 
-  // optional .lapis.SGDProto.ChangeProto learning_rate_change = 10 [default = INVERSE_T];
+  // optional .lapis.SGDProto.ChangeProto learning_rate_change = 10 [default = kInverse_t];
   inline bool has_learning_rate_change() const;
   inline void clear_learning_rate_change();
   static const int kLearningRateChangeFieldNumber = 10;
   inline ::lapis::SGDProto_ChangeProto learning_rate_change() const;
   inline void set_learning_rate_change(::lapis::SGDProto_ChangeProto value);
 
-  // optional .lapis.SGDProto.ChangeProto weight_decay_change = 11 [default = FIXED];
+  // optional .lapis.SGDProto.ChangeProto weight_decay_change = 11 [default = kFixed];
   inline bool has_weight_decay_change() const;
   inline void clear_weight_decay_change();
   static const int kWeightDecayChangeFieldNumber = 11;
   inline ::lapis::SGDProto_ChangeProto weight_decay_change() const;
   inline void set_weight_decay_change(::lapis::SGDProto_ChangeProto value);
 
-  // optional .lapis.SGDProto.ChangeProto momentum_change = 12 [default = FIXED];
+  // optional .lapis.SGDProto.ChangeProto momentum_change = 12 [default = kFixed];
   inline bool has_momentum_change() const;
   inline void clear_momentum_change();
   static const int kMomentumChangeFieldNumber = 12;
@@ -2442,7 +2538,7 @@ inline void RGBDatum::set_allocated_content(::std::string* content) {
 
 // ParamProto
 
-// required string name = 1;
+// optional string name = 1;
 inline bool ParamProto::has_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -2512,77 +2608,7 @@ inline void ParamProto::set_allocated_name(::std::string* name) {
   }
 }
 
-// optional string initializer = 2 [default = "Zero"];
-inline bool ParamProto::has_initializer() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void ParamProto::set_has_initializer() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void ParamProto::clear_has_initializer() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void ParamProto::clear_initializer() {
-  if (initializer_ != _default_initializer_) {
-    initializer_->assign(*_default_initializer_);
-  }
-  clear_has_initializer();
-}
-inline const ::std::string& ParamProto::initializer() const {
-  return *initializer_;
-}
-inline void ParamProto::set_initializer(const ::std::string& value) {
-  set_has_initializer();
-  if (initializer_ == _default_initializer_) {
-    initializer_ = new ::std::string;
-  }
-  initializer_->assign(value);
-}
-inline void ParamProto::set_initializer(const char* value) {
-  set_has_initializer();
-  if (initializer_ == _default_initializer_) {
-    initializer_ = new ::std::string;
-  }
-  initializer_->assign(value);
-}
-inline void ParamProto::set_initializer(const char* value, size_t size) {
-  set_has_initializer();
-  if (initializer_ == _default_initializer_) {
-    initializer_ = new ::std::string;
-  }
-  initializer_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* ParamProto::mutable_initializer() {
-  set_has_initializer();
-  if (initializer_ == _default_initializer_) {
-    initializer_ = new ::std::string(*_default_initializer_);
-  }
-  return initializer_;
-}
-inline ::std::string* ParamProto::release_initializer() {
-  clear_has_initializer();
-  if (initializer_ == _default_initializer_) {
-    return NULL;
-  } else {
-    ::std::string* temp = initializer_;
-    initializer_ = const_cast< ::std::string*>(_default_initializer_);
-    return temp;
-  }
-}
-inline void ParamProto::set_allocated_initializer(::std::string* initializer) {
-  if (initializer_ != _default_initializer_) {
-    delete initializer_;
-  }
-  if (initializer) {
-    set_has_initializer();
-    initializer_ = initializer;
-  } else {
-    clear_has_initializer();
-    initializer_ = const_cast< ::std::string*>(_default_initializer_);
-  }
-}
-
-// repeated int32 shape = 3;
+// repeated int32 shape = 2;
 inline int ParamProto::shape_size() const {
   return shape_.size();
 }
@@ -2607,77 +2633,140 @@ ParamProto::mutable_shape() {
   return &shape_;
 }
 
-// optional string partitioner = 4;
-inline bool ParamProto::has_partitioner() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+// optional .lapis.ParamProto.InitMethod init_method = 3 [default = kConstant];
+inline bool ParamProto::has_init_method() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void ParamProto::set_has_partitioner() {
-  _has_bits_[0] |= 0x00000008u;
+inline void ParamProto::set_has_init_method() {
+  _has_bits_[0] |= 0x00000004u;
 }
-inline void ParamProto::clear_has_partitioner() {
-  _has_bits_[0] &= ~0x00000008u;
+inline void ParamProto::clear_has_init_method() {
+  _has_bits_[0] &= ~0x00000004u;
 }
-inline void ParamProto::clear_partitioner() {
-  if (partitioner_ != &::google::protobuf::internal::kEmptyString) {
-    partitioner_->clear();
-  }
-  clear_has_partitioner();
+inline void ParamProto::clear_init_method() {
+  init_method_ = 0;
+  clear_has_init_method();
 }
-inline const ::std::string& ParamProto::partitioner() const {
-  return *partitioner_;
+inline ::lapis::ParamProto_InitMethod ParamProto::init_method() const {
+  return static_cast< ::lapis::ParamProto_InitMethod >(init_method_);
 }
-inline void ParamProto::set_partitioner(const ::std::string& value) {
-  set_has_partitioner();
-  if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
-    partitioner_ = new ::std::string;
-  }
-  partitioner_->assign(value);
-}
-inline void ParamProto::set_partitioner(const char* value) {
-  set_has_partitioner();
-  if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
-    partitioner_ = new ::std::string;
-  }
-  partitioner_->assign(value);
-}
-inline void ParamProto::set_partitioner(const char* value, size_t size) {
-  set_has_partitioner();
-  if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
-    partitioner_ = new ::std::string;
-  }
-  partitioner_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* ParamProto::mutable_partitioner() {
-  set_has_partitioner();
-  if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
-    partitioner_ = new ::std::string;
-  }
-  return partitioner_;
-}
-inline ::std::string* ParamProto::release_partitioner() {
-  clear_has_partitioner();
-  if (partitioner_ == &::google::protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = partitioner_;
-    partitioner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-inline void ParamProto::set_allocated_partitioner(::std::string* partitioner) {
-  if (partitioner_ != &::google::protobuf::internal::kEmptyString) {
-    delete partitioner_;
-  }
-  if (partitioner) {
-    set_has_partitioner();
-    partitioner_ = partitioner;
-  } else {
-    clear_has_partitioner();
-    partitioner_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  }
+inline void ParamProto::set_init_method(::lapis::ParamProto_InitMethod value) {
+  assert(::lapis::ParamProto_InitMethod_IsValid(value));
+  set_has_init_method();
+  init_method_ = value;
 }
 
-// repeated float content = 5 [packed = true];
+// optional float value = 4 [default = 0];
+inline bool ParamProto::has_value() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ParamProto::set_has_value() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ParamProto::clear_has_value() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ParamProto::clear_value() {
+  value_ = 0;
+  clear_has_value();
+}
+inline float ParamProto::value() const {
+  return value_;
+}
+inline void ParamProto::set_value(float value) {
+  set_has_value();
+  value_ = value;
+}
+
+// optional float low = 5 [default = -1];
+inline bool ParamProto::has_low() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void ParamProto::set_has_low() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void ParamProto::clear_has_low() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void ParamProto::clear_low() {
+  low_ = -1;
+  clear_has_low();
+}
+inline float ParamProto::low() const {
+  return low_;
+}
+inline void ParamProto::set_low(float value) {
+  set_has_low();
+  low_ = value;
+}
+
+// optional float high = 6 [default = 1];
+inline bool ParamProto::has_high() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void ParamProto::set_has_high() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void ParamProto::clear_has_high() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void ParamProto::clear_high() {
+  high_ = 1;
+  clear_has_high();
+}
+inline float ParamProto::high() const {
+  return high_;
+}
+inline void ParamProto::set_high(float value) {
+  set_has_high();
+  high_ = value;
+}
+
+// optional float mean = 7 [default = 0];
+inline bool ParamProto::has_mean() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void ParamProto::set_has_mean() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void ParamProto::clear_has_mean() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void ParamProto::clear_mean() {
+  mean_ = 0;
+  clear_has_mean();
+}
+inline float ParamProto::mean() const {
+  return mean_;
+}
+inline void ParamProto::set_mean(float value) {
+  set_has_mean();
+  mean_ = value;
+}
+
+// optional float std = 8 [default = 1];
+inline bool ParamProto::has_std() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void ParamProto::set_has_std() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void ParamProto::clear_has_std() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void ParamProto::clear_std() {
+  std_ = 1;
+  clear_has_std();
+}
+inline float ParamProto::std() const {
+  return std_;
+}
+inline void ParamProto::set_std(float value) {
+  set_has_std();
+  std_ = value;
+}
+
+// repeated float content = 9 [packed = true];
 inline int ParamProto::content_size() const {
   return content_.size();
 }
@@ -2700,6 +2789,31 @@ ParamProto::content() const {
 inline ::google::protobuf::RepeatedField< float >*
 ParamProto::mutable_content() {
   return &content_;
+}
+
+// repeated float history = 10 [packed = true];
+inline int ParamProto::history_size() const {
+  return history_.size();
+}
+inline void ParamProto::clear_history() {
+  history_.Clear();
+}
+inline float ParamProto::history(int index) const {
+  return history_.Get(index);
+}
+inline void ParamProto::set_history(int index, float value) {
+  history_.Set(index, value);
+}
+inline void ParamProto::add_history(float value) {
+  history_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+ParamProto::history() const {
+  return history_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+ParamProto::mutable_history() {
+  return &history_;
 }
 
 // -------------------------------------------------------------------
@@ -3498,7 +3612,7 @@ inline void SGDProto::set_weight_decay_change_steps(::google::protobuf::int32 va
   weight_decay_change_steps_ = value;
 }
 
-// optional .lapis.SGDProto.ChangeProto learning_rate_change = 10 [default = INVERSE_T];
+// optional .lapis.SGDProto.ChangeProto learning_rate_change = 10 [default = kInverse_t];
 inline bool SGDProto::has_learning_rate_change() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
@@ -3521,7 +3635,7 @@ inline void SGDProto::set_learning_rate_change(::lapis::SGDProto_ChangeProto val
   learning_rate_change_ = value;
 }
 
-// optional .lapis.SGDProto.ChangeProto weight_decay_change = 11 [default = FIXED];
+// optional .lapis.SGDProto.ChangeProto weight_decay_change = 11 [default = kFixed];
 inline bool SGDProto::has_weight_decay_change() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
@@ -3544,7 +3658,7 @@ inline void SGDProto::set_weight_decay_change(::lapis::SGDProto_ChangeProto valu
   weight_decay_change_ = value;
 }
 
-// optional .lapis.SGDProto.ChangeProto momentum_change = 12 [default = FIXED];
+// optional .lapis.SGDProto.ChangeProto momentum_change = 12 [default = kFixed];
 inline bool SGDProto::has_momentum_change() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
@@ -4346,6 +4460,10 @@ namespace protobuf {
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::DataSourceProto_DataType>() {
   return ::lapis::DataSourceProto_DataType_descriptor();
+}
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::ParamProto_InitMethod>() {
+  return ::lapis::ParamProto_InitMethod_descriptor();
 }
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SGDProto_ChangeProto>() {

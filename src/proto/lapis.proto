@@ -165,3 +165,7 @@ message ModelConfProto {
   required NetProto net = 2;
   required TrainerProto trainer = 3;
 }
+
+message float_vector_message {
+  repeated float myfloat = 1;
+}

@@ -1,0 +1,22 @@
+// Copyright © 2014 Wei Wang. All Rights Reserved.
+// 2014-07-24 14:22
+#ifndef INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_
+#define INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_
+
+#include "model/edge.h"
+#include "proto/lapis.pb.h"
+
+namespace lapis {
+class SoftmaxLossEdge : public Edge {
+ public:
+  virtual void Setup(bool set_param);
+  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
+  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
+                        const Blob *dest_fea, Blob *dest_grad,
+                        bool overwirte);
+
+ private:
+  Blob prob_;
+};
+}  // namespace lapis
+#endif  // INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_

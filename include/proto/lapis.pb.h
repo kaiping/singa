@@ -89,6 +89,25 @@ inline bool ParamProto_InitMethod_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<ParamProto_InitMethod>(
     ParamProto_InitMethod_descriptor(), name, value);
 }
+enum EdgeProto_PoolingMethod {
+  EdgeProto_PoolingMethod_kMaxPooling = 1,
+  EdgeProto_PoolingMethod_kAvgPooling = 2
+};
+bool EdgeProto_PoolingMethod_IsValid(int value);
+const EdgeProto_PoolingMethod EdgeProto_PoolingMethod_PoolingMethod_MIN = EdgeProto_PoolingMethod_kMaxPooling;
+const EdgeProto_PoolingMethod EdgeProto_PoolingMethod_PoolingMethod_MAX = EdgeProto_PoolingMethod_kAvgPooling;
+const int EdgeProto_PoolingMethod_PoolingMethod_ARRAYSIZE = EdgeProto_PoolingMethod_PoolingMethod_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* EdgeProto_PoolingMethod_descriptor();
+inline const ::std::string& EdgeProto_PoolingMethod_Name(EdgeProto_PoolingMethod value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    EdgeProto_PoolingMethod_descriptor(), value);
+}
+inline bool EdgeProto_PoolingMethod_Parse(
+    const ::std::string& name, EdgeProto_PoolingMethod* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<EdgeProto_PoolingMethod>(
+    EdgeProto_PoolingMethod_descriptor(), name, value);
+}
 enum SGDProto_ChangeProto {
   SGDProto_ChangeProto_kFixed = 0,
   SGDProto_ChangeProto_kInverse_t = 1,
@@ -655,7 +674,7 @@ class ParamProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional string name = 1;
+  // required string name = 1;
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
@@ -721,10 +740,31 @@ class ParamProto : public ::google::protobuf::Message {
   inline float std() const;
   inline void set_std(float value);
 
-  // repeated float content = 9 [packed = true];
+  // optional float momentum = 9;
+  inline bool has_momentum() const;
+  inline void clear_momentum();
+  static const int kMomentumFieldNumber = 9;
+  inline float momentum() const;
+  inline void set_momentum(float value);
+
+  // optional float learning_rate = 10;
+  inline bool has_learning_rate() const;
+  inline void clear_learning_rate();
+  static const int kLearningRateFieldNumber = 10;
+  inline float learning_rate() const;
+  inline void set_learning_rate(float value);
+
+  // optional float weight_decay = 11;
+  inline bool has_weight_decay() const;
+  inline void clear_weight_decay();
+  static const int kWeightDecayFieldNumber = 11;
+  inline float weight_decay() const;
+  inline void set_weight_decay(float value);
+
+  // repeated float content = 13 [packed = true];
   inline int content_size() const;
   inline void clear_content();
-  static const int kContentFieldNumber = 9;
+  static const int kContentFieldNumber = 13;
   inline float content(int index) const;
   inline void set_content(int index, float value);
   inline void add_content(float value);
@@ -733,10 +773,10 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< float >*
       mutable_content();
 
-  // repeated float history = 10 [packed = true];
+  // repeated float history = 14 [packed = true];
   inline int history_size() const;
   inline void clear_history();
-  static const int kHistoryFieldNumber = 10;
+  static const int kHistoryFieldNumber = 14;
   inline float history(int index) const;
   inline void set_history(int index, float value);
   inline void add_history(float value);
@@ -761,6 +801,12 @@ class ParamProto : public ::google::protobuf::Message {
   inline void clear_has_mean();
   inline void set_has_std();
   inline void clear_has_std();
+  inline void set_has_momentum();
+  inline void clear_has_momentum();
+  inline void set_has_learning_rate();
+  inline void clear_has_learning_rate();
+  inline void set_has_weight_decay();
+  inline void clear_has_weight_decay();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -772,13 +818,16 @@ class ParamProto : public ::google::protobuf::Message {
   float high_;
   float mean_;
   float std_;
+  float momentum_;
+  float learning_rate_;
   ::google::protobuf::RepeatedField< float > content_;
   mutable int _content_cached_byte_size_;
   ::google::protobuf::RepeatedField< float > history_;
   mutable int _history_cached_byte_size_;
+  float weight_decay_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -841,6 +890,30 @@ class EdgeProto : public ::google::protobuf::Message {
 
   // nested types ----------------------------------------------------
 
+  typedef EdgeProto_PoolingMethod PoolingMethod;
+  static const PoolingMethod kMaxPooling = EdgeProto_PoolingMethod_kMaxPooling;
+  static const PoolingMethod kAvgPooling = EdgeProto_PoolingMethod_kAvgPooling;
+  static inline bool PoolingMethod_IsValid(int value) {
+    return EdgeProto_PoolingMethod_IsValid(value);
+  }
+  static const PoolingMethod PoolingMethod_MIN =
+    EdgeProto_PoolingMethod_PoolingMethod_MIN;
+  static const PoolingMethod PoolingMethod_MAX =
+    EdgeProto_PoolingMethod_PoolingMethod_MAX;
+  static const int PoolingMethod_ARRAYSIZE =
+    EdgeProto_PoolingMethod_PoolingMethod_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  PoolingMethod_descriptor() {
+    return EdgeProto_PoolingMethod_descriptor();
+  }
+  static inline const ::std::string& PoolingMethod_Name(PoolingMethod value) {
+    return EdgeProto_PoolingMethod_Name(value);
+  }
+  static inline bool PoolingMethod_Parse(const ::std::string& name,
+      PoolingMethod* value) {
+    return EdgeProto_PoolingMethod_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
 
   // required string name = 1;
@@ -867,10 +940,17 @@ class EdgeProto : public ::google::protobuf::Message {
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
 
-  // repeated .lapis.ParamProto param = 3;
+  // optional int32 num_output = 3;
+  inline bool has_num_output() const;
+  inline void clear_num_output();
+  static const int kNumOutputFieldNumber = 3;
+  inline ::google::protobuf::int32 num_output() const;
+  inline void set_num_output(::google::protobuf::int32 value);
+
+  // repeated .lapis.ParamProto param = 4;
   inline int param_size() const;
   inline void clear_param();
-  static const int kParamFieldNumber = 3;
+  static const int kParamFieldNumber = 4;
   inline const ::lapis::ParamProto& param(int index) const;
   inline ::lapis::ParamProto* mutable_param(int index);
   inline ::lapis::ParamProto* add_param();
@@ -879,12 +959,85 @@ class EdgeProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
       mutable_param();
 
-  // optional bool directed = 4 [default = true];
+  // optional bool directed = 5 [default = true];
   inline bool has_directed() const;
   inline void clear_directed();
-  static const int kDirectedFieldNumber = 4;
+  static const int kDirectedFieldNumber = 5;
   inline bool directed() const;
   inline void set_directed(bool value);
+
+  // optional string top = 6;
+  inline bool has_top() const;
+  inline void clear_top();
+  static const int kTopFieldNumber = 6;
+  inline const ::std::string& top() const;
+  inline void set_top(const ::std::string& value);
+  inline void set_top(const char* value);
+  inline void set_top(const char* value, size_t size);
+  inline ::std::string* mutable_top();
+  inline ::std::string* release_top();
+  inline void set_allocated_top(::std::string* top);
+
+  // optional string bottom = 7;
+  inline bool has_bottom() const;
+  inline void clear_bottom();
+  static const int kBottomFieldNumber = 7;
+  inline const ::std::string& bottom() const;
+  inline void set_bottom(const ::std::string& value);
+  inline void set_bottom(const char* value);
+  inline void set_bottom(const char* value, size_t size);
+  inline ::std::string* mutable_bottom();
+  inline ::std::string* release_bottom();
+  inline void set_allocated_bottom(::std::string* bottom);
+
+  // optional int32 kernel_size = 8;
+  inline bool has_kernel_size() const;
+  inline void clear_kernel_size();
+  static const int kKernelSizeFieldNumber = 8;
+  inline ::google::protobuf::int32 kernel_size() const;
+  inline void set_kernel_size(::google::protobuf::int32 value);
+
+  // optional int32 stride = 9;
+  inline bool has_stride() const;
+  inline void clear_stride();
+  static const int kStrideFieldNumber = 9;
+  inline ::google::protobuf::int32 stride() const;
+  inline void set_stride(::google::protobuf::int32 value);
+
+  // optional int32 pad = 10;
+  inline bool has_pad() const;
+  inline void clear_pad();
+  static const int kPadFieldNumber = 10;
+  inline ::google::protobuf::int32 pad() const;
+  inline void set_pad(::google::protobuf::int32 value);
+
+  // optional float alpha = 11;
+  inline bool has_alpha() const;
+  inline void clear_alpha();
+  static const int kAlphaFieldNumber = 11;
+  inline float alpha() const;
+  inline void set_alpha(float value);
+
+  // optional float beta = 12;
+  inline bool has_beta() const;
+  inline void clear_beta();
+  static const int kBetaFieldNumber = 12;
+  inline float beta() const;
+  inline void set_beta(float value);
+
+  // optional int32 local_size = 13;
+  inline bool has_local_size() const;
+  inline void clear_local_size();
+  static const int kLocalSizeFieldNumber = 13;
+  inline ::google::protobuf::int32 local_size() const;
+  inline void set_local_size(::google::protobuf::int32 value);
+
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  inline bool has_pooling_method() const;
+  inline void clear_pooling_method();
+  static const int kPoolingMethodFieldNumber = 14;
+  inline ::lapis::EdgeProto_PoolingMethod pooling_method() const;
+  inline void set_pooling_method(::lapis::EdgeProto_PoolingMethod value);
 
   // @@protoc_insertion_point(class_scope:lapis.EdgeProto)
  private:
@@ -892,18 +1045,48 @@ class EdgeProto : public ::google::protobuf::Message {
   inline void clear_has_name();
   inline void set_has_type();
   inline void clear_has_type();
+  inline void set_has_num_output();
+  inline void clear_has_num_output();
   inline void set_has_directed();
   inline void clear_has_directed();
+  inline void set_has_top();
+  inline void clear_has_top();
+  inline void set_has_bottom();
+  inline void clear_has_bottom();
+  inline void set_has_kernel_size();
+  inline void clear_has_kernel_size();
+  inline void set_has_stride();
+  inline void clear_has_stride();
+  inline void set_has_pad();
+  inline void clear_has_pad();
+  inline void set_has_alpha();
+  inline void clear_has_alpha();
+  inline void set_has_beta();
+  inline void clear_has_beta();
+  inline void set_has_local_size();
+  inline void clear_has_local_size();
+  inline void set_has_pooling_method();
+  inline void clear_has_pooling_method();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
   ::std::string* type_;
   ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto > param_;
+  ::google::protobuf::int32 num_output_;
   bool directed_;
+  ::std::string* top_;
+  ::std::string* bottom_;
+  ::google::protobuf::int32 kernel_size_;
+  ::google::protobuf::int32 stride_;
+  ::google::protobuf::int32 pad_;
+  float alpha_;
+  float beta_;
+  ::google::protobuf::int32 local_size_;
+  int pooling_method_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
 
   friend void  protobuf_AddDesc_lapis_2eproto();
   friend void protobuf_AssignDesc_lapis_2eproto();
@@ -2538,7 +2721,7 @@ inline void RGBDatum::set_allocated_content(::std::string* content) {
 
 // ParamProto
 
-// optional string name = 1;
+// required string name = 1;
 inline bool ParamProto::has_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -2766,7 +2949,73 @@ inline void ParamProto::set_std(float value) {
   std_ = value;
 }
 
-// repeated float content = 9 [packed = true];
+// optional float momentum = 9;
+inline bool ParamProto::has_momentum() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void ParamProto::set_has_momentum() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void ParamProto::clear_has_momentum() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void ParamProto::clear_momentum() {
+  momentum_ = 0;
+  clear_has_momentum();
+}
+inline float ParamProto::momentum() const {
+  return momentum_;
+}
+inline void ParamProto::set_momentum(float value) {
+  set_has_momentum();
+  momentum_ = value;
+}
+
+// optional float learning_rate = 10;
+inline bool ParamProto::has_learning_rate() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void ParamProto::set_has_learning_rate() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void ParamProto::clear_has_learning_rate() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void ParamProto::clear_learning_rate() {
+  learning_rate_ = 0;
+  clear_has_learning_rate();
+}
+inline float ParamProto::learning_rate() const {
+  return learning_rate_;
+}
+inline void ParamProto::set_learning_rate(float value) {
+  set_has_learning_rate();
+  learning_rate_ = value;
+}
+
+// optional float weight_decay = 11;
+inline bool ParamProto::has_weight_decay() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
+}
+inline void ParamProto::set_has_weight_decay() {
+  _has_bits_[0] |= 0x00000400u;
+}
+inline void ParamProto::clear_has_weight_decay() {
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline void ParamProto::clear_weight_decay() {
+  weight_decay_ = 0;
+  clear_has_weight_decay();
+}
+inline float ParamProto::weight_decay() const {
+  return weight_decay_;
+}
+inline void ParamProto::set_weight_decay(float value) {
+  set_has_weight_decay();
+  weight_decay_ = value;
+}
+
+// repeated float content = 13 [packed = true];
 inline int ParamProto::content_size() const {
   return content_.size();
 }
@@ -2791,7 +3040,7 @@ ParamProto::mutable_content() {
   return &content_;
 }
 
-// repeated float history = 10 [packed = true];
+// repeated float history = 14 [packed = true];
 inline int ParamProto::history_size() const {
   return history_.size();
 }
@@ -2960,7 +3209,29 @@ inline void EdgeProto::set_allocated_type(::std::string* type) {
   }
 }
 
-// repeated .lapis.ParamProto param = 3;
+// optional int32 num_output = 3;
+inline bool EdgeProto::has_num_output() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void EdgeProto::set_has_num_output() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void EdgeProto::clear_has_num_output() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void EdgeProto::clear_num_output() {
+  num_output_ = 0;
+  clear_has_num_output();
+}
+inline ::google::protobuf::int32 EdgeProto::num_output() const {
+  return num_output_;
+}
+inline void EdgeProto::set_num_output(::google::protobuf::int32 value) {
+  set_has_num_output();
+  num_output_ = value;
+}
+
+// repeated .lapis.ParamProto param = 4;
 inline int EdgeProto::param_size() const {
   return param_.size();
 }
@@ -2985,15 +3256,15 @@ EdgeProto::mutable_param() {
   return &param_;
 }
 
-// optional bool directed = 4 [default = true];
+// optional bool directed = 5 [default = true];
 inline bool EdgeProto::has_directed() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void EdgeProto::set_has_directed() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void EdgeProto::clear_has_directed() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void EdgeProto::clear_directed() {
   directed_ = true;
@@ -3005,6 +3276,301 @@ inline bool EdgeProto::directed() const {
 inline void EdgeProto::set_directed(bool value) {
   set_has_directed();
   directed_ = value;
+}
+
+// optional string top = 6;
+inline bool EdgeProto::has_top() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void EdgeProto::set_has_top() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void EdgeProto::clear_has_top() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void EdgeProto::clear_top() {
+  if (top_ != &::google::protobuf::internal::kEmptyString) {
+    top_->clear();
+  }
+  clear_has_top();
+}
+inline const ::std::string& EdgeProto::top() const {
+  return *top_;
+}
+inline void EdgeProto::set_top(const ::std::string& value) {
+  set_has_top();
+  if (top_ == &::google::protobuf::internal::kEmptyString) {
+    top_ = new ::std::string;
+  }
+  top_->assign(value);
+}
+inline void EdgeProto::set_top(const char* value) {
+  set_has_top();
+  if (top_ == &::google::protobuf::internal::kEmptyString) {
+    top_ = new ::std::string;
+  }
+  top_->assign(value);
+}
+inline void EdgeProto::set_top(const char* value, size_t size) {
+  set_has_top();
+  if (top_ == &::google::protobuf::internal::kEmptyString) {
+    top_ = new ::std::string;
+  }
+  top_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* EdgeProto::mutable_top() {
+  set_has_top();
+  if (top_ == &::google::protobuf::internal::kEmptyString) {
+    top_ = new ::std::string;
+  }
+  return top_;
+}
+inline ::std::string* EdgeProto::release_top() {
+  clear_has_top();
+  if (top_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = top_;
+    top_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void EdgeProto::set_allocated_top(::std::string* top) {
+  if (top_ != &::google::protobuf::internal::kEmptyString) {
+    delete top_;
+  }
+  if (top) {
+    set_has_top();
+    top_ = top;
+  } else {
+    clear_has_top();
+    top_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional string bottom = 7;
+inline bool EdgeProto::has_bottom() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void EdgeProto::set_has_bottom() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void EdgeProto::clear_has_bottom() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void EdgeProto::clear_bottom() {
+  if (bottom_ != &::google::protobuf::internal::kEmptyString) {
+    bottom_->clear();
+  }
+  clear_has_bottom();
+}
+inline const ::std::string& EdgeProto::bottom() const {
+  return *bottom_;
+}
+inline void EdgeProto::set_bottom(const ::std::string& value) {
+  set_has_bottom();
+  if (bottom_ == &::google::protobuf::internal::kEmptyString) {
+    bottom_ = new ::std::string;
+  }
+  bottom_->assign(value);
+}
+inline void EdgeProto::set_bottom(const char* value) {
+  set_has_bottom();
+  if (bottom_ == &::google::protobuf::internal::kEmptyString) {
+    bottom_ = new ::std::string;
+  }
+  bottom_->assign(value);
+}
+inline void EdgeProto::set_bottom(const char* value, size_t size) {
+  set_has_bottom();
+  if (bottom_ == &::google::protobuf::internal::kEmptyString) {
+    bottom_ = new ::std::string;
+  }
+  bottom_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* EdgeProto::mutable_bottom() {
+  set_has_bottom();
+  if (bottom_ == &::google::protobuf::internal::kEmptyString) {
+    bottom_ = new ::std::string;
+  }
+  return bottom_;
+}
+inline ::std::string* EdgeProto::release_bottom() {
+  clear_has_bottom();
+  if (bottom_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = bottom_;
+    bottom_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void EdgeProto::set_allocated_bottom(::std::string* bottom) {
+  if (bottom_ != &::google::protobuf::internal::kEmptyString) {
+    delete bottom_;
+  }
+  if (bottom) {
+    set_has_bottom();
+    bottom_ = bottom;
+  } else {
+    clear_has_bottom();
+    bottom_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional int32 kernel_size = 8;
+inline bool EdgeProto::has_kernel_size() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void EdgeProto::set_has_kernel_size() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void EdgeProto::clear_has_kernel_size() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void EdgeProto::clear_kernel_size() {
+  kernel_size_ = 0;
+  clear_has_kernel_size();
+}
+inline ::google::protobuf::int32 EdgeProto::kernel_size() const {
+  return kernel_size_;
+}
+inline void EdgeProto::set_kernel_size(::google::protobuf::int32 value) {
+  set_has_kernel_size();
+  kernel_size_ = value;
+}
+
+// optional int32 stride = 9;
+inline bool EdgeProto::has_stride() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void EdgeProto::set_has_stride() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void EdgeProto::clear_has_stride() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void EdgeProto::clear_stride() {
+  stride_ = 0;
+  clear_has_stride();
+}
+inline ::google::protobuf::int32 EdgeProto::stride() const {
+  return stride_;
+}
+inline void EdgeProto::set_stride(::google::protobuf::int32 value) {
+  set_has_stride();
+  stride_ = value;
+}
+
+// optional int32 pad = 10;
+inline bool EdgeProto::has_pad() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void EdgeProto::set_has_pad() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void EdgeProto::clear_has_pad() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void EdgeProto::clear_pad() {
+  pad_ = 0;
+  clear_has_pad();
+}
+inline ::google::protobuf::int32 EdgeProto::pad() const {
+  return pad_;
+}
+inline void EdgeProto::set_pad(::google::protobuf::int32 value) {
+  set_has_pad();
+  pad_ = value;
+}
+
+// optional float alpha = 11;
+inline bool EdgeProto::has_alpha() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
+}
+inline void EdgeProto::set_has_alpha() {
+  _has_bits_[0] |= 0x00000400u;
+}
+inline void EdgeProto::clear_has_alpha() {
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline void EdgeProto::clear_alpha() {
+  alpha_ = 0;
+  clear_has_alpha();
+}
+inline float EdgeProto::alpha() const {
+  return alpha_;
+}
+inline void EdgeProto::set_alpha(float value) {
+  set_has_alpha();
+  alpha_ = value;
+}
+
+// optional float beta = 12;
+inline bool EdgeProto::has_beta() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void EdgeProto::set_has_beta() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void EdgeProto::clear_has_beta() {
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline void EdgeProto::clear_beta() {
+  beta_ = 0;
+  clear_has_beta();
+}
+inline float EdgeProto::beta() const {
+  return beta_;
+}
+inline void EdgeProto::set_beta(float value) {
+  set_has_beta();
+  beta_ = value;
+}
+
+// optional int32 local_size = 13;
+inline bool EdgeProto::has_local_size() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void EdgeProto::set_has_local_size() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void EdgeProto::clear_has_local_size() {
+  _has_bits_[0] &= ~0x00001000u;
+}
+inline void EdgeProto::clear_local_size() {
+  local_size_ = 0;
+  clear_has_local_size();
+}
+inline ::google::protobuf::int32 EdgeProto::local_size() const {
+  return local_size_;
+}
+inline void EdgeProto::set_local_size(::google::protobuf::int32 value) {
+  set_has_local_size();
+  local_size_ = value;
+}
+
+// optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+inline bool EdgeProto::has_pooling_method() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void EdgeProto::set_has_pooling_method() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void EdgeProto::clear_has_pooling_method() {
+  _has_bits_[0] &= ~0x00002000u;
+}
+inline void EdgeProto::clear_pooling_method() {
+  pooling_method_ = 1;
+  clear_has_pooling_method();
+}
+inline ::lapis::EdgeProto_PoolingMethod EdgeProto::pooling_method() const {
+  return static_cast< ::lapis::EdgeProto_PoolingMethod >(pooling_method_);
+}
+inline void EdgeProto::set_pooling_method(::lapis::EdgeProto_PoolingMethod value) {
+  assert(::lapis::EdgeProto_PoolingMethod_IsValid(value));
+  set_has_pooling_method();
+  pooling_method_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -4464,6 +5030,10 @@ inline const EnumDescriptor* GetEnumDescriptor< ::lapis::DataSourceProto_DataTyp
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::ParamProto_InitMethod>() {
   return ::lapis::ParamProto_InitMethod_descriptor();
+}
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::EdgeProto_PoolingMethod>() {
+  return ::lapis::EdgeProto_PoolingMethod_descriptor();
 }
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SGDProto_ChangeProto>() {

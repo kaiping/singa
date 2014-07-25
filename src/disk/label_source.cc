@@ -17,8 +17,8 @@ void LabelSource::ToProto(DataSourceProto *ds_proto) {
 }
 
 void LabelSource::GetData(Blob *blob) {
-  float *addr = blob->mutable_content();
-  for (int i = 0; i < blob->size(); i++) {
+  float *addr = blob->mutable_data();
+  for (int i = 0; i < blob->num(); i++) {
     if (offset_ == size_)
       offset_ = 0;
     addr[i] = labels_[offset_++];

@@ -13,8 +13,8 @@
 namespace lapis {
 /**
  * Layer for fetching raw input features
- * It setups DataSource firstly and the fetch the data batch in ::Forward()
- * Since no parameters for this layer, ::ComputeParamUpdates() is empty
+ * It setups DataSource firstlyn ::Setup() and then fetch the data batch in
+ * ::Forward().
  */
 class DataLayer : public Layer {
  public:
@@ -22,13 +22,18 @@ class DataLayer : public Layer {
    * Identifier of this layer, the value is "Data".
    */
   static const std::string kDataLayer;
-  virtual void Init(const LayerProto &layer_proto,
-                    const std::map<std::string, Edge *> &edge_map);
   /**
-   * setup the data source/provider.
+   * Set data source identifier, i.e. name.
+   */
+  virtual void Init(const LayerProto &proto);
+  /**
+   * Setup the data source/provider.
    * ::Forward() function will fetch one batch of data from this data source
-   * @param ds pointer to a DataSource object, which can provide raw feature or
-   * labels.
+   * @param batchsize num of instance in one batch
+   * @param alg
+   * @param sources, a vector of DataSource objects (e.g., rgb feature or
+   * label) from which this layer will select one based on data source
+   * identifier, i.e., name.
    */
   virtual void Setup(int batchsize, TrainAlgorithm alg,
                      const std::vector<DataSource *> &sources);
@@ -36,28 +41,27 @@ class DataLayer : public Layer {
    * fetch data from data source
    */
   virtual void Forward();
+  /*
+   * Just call Backward function of out going edges.
+   */
   virtual void Backward();
-  virtual void ComputeParamUpdates(const Trainer *trainer);
+  /**
+   * Write the data source name
+   */
   virtual void ToProto(LayerProto *layer_proto);
-  virtual bool HasInput() {
-    return true;
-  }
+  virtual bool HasInput() { return true; }
   /**
    * Return the data provided by DataSource
    * @param edge not used currently.
    */
-  virtual Blob *Feature(Edge *edge) {
-    return &data_;
-  }
+  virtual Blob *feature(Edge *edge) { return &data_; }
   /**
    * Because DataLayer is usually connected from loss edges, hence this
    * function returns the data provided by DataSource to the loss edge to
    * compute the gradients.
    * @param edge not used currently.
    */
-  virtual Blob *Gradient(Edge *edge) {
-    return &data_;
-  }
+  virtual Blob *gradient(Edge *edge) { return &data_; }
 
   /** identifier for this layer.
    * LayerFactory will create an instance of this based on this identifier
@@ -71,4 +75,3 @@ class DataLayer : public Layer {
 
 }  // namespace lapis
 #endif  // INCLUDE_MODEL_DATA_LAYER_H_
-

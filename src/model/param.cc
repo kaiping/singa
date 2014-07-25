@@ -9,6 +9,9 @@ using google::protobuf::RepeatedField;
 namespace lapis {
 void Param::Init(const ParamProto &proto) {
   const RepeatedField<int> shape = proto.shape();
+  momentum_=proto.momentum();
+  learning_rate_=proto.learning_rate();
+  weight_decay_=proto.weight_decay();
   // currently only support vector and  matrix parameter
   if (shape.size() == 2) {
     int h = shape.Get(0);
@@ -23,42 +26,42 @@ void Param::Init(const ParamProto &proto) {
     history_grad_.Reshape(l);
   }
 
-  int length=content_.Length();
-  float *val=content_.mutable_content();
+  int len=content_.length();
+  float *val=content_.mutable_data();
   switch (proto.init_method()) {
     case ParamProto::kConstant: {
-      for(int i=0;i<length;i++)
+      for(int i=0;i<len;i++)
         val[i]=proto.value();
       break;
     }
     case ParamProto::kUniform: {
-      FillUniformData(proto.low(), proto.high(), proto.value(), val);
+      FillUniformData(len, proto.low(), proto.high(), proto.value(), val);
       break;
     }
     case ParamProto::kUniformSqrtFanIn:{
       CHECK_EQ(shape.size(),2);
-      FillUniformData(proto.low(), proto.high(),
+      FillUniformData(len, proto.low(), proto.high(),
                       proto.value()/sqrt(shape.Get(0)/3.0f), val);
       break;
     }
     case ParamProto::kUniformSqrtFanInOut: {
       CHECK_EQ(shape.size(),2);
-      FillUniformData(proto.low(), proto.high(),
+      FillUniformData(len, proto.low(), proto.high(),
                       proto.value()/sqrt(shape.Get(0)+shape.Get(1)), val);
     }
     case ParamProto::kGaussain: {
-      FillGaussainData(proto.mean(), proto.std(), proto.value(), val);
+      FillGaussainData(len, proto.mean(), proto.std(), proto.value(), val);
       break;
     }
     case ParamProto::kGaussainSqrtFanIn: {
       CHECK_EQ(shape.size(),2);
-      FillGaussainData(proto.mean(), proto.std(),
+      FillGaussainData(len, proto.mean(), proto.std(),
                        proto.value()/sqrt(shape.Get(0)), val);
       break;
     }
     case ParamProto::kPretrained: {
-      content_.set_content(proto.content().data());
-      history_grad_.set_content(proto.history().data());
+      content_.set_data(proto.content().data());
+      history_grad_.set_data(proto.history().data());
       break;
     }
     default: {
@@ -70,19 +73,25 @@ void Param::Init(const ParamProto &proto) {
 
 void Param::ToProto(ParamProto *proto) {
   // TODO(wangwei) store the proto as a member for easy ToProto.
+  proto->set_name(name_);
+  proto->set_momentum(momentum_);
+  proto->set_learning_rate(learning_rate_);
+  proto->set_weight_decay(weight_decay_);
 }
 
-void Param::FillGaussainData(float mean, float std, float factor, float *val) {
+void Param::FillGaussainData(int length, float mean, float std, float factor, float *val) {
   std::normal_distribution<float> normal(mean,std);
-  for (int i=0;i<Length();i++)
-    val[i]=normal(Lapis::Get().rng())*factor;
+  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
+  for (int i=0;i<length;i++)
+    val[i]=normal(*generator)*factor;
 }
 
-void Param::FillUniformData(float low, float high, float factor, float *val) {
+void Param::FillUniformData(int length, float low, float high, float factor, float *val) {
   LOG(INFO)<<low<<" "<<high;
+  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
   std::uniform_real_distribution<float> uniform(low,high);
-  for (int i=0;i<Length();i++)
-    val[i]=uniform(Lapis::Get().rng())*factor;
+  for (int i=0;i<length;i++)
+    val[i]=uniform(*generator)*factor;
 }
 
 

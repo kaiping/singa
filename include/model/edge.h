@@ -24,49 +24,74 @@ class Trainer;
  * forward neural network, or undirected, e.g., in RBM and DBM. In DBN,
  * there are both directed edges and undirected edges.
  * Normally, the edge contains parameters. It operates on output features
- * (or gradient of activations) of one layer and assign the results to
+ * (or gradient of activations) of one layer and assigns the results to
  * activations (or gradient of output features) of another layer.
- * Currently, 2 types of edges are supported, i.e., inner_product_edge and
- * eucldiean_loss_edge. TODO(wangwei)  implement convolution_edge etc.
  */
 class Edge {
  public:
   /**
-   * Set edge properties, allocate memory for parameters and initialize them
+   * Set edge properties,
    * @param edge_proto user defined edge properties, e.g., edge name,
    * parameters, type
    */
-  virtual void Init(const EdgeProto &edge_proto) = 0;
+  virtual void Init(const EdgeProto &proto,
+                 const std::map<std::string, Layer *> &layer_map);
+  /**
+   * Setup properties of this edge based on bottom layer, e.g, parameter shape.
+   * Allocate memory for parameters and initialize them according to user
+   * specified init method. Some parameters can not be set until the bottom
+   * layer is setup ready. May also allocate memory to store intermediate
+   * results.
+   * @param set_param set parameters; true for network init; false otherwise.
+   */
+  virtual void Setup(bool set_param);
   /**
    * Marshal edge properties into google protobuf object
    */
-  virtual void ToProto(EdgeProto *edge_proto) = 0;
+  virtual void ToProto(EdgeProto *proto);
   /**
    * Forward propagate feature, read from src and write to dest
    * @param src source feature
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add it
    */
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite) = 0;
+  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
   /**
-   * Backward propagate gradient, read gradient from src and write to dest
-   * @param src_grad read gradient/feature from src
-   * @param dest_fea feature from the src layer
-   * @param dest_grad write the comptued gradient to dest_grad, if no need to
-   * compute that gradient, then set dest_grad=nullptr
-   * @param overwrite if true overwrite dest_grad otherwise add it
+   * Backward propagate gradient, read gradient/feature blob from src and
+   * feature blob from src, then compute the gradient for parameters of this
+   * edge and dest layer.
+   * @param src_fea feature (or activation) blob from the source layer that
+   * connected to this edge
+   * @param src_grad gradient blob from the source layer connected to this edge
+   * @param dest_fea feature blob from the dest layer connected to this layer
+   * @param dest_grad gradient blob from the dest layer connected to this edge,
+   * If no need to compute that gradient, then set dest_grad=nullptr, e.g., if
+   * the bottom layer is DataLayer, the no need to compute for the dest_grad.
+   * @param overwrite if true overwrite dest_grad otherwise add to it
    */
-  virtual void Backward(const Blob *src_grad, const Blob *dest_fea,
-                        Blob *dest_grad, bool overwrite) = 0;
-
+  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
+                        const Blob *dest_fea, Blob *dest_grad,
+                        bool overwrite);
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
    * gradients of parameters associated with this edge, which will be
    * used to update the parameters. If there is no parameters, then do nothing.
+   * Currently implemented as :
+   * history=momentum*history-learning_rate*(gradient+weight_decay*param_data)
+   * where history is the history update, param_data is the content of the
+   * parameter, momentum, learning_rate, weight_decay are product of local
+   * and global (i.e., from sgd trainer);
    * @param trainer contains hyper-parameters. May cast it into specific
    * trainer, e.g., SGDTrainer, to get momentum and weight_decay, etc.
    */
   virtual void ComputeParamUpdates(const Trainer *trainer);
+  /**
+   * Setup (Reshape) the blob from top layer connected to this edge. Because
+   * the top blob is generated (although owned by the top layer) by this edge,
+   * this edge will decide the shape of the blob and is responsible to setup it
+   * @param blob the top blob to set setup.
+   */
+  virtual void SetupTopBlob(Blob* blob);
   /**
    * Return parameters associated this edge
    */
@@ -83,55 +108,53 @@ class Edge {
   /**
    * Set top end of this edge
    */
-  void SetTop(Layer *top) {
+  void set_top(Layer *top) {
     top_ = top;
   }
   /**
    * Set bottom end of this edge
    */
-  void SetBottom(Layer *bottom) {
+  void set_bottom(Layer *bottom) {
     bottom_ = bottom;
   }
-  const Layer *Top() {
+  Layer *top() {
     return top_;
   }
-  const Layer *Bottom() {
+  Layer *bottom() {
     return bottom_;
   }
-  const std::string &Name() {
+  const std::string &name() {
     return name_;
   }
 
  protected:
+  std::string name_;
   /**
    * Sides/endpoints of the edge.
    * Normally for feed forward neural network, the edge direction is from
-   * bottom to top. The 'top' and 'bottom' just describe the positions of the
-   * layers in the Net, hence it is possible that the direction of one edge is
-   * from top to bottom, e.g., the EuclideanLossEdge is usually from the
-   * highest (top) layer to an input layer (bottom), as in AutoEncoder.
+   * bottom to top. But for undirected edge, then top and bottom contains no
+   * position information.
    */
   Layer *top_, * bottom_;
   std::vector<Param *> params_;
-  std::string name_;
 };
 
 
 /****************************************************************************/
 /**
- * Register Edge with identifier ID
- * @param ID identifier of the edge e.g., InnerProduct, i.e., the type field
+ * Register Edge with type TYPE
+ * @param TYPE identifier of the edge e.g., InnerProduct, i.e., the type field
  * in EdgeProto
  * @param EDGE the child edge class
  */
-#define REGISTER_EDGE(ID, EDGE) EdgeFactory::Instance()->\
-  RegisterCreateFunction(ID, [](void)-> Edge* {return new EDGE();});
+#define REGISTER_EDGE(TYPE, EDGE) EdgeFactory::Instance()->\
+  RegisterCreateFunction(TYPE, [](void)-> Edge* {return new EDGE();});
 
 /**
- * Factory for creating edge based on user provided edge type/identifier.
+ * Factory for creating edge based on user provided edge type.
  * Users are required to register user-defined edges before creating instances
  * of them during runtime. For example, if you define a new Edge FooEdge with
- * identifier "Foo", then you can use it in your net by 1) configure your
+ * type "Foo", then you can use it in your net by 1) configure your
  * edge proto with the type field to be "Foo". 2) register it (e.g., at the
  * start of the program). Then your FooEdge will be created by calling
  * EdgeFactory::Instance()->Create("Foo");
@@ -143,19 +166,19 @@ class EdgeFactory {
    */
   static EdgeFactory *Instance();
   /**
-   * Register user defined edge, i.e., add the edge type/identifier and a
+   * Register user defined edge, i.e., add the edge type and a
    * function which creats an instance of the edge. This function is called by
    * the REGISTER_EDGE macro.
-   * @param id identifier of the edge, every edge has a type to identify it
+   * @param type type of the edge, every edge has a type to identify it
    * @param create_function a function that creates a edge instance
    */
-  void RegisterCreateFunction(const std::string id,
+  void RegisterCreateFunction(const std::string type,
                               std::function<Edge*(void)> create_function);
   /**
    * create a layer  instance by providing its type
-   * @param type the identifier of the layer to be created
+   * @param type the type of the layer to be created
    */
-  Edge *Create(const std::string id);
+  Edge *Create(const std::string type);
 
  private:
   //! To avoid creating multiple instances of this factory in the program

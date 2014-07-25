@@ -23,6 +23,9 @@ class SGDTrainer : public Trainer {
   virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished(const int step);
 
+  float learning_rate() const {return learning_rate_;}
+  float momentum() const {return momentum_;}
+  float weight_decay() const  {return weight_decay_;}
   void UpdateHyperParams(const int step);
   ~SGDTrainer();
  protected:

@@ -6,72 +6,67 @@
 #include "utils/lapis.h"
 
 namespace lapis {
-const std::string kLogisticLayer = "Logistic";
-void LogisticLayer::Init(const LayerProto &layer_proto,
-                         const std::map<std::string, Edge *> &edge_map) {
-  feature_dimension_ = layer_proto.num_output();
-}
+const std::string LogisticLayer::type = "Logistic";
 
+void LogisticLayer::Init(const LayerProto &proto) {
+  Layer::Init(proto);
+}
 
 void LogisticLayer::Setup(int batchsize, TrainAlgorithm alg,
                           const std::vector<DataSource *> &sources) {
   if (alg == TrainAlgorithm::kBackPropagation) {
-    activation_.Reshape(batchsize, feature_dimension_);
-    feature_.Reshape(batchsize, feature_dimension_);
-    activation_grad_.Reshape(batchsize, feature_dimension_);
-    feature_grad_.Reshape(batchsize, feature_dimension_);
+    Edge* edge=in_edges_[0];
+    edge->SetupTopBlob(&activation_);
+    edge->SetupTopBlob(&feature_);
+    edge->SetupTopBlob(&activation_grad_);
+    edge->SetupTopBlob(&feature_grad_);
+    feature_dimension_=activation_.record_length();
   } else {
     //! CD or PCD
+    /*
     pos_feature_.Reshape(batchsize, feature_dimension_);
     neg_feature_.Reshape(batchsize, feature_dimension_);
+    */
   }
 }
 
-void LogisticLayer::ToProto(LayerProto *layer_proto) {
-  layer_proto->set_name(name_);
-  layer_proto->set_num_output(feature_dimension_);
-  layer_proto->set_type(kLogisticLayer);
+void LogisticLayer::ToProto(LayerProto *proto) {
+  Layer::ToProto(proto);
+  proto->set_num_output(feature_dimension_);
+  proto->set_type(type);
 }
 
 void LogisticLayer::Forward() {
-  MapArrayType act(activation_.mutable_content(), activation_.height(),
-                   activation_.width());
   CHECK_GE(in_edges_.size(),
-           1) << "logistic layer must have >=1 incoming edges\n";
+           1) << "logistic layer must have >=1 incoming edges";
   auto it = in_edges_.begin();
   Edge *edge = (*it);
-  edge->Forward(edge->OtherSide(this)->Feature(edge), &activation_, true);
+  edge->Forward(edge->OtherSide(this)->feature(edge), &activation_, true);
   for (it++ ; it != in_edges_.end(); it++) {
     edge = *it;
-    edge->Forward(edge->OtherSide(this)->Feature(edge), &activation_, false);
+    edge->Forward(edge->OtherSide(this)->feature(edge), &activation_, false);
   }
-  MapArrayType fea(feature_.mutable_content(), feature_.height(),
-                   feature_.width());
-  fea = (-act).exp();
-  fea = 1. / (1. + fea);
+  AVec activation(activation_.mutable_data(), feature_dimension_);
+  AVec feature(feature_.mutable_data(), feature_dimension_);
+  feature = 1./(1.+(-activation).exp());
 }
 
 void LogisticLayer::Backward() {
-  CHECK_GE(out_edges_.size(), 1) << "logistic layer must have >=1 out edges\n";
+  CHECK_GE(out_edges_.size(), 1) << "logistic layer must have >=1 out edges";
   auto it = out_edges_.begin();
   Edge *edge = *it;
-  edge->Backward(edge->OtherSide(this)->Gradient(edge), &feature_,
+  Layer *layer=edge->OtherSide(this);
+  edge->Backward(layer->feature(edge), layer->gradient(edge), &feature_,
                  &feature_grad_, true);
   for (it++; it != out_edges_.end(); it++) {
     edge = *it;
-    edge->Backward(edge->OtherSide(this)->Gradient(edge), &feature_,
+    layer=edge->OtherSide(this);
+    edge->Backward(layer->feature(edge), layer->gradient(edge), &feature_,
                    &feature_grad_, false);
   }
-  MapArrayType act_grad(activation_grad_.mutable_content(),
-                        activation_grad_.height(),
-                        activation_grad_.width());
-  MapArrayType fea_grad(feature_grad_.mutable_content(),
-                        feature_grad_.height(),
-                        feature_grad_.width());
-  MapArrayType fea(feature_.mutable_content(), feature_.height(),
-                   feature_.width());
-  act_grad = fea_grad * fea * (1 - fea);
+  AVec feature_grad(feature_grad_.mutable_data(),feature_dimension_);
+  AVec feature(feature_.mutable_data(), feature_dimension_);
+  AVec activation_grad(activation_grad_.mutable_data(),feature_dimension_);
+  activation_grad = feature_grad * feature * (1 - feature);
 }
-
-
 }  // namespace lapis

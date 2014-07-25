@@ -37,6 +37,7 @@ const ::google::protobuf::EnumDescriptor* ParamProto_InitMethod_descriptor_ = NU
 const ::google::protobuf::Descriptor* EdgeProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   EdgeProto_reflection_ = NULL;
+const ::google::protobuf::EnumDescriptor* EdgeProto_PoolingMethod_descriptor_ = NULL;
 const ::google::protobuf::Descriptor* LayerProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   LayerProto_reflection_ = NULL;
@@ -130,7 +131,7 @@ void protobuf_AssignDesc_lapis_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(RGBDatum));
   ParamProto_descriptor_ = file->message_type(3);
-  static const int ParamProto_offsets_[10] = {
+  static const int ParamProto_offsets_[13] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, shape_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, init_method_),
@@ -139,6 +140,9 @@ void protobuf_AssignDesc_lapis_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, high_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, mean_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, std_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, momentum_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, learning_rate_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, weight_decay_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, content_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ParamProto, history_),
   };
@@ -155,11 +159,21 @@ void protobuf_AssignDesc_lapis_2eproto() {
       sizeof(ParamProto));
   ParamProto_InitMethod_descriptor_ = ParamProto_descriptor_->enum_type(0);
   EdgeProto_descriptor_ = file->message_type(4);
-  static const int EdgeProto_offsets_[4] = {
+  static const int EdgeProto_offsets_[14] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, type_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, num_output_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, param_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, directed_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, top_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, bottom_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, kernel_size_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, stride_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, pad_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, alpha_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, beta_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, local_size_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, pooling_method_),
   };
   EdgeProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -172,6 +186,7 @@ void protobuf_AssignDesc_lapis_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(EdgeProto));
+  EdgeProto_PoolingMethod_descriptor_ = EdgeProto_descriptor_->enum_type(0);
   LayerProto_descriptor_ = file->message_type(5);
   static const int LayerProto_offsets_[7] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, name_),
@@ -386,58 +401,65 @@ void protobuf_AddDesc_lapis_2eproto() {
     "\0010\022\021\n\006offset\030\t \001(\003:\0010\"\"\n\010DataType\022\013\n\007FEA"
     "TURE\020\000\022\t\n\005LABEL\020\001\"U\n\010RGBDatum\022\023\n\010channel"
     "s\030\001 \001(\005:\0013\022\021\n\006height\030\002 \001(\005:\0010\022\020\n\005width\030\003"
-    " \001(\005:\0010\022\017\n\007content\030\004 \002(\t\"\373\002\n\nParamProto\022"
-    "\014\n\004name\030\001 \001(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013init_met"
+    " \001(\005:\0010\022\017\n\007content\030\004 \002(\t\"\272\003\n\nParamProto\022"
+    "\014\n\004name\030\001 \002(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013init_met"
     "hod\030\003 \001(\0162\034.lapis.ParamProto.InitMethod:"
     "\tkConstant\022\020\n\005value\030\004 \001(\002:\0010\022\017\n\003low\030\005 \001("
     "\002:\002-1\022\017\n\004high\030\006 \001(\002:\0011\022\017\n\004mean\030\007 \001(\002:\0010\022"
-    "\016\n\003std\030\010 \001(\002:\0011\022\023\n\007content\030\t \003(\002B\002\020\001\022\023\n\007"
-    "history\030\n \003(\002B\002\020\001\"\222\001\n\nInitMethod\022\r\n\tkCon"
-    "stant\020\000\022\r\n\tkGaussain\020\001\022\014\n\010kUniform\020\002\022\017\n\013"
-    "kPretrained\020\003\022\026\n\022kGaussainSqrtFanIn\020\004\022\025\n"
-    "\021kUniformSqrtFanIn\020\005\022\030\n\024kUniformSqrtFanI"
-    "nOut\020\006\"a\n\tEdgeProto\022\014\n\004name\030\001 \002(\t\022\014\n\004typ"
-    "e\030\002 \002(\t\022 \n\005param\030\003 \003(\0132\021.lapis.ParamProt"
-    "o\022\026\n\010directed\030\004 \001(\010:\004true\"\226\001\n\nLayerProto"
-    "\022\014\n\004name\030\001 \002(\t\022\022\n\nnum_output\030\002 \002(\005\022\014\n\004ty"
-    "pe\030\003 \002(\t\022 \n\005param\030\004 \003(\0132\021.lapis.ParamPro"
-    "to\022\020\n\010out_edge\030\005 \003(\t\022\017\n\007in_edge\030\006 \003(\t\022\023\n"
-    "\013data_source\030\007 \001(\t\"L\n\010NetProto\022 \n\005layer\030"
-    "\003 \003(\0132\021.lapis.LayerProto\022\036\n\004edge\030\004 \003(\0132\020"
-    ".lapis.EdgeProto\"\212\005\n\010SGDProto\022\032\n\022base_le"
-    "arning_rate\030\001 \002(\002\022\030\n\rbase_momentum\030\002 \001(\002"
-    ":\0010\022\034\n\021base_weight_decay\030\003 \001(\002:\0010\022\026\n\016fin"
-    "al_momentum\030\004 \001(\002\022\033\n\023final_learning_rate"
-    "\030\005 \001(\002\022\032\n\022final_weight_decay\030\006 \001(\002\022\"\n\032le"
-    "arning_rate_change_steps\030\007 \001(\005\022\035\n\025moment"
-    "um_change_steps\030\010 \001(\005\022!\n\031weight_decay_ch"
-    "ange_steps\030\t \001(\005\022E\n\024learning_rate_change"
-    "\030\n \001(\0162\033.lapis.SGDProto.ChangeProto:\nkIn"
-    "verse_t\022@\n\023weight_decay_change\030\013 \001(\0162\033.l"
-    "apis.SGDProto.ChangeProto:\006kFixed\022<\n\017mom"
-    "entum_change\030\014 \001(\0162\033.lapis.SGDProto.Chan"
-    "geProto:\006kFixed\022\023\n\013total_steps\030\r \001(\005\022\027\n\017"
-    "train_batchsize\030\016 \001(\005\022\034\n\024validation_batc"
-    "hsize\030\017 \001(\005\022\026\n\016test_batchsize\030\020 \001(\005\"H\n\013C"
-    "hangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020"
-    "\n\014kExponential\020\002\022\013\n\007kLinear\020\003\"W\n\020Perform"
-    "anceProto\022\021\n\tprecision\030\001 \001(\002\022\016\n\006recall\030\002"
-    " \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precision50\030\004 \001(\002\"\314"
-    "\003\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017.lapis.SGD"
-    "Proto\022!\n\026checkpoint_after_steps\030\002 \001(\005:\0010"
-    "\022!\n\026checkpoint_every_steps\030\003 \001(\005:\0010\022)\n\021c"
-    "heckpoint_prefix\030\004 \001(\t:\016tmp/checkpoint\022\032"
-    "\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n\023display_af"
-    "ter_steps\030\006 \001(\005:\0010\022\036\n\023display_every_step"
-    "s\030\007 \001(\005:\0010\022#\n\016display_prefix\030\010 \001(\t:\013tmp/"
-    "display\022*\n\ntrain_data\030\t \003(\0132\026.lapis.Data"
-    "SourceProto\022/\n\017validation_data\030\n \003(\0132\026.l"
-    "apis.DataSourceProto\022)\n\ttest_data\030\013 \003(\0132"
-    "\026.lapis.DataSourceProto\022$\n\013perf_prefix\030\016"
-    " \001(\t:\017tmp/performance\"b\n\016ModelConfProto\022"
-    "\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetPr"
-    "oto\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerProt"
-    "o", 2521);
+    "\016\n\003std\030\010 \001(\002:\0011\022\020\n\010momentum\030\t \001(\002\022\025\n\rlea"
+    "rning_rate\030\n \001(\002\022\024\n\014weight_decay\030\013 \001(\002\022\023"
+    "\n\007content\030\r \003(\002B\002\020\001\022\023\n\007history\030\016 \003(\002B\002\020\001"
+    "\"\222\001\n\nInitMethod\022\r\n\tkConstant\020\000\022\r\n\tkGauss"
+    "ain\020\001\022\014\n\010kUniform\020\002\022\017\n\013kPretrained\020\003\022\026\n\022"
+    "kGaussainSqrtFanIn\020\004\022\025\n\021kUniformSqrtFanI"
+    "n\020\005\022\030\n\024kUniformSqrtFanInOut\020\006\"\340\002\n\tEdgePr"
+    "oto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002(\t\022\022\n\nnum_o"
+    "utput\030\003 \001(\005\022 \n\005param\030\004 \003(\0132\021.lapis.Param"
+    "Proto\022\026\n\010directed\030\005 \001(\010:\004true\022\013\n\003top\030\006 \001"
+    "(\t\022\016\n\006bottom\030\007 \001(\t\022\023\n\013kernel_size\030\010 \001(\005\022"
+    "\016\n\006stride\030\t \001(\005\022\013\n\003pad\030\n \001(\005\022\r\n\005alpha\030\013 "
+    "\001(\002\022\014\n\004beta\030\014 \001(\002\022\022\n\nlocal_size\030\r \001(\005\0226\n"
+    "\016pooling_method\030\016 \001(\0162\036.lapis.EdgeProto."
+    "PoolingMethod\"1\n\rPoolingMethod\022\017\n\013kMaxPo"
+    "oling\020\001\022\017\n\013kAvgPooling\020\002\"\226\001\n\nLayerProto\022"
+    "\014\n\004name\030\001 \002(\t\022\022\n\nnum_output\030\002 \002(\005\022\014\n\004typ"
+    "e\030\003 \002(\t\022 \n\005param\030\004 \003(\0132\021.lapis.ParamProt"
+    "o\022\020\n\010out_edge\030\005 \003(\t\022\017\n\007in_edge\030\006 \003(\t\022\023\n\013"
+    "data_source\030\007 \001(\t\"L\n\010NetProto\022 \n\005layer\030\003"
+    " \003(\0132\021.lapis.LayerProto\022\036\n\004edge\030\004 \003(\0132\020."
+    "lapis.EdgeProto\"\212\005\n\010SGDProto\022\032\n\022base_lea"
+    "rning_rate\030\001 \002(\002\022\030\n\rbase_momentum\030\002 \001(\002:"
+    "\0010\022\034\n\021base_weight_decay\030\003 \001(\002:\0010\022\026\n\016fina"
+    "l_momentum\030\004 \001(\002\022\033\n\023final_learning_rate\030"
+    "\005 \001(\002\022\032\n\022final_weight_decay\030\006 \001(\002\022\"\n\032lea"
+    "rning_rate_change_steps\030\007 \001(\005\022\035\n\025momentu"
+    "m_change_steps\030\010 \001(\005\022!\n\031weight_decay_cha"
+    "nge_steps\030\t \001(\005\022E\n\024learning_rate_change\030"
+    "\n \001(\0162\033.lapis.SGDProto.ChangeProto:\nkInv"
+    "erse_t\022@\n\023weight_decay_change\030\013 \001(\0162\033.la"
+    "pis.SGDProto.ChangeProto:\006kFixed\022<\n\017mome"
+    "ntum_change\030\014 \001(\0162\033.lapis.SGDProto.Chang"
+    "eProto:\006kFixed\022\023\n\013total_steps\030\r \001(\005\022\027\n\017t"
+    "rain_batchsize\030\016 \001(\005\022\034\n\024validation_batch"
+    "size\030\017 \001(\005\022\026\n\016test_batchsize\030\020 \001(\005\"H\n\013Ch"
+    "angeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n"
+    "\014kExponential\020\002\022\013\n\007kLinear\020\003\"W\n\020Performa"
+    "nceProto\022\021\n\tprecision\030\001 \001(\002\022\016\n\006recall\030\002 "
+    "\001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precision50\030\004 \001(\002\"\314\003"
+    "\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017.lapis.SGDP"
+    "roto\022!\n\026checkpoint_after_steps\030\002 \001(\005:\0010\022"
+    "!\n\026checkpoint_every_steps\030\003 \001(\005:\0010\022)\n\021ch"
+    "eckpoint_prefix\030\004 \001(\t:\016tmp/checkpoint\022\032\n"
+    "\017checkpoint_step\030\005 \001(\005:\0010\022\036\n\023display_aft"
+    "er_steps\030\006 \001(\005:\0010\022\036\n\023display_every_steps"
+    "\030\007 \001(\005:\0010\022#\n\016display_prefix\030\010 \001(\t:\013tmp/d"
+    "isplay\022*\n\ntrain_data\030\t \003(\0132\026.lapis.DataS"
+    "ourceProto\022/\n\017validation_data\030\n \003(\0132\026.la"
+    "pis.DataSourceProto\022)\n\ttest_data\030\013 \003(\0132\026"
+    ".lapis.DataSourceProto\022$\n\013perf_prefix\030\016 "
+    "\001(\t:\017tmp/performance\"b\n\016ModelConfProto\022\014"
+    "\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetPro"
+    "to\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerProto", 2840);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lapis.proto", &protobuf_RegisterTypes);
   SystemConfProto::default_instance_ = new SystemConfProto();
@@ -1928,6 +1950,9 @@ const int ParamProto::kLowFieldNumber;
 const int ParamProto::kHighFieldNumber;
 const int ParamProto::kMeanFieldNumber;
 const int ParamProto::kStdFieldNumber;
+const int ParamProto::kMomentumFieldNumber;
+const int ParamProto::kLearningRateFieldNumber;
+const int ParamProto::kWeightDecayFieldNumber;
 const int ParamProto::kContentFieldNumber;
 const int ParamProto::kHistoryFieldNumber;
 #endif  // !_MSC_VER
@@ -1955,6 +1980,9 @@ void ParamProto::SharedCtor() {
   high_ = 1;
   mean_ = 0;
   std_ = 1;
+  momentum_ = 0;
+  learning_rate_ = 0;
+  weight_decay_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2005,6 +2033,11 @@ void ParamProto::Clear() {
     mean_ = 0;
     std_ = 1;
   }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    momentum_ = 0;
+    learning_rate_ = 0;
+    weight_decay_ = 0;
+  }
   shape_.Clear();
   content_.Clear();
   history_.Clear();
@@ -2018,7 +2051,7 @@ bool ParamProto::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional string name = 1;
+      // required string name = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -2153,12 +2186,60 @@ bool ParamProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(74)) goto parse_content;
+        if (input->ExpectTag(77)) goto parse_momentum;
         break;
       }
 
-      // repeated float content = 9 [packed = true];
+      // optional float momentum = 9;
       case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_momentum:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &momentum_)));
+          set_has_momentum();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(85)) goto parse_learning_rate;
+        break;
+      }
+
+      // optional float learning_rate = 10;
+      case 10: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_learning_rate:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &learning_rate_)));
+          set_has_learning_rate();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(93)) goto parse_weight_decay;
+        break;
+      }
+
+      // optional float weight_decay = 11;
+      case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_weight_decay:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &weight_decay_)));
+          set_has_weight_decay();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(106)) goto parse_content;
+        break;
+      }
+
+      // repeated float content = 13 [packed = true];
+      case 13: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_content:
@@ -2170,16 +2251,16 @@ bool ParamProto::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 74, input, this->mutable_content())));
+                 1, 106, input, this->mutable_content())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(82)) goto parse_history;
+        if (input->ExpectTag(114)) goto parse_history;
         break;
       }
 
-      // repeated float history = 10 [packed = true];
-      case 10: {
+      // repeated float history = 14 [packed = true];
+      case 14: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_history:
@@ -2191,7 +2272,7 @@ bool ParamProto::MergePartialFromCodedStream(
                       WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 82, input, this->mutable_history())));
+                 1, 114, input, this->mutable_history())));
         } else {
           goto handle_uninterpreted;
         }
@@ -2217,7 +2298,7 @@ bool ParamProto::MergePartialFromCodedStream(
 
 void ParamProto::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // optional string name = 1;
+  // required string name = 1;
   if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->name().data(), this->name().length(),
@@ -2263,9 +2344,24 @@ void ParamProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(8, this->std(), output);
   }
 
-  // repeated float content = 9 [packed = true];
+  // optional float momentum = 9;
+  if (has_momentum()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(9, this->momentum(), output);
+  }
+
+  // optional float learning_rate = 10;
+  if (has_learning_rate()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(10, this->learning_rate(), output);
+  }
+
+  // optional float weight_decay = 11;
+  if (has_weight_decay()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->weight_decay(), output);
+  }
+
+  // repeated float content = 13 [packed = true];
   if (this->content_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(9, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(13, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_content_cached_byte_size_);
   }
   for (int i = 0; i < this->content_size(); i++) {
@@ -2273,9 +2369,9 @@ void ParamProto::SerializeWithCachedSizes(
       this->content(i), output);
   }
 
-  // repeated float history = 10 [packed = true];
+  // repeated float history = 14 [packed = true];
   if (this->history_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(10, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    ::google::protobuf::internal::WireFormatLite::WriteTag(14, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
     output->WriteVarint32(_history_cached_byte_size_);
   }
   for (int i = 0; i < this->history_size(); i++) {
@@ -2291,7 +2387,7 @@ void ParamProto::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* ParamProto::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // optional string name = 1;
+  // required string name = 1;
   if (has_name()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->name().data(), this->name().length(),
@@ -2338,10 +2434,25 @@ void ParamProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(8, this->std(), target);
   }
 
-  // repeated float content = 9 [packed = true];
+  // optional float momentum = 9;
+  if (has_momentum()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(9, this->momentum(), target);
+  }
+
+  // optional float learning_rate = 10;
+  if (has_learning_rate()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(10, this->learning_rate(), target);
+  }
+
+  // optional float weight_decay = 11;
+  if (has_weight_decay()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->weight_decay(), target);
+  }
+
+  // repeated float content = 13 [packed = true];
   if (this->content_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      9,
+      13,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -2352,10 +2463,10 @@ void ParamProto::SerializeWithCachedSizes(
       WriteFloatNoTagToArray(this->content(i), target);
   }
 
-  // repeated float history = 10 [packed = true];
+  // repeated float history = 14 [packed = true];
   if (this->history_size() > 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      10,
+      14,
       ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
       target);
     target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
@@ -2377,7 +2488,7 @@ int ParamProto::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional string name = 1;
+    // required string name = 1;
     if (has_name()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -2416,6 +2527,23 @@ int ParamProto::ByteSize() const {
     }
 
   }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    // optional float momentum = 9;
+    if (has_momentum()) {
+      total_size += 1 + 4;
+    }
+
+    // optional float learning_rate = 10;
+    if (has_learning_rate()) {
+      total_size += 1 + 4;
+    }
+
+    // optional float weight_decay = 11;
+    if (has_weight_decay()) {
+      total_size += 1 + 4;
+    }
+
+  }
   // repeated int32 shape = 2;
   {
     int data_size = 0;
@@ -2426,7 +2554,7 @@ int ParamProto::ByteSize() const {
     total_size += 1 * this->shape_size() + data_size;
   }
 
-  // repeated float content = 9 [packed = true];
+  // repeated float content = 13 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->content_size();
@@ -2440,7 +2568,7 @@ int ParamProto::ByteSize() const {
     total_size += data_size;
   }
 
-  // repeated float history = 10 [packed = true];
+  // repeated float history = 14 [packed = true];
   {
     int data_size = 0;
     data_size = 4 * this->history_size();
@@ -2505,6 +2633,17 @@ void ParamProto::MergeFrom(const ParamProto& from) {
       set_std(from.std());
     }
   }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_momentum()) {
+      set_momentum(from.momentum());
+    }
+    if (from.has_learning_rate()) {
+      set_learning_rate(from.learning_rate());
+    }
+    if (from.has_weight_decay()) {
+      set_weight_decay(from.weight_decay());
+    }
+  }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
@@ -2521,6 +2660,7 @@ void ParamProto::CopyFrom(const ParamProto& from) {
 }
 
 bool ParamProto::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
 
   return true;
 }
@@ -2535,6 +2675,9 @@ void ParamProto::Swap(ParamProto* other) {
     std::swap(high_, other->high_);
     std::swap(mean_, other->mean_);
     std::swap(std_, other->std_);
+    std::swap(momentum_, other->momentum_);
+    std::swap(learning_rate_, other->learning_rate_);
+    std::swap(weight_decay_, other->weight_decay_);
     content_.Swap(&other->content_);
     history_.Swap(&other->history_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
@@ -2554,11 +2697,42 @@ void ParamProto::Swap(ParamProto* other) {
 
 // ===================================================================
 
+const ::google::protobuf::EnumDescriptor* EdgeProto_PoolingMethod_descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return EdgeProto_PoolingMethod_descriptor_;
+}
+bool EdgeProto_PoolingMethod_IsValid(int value) {
+  switch(value) {
+    case 1:
+    case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#ifndef _MSC_VER
+const EdgeProto_PoolingMethod EdgeProto::kMaxPooling;
+const EdgeProto_PoolingMethod EdgeProto::kAvgPooling;
+const EdgeProto_PoolingMethod EdgeProto::PoolingMethod_MIN;
+const EdgeProto_PoolingMethod EdgeProto::PoolingMethod_MAX;
+const int EdgeProto::PoolingMethod_ARRAYSIZE;
+#endif  // _MSC_VER
 #ifndef _MSC_VER
 const int EdgeProto::kNameFieldNumber;
 const int EdgeProto::kTypeFieldNumber;
+const int EdgeProto::kNumOutputFieldNumber;
 const int EdgeProto::kParamFieldNumber;
 const int EdgeProto::kDirectedFieldNumber;
+const int EdgeProto::kTopFieldNumber;
+const int EdgeProto::kBottomFieldNumber;
+const int EdgeProto::kKernelSizeFieldNumber;
+const int EdgeProto::kStrideFieldNumber;
+const int EdgeProto::kPadFieldNumber;
+const int EdgeProto::kAlphaFieldNumber;
+const int EdgeProto::kBetaFieldNumber;
+const int EdgeProto::kLocalSizeFieldNumber;
+const int EdgeProto::kPoolingMethodFieldNumber;
 #endif  // !_MSC_VER
 
 EdgeProto::EdgeProto()
@@ -2579,7 +2753,17 @@ void EdgeProto::SharedCtor() {
   _cached_size_ = 0;
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  num_output_ = 0;
   directed_ = true;
+  top_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  bottom_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  kernel_size_ = 0;
+  stride_ = 0;
+  pad_ = 0;
+  alpha_ = 0;
+  beta_ = 0;
+  local_size_ = 0;
+  pooling_method_ = 1;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2593,6 +2777,12 @@ void EdgeProto::SharedDtor() {
   }
   if (type_ != &::google::protobuf::internal::kEmptyString) {
     delete type_;
+  }
+  if (top_ != &::google::protobuf::internal::kEmptyString) {
+    delete top_;
+  }
+  if (bottom_ != &::google::protobuf::internal::kEmptyString) {
+    delete bottom_;
   }
   if (this != default_instance_) {
   }
@@ -2631,7 +2821,27 @@ void EdgeProto::Clear() {
         type_->clear();
       }
     }
+    num_output_ = 0;
     directed_ = true;
+    if (has_top()) {
+      if (top_ != &::google::protobuf::internal::kEmptyString) {
+        top_->clear();
+      }
+    }
+    if (has_bottom()) {
+      if (bottom_ != &::google::protobuf::internal::kEmptyString) {
+        bottom_->clear();
+      }
+    }
+    kernel_size_ = 0;
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    stride_ = 0;
+    pad_ = 0;
+    alpha_ = 0;
+    beta_ = 0;
+    local_size_ = 0;
+    pooling_method_ = 1;
   }
   param_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -2673,12 +2883,28 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_param;
+        if (input->ExpectTag(24)) goto parse_num_output;
         break;
       }
 
-      // repeated .lapis.ParamProto param = 3;
+      // optional int32 num_output = 3;
       case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_num_output:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &num_output_)));
+          set_has_num_output();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(34)) goto parse_param;
+        break;
+      }
+
+      // repeated .lapis.ParamProto param = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_param:
@@ -2687,13 +2913,13 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_param;
-        if (input->ExpectTag(32)) goto parse_directed;
+        if (input->ExpectTag(34)) goto parse_param;
+        if (input->ExpectTag(40)) goto parse_directed;
         break;
       }
 
-      // optional bool directed = 4 [default = true];
-      case 4: {
+      // optional bool directed = 5 [default = true];
+      case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_directed:
@@ -2701,6 +2927,157 @@ bool EdgeProto::MergePartialFromCodedStream(
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &directed_)));
           set_has_directed();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(50)) goto parse_top;
+        break;
+      }
+
+      // optional string top = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_top:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_top()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->top().data(), this->top().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(58)) goto parse_bottom;
+        break;
+      }
+
+      // optional string bottom = 7;
+      case 7: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_bottom:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_bottom()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->bottom().data(), this->bottom().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(64)) goto parse_kernel_size;
+        break;
+      }
+
+      // optional int32 kernel_size = 8;
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_kernel_size:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &kernel_size_)));
+          set_has_kernel_size();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(72)) goto parse_stride;
+        break;
+      }
+
+      // optional int32 stride = 9;
+      case 9: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_stride:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &stride_)));
+          set_has_stride();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(80)) goto parse_pad;
+        break;
+      }
+
+      // optional int32 pad = 10;
+      case 10: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_pad:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &pad_)));
+          set_has_pad();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(93)) goto parse_alpha;
+        break;
+      }
+
+      // optional float alpha = 11;
+      case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_alpha:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &alpha_)));
+          set_has_alpha();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(101)) goto parse_beta;
+        break;
+      }
+
+      // optional float beta = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_beta:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &beta_)));
+          set_has_beta();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(104)) goto parse_local_size;
+        break;
+      }
+
+      // optional int32 local_size = 13;
+      case 13: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_local_size:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &local_size_)));
+          set_has_local_size();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(112)) goto parse_pooling_method;
+        break;
+      }
+
+      // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+      case 14: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_pooling_method:
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          if (::lapis::EdgeProto_PoolingMethod_IsValid(value)) {
+            set_pooling_method(static_cast< ::lapis::EdgeProto_PoolingMethod >(value));
+          } else {
+            mutable_unknown_fields()->AddVarint(14, value);
+          }
         } else {
           goto handle_uninterpreted;
         }
@@ -2744,15 +3121,74 @@ void EdgeProto::SerializeWithCachedSizes(
       2, this->type(), output);
   }
 
-  // repeated .lapis.ParamProto param = 3;
-  for (int i = 0; i < this->param_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->param(i), output);
+  // optional int32 num_output = 3;
+  if (has_num_output()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->num_output(), output);
   }
 
-  // optional bool directed = 4 [default = true];
+  // repeated .lapis.ParamProto param = 4;
+  for (int i = 0; i < this->param_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->param(i), output);
+  }
+
+  // optional bool directed = 5 [default = true];
   if (has_directed()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->directed(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteBool(5, this->directed(), output);
+  }
+
+  // optional string top = 6;
+  if (has_top()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->top().data(), this->top().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      6, this->top(), output);
+  }
+
+  // optional string bottom = 7;
+  if (has_bottom()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->bottom().data(), this->bottom().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      7, this->bottom(), output);
+  }
+
+  // optional int32 kernel_size = 8;
+  if (has_kernel_size()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->kernel_size(), output);
+  }
+
+  // optional int32 stride = 9;
+  if (has_stride()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->stride(), output);
+  }
+
+  // optional int32 pad = 10;
+  if (has_pad()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(10, this->pad(), output);
+  }
+
+  // optional float alpha = 11;
+  if (has_alpha()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->alpha(), output);
+  }
+
+  // optional float beta = 12;
+  if (has_beta()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(12, this->beta(), output);
+  }
+
+  // optional int32 local_size = 13;
+  if (has_local_size()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(13, this->local_size(), output);
+  }
+
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  if (has_pooling_method()) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      14, this->pooling_method(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -2783,16 +3219,77 @@ void EdgeProto::SerializeWithCachedSizes(
         2, this->type(), target);
   }
 
-  // repeated .lapis.ParamProto param = 3;
+  // optional int32 num_output = 3;
+  if (has_num_output()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->num_output(), target);
+  }
+
+  // repeated .lapis.ParamProto param = 4;
   for (int i = 0; i < this->param_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        3, this->param(i), target);
+        4, this->param(i), target);
   }
 
-  // optional bool directed = 4 [default = true];
+  // optional bool directed = 5 [default = true];
   if (has_directed()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->directed(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(5, this->directed(), target);
+  }
+
+  // optional string top = 6;
+  if (has_top()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->top().data(), this->top().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        6, this->top(), target);
+  }
+
+  // optional string bottom = 7;
+  if (has_bottom()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->bottom().data(), this->bottom().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        7, this->bottom(), target);
+  }
+
+  // optional int32 kernel_size = 8;
+  if (has_kernel_size()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->kernel_size(), target);
+  }
+
+  // optional int32 stride = 9;
+  if (has_stride()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->stride(), target);
+  }
+
+  // optional int32 pad = 10;
+  if (has_pad()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(10, this->pad(), target);
+  }
+
+  // optional float alpha = 11;
+  if (has_alpha()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->alpha(), target);
+  }
+
+  // optional float beta = 12;
+  if (has_beta()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(12, this->beta(), target);
+  }
+
+  // optional int32 local_size = 13;
+  if (has_local_size()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(13, this->local_size(), target);
+  }
+
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  if (has_pooling_method()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      14, this->pooling_method(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2820,13 +3317,80 @@ int EdgeProto::ByteSize() const {
           this->type());
     }
 
-    // optional bool directed = 4 [default = true];
+    // optional int32 num_output = 3;
+    if (has_num_output()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->num_output());
+    }
+
+    // optional bool directed = 5 [default = true];
     if (has_directed()) {
       total_size += 1 + 1;
     }
 
+    // optional string top = 6;
+    if (has_top()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->top());
+    }
+
+    // optional string bottom = 7;
+    if (has_bottom()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->bottom());
+    }
+
+    // optional int32 kernel_size = 8;
+    if (has_kernel_size()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->kernel_size());
+    }
+
   }
-  // repeated .lapis.ParamProto param = 3;
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    // optional int32 stride = 9;
+    if (has_stride()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->stride());
+    }
+
+    // optional int32 pad = 10;
+    if (has_pad()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->pad());
+    }
+
+    // optional float alpha = 11;
+    if (has_alpha()) {
+      total_size += 1 + 4;
+    }
+
+    // optional float beta = 12;
+    if (has_beta()) {
+      total_size += 1 + 4;
+    }
+
+    // optional int32 local_size = 13;
+    if (has_local_size()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->local_size());
+    }
+
+    // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+    if (has_pooling_method()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::EnumSize(this->pooling_method());
+    }
+
+  }
+  // repeated .lapis.ParamProto param = 4;
   total_size += 1 * this->param_size();
   for (int i = 0; i < this->param_size(); i++) {
     total_size +=
@@ -2867,8 +3431,40 @@ void EdgeProto::MergeFrom(const EdgeProto& from) {
     if (from.has_type()) {
       set_type(from.type());
     }
+    if (from.has_num_output()) {
+      set_num_output(from.num_output());
+    }
     if (from.has_directed()) {
       set_directed(from.directed());
+    }
+    if (from.has_top()) {
+      set_top(from.top());
+    }
+    if (from.has_bottom()) {
+      set_bottom(from.bottom());
+    }
+    if (from.has_kernel_size()) {
+      set_kernel_size(from.kernel_size());
+    }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_stride()) {
+      set_stride(from.stride());
+    }
+    if (from.has_pad()) {
+      set_pad(from.pad());
+    }
+    if (from.has_alpha()) {
+      set_alpha(from.alpha());
+    }
+    if (from.has_beta()) {
+      set_beta(from.beta());
+    }
+    if (from.has_local_size()) {
+      set_local_size(from.local_size());
+    }
+    if (from.has_pooling_method()) {
+      set_pooling_method(from.pooling_method());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -2889,6 +3485,9 @@ void EdgeProto::CopyFrom(const EdgeProto& from) {
 bool EdgeProto::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
 
+  for (int i = 0; i < param_size(); i++) {
+    if (!this->param(i).IsInitialized()) return false;
+  }
   return true;
 }
 
@@ -2896,8 +3495,18 @@ void EdgeProto::Swap(EdgeProto* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(type_, other->type_);
+    std::swap(num_output_, other->num_output_);
     param_.Swap(&other->param_);
     std::swap(directed_, other->directed_);
+    std::swap(top_, other->top_);
+    std::swap(bottom_, other->bottom_);
+    std::swap(kernel_size_, other->kernel_size_);
+    std::swap(stride_, other->stride_);
+    std::swap(pad_, other->pad_);
+    std::swap(alpha_, other->alpha_);
+    std::swap(beta_, other->beta_);
+    std::swap(local_size_, other->local_size_);
+    std::swap(pooling_method_, other->pooling_method_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -3402,6 +4011,9 @@ void LayerProto::CopyFrom(const LayerProto& from) {
 bool LayerProto::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
 
+  for (int i = 0; i < param_size(); i++) {
+    if (!this->param(i).IsInitialized()) return false;
+  }
   return true;
 }
 

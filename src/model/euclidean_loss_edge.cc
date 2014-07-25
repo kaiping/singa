@@ -8,28 +8,29 @@
 
 namespace lapis {
 
-const std::string kEuclideanLossEdge = "EuclideanLoss";
-void EuclideanLossEdge::Init(const EdgeProto &edge_proto) {
-  Edge::Init(edge_proto);
+const std::string type = "EuclideanLoss";
+
+void EuclideanLossEdge::ToProto(EdgeProto *proto) {
+  Edge::ToProto(proto);
 }
-void EuclideanLossEdge::ToProto(EdgeProto *edge_proto) {
-  Edge::ToProto(edge_proto);
-}
-void EuclideanLossEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
+
+void EuclideanLossEdge::Forward(const Blob *src_fea, Blob *dest_fea,
+                                bool overwrite) {
   LOG(INFO) << "Forward() of EuclideanLossEdge should not be called\n";
 }
-void EuclideanLossEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
-                                 Blob *dest_grad, bool overwrite) {
-  MapMatrixType predict(dest_fea->mutable_content(), dest_fea->height(),
+void EuclideanLossEdge::Backward(const Blob *src_fea, const Blob *src_grad,
+                                 const Blob *dest_fea, Blob *dest_grad,
+                                 bool overwrite) {
+  MMat predict(dest_fea->mutable_data(), dest_fea->height(),
                         dest_fea->width());
   //! here src_grad is actually the input data/label from DataLayer
-  MapMatrixType data(src_grad->mutable_content(), src_grad->height(),
+  MMat label(src_grad->mutable_data(), src_grad->height(),
                      src_grad->width());
-  MapMatrixType fea_grad(dest_grad->mutable_content(), dest_grad->height(),
+  MMat fea_grad(dest_grad->mutable_data(), dest_grad->height(),
                          dest_grad->width());
   if (overwrite)
-    fea_grad = (predict - data) / predict.rows();
+    fea_grad = (predict - label) / predict.rows();
   else
-    fea_grad += (predict - data) / predict.rows();
+    fea_grad += (predict - label) / predict.rows();
 }
 }  // namespace lapis

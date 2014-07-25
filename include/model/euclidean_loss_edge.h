@@ -9,13 +9,11 @@
 namespace lapis {
 class EuclideanLossEdge : public Edge {
  public:
-  static const std::string kEuclideanLossEdge;
-  virtual void Init(const EdgeProto &edge_proto);
-  virtual void ToProto(EdgeProto *edge_proto);
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
-  virtual void Backward(const Blob *src_grad, const Blob *dest_fea,
-                        Blob *dest_grad, bool overwrite);
-  virtual void ComputeParamUpdates(const Trainer *trainer);
+  static const std::string type;
+  virtual void ToProto(EdgeProto *proto);
+  virtual void Forward(const Blob *src_fea, Blob *dest_fea, bool overwrite);
+  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
+                        const Blob *dest_fea, Blob *dest_grad, bool overwrite);
 };
 
 }  // namespace lapis

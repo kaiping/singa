@@ -2,50 +2,53 @@
 // 2014-07-06 15:19
 
 #include <glog/logging.h>
+#include <memory>
+#include <random>
+
 #include "model/layer.h"
 
 namespace lapis {
-/*****************************************************
+/*****************************************************************************
  * Implementation for Layer
- *****************************************************/
-void Layer::Init(const LayerProto &layer_proto,
-                 const std::map<std::string, Edge *> &edge_map) {
-  name_ = layer_proto.name();
-  for (auto &edge_name : layer_proto.out_edge()) {
-    CHECK(edge_map.find(edge_name) != edge_map.end())
-        << "No out going edge named '" << edge_name
-        << "' for layer '" << name_ << "\n";
-    Edge *edge = edge_map.at(edge_name);
-    out_edges_.push_back(edge);
-    if (edge->Bottom() == nullptr)
-      edge->SetBottom(this);
-  }
-  for (std::string edge_name : layer_proto.in_edge()) {
-    CHECK(edge_map.find(edge_name) != edge_map.end())
-        << "No incoming edge named '" << edge_name
-        << "' for layer '" << name_ << "\n";
-    Edge *edge = edge_map.at(edge_name);
-    in_edges_.push_back(edge);
-    if (edge->Top() == nullptr)
-      edge->SetTop(this);
-  }
+ *****************************************************************************/
+void Layer::Init(const LayerProto &proto){
+  name_ = proto.name();
 }
 
 void Layer::ToProto(LayerProto *proto) {
   proto->set_name(name_);
-  for (Edge *edge : in_edges_)
-    proto->add_in_edge(edge->Name());
-  for (Edge *edge : out_edges_)
-    proto->add_out_edge(edge->Name());
 }
 
+void Layer::Dropout(float drop_prob, float scale,
+                    const Blob &src, Blob* dest, int * mask) {
+  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
+  // with 1-drop_prob to keep one neuron, i.e., mask=1
+  std::bernoulli_distribution distribution(1-drop_prob);
+  float *dest_data=dest->mutable_data();
+  const float* src_data=src.data();
+  for(int i=0;i<src.length();i++) {
+    mask[i]=distribution(*generator);
+    dest_data[i]=src_data[i]*mask[i]*scale;
+  }
+}
+
+void Layer::ComputeDropoutGradient(float scale, const Blob& src ,
+                            const int* mask, Blob* dest) {
+  const float* src_grad=src.data();
+  float* dest_grad=dest->mutable_data();
+  for(int i=0;i<dest->length();i++)
+    dest_grad[i]=src_grad[i]*mask[i]*scale;
+}
+// Currently layers do not have parameters
+/*
 void Layer::ComputeParamUpdates(const Trainer *trainer) {
   LOG(INFO) << "Layer " << name_ << " has no parameters to update\n";
 }
+*/
 
-/**********************************************
+/*****************************************************************************
  * Implementation for LayerFactory
- *********************************************/
+ ****************************************************************************/
 LayerFactory *LayerFactory::Instance() {
   static LayerFactory factory;
   return &factory;
@@ -59,7 +62,7 @@ void LayerFactory::RegisterCreateFunction(
 
 Layer *LayerFactory::Create(const std::string id) {
   CHECK(layer_map_.find(id) != layer_map_.end())
-      << "The initialization function " << id << " has not been registered\n";
+      << "The initialization function " << id << " has not been registered";
   return layer_map_[id]();
 }
 

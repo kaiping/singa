@@ -4,6 +4,9 @@
 #include "model/blob.h"
 namespace lapis {
 
+Blob::Blob(int num, int channels, int height, int width) {
+  Reshape(num, channels, height, width);
+}
 void Blob::Reshape(int length) {
   Reshape(1, length);
 }
@@ -17,20 +20,22 @@ void Blob::Reshape(int size, int height, int width) {
 }
 
 void Blob::Reshape(int size, int channels, int height, int width) {
-  if (size_ != size || channels_ != channels || height_ != height
+  if (num_ != size || channels_ != channels || height_ != height
       || width_ != width) {
-    size_ = size;
+    num_ = size;
     channels_ = channels;
     height_ = height;
     width_ = width;
-    int length = Length();
-    if (content_ != nullptr)
-      delete content_;
-    content_ = new float[length];
+    record_length_=channels_ * height_ * width_;
+    length_ = num_ * record_length_;
+    if (data_ != nullptr)
+      delete data_;
+    data_ = new float[length_];
   }
 }
-void Blob::set_content(const float *other) {
-  memcpy(content_, other, sizeof(float)*Length());
+
+void Blob::set_data(const float *other) {
+  memcpy(data_, other, sizeof(float)*length_);
 }
 
 }  // namespace lapis

@@ -41,7 +41,7 @@ void topology_sort(std::vector<Layer *> *layers) {
     // automatically insert a new entry to the map
     // the direction of edge is from layer to layers in adjacent_list
     adjacent_list[layer];
-    for (Edge *edge : layer->Out_edges()) {
+    for (Edge *edge : layer->out_edges()) {
       Layer *layer1 = edge->OtherSide(layer);
       adjacent_list[layer].push_back(layer1);
     }
@@ -64,20 +64,18 @@ void topology_sort(std::vector<Layer *> *layers) {
 }
 
 void Net::Init(const NetProto &net_proto) {
-  std::map<std::string, Edge *> edge_map;
-  for (auto &edge_proto : net_proto.edge()) {
-    Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
-    edge->Init(edge_proto);
-    edges_.push_back(edge);
-    edge_map[edge->Name()] = edge;
-    for (auto *param : edge->Params())
-      params_.push_back(param);
-  }
+  std::map<std::string, Layer *> layer_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
-    layer->Init(layer_proto, edge_map);
+    layer->Init(layer_proto);
     layers_.push_back(layer);
-    for (auto *param : layer->Params())
+    layer_map[layer->name()] = layer;
+  }
+  for (auto &edge_proto : net_proto.edge()) {
+    Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
+    edge->Init(edge_proto, layer_map);
+    edges_.push_back(edge);
+    for (auto *param : edge->Params())
       params_.push_back(param);
   }
   topology_sort(&layers_);

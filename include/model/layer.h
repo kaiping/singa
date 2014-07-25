@@ -38,8 +38,9 @@ class Edge;
  * backpropagation method;
  * TODO(wangwei) For layers that support contrastive convergence,
  * ::ComputeLayer() should be implemented.
- * Currently there are 5 layers of type "Logistic", "Data", "Softmax",
- * "EuclidenLoss", "RELU" respectively
+ * Currently there are 3 layers of type LogisticLayer, DataLayer and
+ * LinearLayer. The identifier of each layer is defined as id field in the
+ * corresponding class
  */
 class Layer {
  public:
@@ -53,8 +54,7 @@ class Layer {
    * added to the layer. see LayerProto
    * @param edge_map a map from edge name to the edge object.
    */
-  virtual void Init(const LayerProto &layer_proto,
-                    const std::map<std::string, Edge *> &edge_map);
+  virtual void Init(const LayerProto &proto);
   /**
    * allocate memory for storing activations/features/gradients, etc.
    * @param batchsize num of instances processed in one mini-batch
@@ -63,19 +63,19 @@ class Layer {
    * @param sources data providers, can be null for layers do not accept inputs
    */
   virtual void Setup(int batchsize, TrainAlgorithm alg,
-                     const std::vector<DataSource *> &sources) = 0;
+                     const std::vector<DataSource *> &sources);
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
    * activation function
    */
-  virtual void Forward() = 0;
+  virtual void Forward();
   /**
    * Backward propagate gradients through the Net
    * It aggregates gradients from all outgoing edges, and then computes
    * the gradient w.r.t the aggregated activation.
    */
-  virtual void Backward() = 0;
+  virtual void Backward();
   /**
    * Combine momentum, learning rate, weight decay, etc,  with the gradients
    * of parameters associated with this layer
@@ -85,20 +85,39 @@ class Layer {
    */
   virtual void ComputeParamUpdates(const Trainer *trainer);
   /**
+   * Apply dropout to src blob and write to dest blob, record the mask
+   * @param drop_prob probability for drop out a neuron
+   * @param scale a scale factor to be applied to every neuron after dropout
+   * @param src the blob whoes data is going to be dropped
+   * @param dest the blob to write the data after dropout
+   * @param mask record which neuron is dropped for back propagating gradients,
+   * if mask[i]=0, then the i-th neuron is dropped.
+   */
+  virtual void Dropout(float drop_prob, float scale, const Blob &src, Blob* dest, int * mask);
+  /**
+   * Back propagate the gradient for dropout operation
+   * @param scale a scale factor multiplied to the gradient
+   * @param src gradient from top blob
+   * @param dest blob to store the gradient after dropout operation
+   * @param mask it records which neuron was dropped in ::Dropout(), and
+   * directs how to pass the gradient from src to dest.
+   */
+  virtual void ComputeDropoutGradient(float scale, const Blob& src , const int* mask, Blob* dest);
+  /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
    */
   virtual void ToProto(LayerProto *layer_proto);
   /**
    * Return true for layers accept input data, e.g., DataLayer,
-   * false for all other layer
+   * false for all other layer; default is false;
    */
-  virtual bool HasInput() = 0;
+  virtual bool HasInput() {return false;}
   /**
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual Blob *Feature(Edge *edge) = 0;
+  virtual Blob *feature(Edge *edge);
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -107,36 +126,42 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual Blob *Gradient(Edge *edge) = 0;
+  virtual Blob *gradient(Edge *edge);
   /**
    * Return parameters of this layer
+
+    std::vector<Param *> &params() {
+      return params_;
+    }
    */
-  std::vector<Param *> &Params() {
-    return params_;
-  }
   /**
    * Return name of this layer
    */
-  const std::string &Name() {
+  const std::string &name() {
     return name_;
+  }
+  void add_in_edge(Edge * edge) {
+    in_edges_.push_back(edge);
+  }
+  void add_out_edge(Edge* edge) {
+    out_edges_.push_back(edge);
   }
   /**
    * Return outgoing edges
    */
-  std::vector<Edge *> &Out_edges() {
+  std::vector<Edge *> &out_edges() {
     return out_edges_;
   }
   /**
    * Return incoming edges
    */
-  std::vector<Edge *> &In_edges() {
+  std::vector<Edge *> &in_edges() {
     return in_edges_;
   }
 
  protected:
   std::vector<Edge *> out_edges_;
   std::vector<Edge *> in_edges_;
-  std::vector<Param *> params_;
   std::string name_;
 };
 

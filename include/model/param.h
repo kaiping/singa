@@ -21,37 +21,79 @@ class Param {
  public:
   /**
    * Set properties of this parameter from ParamProto, allocate
-   * corresponding memory and initialize the parameter
+   * corresponding memory and initialize the parameter. Copy content and
+   * history from ParamProto if available.
    */
   virtual void Init(const ParamProto &proto);
-  //! Marshal properties of this parameter into google protobuf
+  /**
+   * Marshal properties, content and history gradient of this parameter into
+   * ParamProto
+   */
   virtual void ToProto(ParamProto *proto);
-  //! Return data pointer for this parameter
-  const float *Content() const {
-    return content_.content();
+  /**
+   * Return const mem address for the content of this parameter
+   */
+  const float *content() const {
+    return content_.data();
   }
-  float *MutableContent() const {
-    return content_.mutable_content();
+  /**
+   * Return mem address for the content of this parameter
+   */
+  float *mutable_content() const {
+    return content_.mutable_data();
+  }
+  /**
+   * Return const mem address for the gradient of this parameter
+   */
+  const float *gradient() const {
+    return grad_.data();
+  }
+  /**
+   * Return mem address for the gradient of this parameter
+   */
+  float *mutable_gradient() const {
+    return grad_.mutable_data();
+  }
+  /**
+   * Return const mem address for the history gradient of this parameter
+   */
+  const float *history() const {
+    return history_grad_.data();
+  }
+  /**
+   * Return mem address for the history gradient of this parameter
+   */
+  float *mutable_history() const {
+    return history_grad_.mutable_data();
   }
 
-  const float *Gradient() const {
-    return grad_.content();
-  }
-
-  float *MutableGradient() const {
-    return grad_.mutable_content();
-  }
-  //! Return num of rows for matrix parameters
-  const int Rows() {
+  /**
+   * Return num of rows for matrix parameters
+   */
+  const int height() {
     return content_.height();
   }
-  //! Return num of columns for matrix parameters
-  const int Cols() {
+  /**
+   * Return num of columns for matrix parameters
+   */
+  const int width() {
     return content_.width();
   }
-  //! Return num of floats for vector parameters
-  const int Length() {
-    return content_.Length();
+  /**
+   * Return num of floats for this (vector) parameter
+   */
+  const int length() {
+    return content_.length();
+  }
+
+  float momentum() {
+    return momentum_;
+  }
+  float learning_rate() {
+    return learning_rate_;
+  }
+  float weight_decay() {
+    return weight_decay_;
   }
 
  protected:
@@ -62,17 +104,28 @@ class Param {
    * @param factor the generated data is multiplied to this number
    * @param val float array to store the generated data
    */
-  void FillUniformData(float low, float high, float factor, float *val);
+  void FillUniformData(int length, float low, float high, float factor, float *val);
   /**
    * Similar to ::FillGaussainData(), except the data are generated from
    * Gaussain distribution.
    */
-  void FillGaussainData(float mean, float std, float factor, float *val);
+  void FillGaussainData(int length, float mean, float std, float factor, float *val);
 
+  /**
+   * name of the parameter used to identify the ParamProto configed in
+   * EdgeProto by users. Currently there are two kinds of parameters, 'weight'
+   * and 'bias'.
+   */
+  std::string name_;
+  //! scale factor for learning rate and weight decay for this parameter
+  float momentum_, learning_rate_, weight_decay_;
+  //! content, gradient and history gradient of this parameter
   Blob content_, grad_, history_grad_;
-  std::string initializer_;
-  std::string name_;  //!< name of the parameter, e.g., 'weight', 'bias'
-  float learning_rate_, weight_decay_;
+  /**
+   * Currently support 5 init methods. May change to ParamInitFactory later to
+   * support user defined init method.
+   */
+  ParamProto::InitMethod init_method;
 };
 
 

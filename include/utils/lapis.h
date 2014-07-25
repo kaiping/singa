@@ -9,32 +9,40 @@
 #include "Eigen/Dense"
 
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic,
-        Eigen::RowMajor> MatrixType;
+        Eigen::RowMajor> EigenMatrix;
 typedef Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic,
-        Eigen::RowMajor> ArrayType;
-typedef Eigen::Map<MatrixType> MapMatrixType;
-typedef Eigen::Map<ArrayType> MapArrayType;
-typedef Eigen::Map<Eigen::RowVectorXf> MapVectorType;
-namespace lapis {
+        Eigen::RowMajor> EigenArray;
+typedef Eigen::Array<float, 1,  Eigen::Dynamic, Eigen::RowMajor> EigenAVector;
+typedef Eigen::Matrix<float, 1,  Eigen::Dynamic, Eigen::RowMajor> EigenMVector;
 
+typedef Eigen::Map<EigenMatrix> MMat;
+typedef Eigen::Map<EigenMVector> MVec;
+typedef Eigen::Map<EigenArray> AMat;
+typedef Eigen::Map<EigenAVector> AVec;
+
+namespace lapis {
+/**
+ * Class Lapis provide some global object, e.g., random number generator
+ */
 class Lapis {
  public:
-  inline static Lapis& Get() {
+  /**
+   * Singleton of the class
+   */
+  inline static std::shared_ptr<Lapis>& Instance() {
     if (!instance_.get()) {
       instance_.reset(new Lapis());
     }
-    return *instance_;
+    return instance_;
   }
 
-  void set_random_seed(const unsigned int seed) {
-    rng_.seed(seed);
+  std::shared_ptr<std::mt19937>& generator() {
+    return generator_;
   }
-
-  std::mt19937 &rng() {return rng_;}
 
  private:
-  Lapis(){};
-  std::mt19937 rng_;
+  Lapis();
+  std::shared_ptr<std::mt19937> generator_;
   static std::shared_ptr<Lapis> instance_;
 };
 }  // namespace lapis

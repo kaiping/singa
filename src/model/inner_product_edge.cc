@@ -8,20 +8,30 @@
 namespace lapis {
 
 const std::string InnerProductEdge::kInnerProductEdge = "InnerProduct";
-void InnerProductEdge::Init(const EdgeProto &edge_proto,
-                            const std::map<std::string, Edge *> &edge_map) {
-  Edge::Init(edge_proto);
-  CHECK_EQ(edge_proto.param().size(),
-           2) << "InnerProductEdge should have two parameters\n";
-  //! match the parameter based on shape
-  auto &param0 = edge_proto.param().Get(0);
-  auto &param1 = edge_proto.param().Get(1);
-  if (param0.shape().size() == 2) {
-    weight_.Init(param0);
-    bias_.Init(param1);
-  } else {
-    weight_.Init(param1);
-    bias_.Init(param0);
+void InnerProductEdge::Init(const EdgeProto &proto,
+                            const std::map<std::string, Layer *> &layer_map) {
+  Edge::Init(proto, layer_map);
+  param_proto_=proto.param();
+  num_output_=proto.num_output();
+}
+
+void InnerProductEdge::Setup(bool set_param) {
+  if(set_param) {
+    CHECK(param_proto_.size()<=2);
+    for (auto proto : param_proto_) {
+      if(proto.name()=="weight") {
+        proto.clear_shape();
+        proto.add_shape(bottom_->feature(this)->record_length());
+        proto.add_shape(num_output_);
+        weight_.Init(proto);
+        params_.push_back(&weight_);
+      } else if (proto.name()=="bias") {
+        proto.clear_shape();
+        proto.add_shape(num_output_);
+        bias_.Init(proto);
+        params_.push_back(&bias_);
+      }
+    }
   }
 }
 
@@ -35,11 +45,10 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
 }
 
 void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  MapMatrixType fea(src->mutable_content(), src->height(), src->width());
-  MapMatrixType act(dest->mutable_content(), dest->width(), dest->width());
-  MapMatrixType weight(weight_.MutableContent(),
-                       weight_.Rows(), weight_.Cols());
-  MapVectorType bias(bias_.MutableContent(), bias_.Length());
+  MMat fea(src->mutable_data(), src->height(), src->width());
+  MMat act(dest->mutable_data(), dest->width(), dest->width());
+  MMat weight(weight_.mutable_content(), weight_.height(), weight_.width());
+  MVec bias(bias_.mutable_content(), bias_.length());
   if (overwrite)
     act.noalias() = (fea * weight).rowwise() + bias;
   else
@@ -48,21 +57,19 @@ void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
 
 void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
                                 Blob *dest_grad, bool overwrite) {
-  MapMatrixType act_grad(src_grad->mutable_content(), src_grad->height(),
+  MMat act_grad(src_grad->mutable_data(), src_grad->height(),
                          src_grad->width());
-  MapMatrixType fea(dest_fea->mutable_content(), dest_fea->width(),
+  MMat fea(dest_fea->mutable_data(), dest_fea->width(),
                     dest_fea->width());
-  MapMatrixType weight_grad(weight_.MutableGradient(), weight_.Rows(),
-                            weight_.Cols());
-  MapMatrixType weight(weight_.MutableContent(), weight_.Rows(),
-                       weight_.Cols());
-  MapVectorType bias_grad(bias_.MutableGradient(), bias_.Length());
+  MMat weight_grad(weight_.mutable_gradient(), weight_.height(), weight_.width());
+  MMat weight(weight_.mutable_content(), weight_.height(), weight_.width());
+  MVec bias_grad(bias_.mutable_gradient(), bias_.length());
   weight_grad.noalias() = fea.transpose() * act_grad;
   bias_grad = act_grad.colwise().sum();
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   if (dest_grad != nullptr) {
-    MapMatrixType fea_grad(dest_grad->mutable_content(), dest_grad->height(),
+    MMat fea_grad(dest_grad->mutable_data(), dest_grad->height(),
                            dest_grad->width());
     if (overwrite)
       fea_grad.noalias() = act_grad * weight.transpose();
@@ -71,4 +78,8 @@ void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
   }
 }
 
+void InnerProductEdge::SetupTopBlob(Blob* blob) {
+  Blob* b=bottom_->feature(this);
+  blob->Reshape(b->num(),1, b->record_length(), num_output_);
+}
 }  // namespace lapis

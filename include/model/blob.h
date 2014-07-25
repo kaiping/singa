@@ -11,12 +11,12 @@
 
 namespace lapis {
 /**
- * Blob stores the content of both parameters and (raw/intermediate) features.
+ * Blob stores the data of both parameters and (raw/intermediate) features.
  */
 class Blob {
  public:
-  Blob(): size_(0), channels_(0), height_(0),
-    width_(0), content_(nullptr) {}
+  Blob(): num_(0), channels_(0), height_(0), width_(0), data_(nullptr) {}
+  Blob(int num, int channels, int height, int width);
   /**
    * allocate memory of size length, e.g., for the bias parameter
    * do nothing if it is of exactly the same shape
@@ -47,18 +47,28 @@ class Blob {
    */
   void Reshape(int num, int channel, int height, int width);
 
-  const float *content() const {
-    return content_;
+  float* offset(int n, int c=0, int h=0 ,int w=0) const {
+    return data_+((n*num_+c)*height_+h)*width_+w;
   }
-  float *mutable_content() const {
-    return content_;
+
+  const float *data() const {
+    return data_;
   }
-  void set_content(const float *other);
+  float *mutable_data() const {
+    return data_;
+  }
+  void set_data(const float *other);
   /**
    * Return num of instances stored in this blob
    */
-  const int size() const {
-    return size_;
+  const int num() const {
+    return num_;
+  }
+  /**
+   * Return channels of this blob
+   */
+  const int channels() const {
+    return channels_;
   }
   /**
    * For image data, it is the height of the image;
@@ -78,13 +88,21 @@ class Blob {
   /**
    * Return the total size in terms of floats
    */
-  const int Length() const {
-    return size_ * channels_ * height_ * width_;
+  const int length() const {
+    return length_;
+  }
+
+  /**
+   * Return the size of one record in terms of floats
+   */
+  const int record_length() const {
+    return record_length_;
   }
 
  private:
-  int size_, channels_, height_, width_;
-  float *content_;
+  int num_, channels_, height_, width_;
+  int length_, record_length_;
+  float *data_;
 };
 
 }  // namespace lapis

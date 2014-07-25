@@ -50,13 +50,15 @@ message RGBDatum {
   // size of the cropped image, default setting is no crop
   optional int32 height = 2 [default = 0];
   optional int32 width = 3 [default = 0];
-
   required string content = 4;
 }
 
 message ParamProto {
-  optional string name = 1;
-  // for vector, shape is <n>; for matrix, it is <m, n>
+  // for the program to identify it, each edge/layer has fixed parameters
+  // e.g., "weight" "bias"
+  required string name = 1;
+  // optional, in most situation, user do not need to config this, the program
+  // will calculate it
   repeated int32 shape = 2;
 
   enum InitMethod {
@@ -83,18 +85,38 @@ message ParamProto {
   optional float mean = 7 [default = 0];
   optional float std = 8 [default = 1];
   // optional string partitioner = 4; // e.g., row or column partition
-
-  repeated float content = 9 [packed = true];
-  repeated float history = 10 [packed = true];
+  optional float momentum =9;
+  optional float learning_rate =10;
+  optional float weight_decay=11;
+  repeated float content = 13 [packed = true];
+  repeated float history = 14 [packed = true];
 }
-
 
 // both edge and layer only have params
 message EdgeProto {
   required string name = 1;
   required string type = 2;
-  repeated ParamProto param = 3;
-  optional bool directed = 4 [default = true];
+  optional int32 num_output = 3;
+  repeated ParamProto param = 4;
+  optional bool directed = 5 [default = true];
+  optional string top = 6;
+  optional string bottom =7;
+  // for convolutional and pooling edge.
+  optional int32 kernel_size = 8;
+  optional int32 stride = 9;
+  optional int32 pad = 10;
+
+  // for local response normalization edge
+  optional float alpha = 11;
+  optional float beta = 12;
+  optional int32 local_size = 13;
+
+  // for pooling edge
+  enum PoolingMethod {
+    kMaxPooling=1;
+    kAvgPooling=2;
+  }
+  optional PoolingMethod pooling_method = 14;
 }
 
 message LayerProto {

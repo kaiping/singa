@@ -6,10 +6,10 @@
 namespace lapis {
 
 const std::string kDataLayer = "Data";
-void DataLayer::Init(const LayerProto &layer_proto,
-                     const std::map<std::string, Edge *> &edge_map) {
-  Layer::Init(layer_proto, edge_map);
-  data_source_name_ = layer_proto.data_source();
+
+void DataLayer::Init(const LayerProto &proto) {
+  Layer::Init(proto);
+  data_source_name_ = proto.data_source();
   data_source_ = nullptr;
 }
 
@@ -26,8 +26,7 @@ void DataLayer::Setup(int batchsize, TrainAlgorithm alg,
       break;
     }
   }
-  CHECK(data_source_ != nullptr) << "Cannot find data source for layer '"
-                                 << name_ << "'\n";
+  CHECK(data_source_ != nullptr) << "Cannot find data source for " << name_;
   data_.Reshape(batchsize, data_source_->channels(), data_source_->height(),
                 data_source_->width());
 }
@@ -38,13 +37,9 @@ void DataLayer::Forward() {
 
 void DataLayer::Backward() {
   for (Edge *edge : out_edges_) {
-    edge->Backward(edge->OtherSide(this)->Gradient(edge), &data_,
+    Layer* layer=edge->OtherSide(this);
+    edge->Backward(layer->feature(edge), layer->gradient(edge), &data_,
                    nullptr, true);
   }
 }
-
-void DataLayer::ComputeParamUpdates(const Trainer *trainer) {
-  LOG(INFO) << "ComputeParamUpdates() for datalyer does nothing\n";
-}
-
 }  // namespace lapis

@@ -15,12 +15,16 @@
 
 namespace lapis {
 
-void ModelController::Init(int split_tpye,int machine_num,int split_size)
+void ModelController::Init(int machine_num,int split_tpye,int split_size)
 {
 	my_split_tpye_ = split_tpye;
 	my_machine_num_ = machine_num;
 	my_split_size_ = split_size;
 	distributed_store_ = CreateTable(0, my_machine_num, new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<int>);
+
+	if (IsDistributedMemoryManager()){
+    DistributedMemoryManager::Get()->AssignTables();
+  }
 	return;
 }
 

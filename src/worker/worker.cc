@@ -12,8 +12,6 @@ Worker::Worker(const DistributedMemory *dm,
   model_controller_ = new ModelController(dm, dd, gc);
 }
 
-
-
 void runContrastiveDivergence() {
 }
 
@@ -30,6 +28,9 @@ void Woker::WorkerMainFunc() {
 }
 
 void Worker::run() {
-  pthread_create(&app_thread, NULL, WorkerMainFunc, NULL);
+  /*
+   * do works
+   */
+  Finish();
 }
 }  // namespace lapis

@@ -19,7 +19,8 @@ class ModelController {
   void Update(const std::vector<Param*> *params);
   void GetParam(std::vector<Param*> *params);
   void Put(const std::vector<Param*> *params);
-  void Init(int split_tpye,int machine_num,int split_size);//set split type to 0 and split size to 2
+  //set split type to 0 and split size to 2
+  void Init(int machine_num, int split_tpye=0,int split_size=2);
  private:
   int my_split_tpye_,my_machine_num_,my_split_size_;
   TypedGlobalTable<int, float_vector_message>* distributed_store_;

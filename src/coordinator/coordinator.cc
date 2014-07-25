@@ -7,7 +7,7 @@
 
 namespace lapis {
 Coordinator::Coordinator(const GlobalContext &global_context,
-                         const DistributedMemory &distributed_memory)
+                         const ModelController &mc)
   : global_context_(global_context), distibuted_memory_(distibuted_memory) {
   LOG(INFO) << "starting coordinator...\n";
   ReadProtoFromTextFile(global_context_.model_conf_path, &model_conf_proto_);
@@ -30,24 +30,17 @@ int Coordinator::LoadData() {
 // no model splitting currently
 // init parameters and put them into distributed memory
 // send whole copy of modelConfigProto to each worker
-int InitSplitModel() {
-  for (LayerProto &layer_proto : model_conf_proto_.layers()) {
-    for (ParameterProto &param_proto : layer_proto.parameters()) {
-      Parameter param = param_factory_generate(param_proto.splitter_name);
-      string k, v;
-      while (param.next(&k, &v))
-        distributed_memory_.put(k, v);
-    }
-  }
-  // TODO(Anh) mpi wrapper for sending message to all workers
-  send2allWorkers(model_conf_proto_.serializeToString());
+int InitModel() {
+  net=createNet(model_conf_proto_);
+  mc->Put(net.params);
   return 0;
 }
 
 // we do not create a thread for the Coordinator, because workers have to wait
 // the coordinator to finish the initialization work, i.e. what Run() does
 void Coordinator::Run() {
-  LoadData();
-  InitSplitModel();
+  //LoadData();
+  InitModel();
+  Finish();
 }
 }  // namespace lapis

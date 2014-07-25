@@ -16,6 +16,24 @@ int main(int argc, char **argv) {
   google::InitGoogleLoggin(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   // TODO(by wangwei) register partition/fileparser/layer classes
-  startDaemon(FLAGS_system_conf.c_str(), FLAGS_model_conf.c_str());
+  lapis::GlobalContext global_context(system_conf_path, model_conf_path);
+
+  ModelController mc;
+  mc.Init(global_context.num_memory_servers());
+	InitServers(argc, argv);
+  // TODO(Anh) DistributedDisk
+  // lapis::DistributedDisk distributed_disk(global_context);
+  int rank = NetworkThread::Get()->id();
+  if (global_context.IsRoleOf(lapis::kCoordinator, rank)) {
+    LOG(INFO) << "Coordinator is of rank " << rank << "\n";
+    // TODO(wangwei) Coordinator
+    lapis::Coodinator coordinator(global_cotext, mc);
+    coordinator.run();
+  } else if (global_context.IsRoleOf(lapis::kWorker, rank)) {
+    LOG(INFO) << "Start worker of rank " << rank << "\n";
+    // TODO(wangwei) Worker
+    lapis::Worker worker(mc, global_context);
+    worker.run();
+  }
   return 0;
 }

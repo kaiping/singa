@@ -27,7 +27,47 @@ void ModelController::Init(int machine_num,int split_tpye,int split_size)
   }
 	return;
 }
+//  this is called once for every MPI process
+void InitServers(manger, server) {
+  FLAGS_logtostderr = true;
+  FLAGS_logbuflevel = -1;
+/*
+  google::SetUsageMessage("%s: invoke from mpirun, using --runner to select control function.");
+  google::ParseCommandLineFlags(&argc, &argv, false);
+  google::InitGoogleLogging(argv[0]);
+  google::InstallFailureSignalHandler();
+  */
 
+  //  no initializer registered
+  RunInitializers();
+
+  // Assumed that we launch using MPI command
+  //  start network thread for this process
+  NetworkThread::Init();
+
+  if (IsDistributedMemoryManager()){
+  		  DistributedMemoryManager::Init();
+  		  manager = DistributedMemoryManager::Get();
+  		  manager->StartMemoryManager();
+  }
+  else{
+	  server = new MemoryServer();
+	  server->StartMemoryServer();
+  }
+}
+
+//  shutdown the servers
+void Finish(manger, server){
+	if (IsDistributedMemoryManager())
+		manager->ShutdownServers();
+	else
+		server->ShutdownMemoryServer();
+}
+
+
+void Finish() {
+
+}
 void ModelController::Update(const std::vector<Param*> * params)
 {
 	for(int i = 0; i < params->size(); i++)

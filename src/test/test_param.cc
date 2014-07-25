@@ -27,7 +27,7 @@ TEST_F(ParamTest, ConstantInit) {
   bp.set_init_method(ParamProto::kConstant);
   bp.set_value(0.5);
   b.Init(bp);
-  const float * val=b.Content();
+  const float * val=b.content();
   EXPECT_EQ(0.5f, val[0]);
   EXPECT_EQ(0.5f, val[1]);
   EXPECT_EQ(0.5f, val[2]);
@@ -36,7 +36,7 @@ TEST_F(ParamTest, ConstantInit) {
   wp.set_init_method(ParamProto::kConstant);
   wp.set_value(1.5);
   w.Init(wp);
-  val=w.Content();
+  val=w.content();
   EXPECT_EQ(1.5f, val[0]);
   EXPECT_EQ(1.5f, val[3]);
   EXPECT_EQ(1.5f, val[4]);
@@ -47,7 +47,7 @@ TEST_F(ParamTest, UniformInit) {
   bp.set_init_method(ParamProto::kUniform);
   bp.set_value(1.0f);
   b.Init(bp);
-  const float *val=b.Content();
+  const float *val=b.content();
   EXPECT_TRUE(val[0]>=-1 && val[0]<=1);
   EXPECT_TRUE(val[1]>=-1 && val[2]<=1);
   EXPECT_TRUE(val[2]>=-1 && val[2]<=1);
@@ -56,7 +56,7 @@ TEST_F(ParamTest, UniformInit) {
   wp.set_init_method(ParamProto::kUniform);
   wp.set_value(1.0f);
   w.Init(wp);
-  val=w.Content();
+  val=w.content();
   EXPECT_TRUE(val[0]>=-1 && val[0]<=1);
   EXPECT_TRUE(val[3]>=-1 && val[3]<=1);
   EXPECT_TRUE(val[4]>=-1 && val[4]<=1);
@@ -67,7 +67,7 @@ TEST_F(ParamTest, UniformSqrtFanInInit) {
   wp.set_init_method(ParamProto::kUniformSqrtFanIn);
   wp.set_value(2.0f);
   w.Init(wp);
-  const float *val=w.Content();
+  const float *val=w.content();
   EXPECT_TRUE(val[0]>=-2 && val[0]<=2);
   EXPECT_TRUE(val[3]>=-2 && val[3]<=2);
   EXPECT_TRUE(val[4]>=-2 && val[4]<=2);
@@ -81,7 +81,7 @@ TEST_F(ParamTest, UniformSqrtFanInOutInit) {
   wp.set_low(0.f);
   wp.set_high(1.f);
   w.Init(wp);
-  const float *val=w.Content();
+  const float *val=w.content();
   LOG(INFO)<<val[0]<<" "<<val[1]<<" "<<val[2]<<" "<<val[3];
   LOG(INFO)<<val[4]<<" "<<val[5]<<" "<<val[6]<<" "<<val[7];
   LOG(INFO)<<val[8]<<" "<<val[9]<<" "<<val[10]<<" "<<val[11];
@@ -99,7 +99,7 @@ TEST_F(ParamTest, GaussianInit) {
   wp.set_mean(0);
   wp.set_std(1.0f);
   w.Init(wp);
-  const float *val=w.Content();
+  const float *val=w.content();
   LOG(INFO)<<val[0]<<" "<<val[1]<<" "<<val[2]<<" "<<val[3];
   LOG(INFO)<<val[4]<<" "<<val[5]<<" "<<val[6]<<" "<<val[7];
   LOG(INFO)<<val[8]<<" "<<val[9]<<" "<<val[10]<<" "<<val[11];
@@ -111,7 +111,7 @@ TEST_F(ParamTest, GaussianSqrtFanInInit) {
   wp.set_mean(0);
   wp.set_std(1.0f);
   w.Init(wp);
-  const float *val=w.Content();
+  const float *val=w.content();
   LOG(INFO)<<val[0]<<" "<<val[1]<<" "<<val[2]<<" "<<val[3];
   LOG(INFO)<<val[4]<<" "<<val[5]<<" "<<val[6]<<" "<<val[7];
   LOG(INFO)<<val[8]<<" "<<val[9]<<" "<<val[10]<<" "<<val[11];

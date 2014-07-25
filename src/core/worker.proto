@@ -1,0 +1,58 @@
+package lapis;
+
+import "common.proto";
+option optimize_for = SPEED;
+
+message RegisterWorkerRequest {
+  required int32 id = 1;
+}
+
+message ShardAssignment {
+  required int32 table = 1;
+  required int32 shard = 2;
+//  required int32 old_worker = 3;
+  required int32 new_worker = 4;
+}
+
+message ShardAssignmentRequest {
+  repeated ShardAssignment assign = 1;
+}
+
+message ShardInfo {
+  required uint32 table = 1;
+  required uint32 shard = 2;
+  required uint64 entries = 3;
+  required uint32 owner = 4;
+  required int32 type = 5; 
+}
+
+message MethodStats {
+  required double total_time = 1;
+  required double shard_time = 2;
+  required int32 calls = 3;
+  required int32 shard_calls = 4;
+};
+
+
+message HashGet {
+  required uint32 table = 1;
+  required uint32 shard = 2;
+  required uint32 source = 3; 
+  optional bytes key = 4;
+  optional uint32 index = 5;
+}
+
+message TableData {
+  required uint32 source = 1;
+  required uint32 table = 2;
+  required uint32 shard = 3;
+  required bool done = 4;
+  required bytes key = 5; 
+  
+  optional bytes table_data = 6;
+  repeated Arg kv_data = 7;
+   
+  optional bool missing_key = 8;
+}
+
+

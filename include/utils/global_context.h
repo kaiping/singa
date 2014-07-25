@@ -5,19 +5,25 @@
 
 #include <map>
 #include <utility>
+/*
+#include <gflags/gflags.h>
+
+DECLARE_string(system_conf_path);
+DECLARE_string(model_conf_path);
+DECLARE_int32(num_server);
+*/
 
 namespace lapis {
 enum Role {
   kCoordinator,
-  kWoker,
+  kWorker,
   kMemoryServer,
   kDiskServer
 };
 
+//  assume that the coordinator's rank is (num_servers()-1)
 class GlobalContext {
  public:
-  explicit GlobalContext(const char *system_conf_path,
-                         const char *model_conf_path);
   inline bool IsRoleOf(const Role &role, int rank);
 
   int num_memory_servers() {
@@ -30,13 +36,17 @@ class GlobalContext {
     return model_conf_path_;
   }
 
+  static GlobalContext* Get();
+
  private:
+  explicit GlobalContext(const char *system_conf_path,
+                         const char *model_conf_path);
   // map from role to (start_rank, end_rank) pair
   std::map<Role, std::pair<int, int>> role_rank_;
   // # of nodes have memory tables
-  int num_memory_servers;
+  int num_memory_servers_;
   // # of nodes have disk tables
-  int num_disk_servers;
+  int num_disk_servers_;
 
   const char *model_conf_path_;
 };

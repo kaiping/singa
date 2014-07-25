@@ -119,8 +119,21 @@ message EdgeProto {
   optional PoolingMethod pooling_method = 14;
 }
 
+message BlobProto{
+}
+
+// both edge and layer may have params and data blob
+message EdgeProto {
+  optional string name = 1;
+  repeated ParamProto params = 2;
+  optional BlobProto blob = 3;
+}
+
+
+
 message LayerProto {
   required string name = 1;
+<<<<<<< HEAD
   required int32 num_output = 2;
   required string type = 3;
   /*

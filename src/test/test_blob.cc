@@ -18,41 +18,41 @@ class BlobTest : public ::testing::Test {
 };
 
 TEST_F(BlobTest, Constructor) {
-  EXPECT_EQ(blob1->Length(), 0);
+  EXPECT_EQ(blob1->length(), 0);
   EXPECT_EQ(blob1->width(), 0);
   EXPECT_EQ(blob1->height(), 0);
-  EXPECT_EQ(blob3.Length(), 0);
+  EXPECT_EQ(blob3.length(), 0);
   EXPECT_EQ(blob3.width(), 0);
   EXPECT_EQ(blob3.height(), 0);
-  EXPECT_TRUE(blob2->content() == nullptr);
-  EXPECT_TRUE(blob4.content() == nullptr);
+  EXPECT_TRUE(blob2->data() == nullptr);
+  EXPECT_TRUE(blob4.data() == nullptr);
 }
 
 TEST_F(BlobTest, TestReshape) {
   blob1->Reshape(10);
-  EXPECT_EQ(blob1->Length(), 10);
-  EXPECT_EQ(blob1->size(), 1);
+  EXPECT_EQ(blob1->length(), 10);
+  EXPECT_EQ(blob1->num(), 1);
   EXPECT_EQ(blob1->height(), 1);
   EXPECT_EQ(blob1->width(), 10);
-  EXPECT_TRUE(blob1->content() != nullptr);
+  EXPECT_TRUE(blob1->data() != nullptr);
   blob2->Reshape(3, 4);
-  EXPECT_EQ(blob2->Length(), 12);
-  EXPECT_EQ(blob2->size(), 1);
+  EXPECT_EQ(blob2->length(), 12);
+  EXPECT_EQ(blob2->num(), 1);
   EXPECT_EQ(blob2->height(), 3);
   EXPECT_EQ(blob2->width(), 4);
-  EXPECT_TRUE(blob2->content() != nullptr);
+  EXPECT_TRUE(blob2->data() != nullptr);
   blob3.Reshape(3, 4, 5);
-  EXPECT_EQ(blob3.Length(), 60);
-  EXPECT_EQ(blob3.size(), 3);
+  EXPECT_EQ(blob3.length(), 60);
+  EXPECT_EQ(blob3.num(), 3);
   EXPECT_EQ(blob3.height(), 4);
   EXPECT_EQ(blob3.width(), 5);
-  EXPECT_TRUE(blob3.content() != nullptr);
+  EXPECT_TRUE(blob3.data() != nullptr);
   blob4.Reshape(3, 4, 5, 6);
-  EXPECT_EQ(blob4.Length(), 360);
-  EXPECT_EQ(blob4.size(), 3);
+  EXPECT_EQ(blob4.length(), 360);
+  EXPECT_EQ(blob4.num(), 3);
   EXPECT_EQ(blob4.height(), 5);
   EXPECT_EQ(blob4.width(), 6);
-  EXPECT_TRUE(blob4.content() != nullptr);
+  EXPECT_TRUE(blob4.data() != nullptr);
 }
 
 }  // namespace lapis

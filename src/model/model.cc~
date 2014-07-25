@@ -51,7 +51,7 @@ void ModelController::Init(const GlobalContext & gc)
     else
     {
         EmptyMessage* empty;
-        net_->Read(NetworkThread::Get()->size()-1,MTYPE_MC_BROADCAST, empty);
+        net_->Read(NetworkThread::Get()->size()-1,MYTYPE_MC_BROADCAST, empty);
     }
     distributed_store_ = CreateTable(0, my_machine_num, new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<int>);
 	return;

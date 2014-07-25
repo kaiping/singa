@@ -22,7 +22,7 @@ class ModelController {
   //set split type to 0 and split size to 2
   void Init(const GlobalContext & gc);
   void CommenceBroadcast();
-    {if (iscoordinator_) net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());}
+    {if (iscoordinator_) net_->Broadcast(MYTYPE_MC_BROADCAST,EmptyMessage());}
   void Finish()
     {isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();}
   bool IsCoordinator(){return iscoordinator_;}

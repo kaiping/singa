@@ -36,7 +36,7 @@ TEST_F(LabelSourceTest, GetData) {
   Blob b;
   b.Reshape(5, 1, 1);
   ls.GetData(&b);
-  const float *val = b.data();
+  const float *val = b.content();
   EXPECT_EQ(0.0f, val[0]);
   EXPECT_EQ(1.0f, val[1]);
   EXPECT_EQ(4.0f, val[2]);

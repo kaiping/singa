@@ -3,7 +3,7 @@
 //  implementing distributed memory interface
 #include "core/distributed-memory.h"
 #include "core/rpc.h"
-#include "core/worker.pb.h"
+#include "proto/worker.pb.h"
 #include "utils/global_context.h";
 #include "core/table-registry.h"
 

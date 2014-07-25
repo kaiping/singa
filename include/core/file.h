@@ -6,7 +6,7 @@
 
 #include "boost/noncopyable.hpp"
 #include "core/common.h"
-#include "core/common.pb.h"
+#include "proto/common.pb.h"
 #include <lzo/lzo1x.h>
 
 #include <stdio.h>

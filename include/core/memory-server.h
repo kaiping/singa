@@ -12,7 +12,7 @@
 #include "core/table.h"
 #include "core/global-table.h"
 #include "core/local-table.h"
-#include "core/worker.pb.h"
+#include "proto/worker.pb.h"
 
 namespace lapis{
 

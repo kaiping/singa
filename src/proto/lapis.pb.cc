@@ -57,9 +57,6 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* ModelConfProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   ModelConfProto_reflection_ = NULL;
-const ::google::protobuf::Descriptor* float_vector_message_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-  float_vector_message_reflection_ = NULL;
 
 }  // namespace
 
@@ -319,21 +316,6 @@ void protobuf_AssignDesc_lapis_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelConfProto));
-  float_vector_message_descriptor_ = file->message_type(11);
-  static const int float_vector_message_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, myfloat_),
-  };
-  float_vector_message_reflection_ =
-    new ::google::protobuf::internal::GeneratedMessageReflection(
-      float_vector_message_descriptor_,
-      float_vector_message::default_instance_,
-      float_vector_message_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, _unknown_fields_),
-      -1,
-      ::google::protobuf::DescriptorPool::generated_pool(),
-      ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(float_vector_message));
 }
 
 namespace {
@@ -368,8 +350,6 @@ void protobuf_RegisterTypes(const ::std::string&) {
     TrainerProto_descriptor_, &TrainerProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     ModelConfProto_descriptor_, &ModelConfProto::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    float_vector_message_descriptor_, &float_vector_message::default_instance());
 }
 
 }  // namespace
@@ -400,8 +380,6 @@ void protobuf_ShutdownFile_lapis_2eproto() {
   delete TrainerProto::_default_perf_prefix_;
   delete ModelConfProto::default_instance_;
   delete ModelConfProto_reflection_;
-  delete float_vector_message::default_instance_;
-  delete float_vector_message_reflection_;
 }
 
 void protobuf_AddDesc_lapis_2eproto() {
@@ -481,9 +459,7 @@ void protobuf_AddDesc_lapis_2eproto() {
     ".lapis.DataSourceProto\022$\n\013perf_prefix\030\016 "
     "\001(\t:\017tmp/performance\"b\n\016ModelConfProto\022\014"
     "\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetPro"
-    "to\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerProto"
-    "\"\'\n\024float_vector_message\022\017\n\007myfloat\030\001 \003("
-    "\002", 2881);
+    "to\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerProto", 2840);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "lapis.proto", &protobuf_RegisterTypes);
   SystemConfProto::default_instance_ = new SystemConfProto();
@@ -503,7 +479,6 @@ void protobuf_AddDesc_lapis_2eproto() {
       new ::std::string("tmp/performance", 15);
   TrainerProto::default_instance_ = new TrainerProto();
   ModelConfProto::default_instance_ = new ModelConfProto();
-  float_vector_message::default_instance_ = new float_vector_message();
   SystemConfProto::default_instance_->InitAsDefaultInstance();
   DataSourceProto::default_instance_->InitAsDefaultInstance();
   RGBDatum::default_instance_->InitAsDefaultInstance();
@@ -515,7 +490,6 @@ void protobuf_AddDesc_lapis_2eproto() {
   PerformanceProto::default_instance_->InitAsDefaultInstance();
   TrainerProto::default_instance_->InitAsDefaultInstance();
   ModelConfProto::default_instance_->InitAsDefaultInstance();
-  float_vector_message::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_lapis_2eproto);
 }
 
@@ -6525,214 +6499,6 @@ void ModelConfProto::Swap(ModelConfProto* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = ModelConfProto_descriptor_;
   metadata.reflection = ModelConfProto_reflection_;
-  return metadata;
-}
-
-
-// ===================================================================
-
-#ifndef _MSC_VER
-const int float_vector_message::kMyfloatFieldNumber;
-#endif  // !_MSC_VER
-
-float_vector_message::float_vector_message()
-  : ::google::protobuf::Message() {
-  SharedCtor();
-}
-
-void float_vector_message::InitAsDefaultInstance() {
-}
-
-float_vector_message::float_vector_message(const float_vector_message& from)
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  MergeFrom(from);
-}
-
-void float_vector_message::SharedCtor() {
-  _cached_size_ = 0;
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-}
-
-float_vector_message::~float_vector_message() {
-  SharedDtor();
-}
-
-void float_vector_message::SharedDtor() {
-  if (this != default_instance_) {
-  }
-}
-
-void float_vector_message::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* float_vector_message::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return float_vector_message_descriptor_;
-}
-
-const float_vector_message& float_vector_message::default_instance() {
-  if (default_instance_ == NULL) protobuf_AddDesc_lapis_2eproto();
-  return *default_instance_;
-}
-
-float_vector_message* float_vector_message::default_instance_ = NULL;
-
-float_vector_message* float_vector_message::New() const {
-  return new float_vector_message;
-}
-
-void float_vector_message::Clear() {
-  myfloat_.Clear();
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-  mutable_unknown_fields()->Clear();
-}
-
-bool float_vector_message::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
-  ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated float myfloat = 1;
-      case 1: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_myfloat:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 13, input, this->mutable_myfloat())));
-        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
-                   == ::google::protobuf::internal::WireFormatLite::
-                      WIRETYPE_LENGTH_DELIMITED) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, this->mutable_myfloat())));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(13)) goto parse_myfloat;
-        if (input->ExpectAtEnd()) return true;
-        break;
-      }
-
-      default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-  return true;
-#undef DO_
-}
-
-void float_vector_message::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated float myfloat = 1;
-  for (int i = 0; i < this->myfloat_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(
-      1, this->myfloat(i), output);
-  }
-
-  if (!unknown_fields().empty()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        unknown_fields(), output);
-  }
-}
-
-::google::protobuf::uint8* float_vector_message::SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8* target) const {
-  // repeated float myfloat = 1;
-  for (int i = 0; i < this->myfloat_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteFloatToArray(1, this->myfloat(i), target);
-  }
-
-  if (!unknown_fields().empty()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        unknown_fields(), target);
-  }
-  return target;
-}
-
-int float_vector_message::ByteSize() const {
-  int total_size = 0;
-
-  // repeated float myfloat = 1;
-  {
-    int data_size = 0;
-    data_size = 4 * this->myfloat_size();
-    total_size += 1 * this->myfloat_size() + data_size;
-  }
-
-  if (!unknown_fields().empty()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        unknown_fields());
-  }
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void float_vector_message::MergeFrom(const ::google::protobuf::Message& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  const float_vector_message* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const float_vector_message*>(
-      &from);
-  if (source == NULL) {
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    MergeFrom(*source);
-  }
-}
-
-void float_vector_message::MergeFrom(const float_vector_message& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  myfloat_.MergeFrom(from.myfloat_);
-  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
-}
-
-void float_vector_message::CopyFrom(const ::google::protobuf::Message& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void float_vector_message::CopyFrom(const float_vector_message& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool float_vector_message::IsInitialized() const {
-
-  return true;
-}
-
-void float_vector_message::Swap(float_vector_message* other) {
-  if (other != this) {
-    myfloat_.Swap(&other->myfloat_);
-    std::swap(_has_bits_[0], other->_has_bits_[0]);
-    _unknown_fields_.Swap(&other->_unknown_fields_);
-    std::swap(_cached_size_, other->_cached_size_);
-  }
-}
-
-::google::protobuf::Metadata float_vector_message::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = float_vector_message_descriptor_;
-  metadata.reflection = float_vector_message_reflection_;
   return metadata;
 }
 

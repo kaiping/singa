@@ -2,7 +2,7 @@
 #define INCLUDE_CORE_SPARSE-TABLE_H_
 
 #include "core/common.h"
-#include "core/worker.pb.h"
+#include "proto/worker.pb.h"
 #include "core/table.h"
 #include "local-table.h"
 #include <boost/noncopyable.hpp>

@@ -5,8 +5,8 @@
 #include <signal.h>
 #include "core/rpc.h"
 #include "core/common.h"
-#include "core/common.pb.h"
-#include "core/worker.pb.h"
+#include "proto/common.pb.h"
+#include "proto/worker.pb.h"
 #include "utils/global_context.h"
 
 

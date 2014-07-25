@@ -3,7 +3,7 @@
 
 #include "core/common.h"
 #include "core/file.h"
-#include "core/worker.pb.h"
+#include "proto/worker.pb.h"
 #include <boost/thread.hpp>
 
 namespace lapis {

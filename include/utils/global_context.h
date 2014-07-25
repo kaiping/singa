@@ -5,13 +5,8 @@
 
 #include <map>
 #include <utility>
-/*
-#include <gflags/gflags.h>
 
-DECLARE_string(system_conf_path);
-DECLARE_string(model_conf_path);
-DECLARE_int32(num_server);
-*/
+#include <gflags/gflags.h>
 
 namespace lapis {
 enum Role {

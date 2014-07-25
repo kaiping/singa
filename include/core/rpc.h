@@ -19,7 +19,7 @@
 
 #include "core/common.h"
 #include "core/file.h"
-#include "core/common.pb.h"
+#include "proto/common.pb.h"
 
 #include <boost/thread.hpp>
 #include <boost/function.hpp>

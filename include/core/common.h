@@ -19,7 +19,7 @@
 #include "glog/logging.h"
 #include "google/gflags.h"
 
-#include "core/common.pb.h"
+#include "proto/common.pb.h"
 #include "core/hash.h"
 #include "core/static-initializers.h"
 #include "core/stringpiece.h"

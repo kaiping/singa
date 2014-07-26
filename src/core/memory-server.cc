@@ -90,8 +90,6 @@ namespace lapis{
 
 		GlobalTable *t = TableRegistry::Get()->table(put->table());
 		t->ApplyUpdates(*put);
-		int key = 0;
-		key = *reinterpret_cast<const int*>((new StringPiece(put->key()))->data);
 	}
 
 	int MemoryServer::peer_for_partition(int table, int shard){

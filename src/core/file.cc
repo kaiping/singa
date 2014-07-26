@@ -13,7 +13,7 @@ vector<string> File::MatchingFilenames(StringPiece pattern) {
   globbuf.gl_offs = 0;
   glob(pattern.AsString().c_str(), 0, NULL, &globbuf);
   vector<string> out;
-  for (int i = 0; i < globbuf.gl_pathc; ++i) {
+  for (size_t i = 0; i < globbuf.gl_pathc; ++i) {
     out.push_back(globbuf.gl_pathv[i]);
   }
   globfree(&globbuf);
@@ -23,7 +23,7 @@ vector<string> File::MatchingFilenames(StringPiece pattern) {
 vector<File::Info> File::MatchingFileinfo(StringPiece glob) {
   vector<string> names = MatchingFilenames(glob);
   vector<File::Info> out(names.size());
-  for (int i = 0; i < names.size(); ++i) {
+  for (size_t i = 0; i < names.size(); ++i) {
     out[i].name = names[i];
     stat(names[i].c_str(), &out[i].stat);
   }
@@ -40,7 +40,7 @@ void File::Mkdirs(string path) {
 
   vector<StringPiece> pbits = StringPiece::split(path, "/");
   string prefix;
-  for (int i = 0; i < pbits.size(); ++i) {
+  for (size_t i = 0; i < pbits.size(); ++i) {
     pbits[i].strip();
     if (pbits[i].size() == 0) { continue; }
 
@@ -216,7 +216,7 @@ bool RecordFile::readChunk(string *s) {
   int len;
   int bytes_read = fp->read((char*)&len, sizeof(len));
 
-  if (bytes_read < sizeof(int)) {
+  if ((size_t)bytes_read < sizeof(int)) {
     return false;
   }
 

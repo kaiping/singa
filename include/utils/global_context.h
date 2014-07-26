@@ -20,10 +20,10 @@ enum Role {
 //  assume that the coordinator's rank is (num_servers()-1)
 class GlobalContext {
  public:
+  bool IsRoleOf(const Role &role, int rank);
   void Init(const std::string &system_conf_path,
                          const std::string &model_conf_path);
 
-  inline bool IsRoleOf(const Role &role, int rank);
 
   int num_memory_servers() {
     return num_memory_servers_;

@@ -38,10 +38,6 @@ public:
   static std::vector<StringPiece> split(StringPiece sp, StringPiece delim);
 };
 
-static bool operator==(const StringPiece& a, const StringPiece& b) {
-  return a.data == b.data && a.len == b.len;
-}
-
 #ifndef SWIG
 string StringPrintf(StringPiece fmt, ...);
 string VStringPrintf(StringPiece fmt, va_list args);

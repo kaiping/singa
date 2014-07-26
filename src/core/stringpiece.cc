@@ -57,7 +57,7 @@ vector<StringPiece> StringPiece::split(StringPiece sp, StringPiece delim) {
 
 string StringPrintf(StringPiece fmt, ...) {
   va_list l;
-  va_start(l, fmt.AsString().c_str());
+  va_start(l, fmt); //fmt.AsString().c_str());
   string result = VStringPrintf(fmt, l);
   va_end(l);
 

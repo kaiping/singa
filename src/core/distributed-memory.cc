@@ -11,7 +11,7 @@ namespace lapis{
 	DistributedMemoryManager* DistributedMemoryManager::dmm_;
 
 	DistributedMemoryManager::~DistributedMemoryManager(){
-		for (int i=0; i<server_states_.size(); i++){
+		for (size_t i=0; i<server_states_.size(); i++){
 			delete server_states_[i];
 		}
 	}
@@ -68,7 +68,7 @@ namespace lapis{
 	//  then broadcast this to all servers (including non-memory servers)
 	void DistributedMemoryManager::send_table_assignments(){
 		  ShardAssignmentRequest req;
-		  for (int i = 0; i < server_states_.size(); ++i) {
+		  for (size_t i = 0; i < server_states_.size(); ++i) {
 		    ServerState& server = *server_states_[i];
 		    for (unordered_set<TaskId*>::const_iterator j = server.local_shards.begin(); j != server.local_shards.end(); ++j) {
 		      ShardAssignment* s  = req.add_assign();

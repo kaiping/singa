@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <lzo/lzo1x.h>
+//#include <lzo/lzo1x.h>
 #include <mpi.h>
 
 DEFINE_bool(localtest, false, "");

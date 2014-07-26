@@ -192,7 +192,7 @@ void SparseTable<K, V>::resize(int64_t size) {
   size_ = size;
   clear();
 
-  for (int i = 0; i < old_b.size(); ++i) {
+  for (size_t i = 0; i < old_b.size(); ++i) {
     if (old_b[i].in_use) {
       put(old_b[i].k, old_b[i].v);
     }

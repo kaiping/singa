@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "glog/logging.h"
-#include "gflags/gflags.h"
+#include "google/gflags.h"
 
 #include "proto/common.pb.h"
 #include "core/hash.h"
@@ -103,17 +103,4 @@ T unmarshal(Marshal<T>* m, const StringPiece& s) { T out; m->unmarshal(s, &out);
 
 }
 #include "core/tuple.h"
-
-#ifndef SWIG
-// operator<< overload to allow protocol buffers to be output from the logging methods.
-#include <google/protobuf/message.h>
-namespace std{
-static ostream & operator<< (ostream &out, const google::protobuf::Message &q) {
-  string s = q.ShortDebugString();
-  out << s;
-  return out;
-}
-}
-#endif
-
 #endif  // INCLUDE_CORE_COMMON_H_

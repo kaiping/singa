@@ -122,7 +122,7 @@ class Decoder {
   const char* src_p_;
   File* f_src_;
 
-  int pos_;
+  size_t pos_;
  public:
   Decoder(const string& data) : src_(&data), src_p_(data.data()), f_src_(NULL), pos_(0) {}
   Decoder(File* f) : src_(NULL), src_p_(NULL), f_src_(f), pos_(0) {}

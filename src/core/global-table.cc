@@ -10,7 +10,7 @@ void GlobalTable::UpdatePartitions(const ShardInfo& info) {
 }
 
 GlobalTable::~GlobalTable() {
-  for (int i = 0; i < partitions_.size(); ++i) {
+  for (size_t i = 0; i < partitions_.size(); ++i) {
     delete partitions_[i];
   }
 }
@@ -52,7 +52,7 @@ void GlobalTable::clear(int shard) {
 }
 
 bool GlobalTable::empty() {
-  for (int i = 0; i < partitions_.size(); ++i) {
+  for (size_t i = 0; i < partitions_.size(); ++i) {
     if (is_local_shard(i) && !partitions_[i]->empty()) {
       return false;
     }
@@ -61,7 +61,7 @@ bool GlobalTable::empty() {
 }
 
 void GlobalTable::resize(int64_t new_size) {
-  for (int i = 0; i < partitions_.size(); ++i) {
+  for (size_t i = 0; i < partitions_.size(); ++i) {
     if (is_local_shard(i)) {
       partitions_[i]->resize(new_size / partitions_.size());
     }
@@ -117,7 +117,7 @@ void GlobalTable::handle_get(const HashGet& get_req, TableData *get_resp) {
 
 void GlobalTable::SendUpdates() {
   TableData put;
-  for (int i = 0; i < partitions_.size(); ++i) {
+  for (size_t i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
     if (!is_local_shard(i) && !t->empty()) {
       // Always send at least one chunk, to ensure that we clear taint on
@@ -145,7 +145,7 @@ void GlobalTable::SendUpdates() {
 
 int GlobalTable::pending_write_bytes() {
   int64_t s = 0;
-  for (int i = 0; i < partitions_.size(); ++i) {
+  for (size_t i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
     if (!is_local_shard(i)) {
       s += t->size();

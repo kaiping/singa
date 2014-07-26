@@ -22,7 +22,7 @@ public:
   virtual int64_t size() = 0;
   virtual void clear() = 0;
   virtual void resize(int64_t size) = 0;
-
+  virtual ~LocalTable(){}
 protected:
   friend class GlobalTable;
   TableCoder *delta_file_;

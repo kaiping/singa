@@ -33,8 +33,8 @@ vector<File::Info> File::MatchingFileinfo(StringPiece glob) {
 
 void File::Mkdirs(string path) {
   if (path[0] != '/') {
-    char cur[PATH_MAX];
-    getcwd(cur, PATH_MAX);
+    char cur[4096];
+    getcwd(cur, 4096);
     path = string(cur) + "/" + path;
   }
 

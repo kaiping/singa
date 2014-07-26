@@ -3,13 +3,12 @@
 
 #include <google/protobuf/repeated_field.h>
 #include <vector>
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "model/trainer.h"
-
 
 namespace lapis {
 
-static void Trainer::InitDataSource(
+void Trainer::InitDataSource(
   const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
   std::vector<DataSource *> *sources) {
   for (auto &proto : protos) {
@@ -73,7 +72,7 @@ void Trainer::Run(Net *net) {
     while(!HasFinished(step_)) {
       if(ValidateNow(step_))
         Validate(net);
-      Train(net, step);
+      Train(net, step_);
     }
   }
   if(do_test_)

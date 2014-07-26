@@ -21,13 +21,13 @@ class Net {
  public:
   void Init(const NetProto &net);
   void ToProto(NetProto *net_proto);
-  std::vector<Layer *> &Layers() {
+  std::vector<Layer *> &layers() {
     return layers_;
   }
-  std::vector<Edge *> &Edges() {
+  std::vector<Edge *> &edges() {
     return edges_;
   }
-  std::vector<Param *> &Params() {
+  const std::vector<Param *> &params() {
     return params_;
   }
  private:

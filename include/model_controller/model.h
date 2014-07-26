@@ -4,37 +4,40 @@
 #ifndef INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #define INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #include <vector>
-#include "model/layer.h"
+#include "model/param.h"
+#include "utils/global_context.h"
+/*
 #include "core/common.h"
 #include "core/table-registry.h"
 #include "core/global-table.h"
 #include "core/table.h"
 #include "core/distributed-memory.h"
 #include "core/memory-server.h"
+*/
 
 namespace lapis {
 class ModelController {
  public:
-  void GetNextInput(Layer *layer);// to be done
-  void Update(const std::vector<Param*> *params);
-  void GetParam(std::vector<Param*> *params);
-  void Put(const std::vector<Param*> *params);
+  //void GetNextInput(Layer *layer);// to be done
+  void Update(const std::vector<Param*> &params);
+  void Get(const std::vector<Param*> &params);
+  void Put(const std::vector<Param*> &params);
   //set split type to 0 and split size to 2
-  void Init(const GlobalContext & gc);
+  void Init();
   void CommenceBroadcast();
-    {if (iscoordinator_) net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());}
-  void Finish()
-    {isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();}
+  void Finish();
   bool IsCoordinatorProcess(){return iscoordinator_;}
   bool IsDMM(){return isdmm_;}
-  int MyRank(){return my_rank_;}
+  int my_rank(){return my_rank_;}
  private:
   int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;
+  /*
   DistributedMemoryManager* dmm_;
   MemoryServer* ms_;
   NetworkThread * net_;
-  bool iscoordinator_,isdmm_;
   TypedGlobalTable<int, float_vector_message>* distributed_store_;
+  */
+  bool iscoordinator_,isdmm_;
   //ModelConfProto model_conf_proto_;
 };
 }  // namespace lapis

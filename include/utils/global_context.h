@@ -4,6 +4,7 @@
 #define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 
 #include <map>
+#include <string>
 #include <utility>
 
 #include <gflags/gflags.h>
@@ -19,6 +20,9 @@ enum Role {
 //  assume that the coordinator's rank is (num_servers()-1)
 class GlobalContext {
  public:
+  void Init(const std::string &system_conf_path,
+                         const std::string &model_conf_path);
+
   inline bool IsRoleOf(const Role &role, int rank);
 
   int num_memory_servers() {
@@ -28,14 +32,11 @@ class GlobalContext {
     return num_disk_servers_;
   }
   const char *model_conf_path() {
-    return model_conf_path_;
+    return model_conf_path_.c_str();
   }
 
-  static GlobalContext* Get();
-
+  static GlobalContext *Get();
  private:
-  explicit GlobalContext(const char *system_conf_path,
-                         const char *model_conf_path);
   // map from role to (start_rank, end_rank) pair
   std::map<Role, std::pair<int, int>> role_rank_;
   // # of nodes have memory tables
@@ -43,7 +44,8 @@ class GlobalContext {
   // # of nodes have disk tables
   int num_disk_servers_;
 
-  const char *model_conf_path_;
+  std::string model_conf_path_;
+  GlobalContext(){}
 };
 }  // namespace lapis
 

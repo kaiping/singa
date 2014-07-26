@@ -12,9 +12,9 @@ void LogisticLayer::Init(const LayerProto &proto) {
   Layer::Init(proto);
 }
 
-void LogisticLayer::Setup(int batchsize, TrainAlgorithm alg,
+void LogisticLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
                           const std::vector<DataSource *> &sources) {
-  if (alg == TrainAlgorithm::kBackPropagation) {
+  if (alg == TrainerProto::kBackPropagation) {
     Edge* edge=in_edges_[0];
     edge->SetupTopBlob(&activation_);
     edge->SetupTopBlob(&feature_);

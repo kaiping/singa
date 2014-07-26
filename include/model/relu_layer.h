@@ -15,7 +15,7 @@ class ReLULayer : public Layer {
  public:
   static const std::string type;
 
-  virtual void Setup(int batchsize, TrainAlgorithm alg,
+  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
                      const std::vector<DataSource *> &sources);
   virtual void Forward();
   virtual void Backward();

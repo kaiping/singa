@@ -4,8 +4,9 @@
 #ifndef INCLUDE_COORDINATOR_COORDINATOR_H_
 #define INCLUDE_COORDINATOR_COORDINATOR_H_
 #include "utils/global_context.h"
-#include "memory/distributed_memory.h"
 #include "model_controller/model.h"
+
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**
@@ -17,8 +18,7 @@ namespace lapis {
  */
 class Coordinator {
  public:
-  Coordinator(const GlobalContext &global_context,
-              const ModelController &model_controller);
+  Coordinator(ModelController *mc);
   ~Coordinator();
 
   // TODO(wangwei) load all data into distributed disk
@@ -27,11 +27,10 @@ class Coordinator {
   // init and partition parameters of the model,
   // then put it into the distributed memory.
   // Currently, only do initailization. TODO(wangwei), model partition
-  int InitModel();
+  int InitModel(const ModelProto &model_proto);
 
   void Run();
  private:
-  GlobalContext *global_context_;
   ModelController *model_controller_;
   ModelProto model_proto_;
 };

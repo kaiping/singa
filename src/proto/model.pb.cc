@@ -288,8 +288,8 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, test_data_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, perf_prefix_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, alg_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, do_training_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, do_testing_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, do_train_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, do_test_),
   };
   TrainerProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -465,7 +465,7 @@ void protobuf_AddDesc_model_2eproto() {
     "rse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003\"W"
     "\n\020PerformanceProto\022\021\n\tprecision\030\001 \001(\002\022\016\n"
     "\006recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precision5"
-    "0\030\004 \001(\002\"\333\005\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017."
+    "0\030\004 \001(\002\"\325\005\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017."
     "lapis.SGDProto\022!\n\026checkpoint_after_steps"
     "\030\002 \001(\005:\0010\022!\n\026checkpoint_every_steps\030\003 \001("
     "\005:\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/che"
@@ -480,13 +480,13 @@ void protobuf_AddDesc_model_2eproto() {
     "o\022)\n\ttest_data\030\016 \003(\0132\026.lapis.DataSourceP"
     "roto\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/performan"
     "ce\022<\n\003alg\030\020 \001(\0162\035.lapis.TrainerProto.Alg"
-    "orithm:\020kBackPropagation\022\031\n\013do_training\030"
-    "\021 \001(\010:\004true\022\031\n\ndo_testing\030\022 \001(\010:\005false\"="
-    "\n\tAlgorithm\022\024\n\020kBackPropagation\020\001\022\032\n\026kCo"
-    "ntrastiveDivergence\020\002\"^\n\nModelProto\022\014\n\004n"
-    "ame\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022"
-    "$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerProto\"\'\n"
-    "\024float_vector_message\022\017\n\007myfloat\030\001 \003(\002", 2998);
+    "orithm:\020kBackPropagation\022\026\n\010do_train\030\021 \001"
+    "(\010:\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAlgo"
+    "rithm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContrast"
+    "iveDivergence\020\002\"^\n\nModelProto\022\014\n\004name\030\001 "
+    "\001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007tra"
+    "iner\030\003 \002(\0132\023.lapis.TrainerProto\"\'\n\024float"
+    "_vector_message\022\017\n\007myfloat\030\001 \003(\002", 2992);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -5235,8 +5235,8 @@ const int TrainerProto::kValidationDataFieldNumber;
 const int TrainerProto::kTestDataFieldNumber;
 const int TrainerProto::kPerfPrefixFieldNumber;
 const int TrainerProto::kAlgFieldNumber;
-const int TrainerProto::kDoTrainingFieldNumber;
-const int TrainerProto::kDoTestingFieldNumber;
+const int TrainerProto::kDoTrainFieldNumber;
+const int TrainerProto::kDoTestFieldNumber;
 #endif  // !_MSC_VER
 
 TrainerProto::TrainerProto()
@@ -5269,8 +5269,8 @@ void TrainerProto::SharedCtor() {
   validate_every_steps_ = 0;
   perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
   alg_ = 1;
-  do_training_ = true;
-  do_testing_ = false;
+  do_train_ = true;
+  do_test_ = false;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -5347,8 +5347,8 @@ void TrainerProto::Clear() {
     alg_ = 1;
   }
   if (_has_bits_[16 / 32] & (0xffu << (16 % 32))) {
-    do_training_ = true;
-    do_testing_ = false;
+    do_train_ = true;
+    do_test_ = false;
   }
   train_data_.Clear();
   validation_data_.Clear();
@@ -5617,35 +5617,35 @@ bool TrainerProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(136)) goto parse_do_training;
+        if (input->ExpectTag(136)) goto parse_do_train;
         break;
       }
 
-      // optional bool do_training = 17 [default = true];
+      // optional bool do_train = 17 [default = true];
       case 17: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_do_training:
+         parse_do_train:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &do_training_)));
-          set_has_do_training();
+                 input, &do_train_)));
+          set_has_do_train();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(144)) goto parse_do_testing;
+        if (input->ExpectTag(144)) goto parse_do_test;
         break;
       }
 
-      // optional bool do_testing = 18 [default = false];
+      // optional bool do_test = 18 [default = false];
       case 18: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_do_testing:
+         parse_do_test:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &do_testing_)));
-          set_has_do_testing();
+                 input, &do_test_)));
+          set_has_do_test();
         } else {
           goto handle_uninterpreted;
         }
@@ -5768,14 +5768,14 @@ void TrainerProto::SerializeWithCachedSizes(
       16, this->alg(), output);
   }
 
-  // optional bool do_training = 17 [default = true];
-  if (has_do_training()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(17, this->do_training(), output);
+  // optional bool do_train = 17 [default = true];
+  if (has_do_train()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(17, this->do_train(), output);
   }
 
-  // optional bool do_testing = 18 [default = false];
-  if (has_do_testing()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(18, this->do_testing(), output);
+  // optional bool do_test = 18 [default = false];
+  if (has_do_test()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(18, this->do_test(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -5890,14 +5890,14 @@ void TrainerProto::SerializeWithCachedSizes(
       16, this->alg(), target);
   }
 
-  // optional bool do_training = 17 [default = true];
-  if (has_do_training()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(17, this->do_training(), target);
+  // optional bool do_train = 17 [default = true];
+  if (has_do_train()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(17, this->do_train(), target);
   }
 
-  // optional bool do_testing = 18 [default = false];
-  if (has_do_testing()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(18, this->do_testing(), target);
+  // optional bool do_test = 18 [default = false];
+  if (has_do_test()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(18, this->do_test(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -6005,13 +6005,13 @@ int TrainerProto::ByteSize() const {
 
   }
   if (_has_bits_[16 / 32] & (0xffu << (16 % 32))) {
-    // optional bool do_training = 17 [default = true];
-    if (has_do_training()) {
+    // optional bool do_train = 17 [default = true];
+    if (has_do_train()) {
       total_size += 2 + 1;
     }
 
-    // optional bool do_testing = 18 [default = false];
-    if (has_do_testing()) {
+    // optional bool do_test = 18 [default = false];
+    if (has_do_test()) {
       total_size += 2 + 1;
     }
 
@@ -6112,11 +6112,11 @@ void TrainerProto::MergeFrom(const TrainerProto& from) {
     }
   }
   if (from._has_bits_[16 / 32] & (0xffu << (16 % 32))) {
-    if (from.has_do_training()) {
-      set_do_training(from.do_training());
+    if (from.has_do_train()) {
+      set_do_train(from.do_train());
     }
-    if (from.has_do_testing()) {
-      set_do_testing(from.do_testing());
+    if (from.has_do_test()) {
+      set_do_test(from.do_test());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -6169,8 +6169,8 @@ void TrainerProto::Swap(TrainerProto* other) {
     test_data_.Swap(&other->test_data_);
     std::swap(perf_prefix_, other->perf_prefix_);
     std::swap(alg_, other->alg_);
-    std::swap(do_training_, other->do_training_);
-    std::swap(do_testing_, other->do_testing_);
+    std::swap(do_train_, other->do_train_);
+    std::swap(do_test_, other->do_test_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

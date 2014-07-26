@@ -14,14 +14,14 @@ CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 	$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 LIBRARIES := glog gflag protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core
+						boost_filesystem opencv_highgui opencv_imgproc opencv_core gomp
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 
 ###############################################################################
 # Build core of Lapis into .a and .so library
 ###############################################################################
-
+.PHONY: proto core init model utils flint clean
 ###############################################################################
 # Build headers and sources under Proto/, i.e. the google protobuf messages
 ###############################################################################
@@ -33,15 +33,15 @@ PROTO_SRCS :=$(PROTOS:.proto=.pb.cc)
 PROTO_HDRS :=$(patsubst src%, include%, $(PROTOS:.proto=.pb.h))
 PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
-proto: init genproto $(PROTO_OBJS)
+proto: init $(PROTO_OBJS)
 
-genproto:$(PROTOS)
+$(PROTO_HDRS) $(PROTO_SRCS): $(PROTOS)
 	protoc --proto_path=src/proto --cpp_out=src/proto $(PROTOS)
 	mkdir -p include/proto/
 	cp src/proto/*.pb.h include/proto/
 	@echo
 
-$(PROTO_OBJS): genproto $(PROTO_HDRS) $(PROTO_SRCS)
+$(PROTO_OBJS): $(PROTO_HDRS) $(PROTO_SRCS)
 
 $(PROTO_OBJS): $(BUILD_DIR)/%.o : %.cc
 	$(CXX) $< $(CXXFLAGS) -c -o $@
@@ -54,7 +54,7 @@ UTL_HDRS := $(shell find include/utils -name "*.h" -type f)
 UTL_SRCS :=$(shell find src/utils -name "*.cc" -type f)
 UTL_OBJS :=$(addprefix $(BUILD_DIR)/, $(UTL_SRCS:.cc=.o))
 
-utils: init proto $(UTL_OBJS) $(UTL_HDRS) $(UTL_SRCS)
+utils: init proto $(UTL_OBJS)
 
 $(UTL_OBJS): $(UTL_HDRS) $(UTL_SRCS)
 
@@ -69,7 +69,7 @@ CORE_HDRS := $(shell find include/core -name "*.h" -type f)
 CORE_SRCS :=$(shell find src/core -name "*.cc" -type f)
 CORE_OBJS :=$(addprefix $(BUILD_DIR)/, $(CORE_SRCS:.cc=.o))
 
-core: init proto utils $(CORE_OBJS) $(CORRD_HDRS) $(CORE_SRCS)
+core: init proto utils $(CORE_OBJS)
 
 $(CORE_OBJS): $(CORRD_HDRS) $(CORE_SRCS)
 
@@ -84,7 +84,7 @@ MODEL_HDRS := $(shell find include/model -name "*.h" -type f)
 MODEL_SRCS :=$(shell find src/model -name "*.cc" -type f)
 MODEL_OBJS :=$(addprefix $(BUILD_DIR)/, $(MODEL_SRCS:.cc=.o))
 
-model: init proto utils $(MODEL_OBJS) $(MODEL_HDRS) $(MODEL_SRCS)
+model: init proto utils $(MODEL_OBJS)
 
 $(MODEL_OBJS): $(MODEL_HDRS) $(MODEL_SRCS)
 
@@ -106,9 +106,9 @@ MAIN_SRCS := src/main.cc $(WORKER_SRCS) $(CORRD_SRCS) $(MC_SRCS)
 MAIN_HDRS:= $(WORKER_HDRS) $(CORRD_HDRS) $(MC_HDRS)
 MAIN_OBJS :=$(addprefix $(BUILD_DIR)/, $(MAIN_SRCS:.cc=.o))
 
-main: init proto model core $(MC_OBJS) $(MC_SRCS) $(MC_HDRS)
+main: init proto model $(MAIN_OBJS)
 
-$(MC_OBJS): $(MC_SRCS) $(MC_HDRS)
+$(MAIN_OBJS): $(MAIN_SRCS) $(MAIN_HDRS)
 
 $(MAIN_OBJS): $(BUILD_DIR)/%.o : %.cc
 	$(CXX) $< $(CXXFLAGS) -c -o $@
@@ -137,13 +137,13 @@ LAPIS_HDRS: =$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
 LAPIS_SRCS: =$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
 LAPIS_OBJS := $(CORE_OBJS) $(MODEL_OBJS) $(MAIN_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
 
-lapis: lapis.a $(LAPIS_HDRS) $(LAPIS_SRCS)
+lapis: init lapis.a
 
-lapis.a: init $(LAPIS_OBJS)
+lapis.a: $(LAPIS_OBJS)
 	ar rcs lapis.a $(LAPIS_OBJS)
 	@echo
 
-lapis.so: init $(LAPIS_OBJS)
+lapis.so: $(LAPIS_OBJS)
 	$(CXX) -shared -o lapis.so $(LAPIS_OBJS) $(CXXFLAGS) $(LDFLAGS)
 	@echo
 

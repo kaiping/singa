@@ -196,8 +196,8 @@ message TrainerProto {
     kContrastiveDivergence = 2;
   }
   optional Algorithm alg= 16 [default = kBackPropagation];
-  optional bool do_training = 17 [default = true];
-  optional bool do_testing = 18 [default = false];
+  optional bool do_train= 17 [default = true];
+  optional bool do_test= 18 [default = false];
 }
 
 message ModelProto {

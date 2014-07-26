@@ -1911,19 +1911,19 @@ class TrainerProto : public ::google::protobuf::Message {
   inline ::lapis::TrainerProto_Algorithm alg() const;
   inline void set_alg(::lapis::TrainerProto_Algorithm value);
 
-  // optional bool do_training = 17 [default = true];
-  inline bool has_do_training() const;
-  inline void clear_do_training();
-  static const int kDoTrainingFieldNumber = 17;
-  inline bool do_training() const;
-  inline void set_do_training(bool value);
+  // optional bool do_train = 17 [default = true];
+  inline bool has_do_train() const;
+  inline void clear_do_train();
+  static const int kDoTrainFieldNumber = 17;
+  inline bool do_train() const;
+  inline void set_do_train(bool value);
 
-  // optional bool do_testing = 18 [default = false];
-  inline bool has_do_testing() const;
-  inline void clear_do_testing();
-  static const int kDoTestingFieldNumber = 18;
-  inline bool do_testing() const;
-  inline void set_do_testing(bool value);
+  // optional bool do_test = 18 [default = false];
+  inline bool has_do_test() const;
+  inline void clear_do_test();
+  static const int kDoTestFieldNumber = 18;
+  inline bool do_test() const;
+  inline void set_do_test(bool value);
 
   // @@protoc_insertion_point(class_scope:lapis.TrainerProto)
  private:
@@ -1953,10 +1953,10 @@ class TrainerProto : public ::google::protobuf::Message {
   inline void clear_has_perf_prefix();
   inline void set_has_alg();
   inline void clear_has_alg();
-  inline void set_has_do_training();
-  inline void clear_has_do_training();
-  inline void set_has_do_testing();
-  inline void clear_has_do_testing();
+  inline void set_has_do_train();
+  inline void clear_has_do_train();
+  inline void set_has_do_test();
+  inline void clear_has_do_test();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -1979,8 +1979,8 @@ class TrainerProto : public ::google::protobuf::Message {
   ::std::string* perf_prefix_;
   static ::std::string* _default_perf_prefix_;
   int alg_;
-  bool do_training_;
-  bool do_testing_;
+  bool do_train_;
+  bool do_test_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(18 + 31) / 32];
@@ -4918,48 +4918,48 @@ inline void TrainerProto::set_alg(::lapis::TrainerProto_Algorithm value) {
   alg_ = value;
 }
 
-// optional bool do_training = 17 [default = true];
-inline bool TrainerProto::has_do_training() const {
+// optional bool do_train = 17 [default = true];
+inline bool TrainerProto::has_do_train() const {
   return (_has_bits_[0] & 0x00010000u) != 0;
 }
-inline void TrainerProto::set_has_do_training() {
+inline void TrainerProto::set_has_do_train() {
   _has_bits_[0] |= 0x00010000u;
 }
-inline void TrainerProto::clear_has_do_training() {
+inline void TrainerProto::clear_has_do_train() {
   _has_bits_[0] &= ~0x00010000u;
 }
-inline void TrainerProto::clear_do_training() {
-  do_training_ = true;
-  clear_has_do_training();
+inline void TrainerProto::clear_do_train() {
+  do_train_ = true;
+  clear_has_do_train();
 }
-inline bool TrainerProto::do_training() const {
-  return do_training_;
+inline bool TrainerProto::do_train() const {
+  return do_train_;
 }
-inline void TrainerProto::set_do_training(bool value) {
-  set_has_do_training();
-  do_training_ = value;
+inline void TrainerProto::set_do_train(bool value) {
+  set_has_do_train();
+  do_train_ = value;
 }
 
-// optional bool do_testing = 18 [default = false];
-inline bool TrainerProto::has_do_testing() const {
+// optional bool do_test = 18 [default = false];
+inline bool TrainerProto::has_do_test() const {
   return (_has_bits_[0] & 0x00020000u) != 0;
 }
-inline void TrainerProto::set_has_do_testing() {
+inline void TrainerProto::set_has_do_test() {
   _has_bits_[0] |= 0x00020000u;
 }
-inline void TrainerProto::clear_has_do_testing() {
+inline void TrainerProto::clear_has_do_test() {
   _has_bits_[0] &= ~0x00020000u;
 }
-inline void TrainerProto::clear_do_testing() {
-  do_testing_ = false;
-  clear_has_do_testing();
+inline void TrainerProto::clear_do_test() {
+  do_test_ = false;
+  clear_has_do_test();
 }
-inline bool TrainerProto::do_testing() const {
-  return do_testing_;
+inline bool TrainerProto::do_test() const {
+  return do_test_;
 }
-inline void TrainerProto::set_do_testing(bool value) {
-  set_has_do_testing();
-  do_testing_ = value;
+inline void TrainerProto::set_do_test(bool value) {
+  set_has_do_test();
+  do_test_ = value;
 }
 
 // -------------------------------------------------------------------

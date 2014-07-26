@@ -5,7 +5,7 @@
 #include "model/linear_layer.h"
 
 namespace lapis {
-void LinearLayer::Setup(int batchsize, TrainAlgorithm alg,
+void LinearLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
                      const std::vector<DataSource *> &sources) {
   CHECK(in_edges_.size()==1);
   in_edges_[0]->SetupTopBlob(&fea_);

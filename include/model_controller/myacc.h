@@ -3,6 +3,8 @@
 
 #ifndef INCLUDE_MC_MYACC_H_
 #define INCLUDE_MC_MYACC_H_
+#include "core/common.h"
+#include "proto/model.pb.h"
 
 struct MyAcc : public Accumulator<float_vector_message>
 {
@@ -18,3 +20,4 @@ struct MyAcc : public Accumulator<float_vector_message>
         return;
     }
 }
+#endif  // INCLUDE_MC_MYACC_H_

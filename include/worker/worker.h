@@ -3,12 +3,15 @@
 
 #ifndef INCLUDE_WORKER_WORKER_H_
 #define INCLUDE_WORKER_WORKER_H_
+#include "model_controller/model.h"
+#include "utils/global_context.h"
+
 
 namespace lapis {
 class Worker {
  public:
-  Worker(const GlobalContext *gc, ModelController *mc);
-  void run();
+  Worker(ModelController *mc);
+  void Run();
 
  private:
   GlobalContext *global_context_;

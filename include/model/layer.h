@@ -19,11 +19,6 @@
  */
 
 namespace lapis {
-
-/**
- * forward declaration of TrainAlgorithm.
- */
-enum class TrainAlgorithm;
 /**
  * forward declaration of Trainer.
  */
@@ -62,7 +57,7 @@ class Layer {
    * TODO (wangwei), add support for Contrastive Divergence
    * @param sources data providers, can be null for layers do not accept inputs
    */
-  virtual void Setup(int batchsize, TrainAlgorithm alg,
+  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
                      const std::vector<DataSource *> &sources);
   /**
    * Forward propagate features through the Net

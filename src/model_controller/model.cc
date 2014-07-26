@@ -6,19 +6,20 @@
 
 #include "model_controller/myacc.h"
 #include "model_controller/model.h"
+/*
 #include "core/common.h"
 #include "core/table-registry.h"
 #include "core/global-table.h"
 #include "core/table.h"
 #include "core/distributed-memory.h"
 #include "core/memory-server.h"
-
+*/
 namespace lapis {
 
-void ModelController::Init(const GlobalContext & gc)
+void ModelController::Init()
 {
 	my_split_tpye_ = 0;
-	my_machine_num_ = gc.num_memory_servers();
+	my_machine_num_ = GlobalContext::Get()->num_memory_servers();
 	my_split_size_ = 2;
 
     //start the lower level network part
@@ -138,5 +139,13 @@ void ModelController::GetParam(std::vector<Param*> &params)
     return;
 }
 
+
+void Model::CommenceBroadcast() {
+  if (iscoordinator_)
+    net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());
+}
+void Model::Finish() {
+  isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();
+}
 
 }  // namespace lapis

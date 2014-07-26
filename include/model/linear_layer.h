@@ -19,7 +19,7 @@ class LinearLayer : public Layer {
    * @param alg not used
    * @param sources not used
    */
-  virtual void Setup(int batchsize, TrainAlgorithm alg,
+  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
                      const std::vector<DataSource *> &sources);
   /**
    * Call ::Forward() function of in coming Edge.

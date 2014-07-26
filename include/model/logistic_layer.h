@@ -25,7 +25,7 @@ class LogisticLayer : public Layer {
   static const std::string type;
 
   virtual void Init(const LayerProto &proto);
-  virtual void Setup(int batchsize, TrainAlgorithm alg,
+  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
                      const std::vector<DataSource *> &sources) = 0;
   /**
    * There may be multiple incoming edges, it sums data/activations from all

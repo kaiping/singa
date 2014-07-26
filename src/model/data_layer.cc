@@ -18,7 +18,7 @@ void DataLayer::ToProto(LayerProto *layer_proto) {
   layer_proto->set_data_source(data_source_name_);
 }
 
-void DataLayer::Setup(int batchsize, TrainAlgorithm alg,
+void DataLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
                       const std::vector<DataSource *> &sources) {
   for (auto *source : sources) {
     if (source->name() == data_source_name_) {

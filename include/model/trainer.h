@@ -20,12 +20,6 @@ enum class Phase {
   kValidation = 2,
   kTest = 3
 };
-enum class TrainAlgorithm {
-  kBackPropagation,
-  kCD,
-  kPCD
-};
-
 /**
  * Forward declaration of Net class
  */
@@ -56,7 +50,7 @@ class Trainer {
    * @param net the Net object to be trained
    * @param step the current training step, e.g., id of the mini-batch
    */
-  virtual void Train(Net *net, const int step) = 0;
+  virtual void Train(Net *net, int step) = 0;
   /**
    * test performance on validation dataset
    * @param net the Net object
@@ -67,6 +61,12 @@ class Trainer {
    * @param net the current Net object
    */
   virtual void Test(Net *net) = 0;
+  /**
+   * Run the trainer
+   * @param net the neural network
+   */
+  virtual void Run(Net* net);
+
   /**
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()
@@ -95,7 +95,7 @@ class Trainer {
    */
   const bool ValidateNow(const int step) {
     if (validate_after_steps_ > 0 && step >= validate_after_steps_) {
-      if ((step - validate_after_steps_) % validate_very_steps_ == 0)
+      if ((step - validate_after_steps_) % validate_every_steps_ == 0)
         return true;
     }
     return false;
@@ -104,12 +104,12 @@ class Trainer {
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().
    */
-  void IncStep() {step++;}
+  void IncStep() {step_++;}
   /**
    * return the current training step
    * the ::Train() has been called such num of times
    */
-  const int step( return step_;)
+  const int step() {return step_;}
 
  protected:
   //! current phase, need this field to change the data sources for input layer

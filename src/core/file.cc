@@ -172,80 +172,6 @@ void Encoder::write_bytes(const char* a, int len) {
   else { out_f_->write(a, len); }
 }
 
-int LZOFile::write(const char* data, int len) {
-  int left = len;
-  do {
-    if (block.len + left > kBlockSize) {
-      write_block();
-    }
-
-    int bytes_to_write = min(kBlockSize - block.len, left);
-    memcpy(block.raw + block.len, data, bytes_to_write);
-    block.len += bytes_to_write;
-    left -= bytes_to_write;
-    data += bytes_to_write;
-  } while (left > 0);
-
-  return len;
-}
-
-int LZOFile::read(char* data, int len) {
-  int left = len;
-  do {
-//    LOG_EVERY_N(INFO, 1000) << MP(left, block.pos, block.len);
-    if (block.pos == block.len) {
-      if (!read_block()) {
-        return 0;
-      }
-    }
-
-    int bytes_to_read = min(left, block.len - block.pos);
-    memcpy(data, block.raw + block.pos, bytes_to_read);
-    block.pos += bytes_to_read;
-    pos_ += bytes_to_read;
-    left -= bytes_to_read;
-    data += bytes_to_read;
-  } while (left > 0);
-
-  return len;
-}
-
-void LZOFile::write_block() {
-  if (block.len == 0)
-    return;
-
-//  LOG(INFO) << "Writing... " << block.len << " : " << f_->tell();
-
-  lzo_uint comp_size = kCompressedBlockSize;
-  CHECK_EQ(0, lzo1x_1_15_compress((unsigned char*)block.raw, block.len,
-                                  (unsigned char*)block.comp, (lzo_uint*)&comp_size,
-                                  (unsigned char*)block.scratch));
-
-  f_->write((char*)&comp_size, sizeof(int));
-  f_->write(block.comp, comp_size);
-  block.len = 0;
-}
-
-bool LZOFile::read_block() {
-  block.len = kBlockSize;
-  int comp_size;
-  if (f_->read((char*)&comp_size, sizeof(int)) != sizeof(int)) {
-    block.len = 0;
-    block.pos = 0;
-    return false;
-  }
-
-  CHECK_EQ(f_->read(block.comp, comp_size), comp_size);
-  CHECK_GT(comp_size, 0);
-  CHECK_EQ(0, lzo1x_decompress_safe((unsigned char*)block.comp, comp_size,
-                                    (unsigned char*)block.raw, (lzo_uint*)&block.len,
-                                    (unsigned char*)block.scratch));
-
-//  LOG(INFO) << "Read block of size: " << MP(block.len, comp_size);
-  block.pos = 0;
-  return true;
-}
-
 RecordFile::RecordFile(const string& path, const string& mode, int compression) {
   path_ = path;
   mode_ = mode;
@@ -257,7 +183,7 @@ RecordFile::RecordFile(const string& path, const string& mode, int compression) 
   }
 
   if (compression == LZO) {
-    fp = new LZOFile((LocalFile*)fp, mode);
+    fp = NULL;//new LZOFile((LocalFile*)fp, mode);
   }
 }
 

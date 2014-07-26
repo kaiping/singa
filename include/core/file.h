@@ -7,7 +7,6 @@
 #include "boost/noncopyable.hpp"
 #include "core/common.h"
 #include "proto/common.pb.h"
-#include <lzo/lzo1x.h>
 
 #include <stdio.h>
 #include <glob.h>
@@ -172,65 +171,6 @@ class Decoder {
     if (src_) { pos_ = p; }
     else { pos_ = p; f_src_->seek(pos_); }
   }
-};
-
-class LZOFile : public File, private boost::noncopyable {
- public:
-  LZOFile(const string& fname, const string& mode) {
-    init(new LocalFile(fname, mode), mode);
-  }
-
-  LZOFile(LocalFile* target, const string& mode) {
-    init(target, mode);
-  }
-
-  virtual ~LZOFile() {
-    write_block();
-    delete f_;
-  }
-
-  bool read_line(string *out) {
-    //LOG(FATAL) << "Not implemented";
-  }
-
-  virtual int read(char *buffer, int len);
-  virtual int write(const char* buffer, int len);
-  void seek(int64_t pos) {} //LOG(FATAL) << "Not seekable."; }
-  uint64_t tell() { return pos_; }
-
-  const char* name() { return f_->name(); }
-  bool eof() { return f_->eof() && block.pos == block.len; }
-  void sync() { f_->sync(); }
-
- private:
-  void init(LocalFile* f, const string& mode) {
-    f_ = f;
-    pos_ = 0;
-    if (mode == "r") {
-      read_block();
-    } else {
-      block.len = block.pos = 0;
-    }
-  }
-
-  LocalFile *f_;
-  long pos_;
-
-  void write_block();
-  bool read_block();
-
-  static const int kBlockSize = 512000;
-  static const int kCompressedBlockSize = kBlockSize + (kBlockSize / 16) + 64 + 3;
-
-  struct Block {
-    char raw[kBlockSize];
-    char comp[kCompressedBlockSize];
-    char scratch[LZO1X_1_15_MEM_COMPRESS];
-    int pos;
-    int len;
-  };
-
-  Block block;
 };
 
 class RecordFile {

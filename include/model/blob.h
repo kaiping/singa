@@ -7,7 +7,7 @@
 #include <vector>
 #include <cstring>
 
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**

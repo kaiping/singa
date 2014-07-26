@@ -9,7 +9,7 @@
 #include <map>
 #include <functional>
 
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**

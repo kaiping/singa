@@ -4,7 +4,7 @@
 #define INCLUDE_MODEL_RELU_LAYER_H_
 
 #include "layer.h"
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**

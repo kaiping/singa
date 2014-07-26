@@ -13,76 +13,150 @@ BUILD_DIR := build
 CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 	$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-
+LIBRARIES := glog gflag protobuf boost_system boost_regex \
+						boost_filesystem opencv_highgui opencv_imgproc opencv_core
+LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
+						$(foreach library, $(LIBRARIES), -l$(library))
 
 ###############################################################################
 # Build core of Lapis into .a and .so library
 ###############################################################################
-LIBRARIES := glog protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core #gflag
-LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
-						$(foreach library, $(LIBRARIES), -l$(library))
 
-# ignore some files temporarily
-FILTER_HDRS := include/coordinator/coordinator.h \
-							include/worker/worker.h \
-							include/utils/global_cotext.h \
-							include/model/row_param.h
-
-LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
-LAPIS_HDRS := $(filter-out $(FILTER_HDRS), $(LAPIS_HDRS))
-
-FILTER_SRCS := src/coordinator/coordinator.cc \
-							src/worker/worker.cc \
-							src/main.cc \
-							src/utils/start_deamon.cc \
-							src/utils/global_cotext.cc \
-							src/model/row_param.cc
-
-LAPIS_SRCS := $(shell find src/ -path "src/test" -prune -o -name "*.cc" -print)
-LAPIS_SRCS :=$(filter-out $(FILTER_SRCS), $(LAPIS_SRCS))
-
+###############################################################################
+# Build headers and sources under Proto/, i.e. the google protobuf messages
+###############################################################################
 # find user defined .proto file, and then compute the corresponding .h, .cc
 # files, which cannot be found by shell find, because they haven't been
 # generated currently
 PROTOS := $(shell find src/proto/ -name "*.proto")
 PROTO_SRCS :=$(PROTOS:.proto=.pb.cc)
 PROTO_HDRS :=$(patsubst src%, include%, $(PROTOS:.proto=.pb.h))
+PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
+
+proto: init genproto $(PROTO_OBJS)
+
+genproto:$(PROTOS)
+	protoc --proto_path=src/proto --cpp_out=src/proto $(PROTOS)
+	mkdir -p include/proto/
+	cp src/proto/*.pb.h include/proto/
+	@echo
+
+$(PROTO_OBJS): genproto $(PROTO_HDRS) $(PROTO_SRCS)
+
+$(PROTO_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
+###############################################################################
+# Build sources under utils/ folder
+###############################################################################
+UTL_HDRS := $(shell find include/utils -name "*.h" -type f)
+UTL_SRCS :=$(shell find src/utils -name "*.cc" -type f)
+UTL_OBJS :=$(addprefix $(BUILD_DIR)/, $(UTL_SRCS:.cc=.o))
+
+utils: init proto $(UTL_OBJS) $(UTL_HDRS) $(UTL_SRCS)
+
+$(UTL_OBJS): $(UTL_HDRS) $(UTL_SRCS)
+
+$(UTL_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
+###############################################################################
+# Build sources under core/ folder
+###############################################################################
+CORE_HDRS := $(shell find include/core -name "*.h" -type f)
+CORE_SRCS :=$(shell find src/core -name "*.cc" -type f)
+CORE_OBJS :=$(addprefix $(BUILD_DIR)/, $(CORE_SRCS:.cc=.o))
+
+core: init proto utils $(CORE_OBJS) $(CORRD_HDRS) $(CORE_SRCS)
+
+$(CORE_OBJS): $(CORRD_HDRS) $(CORE_SRCS)
+
+$(CORE_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
+###############################################################################
+# Set headers and sources for compiling classes under model/ folder
+###############################################################################
+MODEL_HDRS := $(shell find include/model -name "*.h" -type f)
+MODEL_SRCS :=$(shell find src/model -name "*.cc" -type f)
+MODEL_OBJS :=$(addprefix $(BUILD_DIR)/, $(MODEL_SRCS:.cc=.o))
+
+model: init proto utils $(MODEL_OBJS) $(MODEL_HDRS) $(MODEL_SRCS)
+
+$(MODEL_OBJS): $(MODEL_HDRS) $(MODEL_SRCS)
+
+$(MODEL_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
+###############################################################################
+# Build main.cc, coordinator worker and model_controller
+###############################################################################
+WORKER_HDRS:=$(shell find include/worker -name "*.h" -type f)
+CORRD_HDRS:=$(shell find include/coordinator -name "*.h" -type f)
+MC_HDRS:=$(shell find include/model_controller/ -name "*.h" -type f)
+WORKER_SRCS:=$(shell find src/worker -name "*.cc" -type f)
+CORRD_SRCS:=$(shell find src/coordinator -name "*.cc" -type f)
+MC_SRCS:=$(shell find src/model_controller/ -name "*.cc" -type f)
+
+MAIN_SRCS := src/main.cc $(WORKER_SRCS) $(CORRD_SRCS) $(MC_SRCS)
+MAIN_HDRS:= $(WORKER_HDRS) $(CORRD_HDRS) $(MC_HDRS)
+MAIN_OBJS :=$(addprefix $(BUILD_DIR)/, $(MAIN_SRCS:.cc=.o))
+
+main: init proto model core $(MC_OBJS) $(MC_SRCS) $(MC_HDRS)
+
+$(MC_OBJS): $(MC_SRCS) $(MC_HDRS)
+
+$(MAIN_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
+#LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
+#LAPIS_HDRS := $(filter-out $(FILTER_HDRS), $(LAPIS_HDRS))
+
+# ignore some files temporarily
+# FILTER_HDRS := include/model/row_param.h
+
+#FILTER_SRCS := src/model/row_param.cc
+
+#LAPIS_SRCS := $(shell find src/ -path "src/test" -prune -o -name "*.cc" -print)
+#LAPIS_SRCS :=$(filter-out $(FILTER_SRCS), $(LAPIS_SRCS))
 
 # must union the headers and srcs of proto with lapis_srcs and lapis_hdrs
 # because shell find cannot find these proto files before running protoc to
 # generate them
-LAPIS_SRCS :=$(sort $(LAPIS_SRCS) $(PROTO_SRCS))
-LAPIS_HDRS :=$(sort $(LAPIS_HDRS) $(PROTO_HDRS))
+#LAPIS_SRCS :=$(sort $(LAPIS_SRCS) $(PROTO_SRCS))
+#LAPIS_HDRS :=$(sort $(LAPIS_HDRS) $(PROTO_HDRS))
 
 # each lapis src file will generate a .o file
-LAPIS_OBJS :=$(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o))
+#LAPIS_OBJS :=$(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o))
+LAPIS_HDRS: =$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
+LAPIS_SRCS: =$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
+LAPIS_OBJS := $(CORE_OBJS) $(MODEL_OBJS) $(MAIN_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
 
-lapis.a: folders $(LAPIS_OBJS)
+lapis: lapis.a $(LAPIS_HDRS) $(LAPIS_SRCS)
+
+lapis.a: init $(LAPIS_OBJS)
 	ar rcs lapis.a $(LAPIS_OBJS)
 	@echo
 
-lapis.so: folders $(LAPIS_OBJS)
+lapis.so: init $(LAPIS_OBJS)
 	$(CXX) -shared -o lapis.so $(LAPIS_OBJS) $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-$(LAPIS_OBJS): proto $(LAPIS_HDRS)
 
-$(LAPIS_OBJS): $(BUILD_DIR)/%.o : %.cc
-	$(CXX) $< $(CXXFLAGS) -c -o $@
-	@echo
+#$(LAPIS_OBJS): $(BUILD_DIR)/%.o : %.cc
+#	$(CXX) $< $(CXXFLAGS) -c -o $@
+#	@echo
 
 # create folders
-folders:
+init:
 	@ mkdir -p $(foreach obj, $(LAPIS_OBJS), $(dir $(obj)))
 	@ mkdir -p $(foreach obj, $(TEST_OBJS), $(dir $(obj)))
 	@ mkdir -p $(foreach bin, $(TEST_BINS), $(dir $(bin)))
-	@echo
-
-proto: $(PROTOS)
-	protoc --proto_path=src/proto --cpp_out=src/proto $(PROTOS)
-	mkdir -p include/proto/
-	cp src/proto/*.pb.h include/proto/
 	@echo
 
 ###############################################################################

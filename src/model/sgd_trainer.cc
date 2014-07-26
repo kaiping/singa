@@ -7,11 +7,11 @@
 
 namespace lapis {
 
-void SGDTrainer::Init(const TrainerProto &trainer_proto) {
-  Trainer::Init(trainer_proto);
+void SGDTrainer::Init(const TrainerProto &proto, ModelController *mc) {
+  Trainer::Init(proto, mc);
   // take over the control for this pointer
   sgd_proto_ = trainer_proto.sgd();
-  phase_ = TrainPhase::kTest;
+  phase_ = Phase::kInit;
 }
 
 SGDTrainer::~SGDTrainer() {
@@ -46,7 +46,10 @@ void SGDTrainer::Train(Net *net, const int step) {
       layer->Setup(sgd_proto_.train_batchsize(),
                    TrainAlgorithm::kBackPropagation,
                    train_data_);
+      for(auto edge: layer->out_edges())
+        edge.Setup(true);
     }
+    phase_=TrainPhase::kTrain;
   }
   BackPropagation(net, step);
 }
@@ -57,9 +60,15 @@ void SGDTrainer::Validate(Net *net) {
       layer->Setup(sgd_proto_.validation_batchsize(),
                    TrainAlgorithm::kBackPropagation,
                    validation_data_);
+      for(auto edge: layer->out_edges())
+        edge.Setup(false);
     }
+    phase_=TrainPhase::kValidation;
   }
-  // TODO(wangwei) forward only
+  /* TODO(wangwei) forward through all layers to get the loss
+  for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
+    Forward();
+  */
 }
 
 void SGDTrainer::Test(Net *net) {
@@ -68,9 +77,15 @@ void SGDTrainer::Test(Net *net) {
       layer->Setup(sgd_proto_.test_batchsize(),
                    TrainAlgorithm::kBackPropagation,
                    test_data_);
+      for(auto edge: layer->out_edges())
+        edge.Setup(false);
     }
+    phase_=TrainPhase::kTest;
   }
-  // TODO(wangwei) forward only
+  /* TODO(wangwei) forward through all layers to get the loss
+  for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
+    Forward();
+  */
 }
 
 void SGDTrainer::ToProto(TrainerProto *proto) {
@@ -90,28 +105,23 @@ float SGDTrainer::UpdateHyperParam(int step, SGDProto_ChangeProto change,
                                    float base_val, float final_val) {
   float ret = 0.;
   switch (change) {
-  case SGDProto::kFixed: {
+  case SGDProto::kFixed:
     ret = base_val;
     break;
-  }
-  case SGDProto::kLinear: {
+  case SGDProto::kLinear:
     float r = step * 1.0  / change_steps;
     ret = (1.0 - r) * base_val + r * final_val;
     break;
-  }
-  case SGDProto::kExponential: {
-    CHECK_EQ(base_val, 2 * final_val) << "final value should be the half\n";
+  case SGDProto::kExponential:
+    CHECK_EQ(base_val, 2 * final_val) << "final value should be the half";
     ret = base_val / pow(2, step_ * 1. / change_steps);
     break;
-  }
-  case SGDProto::kInverse_t: {
-    CHECK_EQ(base_val, 2 * final_val) << "final value should be the half\n";
+  case SGDProto::kInverse_t:
+    CHECK_EQ(base_val, 2 * final_val) << "final value should be the half";
     ret = base_val / (1. + step_ * 1. / change_steps);
     break;
-  }
-  default: {
-    LOG(INFO) << "Wrong hyper-parameter update method\n";
-  }
+  default:
+    LOG(INFO) << "Wrong hyper-parameter update method";
   }
   return ret;
 }

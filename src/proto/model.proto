@@ -1,26 +1,5 @@
 package lapis;
 
-
-message SystemConfProto {
-  //rank for coordinator
-  required int32 coordinator = 1;
-  //start rank for worker, both start and end ranks are included.
-  required int32 worker_start = 2;
-  //end rank for worker
-  required int32 worker_end = 3;
-
-  //if the following fields are omitted, then use the setting of workers
-
-  //start rank for distributed memory table
-  optional int32 memory_start = 4;
-  //end rank for distributed memory table
-  optional int32 memory_end = 5;
-  //start rank for distributed disk table
-  optional int32 disk_start = 6;
-  //end rank for distributed disk table
-  optional int32 disk_end = 7;
-}
-
 message DataSourceProto {
   required string name = 1;
   required string id = 2;
@@ -185,6 +164,7 @@ message TrainerProto {
   optional int32 checkpoint_every_steps = 3 [default = 0];
   // path prefix for the checkpoint file
   optional string checkpoint_prefix  = 4 [default = "tmp/checkpoint"];
+
   // the time of checkpoint
   optional int32 checkpoint_step = 5 [default = 0];
   // start display after this num steps
@@ -194,17 +174,33 @@ message TrainerProto {
   // path prefix for the display file
   optional string display_prefix = 8 [default = "tmp/display"];
 
-  repeated DataSourceProto train_data = 9;
-  repeated DataSourceProto validation_data = 10;
-  repeated DataSourceProto test_data = 11;
+// the time of validation
+  optional int32 validate_step = 9 [default = 0];
+  // start validation after this num steps
+  optional int32 validate_after_steps = 10 [default = 0];
+  // frequency of validation
+  optional int32 validate_every_steps = 11 [default = 0];
+
+
+  repeated DataSourceProto train_data = 12;
+  repeated DataSourceProto validation_data = 13;
+  repeated DataSourceProto test_data = 14;
 
   //optional PerformanceProto train_perf = 11;
   //optional PerformanceProto validation_perf = 12;
   //optional PerformanceProto test_perf = 13;
-  optional string perf_prefix = 14 [default = "tmp/performance"];
+  optional string perf_prefix = 15 [default = "tmp/performance"];
+
+  enum Algorithm {
+    kBackPropagation = 1;
+    kContrastiveDivergence = 2;
+  }
+  optional Algorithm alg= 16 [default = kBackPropagation];
+  optional bool do_training = 17 [default = true];
+  optional bool do_testing = 18 [default = false];
 }
 
-message ModelConfProto {
+message ModelProto {
   // model name
   optional string name = 1;
   required NetProto net = 2;

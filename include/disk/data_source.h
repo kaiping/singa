@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 #include "model/blob.h"
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 
 namespace lapis {

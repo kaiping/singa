@@ -10,7 +10,7 @@
 #include <functional>
 #include <random>
 
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "utils/lapis.h"
 #include "model/blob.h"
 

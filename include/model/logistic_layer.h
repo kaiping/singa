@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "model/layer.h"
 #include "model/trainer.h"
 

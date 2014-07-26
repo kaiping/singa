@@ -3,44 +3,46 @@
 
 #include "coordinator/coordinator.h"
 #incldue "utils/proto_helper.h"
-#include "proto/lapis.pb.h"
+#include "disk/data_source.h"
+#include "model_controller/model.h"
+#include "proto/model.pb.h"
+
 
 namespace lapis {
-Coordinator::Coordinator(const GlobalContext &global_context,
-                         const ModelController &mc)
-  : global_context_(global_context), distibuted_memory_(distibuted_memory) {
+Coordinator::Coordinator(const GlobalContext *gc, ModelController *mc)
+  : global_context_(gc), model_controller_(mc) {
   LOG(INFO) << "starting coordinator...\n";
-  ReadProtoFromTextFile(global_context_.model_conf_path, &model_conf_proto_);
-}
-
-int Coordinator::LoadData() {
-  // TODO(all) in this implementation, the distributed_disk has to join tables
-  // on worker nodes. <filename, rgb>---<filename, label>
-  for (DataMetaProto &data_source : model_conf_proto.data()) {
-    // TODO(wangwei) create the factory in main.cc
-    DataReaderInterface reader = data_reader_factory.get[data_source.type()];
-    reader.init(data_source);
-    string k, v;
-    while (reader.next(k, v) > 0)
-      distributed_disk_.put(k, v);
-  }
-  return 0;
 }
 
 // no model splitting currently
 // init parameters and put them into distributed memory
-// send whole copy of modelConfigProto to each worker
-int InitModel() {
-  net=createNet(model_conf_proto_);
-  mc->Put(net.params);
+int InitModel(const ModelProto &model_proto) {
+  Net net;
+  // set user configured fields
+  net.Init(model_proto_.net());
+  // setup training data which is necessary to setup the DataLayer that is in
+  // turn required by upper edges and layers to setup.
+  std::vector<DataSource*> train_data;
+  TrainerProto trainer=net.trainer();
+  Trainer::InitDataSource(trainer.train_data(), &train_data);
+  // allocate memory for parameters and init them
+  for (auto layer : net->Layers()) {
+    layer->Setup(trainer.train_batchsize(),trainer.alg(), train_data);
+    for(auto edge: layer->out_edges())
+      edge.Setup(true);
+  }
+  // put parameters into distributed memory
+  model_controller_->Put(net.params);
   return 0;
 }
 
-// we do not create a thread for the Coordinator, because workers have to wait
-// the coordinator to finish the initialization work, i.e. what Run() does
+// The coordinator run in a single process, and call Finish() to wait workers.
+// It shutdown until all works have finished.
 void Coordinator::Run() {
   //LoadData();
-  InitModel();
-  Finish();
+  ModelProto model_proto;
+  ReadProtoFromTextFile(global_context_->model_conf_path, &model_proto);
+  InitModel(model_proto);
+  model_controller_.Finish();
 }
 }  // namespace lapis

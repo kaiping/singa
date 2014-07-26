@@ -2,7 +2,7 @@
 // 2014-06-28 14:40
 
 #include "utils/global_context.h"
-#include "proto/lapis.pb.h"
+#include "proto/system.pb.h"
 #include "utils/proto_helper.h"
 
 DEFINE_string(system_conf_path, "", "");
@@ -12,7 +12,7 @@ GlobalContext::GlobalContext(const char *system_conf_path,
                              const char *model_conf_path)
   : model_conf_path_(model_conf_path) {
 
-	 SystemConfProto system_conf;
+	 SystemProto system_conf;
 	  ReadProtoFromTextFile(system_conf_path, &system_conf);
 	  role_rank_[kCoordinator] = std::make_pair(system_conf.coordinator(),
 	                             system_conf.coordinator());

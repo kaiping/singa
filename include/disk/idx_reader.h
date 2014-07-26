@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <fstream> // #NOLINT
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "disk/record_reader.h"
 namespace lapis {
 /**

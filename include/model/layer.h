@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 #include <functional>
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "model/edge.h"
 #include "model/trainer.h"
 #include "model/param.h"

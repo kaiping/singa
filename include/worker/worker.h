@@ -7,15 +7,13 @@
 namespace lapis {
 class Worker {
  public:
-  Worker(const DistributedMemory *dm,
-         const DistributedDisk *dd,
-         const GlobalContext *gc);
+  Worker(const GlobalContext *gc, ModelController *mc);
   void run();
 
  private:
-  ModelController model_controller_;
+  GlobalContext *global_context_;
+  ModelController *model_controller_;
 };
 }  // namespace lapis
-
 
 #endif  // INCLUDE_WORKER_WORKER_H_

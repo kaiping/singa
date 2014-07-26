@@ -9,7 +9,7 @@
 
 namespace lapis {
 
-void InitDataSource(
+static void Trainer::InitDataSource(
   const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
   std::vector<DataSource *> *sources) {
   for (auto &proto : protos) {
@@ -19,21 +19,28 @@ void InitDataSource(
   }
 }
 
-void Trainer::Init(const TrainerProto &trainer_proto) {
+void Trainer::Init(const TrainerProto &proto, ModelController *mc) {
   //! if step_>0, then the trainer is restored from a checkpoint
-  step_ = trainer_proto.checkpoint_step();
-  checkpoint_after_steps_ = trainer_proto.checkpoint_after_steps();
-  checkpoint_every_steps_ = trainer_proto.checkpoint_every_steps();
+  step_ = proto.checkpoint_step();
+  checkpoint_after_steps_ = proto.checkpoint_after_steps();
+  checkpoint_every_steps_ = proto.checkpoint_every_steps();
   //! last checkpoint step
-  checkpoint_step_ = trainer_proto.checkpoint_step();
-  checkpoint_prefix_ = trainer_proto.checkpoint_prefix();
-  display_after_steps_ = trainer_proto.display_after_steps();
-  display_every_steps_ = trainer_proto.display_every_steps();
-  display_prefix_ = trainer_proto.display_prefix();
-  InitDataSource(trainer_proto.train_data(), &train_data_);
-  InitDataSource(trainer_proto.validation_data(), &validation_data_);
-  InitDataSource(trainer_proto.test_data(), &test_data_);
-  perf_prefix_ = trainer_proto.perf_prefix();
+  checkpoint_step_ = proto.checkpoint_step();
+  checkpoint_prefix_ = proto.checkpoint_prefix();
+  display_after_steps_ = proto.display_after_steps();
+  display_every_steps_ = proto.display_every_steps();
+  display_prefix_ = proto.display_prefix();
+  validate_after_steps_ = proto.validate_after_steps();
+  validate_every_steps_ = proto.validate_every_steps();
+  InitDataSource(proto.train_data(), &train_data_);
+  InitDataSource(proto.validation_data(), &validation_data_);
+  InitDataSource(proto.test_data(), &test_data_);
+  perf_prefix_ = proto.perf_prefix();
+
+  do_train_=proto.do_train();
+  do_test_=proto.do_test();
+
+  model_controller_=mc;
 }
 
 void Trainer::ToProto(TrainerProto *proto) {
@@ -60,19 +67,16 @@ void Trainer::ToProto(TrainerProto *proto) {
     ds->ToProto(ds_proto);
   }
 }
-inline const bool Trainer::CheckpointNow(const int step) {
-  if (checkpoint_after_steps_ > 0 && step >= checkpoint_after_steps_) {
-    if ((step - checkpoint_every_steps_) % checkpoint_every_steps_ == 0)
-      return true;
+
+void Trainer::Run(Net *net) {
+  if(do_train_) {
+    while(!HasFinished(step_)) {
+      if(ValidateNow(step_))
+        Validate(net);
+      Train(net, step);
+    }
   }
-  return false;
+  if(do_test_)
+    Test(net);
 }
-inline void Trainer::IncStep() {
-  step_++;
-}
-inline const int Trainer::Step() {
-  return step_;
-}
-
-
 }  // namespace lapis

@@ -4,7 +4,7 @@
 #define INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_
 
 #include "model/edge.h"
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 class SoftmaxLossEdge : public Edge {

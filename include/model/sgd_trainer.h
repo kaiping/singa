@@ -7,7 +7,7 @@
 #include <vector>
 #include "model/param.h"
 #include "model/trainer.h"
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**

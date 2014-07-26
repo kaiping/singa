@@ -11,7 +11,7 @@
 #include "model/blob.h"
 #include "model/layer.h"
 #include "model/param.h"
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 //! forward declaration for Layer.

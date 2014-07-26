@@ -3,7 +3,7 @@
 #ifndef INCLUDE_MODEL_POOLING_EDGE_H_
 #define INCLUDE_MODEL_POOLING_EDGE_H_
 
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "model/edge.h"
 
 namespace lapis {

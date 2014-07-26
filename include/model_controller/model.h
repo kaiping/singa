@@ -4,7 +4,7 @@
 #ifndef INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #define INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #include <vector>
-#include "worker/layer.h"
+#include "model/layer.h"
 #include "core/common.h"
 #include "core/table-registry.h"
 #include "core/global-table.h"
@@ -25,7 +25,7 @@ class ModelController {
     {if (iscoordinator_) net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());}
   void Finish()
     {isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();}
-  bool IsCoordinator(){return iscoordinator_;}
+  bool IsCoordinatorProcess(){return iscoordinator_;}
   bool IsDMM(){return isdmm_;}
   int MyRank(){return my_rank_;}
  private:

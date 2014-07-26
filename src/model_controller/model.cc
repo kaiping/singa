@@ -1,11 +1,11 @@
 // Copyright © 2014 Jinyang Gao. All Rights Reserved.
 // 2014-07-18 16:33
 
-#include "mc/model_controller.h"
 
 #include <vector>
 
-#include "mc/myacc.h"
+#include "model_controller/myacc.h"
+#include "model_controller/model.h"
 #include "core/common.h"
 #include "core/table-registry.h"
 #include "core/global-table.h"
@@ -58,16 +58,16 @@ void ModelController::Init(const GlobalContext & gc)
 }
 
 
-void ModelController::Update(const std::vector<Param*> * params)
+void ModelController::Update(const std::vector<Param*> &params)
 {
-	for(int i = 0; i < params->size(); i++)
+	for(int i = 0; i < params.size(); i++)
     {
-        int paramid = (*params)[i]->id();
-        int splitoffset = (*params)[i].length()/(my_machine_num_*my_split_size_);
-        if ((*params)[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = params[i]->id();
+        int splitoffset = params[i].length()/(my_machine_num_*my_split_size_);
+        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = (*params)[i].length();
-        const float * grad_addr = (*params)[i]->Gradient();
+        int largestoffset = params[i].length();
+        const float * grad_addr = params[i]->gradient();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             float_vector_message mymessage;
@@ -85,16 +85,16 @@ void ModelController::Update(const std::vector<Param*> * params)
     return;
 }
 
-void ModelController::Put(const std::vector<Param*> * params)
+void ModelController::Put(const std::vector<Param*> &params)
 {
-    for(int i = 0; i < params->size(); i++)
+    for(int i = 0; i < params.size(); i++)
     {
-        int paramid = (*params)[i]->id();
-        int splitoffset = (*params)[i].length()/(my_machine_num_*my_split_size_);
-        if ((*params)[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = params[i]->id();
+        int splitoffset = params[i]->length()/(my_machine_num_*my_split_size_);
+        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = (*params)[i].length();
-        const float * content_addr = (*params)[i]->Content();
+        int largestoffset = params[i]->length();
+        const float * content_addr = params[i]->content();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             float_vector_message mymessage;
@@ -112,23 +112,23 @@ void ModelController::Put(const std::vector<Param*> * params)
     return;
 }
 
-void ModelController::GetParam(std::vector<Param*> * params)
+void ModelController::GetParam(std::vector<Param*> &params)
 {
     for(int i = 0; i < params->size(); i++)
     {
-        int paramid = (*params)[i].id();
-        int splitoffset = (*params)[i].length()/(my_machine_num_*my_split_size_);
-        if ((*params)[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = params[i]->id();
+        int splitoffset = params[i]->length()/(my_machine_num_*my_split_size_);
+        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = (*params)[i].length();
-        float * content_addr = (*params)[i]->MutableContent();
+        int largestoffset = params[i]->length();
+        float * content_addr = params[i]->mutable_content();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             int mykey = paramid*my_machine_num_*my_split_size_+j;
             float_vector_message mymessage = distributed_store_->get(mykey);
             for(int k = 0; k < splitoffset; k++)
             {
-                if(curoffset >= params[i].length())continue;
+                if(curoffset >= params[i]->length())continue;
                 //to pass new float to the params
                 content_addr[curoffset] = mymessage.myfloat(k);
                 curoffset++;

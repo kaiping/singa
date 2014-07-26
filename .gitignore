@@ -6,5 +6,6 @@
 *.a
 *.so
 *.dat
+*~
 examples/
 cscope.*

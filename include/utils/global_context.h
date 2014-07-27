@@ -23,7 +23,7 @@ class GlobalContext {
   bool IsRoleOf(const Role &role, int rank);
   void Init(const std::string &system_conf_path,
                          const std::string &model_conf_path);
-
+  bool single(){return single_;}
 
   int num_memory_servers() {
     return num_memory_servers_;
@@ -44,7 +44,7 @@ class GlobalContext {
   int num_memory_servers_;
   // # of nodes have disk tables
   int num_disk_servers_;
-
+  bool single_;
   std::string model_conf_path_;
   GlobalContext(){}
 };

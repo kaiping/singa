@@ -24,6 +24,7 @@ class ModelController {
   //set split type to 0 and split size to 2
   Message Init();
   void CommenceBroadcast(const Message &modelconfig);
+  void CommenceSpecialConfig(const Message &modelconfig, int dst);
   void Finish();
   bool IsCoordinatorProcess(){return iscoordinator_;}
   bool IsDMM(){return isdmm_;}
@@ -34,7 +35,7 @@ class ModelController {
   MemoryServer* ms_;
   NetworkThread * net_;
   TypedGlobalTable<int, float_vector_message>* distributed_store_;
-  bool iscoordinator_,isdmm_;
+  bool issinglemachine_,iscoordinator_,isdmm_;
   //ModelConfProto model_conf_proto_;
 };
 }  // namespace lapis

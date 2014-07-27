@@ -71,12 +71,15 @@ void Net::Init(const NetProto &net_proto) {
     layers_.push_back(layer);
     layer_map[layer->name()] = layer;
   }
+  int param_id=0;
   for (auto &edge_proto : net_proto.edge()) {
     Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
     edge->Init(edge_proto, layer_map);
     edges_.push_back(edge);
-    for (auto *param : edge->Params())
+    for (auto *param : edge->Params()) {
+      param->set_id(param_id++);
       params_.push_back(param);
+    }
   }
   topology_sort(&layers_);
 }

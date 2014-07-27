@@ -85,6 +85,8 @@ class Param {
   const int length() {
     return content_.length();
   }
+  int id() { return id_;}
+  void set_id(int id) {id_=id;}
 
   float momentum() {
     return momentum_;
@@ -117,6 +119,10 @@ class Param {
    * and 'bias'.
    */
   std::string name_;
+  /**
+   * identifier of this parameter, will be used by ModelController
+   */
+  int id_;
   //! scale factor for learning rate and weight decay for this parameter
   float momentum_, learning_rate_, weight_decay_;
   //! content, gradient and history gradient of this parameter

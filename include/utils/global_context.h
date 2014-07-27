@@ -34,7 +34,8 @@ class GlobalContext {
   const char *model_conf_path() {
     return model_conf_path_.c_str();
   }
-
+  int StartRankOf(Role role) {return role_rank_.at(role).first;}
+  int EndRankOf(Role role) { return role_rank_.at(role).second;}
   static GlobalContext *Get();
  private:
   // map from role to (start_rank, end_rank) pair

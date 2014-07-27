@@ -6,20 +6,13 @@
 
 #include "model_controller/myacc.h"
 #include "model_controller/model.h"
-/*
-#include "core/common.h"
-#include "core/table-registry.h"
-#include "core/global-table.h"
-#include "core/table.h"
-#include "core/distributed-memory.h"
-#include "core/memory-server.h"
-*/
 namespace lapis {
 
 void ModelController::Init()
 {
+  GlobalContext* gc=GlobalContext::Get();
 	my_split_tpye_ = 0;
-	my_machine_num_ = GlobalContext::Get()->num_memory_servers();
+	my_machine_num_ = gc->num_memory_servers();
 	my_split_size_ = 2;
 
     //start the lower level network part
@@ -43,39 +36,41 @@ void ModelController::Init()
     ms_ = new MemoryServer();
     ms_-> StartMemoryServer();
     }
-
-    iscoordinator_ = (my_rank_ <= role_rank_[lapis::kCoordinator].second && my_rank_ >= role_rank_[lapis::kCoordinator].first);
+    int start_rank=gc->StartRankOf(lapis::kCoordinator);
+    int end_rank=gc->EndRankOf(lapis::kCoordinator);
+    iscoordinator_ = (my_rank_ <= end_rank && my_rank_ >= start_rank);
     if (iscoordinator_)
     {
         //do nothing?
     }
     else
     {
-        EmptyMessage* empty;
-        net_->Read(NetworkThread::Get()->size()-1,MTYPE_MC_BROADCAST, empty);
+        EmptyMessage empty;
+        net_->Read(NetworkThread::Get()->size()-1,MTYPE_MC_BROADCAST, &empty);
     }
-    distributed_store_ = CreateTable(0, my_machine_num, new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<int>);
+    distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
+                                    new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
 	return;
 }
 
 
 void ModelController::Update(const std::vector<Param*> &params)
 {
-	for(int i = 0; i < params.size(); i++)
+	for(auto* param: params)
     {
-        int paramid = params[i]->id();
-        int splitoffset = params[i].length()/(my_machine_num_*my_split_size_);
-        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = param->id();
+        int splitoffset = param->length()/(my_machine_num_*my_split_size_);
+        if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = params[i].length();
-        const float * grad_addr = params[i]->gradient();
+        int largestoffset = param->length();
+        const float * grad_addr = param->gradient();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             float_vector_message mymessage;
             mymessage.clear_myfloat();
             for(int k = 0; k < splitoffset; k++)
             {
-                if(curoffset >= largestoffset)continue;
+                if(curoffset >= largestoffset) break;
                 mymessage.add_myfloat(grad_addr[curoffset]);
                 curoffset++;
             }
@@ -88,21 +83,21 @@ void ModelController::Update(const std::vector<Param*> &params)
 
 void ModelController::Put(const std::vector<Param*> &params)
 {
-    for(int i = 0; i < params.size(); i++)
+    for(auto* param: params)
     {
-        int paramid = params[i]->id();
-        int splitoffset = params[i]->length()/(my_machine_num_*my_split_size_);
-        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = param->id();
+        int splitoffset = param->length()/(my_machine_num_*my_split_size_);
+        if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = params[i]->length();
-        const float * content_addr = params[i]->content();
+        int largestoffset = param->length();
+        const float * content_addr = param->content();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             float_vector_message mymessage;
             mymessage.clear_myfloat();
             for(int k = 0; k < splitoffset; k++)
             {
-                if(curoffset >= largestoffset)continue;
+                if(curoffset >= largestoffset) break;
                 mymessage.add_myfloat(content_addr[curoffset]);
                 curoffset++;
             }
@@ -113,23 +108,23 @@ void ModelController::Put(const std::vector<Param*> &params)
     return;
 }
 
-void ModelController::GetParam(std::vector<Param*> &params)
+void ModelController::Get(const std::vector<Param*> &params)
 {
-    for(int i = 0; i < params->size(); i++)
+    for(auto* param : params)
     {
-        int paramid = params[i]->id();
-        int splitoffset = params[i]->length()/(my_machine_num_*my_split_size_);
-        if (params[i].length()%(my_machine_num_*my_split_size_)) splitoffset++;
+        int paramid = param->id();
+        int splitoffset = param->length()/(my_machine_num_*my_split_size_);
+        if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
         int curoffset = 0;
-        int largestoffset = params[i]->length();
-        float * content_addr = params[i]->mutable_content();
+        int largestoffset = param->length();
+        float * content_addr = param->mutable_content();
         for(int j = 0; j < my_machine_num_*my_split_size_; j++)
         {
             int mykey = paramid*my_machine_num_*my_split_size_+j;
             float_vector_message mymessage = distributed_store_->get(mykey);
             for(int k = 0; k < splitoffset; k++)
             {
-                if(curoffset >= params[i]->length())continue;
+                if(curoffset >= largestoffset) break;
                 //to pass new float to the params
                 content_addr[curoffset] = mymessage.myfloat(k);
                 curoffset++;
@@ -140,11 +135,11 @@ void ModelController::GetParam(std::vector<Param*> &params)
 }
 
 
-void Model::CommenceBroadcast() {
+void ModelController::CommenceBroadcast() {
   if (iscoordinator_)
     net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());
 }
-void Model::Finish() {
+void ModelController::Finish() {
   isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();
 }
 

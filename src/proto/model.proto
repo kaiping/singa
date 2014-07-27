@@ -71,7 +71,7 @@ message ParamProto {
   repeated float history = 14 [packed = true];
 }
 
-// both edge and layer only have params
+// Only edge have params
 message EdgeProto {
   required string name = 1;
   required string type = 2;
@@ -103,11 +103,11 @@ message BlobProto{
 
 message LayerProto {
   required string name = 1;
-  required int32 num_output = 2;
+  // required int32 num_output = 2;
   required string type = 3;
-  repeated ParamProto param  = 4;
-  repeated string out_edge = 5;
-  repeated string in_edge = 6;
+  // repeated ParamProto param  = 4;
+  // repeated string out_edge = 5;
+  // repeated string in_edge = 6;
   optional string data_source = 7;
 }
 

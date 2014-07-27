@@ -30,12 +30,10 @@ class ModelController {
   int my_rank(){return my_rank_;}
  private:
   int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;
-  /*
   DistributedMemoryManager* dmm_;
   MemoryServer* ms_;
   NetworkThread * net_;
   TypedGlobalTable<int, float_vector_message>* distributed_store_;
-  */
   bool iscoordinator_,isdmm_;
   //ModelConfProto model_conf_proto_;
 };

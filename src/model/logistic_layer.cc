@@ -32,7 +32,6 @@ void LogisticLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
 
 void LogisticLayer::ToProto(LayerProto *proto) {
   Layer::ToProto(proto);
-  proto->set_num_output(feature_dimension_);
   proto->set_type(type);
 }
 

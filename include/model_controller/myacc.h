@@ -5,6 +5,7 @@
 #define INCLUDE_MC_MYACC_H_
 #include "core/common.h"
 #include "proto/model.pb.h"
+namespace lapis {
 
 struct MyAcc : public Accumulator<float_vector_message>
 {
@@ -19,5 +20,6 @@ struct MyAcc : public Accumulator<float_vector_message>
         }
         return;
     }
-}
+};
+}  // namespace lapis
 #endif  // INCLUDE_MC_MYACC_H_

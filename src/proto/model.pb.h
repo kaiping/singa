@@ -1113,13 +1113,6 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // required int32 num_output = 2;
-  inline bool has_num_output() const;
-  inline void clear_num_output();
-  static const int kNumOutputFieldNumber = 2;
-  inline ::google::protobuf::int32 num_output() const;
-  inline void set_num_output(::google::protobuf::int32 value);
-
   // required string type = 3;
   inline bool has_type() const;
   inline void clear_type();
@@ -1131,50 +1124,6 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::std::string* mutable_type();
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
-
-  // repeated .lapis.ParamProto param = 4;
-  inline int param_size() const;
-  inline void clear_param();
-  static const int kParamFieldNumber = 4;
-  inline const ::lapis::ParamProto& param(int index) const;
-  inline ::lapis::ParamProto* mutable_param(int index);
-  inline ::lapis::ParamProto* add_param();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
-      param() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
-      mutable_param();
-
-  // repeated string out_edge = 5;
-  inline int out_edge_size() const;
-  inline void clear_out_edge();
-  static const int kOutEdgeFieldNumber = 5;
-  inline const ::std::string& out_edge(int index) const;
-  inline ::std::string* mutable_out_edge(int index);
-  inline void set_out_edge(int index, const ::std::string& value);
-  inline void set_out_edge(int index, const char* value);
-  inline void set_out_edge(int index, const char* value, size_t size);
-  inline ::std::string* add_out_edge();
-  inline void add_out_edge(const ::std::string& value);
-  inline void add_out_edge(const char* value);
-  inline void add_out_edge(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& out_edge() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_out_edge();
-
-  // repeated string in_edge = 6;
-  inline int in_edge_size() const;
-  inline void clear_in_edge();
-  static const int kInEdgeFieldNumber = 6;
-  inline const ::std::string& in_edge(int index) const;
-  inline ::std::string* mutable_in_edge(int index);
-  inline void set_in_edge(int index, const ::std::string& value);
-  inline void set_in_edge(int index, const char* value);
-  inline void set_in_edge(int index, const char* value, size_t size);
-  inline ::std::string* add_in_edge();
-  inline void add_in_edge(const ::std::string& value);
-  inline void add_in_edge(const char* value);
-  inline void add_in_edge(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& in_edge() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_in_edge();
 
   // optional string data_source = 7;
   inline bool has_data_source() const;
@@ -1192,8 +1141,6 @@ class LayerProto : public ::google::protobuf::Message {
  private:
   inline void set_has_name();
   inline void clear_has_name();
-  inline void set_has_num_output();
-  inline void clear_has_num_output();
   inline void set_has_type();
   inline void clear_has_type();
   inline void set_has_data_source();
@@ -1203,14 +1150,10 @@ class LayerProto : public ::google::protobuf::Message {
 
   ::std::string* name_;
   ::std::string* type_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto > param_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> out_edge_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> in_edge_;
   ::std::string* data_source_;
-  ::google::protobuf::int32 num_output_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -3612,37 +3555,15 @@ inline void LayerProto::set_allocated_name(::std::string* name) {
   }
 }
 
-// required int32 num_output = 2;
-inline bool LayerProto::has_num_output() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void LayerProto::set_has_num_output() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void LayerProto::clear_has_num_output() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void LayerProto::clear_num_output() {
-  num_output_ = 0;
-  clear_has_num_output();
-}
-inline ::google::protobuf::int32 LayerProto::num_output() const {
-  return num_output_;
-}
-inline void LayerProto::set_num_output(::google::protobuf::int32 value) {
-  set_has_num_output();
-  num_output_ = value;
-}
-
 // required string type = 3;
 inline bool LayerProto::has_type() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void LayerProto::set_has_type() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void LayerProto::clear_has_type() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void LayerProto::clear_type() {
   if (type_ != &::google::protobuf::internal::kEmptyString) {
@@ -3704,128 +3625,15 @@ inline void LayerProto::set_allocated_type(::std::string* type) {
   }
 }
 
-// repeated .lapis.ParamProto param = 4;
-inline int LayerProto::param_size() const {
-  return param_.size();
-}
-inline void LayerProto::clear_param() {
-  param_.Clear();
-}
-inline const ::lapis::ParamProto& LayerProto::param(int index) const {
-  return param_.Get(index);
-}
-inline ::lapis::ParamProto* LayerProto::mutable_param(int index) {
-  return param_.Mutable(index);
-}
-inline ::lapis::ParamProto* LayerProto::add_param() {
-  return param_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >&
-LayerProto::param() const {
-  return param_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::ParamProto >*
-LayerProto::mutable_param() {
-  return &param_;
-}
-
-// repeated string out_edge = 5;
-inline int LayerProto::out_edge_size() const {
-  return out_edge_.size();
-}
-inline void LayerProto::clear_out_edge() {
-  out_edge_.Clear();
-}
-inline const ::std::string& LayerProto::out_edge(int index) const {
-  return out_edge_.Get(index);
-}
-inline ::std::string* LayerProto::mutable_out_edge(int index) {
-  return out_edge_.Mutable(index);
-}
-inline void LayerProto::set_out_edge(int index, const ::std::string& value) {
-  out_edge_.Mutable(index)->assign(value);
-}
-inline void LayerProto::set_out_edge(int index, const char* value) {
-  out_edge_.Mutable(index)->assign(value);
-}
-inline void LayerProto::set_out_edge(int index, const char* value, size_t size) {
-  out_edge_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* LayerProto::add_out_edge() {
-  return out_edge_.Add();
-}
-inline void LayerProto::add_out_edge(const ::std::string& value) {
-  out_edge_.Add()->assign(value);
-}
-inline void LayerProto::add_out_edge(const char* value) {
-  out_edge_.Add()->assign(value);
-}
-inline void LayerProto::add_out_edge(const char* value, size_t size) {
-  out_edge_.Add()->assign(reinterpret_cast<const char*>(value), size);
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-LayerProto::out_edge() const {
-  return out_edge_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-LayerProto::mutable_out_edge() {
-  return &out_edge_;
-}
-
-// repeated string in_edge = 6;
-inline int LayerProto::in_edge_size() const {
-  return in_edge_.size();
-}
-inline void LayerProto::clear_in_edge() {
-  in_edge_.Clear();
-}
-inline const ::std::string& LayerProto::in_edge(int index) const {
-  return in_edge_.Get(index);
-}
-inline ::std::string* LayerProto::mutable_in_edge(int index) {
-  return in_edge_.Mutable(index);
-}
-inline void LayerProto::set_in_edge(int index, const ::std::string& value) {
-  in_edge_.Mutable(index)->assign(value);
-}
-inline void LayerProto::set_in_edge(int index, const char* value) {
-  in_edge_.Mutable(index)->assign(value);
-}
-inline void LayerProto::set_in_edge(int index, const char* value, size_t size) {
-  in_edge_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* LayerProto::add_in_edge() {
-  return in_edge_.Add();
-}
-inline void LayerProto::add_in_edge(const ::std::string& value) {
-  in_edge_.Add()->assign(value);
-}
-inline void LayerProto::add_in_edge(const char* value) {
-  in_edge_.Add()->assign(value);
-}
-inline void LayerProto::add_in_edge(const char* value, size_t size) {
-  in_edge_.Add()->assign(reinterpret_cast<const char*>(value), size);
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-LayerProto::in_edge() const {
-  return in_edge_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-LayerProto::mutable_in_edge() {
-  return &in_edge_;
-}
-
 // optional string data_source = 7;
 inline bool LayerProto::has_data_source() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void LayerProto::set_has_data_source() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void LayerProto::clear_has_data_source() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void LayerProto::clear_data_source() {
   if (data_source_ != &::google::protobuf::internal::kEmptyString) {

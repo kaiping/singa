@@ -1,11 +1,13 @@
 ###############################################################################
+# Requirements for success compiling:
+# 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 # Configuration for folders and Flags
 ###############################################################################
-# g++ location, should support c++11, tested with 4.8.1
+# Change this variable!! g++ location, should support c++11, tested with 4.8.1
 CXX := /home/wangwei/install/bin/g++
-# header folder for system and external libs
+# Change this variable!! header folder for system and external libs.
 INCLUDE_DIRS := include/ /home/wangwei/install/include
-# lib folder for system and external libs
+# Change this variable!! lib folder for system and external libs
 LIBRARY_DIRS := /home/wangwei/install/lib64 /home/wangwei/install/lib
 # folder for compiled file
 BUILD_DIR := build

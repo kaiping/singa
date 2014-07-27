@@ -8,7 +8,7 @@
 #include "model_controller/model.h"
 namespace lapis {
 
-void ModelController::Init()
+Message ModelController::Init()
 {
   GlobalContext* gc=GlobalContext::Get();
 	
@@ -40,18 +40,18 @@ void ModelController::Init()
     int start_rank=gc->StartRankOf(lapis::kCoordinator);
     int end_rank=gc->EndRankOf(lapis::kCoordinator);
     iscoordinator_ = (my_rank_ <= end_rank && my_rank_ >= start_rank);
-    if (iscoordinator_)
+    Message modelconfig;
+	if (iscoordinator_)
     {
         //do nothing?
     }
     else
     {
-        EmptyMessage empty;
-        net_->Read(start_rank,MTYPE_MC_BROADCAST, &empty);
+        net_->Read(start_rank,MTYPE_MC_BROADCAST, &modelconfig);
     }
     distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
                                     new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
-	return;
+	return modelconfig;
 }
 
 
@@ -136,9 +136,9 @@ void ModelController::Get(const std::vector<Param*> &params)
 }
 
 
-void ModelController::CommenceBroadcast() {
+void ModelController::CommenceBroadcast(const Message &modelconfig) {
   if (iscoordinator_)
-    net_->Broadcast(MTYPE_MC_BROADCAST,EmptyMessage());
+    net_->Broadcast(MTYPE_MC_BROADCAST,modelconfig);
 }
 void ModelController::Finish() {
   isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();

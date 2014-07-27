@@ -22,8 +22,8 @@ class ModelController {
   void Get(const std::vector<Param*> &params);
   void Put(const std::vector<Param*> &params);
   //set split type to 0 and split size to 2
-  void Init();
-  void CommenceBroadcast();
+  Message Init();
+  void CommenceBroadcast(const Message &modelconfig);
   void Finish();
   bool IsCoordinatorProcess(){return iscoordinator_;}
   bool IsDMM(){return isdmm_;}

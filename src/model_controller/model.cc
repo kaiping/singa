@@ -11,6 +11,7 @@ namespace lapis {
 void ModelController::Init()
 {
   GlobalContext* gc=GlobalContext::Get();
+	
 	my_split_tpye_ = 0;
 	my_machine_num_ = gc->num_memory_servers();
 	my_split_size_ = 2;
@@ -46,7 +47,7 @@ void ModelController::Init()
     else
     {
         EmptyMessage empty;
-        net_->Read(NetworkThread::Get()->size()-1,MTYPE_MC_BROADCAST, &empty);
+        net_->Read(start_rank,MTYPE_MC_BROADCAST, &empty);
     }
     distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
                                     new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);

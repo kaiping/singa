@@ -14,7 +14,8 @@ Use astyle to format code.
 The cpplint.py can help to detect lines that do not follow the style.
 
 External libraries include gflag (commandline parsing), glog (logging),
-google-protobuf (configuration), gtest (unit test).
+google-protobuf (configuration), gtest (unit test), boost (filesystem, thread),
+mpi, opencv (read image, only used in rgb_dir_source.cc).
 
 gtest usage:
 g++ -isystem ${GTEST_DIR}/include -pthread path/to/your_test.cc libgtest.a \

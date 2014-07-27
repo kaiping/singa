@@ -6,14 +6,13 @@
 #include <vector>
 #include "model/param.h"
 #include "utils/global_context.h"
-/*
 #include "core/common.h"
 #include "core/table-registry.h"
 #include "core/global-table.h"
 #include "core/table.h"
 #include "core/distributed-memory.h"
 #include "core/memory-server.h"
-*/
+
 
 namespace lapis {
 class ModelController {

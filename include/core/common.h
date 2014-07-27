@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "glog/logging.h"
-#include "google/gflags.h"
+#include "gflags/gflags.h"
 
 #include "proto/common.pb.h"
 #include "core/hash.h"

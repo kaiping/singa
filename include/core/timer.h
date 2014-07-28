@@ -8,7 +8,7 @@ namespace lapis {
 static uint64_t rdtsc() {
   uint32_t hi, lo;
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-  return (((uint64_t)hi)<<32) | ((uint64_t)lo);
+  return (((uint64_t)hi) << 32) | ((uint64_t)lo);
 }
 
 inline double Now() {
@@ -18,7 +18,7 @@ inline double Now() {
 }
 
 class Timer {
-public:
+ public:
   Timer() {
     Reset();
   }
@@ -45,7 +45,7 @@ public:
     return double(cycles_elapsed()) / count;
   }
 
-private:
+ private:
   double start_time_;
   uint64_t start_cycle_;
 };

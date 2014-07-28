@@ -38,8 +38,8 @@ void Sleep(double t) {
   nanosleep(&req, NULL);
 }
 
-bool IsDistributedMemoryManager(){
-		return NetworkThread::Get()->id() == (NetworkThread::Get()->size()-1);
+bool IsDistributedMemoryManager() {
+  return NetworkThread::Get()->id() == (NetworkThread::Get()->size() - 1);
 }
 
 }

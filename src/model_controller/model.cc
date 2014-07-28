@@ -6,6 +6,8 @@
 
 #include "model_controller/myacc.h"
 #include "model_controller/model.h"
+
+
 namespace lapis {
 
 Message ModelController::Init()

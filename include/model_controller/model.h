@@ -3,7 +3,10 @@
 
 #ifndef INCLUDE_WORKER_MODEL_CONTROLLER_H_
 #define INCLUDE_WORKER_MODEL_CONTROLLER_H_
+
 #include <vector>
+#include <google/protobuf/message.h>
+
 #include "model/param.h"
 #include "utils/global_context.h"
 #include "core/common.h"
@@ -13,8 +16,9 @@
 #include "core/distributed-memory.h"
 #include "core/memory-server.h"
 
-
 namespace lapis {
+
+using google::protobuf::Message;
 class ModelController {
  public:
   //void GetNextInput(Layer *layer);// to be done
@@ -26,8 +30,9 @@ class ModelController {
   void CommenceBroadcast(const Message &modelconfig);
   void CommenceSpecialConfig(const Message &modelconfig, int dst);
   void Finish();
-  bool IsCoordinatorProcess(){return iscoordinator_;}
-  bool IsDMM(){return isdmm_;}
+  bool iscoordinator(){return iscoordinator_;}
+  bool isdmm(){return isdmm_;}
+  bool issinglemachine(){return issinglemachine_};
   int my_rank(){return my_rank_;}
  private:
   int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;

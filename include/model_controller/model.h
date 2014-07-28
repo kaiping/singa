@@ -18,23 +18,29 @@ namespace lapis {
 class ModelController {
  public:
   //void GetNextInput(Layer *layer);// to be done
-  void Update(const std::vector<Param*> &params);
-  void Get(const std::vector<Param*> &params);
-  void Put(const std::vector<Param*> &params);
+  void Update(const std::vector<Param *> &params);
+  void Get(const std::vector<Param *> &params);
+  void Put(const std::vector<Param *> &params);
   //set split type to 0 and split size to 2
   void Init();
   void CommenceBroadcast();
   void Finish();
-  bool IsCoordinatorProcess(){return iscoordinator_;}
-  bool IsDMM(){return isdmm_;}
-  int my_rank(){return my_rank_;}
+  bool IsCoordinatorProcess() {
+    return iscoordinator_;
+  }
+  bool IsDMM() {
+    return isdmm_;
+  }
+  int my_rank() {
+    return my_rank_;
+  }
  private:
-  int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;
-  DistributedMemoryManager* dmm_;
-  MemoryServer* ms_;
-  NetworkThread * net_;
-  TypedGlobalTable<int, float_vector_message>* distributed_store_;
-  bool iscoordinator_,isdmm_;
+  int my_split_tpye_, my_machine_num_, my_split_size_, my_rank_;
+  DistributedMemoryManager *dmm_;
+  MemoryServer *ms_;
+  NetworkThread *net_;
+  TypedGlobalTable<int, float_vector_message> *distributed_store_;
+  bool iscoordinator_, isdmm_;
   //ModelConfProto model_conf_proto_;
 };
 }  // namespace lapis

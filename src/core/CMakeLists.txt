@@ -4,25 +4,25 @@ set (DYNAMIC_LIBS lzo2 pthread rt dl ${Boost_LIBRARIES})
 # master
 add_library(manager distributed-memory.cc ${WORKER_PB_SRC} ${WORKER_PB_HDR})
 add_dependencies(manager lapis_worker)
- 
+
 # memory workers
 add_library(memory-server memory-server.cc ${WORKER_PB_SRC} ${WORKER_PB_HDR})
 add_dependencies(memory-server lapis_common)
 
 # common
 add_library(common
-            common.cc 
-            file.cc 
+            common.cc
+            file.cc
             stringpiece.cc
-            rpc.cc 
-            static-initializers.cc 
-            ${COMMON_PB_SRC} 
+            rpc.cc
+            static-initializers.cc
+            ${COMMON_PB_SRC}
             ${COMMON_PB_HDR})
 add_dependencies(common lapis_common lapis_worker)
 
-# table 
+# table
 #add_library(table
-#            table-registry.cc 
+#            table-registry.cc
 #            local-table.cc
 #            global-table.cc)
 #add_dependencies(table worker_proto)

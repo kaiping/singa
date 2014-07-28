@@ -5,13 +5,14 @@ message DataSourceProto {
   required string id = 2;
   optional string path = 3;
   optional int64 size = 4;
-
+/*
   enum DataType {
     FEATURE = 0;
     LABEL = 1;
   }
 
   optional DataType type = 5;
+  */
 
   // following three fields will be used for rgb image feature
   optional int32 channels = 6 [default = 1];
@@ -64,9 +65,9 @@ message ParamProto {
   optional float mean = 7 [default = 0];
   optional float std = 8 [default = 1];
   // optional string partitioner = 4; // e.g., row or column partition
-  optional float momentum =9;
-  optional float learning_rate =10;
-  optional float weight_decay=11;
+  optional float momentum_multiplier =9;
+  optional float learning_rate_multiplier =10;
+  optional float weight_decay_multiplier =11;
   repeated float content = 13 [packed = true];
   repeated float history = 14 [packed = true];
 }
@@ -109,6 +110,7 @@ message LayerProto {
   // repeated string out_edge = 5;
   // repeated string in_edge = 6;
   optional string data_source = 7;
+  optional float drop_prob = 8 [default=0.0];
 }
 
 message NetProto {
@@ -133,6 +135,7 @@ message SGDProto {
     kInverse_t= 1;
     kExponential = 2;
     kLinear = 3;
+    kStep = 4;
   }
 
   optional ChangeProto learning_rate_change = 10 [default = kInverse_t];

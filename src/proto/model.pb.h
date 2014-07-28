@@ -47,25 +47,6 @@ class TrainerProto;
 class ModelProto;
 class float_vector_message;
 
-enum DataSourceProto_DataType {
-  DataSourceProto_DataType_FEATURE = 0,
-  DataSourceProto_DataType_LABEL = 1
-};
-bool DataSourceProto_DataType_IsValid(int value);
-const DataSourceProto_DataType DataSourceProto_DataType_DataType_MIN = DataSourceProto_DataType_FEATURE;
-const DataSourceProto_DataType DataSourceProto_DataType_DataType_MAX = DataSourceProto_DataType_LABEL;
-const int DataSourceProto_DataType_DataType_ARRAYSIZE = DataSourceProto_DataType_DataType_MAX + 1;
-
-const ::google::protobuf::EnumDescriptor* DataSourceProto_DataType_descriptor();
-inline const ::std::string& DataSourceProto_DataType_Name(DataSourceProto_DataType value) {
-  return ::google::protobuf::internal::NameOfEnum(
-    DataSourceProto_DataType_descriptor(), value);
-}
-inline bool DataSourceProto_DataType_Parse(
-    const ::std::string& name, DataSourceProto_DataType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<DataSourceProto_DataType>(
-    DataSourceProto_DataType_descriptor(), name, value);
-}
 enum ParamProto_InitMethod {
   ParamProto_InitMethod_kConstant = 0,
   ParamProto_InitMethod_kGaussain = 1,
@@ -203,30 +184,6 @@ class DataSourceProto : public ::google::protobuf::Message {
 
   // nested types ----------------------------------------------------
 
-  typedef DataSourceProto_DataType DataType;
-  static const DataType FEATURE = DataSourceProto_DataType_FEATURE;
-  static const DataType LABEL = DataSourceProto_DataType_LABEL;
-  static inline bool DataType_IsValid(int value) {
-    return DataSourceProto_DataType_IsValid(value);
-  }
-  static const DataType DataType_MIN =
-    DataSourceProto_DataType_DataType_MIN;
-  static const DataType DataType_MAX =
-    DataSourceProto_DataType_DataType_MAX;
-  static const int DataType_ARRAYSIZE =
-    DataSourceProto_DataType_DataType_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor*
-  DataType_descriptor() {
-    return DataSourceProto_DataType_descriptor();
-  }
-  static inline const ::std::string& DataType_Name(DataType value) {
-    return DataSourceProto_DataType_Name(value);
-  }
-  static inline bool DataType_Parse(const ::std::string& name,
-      DataType* value) {
-    return DataSourceProto_DataType_Parse(name, value);
-  }
-
   // accessors -------------------------------------------------------
 
   // required string name = 1;
@@ -272,13 +229,6 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 size() const;
   inline void set_size(::google::protobuf::int64 value);
 
-  // optional .lapis.DataSourceProto.DataType type = 5;
-  inline bool has_type() const;
-  inline void clear_type();
-  static const int kTypeFieldNumber = 5;
-  inline ::lapis::DataSourceProto_DataType type() const;
-  inline void set_type(::lapis::DataSourceProto_DataType value);
-
   // optional int32 channels = 6 [default = 1];
   inline bool has_channels() const;
   inline void clear_channels();
@@ -317,8 +267,6 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_path();
   inline void set_has_size();
   inline void clear_has_size();
-  inline void set_has_type();
-  inline void clear_has_type();
   inline void set_has_channels();
   inline void clear_has_channels();
   inline void set_has_height();
@@ -334,14 +282,13 @@ class DataSourceProto : public ::google::protobuf::Message {
   ::std::string* id_;
   ::std::string* path_;
   ::google::protobuf::int64 size_;
-  int type_;
   ::google::protobuf::int32 channels_;
   ::google::protobuf::int32 height_;
-  ::google::protobuf::int32 width_;
   ::google::protobuf::int64 offset_;
+  ::google::protobuf::int32 width_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -618,26 +565,26 @@ class ParamProto : public ::google::protobuf::Message {
   inline float std() const;
   inline void set_std(float value);
 
-  // optional float momentum = 9;
-  inline bool has_momentum() const;
-  inline void clear_momentum();
-  static const int kMomentumFieldNumber = 9;
-  inline float momentum() const;
-  inline void set_momentum(float value);
+  // optional float momentum_multiplier = 9;
+  inline bool has_momentum_multiplier() const;
+  inline void clear_momentum_multiplier();
+  static const int kMomentumMultiplierFieldNumber = 9;
+  inline float momentum_multiplier() const;
+  inline void set_momentum_multiplier(float value);
 
-  // optional float learning_rate = 10;
-  inline bool has_learning_rate() const;
-  inline void clear_learning_rate();
-  static const int kLearningRateFieldNumber = 10;
-  inline float learning_rate() const;
-  inline void set_learning_rate(float value);
+  // optional float learning_rate_multiplier = 10;
+  inline bool has_learning_rate_multiplier() const;
+  inline void clear_learning_rate_multiplier();
+  static const int kLearningRateMultiplierFieldNumber = 10;
+  inline float learning_rate_multiplier() const;
+  inline void set_learning_rate_multiplier(float value);
 
-  // optional float weight_decay = 11;
-  inline bool has_weight_decay() const;
-  inline void clear_weight_decay();
-  static const int kWeightDecayFieldNumber = 11;
-  inline float weight_decay() const;
-  inline void set_weight_decay(float value);
+  // optional float weight_decay_multiplier = 11;
+  inline bool has_weight_decay_multiplier() const;
+  inline void clear_weight_decay_multiplier();
+  static const int kWeightDecayMultiplierFieldNumber = 11;
+  inline float weight_decay_multiplier() const;
+  inline void set_weight_decay_multiplier(float value);
 
   // repeated float content = 13 [packed = true];
   inline int content_size() const;
@@ -679,12 +626,12 @@ class ParamProto : public ::google::protobuf::Message {
   inline void clear_has_mean();
   inline void set_has_std();
   inline void clear_has_std();
-  inline void set_has_momentum();
-  inline void clear_has_momentum();
-  inline void set_has_learning_rate();
-  inline void clear_has_learning_rate();
-  inline void set_has_weight_decay();
-  inline void clear_has_weight_decay();
+  inline void set_has_momentum_multiplier();
+  inline void clear_has_momentum_multiplier();
+  inline void set_has_learning_rate_multiplier();
+  inline void clear_has_learning_rate_multiplier();
+  inline void set_has_weight_decay_multiplier();
+  inline void clear_has_weight_decay_multiplier();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -696,13 +643,13 @@ class ParamProto : public ::google::protobuf::Message {
   float high_;
   float mean_;
   float std_;
-  float momentum_;
-  float learning_rate_;
+  float momentum_multiplier_;
+  float learning_rate_multiplier_;
   ::google::protobuf::RepeatedField< float > content_;
   mutable int _content_cached_byte_size_;
   ::google::protobuf::RepeatedField< float > history_;
   mutable int _history_cached_byte_size_;
-  float weight_decay_;
+  float weight_decay_multiplier_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
@@ -1137,6 +1084,13 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::std::string* release_data_source();
   inline void set_allocated_data_source(::std::string* data_source);
 
+  // optional float drop_prob = 8 [default = 0];
+  inline bool has_drop_prob() const;
+  inline void clear_drop_prob();
+  static const int kDropProbFieldNumber = 8;
+  inline float drop_prob() const;
+  inline void set_drop_prob(float value);
+
   // @@protoc_insertion_point(class_scope:lapis.LayerProto)
  private:
   inline void set_has_name();
@@ -1145,15 +1099,18 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_type();
   inline void set_has_data_source();
   inline void clear_has_data_source();
+  inline void set_has_drop_prob();
+  inline void clear_has_drop_prob();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
   ::std::string* type_;
   ::std::string* data_source_;
+  float drop_prob_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -2370,38 +2327,15 @@ inline void DataSourceProto::set_size(::google::protobuf::int64 value) {
   size_ = value;
 }
 
-// optional .lapis.DataSourceProto.DataType type = 5;
-inline bool DataSourceProto::has_type() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void DataSourceProto::set_has_type() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void DataSourceProto::clear_has_type() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void DataSourceProto::clear_type() {
-  type_ = 0;
-  clear_has_type();
-}
-inline ::lapis::DataSourceProto_DataType DataSourceProto::type() const {
-  return static_cast< ::lapis::DataSourceProto_DataType >(type_);
-}
-inline void DataSourceProto::set_type(::lapis::DataSourceProto_DataType value) {
-  assert(::lapis::DataSourceProto_DataType_IsValid(value));
-  set_has_type();
-  type_ = value;
-}
-
 // optional int32 channels = 6 [default = 1];
 inline bool DataSourceProto::has_channels() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void DataSourceProto::set_has_channels() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void DataSourceProto::clear_has_channels() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void DataSourceProto::clear_channels() {
   channels_ = 1;
@@ -2417,13 +2351,13 @@ inline void DataSourceProto::set_channels(::google::protobuf::int32 value) {
 
 // optional int32 height = 7 [default = 0];
 inline bool DataSourceProto::has_height() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void DataSourceProto::set_has_height() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void DataSourceProto::clear_has_height() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void DataSourceProto::clear_height() {
   height_ = 0;
@@ -2439,13 +2373,13 @@ inline void DataSourceProto::set_height(::google::protobuf::int32 value) {
 
 // optional int32 width = 8 [default = 0];
 inline bool DataSourceProto::has_width() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void DataSourceProto::set_has_width() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void DataSourceProto::clear_has_width() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void DataSourceProto::clear_width() {
   width_ = 0;
@@ -2461,13 +2395,13 @@ inline void DataSourceProto::set_width(::google::protobuf::int32 value) {
 
 // optional int64 offset = 9 [default = 0];
 inline bool DataSourceProto::has_offset() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void DataSourceProto::set_has_offset() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void DataSourceProto::clear_has_offset() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void DataSourceProto::clear_offset() {
   offset_ = GOOGLE_LONGLONG(0);
@@ -2853,70 +2787,70 @@ inline void ParamProto::set_std(float value) {
   std_ = value;
 }
 
-// optional float momentum = 9;
-inline bool ParamProto::has_momentum() const {
+// optional float momentum_multiplier = 9;
+inline bool ParamProto::has_momentum_multiplier() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
-inline void ParamProto::set_has_momentum() {
+inline void ParamProto::set_has_momentum_multiplier() {
   _has_bits_[0] |= 0x00000100u;
 }
-inline void ParamProto::clear_has_momentum() {
+inline void ParamProto::clear_has_momentum_multiplier() {
   _has_bits_[0] &= ~0x00000100u;
 }
-inline void ParamProto::clear_momentum() {
-  momentum_ = 0;
-  clear_has_momentum();
+inline void ParamProto::clear_momentum_multiplier() {
+  momentum_multiplier_ = 0;
+  clear_has_momentum_multiplier();
 }
-inline float ParamProto::momentum() const {
-  return momentum_;
+inline float ParamProto::momentum_multiplier() const {
+  return momentum_multiplier_;
 }
-inline void ParamProto::set_momentum(float value) {
-  set_has_momentum();
-  momentum_ = value;
+inline void ParamProto::set_momentum_multiplier(float value) {
+  set_has_momentum_multiplier();
+  momentum_multiplier_ = value;
 }
 
-// optional float learning_rate = 10;
-inline bool ParamProto::has_learning_rate() const {
+// optional float learning_rate_multiplier = 10;
+inline bool ParamProto::has_learning_rate_multiplier() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
-inline void ParamProto::set_has_learning_rate() {
+inline void ParamProto::set_has_learning_rate_multiplier() {
   _has_bits_[0] |= 0x00000200u;
 }
-inline void ParamProto::clear_has_learning_rate() {
+inline void ParamProto::clear_has_learning_rate_multiplier() {
   _has_bits_[0] &= ~0x00000200u;
 }
-inline void ParamProto::clear_learning_rate() {
-  learning_rate_ = 0;
-  clear_has_learning_rate();
+inline void ParamProto::clear_learning_rate_multiplier() {
+  learning_rate_multiplier_ = 0;
+  clear_has_learning_rate_multiplier();
 }
-inline float ParamProto::learning_rate() const {
-  return learning_rate_;
+inline float ParamProto::learning_rate_multiplier() const {
+  return learning_rate_multiplier_;
 }
-inline void ParamProto::set_learning_rate(float value) {
-  set_has_learning_rate();
-  learning_rate_ = value;
+inline void ParamProto::set_learning_rate_multiplier(float value) {
+  set_has_learning_rate_multiplier();
+  learning_rate_multiplier_ = value;
 }
 
-// optional float weight_decay = 11;
-inline bool ParamProto::has_weight_decay() const {
+// optional float weight_decay_multiplier = 11;
+inline bool ParamProto::has_weight_decay_multiplier() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void ParamProto::set_has_weight_decay() {
+inline void ParamProto::set_has_weight_decay_multiplier() {
   _has_bits_[0] |= 0x00000400u;
 }
-inline void ParamProto::clear_has_weight_decay() {
+inline void ParamProto::clear_has_weight_decay_multiplier() {
   _has_bits_[0] &= ~0x00000400u;
 }
-inline void ParamProto::clear_weight_decay() {
-  weight_decay_ = 0;
-  clear_has_weight_decay();
+inline void ParamProto::clear_weight_decay_multiplier() {
+  weight_decay_multiplier_ = 0;
+  clear_has_weight_decay_multiplier();
 }
-inline float ParamProto::weight_decay() const {
-  return weight_decay_;
+inline float ParamProto::weight_decay_multiplier() const {
+  return weight_decay_multiplier_;
 }
-inline void ParamProto::set_weight_decay(float value) {
-  set_has_weight_decay();
-  weight_decay_ = value;
+inline void ParamProto::set_weight_decay_multiplier(float value) {
+  set_has_weight_decay_multiplier();
+  weight_decay_multiplier_ = value;
 }
 
 // repeated float content = 13 [packed = true];
@@ -3693,6 +3627,28 @@ inline void LayerProto::set_allocated_data_source(::std::string* data_source) {
     clear_has_data_source();
     data_source_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
+}
+
+// optional float drop_prob = 8 [default = 0];
+inline bool LayerProto::has_drop_prob() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void LayerProto::set_has_drop_prob() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void LayerProto::clear_has_drop_prob() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void LayerProto::clear_drop_prob() {
+  drop_prob_ = 0;
+  clear_has_drop_prob();
+}
+inline float LayerProto::drop_prob() const {
+  return drop_prob_;
+}
+inline void LayerProto::set_drop_prob(float value) {
+  set_has_drop_prob();
+  drop_prob_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -4958,10 +4914,6 @@ float_vector_message::mutable_myfloat() {
 namespace google {
 namespace protobuf {
 
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::lapis::DataSourceProto_DataType>() {
-  return ::lapis::DataSourceProto_DataType_descriptor();
-}
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::ParamProto_InitMethod>() {
   return ::lapis::ParamProto_InitMethod_descriptor();

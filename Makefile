@@ -15,7 +15,7 @@ BUILD_DIR := build
 CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 	$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-LIBRARIES := glog gflag protobuf boost_system boost_regex \
+LIBRARIES := glog gflags protobuf boost_system boost_regex \
 						boost_filesystem opencv_highgui opencv_imgproc opencv_core gomp
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
@@ -68,7 +68,7 @@ $(UTL_OBJS): $(BUILD_DIR)/%.o : %.cc
 # Build sources under core/ folder
 ###############################################################################
 CORE_HDRS := $(shell find include/core -name "*.h" -type f)
-CORE_SRCS :=$(shell find src/core -name "*.cc" -type f)
+CORE_SRCS :=$(shell find src/core  -name "*.cc" -type f)
 CORE_OBJS :=$(addprefix $(BUILD_DIR)/, $(CORE_SRCS:.cc=.o))
 
 core: init proto utils $(CORE_OBJS)
@@ -139,12 +139,13 @@ LAPIS_HDRS: =$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
 LAPIS_SRCS: =$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
 LAPIS_OBJS := $(CORE_OBJS) $(MODEL_OBJS) $(MAIN_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
 
-lapis: init lapis.a
+lapis: init proto lapis.so
 
 lapis.a: $(LAPIS_OBJS)
 	ar rcs lapis.a $(LAPIS_OBJS)
 	@echo
 
+#-Wl,-whole-archive -lgflags -Wl,-no-whole-archive
 lapis.so: $(LAPIS_OBJS)
 	$(CXX) -shared -o lapis.so $(LAPIS_OBJS) $(CXXFLAGS) $(LDFLAGS)
 	@echo

@@ -13,6 +13,8 @@ void ConvEdge::Init(const EdgeProto &proto,
   stride_= proto.stride();
   pad_=proto.pad();
   num_kernels_=proto.num_output();
+  num_groups_=proto.num_goups();
+  CHECK(num_kernels_ % num_groups_ ==0);
   // store the proto to init parameters in Setup().
   param_proto_=proto.param();
 }
@@ -26,9 +28,15 @@ void ConvEdge::Setup(bool set_param) {
   // height and width of the image after convolution
   conv_height_=(height_+2*pad_-kernel_size_)/stride_+1;
   conv_width_=(height_+2*pad_-kernel_size_)/stride_+1;
+  // weight matrix is of size num_kernels_* K_, colimg is of size K_*N_
+  // image after conv is of shape (num_kernels_*N_)
+  M_=num_kernels_/num_groups_;
+  K_=kernel_size_*kernel_size_*channels_/num_groups_;
+  N_=conv_height_*conv_width_;
+
   // allocate memory for processing one image to save memory
-  col_fea_.Reshape(1,1,conv_height_, conv_width_);
-  col_grad_.Reshape(1,1,conv_height_, conv_width_);
+  col_fea_.Reshape(1,K_*num_groups_,conv_height_, conv_width_);
+  col_grad_.Reshape(1,K_*num_groups_,conv_height_, conv_width_);
 
   // setup parameter shape and init
   if(set_param) {
@@ -37,12 +45,12 @@ void ConvEdge::Setup(bool set_param) {
       if(proto.name()=="weight") {
         proto.clear_shape();
         proto.add_shape(num_kernels_);
-        proto.add_shape(channels_*kernel_size_*kernel_size_);
+        proto.add_shape(K_);
         weight_.Init(proto);
         params_.push_back(&weight_);
       } else if (proto.name()=="bias") {
         proto.clear_shape();
-        proto.add_shape(conv_height_*conv_width_);
+        proto.add_shape(num_kernesl_);
         bias_.Init(proto);
         params_.push_back(&bias_);
       }
@@ -107,17 +115,20 @@ void ConvEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
   MMat col_mat(col_fea_.mutable_data(), col_fea_.height(), col_fea_.width());
   MMat weight(weight_.mutable_content(), weight_.height(), weight_.width());
   MVec bias(bias_.mutable_content(), bias_.length());
-  int dest_height=dest->channels();
-  int dest_width=dest->height()*dest->width();
   // the convolutioned image is treated as a matrix of shape
   // num_kernels*(conv_height*conv_width)
   MMat conv_mat(dest->offset(0), dest_height, dest_width);
   for(int i=0;i<src->num();i++) {
     im2col(src->offset(i), channels_, height_, width_, kernel_size_,
         pad_,stride_,col_data);
-    // put the convolutioned image to the i-th position in top feature blob
-    new (&conv_mat)MMat(dest->offset(i), dest_height, dest_width);
-    conv_mat.noalias()=(weight*col_mat).rowwise()+bias;
+    for (int g=0;g<num_groups_;g++) {
+      new (&conv_mat)MMat(dest->offset(i,g*M_), M_, N_);
+      new (&weight)MMat(weight_.offset(0,0,g*M_), M_, K_);
+      new (&col_mat)MMat(col_fea_.offset(0,0,g*K_), K_, N_);
+      conv_mat.noalias()=(weight*col_mat);
+    }
+    new (&conv_mat)MMat(dest->offset(i), num_kernels_, N_);
+    conv_mat=conv_mat.colwise()+bias;
   }
 }
 
@@ -145,15 +156,21 @@ void ConvEdge::Backward(const Blob *src_grad, const Blob *src_fea,
   MMat grad_mat(src_grad->offset(0), src_fea_height, src_fea_width);
   // go through image by image
   for(int i=0;i<src_grad->num();i++) {
-    new (&grad_mat)MMat(src_grad->offset(i), src_fea_height, src_fea_width);
     im2col(dest_fea->offset(i), channels_, height_, width_, kernel_size_,
         pad_,stride_, col_fea_.mutable_data());
-    weight_grad+=grad_mat*col_fea_mat.transpose();
-    if(dest_grad!=nullptr) {
-      col_grad_mat.noalias()=weight.transpose()*grad_mat;
-      col2im(col_grad_.data(), channels_, height_, width_, kernel_size_, pad_,
-          stride_, dest_grad->offset(i));
+    for(int g=0;g<num_groups_;g++){
+      new (&grad_mat)MMat(src_grad->offset(i, g*M_), M_, N_);
+      new (&weight_grad)MMat(weight_grad_.offset(0,0,g*M_), M_, K_);
+      new (&col_fea_mat)MMat(col_fea_.offset(0,0, g*K_), K_,N_);
+      weight_grad+=grad_mat*col_fea_mat.transpose();
+      if(dest_grad!=nullptr) {
+        new (&col_grad_mat)MMat(col_grad_.offset(0,0,g*K_), K_, N_);
+        new (&weigth)MMat(weight_.offset(0,0,g*M_),M_,K_);
+        col_grad_mat.noalias()=weight.transpose()*grad_mat;
+      }
     }
+    col2im(col_grad_.data(), channels_, height_, width_, kernel_size_, pad_,
+          stride_, dest_grad->offset(i));
   }
 }
 

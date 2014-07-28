@@ -100,26 +100,32 @@ bool SGDTrainer::HasFinished(int step) {
     return false;
 }
 
-float SGDTrainer::UpdateHyperParam(int step, SGDProto::ChangeProto change,
-                                   int change_steps, float base_val,
-                                   float final_val) {
+float UpdateHyperParam(int step, SGDProto::ChangeProto change,
+                                   int change_steps, float a,
+                                   float b) {
   float ret = 0., r=0.;
   switch (change) {
     case SGDProto::kFixed:
-      ret = base_val;
+      ret = a;
       break;
     case SGDProto::kLinear:
+      // a is init, b is the final
       r = step * 1.0  / change_steps;
-      ret = (1.0 - r) * base_val + r * final_val;
+      ret = (1.0 - r) * a + r * b;
       break;
     case SGDProto::kExponential:
-      CHECK_EQ(base_val, 2 * final_val) << "final value should be the half";
-      ret = base_val / pow(2, step_ * 1. / change_steps);
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / pow(2, step * 1. / change_steps);
       break;
     case SGDProto::kInverse_t:
-      CHECK_EQ(base_val, 2 * final_val) << "final value should be the half";
-      ret = base_val / (1. + step_ * 1. / change_steps);
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / (1. + step * 1. / b);
       break;
+    case SGDProto::kStep:
+      // a is the base learning rate, b is gamma, from caffe
+      ret=a*pow(b, step/change_steps);
     default:
       LOG(INFO) << "Wrong hyper-parameter update method";
   }
@@ -130,14 +136,14 @@ void SGDTrainer::UpdateHyperParams(int step) {
   learning_rate_ = UpdateHyperParam(step, sgd_proto_.learning_rate_change(),
                                     sgd_proto_.learning_rate_change_steps(),
                                     sgd_proto_.base_learning_rate(),
-                                    sgd_proto_.final_learning_rate());
+                                    sgd_proto_.learning_rate_x());
   momentum_ = UpdateHyperParam(step, sgd_proto_.momentum_change(),
                                sgd_proto_.momentum_change_steps(),
                                sgd_proto_.base_momentum(),
-                               sgd_proto_.final_momentum());
+                               sgd_proto_.momentum_x());
   weight_decay_ = UpdateHyperParam(step, sgd_proto_.weight_decay_change(),
                                    sgd_proto_.weight_decay_change_steps(),
                                    sgd_proto_.base_weight_decay(),
-                                   sgd_proto_.final_weight_decay());
+                                   sgd_proto_.weight_decay_x());
 }
 }  // namespace lapis

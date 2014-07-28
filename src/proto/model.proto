@@ -123,9 +123,11 @@ message SGDProto {
   required float base_learning_rate = 1;
   optional float base_momentum = 2 [default = 0];
   optional float base_weight_decay = 3 [default = 0];
-  optional float final_momentum = 4;
-  optional float final_learning_rate = 5;
-  optional float final_weight_decay = 6;
+  // the *_x field can be used for multiple purposes, e.g., final_*
+  optional float momentum_x = 4;
+  // for SGDProto::kStep, this field is the gamma used in caffe
+  optional float learning_rate_x = 5;
+  optional float weight_decay_x = 6;
   optional int32 learning_rate_change_steps = 7;
   optional int32 momentum_change_steps = 8;
   optional int32 weight_decay_change_steps = 9;

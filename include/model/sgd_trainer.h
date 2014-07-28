@@ -29,8 +29,10 @@ class SGDTrainer : public Trainer {
   void UpdateHyperParams(const int step);
   ~SGDTrainer();
  protected:
+  /*
   float UpdateHyperParam(int step, SGDProto_ChangeProto change,
                          int change_steps, float base_val, float final_val);
+                         */
 
   void BackPropagation(Net *net, const int step);
 

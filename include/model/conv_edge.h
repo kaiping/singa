@@ -57,6 +57,8 @@ class ConvEdge : public Edge {
   int channels_, height_, width_;
   //! height and width for the image after convolution processing
   int conv_height_, conv_width_;
+  //! num of groups, from caffe
+  int num_groups_;
   //! height and width of the kernel/filter, assume the kernel is square
   int kernel_size_;
   //! length/width between to successive kernels/filters

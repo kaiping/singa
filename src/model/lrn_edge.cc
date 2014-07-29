@@ -13,86 +13,69 @@ void LRNEdge:: Init(const EdgeProto &proto,
 }
 
 void LRNEdge::Setup(bool set_param) {
-  Blob* b=bottom_->feature(this);
+  TensorPtr * b=bottom_->feature(this);
   num_=b->num();
   channels_=b->channels();
   height_=b->height();
   width_=b->width();
-  pad_square_.Reshape(1, channels_+local_size_-1, height_, width_);
-  pad_grad_.Reshape(1, channels_+local_size_-1, height_, width_);
-  accum_fea_.Reshape(num_, channels_, height_, width_);
+  pad_square_.Reset(channels_+local_size_-1, height_* width_);
+  pad_grad_.Reset(channels_+local_size_-1, height_* width_);
+  accum_fea_.Reset(num_, channels_, height_* width_);
 }
-void LRNEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
+void LRNEdge::Forward(const Tensor& src, Tensor*dest, bool overwrite) {
   int record_length=channels_*height_*width_;
   int length=height_*width_;
   float alpha_over_size=alpha_/local_size_;
-  AVec pad_square_vec(pad_square_.mutable_data(), pad_square_.length());
-  AVec accum_fea_vec(accum_fea_.mutable_data(), accum_fea_.length());
-  accum_fea_vec.setOnes();
-  AVec src_fea_vec(src->offset(0), record_length);
-  AMat pad_square_mat(pad_square_.mutable_data(), local_size_, length);;
+  accum_fea_.setOnes();
   for(int n=0;n<num_;n++) {
-    new (&pad_square_vec)AVec(pad_square_.offset(0, pre_pad_), record_length);
-    new (&src_fea_vec)AVec(src->offset(n), record_length);
-    pad_square_vec=src_fea_vec.square(); //ai^2
-
-    new (&accum_fea_vec)AVec(accum_fea_.offset(n),length);
-    accum_fea_vec+=pad_square_mat.colwise().sum()*alpha_over_size; //*alpha
-
+    TensorPtr::Square(src.Slice(n),
+                      pad_square_.Slice(pre_pad_, pre_pad_+channels_-1)); //ai^2
+    Tensor accum_fea_n=accum_fea_.Slice(0);
+    Tensor::Sum(pad_square_.Slice(0, local_size),0, accum_fea_n.Slice(0));
+    Tensor::MultScalar(accum_fea_n, alpha_over_size, &accum_fea_n); //*alpha
     for (int c=1;c<channels_;c++){
-      memcpy(accum_fea_.offset(n,c), accum_fea_.offset(n,c-1), length*sizeof(float));
-      new (&pad_square_vec)AVec(pad_square_.offset(0, c+local_size_-1), length);
-      new (&accum_fea_vec)AVec(accum_fea_.offset(n,c), length);
-      accum_fea_vec+=pad_square_vec*alpha_over_size;
-      new (&pad_square_vec)AVec(pad_square_.offset(0,c-1), length);
-      accum_fea_vec-=pad_square_vec*alpha_over_size;
+      Tensor accum_fea_n_c=accum_fea_n.Slice(c);
+      Tensor::Copy(&accum_fea_n_c, accum_fea_n.Slice(c-1));
+      Tensor::Add(pad_square_.Slice(c+local_size_-1), &accum_fea_n_c);
+      Tensor::Sub(pad_square_.Slice(c-1), &accum_fea_n_c);
     }
   }
-  new (&accum_fea_vec)AVec(accum_fea_.mutable_data(), record_length);
-  new (&src_fea_vec)AVec(src->mutable_data(), record_length);
-  AVec dest_fea_vec(dest->mutable_data(), record_length);
-  dest_fea_vec=accum_fea_vec.pow(-beta_)*src_fea_vec; //ai*xi^(-beta)
+  Tensor::Pow(-beta, accum_fea_, dest);
+  Tensor::Mult(src, dest);
 }
 
-void LRNEdge::Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
+void LRNEdge::Backward(const Tensor& src_fea, const Tensor& src_grad,
+                        const Tensor& dest_fea, Tensor* dest_grad,
                         bool overwrite) {
   int inverse_pre_pad=local_size_-(local_size_+1)/2;
-  int record_length=channels_*height_*width_;
-  int length=height_*width_;
-  float factor=2.*alpha_*beta_/local_size_;
-
-  AVec src_grad_vec(src_grad->mutable_data(), src_grad->length());
-  AVec dest_grad_vec(dest_grad->mutable_data(), dest_grad->length());
-  AVec accum_fea_vec(accum_fea_.mutable_data(), accum_fea_.length());
-  dest_grad_vec=accum_fea_vec.pow(-beta_)*src_grad_vec;
-  AVec dest_fea_vec(dest_fea->mutable_data(), dest_fea->length());
-  EigenAVector grad_vec(length);
-  AVec pad_grad_vec(pad_grad_.offset(0, inverse_pre_pad), record_length);
-  AVec src_fea_vec(src_fea->offset(0), record_length);
-  AMat pad_grad_mat(pad_grad_.mutable_data(), local_size_-1, length);
+  float factor=-2.*alpha_*beta_/local_size_;
+  Tensor::Pow(-beta_, accum_fea_, dest_grad);
+  Tensor::Pow(src_grad, dest_grad);
+  src_grad.Reshape(num_, channels_, height_*width_);
+  src_fea.Reshape(num_, channels_, height_*width_);
+  dest_grad->Reshape(num_, channels_, height_*width_);
+  Tensor accum_grad(height_*width_);
   for(int n=0;n<num_;n++){
-    new (&pad_grad_vec)AVec(pad_grad_.offset(0, inverse_pre_pad), record_length);
-    new (&src_fea_vec)AVec(src_fea->offset(n), record_length);
-    new (&src_grad_vec)AVec(src_grad->offset(n), record_length);
-    new (&accum_fea_vec)AVec(accum_fea_.offset(n), record_length);
-    pad_grad_vec=src_grad_vec*src_fea_vec/accum_fea_vec; //src_grad*b_i/x_i
+    Tensor accum_fea_n=accum_fea.Slice(n);
+    Tensor src_grad_n=src_grad.Slice(n);
+    Tensor src_fea_n=src_fea.Slice(n);
+    Tensor dest_grad_n=dest_grad.Slice(n);
+    Tensor::MultDiv(src_grad_n, src_fea_n, accum_fea_n,
+                    pad_grad_.Slice(inverse_pre_pad, inverse_pre_pad+channels_-1));
+     //src_grad*b_i/x_i
     // TODO(wangwei) use colwise operation instead of for loop
-    grad_vec=pad_grad_mat.colwise().sum();
+    Tensor::Sum(pad_grad_.Slice(0, local_size_-1), 0, &accum_grad);
     for (int c=0;c<channels_;c++) {
-      new (&pad_grad_vec)AVec(pad_grad_.offset(0,c+local_size_-1), length);
-      grad_vec+=pad_grad_vec;
-      new (&dest_fea_vec)AVec(dest_fea->offset(n,c), length);
-      new (&dest_grad_vec)AVec(dest_grad->offset(n,c), length);
-      dest_grad_vec+=grad_vec*dest_fea_vec*factor; // *ai*alpha*beta*2
-      new (&pad_grad_vec)AVec(pad_grad_.offset(0,c), length);
-      grad_vec-=pad_grad_vec;
+      Tensor::Add(pad_grad_.Slice(c+local_size_-1), &accum_grad);
+      Tensor::Mult(factor, src_fea_n.Slice(c), accum_grad, dest_grad_n.Slice(c));
+      Tensor::Sub(pad_grad_.Slice(c), accum_grad);
+       // *ai*alpha*beta*2
     }
   }
 }
 
-void LRNEdge::SetupTopBlob(Blob* blob) {
-  blob->Reshape(num_,channels_,height_, width_);
+void LRNEdge::SetupTopTensorPtr (TensorPtr t) {
+  t->Reshape(num_,channels_,height_, width_);
 }
 
 }  // namespace lapis

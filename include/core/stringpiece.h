@@ -16,13 +16,13 @@ namespace lapis {
 using std::string;
 
 class StringPiece {
-public:
+ public:
   StringPiece();
-  StringPiece(const StringPiece& s);
-  StringPiece(const string& s);
-  StringPiece(const string& s, int len);
-  StringPiece(const char* c);
-  StringPiece(const char* c, int len);
+  StringPiece(const StringPiece &s);
+  StringPiece(const string &s);
+  StringPiece(const string &s, int len);
+  StringPiece(const char *c);
+  StringPiece(const char *c, int len);
 
   // Remove whitespace from either side
   void strip();
@@ -30,9 +30,11 @@ public:
   uint32_t hash() const;
   string AsString() const;
 
-  int size() const { return len; }
+  int size() const {
+    return len;
+  }
 
-  const char* data;
+  const char *data;
   int len;
 
   static std::vector<StringPiece> split(StringPiece sp, StringPiece delim);

@@ -94,11 +94,12 @@ enum SGDProto_ChangeProto {
   SGDProto_ChangeProto_kFixed = 0,
   SGDProto_ChangeProto_kInverse_t = 1,
   SGDProto_ChangeProto_kExponential = 2,
-  SGDProto_ChangeProto_kLinear = 3
+  SGDProto_ChangeProto_kLinear = 3,
+  SGDProto_ChangeProto_kStep = 4
 };
 bool SGDProto_ChangeProto_IsValid(int value);
 const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_kFixed;
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kLinear;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kStep;
 const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE = SGDProto_ChangeProto_ChangeProto_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor();
@@ -1276,6 +1277,7 @@ class SGDProto : public ::google::protobuf::Message {
   static const ChangeProto kInverse_t = SGDProto_ChangeProto_kInverse_t;
   static const ChangeProto kExponential = SGDProto_ChangeProto_kExponential;
   static const ChangeProto kLinear = SGDProto_ChangeProto_kLinear;
+  static const ChangeProto kStep = SGDProto_ChangeProto_kStep;
   static inline bool ChangeProto_IsValid(int value) {
     return SGDProto_ChangeProto_IsValid(value);
   }

@@ -3,7 +3,8 @@
 
 namespace lapis {
 
-RPCTableCoder::RPCTableCoder(const TableData *in) : read_pos_(0), t_(const_cast<TableData*>(in)) {}
+RPCTableCoder::RPCTableCoder(const TableData *in) : read_pos_(0),
+  t_(const_cast<TableData *>(in)) {}
 
 bool RPCTableCoder::ReadEntry(string *k, string *v) {
   if (read_pos_ < t_->kv_data_size()) {
@@ -12,7 +13,6 @@ bool RPCTableCoder::ReadEntry(string *k, string *v) {
     ++read_pos_;
     return true;
   }
-
   return false;
 }
 
@@ -24,8 +24,8 @@ void RPCTableCoder::WriteEntry(StringPiece k, StringPiece v) {
   a->set_value(v.data, v.len);
 }
 
-LocalTableCoder::LocalTableCoder(const string& f, const string &mode) :
-    f_(new RecordFile(f, mode, RecordFile::LZO)) {
+LocalTableCoder::LocalTableCoder(const string &f, const string &mode) :
+  f_(new RecordFile(f, mode, RecordFile::LZO)) {
 }
 
 LocalTableCoder::~LocalTableCoder() {
@@ -37,7 +37,6 @@ bool LocalTableCoder::ReadEntry(string *k, string *v) {
     f_->readChunk(v);
     return true;
   }
-
   return false;
 }
 

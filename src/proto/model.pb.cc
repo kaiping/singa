@@ -437,7 +437,7 @@ void protobuf_AddDesc_model_2eproto() {
     "\n\004name\030\001 \002(\t\022\014\n\004type\030\003 \002(\t\022\023\n\013data_sourc"
     "e\030\007 \001(\t\022\024\n\tdrop_prob\030\010 \001(\002:\0010\"L\n\010NetProt"
     "o\022 \n\005layer\030\003 \003(\0132\021.lapis.LayerProto\022\036\n\004e"
-    "dge\030\004 \003(\0132\020.lapis.EdgeProto\"\212\005\n\010SGDProto"
+    "dge\030\004 \003(\0132\020.lapis.EdgeProto\"\225\005\n\010SGDProto"
     "\022\032\n\022base_learning_rate\030\001 \002(\002\022\030\n\rbase_mom"
     "entum\030\002 \001(\002:\0010\022\034\n\021base_weight_decay\030\003 \001("
     "\002:\0010\022\026\n\016final_momentum\030\004 \001(\002\022\033\n\023final_le"
@@ -452,32 +452,33 @@ void protobuf_AddDesc_model_2eproto() {
     "DProto.ChangeProto:\006kFixed\022\023\n\013total_step"
     "s\030\r \001(\005\022\027\n\017train_batchsize\030\016 \001(\005\022\034\n\024vali"
     "dation_batchsize\030\017 \001(\005\022\026\n\016test_batchsize"
-    "\030\020 \001(\005\"H\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkIn"
+    "\030\020 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkIn"
     "verse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003"
-    "\"W\n\020PerformanceProto\022\021\n\tprecision\030\001 \001(\002\022"
-    "\016\n\006recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precisio"
-    "n50\030\004 \001(\002\"\325\005\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132"
-    "\017.lapis.SGDProto\022!\n\026checkpoint_after_ste"
-    "ps\030\002 \001(\005:\0010\022!\n\026checkpoint_every_steps\030\003 "
-    "\001(\005:\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/c"
-    "heckpoint\022\032\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n"
-    "\023display_after_steps\030\006 \001(\005:\0010\022\036\n\023display"
-    "_every_steps\030\007 \001(\005:\0010\022#\n\016display_prefix\030"
-    "\010 \001(\t:\013tmp/display\022\030\n\rvalidate_step\030\t \001("
-    "\005:\0010\022\037\n\024validate_after_steps\030\n \001(\005:\0010\022\037\n"
-    "\024validate_every_steps\030\013 \001(\005:\0010\022*\n\ntrain_"
-    "data\030\014 \003(\0132\026.lapis.DataSourceProto\022/\n\017va"
-    "lidation_data\030\r \003(\0132\026.lapis.DataSourcePr"
-    "oto\022)\n\ttest_data\030\016 \003(\0132\026.lapis.DataSourc"
-    "eProto\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/perform"
-    "ance\022<\n\003alg\030\020 \001(\0162\035.lapis.TrainerProto.A"
-    "lgorithm:\020kBackPropagation\022\026\n\010do_train\030\021"
-    " \001(\010:\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAl"
-    "gorithm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContra"
-    "stiveDivergence\020\002\"^\n\nModelProto\022\014\n\004name\030"
-    "\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007t"
-    "rainer\030\003 \002(\0132\023.lapis.TrainerProto\"\'\n\024flo"
-    "at_vector_message\022\017\n\007myfloat\030\001 \003(\002", 2874);
+    "\022\t\n\005kStep\020\004\"W\n\020PerformanceProto\022\021\n\tpreci"
+    "sion\030\001 \001(\002\022\016\n\006recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022"
+    "\023\n\013precision50\030\004 \001(\002\"\325\005\n\014TrainerProto\022\034\n"
+    "\003sgd\030\001 \001(\0132\017.lapis.SGDProto\022!\n\026checkpoin"
+    "t_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_eve"
+    "ry_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004"
+    " \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint_step\030"
+    "\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 \001(\005:\0010"
+    "\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#\n\016disp"
+    "lay_prefix\030\010 \001(\t:\013tmp/display\022\030\n\rvalidat"
+    "e_step\030\t \001(\005:\0010\022\037\n\024validate_after_steps\030"
+    "\n \001(\005:\0010\022\037\n\024validate_every_steps\030\013 \001(\005:\001"
+    "0\022*\n\ntrain_data\030\014 \003(\0132\026.lapis.DataSource"
+    "Proto\022/\n\017validation_data\030\r \003(\0132\026.lapis.D"
+    "ataSourceProto\022)\n\ttest_data\030\016 \003(\0132\026.lapi"
+    "s.DataSourceProto\022$\n\013perf_prefix\030\017 \001(\t:\017"
+    "tmp/performance\022<\n\003alg\030\020 \001(\0162\035.lapis.Tra"
+    "inerProto.Algorithm:\020kBackPropagation\022\026\n"
+    "\010do_train\030\021 \001(\010:\004true\022\026\n\007do_test\030\022 \001(\010:\005"
+    "false\"=\n\tAlgorithm\022\024\n\020kBackPropagation\020\001"
+    "\022\032\n\026kContrastiveDivergence\020\002\"^\n\nModelPro"
+    "to\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.Ne"
+    "tProto\022$\n\007trainer\030\003 \002(\0132\023.lapis.TrainerP"
+    "roto\"\'\n\024float_vector_message\022\017\n\007myfloat\030"
+    "\001 \003(\002", 2885);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -3815,6 +3816,7 @@ bool SGDProto_ChangeProto_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
       return true;
     default:
       return false;
@@ -3826,6 +3828,7 @@ const SGDProto_ChangeProto SGDProto::kFixed;
 const SGDProto_ChangeProto SGDProto::kInverse_t;
 const SGDProto_ChangeProto SGDProto::kExponential;
 const SGDProto_ChangeProto SGDProto::kLinear;
+const SGDProto_ChangeProto SGDProto::kStep;
 const SGDProto_ChangeProto SGDProto::ChangeProto_MIN;
 const SGDProto_ChangeProto SGDProto::ChangeProto_MAX;
 const int SGDProto::ChangeProto_ARRAYSIZE;

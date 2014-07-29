@@ -4,26 +4,37 @@
 # Configuration for folders and Flags
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-CXX := /home/wangwei/install/bin/g++
+CXX := g++
 # Change this variable!! header folder for system and external libs.
-INCLUDE_DIRS := include/ /home/wangwei/install/include
+INCLUDE_DIRS := include/ /usr/include /usr/include/mpi
 # Change this variable!! lib folder for system and external libs
-LIBRARY_DIRS := /home/wangwei/install/lib64 /home/wangwei/install/lib
+LIBRARY_DIRS := /usr/lib
+HOME_DIR := $(shell pwd)
+
 # folder for compiled file
 BUILD_DIR := build
+TEST_DIR := $(BUILD_DIR)/src/test
+
+OUTPUT_LIB_DIR := $(HOME_DIR)
+OUTPUT_LIB_STATIC := lapis.a
+OUTPUT_LIB_SHARED := liblapis.so
 
 CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
 	$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-LIBRARIES := glog gflag protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core gomp
-LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
-						$(foreach library, $(LIBRARIES), -l$(library))
+MPI_LDFLAGS := -L/usr/lib/openmpi -lmpi_cxx -lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lm -ldl 
+LIBRARIES := glog gflags protobuf boost_system boost_regex \
+		boost_thread boost_filesystem opencv_highgui opencv_imgproc opencv_core gomp 
+LDFLAGS := -Wl,-rpath=$(OUTPUT_LIB_DIR) -Wl,-rpath=/usr/local/lib $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
+						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
+
+TEST_CORE_CMD := mpirun -hostfile $(HOME_DIR)/mpi-beakers -bycore -nooversubscribe -n 2 
+TEST_CORE_OPTS:= --nosync_update --system_conf=$(HOME_DIR)/src/test/data/system.conf
 
 ###############################################################################
 # Build core of Lapis into .a and .so library
 ###############################################################################
-.PHONY: proto core init model utils flint clean
+.PHONY: proto core init model utils test_core flint clean
 ###############################################################################
 # Build headers and sources under Proto/, i.e. the google protobuf messages
 ###############################################################################
@@ -135,18 +146,21 @@ $(MAIN_OBJS): $(BUILD_DIR)/%.o : %.cc
 
 # each lapis src file will generate a .o file
 #LAPIS_OBJS :=$(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o))
-LAPIS_HDRS: =$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
-LAPIS_SRCS: =$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
-LAPIS_OBJS := $(CORE_OBJS) $(MODEL_OBJS) $(MAIN_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
+LAPIS_HDRS: =$(CORE_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
+# $(MODEL_HDRS) $(MAIN_HDRS) 
+LAPIS_SRCS: =$(CORE_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
+#$(MODEL_SRCS) $(MAIN_SRCS)
+LAPIS_OBJS := $(CORE_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
+#$(MODEL_OBJS) $(MAIN_OBJS)
 
-lapis: init lapis.a
+lapis: init proto $(OUTPUT_LIB_STATIC) $(OUTPUT_LIB_SHARED)
 
-lapis.a: $(LAPIS_OBJS)
-	ar rcs lapis.a $(LAPIS_OBJS)
+$(OUTPUT_LIB_STATIC): $(LAPIS_OBJS)
+	ar rcs $@ $^ 
 	@echo
 
-lapis.so: $(LAPIS_OBJS)
-	$(CXX) -shared -o lapis.so $(LAPIS_OBJS) $(CXXFLAGS) $(LDFLAGS)
+$(OUTPUT_LIB_SHARED): $(LAPIS_OBJS)
+	$(CXX) -shared -o liblapis.so $(LAPIS_OBJS) $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 
@@ -164,13 +178,16 @@ init:
 ###############################################################################
 # Build Test files
 ###############################################################################
-TEST_LIBRARIES := $(LIBRARIES) gtest
-TEST_LDFLAGS := $(LDFLAGS) -lgtest
+#TEST_LIBRARIES := $(LIBRARIES) gtest
+#TEST_LDFLAGS := $(LDFLAGS) -lgtest
+TEST_LIBRARIES := $(LIBRARIES)
+TEST_LDFLAGS := $(LDFLAGS) 
 
-TEST_MAIN := src/test/test_main.cc
-TEST_SRCS := $(shell find src/test/ -name "test_*.cc")
-TEST_SRCS :=$(filter-out $(TEST_MAIN), $(TEST_SRCS))
+#TEST_MAIN := src/test/test_main.cc
+#TEST_SRCS := $(shell find src/test/ -name "test_*.cc")
+#TEST_SRCS :=$(filter-out $(TEST_MAIN), $(TEST_SRCS))
 
+TEST_SRCS := src/test/test_main.cc
 TEST_OBJS := $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o))
 TEST_BINS := $(addprefix $(BUILD_DIR)/bin/, $(TEST_SRCS:.cc=.bin))
 
@@ -182,6 +199,29 @@ $(TEST_BINS): $(BUILD_DIR)/bin/src/test/%.bin: $(BUILD_DIR)/src/test/%.o
 $(BUILD_DIR)/src/test/%.o: src/test/%.cc
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 
+###############################################################################
+# Build Test-core target
+###############################################################################
+TEST_LIBRARIES := $(LIBRARIES)
+TEST_LDFLAGS := $(LDFLAGS) 
+
+TEST_CORE_SRCS := src/test/test_core.cc
+TEST_CORE_OBJS := $(addprefix $(BUILD_DIR)/, $(TEST_CORE_SRCS:.cc=.o))
+TEST_CORE_BIN  := $(addprefix $(BUILD_DIR)/, $(TEST_CORE_SRCS:.cc=.bin))
+
+test_core: lapis $(TEST_CORE_BIN)
+	$(TEST_CORE_CMD) $(TEST_CORE_BIN) $(TEST_CORE_OPTS)
+	@echo
+
+#$(CXX) -o $@ $(TEST_CORE_OBJS) -Wl,-whole-archive $(OUTPUT_LIB_STATIC) -Wl,-no-whole-archive $(CXXFLAGS) $(LDFLAGS)
+
+$(TEST_CORE_BIN): $(OUTPUT_LIB_STATIC) $(TEST_CORE_OBJS)
+	$(CXX) -o $@ $(TEST_CORE_OBJS) $(CXXFLAGS) -L. -llapis $(LDFLAGS)
+	@echo
+
+$(TEST_CORE_OBJS): $(TEST_CORE_SRCS)
+	$(CXX) $< $(CXXFLAGS) -c -o $@ 
+	@echo
 
 ###############################################################################
 # Formatting and lint, target is flint

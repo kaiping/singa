@@ -16,12 +16,15 @@ void InnerProductEdge::Init(const EdgeProto &proto,
 }
 
 void InnerProductEdge::Setup(bool set_param) {
+  const Shape4& shape=(bottom_->feature(this)).shape;
+  num_=shape[3];
+  num_input_=shape.Size()/num_;
   if(set_param) {
     CHECK(param_proto_.size()<=2);
     for (auto proto : param_proto_) {
       if(proto.name()=="weight") {
         proto.clear_shape();
-        proto.add_shape(bottom_->feature(this)->record_length());
+        proto.add_shape(num_input_);
         proto.add_shape(num_output_);
         weight_.Init(proto);
         params_.push_back(&weight_);
@@ -44,42 +47,38 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
   bias_.ToProto(bias_proto);
 }
 
-void InnerProductEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  MMat fea(src->mutable_data(), src->height(), src->width());
-  MMat act(dest->mutable_data(), dest->width(), dest->width());
-  MMat weight(weight_.mutable_content(), weight_.height(), weight_.width());
-  MVec bias(bias_.mutable_content(), bias_.length());
+void InnerProductEdge::Forward(const Blob4 &src, Blob4 *dest, bool overwrite) {
+  const Blob2 src2=reshape(src, Shape2(num_input_, num_));
+  Blob2 dest2=reshape(*dest, Shape2(num_output_,num_));
+  Blob2& weight=weight_.content();
+  Blob1& bias=bias_.content();
   if (overwrite)
-    act.noalias() = (fea * weight).rowwise() + bias;
+    dest2 = (src2*weight) + repmat<1>(bias, num_);
   else
-    act += (fea * weight).rowwise() + bias;
+    dest += (src2 * weight) +repmat<1>(bias, num_);;
 }
 
-void InnerProductEdge::Backward(const Blob *src_grad, const Blob *dest_fea,
-                                Blob *dest_grad, bool overwrite) {
-  MMat act_grad(src_grad->mutable_data(), src_grad->height(),
-                         src_grad->width());
-  MMat fea(dest_fea->mutable_data(), dest_fea->width(),
-                    dest_fea->width());
-  MMat weight_grad(weight_.mutable_gradient(), weight_.height(), weight_.width());
-  MMat weight(weight_.mutable_content(), weight_.height(), weight_.width());
-  MVec bias_grad(bias_.mutable_gradient(), bias_.length());
-  weight_grad.noalias() = fea.transpose() * act_grad;
-  bias_grad = act_grad.colwise().sum();
+void InnerProductEdge::Backward(const Blob4 &src_grad, const Blob4 &dest_fea,
+                                Blob4 *dest_grad, bool overwrite) {
+  Blob2 dest_fea2=reshape(dest_fea, Shape2(num_input_,num_));
+  Blob2 src_grad2=reshape(src, Shape2(num_output_, num_));
+  Blob1 bias_grad=bias_.mutable_gradient();
+  Blob2& weight_grad=weight_.mutable_gradient();
+  weight_grad=dot(dest_fea2.T(), src_grad2);
+  bias_grad = src_grad2.sum_rows();
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   if (dest_grad != nullptr) {
-    MMat fea_grad(dest_grad->mutable_data(), dest_grad->height(),
-                           dest_grad->width());
+    const Blob2& weight=weight_.content();
+    Blob2 dest_grad2=reshape(*dest_grad, Shape2(num_input_, num_));
     if (overwrite)
-      fea_grad.noalias() = act_grad * weight.transpose();
+      dest_grad2 = src_grad2 * weight.T();
     else
-      fea_grad += act_grad * weight.transpose();
+      dest_grad2= src_grad2 * weight.T();
   }
 }
 
-void InnerProductEdge::SetupTopBlob(Blob* blob) {
-  Blob* b=bottom_->feature(this);
-  blob->Reshape(b->num(),1, b->record_length(), num_output_);
+void InnerProductEdge::SetupTopBlob(Blob4* blob) {
+  blob->Resize(Shape4(num_output_,1,1,num_));
 }
 }  // namespace lapis

@@ -88,7 +88,7 @@ class Layer {
    * @param mask record which neuron is dropped for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
-  virtual void Dropout(float drop_prob, float scale, const Blob &src, Blob* dest, int * mask);
+  virtual void Dropout(float drop_prob, float scale, const Blob4 &src, Blob4* dest, int * mask);
   /**
    * Back propagate the gradient for dropout operation
    * @param scale a scale factor multiplied to the gradient
@@ -97,7 +97,7 @@ class Layer {
    * @param mask it records which neuron was dropped in ::Dropout(), and
    * directs how to pass the gradient from src to dest.
    */
-  virtual void ComputeDropoutGradient(float scale, const Blob& src , const int* mask, Blob* dest);
+  virtual void ComputeDropoutGradient(float scale, const Blob4& src , const int* mask, Blob4* dest);
   /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -109,19 +109,19 @@ class Layer {
    */
   virtual bool HasInput() {return false;}
   /**
-   * Return the output feature Blob of this layer connected to the edge
+   * Return the output feature Blob4 of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual Blob *feature(Edge *edge);
+  virtual Blob4& feature(Edge *edge);
   /**
-   * Return the gradient Blob connected to the edge.
+   * Return the gradient Blob4 connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
-   * to lower layers. But for DataLayer, it returns the feature Blob, because
+   * to lower layers. But for DataLayer, it returns the feature Blob4, because
    * the edge is an loss Edge, which computes the gradient by comparing
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual Blob *gradient(Edge *edge);
+  virtual Blob4& gradient(Edge *edge);
   /**
    * Return parameters of this layer
 
@@ -184,7 +184,7 @@ class LayerFactory {
   /**
    * static method to get instance of this factory
    */
-  static LayerFactory *Instance();
+  static std::shared_ptr<LayerFactory> Instance();
   /**
    * Register user defined layer, i.e., add the layer type/identifier and a
    * function which creats an instance of the layer. This function is called by
@@ -202,9 +202,10 @@ class LayerFactory {
 
  private:
   //! To avoid creating multiple instances of this factory in the program
-  LayerFactory() {}
+  LayerFactory();
   //! Map that stores the registered Layers
   std::map<std::string, std::function<Layer*(void)>> layer_map_;
+  static std::shared_ptr<LayerFactory> instance_;
 };
 
 }  // namespace lapis

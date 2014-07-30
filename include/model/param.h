@@ -33,38 +33,38 @@ class Param {
   /**
    * Return const mem address for the content of this parameter
    */
-  const float *content() const {
-    return content_.data();
+  const Blob2& content() const {
+    return content_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  float *mutable_content() const {
-    return content_.mutable_data();
+  Blob2 *mutable_content() const {
+    return content_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const float *gradient() const {
-    return grad_.data();
+  const Blob2& gradient() const {
+    return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  float *mutable_gradient() const {
-    return grad_.mutable_data();
+  Blob2 *mutable_gradient() const {
+    return grad_;
   }
   /**
    * Return const mem address for the history gradient of this parameter
    */
-  const float *history() const {
-    return history_grad_.data();
+  const Blob2 &history() const {
+    return history_grad_;
   }
   /**
    * Return mem address for the history gradient of this parameter
    */
-  float *mutable_history() const {
-    return history_grad_.mutable_data();
+  Blob2 *mutable_history() const {
+    return history_grad_;
   }
 
   /**
@@ -126,7 +126,7 @@ class Param {
   //! scale factor for learning rate and weight decay for this parameter
   float momentum_, learning_rate_, weight_decay_;
   //! content, gradient and history gradient of this parameter
-  Blob content_, grad_, history_grad_;
+  Blob2 content_, grad_, history_grad_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

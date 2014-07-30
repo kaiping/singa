@@ -20,7 +20,7 @@ void LinearLayer::Forward() {
 void LinearLayer::Backward(){
   Edge* edge= out_edges_[0];
   Layer* top=edge->top();
-  edge->Backward(top->feature(edge),top->gradient(edge), &fea_, &grad_, true);
+  edge->Backward(top->feature(edge),top->gradient(edge), fea_, &grad_, true);
 }
 }  // namespace lapis
 

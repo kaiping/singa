@@ -16,57 +16,44 @@ void Param::Init(const ParamProto &proto) {
   if (shape.size() == 2) {
     int h = shape.Get(0);
     int w = shape.Get(1);
-    content_.Reshape(h, w);
-    grad_.Reshape(h, w);
-    history_grad_.Reshape(h, w);
+    content_.Resize(Shape2(w, h));
+    grad_.Resize(Shape2(w, h));
+    history_grad_.Resize(Shape2(w, h));
   } else {
-    int l = shape.Get(0);
-    content_.Reshape(l);
-    grad_.Reshape(l);
-    history_grad_.Reshape(l);
+    int len = shape.Get(0);
+    content_.Resize(Shape1(len));
+    grad_.Resize(Shape1(l));
+    history_.Resize(Shape1(len));
   }
 
-  int len=content_.length();
-  float *val=content_.mutable_data();
   switch (proto.init_method()) {
-    case ParamProto::kConstant: {
-      for(int i=0;i<len;i++)
-        val[i]=proto.value();
+    case ParamProto::kConstant:
+      content_=proto.value();
       break;
-    }
-    case ParamProto::kUniform: {
-      FillUniformData(len, proto.low(), proto.high(), proto.value(), val);
+    case ParamProto::kUniform:
+      FillUniformData(proto.low(), proto.high(), proto.value());
       break;
-    }
-    case ParamProto::kUniformSqrtFanIn:{
+    case ParamProto::kUniformSqrtFanIn:
       CHECK_EQ(shape.size(),2);
-      FillUniformData(len, proto.low(), proto.high(),
-                      proto.value()/sqrt(shape.Get(0)/3.0f), val);
+      FillUniformData(proto.low(), proto.high(),
+                      proto.value()/sqrt(shape.Get(0)/3.0f));
       break;
-    }
-    case ParamProto::kUniformSqrtFanInOut: {
+    case ParamProto::kUniformSqrtFanInOut:
       CHECK_EQ(shape.size(),2);
-      FillUniformData(len, proto.low(), proto.high(),
-                      proto.value()/sqrt(shape.Get(0)+shape.Get(1)), val);
-    }
-    case ParamProto::kGaussain: {
-      FillGaussainData(len, proto.mean(), proto.std(), proto.value(), val);
+      FillUniformData(proto.low(), proto.high(),
+                      proto.value()/sqrt(shape.Get(0)+shape.Get(1)));
+    case ParamProto::kGaussain:
+      FillGaussainData(proto.mean(), proto.std(), proto.value());
       break;
-    }
-    case ParamProto::kGaussainSqrtFanIn: {
+    case ParamProto::kGaussainSqrtFanIn:
       CHECK_EQ(shape.size(),2);
-      FillGaussainData(len, proto.mean(), proto.std(),
-                       proto.value()/sqrt(shape.Get(0)), val);
+      FillGaussainData(proto.mean(), proto.std(),
+                       proto.value()/sqrt(shape.Get(0)));
       break;
-    }
-    case ParamProto::kPretrained: {
-      content_.set_data(proto.content().data());
-      history_grad_.set_data(proto.history().data());
+    case ParamProto::kPretrained:
       break;
-    }
-    default: {
+    default:
       LOG(ERROR)<<"Illegal parameter init method "<<proto.init_method();
-    }
   }
   name_ = proto.name();
 }
@@ -79,19 +66,19 @@ void Param::ToProto(ParamProto *proto) {
   proto->set_weight_decay(weight_decay_);
 }
 
-void Param::FillGaussainData(int length, float mean, float std, float factor, float *val) {
-  std::normal_distribution<float> normal(mean,std);
-  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
-  for (int i=0;i<length;i++)
-    val[i]=normal(*generator)*factor;
+void Param::FillGaussainData(float mean, float std, float factor) {
+  Random& rnd=Lapis::Instance()->rnd();
+  rnd.SampleGaussian(content_, mean, std);
+  if(factor!=1.0f)
+    content_*=factor;
 }
 
-void Param::FillUniformData(int length, float low, float high, float factor, float *val) {
+void Param::FillUniformData(float low, float high, float factor){
   LOG(INFO)<<low<<" "<<high;
-  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
-  std::uniform_real_distribution<float> uniform(low,high);
-  for (int i=0;i<length;i++)
-    val[i]=uniform(*generator)*factor;
+  Random& rnd=Lapis::Instance()->rnd();
+  rnd.SampleUniform(content_,low, high);
+  if(factor!=1.0f)
+    content_*=factor;
 }
 
 

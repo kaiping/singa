@@ -35,13 +35,13 @@ class ConvEdge : public Edge {
    * @param dest_fea the tensor that store the processed feature
    * @param overwrite not used
    */
-  virtual void Forward(const Tensor *src_fea, Tensor *dest_fea, bool overwrite);
+  virtual void Forward(const Blob4 &src_fea, Blob4 *dest_fea, bool overwrite);
   /**
    * Backpropagate gradients, calc gradients w.r.t, weight, bias and feature of
    * the bottom layer if necessary (no need for data layer).
    */
-  virtual void Backward(const Tensor *src_fea ,const Tensor *src_grad,
-                        const Tensor *dest_fea, Tensor *dest_grad, bool overwrite);
+  virtual void Backward(const Blob4 &src_fea ,const Blob4 &src_grad,
+                        const Blob4 &dest_fea, Blob4 *dest_grad, bool overwrite);
   /**
    * Reshape the tensor from top layer connected to this edge.
    * The channels is just the num of kernels, height and width are the height
@@ -50,13 +50,13 @@ class ConvEdge : public Edge {
    * conv_width=(height_+2*pad_-kernel_size_)/stride_+1;
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopTensor(Tensor* tensor);
+  virtual void SetupTopBlob(Blob4* blob);
 
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int channels_, height_, width_;
-  //! height and width for the image after convolution processing
-  int conv_height_, conv_width_;
+  //! group weight height, width (col height), and col width
+  int M_,K_,N_;
   //! num of groups, from caffe
   int num_groups_;
   //! height and width of the kernel/filter, assume the kernel is square
@@ -67,8 +67,10 @@ class ConvEdge : public Edge {
   int pad_;
   //! number of kernels
   int num_kernels_;
+  //! batch size
+  int num_;
   //! tmp blobs to store the reshaped image and its gradient
-  Tensor col_fea_, col_grad_;
+  Blob2 col_fea_, col_grad_;
   //! one row per kernel; shape is num_kernels_*(channels_*kernel_size^2)
   Param weight_ ;
   //! the length is conv_height*conv*width

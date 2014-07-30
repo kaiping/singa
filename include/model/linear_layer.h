@@ -13,7 +13,7 @@ class LinearLayer : public Layer {
  public:
   /**
    * There are only two data blobs, one for feature, one for gradient.
-   * This function allocate memory for then by calling the ::SetupTopBlob()
+   * This function allocate memory for then by calling the ::SetupTopBlob4()
    * from the in coming edge.
    * @param batchsize not used
    * @param alg not used
@@ -31,10 +31,10 @@ class LinearLayer : public Layer {
    * Assume only one out going edge currently.
    */
   virtual void Backward();
-  virtual Blob *feature(Edge *edge) {return &fea_;}
-  virtual Blob *gradient(Edge *edge) {return &grad_;}
+  virtual Blob4 *feature(Edge *edge) {return &fea_;}
+  virtual Blob4 *gradient(Edge *edge) {return &grad_;}
  private:
-  Blob fea_, grad_;
+  Blob4 fea_, grad_;
 };
 
 }  // namespace lapis

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "model/trainer.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 #include "model/layer.h"
 #include "model/param.h"
 #include "proto/model.pb.h"
@@ -55,7 +55,7 @@ class Edge {
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add it
    */
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
+  virtual void Forward(const Blob4 &src, Blob4 *dest, bool overwrite);
   /**
    * Backward propagate gradient, read gradient/feature blob from src and
    * feature blob from src, then compute the gradient for parameters of this
@@ -69,8 +69,8 @@ class Edge {
    * the bottom layer is DataLayer, the no need to compute for the dest_grad.
    * @param overwrite if true overwrite dest_grad otherwise add to it
    */
-  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
+  virtual void Backward(const Blob4 &src_fea, const Blob4 &src_grad,
+                        const Blob4 &dest_fea, Blob4 *dest_grad,
                         bool overwrite);
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
@@ -91,7 +91,7 @@ class Edge {
    * this edge will decide the shape of the blob and is responsible to setup it
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob* blob);
+  virtual void SetupTopBlob(Blob4* blob);
   /**
    * Return parameters associated this edge
    */
@@ -182,9 +182,10 @@ class EdgeFactory {
 
  private:
   //! To avoid creating multiple instances of this factory in the program
-  EdgeFactory() {}
+  EdgeFactory();
   //! Map that stores the registered Layers
   std::map<std::string, std::function<Edge*(void)>> layer_map_;
+  static std::shared_ptr<EdgeFactory> instance_;
 };
 
 }  // namespace lapis

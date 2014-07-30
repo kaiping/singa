@@ -34,19 +34,50 @@ void Edge::Setup(bool set_param) {
   LOG(INFO)<<"Not implemented";
 }
 
-void Edge::ComputeParamUpdates(const Trainer *trainer) {
-  const SGDTrainer* sgd=reinterpret_cast<const SGDTrainer*> (trainer);
+void Edge::ComputeParamUpdates(const Trainer &trainer) {
+  const SGDTrainer* sgd=reinterpret_cast<const SGDTrainer*> (&trainer);
   float momentum=sgd->momentum();
   float weight_decay=sgd->weight_decay();
   float learning_rate=sgd->learning_rate();
   for (Param* param : params_) {
-    AVec history(param->mutable_history(), param->length());
-    AVec gradient(param->mutable_gradient(), param->length());
-    AVec data(param->mutable_content(), param->length());
+    Blob2& history=param->mutable_history();
+    const Blbo2& gradient=param->gradient();
+    const Blbo2& data=param->content();
     momentum*=param->momentum();
     weight_decay*=param->weight_decay();
     learning_rate*=param->learning_rate();
     history=history*momentum-(gradient+weight_decay*data)*learning_rate;
   }
+}
+
+/*****************************************************************************
+ * Edge Factory Implementation
+ *****************************************************************************/
+#define CreateEdge(EdgeClass) [](void)->Edge* {return new EdgeClass();}
+std::shared_ptr<EdgeFactory> EdgeFactory::Instance() {
+  if(!instance_.get()){
+    instance_.reset(new EdgeFactory());
+ }
+  return instance_;
+}
+
+EdgeFactory::EdgeFactory() {
+  RegisterCreateFunction("ConvEdge", CreateEdge(ConvEdge));
+  RegisterCreateFunction("InnerProductEdge", CreateEdge(InnerProductEdge));
+  RegisterCreateFunction("LRNEdge", CreateEdge(LRNEdge));
+  RegisterCreateFunction("PoolingEdge", CreateEdge(PoolingEdge));
+  RegisterCreateFunction("SoftmaxLossEdge", CreateEdge(SoftmaxLossEdge));
+}
+
+void EdgeFactory::RegisterCreateFunction(
+  const std::string id,
+  std::function<Edge*(void)> create_function) {
+  edge_map_[id] = create_function;
+}
+
+Edge *EdgeFactory::Create(const std::string id) {
+  CHECK(edge_map_.find(id) != edge_map_.end())
+      << "The initialization function " << id << " has not been registered";
+  return layer_map_[id]();
 }
 }  // namespace lapis

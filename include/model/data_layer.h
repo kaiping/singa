@@ -21,7 +21,7 @@ class DataLayer : public Layer {
   /**
    * Identifier of this layer, the value is "Data".
    */
-  static const std::string kDataLayer;
+  static const std::string kType;
   /**
    * Set data source identifier, i.e. name.
    */
@@ -54,21 +54,21 @@ class DataLayer : public Layer {
    * Return the data provided by DataSource
    * @param edge not used currently.
    */
-  virtual Blob *feature(Edge *edge) { return &data_; }
+  virtual Blob4 *feature(Edge *edge) { return &data_; }
   /**
    * Because DataLayer is usually connected from loss edges, hence this
    * function returns the data provided by DataSource to the loss edge to
    * compute the gradients.
    * @param edge not used currently.
    */
-  virtual Blob *gradient(Edge *edge) { return &data_; }
+  virtual Blob4 *gradient(Edge *edge) { return &data_; }
 
   /** identifier for this layer.
    * LayerFactory will create an instance of this based on this identifier
    */
 
  private:
-  Blob data_;
+  Blob4 data_;
   DataSource *data_source_;
   std::string data_source_name_;
 };

@@ -12,28 +12,29 @@ void PoolingEdge::Init(const EdgeProto &proto,
   pooling_method_=proto.pooling_method();
 }
 
-void PoolingEdge::SetupTopBlob(Blob* blob) {
-  Blob* b=bottom_->feature(this);
-  int channels=b->channels();
-  height_=b->height();
-  width_=b->width();
+void PoolingEdge::SetupTopBlob(Blob4* blob) {
+  Blob4* b=bottom_->feature(this);
+  num_=b->shape[3];
+  channels_=b->shape[2];
+  height_=b->shape[1];
+  width_=b->shape[0]();
   pool_height_=static_cast<int> (
       ceil(static_cast<float>(height_-kernel_size_)/stride_))+1;
   pool_width_=static_cast<int> (
       ceil(static_cast<float>(width_-kernel_size_)/stride_))+1;
-  blob->Reshape(b->num(), channels, pool_height_, pool_width_);
+  blob->Resize(Shape4(pool_width_,poob_height_, channels_, num_));
 }
 
-void PoolingEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  float* src_data, *dest_data=dest->mutable_data();
+void PoolingEdge::Forward(const Blob4 &src, Blob4 *dest, bool overwrite) {
+  float* src_data=src.dptr, *dest_data=dest->dptr;
+  int offset_src=src.shape.SubShape().MSize();
+  int offset_dest=dest->shape.SubShape().MSize();
   switch (pooling_method_) {
     case EdgeProto::kMaxPooling:
       for (int i=0;i<dest->length();i++)
         dest_data[i]=-FLT_MAX;
       for (int n=0;n<dest->num();n++) {
        for(int c=0;c<channels_;c++) {
-        src_data=src->offset(n,c);
-        dest_data=dest->offset(n,c);
           for(int ph=0;ph<pool_height_;ph++) {
             for(int pw=0;pw<pool_width_;pw++) {
               int hstart=ph*stride_;
@@ -49,6 +50,8 @@ void PoolingEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
               }
             }
           }
+          src_data+=offset_src;
+          dest_data+=offset_dest;
         }
       }
       break;
@@ -73,6 +76,8 @@ void PoolingEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
               dest_data[ph*pool_width_+pw]/=(hend-hstart)*(wend-wstart);
             }
           }
+          src_data+=offset_src;
+          dest_data+=offset_dest;
         }
       }
       break;
@@ -80,20 +85,18 @@ void PoolingEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
       LOG(ERROR)<<"Not supported pooling method ";
   }
 }
-void PoolingEdge::Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
+void PoolingEdge::Backward(const Blob4 &src_fea, const Blob4 &src_grad,
+                        const Blob4 &dest_fea, Blob4 *dest_grad,
                         bool overwrite) {
-  float* src_fea_data, *dest_fea_data;
-  float* src_grad_data,*dest_grad_data=dest_grad->mutable_data();
-  memset(dest_grad_data, 0, dest_grad->length()*sizeof(float));
+  float* src_fea_data=src_fea.dptr, *dest_fea_data=dest_fea.dptr;
+  float* src_grad_data=src_grad.dptr,*dest_grad_data=(*dest_grad).dptr;
+  int offset_src=src_fea.shape.SubShape().MSize();
+  int offset_dest=dest_fea.shape.SubShape().MSize();
+  (*dest_grad)=0.0f;
   switch (pooling_method_) {
     case EdgeProto::kMaxPooling:
       for (int n=0;n<dest_grad->num();n++) {
         for(int c=0;c<channels_;c++) {
-          src_fea_data=src_fea->offset(n,c);
-          dest_fea_data=dest_fea->offset(n,c);
-          src_grad_data=src_grad->offset(n,c);
-          dest_grad_data=dest_grad->offset(n,c);
           for(int ph=0;ph<pool_height_;ph++) {
             for(int pw=0;pw<pool_width_;pw++) {
               int hstart=ph*stride_;
@@ -110,14 +113,16 @@ void PoolingEdge::Backward(const Blob *src_fea, const Blob *src_grad,
               }
             }
           }
+          src_fea_data+=offset_src;
+          src_grad_data+=offset_src;
+          dest_fea_data+=offset_dest;
+          dest_grad_data+=offset_dest;
         }
       }
       break;
     case EdgeProto::kAvgPooling:
       for (int n=0;n<dest_grad->num();n++) {
         for(int c=0;c<channels_;c++) {
-          src_grad_data=src_grad->offset(n,c);
-          dest_grad_data=dest_grad->offset(n,c);
           for(int ph=0;ph<pool_height_;ph++) {
             for(int pw=0;pw<pool_width_;pw++) {
               int hstart=ph*stride_;
@@ -133,6 +138,10 @@ void PoolingEdge::Backward(const Blob *src_fea, const Blob *src_grad,
               }
             }
           }
+          src_fea_data+=offset_src;
+          src_grad_data+=offset_src;
+          dest_fea_data+=offset_dest;
+          dest_grad_data+=offset_dest;
         }
       }
       break;

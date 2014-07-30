@@ -18,26 +18,23 @@ void Layer::Init(const LayerProto &proto){
 void Layer::ToProto(LayerProto *proto) {
   proto->set_name(name_);
 }
-
-void Layer::Dropout(float drop_prob, float scale,
-                    const Blob &src, Blob* dest, int * mask) {
-  std::shared_ptr<std::mt19937> generator=Lapis::Instance()->generator();
-  // with 1-drop_prob to keep one neuron, i.e., mask=1
-  std::bernoulli_distribution distribution(1-drop_prob);
-  float *dest_data=dest->mutable_data();
-  const float* src_data=src.data();
-  for(int i=0;i<src.length();i++) {
-    mask[i]=distribution(*generator);
-    dest_data[i]=src_data[i]*mask[i]*scale;
+struct Threshold {
+  inline static float Map(float a, float b) {
+    return a<b?1.0f: 0.0f;
   }
+};
+
+void Layer::Dropout(float drop_prob, const Blob4 &src, Blob4* dest, Blob4 * mask) {
+  Random& rnd=Lapis::Instance()->rnd();
+  // with 1-drop_prob to keep one neuron, i.e., mask=1
+  float keep_prob=1.0-drop_prob;
+  *mask=F<Threashold>(rnd.uniform(mask->shape), keep_prob)*(1.0/keep_prob);
+  *dest=(*mask)*src;
 }
 
-void Layer::ComputeDropoutGradient(float scale, const Blob& src ,
-                            const int* mask, Blob* dest) {
-  const float* src_grad=src.data();
-  float* dest_grad=dest->mutable_data();
-  for(int i=0;i<dest->length();i++)
-    dest_grad[i]=src_grad[i]*mask[i]*scale;
+void Layer::ComputeDropoutGradient(const Blob4& src ,
+                            const Blob4& mask, Blob4* dest) {
+  *dest=src*mask;
 }
 // Currently layers do not have parameters
 /*
@@ -49,9 +46,18 @@ void Layer::ComputeParamUpdates(const Trainer *trainer) {
 /*****************************************************************************
  * Implementation for LayerFactory
  ****************************************************************************/
-LayerFactory *LayerFactory::Instance() {
-  static LayerFactory factory;
-  return &factory;
+#define CreateLayer(LayerClass) [](void)->Layer* {return new LayerClass();}
+static std::shared_ptr<LayerFactory> LayerFactory::Instance() {
+  if(!instance_.get()) {
+    instance.reset(new  LayerFactory());
+  }
+  return instance_;
+}
+
+LayerFactory::LayerFactory() {
+  RegisterCreateFunction("DataLayer", CreateLayer(DataLayer));
+  RegisterCreateFunction("LinearLayer", CreateLayer(LinearLayer));
+  RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
 }
 
 void LayerFactory::RegisterCreateFunction(

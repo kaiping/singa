@@ -17,12 +17,12 @@ class PoolingEdge : public Edge {
   virtual void Init(const EdgeProto &proto,
                  const std::map<std::string, Layer *> &layer_map);
   virtual void ToProto(EdgeProto *proto);
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
-  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
+  virtual void Forward(const Blob4 *src, Blob4 *dest, bool overwrite);
+  virtual void Backward(const Blob4 *src_fea, const Blob4 *src_grad,
+                        const Blob4 *dest_fea, Blob4 *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob* blob);
+  virtual void SetupTopBlob(Blob4* blob);
  private:
   //! pooling kernel shape
   int kernel_size_, stride_;
@@ -30,6 +30,8 @@ class PoolingEdge : public Edge {
   int channels_, height_,width_;
   //! shape after pooling
   int pool_height_, pool_width_;
+  //! batchsize
+  int num_;
   EdgeProto::PoolingMethod pooling_method_;
 };
 }  // namespace

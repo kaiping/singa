@@ -18,24 +18,29 @@ void ReLULayer::Setup(int batchsize, TrainerProto::Algorithm alg,
   in_edges_[0]->SetupTopBlob(&act_grad_);
 }
 
+struct relu {
+  inline static float Map(float a) {
+    return std::max(a, 0.0f);
+  }
+};
+struct relu_grad {
+  inline static float Map(float a) {
+    return a>0.0f ?1.0f:0.0f;
+  }
+};
+
 void ReLULayer::Forward() {
   Edge* edge= in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge), &act_, true);
-  const float* act_data=act_.data();
-  float* fea_data=fea_.mutable_data();
-  for(int i=0;i<act_.length();i++)
-    fea_data[i]=std::max(act_data[i],0.f);
+  fea_data_=F<relu>(act_);
 }
 
 void ReLULayer::Backward() {
   Edge* edge= out_edges_[0];
   Layer* layer=edge->OtherSide(this);
-  edge->Backward(layer->feature(edge),layer->gradient(edge), &fea_, &fea_grad_, true);
-  const float* fea_grad_data=fea_grad_.data();
-  const float* act_data=act_.data();
+  edge->Backward(layer->feature(edge),layer->gradient(edge), fea_, &fea_grad_, true);
   float* act_grad_data=act_grad_.mutable_data();
-  for(int i=0;i<fea_.length();i++)
-    act_grad_data[i]=fea_grad_data[i]*(act_data[i]>0);
+  act_grad_=fea_grad_*F<relu_grad>(act_);
 }
 }  // namespace lapis
 

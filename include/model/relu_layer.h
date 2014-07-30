@@ -20,16 +20,16 @@ class ReLULayer : public Layer {
   virtual void Forward();
   virtual void Backward();
   virtual bool HasInput() {return false;}
-  virtual Blob *feature(Edge *edge) {
+  virtual Blob4 *feature(Edge *edge) {
     return edge->bottom()==this? &fea_:&act_;
   }
-  virtual Blob *gradient(Edge *edge) {
+  virtual Blob4 *gradient(Edge *edge) {
     return edge->bottom()==this? &fea_grad_:&act_grad_;
   }
 
  private:
   //! fea short for feature, act short for activation, grad short for gradient
-  Blob fea_, fea_grad_, act_, act_grad_;
+  Blob2 fea_, fea_grad_, act_, act_grad_;
 };
 
 }  // namespace lapis

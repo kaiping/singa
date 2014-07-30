@@ -49,19 +49,25 @@ class DataLayer : public Layer {
    * Write the data source name
    */
   virtual void ToProto(LayerProto *layer_proto);
-  virtual bool HasInput() { return true; }
+  virtual bool HasInput() {
+    return true;
+  }
   /**
    * Return the data provided by DataSource
    * @param edge not used currently.
    */
-  virtual Blob4 *feature(Edge *edge) { return &data_; }
+  virtual Blob4 *feature(Edge *edge) {
+    return &data_;
+  }
   /**
    * Because DataLayer is usually connected from loss edges, hence this
    * function returns the data provided by DataSource to the loss edge to
    * compute the gradients.
    * @param edge not used currently.
    */
-  virtual Blob4 *gradient(Edge *edge) { return &data_; }
+  virtual Blob4 *gradient(Edge *edge) {
+    return &data_;
+  }
 
   /** identifier for this layer.
    * LayerFactory will create an instance of this based on this identifier

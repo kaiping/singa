@@ -88,7 +88,8 @@ class Layer {
    * @param mask record which neuron is dropped for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
-  virtual void Dropout(float drop_prob, float scale, const Blob4 &src, Blob4* dest, int * mask);
+  virtual void Dropout(float drop_prob, float scale, const Blob4 &src,
+                       Blob4 *dest, int *mask);
   /**
    * Back propagate the gradient for dropout operation
    * @param scale a scale factor multiplied to the gradient
@@ -97,7 +98,8 @@ class Layer {
    * @param mask it records which neuron was dropped in ::Dropout(), and
    * directs how to pass the gradient from src to dest.
    */
-  virtual void ComputeDropoutGradient(float scale, const Blob4& src , const int* mask, Blob4* dest);
+  virtual void ComputeDropoutGradient(float scale, const Blob4 &src ,
+                                      const int *mask, Blob4 *dest);
   /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -107,12 +109,14 @@ class Layer {
    * Return true for layers accept input data, e.g., DataLayer,
    * false for all other layer; default is false;
    */
-  virtual bool HasInput() {return false;}
+  virtual bool HasInput() {
+    return false;
+  }
   /**
    * Return the output feature Blob4 of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual Blob4& feature(Edge *edge);
+  virtual Blob4 &feature(Edge *edge);
   /**
    * Return the gradient Blob4 connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -121,7 +125,7 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual Blob4& gradient(Edge *edge);
+  virtual Blob4 &gradient(Edge *edge);
   /**
    * Return parameters of this layer
 
@@ -135,10 +139,10 @@ class Layer {
   const std::string &name() {
     return name_;
   }
-  void add_in_edge(Edge * edge) {
+  void add_in_edge(Edge *edge) {
     in_edges_.push_back(edge);
   }
-  void add_out_edge(Edge* edge) {
+  void add_out_edge(Edge *edge) {
     out_edges_.push_back(edge);
   }
   /**

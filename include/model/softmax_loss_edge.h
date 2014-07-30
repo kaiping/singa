@@ -5,6 +5,8 @@
 
 #include "model/edge.h"
 #include "proto/model.pb.h"
+#include "model/lapis.h"
+
 
 namespace lapis {
 class SoftmaxLossEdge : public Edge {

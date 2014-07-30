@@ -11,8 +11,7 @@
 #include <random>
 
 #include "proto/model.pb.h"
-#include "utils/lapis.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 
 // Base paramter class.
 // TODO(Jingyang) define split/partition function.
@@ -33,60 +32,51 @@ class Param {
   /**
    * Return const mem address for the content of this parameter
    */
-  const Blob2& content() const {
+  const Blob2 &content() {
     return content_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  Blob2 *mutable_content() const {
+  Blob2 &mutable_content() {
     return content_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const Blob2& gradient() const {
+  const Blob2 &gradient(){
     return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  Blob2 *mutable_gradient() const {
+  Blob2 &mutable_gradient() {
     return grad_;
   }
   /**
    * Return const mem address for the history gradient of this parameter
    */
-  const Blob2 &history() const {
+  const Blob2 &history() {
     return history_grad_;
   }
   /**
    * Return mem address for the history gradient of this parameter
    */
-  Blob2 *mutable_history() const {
+  Blob2 &mutable_history() {
     return history_grad_;
-  }
-
-  /**
-   * Return num of rows for matrix parameters
-   */
-  const int height() {
-    return content_.height();
-  }
-  /**
-   * Return num of columns for matrix parameters
-   */
-  const int width() {
-    return content_.width();
   }
   /**
    * Return num of floats for this (vector) parameter
    */
   const int length() {
-    return content_.length();
+    return content_.shape.Size();
   }
-  int id() { return id_;}
-  void set_id(int id) {id_=id;}
+  int id() {
+    return id_;
+  }
+  void set_id(int id) {
+    id_ = id;
+  }
 
   float momentum() {
     return momentum_;
@@ -106,12 +96,14 @@ class Param {
    * @param factor the generated data is multiplied to this number
    * @param val float array to store the generated data
    */
-  void FillUniformData(int length, float low, float high, float factor, float *val);
+  void FillUniformData(int length, float low, float high, float factor,
+                       float *val);
   /**
    * Similar to ::FillGaussainData(), except the data are generated from
    * Gaussain distribution.
    */
-  void FillGaussainData(int length, float mean, float std, float factor, float *val);
+  void FillGaussainData(int length, float mean, float std, float factor,
+                        float *val);
 
   /**
    * name of the parameter used to identify the ParamProto configed in

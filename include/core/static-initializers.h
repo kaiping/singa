@@ -17,24 +17,30 @@ namespace lapis {
 // There exists a separate registry mapping for each value type.
 template <class T>
 class Registry {
-public:
-  typedef map<string, T*> Map;
-  
-  static void put(const string& k, T *t) { get_map()[k] = t; }
-  static T *get(const string& k) { return get_map()[k]; }
-  static Map& get_map() { 
-    if (!m_) { m_ = new Map; }
+ public:
+  typedef map<string, T *> Map;
+
+  static void put(const string &k, T *t) {
+    get_map()[k] = t;
+  }
+  static T *get(const string &k) {
+    return get_map()[k];
+  }
+  static Map &get_map() {
+    if (!m_) {
+      m_ = new Map;
+    }
     return *m_;
   }
-private:
+ private:
   static Map *m_;
 };
 
-template <class T> map<string, T*>* Registry<T>::m_;
+template <class T> map<string, T *> *Registry<T>::m_;
 
 template <class T>
 struct RegistryHelper {
-  RegistryHelper(const string& k, T* t) {
+  RegistryHelper(const string &k, T *t) {
     Registry<T>::put(k, t);
   }
 };

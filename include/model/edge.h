@@ -35,7 +35,7 @@ class Edge {
    * parameters, type
    */
   virtual void Init(const EdgeProto &proto,
-                 const std::map<std::string, Layer *> &layer_map);
+                    const std::map<std::string, Layer *> &layer_map);
   /**
    * Setup properties of this edge based on bottom layer, e.g, parameter shape.
    * Allocate memory for parameters and initialize them according to user
@@ -84,14 +84,14 @@ class Edge {
    * @param trainer contains hyper-parameters. May cast it into specific
    * trainer, e.g., SGDTrainer, to get momentum and weight_decay, etc.
    */
-  virtual void ComputeParamUpdates(const Trainer *trainer);
+  virtual void ComputeParamUpdates(const Trainer* trainer);
   /**
    * Setup (Reshape) the blob from top layer connected to this edge. Because
    * the top blob is generated (although owned by the top layer) by this edge,
    * this edge will decide the shape of the blob and is responsible to setup it
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob4* blob);
+  virtual void SetupTopBlob(Blob4 *blob);
   /**
    * Return parameters associated this edge
    */
@@ -164,7 +164,7 @@ class EdgeFactory {
   /**
    * static method to get instance of this factory
    */
-  static EdgeFactory *Instance();
+  static std::shared_ptr<EdgeFactory> Instance();
   /**
    * Register user defined edge, i.e., add the edge type and a
    * function which creats an instance of the edge. This function is called by
@@ -184,7 +184,7 @@ class EdgeFactory {
   //! To avoid creating multiple instances of this factory in the program
   EdgeFactory();
   //! Map that stores the registered Layers
-  std::map<std::string, std::function<Edge*(void)>> layer_map_;
+  std::map<std::string, std::function<Edge*(void)>> edge_map_;
   static std::shared_ptr<EdgeFactory> instance_;
 };
 

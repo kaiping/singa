@@ -94,11 +94,12 @@ enum SGDProto_ChangeProto {
   SGDProto_ChangeProto_kFixed = 0,
   SGDProto_ChangeProto_kInverse_t = 1,
   SGDProto_ChangeProto_kExponential = 2,
-  SGDProto_ChangeProto_kLinear = 3
+  SGDProto_ChangeProto_kLinear = 3,
+  SGDProto_ChangeProto_kStep = 4
 };
 bool SGDProto_ChangeProto_IsValid(int value);
 const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_kFixed;
-const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kLinear;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kStep;
 const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE = SGDProto_ChangeProto_ChangeProto_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor();
@@ -836,31 +837,38 @@ class EdgeProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 pad() const;
   inline void set_pad(::google::protobuf::int32 value);
 
-  // optional float alpha = 11;
+  // optional int32 num_groups = 11;
+  inline bool has_num_groups() const;
+  inline void clear_num_groups();
+  static const int kNumGroupsFieldNumber = 11;
+  inline ::google::protobuf::int32 num_groups() const;
+  inline void set_num_groups(::google::protobuf::int32 value);
+
+  // optional float alpha = 12;
   inline bool has_alpha() const;
   inline void clear_alpha();
-  static const int kAlphaFieldNumber = 11;
+  static const int kAlphaFieldNumber = 12;
   inline float alpha() const;
   inline void set_alpha(float value);
 
-  // optional float beta = 12;
+  // optional float beta = 13;
   inline bool has_beta() const;
   inline void clear_beta();
-  static const int kBetaFieldNumber = 12;
+  static const int kBetaFieldNumber = 13;
   inline float beta() const;
   inline void set_beta(float value);
 
-  // optional int32 local_size = 13;
+  // optional int32 local_size = 14;
   inline bool has_local_size() const;
   inline void clear_local_size();
-  static const int kLocalSizeFieldNumber = 13;
+  static const int kLocalSizeFieldNumber = 14;
   inline ::google::protobuf::int32 local_size() const;
   inline void set_local_size(::google::protobuf::int32 value);
 
-  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
   inline bool has_pooling_method() const;
   inline void clear_pooling_method();
-  static const int kPoolingMethodFieldNumber = 14;
+  static const int kPoolingMethodFieldNumber = 15;
   inline ::lapis::EdgeProto_PoolingMethod pooling_method() const;
   inline void set_pooling_method(::lapis::EdgeProto_PoolingMethod value);
 
@@ -884,6 +892,8 @@ class EdgeProto : public ::google::protobuf::Message {
   inline void clear_has_stride();
   inline void set_has_pad();
   inline void clear_has_pad();
+  inline void set_has_num_groups();
+  inline void clear_has_num_groups();
   inline void set_has_alpha();
   inline void clear_has_alpha();
   inline void set_has_beta();
@@ -905,13 +915,14 @@ class EdgeProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 kernel_size_;
   ::google::protobuf::int32 stride_;
   ::google::protobuf::int32 pad_;
+  ::google::protobuf::int32 num_groups_;
   float alpha_;
   float beta_;
   ::google::protobuf::int32 local_size_;
   int pooling_method_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(15 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1276,6 +1287,7 @@ class SGDProto : public ::google::protobuf::Message {
   static const ChangeProto kInverse_t = SGDProto_ChangeProto_kInverse_t;
   static const ChangeProto kExponential = SGDProto_ChangeProto_kExponential;
   static const ChangeProto kLinear = SGDProto_ChangeProto_kLinear;
+  static const ChangeProto kStep = SGDProto_ChangeProto_kStep;
   static inline bool ChangeProto_IsValid(int value) {
     return SGDProto_ChangeProto_IsValid(value);
   }
@@ -1320,26 +1332,26 @@ class SGDProto : public ::google::protobuf::Message {
   inline float base_weight_decay() const;
   inline void set_base_weight_decay(float value);
 
-  // optional float final_momentum = 4;
-  inline bool has_final_momentum() const;
-  inline void clear_final_momentum();
-  static const int kFinalMomentumFieldNumber = 4;
-  inline float final_momentum() const;
-  inline void set_final_momentum(float value);
+  // optional float momentum_x = 4;
+  inline bool has_momentum_x() const;
+  inline void clear_momentum_x();
+  static const int kMomentumXFieldNumber = 4;
+  inline float momentum_x() const;
+  inline void set_momentum_x(float value);
 
-  // optional float final_learning_rate = 5;
-  inline bool has_final_learning_rate() const;
-  inline void clear_final_learning_rate();
-  static const int kFinalLearningRateFieldNumber = 5;
-  inline float final_learning_rate() const;
-  inline void set_final_learning_rate(float value);
+  // optional float learning_rate_x = 5;
+  inline bool has_learning_rate_x() const;
+  inline void clear_learning_rate_x();
+  static const int kLearningRateXFieldNumber = 5;
+  inline float learning_rate_x() const;
+  inline void set_learning_rate_x(float value);
 
-  // optional float final_weight_decay = 6;
-  inline bool has_final_weight_decay() const;
-  inline void clear_final_weight_decay();
-  static const int kFinalWeightDecayFieldNumber = 6;
-  inline float final_weight_decay() const;
-  inline void set_final_weight_decay(float value);
+  // optional float weight_decay_x = 6;
+  inline bool has_weight_decay_x() const;
+  inline void clear_weight_decay_x();
+  static const int kWeightDecayXFieldNumber = 6;
+  inline float weight_decay_x() const;
+  inline void set_weight_decay_x(float value);
 
   // optional int32 learning_rate_change_steps = 7;
   inline bool has_learning_rate_change_steps() const;
@@ -1419,12 +1431,12 @@ class SGDProto : public ::google::protobuf::Message {
   inline void clear_has_base_momentum();
   inline void set_has_base_weight_decay();
   inline void clear_has_base_weight_decay();
-  inline void set_has_final_momentum();
-  inline void clear_has_final_momentum();
-  inline void set_has_final_learning_rate();
-  inline void clear_has_final_learning_rate();
-  inline void set_has_final_weight_decay();
-  inline void clear_has_final_weight_decay();
+  inline void set_has_momentum_x();
+  inline void clear_has_momentum_x();
+  inline void set_has_learning_rate_x();
+  inline void clear_has_learning_rate_x();
+  inline void set_has_weight_decay_x();
+  inline void clear_has_weight_decay_x();
   inline void set_has_learning_rate_change_steps();
   inline void clear_has_learning_rate_change_steps();
   inline void set_has_momentum_change_steps();
@@ -1451,9 +1463,9 @@ class SGDProto : public ::google::protobuf::Message {
   float base_learning_rate_;
   float base_momentum_;
   float base_weight_decay_;
-  float final_momentum_;
-  float final_learning_rate_;
-  float final_weight_decay_;
+  float momentum_x_;
+  float learning_rate_x_;
+  float weight_decay_x_;
   ::google::protobuf::int32 learning_rate_change_steps_;
   ::google::protobuf::int32 momentum_change_steps_;
   ::google::protobuf::int32 weight_decay_change_steps_;
@@ -3322,15 +3334,37 @@ inline void EdgeProto::set_pad(::google::protobuf::int32 value) {
   pad_ = value;
 }
 
-// optional float alpha = 11;
-inline bool EdgeProto::has_alpha() const {
+// optional int32 num_groups = 11;
+inline bool EdgeProto::has_num_groups() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void EdgeProto::set_has_alpha() {
+inline void EdgeProto::set_has_num_groups() {
   _has_bits_[0] |= 0x00000400u;
 }
-inline void EdgeProto::clear_has_alpha() {
+inline void EdgeProto::clear_has_num_groups() {
   _has_bits_[0] &= ~0x00000400u;
+}
+inline void EdgeProto::clear_num_groups() {
+  num_groups_ = 0;
+  clear_has_num_groups();
+}
+inline ::google::protobuf::int32 EdgeProto::num_groups() const {
+  return num_groups_;
+}
+inline void EdgeProto::set_num_groups(::google::protobuf::int32 value) {
+  set_has_num_groups();
+  num_groups_ = value;
+}
+
+// optional float alpha = 12;
+inline bool EdgeProto::has_alpha() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void EdgeProto::set_has_alpha() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void EdgeProto::clear_has_alpha() {
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void EdgeProto::clear_alpha() {
   alpha_ = 0;
@@ -3344,15 +3378,15 @@ inline void EdgeProto::set_alpha(float value) {
   alpha_ = value;
 }
 
-// optional float beta = 12;
+// optional float beta = 13;
 inline bool EdgeProto::has_beta() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
+  return (_has_bits_[0] & 0x00001000u) != 0;
 }
 inline void EdgeProto::set_has_beta() {
-  _has_bits_[0] |= 0x00000800u;
+  _has_bits_[0] |= 0x00001000u;
 }
 inline void EdgeProto::clear_has_beta() {
-  _has_bits_[0] &= ~0x00000800u;
+  _has_bits_[0] &= ~0x00001000u;
 }
 inline void EdgeProto::clear_beta() {
   beta_ = 0;
@@ -3366,15 +3400,15 @@ inline void EdgeProto::set_beta(float value) {
   beta_ = value;
 }
 
-// optional int32 local_size = 13;
+// optional int32 local_size = 14;
 inline bool EdgeProto::has_local_size() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00002000u) != 0;
 }
 inline void EdgeProto::set_has_local_size() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00002000u;
 }
 inline void EdgeProto::clear_has_local_size() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00002000u;
 }
 inline void EdgeProto::clear_local_size() {
   local_size_ = 0;
@@ -3388,15 +3422,15 @@ inline void EdgeProto::set_local_size(::google::protobuf::int32 value) {
   local_size_ = value;
 }
 
-// optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+// optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
 inline bool EdgeProto::has_pooling_method() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
+  return (_has_bits_[0] & 0x00004000u) != 0;
 }
 inline void EdgeProto::set_has_pooling_method() {
-  _has_bits_[0] |= 0x00002000u;
+  _has_bits_[0] |= 0x00004000u;
 }
 inline void EdgeProto::clear_has_pooling_method() {
-  _has_bits_[0] &= ~0x00002000u;
+  _has_bits_[0] &= ~0x00004000u;
 }
 inline void EdgeProto::clear_pooling_method() {
   pooling_method_ = 1;
@@ -3775,70 +3809,70 @@ inline void SGDProto::set_base_weight_decay(float value) {
   base_weight_decay_ = value;
 }
 
-// optional float final_momentum = 4;
-inline bool SGDProto::has_final_momentum() const {
+// optional float momentum_x = 4;
+inline bool SGDProto::has_momentum_x() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void SGDProto::set_has_final_momentum() {
+inline void SGDProto::set_has_momentum_x() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void SGDProto::clear_has_final_momentum() {
+inline void SGDProto::clear_has_momentum_x() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void SGDProto::clear_final_momentum() {
-  final_momentum_ = 0;
-  clear_has_final_momentum();
+inline void SGDProto::clear_momentum_x() {
+  momentum_x_ = 0;
+  clear_has_momentum_x();
 }
-inline float SGDProto::final_momentum() const {
-  return final_momentum_;
+inline float SGDProto::momentum_x() const {
+  return momentum_x_;
 }
-inline void SGDProto::set_final_momentum(float value) {
-  set_has_final_momentum();
-  final_momentum_ = value;
+inline void SGDProto::set_momentum_x(float value) {
+  set_has_momentum_x();
+  momentum_x_ = value;
 }
 
-// optional float final_learning_rate = 5;
-inline bool SGDProto::has_final_learning_rate() const {
+// optional float learning_rate_x = 5;
+inline bool SGDProto::has_learning_rate_x() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void SGDProto::set_has_final_learning_rate() {
+inline void SGDProto::set_has_learning_rate_x() {
   _has_bits_[0] |= 0x00000010u;
 }
-inline void SGDProto::clear_has_final_learning_rate() {
+inline void SGDProto::clear_has_learning_rate_x() {
   _has_bits_[0] &= ~0x00000010u;
 }
-inline void SGDProto::clear_final_learning_rate() {
-  final_learning_rate_ = 0;
-  clear_has_final_learning_rate();
+inline void SGDProto::clear_learning_rate_x() {
+  learning_rate_x_ = 0;
+  clear_has_learning_rate_x();
 }
-inline float SGDProto::final_learning_rate() const {
-  return final_learning_rate_;
+inline float SGDProto::learning_rate_x() const {
+  return learning_rate_x_;
 }
-inline void SGDProto::set_final_learning_rate(float value) {
-  set_has_final_learning_rate();
-  final_learning_rate_ = value;
+inline void SGDProto::set_learning_rate_x(float value) {
+  set_has_learning_rate_x();
+  learning_rate_x_ = value;
 }
 
-// optional float final_weight_decay = 6;
-inline bool SGDProto::has_final_weight_decay() const {
+// optional float weight_decay_x = 6;
+inline bool SGDProto::has_weight_decay_x() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void SGDProto::set_has_final_weight_decay() {
+inline void SGDProto::set_has_weight_decay_x() {
   _has_bits_[0] |= 0x00000020u;
 }
-inline void SGDProto::clear_has_final_weight_decay() {
+inline void SGDProto::clear_has_weight_decay_x() {
   _has_bits_[0] &= ~0x00000020u;
 }
-inline void SGDProto::clear_final_weight_decay() {
-  final_weight_decay_ = 0;
-  clear_has_final_weight_decay();
+inline void SGDProto::clear_weight_decay_x() {
+  weight_decay_x_ = 0;
+  clear_has_weight_decay_x();
 }
-inline float SGDProto::final_weight_decay() const {
-  return final_weight_decay_;
+inline float SGDProto::weight_decay_x() const {
+  return weight_decay_x_;
 }
-inline void SGDProto::set_final_weight_decay(float value) {
-  set_has_final_weight_decay();
-  final_weight_decay_ = value;
+inline void SGDProto::set_weight_decay_x(float value) {
+  set_has_weight_decay_x();
+  weight_decay_x_ = value;
 }
 
 // optional int32 learning_rate_change_steps = 7;

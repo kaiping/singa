@@ -85,18 +85,19 @@ message EdgeProto {
   optional int32 kernel_size = 8;
   optional int32 stride = 9;
   optional int32 pad = 10;
+  optional int32 num_groups =11;
 
   // for local response normalization edge
-  optional float alpha = 11;
-  optional float beta = 12;
-  optional int32 local_size = 13;
+  optional float alpha = 12;
+  optional float beta = 13;
+  optional int32 local_size = 14;
 
   // for pooling edge
   enum PoolingMethod {
     kMaxPooling=1;
     kAvgPooling=2;
   }
-  optional PoolingMethod pooling_method = 14;
+  optional PoolingMethod pooling_method = 15;
 }
 
 message BlobProto{

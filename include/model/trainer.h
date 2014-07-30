@@ -8,7 +8,6 @@
 #include "proto/model.pb.h"
 #include "model/net.h"
 #include "disk/data_source.h"
-#include "model_controller/model.h"
 
 namespace lapis {
 /**
@@ -37,13 +36,13 @@ class Trainer {
    * init fields of the trainer
    * @param trainer_proto user configuration for the trainer
    */
-  virtual void Init(const TrainerProto &proto, ModelController *mc);
+  virtual void Init(const TrainerProto &proto); // ModelController *mc);
   /**
    * Init a DataSource object based on DataSourceProto
    */
   static void InitDataSource(
-      const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
-      std::vector<DataSource *> *sources);
+    const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
+    std::vector<DataSource *> *sources);
 
   /**
    * train the model by either backpropagation or contrastive divergence
@@ -65,7 +64,7 @@ class Trainer {
    * Run the trainer
    * @param net the neural network
    */
-  virtual void Run(Net* net);
+  virtual void Run(Net *net);
 
   /**
    * marshal the state of the trainer to google protobuf object, which will
@@ -77,7 +76,7 @@ class Trainer {
    * of steps have been reached.
    * @param step such number of iterations have been processed
    */
-  virtual bool HasFinished(const int step)=0;
+  virtual bool HasFinished(const int step) = 0;
   /**
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
@@ -104,12 +103,16 @@ class Trainer {
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().
    */
-  void IncStep() {step_++;}
+  void IncStep() {
+    step_++;
+  }
   /**
    * return the current training step
    * the ::Train() has been called such num of times
    */
-  const int step() {return step_;}
+  const int step() {
+    return step_;
+  }
 
  protected:
   //! current phase, need this field to change the data sources for input layer
@@ -154,7 +157,7 @@ class Trainer {
   bool do_test_;
 
   //! ModelController to provide parameters and input features
-  ModelController *model_controller_;
+  //ModelController *model_controller_;
 };
 
 }  // namespace lapis

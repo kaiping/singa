@@ -27,7 +27,6 @@ vector<File::Info> File::MatchingFileinfo(StringPiece glob) {
     out[i].name = names[i];
     stat(names[i].c_str(), &out[i].stat);
   }
-
   return out;
 }
 
@@ -37,26 +36,24 @@ void File::Mkdirs(string path) {
     getcwd(cur, 4096);
     path = string(cur) + "/" + path;
   }
-
   vector<StringPiece> pbits = StringPiece::split(path, "/");
   string prefix;
   for (size_t i = 0; i < pbits.size(); ++i) {
     pbits[i].strip();
-    if (pbits[i].size() == 0) { continue; }
-
+    if (pbits[i].size() == 0) {
+      continue;
+    }
     prefix += "/" + pbits[i].AsString();
     int result = mkdir(prefix.c_str(), 0777);
     PCHECK(result == 0 || errno == EEXIST) << "Failed to create directory " << path;
   }
 }
 
-string File::Slurp(const string& f) {
-  FILE* fp = fopen(f.c_str(), "r");
+string File::Slurp(const string &f) {
+  FILE *fp = fopen(f.c_str(), "r");
   CHECK(fp != NULL) << "Failed to read input file " << f;
-
   string out;
   char buffer[32768];
-
   while (!feof(fp) && !ferror(fp)) {
     int read = fread(buffer, 1, 32768, fp);
     if (read > 0) {
@@ -65,12 +62,11 @@ string File::Slurp(const string& f) {
       break;
     }
   }
-
   return out;
 }
 
-bool File::Exists(const string& f) {
-  FILE* fp = fopen(f.c_str(), "r");
+bool File::Exists(const string &f) {
+  FILE *fp = fopen(f.c_str(), "r");
   if (fp) {
     fclose(fp);
     return true;
@@ -78,22 +74,24 @@ bool File::Exists(const string& f) {
   return false;
 }
 
-void File::Dump(const string& f, StringPiece data) {
-  FILE* fp = fopen(f.c_str(), "w+");
-  if (!fp) { LOG(FATAL) << "Failed to open output file " << f.c_str(); }
+void File::Dump(const string &f, StringPiece data) {
+  FILE *fp = fopen(f.c_str(), "w+");
+  if (!fp) {
+    LOG(FATAL) << "Failed to open output file " << f.c_str();
+  }
   fwrite(data.data, 1, data.len, fp);
   fflush(fp);
   fclose(fp);
 }
 
-void File::Move(const string& src, const string&dst) {
+void File::Move(const string &src, const string &dst) {
   PCHECK(rename(src.c_str(), dst.c_str()) == 0);
 }
 
 bool LocalFile::read_line(string *out) {
   out->clear();
   out->resize(8192);
-  char* res = fgets(&(*out)[0], out->size(), fp);
+  char *res = fgets(&(*out)[0], out->size(), fp);
   out->resize(strlen(out->data()));
   return res != NULL;
 }
@@ -106,7 +104,7 @@ int LocalFile::write(const char *buffer, int len) {
   return fwrite(buffer, 1, len, fp);
 }
 
-void LocalFile::Printf(const char* p, ...) {
+void LocalFile::Printf(const char *p, ...) {
   va_list args;
   va_start(args, p);
   write_string(VStringPrintf(p, args));
@@ -117,14 +115,14 @@ bool LocalFile::eof() {
   return feof(fp);
 }
 
-LocalFile::LocalFile(FILE* stream) {
+LocalFile::LocalFile(FILE *stream) {
   CHECK(stream != NULL);
   fp = stream;
   path = "<EXTERNAL FILE>";
   close_on_delete = false;
 }
 
-LocalFile::LocalFile(const string &name, const string& mode) {
+LocalFile::LocalFile(const string &name, const string &mode) {
   fp = fopen(name.c_str(), mode.c_str());
   PCHECK(fp != NULL) << "; failed to open file " << name << " with mode " << mode;
   path = name;
@@ -133,11 +131,11 @@ LocalFile::LocalFile(const string &name, const string& mode) {
 }
 
 template <class T>
-void Encoder::write(const T& v) {
+void Encoder::write(const T &v) {
   if (out_) {
-    out_->append((const char*)&v, (size_t)sizeof(v));
+    out_->append((const char *)&v, (size_t)sizeof(v));
   } else {
-    out_f_->write((const char*)&v, (size_t)sizeof(v));
+    out_f_->write((const char *)&v, (size_t)sizeof(v));
   }
 }
 
@@ -151,10 +149,14 @@ INSTANTIATE(float);
 #undef INSTANTIATE
 
 template <>
-void Encoder::write(const string& v) { write_string(v); }
+void Encoder::write(const string &v) {
+  write_string(v);
+}
 
 template <>
-void Encoder::write(const StringPiece& v) { write_string(v); }
+void Encoder::write(const StringPiece &v) {
+  write_string(v);
+}
 
 
 void Encoder::write_string(StringPiece v) {
@@ -163,33 +165,39 @@ void Encoder::write_string(StringPiece v) {
 }
 
 void Encoder::write_bytes(StringPiece s) {
-  if (out_) { out_->append(s.data, s.len); }
-  else { out_f_->write(s.data, s.len); }
+  if (out_) {
+    out_->append(s.data, s.len);
+  } else {
+    out_f_->write(s.data, s.len);
+  }
 }
 
-void Encoder::write_bytes(const char* a, int len) {
-  if (out_) { out_->append(a, len); }
-  else { out_f_->write(a, len); }
+void Encoder::write_bytes(const char *a, int len) {
+  if (out_) {
+    out_->append(a, len);
+  } else {
+    out_f_->write(a, len);
+  }
 }
 
-RecordFile::RecordFile(const string& path, const string& mode, int compression) {
+RecordFile::RecordFile(const string &path, const string &mode,
+                       int compression) {
   path_ = path;
   mode_ = mode;
-
   if (mode == "r") {
     fp = new LocalFile(path_, mode);
   } else {
     fp = new LocalFile(path_ + ".tmp", mode);
   }
-
   if (compression == LZO) {
     fp = NULL;//new LZOFile((LocalFile*)fp, mode);
   }
 }
 
 RecordFile::~RecordFile() {
-  if (!fp) { return; }
-
+  if (!fp) {
+    return;
+  }
   if (mode_ != "r") {
     fp->sync();
     VLOG(1) << "Renaming: " << path_;
@@ -198,7 +206,7 @@ RecordFile::~RecordFile() {
   delete fp;
 }
 
-void RecordFile::write(const google::protobuf::Message & m) {
+void RecordFile::write(const google::protobuf::Message &m) {
   //LOG_EVERY_N(DEBUG, 1000) << "Writing... " << m.ByteSize() << " bytes at pos " << ftell(fp->filePointer());
   writeChunk(m.SerializeAsString());
   //LOG_EVERY_N(DEBUG, 1000) << "New pos: " <<  ftell(fp->filePointer());
@@ -206,20 +214,17 @@ void RecordFile::write(const google::protobuf::Message & m) {
 
 void RecordFile::writeChunk(StringPiece data) {
   int len = data.size();
-  fp->write((char*)&len, sizeof(int));
+  fp->write((char *)&len, sizeof(int));
   fp->write(data.data, data.size());
 }
 
 bool RecordFile::readChunk(string *s) {
   s->clear();
-
   int len;
-  int bytes_read = fp->read((char*)&len, sizeof(len));
-
+  int bytes_read = fp->read((char *)&len, sizeof(len));
   if ((size_t)bytes_read < sizeof(int)) {
     return false;
   }
-
   s->resize(len);
   fp->read(&(*s)[0], len);
   return true;
@@ -227,12 +232,10 @@ bool RecordFile::readChunk(string *s) {
 
 bool RecordFile::read(google::protobuf::Message *m) {
   if (!readChunk(&buf_)) {
-    return false; 
+    return false;
   }
-
   if (!m)
     return true;
-
   CHECK(m->ParseFromString(buf_));
   return true;
 }

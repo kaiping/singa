@@ -24,14 +24,14 @@ int Coordinator::InitModel(const ModelProto &model_proto) {
   net.Init(model_proto_.net());
   // setup training data which is necessary to setup the DataLayer that is in
   // turn required by upper edges and layers to setup.
-  std::vector<DataSource*> train_data;
-  TrainerProto trainer=model_proto.trainer();
+  std::vector<DataSource *> train_data;
+  TrainerProto trainer = model_proto.trainer();
   Trainer::InitDataSource(trainer.train_data(), &train_data);
-  SGDProto sgd=trainer.sgd();
+  SGDProto sgd = trainer.sgd();
   // allocate memory for parameters and init them
   for (auto layer : net.layers()) {
-    layer->Setup(sgd.train_batchsize(),trainer.alg(), train_data);
-    for(auto *edge: layer->out_edges())
+    layer->Setup(sgd.train_batchsize(), trainer.alg(), train_data);
+    for (auto *edge : layer->out_edges())
       edge->Setup(true);
   }
   // put parameters into distributed memory

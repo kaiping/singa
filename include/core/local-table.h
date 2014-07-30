@@ -14,16 +14,18 @@ namespace lapis {
 class LocalTable :
   public TableBase,
   public UntypedTable,
-  public Serializable{
-public:
+  public Serializable {
+ public:
   LocalTable() : delta_file_(NULL) {}
-  bool empty() { return size() == 0; }
+  bool empty() {
+    return size() == 0;
+  }
 
   virtual int64_t size() = 0;
   virtual void clear() = 0;
   virtual void resize(int64_t size) = 0;
-  virtual ~LocalTable(){}
-protected:
+  virtual ~LocalTable() {}
+ protected:
   friend class GlobalTable;
   TableCoder *delta_file_;
 };

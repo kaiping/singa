@@ -9,7 +9,7 @@
 #include <map>
 #include "model/edge.h"
 #include "model/param.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 
 namespace lapis {
 class InnerProductEdge : public Edge {
@@ -40,7 +40,7 @@ class InnerProductEdge : public Edge {
                         const Blob4 &dest_fea, Blob4 *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob4* blob);
+  virtual void SetupTopBlob(Blob4 *blob);
  private:
   //! the dimension of the output feature i.e., the feature for the top layer
   int num_output_;

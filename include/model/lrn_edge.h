@@ -17,15 +17,15 @@ namespace lapis {
 class LRNEdge : public Edge {
  public:
   virtual void Init(const EdgeProto &proto,
-                 const std::map<std::string, Layer *> &layer_map);
+                    const std::map<std::string, Layer *> &layer_map);
   virtual void Setup(bool set_param);
   virtual void ToProto(EdgeProto *proto);
-  virtual void Forward(const Blob4 *src, Blob4 *dest, bool overwrite);
-  virtual void Backward(const Blob4 *src_fea, const Blob4 *src_grad,
-                        const Blob4 *dest_fea, Blob4 *dest_grad,
+  virtual void Forward(const Blob4 &src, Blob4 *dest, bool overwrite);
+  virtual void Backward(const Blob4 &src_fea, const Blob4 &src_grad,
+                        const Blob4 &dest_fea, Blob4 *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob4(Blob4* blob);
+  virtual void SetupTopBlob(Blob4 *blob);
 
  private:
   //! shape of the bottom layer feature

@@ -71,7 +71,7 @@ void Net::Init(const NetProto &net_proto) {
     layers_.push_back(layer);
     layer_map[layer->name()] = layer;
   }
-  int param_id=0;
+  int param_id = 0;
   for (auto &edge_proto : net_proto.edge()) {
     Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
     edge->Init(edge_proto, layer_map);

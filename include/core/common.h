@@ -44,7 +44,7 @@ namespace lapis {
 //  start servers on MPI process, either memory server of manager
 //  called once for every process, NULL is returned if
 //  the current process is not the manager.
-void InitServers(int argc, char** argv);
+void InitServers(int argc, char **argv);
 
 //  called at the end.
 void Finish();
@@ -57,12 +57,12 @@ void Sleep(double t);
 
 template <class V>
 struct Accumulator {
-  virtual void Accumulate(V* a, const V& b) = 0;
+  virtual void Accumulate(V *a, const V &b) = 0;
 };
 
 template <class K>
 struct Sharder {
-  virtual int operator()(const K& k, int shards) = 0;
+  virtual int operator()(const K &k, int shards) = 0;
 };
 
 //#ifndef SWIG
@@ -71,35 +71,51 @@ struct Sharder {
 
 template <class T, class Enable = void>
 struct Marshal {
-  virtual void marshal(const T& t, string* out) {
+  virtual void marshal(const T &t, string *out) {
     GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
-    out->assign(reinterpret_cast<const char*>(&t), sizeof(t));
+    out->assign(reinterpret_cast<const char *>(&t), sizeof(t));
   }
 
-  virtual void unmarshal(const StringPiece& s, T *t) {
+  virtual void unmarshal(const StringPiece &s, T *t) {
     GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
-    *t = *reinterpret_cast<const T*>(s.data);
+    *t = *reinterpret_cast<const T *>(s.data);
   }
 };
 
 template <class T>
-struct Marshal<T, typename boost::enable_if<boost::is_base_of<string, T> >::type>  {
-  void marshal(const string& t, string *out) { *out = t; }
-  void unmarshal(const StringPiece& s, string *t) { t->assign(s.data, s.len); }
+struct Marshal<T, typename boost::enable_if<boost::is_base_of<string, T>>::type>  {
+  void marshal(const string &t, string *out) {
+    *out = t;
+  }
+  void unmarshal(const StringPiece &s, string *t) {
+    t->assign(s.data, s.len);
+  }
 };
 
 
 template <class T>
-struct Marshal<T, typename boost::enable_if<boost::is_base_of<google::protobuf::Message, T> >::type> {
-  void marshal(const google::protobuf::Message& t, string *out) { t.SerializePartialToString(out); }
-  void unmarshal(const StringPiece& s, google::protobuf::Message* t) { t->ParseFromArray(s.data, s.len); }
+struct Marshal<T, typename boost::enable_if<boost::is_base_of<google::protobuf::Message, T>>::type> {
+  void marshal(const google::protobuf::Message &t, string *out) {
+    t.SerializePartialToString(out);
+  }
+  void unmarshal(const StringPiece &s, google::protobuf::Message *t) {
+    t->ParseFromArray(s.data, s.len);
+  }
 };
 
 template <class T>
-string marshal(Marshal<T>* m, const T& t) { string out; m->marshal(t, &out); return out; }
+string marshal(Marshal<T> *m, const T &t) {
+  string out;
+  m->marshal(t, &out);
+  return out;
+}
 
 template <class T>
-T unmarshal(Marshal<T>* m, const StringPiece& s) { T out; m->unmarshal(s, &out); return out; }
+T unmarshal(Marshal<T> *m, const StringPiece &s) {
+  T out;
+  m->unmarshal(s, &out);
+  return out;
+}
 
 }
 #include "core/tuple.h"

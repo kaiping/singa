@@ -19,17 +19,19 @@ class ReLULayer : public Layer {
                      const std::vector<DataSource *> &sources);
   virtual void Forward();
   virtual void Backward();
-  virtual bool HasInput() {return false;}
-  virtual Blob4 *feature(Edge *edge) {
-    return edge->bottom()==this? &fea_:&act_;
+  virtual bool HasInput() {
+    return false;
   }
-  virtual Blob4 *gradient(Edge *edge) {
-    return edge->bottom()==this? &fea_grad_:&act_grad_;
+  virtual Blob4& feature(Edge *edge) {
+    return edge->bottom() == this ? fea_ : act_;
+  }
+  virtual Blob4& gradient(Edge *edge) {
+    return edge->bottom() == this ? fea_grad_ : act_grad_;
   }
 
  private:
   //! fea short for feature, act short for activation, grad short for gradient
-  Blob2 fea_, fea_grad_, act_, act_grad_;
+  Blob4 fea_, fea_grad_, act_, act_grad_;
 };
 
 }  // namespace lapis

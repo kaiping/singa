@@ -20,7 +20,8 @@ template<class Val> inline Val ntohx(const Val &in) {
   return *(reinterpret_cast<Val *>(out));
 }
 
-template<> inline unsigned char ntohx<unsigned char>(const unsigned char &v) { //NOLINT
+template<> inline unsigned char ntohx<unsigned char>(const unsigned char
+    &v) { //NOLINT
   return v;
 }
 template<> inline uint16_t ntohx<uint16_t>(const uint16_t &v) {
@@ -51,7 +52,8 @@ template<class Val> inline Val htonx(const Val &in) {
   return *(reinterpret_cast<Val *>(out));
 }
 
-template<> inline unsigned char htonx<unsigned char>(const unsigned char &v) { //NOLINT
+template<> inline unsigned char htonx<unsigned char>(const unsigned char
+    &v) { //NOLINT
   return v;
 }
 template<> inline uint16_t htonx<uint16_t>(const uint16_t &v) {

@@ -4,25 +4,30 @@
 #include <glog/logging.h>
 #include "model/edge.h"
 #include "model/sgd_trainer.h"
-#include "utils/lapis.h"
+#include "model/lapis.h"
+#include "model/conv_edge.h"
+#include "model/inner_product_edge.h"
+#include "model/lrn_edge.h"
+#include "model/pooling_edge.h"
+#include "model/softmax_loss_edge.h"
 
 
 namespace lapis {
 void Edge::Init(const EdgeProto &proto,
-    const std::map<std::string, Layer *> &layer_map){
+                const std::map<std::string, Layer *> &layer_map) {
   name_ = proto.name();
-  CHECK(layer_map.find(proto.top())!=layer_map.end());
-  CHECK(layer_map.find(proto.bottom())!=layer_map.end());
-  top_=layer_map.at(proto.top());
-  bottom_=layer_map.at(proto.bottom());
-  if(proto.directed()) {
-      top_->add_in_edge(this);
-      bottom_->add_out_edge(this);
-  }else{
-      top_->add_out_edge(this);
-      bottom_->add_out_edge(this);
-      top_->add_in_edge(this);
-      bottom_->add_in_edge(this);
+  CHECK(layer_map.find(proto.top()) != layer_map.end());
+  CHECK(layer_map.find(proto.bottom()) != layer_map.end());
+  top_ = layer_map.at(proto.top());
+  bottom_ = layer_map.at(proto.bottom());
+  if (proto.directed()) {
+    top_->add_in_edge(this);
+    bottom_->add_out_edge(this);
+  } else {
+    top_->add_out_edge(this);
+    bottom_->add_out_edge(this);
+    top_->add_in_edge(this);
+    bottom_->add_in_edge(this);
   }
 }
 
@@ -31,22 +36,22 @@ void Edge::ToProto(EdgeProto *proto) {
 }
 
 void Edge::Setup(bool set_param) {
-  LOG(INFO)<<"Not implemented";
+  LOG(INFO) << "Not implemented";
 }
 
-void Edge::ComputeParamUpdates(const Trainer &trainer) {
-  const SGDTrainer* sgd=reinterpret_cast<const SGDTrainer*> (&trainer);
-  float momentum=sgd->momentum();
-  float weight_decay=sgd->weight_decay();
-  float learning_rate=sgd->learning_rate();
-  for (Param* param : params_) {
-    Blob2& history=param->mutable_history();
-    const Blbo2& gradient=param->gradient();
-    const Blbo2& data=param->content();
-    momentum*=param->momentum();
-    weight_decay*=param->weight_decay();
-    learning_rate*=param->learning_rate();
-    history=history*momentum-(gradient+weight_decay*data)*learning_rate;
+void Edge::ComputeParamUpdates(const Trainer *trainer) {
+  const SGDTrainer *sgd = reinterpret_cast<const SGDTrainer *> (trainer);
+  float momentum = sgd->momentum();
+  float weight_decay = sgd->weight_decay();
+  float learning_rate = sgd->learning_rate();
+  for (Param *param : params_) {
+    Blob2 &history = param->mutable_history();
+    const Blob2 &gradient = param->gradient();
+    const Blob2 &data = param->content();
+    momentum *= param->momentum();
+    weight_decay *= param->weight_decay();
+    learning_rate *= param->learning_rate();
+    history = history * momentum - (gradient + weight_decay * data) * learning_rate;
   }
 }
 
@@ -55,9 +60,9 @@ void Edge::ComputeParamUpdates(const Trainer &trainer) {
  *****************************************************************************/
 #define CreateEdge(EdgeClass) [](void)->Edge* {return new EdgeClass();}
 std::shared_ptr<EdgeFactory> EdgeFactory::Instance() {
-  if(!instance_.get()){
+  if (!instance_.get()) {
     instance_.reset(new EdgeFactory());
- }
+  }
   return instance_;
 }
 
@@ -78,6 +83,6 @@ void EdgeFactory::RegisterCreateFunction(
 Edge *EdgeFactory::Create(const std::string id) {
   CHECK(edge_map_.find(id) != edge_map_.end())
       << "The initialization function " << id << " has not been registered";
-  return layer_map_[id]();
+  return edge_map_[id]();
 }
 }  // namespace lapis

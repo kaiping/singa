@@ -6,21 +6,21 @@
 
 namespace lapis {
 class ConvEdge : public Edge {
-/**
- * Do convolution follow Caffe's img2col, i.e., reshape the image into a matrix
- * and then multiply with the weight matrix to get the convolutioned image.
- *
- * the weigth matrix is of height: num_filters, i.e., num_output of this edge
- * and the width is channels*kernel_size^2, channels is for the bottom image.
- * the col_fea/col_grad is to store the intermediate data, i.e., reshape the
- * orignal 3-d image into 2-d, with the height being channels*kernel_size^2,
- * the width being conv_height*conv_width, where conv_height/width is the size
- * after convolution operation. The finall product result is of shape:
- * num_filters*(conv_heigth*conv_width), i.e., the channels, height, width of
- * the image after convolution.
- * fea is short for feature
- * grad is short for gradient
- */
+  /**
+   * Do convolution follow Caffe's img2col, i.e., reshape the image into a matrix
+   * and then multiply with the weight matrix to get the convolutioned image.
+   *
+   * the weigth matrix is of height: num_filters, i.e., num_output of this edge
+   * and the width is channels*kernel_size^2, channels is for the bottom image.
+   * the col_fea/col_grad is to store the intermediate data, i.e., reshape the
+   * orignal 3-d image into 2-d, with the height being channels*kernel_size^2,
+   * the width being conv_height*conv_width, where conv_height/width is the size
+   * after convolution operation. The finall product result is of shape:
+   * num_filters*(conv_heigth*conv_width), i.e., the channels, height, width of
+   * the image after convolution.
+   * fea is short for feature
+   * grad is short for gradient
+   */
  public:
   /**
    * Set user defined properties, e.g., size of kernel, stride, pad, etc.
@@ -40,7 +40,7 @@ class ConvEdge : public Edge {
    * Backpropagate gradients, calc gradients w.r.t, weight, bias and feature of
    * the bottom layer if necessary (no need for data layer).
    */
-  virtual void Backward(const Blob4 &src_fea ,const Blob4 &src_grad,
+  virtual void Backward(const Blob4 &src_fea , const Blob4 &src_grad,
                         const Blob4 &dest_fea, Blob4 *dest_grad, bool overwrite);
   /**
    * Reshape the tensor from top layer connected to this edge.
@@ -50,13 +50,13 @@ class ConvEdge : public Edge {
    * conv_width=(height_+2*pad_-kernel_size_)/stride_+1;
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob4* blob);
+  virtual void SetupTopBlob(Blob4 *blob);
 
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int channels_, height_, width_;
   //! group weight height, width (col height), and col width
-  int M_,K_,N_;
+  int M_, K_, N_;
   //! num of groups, from caffe
   int num_groups_;
   //! height and width of the kernel/filter, assume the kernel is square

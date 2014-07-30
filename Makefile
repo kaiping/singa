@@ -4,19 +4,21 @@
 # Configuration for folders and Flags
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-CXX := /home/wangwei/install/bin/g++
+HOME_DIR := /home/wangwei/install
+CXX := $(HOME_DIR)/bin/g++
 # Change this variable!! header folder for system and external libs.
-INCLUDE_DIRS := include/ /home/wangwei/install/include
+INCLUDE_DIRS := include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include
 # Change this variable!! lib folder for system and external libs
-LIBRARY_DIRS := /home/wangwei/install/lib64 /home/wangwei/install/lib
+LIBRARY_DIRS := $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 # folder for compiled file
 BUILD_DIR := build
 
-CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 \
-	$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
+CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 -Wno-unknown-pragmas -funroll-loops \
+					-DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_CUDA=0 \
+						$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 LIBRARIES := glog gflags protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core gomp
+						boost_filesystem opencv_highgui opencv_imgproc opencv_core cblas
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 
@@ -83,7 +85,9 @@ $(CORE_OBJS): $(BUILD_DIR)/%.o : %.cc
 # Set headers and sources for compiling classes under model/ folder
 ###############################################################################
 MODEL_HDRS := $(shell find include/model -name "*.h" -type f)
+MODEL_HDRS += $(addprefix include/disk/, data_source.h label_source.h rgb_dir_source.h)
 MODEL_SRCS :=$(shell find src/model -name "*.cc" -type f)
+MODEL_SRCS += $(addprefix src/disk/, data_source.cc label_source.cc rgb_dir_source.cc)
 MODEL_OBJS :=$(addprefix $(BUILD_DIR)/, $(MODEL_SRCS:.cc=.o))
 
 model: init proto utils $(MODEL_OBJS)
@@ -190,7 +194,7 @@ $(BUILD_DIR)/src/test/%.o: src/test/%.cc
 # files genreated by astyle, to be deleted
 ORIGS := $(shell find . -name "*.orig" -type f)
 # header files, with Eigen/ ignored
-FL_HDRS := $(shell find include -path "include/Eigen"  -prune \
+FL_HDRS := $(shell find include -path "include/mshadow"  -prune \
 						-o \( -name "*.h" ! -name "*.pb.h" -type f \) -print )
 # cc files
 FL_SRCS :=$(shell find src -name "*.cc" ! -name "*.pb.cc" -type f )

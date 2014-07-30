@@ -139,7 +139,7 @@ void protobuf_AssignDesc_model_2eproto() {
       sizeof(ParamProto));
   ParamProto_InitMethod_descriptor_ = ParamProto_descriptor_->enum_type(0);
   EdgeProto_descriptor_ = file->message_type(3);
-  static const int EdgeProto_offsets_[14] = {
+  static const int EdgeProto_offsets_[15] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, num_output_),
@@ -150,6 +150,7 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, kernel_size_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, stride_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, pad_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, num_groups_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, alpha_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, beta_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EdgeProto, local_size_),
@@ -220,9 +221,9 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, base_learning_rate_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, base_momentum_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, base_weight_decay_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, final_momentum_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, final_learning_rate_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, final_weight_decay_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, momentum_x_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, learning_rate_x_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, weight_decay_x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, learning_rate_change_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, momentum_change_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDProto, weight_decay_change_steps_),
@@ -424,60 +425,61 @@ void protobuf_AddDesc_model_2eproto() {
     "od\022\r\n\tkConstant\020\000\022\r\n\tkGaussain\020\001\022\014\n\010kUni"
     "form\020\002\022\017\n\013kPretrained\020\003\022\026\n\022kGaussainSqrt"
     "FanIn\020\004\022\025\n\021kUniformSqrtFanIn\020\005\022\030\n\024kUnifo"
-    "rmSqrtFanInOut\020\006\"\340\002\n\tEdgeProto\022\014\n\004name\030\001"
+    "rmSqrtFanInOut\020\006\"\364\002\n\tEdgeProto\022\014\n\004name\030\001"
     " \002(\t\022\014\n\004type\030\002 \002(\t\022\022\n\nnum_output\030\003 \001(\005\022 "
     "\n\005param\030\004 \003(\0132\021.lapis.ParamProto\022\026\n\010dire"
     "cted\030\005 \001(\010:\004true\022\013\n\003top\030\006 \001(\t\022\016\n\006bottom\030"
     "\007 \001(\t\022\023\n\013kernel_size\030\010 \001(\005\022\016\n\006stride\030\t \001"
-    "(\005\022\013\n\003pad\030\n \001(\005\022\r\n\005alpha\030\013 \001(\002\022\014\n\004beta\030\014"
-    " \001(\002\022\022\n\nlocal_size\030\r \001(\005\0226\n\016pooling_meth"
-    "od\030\016 \001(\0162\036.lapis.EdgeProto.PoolingMethod"
-    "\"1\n\rPoolingMethod\022\017\n\013kMaxPooling\020\001\022\017\n\013kA"
-    "vgPooling\020\002\"\013\n\tBlobProto\"S\n\nLayerProto\022\014"
-    "\n\004name\030\001 \002(\t\022\014\n\004type\030\003 \002(\t\022\023\n\013data_sourc"
-    "e\030\007 \001(\t\022\024\n\tdrop_prob\030\010 \001(\002:\0010\"L\n\010NetProt"
-    "o\022 \n\005layer\030\003 \003(\0132\021.lapis.LayerProto\022\036\n\004e"
-    "dge\030\004 \003(\0132\020.lapis.EdgeProto\"\212\005\n\010SGDProto"
-    "\022\032\n\022base_learning_rate\030\001 \002(\002\022\030\n\rbase_mom"
-    "entum\030\002 \001(\002:\0010\022\034\n\021base_weight_decay\030\003 \001("
-    "\002:\0010\022\026\n\016final_momentum\030\004 \001(\002\022\033\n\023final_le"
-    "arning_rate\030\005 \001(\002\022\032\n\022final_weight_decay\030"
-    "\006 \001(\002\022\"\n\032learning_rate_change_steps\030\007 \001("
-    "\005\022\035\n\025momentum_change_steps\030\010 \001(\005\022!\n\031weig"
-    "ht_decay_change_steps\030\t \001(\005\022E\n\024learning_"
-    "rate_change\030\n \001(\0162\033.lapis.SGDProto.Chang"
-    "eProto:\nkInverse_t\022@\n\023weight_decay_chang"
-    "e\030\013 \001(\0162\033.lapis.SGDProto.ChangeProto:\006kF"
-    "ixed\022<\n\017momentum_change\030\014 \001(\0162\033.lapis.SG"
-    "DProto.ChangeProto:\006kFixed\022\023\n\013total_step"
-    "s\030\r \001(\005\022\027\n\017train_batchsize\030\016 \001(\005\022\034\n\024vali"
-    "dation_batchsize\030\017 \001(\005\022\026\n\016test_batchsize"
-    "\030\020 \001(\005\"H\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkIn"
-    "verse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003"
-    "\"W\n\020PerformanceProto\022\021\n\tprecision\030\001 \001(\002\022"
-    "\016\n\006recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precisio"
-    "n50\030\004 \001(\002\"\325\005\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132"
-    "\017.lapis.SGDProto\022!\n\026checkpoint_after_ste"
-    "ps\030\002 \001(\005:\0010\022!\n\026checkpoint_every_steps\030\003 "
-    "\001(\005:\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/c"
-    "heckpoint\022\032\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n"
-    "\023display_after_steps\030\006 \001(\005:\0010\022\036\n\023display"
-    "_every_steps\030\007 \001(\005:\0010\022#\n\016display_prefix\030"
-    "\010 \001(\t:\013tmp/display\022\030\n\rvalidate_step\030\t \001("
-    "\005:\0010\022\037\n\024validate_after_steps\030\n \001(\005:\0010\022\037\n"
-    "\024validate_every_steps\030\013 \001(\005:\0010\022*\n\ntrain_"
-    "data\030\014 \003(\0132\026.lapis.DataSourceProto\022/\n\017va"
-    "lidation_data\030\r \003(\0132\026.lapis.DataSourcePr"
-    "oto\022)\n\ttest_data\030\016 \003(\0132\026.lapis.DataSourc"
-    "eProto\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/perform"
-    "ance\022<\n\003alg\030\020 \001(\0162\035.lapis.TrainerProto.A"
-    "lgorithm:\020kBackPropagation\022\026\n\010do_train\030\021"
-    " \001(\010:\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAl"
-    "gorithm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContra"
-    "stiveDivergence\020\002\"^\n\nModelProto\022\014\n\004name\030"
-    "\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007t"
-    "rainer\030\003 \002(\0132\023.lapis.TrainerProto\"\'\n\024flo"
-    "at_vector_message\022\017\n\007myfloat\030\001 \003(\002", 2874);
+    "(\005\022\013\n\003pad\030\n \001(\005\022\022\n\nnum_groups\030\013 \001(\005\022\r\n\005a"
+    "lpha\030\014 \001(\002\022\014\n\004beta\030\r \001(\002\022\022\n\nlocal_size\030\016"
+    " \001(\005\0226\n\016pooling_method\030\017 \001(\0162\036.lapis.Edg"
+    "eProto.PoolingMethod\"1\n\rPoolingMethod\022\017\n"
+    "\013kMaxPooling\020\001\022\017\n\013kAvgPooling\020\002\"\013\n\tBlobP"
+    "roto\"S\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type"
+    "\030\003 \002(\t\022\023\n\013data_source\030\007 \001(\t\022\024\n\tdrop_prob"
+    "\030\010 \001(\002:\0010\"L\n\010NetProto\022 \n\005layer\030\003 \003(\0132\021.l"
+    "apis.LayerProto\022\036\n\004edge\030\004 \003(\0132\020.lapis.Ed"
+    "geProto\"\211\005\n\010SGDProto\022\032\n\022base_learning_ra"
+    "te\030\001 \002(\002\022\030\n\rbase_momentum\030\002 \001(\002:\0010\022\034\n\021ba"
+    "se_weight_decay\030\003 \001(\002:\0010\022\022\n\nmomentum_x\030\004"
+    " \001(\002\022\027\n\017learning_rate_x\030\005 \001(\002\022\026\n\016weight_"
+    "decay_x\030\006 \001(\002\022\"\n\032learning_rate_change_st"
+    "eps\030\007 \001(\005\022\035\n\025momentum_change_steps\030\010 \001(\005"
+    "\022!\n\031weight_decay_change_steps\030\t \001(\005\022E\n\024l"
+    "earning_rate_change\030\n \001(\0162\033.lapis.SGDPro"
+    "to.ChangeProto:\nkInverse_t\022@\n\023weight_dec"
+    "ay_change\030\013 \001(\0162\033.lapis.SGDProto.ChangeP"
+    "roto:\006kFixed\022<\n\017momentum_change\030\014 \001(\0162\033."
+    "lapis.SGDProto.ChangeProto:\006kFixed\022\023\n\013to"
+    "tal_steps\030\r \001(\005\022\027\n\017train_batchsize\030\016 \001(\005"
+    "\022\034\n\024validation_batchsize\030\017 \001(\005\022\026\n\016test_b"
+    "atchsize\030\020 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixed\020"
+    "\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007k"
+    "Linear\020\003\022\t\n\005kStep\020\004\"W\n\020PerformanceProto\022"
+    "\021\n\tprecision\030\001 \001(\002\022\016\n\006recall\030\002 \001(\002\022\013\n\003ma"
+    "p\030\003 \001(\002\022\023\n\013precision50\030\004 \001(\002\"\325\005\n\014Trainer"
+    "Proto\022\034\n\003sgd\030\001 \001(\0132\017.lapis.SGDProto\022!\n\026c"
+    "heckpoint_after_steps\030\002 \001(\005:\0010\022!\n\026checkp"
+    "oint_every_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_"
+    "prefix\030\004 \001(\t:\016tmp/checkpoint\022\032\n\017checkpoi"
+    "nt_step\030\005 \001(\005:\0010\022\036\n\023display_after_steps\030"
+    "\006 \001(\005:\0010\022\036\n\023display_every_steps\030\007 \001(\005:\0010"
+    "\022#\n\016display_prefix\030\010 \001(\t:\013tmp/display\022\030\n"
+    "\rvalidate_step\030\t \001(\005:\0010\022\037\n\024validate_afte"
+    "r_steps\030\n \001(\005:\0010\022\037\n\024validate_every_steps"
+    "\030\013 \001(\005:\0010\022*\n\ntrain_data\030\014 \003(\0132\026.lapis.Da"
+    "taSourceProto\022/\n\017validation_data\030\r \003(\0132\026"
+    ".lapis.DataSourceProto\022)\n\ttest_data\030\016 \003("
+    "\0132\026.lapis.DataSourceProto\022$\n\013perf_prefix"
+    "\030\017 \001(\t:\017tmp/performance\022<\n\003alg\030\020 \001(\0162\035.l"
+    "apis.TrainerProto.Algorithm:\020kBackPropag"
+    "ation\022\026\n\010do_train\030\021 \001(\010:\004true\022\026\n\007do_test"
+    "\030\022 \001(\010:\005false\"=\n\tAlgorithm\022\024\n\020kBackPropa"
+    "gation\020\001\022\032\n\026kContrastiveDivergence\020\002\"^\n\n"
+    "ModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\0132\017."
+    "lapis.NetProto\022$\n\007trainer\030\003 \002(\0132\023.lapis."
+    "TrainerProto\"\'\n\024float_vector_message\022\017\n\007"
+    "myfloat\030\001 \003(\002", 2893);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -2227,6 +2229,7 @@ const int EdgeProto::kBottomFieldNumber;
 const int EdgeProto::kKernelSizeFieldNumber;
 const int EdgeProto::kStrideFieldNumber;
 const int EdgeProto::kPadFieldNumber;
+const int EdgeProto::kNumGroupsFieldNumber;
 const int EdgeProto::kAlphaFieldNumber;
 const int EdgeProto::kBetaFieldNumber;
 const int EdgeProto::kLocalSizeFieldNumber;
@@ -2258,6 +2261,7 @@ void EdgeProto::SharedCtor() {
   kernel_size_ = 0;
   stride_ = 0;
   pad_ = 0;
+  num_groups_ = 0;
   alpha_ = 0;
   beta_ = 0;
   local_size_ = 0;
@@ -2336,6 +2340,7 @@ void EdgeProto::Clear() {
   if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     stride_ = 0;
     pad_ = 0;
+    num_groups_ = 0;
     alpha_ = 0;
     beta_ = 0;
     local_size_ = 0;
@@ -2510,12 +2515,28 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(93)) goto parse_alpha;
+        if (input->ExpectTag(88)) goto parse_num_groups;
         break;
       }
 
-      // optional float alpha = 11;
+      // optional int32 num_groups = 11;
       case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_num_groups:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &num_groups_)));
+          set_has_num_groups();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(101)) goto parse_alpha;
+        break;
+      }
+
+      // optional float alpha = 12;
+      case 12: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_alpha:
@@ -2526,12 +2547,12 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(101)) goto parse_beta;
+        if (input->ExpectTag(109)) goto parse_beta;
         break;
       }
 
-      // optional float beta = 12;
-      case 12: {
+      // optional float beta = 13;
+      case 13: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_beta:
@@ -2542,12 +2563,12 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(104)) goto parse_local_size;
+        if (input->ExpectTag(112)) goto parse_local_size;
         break;
       }
 
-      // optional int32 local_size = 13;
-      case 13: {
+      // optional int32 local_size = 14;
+      case 14: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_local_size:
@@ -2558,12 +2579,12 @@ bool EdgeProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(112)) goto parse_pooling_method;
+        if (input->ExpectTag(120)) goto parse_pooling_method;
         break;
       }
 
-      // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
-      case 14: {
+      // optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
+      case 15: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_pooling_method:
@@ -2574,7 +2595,7 @@ bool EdgeProto::MergePartialFromCodedStream(
           if (::lapis::EdgeProto_PoolingMethod_IsValid(value)) {
             set_pooling_method(static_cast< ::lapis::EdgeProto_PoolingMethod >(value));
           } else {
-            mutable_unknown_fields()->AddVarint(14, value);
+            mutable_unknown_fields()->AddVarint(15, value);
           }
         } else {
           goto handle_uninterpreted;
@@ -2668,25 +2689,30 @@ void EdgeProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(10, this->pad(), output);
   }
 
-  // optional float alpha = 11;
+  // optional int32 num_groups = 11;
+  if (has_num_groups()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->num_groups(), output);
+  }
+
+  // optional float alpha = 12;
   if (has_alpha()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->alpha(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(12, this->alpha(), output);
   }
 
-  // optional float beta = 12;
+  // optional float beta = 13;
   if (has_beta()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(12, this->beta(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(13, this->beta(), output);
   }
 
-  // optional int32 local_size = 13;
+  // optional int32 local_size = 14;
   if (has_local_size()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(13, this->local_size(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(14, this->local_size(), output);
   }
 
-  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
   if (has_pooling_method()) {
     ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      14, this->pooling_method(), output);
+      15, this->pooling_method(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -2769,25 +2795,30 @@ void EdgeProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(10, this->pad(), target);
   }
 
-  // optional float alpha = 11;
+  // optional int32 num_groups = 11;
+  if (has_num_groups()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(11, this->num_groups(), target);
+  }
+
+  // optional float alpha = 12;
   if (has_alpha()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->alpha(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(12, this->alpha(), target);
   }
 
-  // optional float beta = 12;
+  // optional float beta = 13;
   if (has_beta()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(12, this->beta(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(13, this->beta(), target);
   }
 
-  // optional int32 local_size = 13;
+  // optional int32 local_size = 14;
   if (has_local_size()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(13, this->local_size(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(14, this->local_size(), target);
   }
 
-  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
   if (has_pooling_method()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      14, this->pooling_method(), target);
+      15, this->pooling_method(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2864,24 +2895,31 @@ int EdgeProto::ByteSize() const {
           this->pad());
     }
 
-    // optional float alpha = 11;
+    // optional int32 num_groups = 11;
+    if (has_num_groups()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->num_groups());
+    }
+
+    // optional float alpha = 12;
     if (has_alpha()) {
       total_size += 1 + 4;
     }
 
-    // optional float beta = 12;
+    // optional float beta = 13;
     if (has_beta()) {
       total_size += 1 + 4;
     }
 
-    // optional int32 local_size = 13;
+    // optional int32 local_size = 14;
     if (has_local_size()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->local_size());
     }
 
-    // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+    // optional .lapis.EdgeProto.PoolingMethod pooling_method = 15;
     if (has_pooling_method()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->pooling_method());
@@ -2952,6 +2990,9 @@ void EdgeProto::MergeFrom(const EdgeProto& from) {
     if (from.has_pad()) {
       set_pad(from.pad());
     }
+    if (from.has_num_groups()) {
+      set_num_groups(from.num_groups());
+    }
     if (from.has_alpha()) {
       set_alpha(from.alpha());
     }
@@ -3001,6 +3042,7 @@ void EdgeProto::Swap(EdgeProto* other) {
     std::swap(kernel_size_, other->kernel_size_);
     std::swap(stride_, other->stride_);
     std::swap(pad_, other->pad_);
+    std::swap(num_groups_, other->num_groups_);
     std::swap(alpha_, other->alpha_);
     std::swap(beta_, other->beta_);
     std::swap(local_size_, other->local_size_);
@@ -3815,6 +3857,7 @@ bool SGDProto_ChangeProto_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
       return true;
     default:
       return false;
@@ -3826,6 +3869,7 @@ const SGDProto_ChangeProto SGDProto::kFixed;
 const SGDProto_ChangeProto SGDProto::kInverse_t;
 const SGDProto_ChangeProto SGDProto::kExponential;
 const SGDProto_ChangeProto SGDProto::kLinear;
+const SGDProto_ChangeProto SGDProto::kStep;
 const SGDProto_ChangeProto SGDProto::ChangeProto_MIN;
 const SGDProto_ChangeProto SGDProto::ChangeProto_MAX;
 const int SGDProto::ChangeProto_ARRAYSIZE;
@@ -3834,9 +3878,9 @@ const int SGDProto::ChangeProto_ARRAYSIZE;
 const int SGDProto::kBaseLearningRateFieldNumber;
 const int SGDProto::kBaseMomentumFieldNumber;
 const int SGDProto::kBaseWeightDecayFieldNumber;
-const int SGDProto::kFinalMomentumFieldNumber;
-const int SGDProto::kFinalLearningRateFieldNumber;
-const int SGDProto::kFinalWeightDecayFieldNumber;
+const int SGDProto::kMomentumXFieldNumber;
+const int SGDProto::kLearningRateXFieldNumber;
+const int SGDProto::kWeightDecayXFieldNumber;
 const int SGDProto::kLearningRateChangeStepsFieldNumber;
 const int SGDProto::kMomentumChangeStepsFieldNumber;
 const int SGDProto::kWeightDecayChangeStepsFieldNumber;
@@ -3868,9 +3912,9 @@ void SGDProto::SharedCtor() {
   base_learning_rate_ = 0;
   base_momentum_ = 0;
   base_weight_decay_ = 0;
-  final_momentum_ = 0;
-  final_learning_rate_ = 0;
-  final_weight_decay_ = 0;
+  momentum_x_ = 0;
+  learning_rate_x_ = 0;
+  weight_decay_x_ = 0;
   learning_rate_change_steps_ = 0;
   momentum_change_steps_ = 0;
   weight_decay_change_steps_ = 0;
@@ -3919,9 +3963,9 @@ void SGDProto::Clear() {
     base_learning_rate_ = 0;
     base_momentum_ = 0;
     base_weight_decay_ = 0;
-    final_momentum_ = 0;
-    final_learning_rate_ = 0;
-    final_weight_decay_ = 0;
+    momentum_x_ = 0;
+    learning_rate_x_ = 0;
+    weight_decay_x_ = 0;
     learning_rate_change_steps_ = 0;
     momentum_change_steps_ = 0;
   }
@@ -3988,51 +4032,51 @@ bool SGDProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(37)) goto parse_final_momentum;
+        if (input->ExpectTag(37)) goto parse_momentum_x;
         break;
       }
 
-      // optional float final_momentum = 4;
+      // optional float momentum_x = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_final_momentum:
+         parse_momentum_x:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &final_momentum_)));
-          set_has_final_momentum();
+                 input, &momentum_x_)));
+          set_has_momentum_x();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(45)) goto parse_final_learning_rate;
+        if (input->ExpectTag(45)) goto parse_learning_rate_x;
         break;
       }
 
-      // optional float final_learning_rate = 5;
+      // optional float learning_rate_x = 5;
       case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_final_learning_rate:
+         parse_learning_rate_x:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &final_learning_rate_)));
-          set_has_final_learning_rate();
+                 input, &learning_rate_x_)));
+          set_has_learning_rate_x();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(53)) goto parse_final_weight_decay;
+        if (input->ExpectTag(53)) goto parse_weight_decay_x;
         break;
       }
 
-      // optional float final_weight_decay = 6;
+      // optional float weight_decay_x = 6;
       case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_final_weight_decay:
+         parse_weight_decay_x:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &final_weight_decay_)));
-          set_has_final_weight_decay();
+                 input, &weight_decay_x_)));
+          set_has_weight_decay_x();
         } else {
           goto handle_uninterpreted;
         }
@@ -4248,19 +4292,19 @@ void SGDProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->base_weight_decay(), output);
   }
 
-  // optional float final_momentum = 4;
-  if (has_final_momentum()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->final_momentum(), output);
+  // optional float momentum_x = 4;
+  if (has_momentum_x()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->momentum_x(), output);
   }
 
-  // optional float final_learning_rate = 5;
-  if (has_final_learning_rate()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->final_learning_rate(), output);
+  // optional float learning_rate_x = 5;
+  if (has_learning_rate_x()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->learning_rate_x(), output);
   }
 
-  // optional float final_weight_decay = 6;
-  if (has_final_weight_decay()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(6, this->final_weight_decay(), output);
+  // optional float weight_decay_x = 6;
+  if (has_weight_decay_x()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(6, this->weight_decay_x(), output);
   }
 
   // optional int32 learning_rate_change_steps = 7;
@@ -4339,19 +4383,19 @@ void SGDProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->base_weight_decay(), target);
   }
 
-  // optional float final_momentum = 4;
-  if (has_final_momentum()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->final_momentum(), target);
+  // optional float momentum_x = 4;
+  if (has_momentum_x()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->momentum_x(), target);
   }
 
-  // optional float final_learning_rate = 5;
-  if (has_final_learning_rate()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->final_learning_rate(), target);
+  // optional float learning_rate_x = 5;
+  if (has_learning_rate_x()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->learning_rate_x(), target);
   }
 
-  // optional float final_weight_decay = 6;
-  if (has_final_weight_decay()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(6, this->final_weight_decay(), target);
+  // optional float weight_decay_x = 6;
+  if (has_weight_decay_x()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(6, this->weight_decay_x(), target);
   }
 
   // optional int32 learning_rate_change_steps = 7;
@@ -4433,18 +4477,18 @@ int SGDProto::ByteSize() const {
       total_size += 1 + 4;
     }
 
-    // optional float final_momentum = 4;
-    if (has_final_momentum()) {
+    // optional float momentum_x = 4;
+    if (has_momentum_x()) {
       total_size += 1 + 4;
     }
 
-    // optional float final_learning_rate = 5;
-    if (has_final_learning_rate()) {
+    // optional float learning_rate_x = 5;
+    if (has_learning_rate_x()) {
       total_size += 1 + 4;
     }
 
-    // optional float final_weight_decay = 6;
-    if (has_final_weight_decay()) {
+    // optional float weight_decay_x = 6;
+    if (has_weight_decay_x()) {
       total_size += 1 + 4;
     }
 
@@ -4553,14 +4597,14 @@ void SGDProto::MergeFrom(const SGDProto& from) {
     if (from.has_base_weight_decay()) {
       set_base_weight_decay(from.base_weight_decay());
     }
-    if (from.has_final_momentum()) {
-      set_final_momentum(from.final_momentum());
+    if (from.has_momentum_x()) {
+      set_momentum_x(from.momentum_x());
     }
-    if (from.has_final_learning_rate()) {
-      set_final_learning_rate(from.final_learning_rate());
+    if (from.has_learning_rate_x()) {
+      set_learning_rate_x(from.learning_rate_x());
     }
-    if (from.has_final_weight_decay()) {
-      set_final_weight_decay(from.final_weight_decay());
+    if (from.has_weight_decay_x()) {
+      set_weight_decay_x(from.weight_decay_x());
     }
     if (from.has_learning_rate_change_steps()) {
       set_learning_rate_change_steps(from.learning_rate_change_steps());
@@ -4621,9 +4665,9 @@ void SGDProto::Swap(SGDProto* other) {
     std::swap(base_learning_rate_, other->base_learning_rate_);
     std::swap(base_momentum_, other->base_momentum_);
     std::swap(base_weight_decay_, other->base_weight_decay_);
-    std::swap(final_momentum_, other->final_momentum_);
-    std::swap(final_learning_rate_, other->final_learning_rate_);
-    std::swap(final_weight_decay_, other->final_weight_decay_);
+    std::swap(momentum_x_, other->momentum_x_);
+    std::swap(learning_rate_x_, other->learning_rate_x_);
+    std::swap(weight_decay_x_, other->weight_decay_x_);
     std::swap(learning_rate_change_steps_, other->learning_rate_change_steps_);
     std::swap(momentum_change_steps_, other->momentum_change_steps_);
     std::swap(weight_decay_change_steps_, other->weight_decay_change_steps_);

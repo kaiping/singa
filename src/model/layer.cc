@@ -6,12 +6,15 @@
 #include <random>
 
 #include "model/layer.h"
+#include "model/data_layer.h"
+#include "model/linear_layer.h"
+#include "model/relu_layer.h"
 
 namespace lapis {
 /*****************************************************************************
  * Implementation for Layer
  *****************************************************************************/
-void Layer::Init(const LayerProto &proto){
+void Layer::Init(const LayerProto &proto) {
   name_ = proto.name();
 }
 
@@ -20,21 +23,22 @@ void Layer::ToProto(LayerProto *proto) {
 }
 struct Threshold {
   inline static float Map(float a, float b) {
-    return a<b?1.0f: 0.0f;
+    return a < b ? 1.0f : 0.0f;
   }
 };
 
-void Layer::Dropout(float drop_prob, const Blob4 &src, Blob4* dest, Blob4 * mask) {
-  Random& rnd=Lapis::Instance()->rnd();
+void Layer::Dropout(float drop_prob, const Blob4 &src, Blob4 *dest,
+                    Blob4 *mask) {
+  Random &rnd = Lapis::Instance()->rnd();
   // with 1-drop_prob to keep one neuron, i.e., mask=1
-  float keep_prob=1.0-drop_prob;
-  *mask=F<Threashold>(rnd.uniform(mask->shape), keep_prob)*(1.0/keep_prob);
-  *dest=(*mask)*src;
+  float keep_prob = 1.0 - drop_prob;
+  *mask = F<Threashold>(rnd.uniform(mask->shape), keep_prob) * (1.0 / keep_prob);
+  *dest = (*mask) * src;
 }
 
-void Layer::ComputeDropoutGradient(const Blob4& src ,
-                            const Blob4& mask, Blob4* dest) {
-  *dest=src*mask;
+void Layer::ComputeDropoutGradient(const Blob4 &src ,
+                                   const Blob4 &mask, Blob4 *dest) {
+  *dest = src * mask;
 }
 // Currently layers do not have parameters
 /*
@@ -48,7 +52,7 @@ void Layer::ComputeParamUpdates(const Trainer *trainer) {
  ****************************************************************************/
 #define CreateLayer(LayerClass) [](void)->Layer* {return new LayerClass();}
 static std::shared_ptr<LayerFactory> LayerFactory::Instance() {
-  if(!instance_.get()) {
+  if (!instance_.get()) {
     instance.reset(new  LayerFactory());
   }
   return instance_;

@@ -18,46 +18,37 @@ using namespace lapis;
 DEFINE_bool(sync_update, false, "Synchronous put/update queue");
 DEFINE_int32(num_server, 1, "default number of server");
 
-int main(int argc, char** argv){
-
-
-	TypedGlobalTable<int, int>* test_table =
-		CreateTable(0, 2, new Sharding::Mod, new Accumulators<int>::Sum, new Marshal<int>, new Marshal<int>);
-
-	InitServers(argc, argv);
-
-
-	if (IsDistributedMemoryManager()){
-		DistributedMemoryManager::Get()->AssignTables();
-
-		LOG(INFO) << StringPrintf("Process %d: put...", NetworkThread::Get()->id());
-		//put, update then get
-		for (int i=0; i<10; i++)
-			test_table->put(i,i);
-		LOG(INFO) << StringPrintf("Process %d: Done put", NetworkThread::Get()->id());
-		
-		LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
-		for (int i=0; i<10; i++)
-			std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
-		LOG(INFO) << StringPrintf("Process %d: Done get", NetworkThread::Get()->id());
-
-		LOG(INFO) << StringPrintf("Process %d: update...", NetworkThread::Get()->id());
-		for (int i=0; i<10; i++)
-			test_table->update(i, 3);
-		LOG(INFO) << StringPrintf("Process %d: Done update", NetworkThread::Get()->id());
-
-		LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
-		for (int i=0; i<10; i++)
-				std::cout << "("<< i << ", "<< test_table->get(i)<< ")" << std::endl;
-		LOG(INFO) << StringPrintf("Process %d: Done get ...", NetworkThread::Get()->id());
-
-	}
-	else{ // worker, sleep while the network thread is processing put/get
-		Sleep(7);
-	}
-
-	Finish();
-	//LOG(INFO) << "Done ...";
+int main(int argc, char **argv) {
+  TypedGlobalTable<int, int> *test_table =
+    CreateTable(0, 2, new Sharding::Mod, new Accumulators<int>::Sum,
+                new Marshal<int>, new Marshal<int>);
+  InitServers(argc, argv);
+  if (IsDistributedMemoryManager()) {
+    DistributedMemoryManager::Get()->AssignTables();
+    LOG(INFO) << StringPrintf("Process %d: put...", NetworkThread::Get()->id());
+    //put, update then get
+    for (int i = 0; i < 10; i++)
+      test_table->put(i, i);
+    LOG(INFO) << StringPrintf("Process %d: Done put", NetworkThread::Get()->id());
+    LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
+    for (int i = 0; i < 10; i++)
+      std::cout << "(" << i << ", " << test_table->get(i) << ")" << std::endl;
+    LOG(INFO) << StringPrintf("Process %d: Done get", NetworkThread::Get()->id());
+    LOG(INFO) << StringPrintf("Process %d: update...", NetworkThread::Get()->id());
+    for (int i = 0; i < 10; i++)
+      test_table->update(i, 3);
+    LOG(INFO) << StringPrintf("Process %d: Done update",
+                              NetworkThread::Get()->id());
+    LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
+    for (int i = 0; i < 10; i++)
+      std::cout << "(" << i << ", " << test_table->get(i) << ")" << std::endl;
+    LOG(INFO) << StringPrintf("Process %d: Done get ...",
+                              NetworkThread::Get()->id());
+  } else { // worker, sleep while the network thread is processing put/get
+    Sleep(7);
+  }
+  Finish();
+  //LOG(INFO) << "Done ...";
 }
 
 

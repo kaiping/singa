@@ -10,7 +10,7 @@ typedef Registry<InitHelper>::Map InitMap;
 
 void RunInitializers() {
   for (InitMap::iterator i = Registry<InitHelper>::get_map().begin();
-      i != Registry<InitHelper>::get_map().end(); ++i) {
+       i != Registry<InitHelper>::get_map().end(); ++i) {
     i->second->Run();
   }
 }

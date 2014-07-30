@@ -16,16 +16,22 @@ namespace lapis {
  */
 class SGDTrainer : public Trainer {
  public:
-  virtual void Init(const TrainerProto &trainer_proto, ModelController *mc);
+  virtual void Init(const TrainerProto &trainer_proto); //, ModelController *mc);
   virtual void Train(Net *net, int step);
   virtual void Validate(Net *net);
   virtual void Test(Net *net);
   virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished(const int step);
 
-  float learning_rate() const {return learning_rate_;}
-  float momentum() const {return momentum_;}
-  float weight_decay() const  {return weight_decay_;}
+  float learning_rate() const {
+    return learning_rate_;
+  }
+  float momentum() const {
+    return momentum_;
+  }
+  float weight_decay() const  {
+    return weight_decay_;
+  }
   void UpdateHyperParams(const int step);
   ~SGDTrainer();
  protected:

@@ -18,7 +18,7 @@ void Trainer::InitDataSource(
   }
 }
 
-void Trainer::Init(const TrainerProto &proto, ModelController *mc) {
+void Trainer::Init(const TrainerProto &proto){// , ModelController *mc) {
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.checkpoint_step();
   checkpoint_after_steps_ = proto.checkpoint_after_steps();
@@ -35,11 +35,9 @@ void Trainer::Init(const TrainerProto &proto, ModelController *mc) {
   InitDataSource(proto.validation_data(), &validation_data_);
   InitDataSource(proto.test_data(), &test_data_);
   perf_prefix_ = proto.perf_prefix();
-
-  do_train_=proto.do_train();
-  do_test_=proto.do_test();
-
-  model_controller_=mc;
+  do_train_ = proto.do_train();
+  do_test_ = proto.do_test();
+  //model_controller_ = mc;
 }
 
 void Trainer::ToProto(TrainerProto *proto) {
@@ -68,14 +66,14 @@ void Trainer::ToProto(TrainerProto *proto) {
 }
 
 void Trainer::Run(Net *net) {
-  if(do_train_) {
-    while(!HasFinished(step_)) {
-      if(ValidateNow(step_))
+  if (do_train_) {
+    while (!HasFinished(step_)) {
+      if (ValidateNow(step_))
         Validate(net);
       Train(net, step_);
     }
   }
-  if(do_test_)
+  if (do_test_)
     Test(net);
 }
 }  // namespace lapis

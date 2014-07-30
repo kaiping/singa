@@ -27,8 +27,8 @@ void DataLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
     }
   }
   CHECK(data_source_ != nullptr) << "Cannot find data source for " << name_;
-  data_.Resize(Shape4(data_source_->width(),data_source_->height(),
-        data_source_->channels(), batchsize);
+  data_.Resize(Shape4(data_source_->width(), data_source_->height(),
+                      data_source_->channels(), batchsize);
 }
 
 void DataLayer::Forward() {
@@ -37,7 +37,7 @@ void DataLayer::Forward() {
 
 void DataLayer::Backward() {
   for (Edge *edge : out_edges_) {
-    Layer* layer=edge->OtherSide(this);
+    Layer *layer = edge->OtherSide(this);
     edge->Backward(layer->feature(edge), layer->gradient(edge), data_,
                    nullptr, true);
   }

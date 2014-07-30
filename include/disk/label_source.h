@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "disk/data_source.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 
 
 namespace lapis {

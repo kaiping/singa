@@ -9,9 +9,9 @@ using google::protobuf::RepeatedField;
 namespace lapis {
 void Param::Init(const ParamProto &proto) {
   const RepeatedField<int> shape = proto.shape();
-  momentum_=proto.momentum();
-  learning_rate_=proto.learning_rate();
-  weight_decay_=proto.weight_decay();
+  momentum_ = proto.momentum();
+  learning_rate_ = proto.learning_rate();
+  weight_decay_ = proto.weight_decay();
   // currently only support vector and  matrix parameter
   if (shape.size() == 2) {
     int h = shape.Get(0);
@@ -25,35 +25,34 @@ void Param::Init(const ParamProto &proto) {
     grad_.Resize(Shape1(l));
     history_.Resize(Shape1(len));
   }
-
   switch (proto.init_method()) {
-    case ParamProto::kConstant:
-      content_=proto.value();
-      break;
-    case ParamProto::kUniform:
-      FillUniformData(proto.low(), proto.high(), proto.value());
-      break;
-    case ParamProto::kUniformSqrtFanIn:
-      CHECK_EQ(shape.size(),2);
-      FillUniformData(proto.low(), proto.high(),
-                      proto.value()/sqrt(shape.Get(0)/3.0f));
-      break;
-    case ParamProto::kUniformSqrtFanInOut:
-      CHECK_EQ(shape.size(),2);
-      FillUniformData(proto.low(), proto.high(),
-                      proto.value()/sqrt(shape.Get(0)+shape.Get(1)));
-    case ParamProto::kGaussain:
-      FillGaussainData(proto.mean(), proto.std(), proto.value());
-      break;
-    case ParamProto::kGaussainSqrtFanIn:
-      CHECK_EQ(shape.size(),2);
-      FillGaussainData(proto.mean(), proto.std(),
-                       proto.value()/sqrt(shape.Get(0)));
-      break;
-    case ParamProto::kPretrained:
-      break;
-    default:
-      LOG(ERROR)<<"Illegal parameter init method "<<proto.init_method();
+  case ParamProto::kConstant:
+    content_ = proto.value();
+    break;
+  case ParamProto::kUniform:
+    FillUniformData(proto.low(), proto.high(), proto.value());
+    break;
+  case ParamProto::kUniformSqrtFanIn:
+    CHECK_EQ(shape.size(), 2);
+    FillUniformData(proto.low(), proto.high(),
+                    proto.value() / sqrt(shape.Get(0) / 3.0f));
+    break;
+  case ParamProto::kUniformSqrtFanInOut:
+    CHECK_EQ(shape.size(), 2);
+    FillUniformData(proto.low(), proto.high(),
+                    proto.value() / sqrt(shape.Get(0) + shape.Get(1)));
+  case ParamProto::kGaussain:
+    FillGaussainData(proto.mean(), proto.std(), proto.value());
+    break;
+  case ParamProto::kGaussainSqrtFanIn:
+    CHECK_EQ(shape.size(), 2);
+    FillGaussainData(proto.mean(), proto.std(),
+                     proto.value() / sqrt(shape.Get(0)));
+    break;
+  case ParamProto::kPretrained:
+    break;
+  default:
+    LOG(ERROR) << "Illegal parameter init method " << proto.init_method();
   }
   name_ = proto.name();
 }
@@ -67,18 +66,18 @@ void Param::ToProto(ParamProto *proto) {
 }
 
 void Param::FillGaussainData(float mean, float std, float factor) {
-  Random& rnd=Lapis::Instance()->rnd();
+  Random &rnd = Lapis::Instance()->rnd();
   rnd.SampleGaussian(content_, mean, std);
-  if(factor!=1.0f)
-    content_*=factor;
+  if (factor != 1.0f)
+    content_ *= factor;
 }
 
-void Param::FillUniformData(float low, float high, float factor){
-  LOG(INFO)<<low<<" "<<high;
-  Random& rnd=Lapis::Instance()->rnd();
-  rnd.SampleUniform(content_,low, high);
-  if(factor!=1.0f)
-    content_*=factor;
+void Param::FillUniformData(float low, float high, float factor) {
+  LOG(INFO) << low << " " << high;
+  Random &rnd = Lapis::Instance()->rnd();
+  rnd.SampleUniform(content_, low, high);
+  if (factor != 1.0f)
+    content_ *= factor;
 }
 
 

@@ -18,7 +18,7 @@ void Trainer::InitDataSource(
   }
 }
 
-void Trainer::Init(const TrainerProto &proto){// , ModelController *mc) {
+void Trainer::Init(const TrainerProto &proto) { // , ModelController *mc) {
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.checkpoint_step();
   checkpoint_after_steps_ = proto.checkpoint_after_steps();

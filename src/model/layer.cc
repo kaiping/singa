@@ -4,6 +4,8 @@
 #include <glog/logging.h>
 #include <memory>
 #include <random>
+#include "mshadow/tensor.h"
+
 
 #include "model/layer.h"
 #include "model/data_layer.h"
@@ -21,24 +23,27 @@ void Layer::Init(const LayerProto &proto) {
 void Layer::ToProto(LayerProto *proto) {
   proto->set_name(name_);
 }
-struct Threshold {
-  inline static float Map(float a, float b) {
-    return a < b ? 1.0f : 0.0f;
-  }
-};
 
-void Layer::Dropout(float drop_prob, const Blob4 &src, Blob4 *dest,
-                    Blob4 *mask) {
+void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
   Random &rnd = Lapis::Instance()->rnd();
   // with 1-drop_prob to keep one neuron, i.e., mask=1
   float keep_prob = 1.0 - drop_prob;
-  *mask = F<Threashold>(rnd.uniform(mask->shape), keep_prob) * (1.0 / keep_prob);
-  *dest = (*mask) * src;
+  int len = dest->length();
+  Tensor1 dest_t(dest->dptr, Shape1(len));
+  Tensor1 mask_t(mask->dptr, Shape1(len));
+  Tensor1 src_t(src.dptr, Shape1(len));
+  mask_t = mshadow::expr::F<mshadow::op::threshold>(rnd.uniform(mask_t.shape),
+           keep_prob);
+  dest_t = src_t * mask_t *(1.0 / keep_prob);
 }
 
-void Layer::ComputeDropoutGradient(const Blob4 &src ,
-                                   const Blob4 &mask, Blob4 *dest) {
-  *dest = src * mask;
+void Layer::ComputeDropoutGradient(const Blob &src ,
+                                   const Blob &mask, Blob *dest) {
+  int len = dest->length();
+  Tensor1 dest_t(dest->dptr, Shape1(len));
+  Tensor1 mask_t(mask.dptr, Shape1(len));
+  Tensor1 src_t(src.dptr, Shape1(len));
+  dest_t = src_t * mask_t;
 }
 // Currently layers do not have parameters
 /*
@@ -51,9 +56,9 @@ void Layer::ComputeParamUpdates(const Trainer *trainer) {
  * Implementation for LayerFactory
  ****************************************************************************/
 #define CreateLayer(LayerClass) [](void)->Layer* {return new LayerClass();}
-static std::shared_ptr<LayerFactory> LayerFactory::Instance() {
+std::shared_ptr<LayerFactory> LayerFactory::Instance() {
   if (!instance_.get()) {
-    instance.reset(new  LayerFactory());
+    instance_.reset(new  LayerFactory());
   }
   return instance_;
 }

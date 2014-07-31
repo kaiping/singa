@@ -10,7 +10,7 @@
 
 namespace mshadow{
     namespace expr{
-        /*! 
+        /*!
          * \brief a general class that allows extension that makes tensors of some shape
          * \tparam SubType type of subclass
          * \tparam SrcExp source expression of the MakeTensorExp, the source of operation
@@ -26,7 +26,7 @@ namespace mshadow{
             }
         };
     };
-    
+
     namespace expr{
         /*! \brief This part of code gives plan that can be used to carry out execution */
         template<typename ExpType>
@@ -62,7 +62,7 @@ namespace mshadow{
         private:
             const real_t  *dptr_;
         };
-        
+
         template<>
         class Plan<ScalarExp>{
         public:
@@ -99,7 +99,7 @@ namespace mshadow{
             Plan<TA> src_;
         };
 
-        
+
         template<typename SubType, typename SrcExp, int dim>
         struct Plan< MakeTensorExp<SubType,SrcExp,dim> >{
         public:
@@ -108,7 +108,7 @@ namespace mshadow{
                 return src_.Eval( y, x );
             }
         private:
-            Plan<SubType> src_;  
+            Plan<SubType> src_;
         };
 
         // allow UnaryMap see the plan
@@ -143,8 +143,8 @@ namespace mshadow{
 
     namespace expr{
         /*!
-         * \brief static type inference template, 
-         *        used to get the dimension of each expression, 
+         * \brief static type inference template,
+         *        used to get the dimension of each expression,
          *        if ExpInfo<E>::kDim == -1, this means here are mismatch in expression
          *        if ( ExpInfo<E>::kDevMask & cpu::kDevMask ) != 0, this means this expression can be assigned to cpu
          * \tparam E expression
@@ -162,7 +162,7 @@ namespace mshadow{
         template<typename Device, int dim>
         struct ExpInfo< Tensor<Device,dim> >{
             const static int kDim = dim;
-            const static int kDevMask = Device::kDevMask;            
+            const static int kDevMask = Device::kDevMask;
         };
         template<typename T, typename SrcExp, int dim>
         struct ExpInfo< MakeTensorExp<T,SrcExp,dim> >{
@@ -208,19 +208,19 @@ namespace mshadow{
             inline static void Error_Expression_Does_Not_Meet_Dimension_Req( void ){}
         };
     }; // namespace expr
-    
+
     namespace expr{
         // check shape consistency
         template<int dim,typename E>
         struct ShapeCheck{
             inline static Shape<dim> Check( const E &t );
         };
-        
+
         template<int dim>
         struct ShapeCheck<dim,ScalarExp>{
             inline static Shape<dim> Check( const ScalarExp &exp ){
                 // use lowest dimension to mark scalar exp
-                Shape<dim> shape; shape[0] = 0; 
+                Shape<dim> shape; shape[0] = 0;
                 return shape;
             }
         };
@@ -305,13 +305,13 @@ namespace mshadow{
             inline static char GetT( bool t ){
                 return t ? 'T' : 'N';
             }
-            inline static void gemm( bool transa, bool transb, int m, int n, int k, float alpha, 
+            inline static void gemm( bool transa, bool transb, int m, int n, int k, float alpha,
                                      const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc ){
                 cublasSgemm(GetT(transa),GetT(transb),m,n,k,alpha,A,lda,B,ldb,beta,C,ldc);
             }
-            inline static void gemm( bool transa, bool transb, int m, int n, int k, double alpha, 
+            inline static void gemm( bool transa, bool transb, int m, int n, int k, double alpha,
                                      const double *A, int lda, const double *B, int ldb, double beta, double *C, int ldc ){
-                cublasDgemm(GetT(transa),GetT(transb),m,n,k,alpha,A,lda,B,ldb,beta,C,ldc);                
+                cublasDgemm(GetT(transa),GetT(transb),m,n,k,alpha,A,lda,B,ldb,beta,C,ldc);
             }
             inline static void gemv( bool trans, int m, int n, float alpha, const float *A, int lda, \
                                      const float *X, int incX, float beta, float *Y, int incY ){
@@ -330,7 +330,7 @@ namespace mshadow{
         };
         #endif
 
-        // helper function to decide which shape we are in 
+        // helper function to decide which shape we are in
         inline static Shape<2> GetShape( const Shape<2> &shape, bool transpose ){
             return transpose ? Shape2(shape[0],shape[1]) : shape;
         }
@@ -347,11 +347,11 @@ namespace mshadow{
                     ( transpose_right , transpose_left,
                       transpose_right ? rhs.shape[1] : rhs.shape[0],
                       transpose_left  ? lhs.shape[0] : lhs.shape[1],
-                      transpose_right ? rhs.shape[0] : rhs.shape[1], 
-                      scale * SV::kAlphaBLAS, 
+                      transpose_right ? rhs.shape[0] : rhs.shape[1],
+                      scale * SV::kAlphaBLAS,
                       rhs.dptr, rhs.shape.stride_,
                       lhs.dptr, lhs.shape.stride_,
-                      SV::kBetaBLAS, 
+                      SV::kBetaBLAS,
                       dst.dptr, dst.shape.stride_ );
             }
         };
@@ -361,13 +361,13 @@ namespace mshadow{
                 Shape<2> sright = GetShape( rhs.shape, transpose_right );
                 utils::Assert( dst.shape[0] == sright[0] && lhs.shape[0] == sright[1], "dot-gemv: matrix shape mismatch");
                 BLASEngine<xpu>::gemv
-                    ( transpose_right, 
+                    ( transpose_right,
                       rhs.shape[0], rhs.shape[1], scale * SV::kAlphaBLAS,
                       rhs.dptr, rhs.shape.stride_,
                       lhs.dptr, 1, SV::kBetaBLAS,
                       dst.dptr, 1 );
             }
-        };        
+        };
         template<typename SV, typename xpu>
         struct DotEngine<SV,xpu,2,1,1,true,false>{
             inline static void Eval( Tensor<xpu,2> &dst, const Tensor<xpu,1> &lhs, const Tensor<xpu,1> &rhs, real_t scale ) {

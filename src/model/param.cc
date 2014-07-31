@@ -9,25 +9,26 @@ using google::protobuf::RepeatedField;
 namespace lapis {
 void Param::Init(const ParamProto &proto) {
   const RepeatedField<int> shape = proto.shape();
-  momentum_ = proto.momentum();
-  learning_rate_ = proto.learning_rate();
-  weight_decay_ = proto.weight_decay();
+  momentum_ = proto.momentum_multiplier();
+  learning_rate_ = proto.learning_rate_multiplier();
+  weight_decay_ = proto.weight_decay_multiplier();
   // currently only support vector and  matrix parameter
   if (shape.size() == 2) {
     int h = shape.Get(0);
     int w = shape.Get(1);
-    content_.Resize(Shape2(w, h));
-    grad_.Resize(Shape2(w, h));
-    history_grad_.Resize(Shape2(w, h));
+    content_.Resize(w, h);
+    grad_.Resize(w, h);
+    history_grad_.Resize(w, h);
   } else {
     int len = shape.Get(0);
-    content_.Resize(Shape1(len));
-    grad_.Resize(Shape1(l));
-    history_.Resize(Shape1(len));
+    content_.Resize(len);
+    grad_.Resize(len);
+    history_grad_.Resize(len);
   }
   switch (proto.init_method()) {
   case ParamProto::kConstant:
-    content_ = proto.value();
+    for (int i = 0; i < content_.length(); i++)
+      content_.dptr[i] = proto.value();
     break;
   case ParamProto::kUniform:
     FillUniformData(proto.low(), proto.high(), proto.value());
@@ -60,24 +61,26 @@ void Param::Init(const ParamProto &proto) {
 void Param::ToProto(ParamProto *proto) {
   // TODO(wangwei) store the proto as a member for easy ToProto.
   proto->set_name(name_);
-  proto->set_momentum(momentum_);
-  proto->set_learning_rate(learning_rate_);
-  proto->set_weight_decay(weight_decay_);
+  proto->set_momentum_multiplier(momentum_);
+  proto->set_learning_rate_multiplier(learning_rate_);
+  proto->set_weight_decay_multiplier(weight_decay_);
 }
 
 void Param::FillGaussainData(float mean, float std, float factor) {
   Random &rnd = Lapis::Instance()->rnd();
-  rnd.SampleGaussian(content_, mean, std);
+  Tensor1 content(content_.dptr, Shape1(length()));
+  rnd.SampleGaussian(content, mean, std);
   if (factor != 1.0f)
-    content_ *= factor;
+    content *= factor;
 }
 
 void Param::FillUniformData(float low, float high, float factor) {
   LOG(INFO) << low << " " << high;
   Random &rnd = Lapis::Instance()->rnd();
-  rnd.SampleUniform(content_, low, high);
+  Tensor1 content(content_.dptr, Shape1(length()));
+  rnd.SampleUniform(content, low, high);
   if (factor != 1.0f)
-    content_ *= factor;
+    content *= factor;
 }
 
 

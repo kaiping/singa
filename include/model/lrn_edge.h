@@ -20,12 +20,12 @@ class LRNEdge : public Edge {
                     const std::map<std::string, Layer *> &layer_map);
   virtual void Setup(bool set_param);
   virtual void ToProto(EdgeProto *proto);
-  virtual void Forward(const Blob4 &src, Blob4 *dest, bool overwrite);
-  virtual void Backward(const Blob4 &src_fea, const Blob4 &src_grad,
-                        const Blob4 &dest_fea, Blob4 *dest_grad,
+  virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
+  virtual void Backward(const Blob &src_fea, const Blob &src_grad,
+                        const Blob &dest_fea, Blob *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob4 *blob);
+  virtual void SetupTopBlob(Blob *blob);
 
  private:
   //! shape of the bottom layer feature
@@ -35,13 +35,13 @@ class LRNEdge : public Edge {
   //! hyper-parameter
   float alpha_, beta_;
   //! accumulate local neighbor feature, i.e., the x_i;
-  Blob3 accum_fea_;
+  Blob accum_fea_;
   //! tmp grad used in accumulating the gradient in BackProp
-  Blob1 accum_grad_;
+  Blob accum_grad_;
   //! the square of feature with padding area
-  Blob2 pad_square_;
+  Blob pad_square_;
   //! gradient of feature with padding area
-  Blob2 pad_grad_;
+  Blob pad_grad_;
 };
 
 }  // namespace lapis

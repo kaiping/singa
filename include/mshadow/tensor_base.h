@@ -227,27 +227,34 @@ struct divto {
 
 
 namespace op {
-  // unary operator/ function: example
-  // these operators can be defined by user, in the same style as binary and unary operator
-  // to use, simply write F<op::identity>( src )
-  /*! \brief identity function that maps a real number to it self */
-  struct identity {
-    /*! \brief map a to result using defined operation */
-    MSHADOW_XINLINE static real_t Map(real_t a) {
-      return a;
-    }
-  };
-  /*! \brief used for generate element of power */
-  struct power {
-    MSHADOW_XINLINE static real_t Map(real_t a, real_t b) {
-      return powf( a, b );
-    }
-  };
-  struct square {
-    MSHADOW_XINLINE static real_t Map(real_t a) {
-      return a*a;
-    }
-  };
+// unary operator/ function: example
+// these operators can be defined by user, in the same style as binary and unary operator
+// to use, simply write F<op::identity>( src )
+/*! \brief identity function that maps a real number to it self */
+struct identity {
+  /*! \brief map a to result using defined operation */
+  MSHADOW_XINLINE static real_t Map(real_t a) {
+    return a;
+  }
+};
+/*! \brief used for generate element of power */
+struct power {
+  MSHADOW_XINLINE static real_t Map(real_t a, real_t b) {
+    return powf( a, b );
+  }
+};
+struct square {
+  MSHADOW_XINLINE static real_t Map(real_t a) {
+    return a * a;
+  }
+};
+struct threshold {
+  MSHADOW_XINLINE static float Map(real_t a, real_t b) {
+    return a < b ? 1.0f : 0.0f;
+  }
+};
+
+
 
 }; // namespace op
 

@@ -17,7 +17,7 @@
 namespace mshadow {
     /*! \brief namespace to support sse2 vectorization */
     namespace sse2{
-        /*! 
+        /*!
          * \brief analog to cudaMallocPitch, allocate a aligned space with num_line * lspace cells
          * \param pitch output parameter, the actuall space allocated for each line
          * \param lspace number of cells required for each line
@@ -26,19 +26,19 @@ namespace mshadow {
         inline void* AlignedMallocPitch( size_t &pitch, size_t lspace, size_t num_line ){
             pitch = ((lspace+15) >> 4) << 4;
             #ifdef _MSC_VER
-            void * res = _aligned_malloc( pitch*num_line, 16 ); 
+            void * res = _aligned_malloc( pitch*num_line, 16 );
             #else
             #ifdef __APPLE__
             void *res = malloc( pitch * num_line );
             #else
-            void * res = memalign( 16, pitch*num_line ); 
+            void * res = memalign( 16, pitch*num_line );
             #endif
             #endif
             utils::Assert( res != NULL, "AlignedMallocPitch failed" );
             return res;
         }
-        /*! 
-         * \brief free aligned space 
+        /*!
+         * \brief free aligned space
          * \param ptr pointer to space to be freed
          */
         inline void AlignedFree( void *ptr ){
@@ -56,16 +56,16 @@ namespace mshadow {
         inline bool CheckAlign( void *ptr ){
             return CheckAlign( (size_t)ptr );
         }
-        /*! 
-         * \brief get upper bound of aligned index of size 
+        /*!
+         * \brief get upper bound of aligned index of size
          * \param size size of the array
          * \param fsize size of float
          */
         inline index_t UpperAlign( index_t size, size_t fsize ){
             return (( (size*fsize+15) >> 4 ) << 4) / fsize;
         }
-        /*! 
-         * \brief get lower bound of aligned index of size 
+        /*!
+         * \brief get lower bound of aligned index of size
          * \param size size of the array
          * \param fsize size of float
          */
@@ -81,14 +81,14 @@ namespace mshadow {
 
 namespace mshadow{
     namespace sse2{
-        /*! 
-         * \brief float vector real type, used for vectorization 
+        /*!
+         * \brief float vector real type, used for vectorization
          * \tparam FloatType double or float
          */
         template<typename FloatType> struct FVec{};
-        
+
         /*! \brief vector real type for float */
-        template<> 
+        template<>
         struct FVec<float> {
         public:
             typedef __m128 DType;
@@ -106,8 +106,8 @@ namespace mshadow{
             }
             /*!\brief load from pointer src */
             FVec( const float *src ){
-                data_ = _mm_load_ps( src );                
-            } 
+                data_ = _mm_load_ps( src );
+            }
         public:
             /*! \brief store data into dst space */
             inline void Store( float *dst ) const{
@@ -127,7 +127,7 @@ namespace mshadow{
         };
 
         /*! \brief vector real type for float */
-        template<> 
+        template<>
         struct FVec<double> {
         public:
             typedef __m128d DType;
@@ -145,8 +145,8 @@ namespace mshadow{
             }
             /*!\brief load from pointer src */
             FVec( const double *src ){
-                data_ = _mm_load_pd( src );                
-            } 
+                data_ = _mm_load_pd( src );
+            }
         public:
             /*! \brief store data into dst space */
             inline void Store( double *dst ) const{
@@ -170,7 +170,7 @@ namespace mshadow{
         template<typename OP>
         struct SSEOp{
             const static bool kEnabled = false;
-        };        
+        };
         template<>
         struct SSEOp<op::plus>{
             const static bool kEnabled = true;
@@ -223,7 +223,7 @@ namespace mshadow{
             }
         };
     }; // namespace sse2
-    
+
     namespace sse2{
         // savers to do storage
         template<typename SV, typename TFloat>
@@ -239,7 +239,7 @@ namespace mshadow{
             MSHADOW_CINLINE static void Save( TFloat *dst, const FVec<TFloat> &src ){
                 src.Store( dst );
             }
-        };        
+        };
     }; // namespace sse2
 }; // namespace mshadow
 
@@ -365,7 +365,7 @@ namespace mshadow{
         struct SSECheck<Tensor<cpu,dim> >{
             const static bool kPass = true;
         };
-        
+
         template<typename OP, typename TA, int etype>
         struct SSECheck<UnaryMapExp<OP,TA,etype> >{
             const static bool kPass = SSECheck<TA>::kPass && sse2::SSEOp<OP>::kEnabled;
@@ -373,7 +373,7 @@ namespace mshadow{
         template<typename OP, typename TA, typename TB, int etype>
         struct SSECheck< BinaryMapExp<OP,TA,TB,etype> >{
             const static bool kPass = SSECheck<TA>::kPass && SSECheck<TB>::kPass && sse2::SSEOp<OP>::kEnabled;
-        }; 
+        };
     }; // namespace expr
     namespace expr{
         // check if data is aligned and allow sse operation
@@ -402,19 +402,19 @@ namespace mshadow{
             }
         };
         template<int dim, typename OP, typename TA, typename TB, int etype>
-        struct SSEAlignCheck< dim, BinaryMapExp<OP,TA,TB,etype> >{ 
+        struct SSEAlignCheck< dim, BinaryMapExp<OP,TA,TB,etype> >{
             inline static bool Check( const BinaryMapExp<OP,TA,TB,etype> &t ){
-                return SSEAlignCheck<dim,TA>::Check( t.lhs_ ) && 
+                return SSEAlignCheck<dim,TA>::Check( t.lhs_ ) &&
                     SSEAlignCheck<dim,TB>::Check( t.rhs_ );
             }
         };
     }; // namespace expr
 
-    /*! 
+    /*!
      * \brief use SSEPlan to compute result
      */
     template<typename SV, typename E, int dim>
-    inline void MapSSEPlan(Tensor<cpu,dim> _dst, const expr::SSEPlan<E> &plan){        
+    inline void MapSSEPlan(Tensor<cpu,dim> _dst, const expr::SSEPlan<E> &plan){
         Tensor<cpu,2> dst = _dst.FlatTo2D();
         const index_t xlen = sse2::LowerAlign( dst.shape[0], sizeof(real_t) );
         for ( index_t y = 0; y < dst.shape[1]; y ++ ) {

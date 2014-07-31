@@ -12,26 +12,26 @@ void PoolingEdge::Init(const EdgeProto &proto,
   pooling_method_ = proto.pooling_method();
 }
 
-void PoolingEdge::SetupTopBlob(Blob4 *blob) {
-  TShape4 &shape = (bottom_->feature(this)).shape;
-  num_ = shape[3];
-  channels_ = shape[2];
-  height_ = shape[1];
-  width_ = shape[0];
+void PoolingEdge::SetupTopBlob(Blob *blob) {
+  Blob &b = bottom_->feature(this);
+  num_ = b.num();
+  channels_ = b.channels();
+  height_ = b.height();
+  width_ = b.width();
   pool_height_ = static_cast<int> (
                    ceil(static_cast<float>(height_ - kernel_size_) / stride_)) + 1;
   pool_width_ = static_cast<int> (
                   ceil(static_cast<float>(width_ - kernel_size_) / stride_)) + 1;
-  blob->Resize(Shape4(pool_width_, pool_height_, channels_, num_));
+  blob->Resize(pool_width_, pool_height_, channels_, num_);
 }
 
-void PoolingEdge::Forward(const Blob4 &src, Blob4 *dest, bool overwrite) {
+void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   float *src_data = src.dptr, *dest_data = dest->dptr;
   int offset_src = height_ * width_ * channels_;
   int offset_dest = pool_height_ * pool_width_ * channels_;
   switch (pooling_method_) {
   case EdgeProto::kMaxPooling:
-    for (unsigned int i = 0; i < dest->shape.Size(); i++)
+    for (int i = 0; i < dest->length(); i++)
       dest_data[i] = -FLT_MAX;
     for (int n = 0; n < num_; n++) {
       for (int c = 0; c < channels_; c++) {
@@ -56,7 +56,7 @@ void PoolingEdge::Forward(const Blob4 &src, Blob4 *dest, bool overwrite) {
     }
     break;
   case EdgeProto::kAvgPooling:
-    for (unsigned int i = 0; i < dest->shape.Size(); i++)
+    for (int i = 0; i < dest->length(); i++)
       dest_data[i] = 0.f;
     for (int n = 0; n < num_; n++) {
       for (int c = 0; c < channels_; c++) {
@@ -83,16 +83,17 @@ void PoolingEdge::Forward(const Blob4 &src, Blob4 *dest, bool overwrite) {
     LOG(ERROR) << "Not supported pooling method ";
   }
 }
-void PoolingEdge::Backward(const Blob4 &src_fea, const Blob4 &src_grad,
-                           const Blob4 &dest_fea, Blob4 *dest_grad,
+void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
+                           const Blob &dest_fea, Blob *dest_grad,
                            bool overwrite) {
   float *src_fea_data = src_fea.dptr, *dest_fea_data = dest_fea.dptr;
   float *src_grad_data = src_grad.dptr, *dest_grad_data = (*dest_grad).dptr;
   int offset_src = height_ * width_ * channels_;
   int offset_dest = pool_height_ * pool_width_ * channels_;
-  (*dest_grad) = 0.0f;
   switch (pooling_method_) {
   case EdgeProto::kMaxPooling:
+    for (int i = 0; i < dest_grad->length(); i++)
+      dest_grad_data[i] = 0.0f;
     for (int n = 0; n < num_; n++) {
       for (int c = 0; c < channels_; c++) {
         for (int ph = 0; ph < pool_height_; ph++) {

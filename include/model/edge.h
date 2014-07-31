@@ -55,7 +55,7 @@ class Edge {
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add it
    */
-  virtual void Forward(const Blob4 &src, Blob4 *dest, bool overwrite);
+  virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
   /**
    * Backward propagate gradient, read gradient/feature blob from src and
    * feature blob from src, then compute the gradient for parameters of this
@@ -69,8 +69,8 @@ class Edge {
    * the bottom layer is DataLayer, the no need to compute for the dest_grad.
    * @param overwrite if true overwrite dest_grad otherwise add to it
    */
-  virtual void Backward(const Blob4 &src_fea, const Blob4 &src_grad,
-                        const Blob4 &dest_fea, Blob4 *dest_grad,
+  virtual void Backward(const Blob &src_fea, const Blob &src_grad,
+                        const Blob &dest_fea, Blob *dest_grad,
                         bool overwrite);
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
@@ -84,14 +84,14 @@ class Edge {
    * @param trainer contains hyper-parameters. May cast it into specific
    * trainer, e.g., SGDTrainer, to get momentum and weight_decay, etc.
    */
-  virtual void ComputeParamUpdates(const Trainer* trainer);
+  virtual void ComputeParamUpdates(const Trainer *trainer);
   /**
    * Setup (Reshape) the blob from top layer connected to this edge. Because
    * the top blob is generated (although owned by the top layer) by this edge,
    * this edge will decide the shape of the blob and is responsible to setup it
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob4 *blob);
+  virtual void SetupTopBlob(Blob *blob);
   /**
    * Return parameters associated this edge
    */

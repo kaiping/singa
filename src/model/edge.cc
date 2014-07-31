@@ -45,9 +45,10 @@ void Edge::ComputeParamUpdates(const Trainer *trainer) {
   float weight_decay = sgd->weight_decay();
   float learning_rate = sgd->learning_rate();
   for (Param *param : params_) {
-    Blob2 &history = param->mutable_history();
-    const Blob2 &gradient = param->gradient();
-    const Blob2 &data = param->content();
+    int len = param->length();
+    Tensor1 history(param->mutable_history().dptr, Shape1(len));
+    const Tensor1 gradient(param->gradient().dptr, Shape1(len));
+    const Tensor1 data(param->content().dptr, Shape1(len));
     momentum *= param->momentum();
     weight_decay *= param->weight_decay();
     learning_rate *= param->learning_rate();

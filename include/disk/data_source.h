@@ -31,7 +31,7 @@ class DataSource {
    * or distributed disk.
    * @param blob where the next batch of data will be put
    */
-  virtual void GetData(Blob4 *blob) = 0;
+  virtual void GetData(Blob *blob) = 0;
   /**
    * TODO(wnagwei) Load data and return the keys of all records.
    * if the distributed disk is not available, it will be loaded into single

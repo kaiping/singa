@@ -7,18 +7,18 @@
 HOME_DIR := /home/wangwei/install
 CXX := $(HOME_DIR)/bin/g++
 # Change this variable!! header folder for system and external libs.
-INCLUDE_DIRS := include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include
+INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include
 # Change this variable!! lib folder for system and external libs
 LIBRARY_DIRS := $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 # folder for compiled file
 BUILD_DIR := build
 
-CXXFLAGS := -Wall -g -pthread -fPIC -std=c++11 -Wno-unknown-pragmas -funroll-loops \
+CXXFLAGS := -Wall -g -pthread -msse3 -O3 -fPIC -std=c++11 -Wno-unknown-pragmas -funroll-loops \
 					-DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_CUDA=0 \
 						$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 LIBRARIES := glog gflags protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core cblas
+						boost_filesystem opencv_highgui opencv_imgproc opencv_core cblas atlas
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 

@@ -71,9 +71,9 @@ void readImage(const std::string &path, int height, int width, float *val) {
   }
 }
 
-void RGBDirSource::GetData(Blob4 *blob) {
+void RGBDirSource::GetData(Blob *blob) {
   float *addr = blob->dptr;
-  for (int i = 0; i < blob->shape[3]; i++) {
+  for (int i = 0; i < blob->num(); i++) {
     if (offset_ == size_)
       offset_ = 0;
     readImage(directory_ + "/" + image_names_->at(offset_), height_,

@@ -461,7 +461,7 @@ inline SwapAxisExp<SrcExp, ExpInfo<SrcExp>::kDim, a1, a2> swapaxis(
   const Exp<SrcExp, etype> &src ) {
   typedef ExpInfo<SrcExp> Info;
   TypeCheckPass<Info::kDim >= a1 + 1 && Info::kDim >= a2 + 1
-  && a1 + 1 <= a2 >::Error_Expression_Does_Not_Meet_Dimension_Req();
+  &&a1 + 1 <= a2 >::Error_Expression_Does_Not_Meet_Dimension_Req();
   return SwapAxisExp<SrcExp, Info::kDim, a1, a2>( src.self() );
 }
 

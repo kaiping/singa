@@ -123,7 +123,7 @@ namespace mshadow {
         EShape eshape = ShapeCheck< ExpInfo<E>::kDim, E >::Check( exp.self() );
         utils::Assert( eshape[dimkeep] == dst.shape[0], "reduction dimension do not match" );
         // use equvalent form
-        Shape<4> pshape = Shape4( eshape.ProdShape(dimkeep+1,EShape::kMaxShape), eshape[dimkeep], 
+        Shape<4> pshape = Shape4( eshape.ProdShape(dimkeep+1,EShape::kMaxShape), eshape[dimkeep],
                                   eshape.ProdShape(1,dimkeep), eshape[0] );
 
         // execution

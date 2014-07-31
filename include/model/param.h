@@ -32,44 +32,44 @@ class Param {
   /**
    * Return const mem address for the content of this parameter
    */
-  const Blob2 &content() {
+  const Blob &content() {
     return content_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  Blob2 &mutable_content() {
+  Blob &mutable_content() {
     return content_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const Blob2 &gradient(){
+  const Blob &gradient() {
     return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  Blob2 &mutable_gradient() {
+  Blob &mutable_gradient() {
     return grad_;
   }
   /**
    * Return const mem address for the history gradient of this parameter
    */
-  const Blob2 &history() {
+  const Blob &history() {
     return history_grad_;
   }
   /**
    * Return mem address for the history gradient of this parameter
    */
-  Blob2 &mutable_history() {
+  Blob &mutable_history() {
     return history_grad_;
   }
   /**
    * Return num of floats for this (vector) parameter
    */
   const int length() {
-    return content_.shape.Size();
+    return content_.length();
   }
   int id() {
     return id_;
@@ -96,14 +96,12 @@ class Param {
    * @param factor the generated data is multiplied to this number
    * @param val float array to store the generated data
    */
-  void FillUniformData(int length, float low, float high, float factor,
-                       float *val);
+  void FillUniformData(float low, float high, float factor);
   /**
    * Similar to ::FillGaussainData(), except the data are generated from
    * Gaussain distribution.
    */
-  void FillGaussainData(int length, float mean, float std, float factor,
-                        float *val);
+  void FillGaussainData(float mean, float std, float factor);
 
   /**
    * name of the parameter used to identify the ParamProto configed in
@@ -118,7 +116,7 @@ class Param {
   //! scale factor for learning rate and weight decay for this parameter
   float momentum_, learning_rate_, weight_decay_;
   //! content, gradient and history gradient of this parameter
-  Blob2 content_, grad_, history_grad_;
+  Blob content_, grad_, history_grad_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

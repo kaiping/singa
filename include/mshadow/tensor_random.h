@@ -9,6 +9,9 @@
 #include <cstdlib>
 #include "tensor.h"
 #include "tensor_container.h"
+#include "tensor_expr_ext.h"
+#include "tensor_expr.h"
+
 
 namespace mshadow {
 /*!

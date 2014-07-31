@@ -35,13 +35,13 @@ class ConvEdge : public Edge {
    * @param dest_fea the tensor that store the processed feature
    * @param overwrite not used
    */
-  virtual void Forward(const Blob4 &src_fea, Blob4 *dest_fea, bool overwrite);
+  virtual void Forward(const Blob &src_fea, Blob *dest_fea, bool overwrite);
   /**
    * Backpropagate gradients, calc gradients w.r.t, weight, bias and feature of
    * the bottom layer if necessary (no need for data layer).
    */
-  virtual void Backward(const Blob4 &src_fea , const Blob4 &src_grad,
-                        const Blob4 &dest_fea, Blob4 *dest_grad, bool overwrite);
+  virtual void Backward(const Blob &src_fea , const Blob &src_grad,
+                        const Blob &dest_fea, Blob *dest_grad, bool overwrite);
   /**
    * Reshape the tensor from top layer connected to this edge.
    * The channels is just the num of kernels, height and width are the height
@@ -50,11 +50,13 @@ class ConvEdge : public Edge {
    * conv_width=(height_+2*pad_-kernel_size_)/stride_+1;
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob4 *blob);
+  virtual void SetupTopBlob(Blob *blob);
 
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int channels_, height_, width_;
+  //! shape for conv image
+  int conv_height_, conv_width_;
   //! group weight height, width (col height), and col width
   int M_, K_, N_;
   //! num of groups, from caffe
@@ -70,7 +72,7 @@ class ConvEdge : public Edge {
   //! batch size
   int num_;
   //! tmp blobs to store the reshaped image and its gradient
-  Blob2 col_fea_, col_grad_;
+  Blob col_fea_, col_grad_;
   //! one row per kernel; shape is num_kernels_*(channels_*kernel_size^2)
   Param weight_ ;
   //! the length is conv_height*conv*width

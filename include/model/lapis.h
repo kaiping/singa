@@ -1,17 +1,14 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 18:48
-#ifndef INCLUDE_UTILS_LAPIS_H_
-#define INCLUDE_UTILS_LAPIS_H_
+#ifndef INCLUDE_MODEL_LAPIS_H_
+#define INCLUDE_MODEL_LAPIS_H_
 #include <memory>
 #include <chrono>
 #include "mshadow/tensor.h"
 #include "mshadow/tensor_container.h"
+#include "mshadow/tensor_random.h"
 
 namespace lapis {
-typedef mshadow::TensorContainer<mshadow::cpu, 4> Blob4;
-typedef mshadow::TensorContainer<mshadow::cpu, 3> Blob3;
-typedef mshadow::TensorContainer<mshadow::cpu, 2> Blob2;
-typedef mshadow::TensorContainer<mshadow::cpu, 1> Blob1;
 typedef mshadow::Tensor<mshadow::cpu, 4> Tensor4;
 typedef mshadow::Tensor<mshadow::cpu, 3> Tensor3;
 typedef mshadow::Tensor<mshadow::cpu, 2> Tensor2;
@@ -23,12 +20,96 @@ typedef mshadow::Shape<3> TShape3;
 typedef mshadow::Shape<2> TShape2;
 typedef mshadow::Shape<1> TShape1;
 typedef mshadow::Random<mshadow::cpu> Random;
-auto Shape1=mshadow::Shape1;
-auto Shape2=mshadow::Shape2;
-auto Shape3=mshadow::Shape3;
-auto Shape4=mshadow::Shape4;
+auto Shape1 = mshadow::Shape1;
+auto Shape2 = mshadow::Shape2;
+auto Shape3 = mshadow::Shape3;
+auto Shape4 = mshadow::Shape4;
 
-using mshadow::expr::reshape;
+/**
+ * Blob stores the data of both parameters and (raw/intermediate) features.
+ */
+class Blob {
+ public:
+  Blob(): dptr(nullptr), num_(0), channels_(0), height_(0), width_(0) {}
+  Blob(int num, int channels, int height, int width);
+  /**
+   * allocate memory of size length, e.g., for the bias parameter
+   * do nothing if it is of exactly the same shape
+   * @param length e.g., length of the bias parameter
+   */
+  void Resize(int length);
+  /**
+   * allocate memory of size height*width, e.g., for the weight matrix
+   * do nothing if it is of exactly the same shape
+   * @param height e.g., num of rows of the weight matrix
+   * @param width e.g., num of cols of the weight matrix
+   */
+  void Resize(int width, int height);
+  /**
+   * allocate memory of size num*height*width, e.g., for the gray image
+   * do nothing if it is of exactly the same shape
+   * @param num number of instances (image) per blob
+   * @param height e.g., height of the image
+   * @param width e.g., width of the image
+   */
+  void Resize(int width, int height, int num);
+  /**
+   * allocate memory of size num*height*width, e.g., for the gray image
+   * do nothing if it is of exactly the same shape
+   * @param num number of instances (image) per blob
+   * @param height e.g., num of rows of the weight matrix
+   * @param width e.g., num of cols of the weight matrix
+   */
+  void Resize(int width, int height, int channels, int num);
+
+  /**
+   * Return num of instances stored in this blob
+   */
+  const int num() const {
+    return num_;
+  }
+  /**
+   * Return channels of this blob
+   */
+  const int channels() const {
+    return channels_;
+  }
+  /**
+   * For image data, it is the height of the image;
+   * For matrix parameters, it is the num of rows in the matrix;
+   */
+  const int height() const {
+    return height_;
+  }
+  /**
+   * For image data, it is the width of the image;
+   * For matrix parameters, it is the num of cols in the matrix;
+   */
+  const int width() const {
+    return width_;
+  }
+
+  /**
+   * Return the total size in terms of floats
+   */
+  const int length() const {
+    return length_;
+  }
+
+  /**
+   * Return the size of one record in terms of floats
+   */
+  const int record_length() const {
+    return record_length_;
+  }
+
+  float *dptr;
+ private:
+  int num_, channels_, height_, width_;
+  unsigned int length_, record_length_;
+};
+
+
 /**
  * Class Lapis provide some global object, e.g., random number generator
  */
@@ -46,7 +127,7 @@ class Lapis {
     return instance_;
   }
 
-  mshadow::Random<mshadow::cpu> &rnd() {
+  Random &rnd() {
     return rnd_;
   }
 
@@ -56,4 +137,4 @@ class Lapis {
   static std::shared_ptr<Lapis> instance_;
 };
 }  // namespace lapis
-#endif  // INCLUDE_UTILS_LAPIS_H_
+#endif  // INCLUDE_MODEL_LAPIS_H_

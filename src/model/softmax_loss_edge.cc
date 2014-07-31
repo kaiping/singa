@@ -6,13 +6,13 @@
 #include "model/softmax_loss_edge.h"
 namespace lapis {
 void SoftmaxLossEdge::Setup(bool set_param) {
-  Blob4 &b = bottom_->feature(this);
-  num_ = b.shape[3];
-  dim_ = b.shape.Size() / num_;
-  prob_.Resize(Shape2(dim_, num_));
+  Blob &b = bottom_->feature(this);
+  num_ = b.num();
+  dim_ = b.length() / num_;
+  prob_.Resize(dim_, 1, 1, num_);
 }
 
-void SoftmaxLossEdge::Forward(const Blob4& src, Blob4 *dest, bool overwrite) {
+void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   float *data = src.dptr;
   float *prob = prob_.dptr;
   for (int i = 0; i < num_; i++) {
@@ -31,8 +31,8 @@ void SoftmaxLossEdge::Forward(const Blob4& src, Blob4 *dest, bool overwrite) {
   }
 }
 
-void SoftmaxLossEdge::Backward(const Blob4 &src_fea, const Blob4 &src_grad,
-                               const Blob4 &dest_fea, Blob4 *dest_grad,
+void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,
+                               const Blob &dest_fea, Blob *dest_grad,
                                bool overwirte) {
   float *dest = dest_grad->dptr;
   const float *label = src_fea.dptr;

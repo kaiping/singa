@@ -21,10 +21,10 @@ void ReLULayer::Setup(int batchsize, TrainerProto::Algorithm alg,
 void ReLULayer::Forward() {
   Edge *edge = in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge), &act_, true);
-  float *fea=fea_.dptr;
-  float *act=act_.dptr;
-  for(unsigned int i=0;i<act_.shape.Size();i++)
-    fea[i]=std::max(act[i],0.0f);
+  float *fea = fea_.dptr;
+  float *act = act_.dptr;
+  for (int i = 0; i < act_.length(); i++)
+    fea[i] = std::max(act[i], 0.0f);
 }
 
 void ReLULayer::Backward() {
@@ -32,11 +32,11 @@ void ReLULayer::Backward() {
   Layer *layer = edge->OtherSide(this);
   edge->Backward(layer->feature(edge), layer->gradient(edge), fea_, &fea_grad_,
                  true);
-  float *act_grad= act_grad_.dptr;
-  float *fea_grad=fea_grad_.dptr;
-  float *fea=fea_.dptr;
-  for(unsigned int i=0;i<act_grad_.shape.Size();i++)
-    act_grad[i]=fea_grad[i]*(fea[i]>0);
+  float *act_grad = act_grad_.dptr;
+  float *fea_grad = fea_grad_.dptr;
+  float *fea = fea_.dptr;
+  for (int i = 0; i < act_grad_.length(); i++)
+    act_grad[i] = fea_grad[i] * (fea[i] > 0);
 }
 }  // namespace lapis
 

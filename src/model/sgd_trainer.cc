@@ -37,8 +37,11 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
   }
   // update parameters either locally or distributedly depending on the
   // system (single machine or a cluster)
-  for (auto *param : params)
-    param->mutable_content() += param->history();
+  for (auto *param : params) {
+    Tensor1 p(param->mutable_content().dptr, Shape1(param->length()));
+    const Tensor1 h(param->history().dptr, Shape1(param->length()));
+    p += h;
+  }
 }
 
 void SGDTrainer::Train(Net *net, const int step) {

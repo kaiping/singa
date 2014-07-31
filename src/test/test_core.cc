@@ -66,8 +66,35 @@ void put(Table* table){
 void get(Table* table){
 	LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
 	    for (int i = 0; i < 10; i++)
-	      std::cout << "(" << i << ", " << table->get(i) << ")" << std::endl;
+	    	LOG(INFO) << StringPrintf("(%d,%d)", i, table->get(i));
 	LOG(INFO) << StringPrintf("Process %d: Done get", NetworkThread::Get()->id());
+}
+
+void async_get(Table* table){
+	LOG(INFO) << StringPrintf("Process %d: async get...", NetworkThread::Get()->id());
+	int count = 0;
+	    for (int i = 0; i < 10; i++){
+	    	int v;
+	    	if (table->async_get(i, &v))
+	    		LOG(INFO) << StringPrintf("(%d,%d)", i, v);
+	    	else{
+	    		LOG(INFO) << StringPrintf("(%d,NULL)",i);
+	    		count++;
+	    	}
+	    }
+	    LOG(INFO) << "Collecting asynchronously ...";
+	    while (count>0){
+	    	int k,v;
+	    	if (table->async_get_collect(&k,&v)){
+	    		LOG(INFO) << StringPrintf("(%d,%d)", k, v);
+	    		count--;
+	    	}
+	    	else
+	    		sleep(1);
+	    }
+
+
+	LOG(INFO) << StringPrintf("Process %d: Done async get", NetworkThread::Get()->id());
 }
 
 void update(Table* table){
@@ -81,7 +108,7 @@ int main(int argc, char **argv) {
   Table *table = init(argc, argv);
   if (IsDistributedMemoryManager()) {
     put(table);
-    get(table);
+    async_get(table);
     update(table);
     get(table);
   } else { // worker, sleep while the network thread is processing put/get

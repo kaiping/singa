@@ -75,6 +75,12 @@ class GlobalTable :
 
   // Fetch key k from the node owning it.  Returns true if the key exists.
   bool get_remote(int shard, const StringPiece &k, string *v);
+
+  // send get request to the remote machine.
+  void async_get_remote(int shard, const StringPiece &k);
+
+  //  true if there're responses to GET request
+  bool async_get_remote_collect(string *k, string *v);
 };
 
 template <class K, class V>
@@ -103,6 +109,12 @@ class TypedGlobalTable :
 
   // Return the value associated with 'k', possibly blocking for a remote fetch.
   V get(const K &k);
+
+  //  asynchronous get. if true (local data), then V contains the value
+  //  if false, use has to call async_collect() until there's data (returning true)
+  bool async_get(const K &k, V* v);
+  bool async_get_collect(K* k, V* v);
+
   bool contains(const K &k);
   void remove(const K &k);
 
@@ -174,6 +186,31 @@ V TypedGlobalTable<K, V>::get(const K &k) {
              marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k),
              &v_str);
   return unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
+}
+
+template<class K, class V>
+bool TypedGlobalTable<K,V>::async_get(const K &k, V* v){
+  int shard = this->get_shard(k);
+  if (is_local_shard(shard)) {
+	*v = get_local(k);
+	return true;
+  }
+  else{
+		async_get_remote(shard,
+				marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
+		return false;
+  }
+}
+
+template<class K, class V>
+bool TypedGlobalTable<K,V>::async_get_collect(K* k, V* v){
+	string tk, tv;
+	bool succeed = async_get_remote_collect(&tk, &tv);
+	if (succeed){
+		*k = unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), tk);
+		*v = unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), tv);
+	}
+	return succeed;
 }
 
 template<class K, class V>

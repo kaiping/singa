@@ -5,7 +5,7 @@
 #include <glog/logging.h>
 #include <algorithm>
 
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "disk/rgb_dir_source.h"
 #include "disk/label_source.h"
 
@@ -15,10 +15,11 @@ class RGBDirSourceTest : public ::testing::Test {
   RGBDirSourceTest() {
     DataSourceProto ds;
     ds.set_path("src/test/data/rgb_dir");
+    ds.set_mean_file("src/test/data/imagenet_mean.binaryproto");
     ds.set_size(3);
-    ds.set_height(225);
-    ds.set_width(225);
-    ds.set_offset(3);
+    ds.set_height(256);
+    ds.set_width(256);
+    ds.set_offset(2);
     ds.set_name("rgb dir source");
     rgbs.Init(ds);
   }
@@ -43,8 +44,8 @@ TEST_F(RGBDirSourceTest, LoadDataWithInputKeys) {
   ds.set_name("label source");
   ds.set_size(3);
   ls.Init(ds);
-  auto &ptr2names1 = ls.LoadData(nullptr);
-  auto &ptr2names2 = rgbs.LoadData(ptr2names1);
+  auto ptr2names1 = ls.LoadData(nullptr);
+  auto ptr2names2 = rgbs.LoadData(ptr2names1);
   EXPECT_EQ(3, ptr2names2->size());
   for (int i = 0; i < 3; i++)
     EXPECT_STREQ(ptr2names1->at(i).c_str(), ptr2names2->at(i).c_str());
@@ -52,7 +53,7 @@ TEST_F(RGBDirSourceTest, LoadDataWithInputKeys) {
 
 TEST_F(RGBDirSourceTest, GetData) {
   Blob b;
-  b.Reshape(2, 3, 225, 225);
+  b.Resize(256,256,3,2);
   rgbs.LoadData(nullptr);
   rgbs.GetData(&b);
   rgbs.GetData(&b);

@@ -4,16 +4,15 @@
 #include <glog/logging.h>
 #include "disk/label_source.h"
 namespace lapis {
-const std::string LabelSource::id_ = "LabelSource";
+const std::string LabelSource::type = "LabelSource";
 
-void LabelSource::Init(const DataSourceProto &ds_proto) {
-  DataSource::Init(ds_proto);
-  label_path_ = ds_proto.path();
-  image_names_ = std::make_shared<StringVec>();
+void LabelSource::Init(const DataSourceProto &proto) {
+  DataSource::Init(proto);
+  label_path_ = proto.path();
 }
 
-void LabelSource::ToProto(DataSourceProto *ds_proto) {
-  ds_proto->set_path(label_path_);
+void LabelSource::ToProto(DataSourceProto *proto) {
+  proto->set_path(label_path_);
 }
 
 void LabelSource::GetData(Blob *blob) {
@@ -25,12 +24,14 @@ void LabelSource::GetData(Blob *blob) {
   }
 }
 
-const std::shared_ptr<StringVec> &LabelSource::LoadData(
+const std::shared_ptr<StringVec> LabelSource::LoadData(
   const std::shared_ptr<StringVec> &keys) {
+  DLOG(INFO)<<"Load Label Data...";
   std::ifstream is(label_path_);
   CHECK(is.is_open()) << "Error open the label file " << label_path_;
-  std::string k;
   int v;
+  std::string k;
+  image_names_ = std::make_shared<StringVec>();
   for (int i = 0; i < size_; i++) {
     is >> k >> v;
     image_names_->push_back(k);

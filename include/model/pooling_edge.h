@@ -16,7 +16,6 @@ class PoolingEdge : public Edge {
  public:
   virtual void Init(const EdgeProto &proto,
                     const std::map<std::string, Layer *> &layer_map);
-  virtual void ToProto(EdgeProto *proto);
   virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
   virtual void Backward(const Blob &src_fea, const Blob &src_grad,
                         const Blob &dest_fea, Blob *dest_grad,

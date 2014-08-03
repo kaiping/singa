@@ -8,6 +8,8 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <memory>
+
 #include "proto/model.pb.h"
 #include "model/edge.h"
 #include "model/trainer.h"
@@ -39,6 +41,7 @@ class Edge;
  */
 class Layer {
  public:
+   virtual ~Layer(){}
   /**
    * Set layer properties, e.g., name and num_outputs(feature dimension for
    * normal layer or num of filters for convolutional layer). Layers should be
@@ -116,7 +119,7 @@ class Layer {
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual Blob &feature(Edge *edge);
+  virtual Blob &feature(Edge *edge)=0;
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -125,7 +128,7 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual Blob &gradient(Edge *edge);
+  virtual Blob &gradient(Edge *edge)=0;
   /**
    * Return parameters of this layer
 
@@ -159,9 +162,11 @@ class Layer {
   }
 
  protected:
+  float drop_prob_;
+  std::string name_, type_;
   std::vector<Edge *> out_edges_;
   std::vector<Edge *> in_edges_;
-  std::string name_;
+  Blob drop_fea_, drop_grad_, mask_;
 };
 
 /****************************************************************************/

@@ -10,16 +10,19 @@ void LinearLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
   CHECK(in_edges_.size() == 1);
   in_edges_[0]->SetupTopBlob(&fea_);
   in_edges_[0]->SetupTopBlob(&grad_);
+  VLOG(2)<<name_<<" shape: "<< fea_.tostring();
 }
 
 void LinearLayer::Forward() {
+  VLOG(3)<<name_;
   Edge *edge = in_edges_[0];
-  edge->Forward(edge->bottom()->feature(edge), &fea_, true);
+  edge->Forward(edge->OtherSide(this)->feature(edge), &fea_, true);
 }
 
 void LinearLayer::Backward() {
+  VLOG(3)<<name_;
   Edge *edge = out_edges_[0];
-  Layer *top = edge->top();
+  Layer *top = edge->OtherSide(this);
   edge->Backward(top->feature(edge), top->gradient(edge), fea_, &grad_, true);
 }
 }  // namespace lapis

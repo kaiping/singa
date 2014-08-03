@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <glog/logging.h>
-#include "proto/lapis.pb.h"
+#include "proto/model.pb.h"
 #include "disk/label_source.h"
 
 namespace lapis {
@@ -34,9 +34,9 @@ TEST_F(LabelSourceTest, LoadData) {
 TEST_F(LabelSourceTest, GetData) {
   ls.LoadData(nullptr);
   Blob b;
-  b.Reshape(5, 1, 1);
+  b.Resize(1, 1, 1, 5);
   ls.GetData(&b);
-  const float *val = b.data();
+  const float *val = b.dptr;
   EXPECT_EQ(0.0f, val[0]);
   EXPECT_EQ(1.0f, val[1]);
   EXPECT_EQ(4.0f, val[2]);

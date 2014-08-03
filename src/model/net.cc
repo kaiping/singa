@@ -32,12 +32,14 @@ void topology_sort(std::vector<Layer *> *layers) {
   // prepare adjacent list; input layers will be processed firstly,
   // hence no need to sort them (mark them as visited)
   for (Layer *layer : *layers) {
+    /*
     if (layer->HasInput()) {
       visited[layer] = true;
       input_layers.push_back(layer);
     } else {
       visited[layer] = false;
     }
+    */
     // automatically insert a new entry to the map
     // the direction of edge is from layer to layers in adjacent_list
     adjacent_list[layer];
@@ -76,7 +78,7 @@ void Net::Init(const NetProto &net_proto) {
     Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
     edge->Init(edge_proto, layer_map);
     edges_.push_back(edge);
-    for (auto *param : edge->Params()) {
+    for (auto *param : edge->params()) {
       param->set_id(param_id++);
       params_.push_back(param);
     }

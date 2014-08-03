@@ -1,7 +1,10 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-16 22:01
 #include <glog/logging.h>
+#include <memory>
 
+#include "disk/label_source.h"
+#include "disk/rgb_dir_source.h"
 #include "disk/data_source.h"
 namespace lapis {
 /*****************************************************************************
@@ -18,7 +21,6 @@ void DataSource::ToProto(DataSourceProto *proto) {
   proto->set_size(size_);
   proto->set_name(name_);
   proto->set_offset(offset_);
-  proto->set_id(id());
 }
 
 
@@ -33,21 +35,26 @@ void DataSource::GetData(Blob *blob) {
 /*****************************************************************************
  * Implementation of DataSourceFactory
  ****************************************************************************/
-DataSourceFactory *DataSourceFactory::Instance() {
-  /**
-   * using shared_ptr
-   * static std::shared_ptr<DataSourceFactory> factory;
-   * if (!factory.Get())
-   *   factory.reset(new DataSourceFactory());
-   * return factory;
-   */
-  static DataSourceFactory factory;
-  return &factory;
+#define CreateDS(DSClass) [](void)->DataSource* {return new DSClass();}
+
+std::shared_ptr<DataSourceFactory> DataSourceFactory::instance_;
+
+std::shared_ptr<DataSourceFactory> DataSourceFactory::Instance() {
+   if (!instance_.get())
+     instance_.reset(new DataSourceFactory());
+   return instance_;
 }
+
+DataSourceFactory::DataSourceFactory() {
+  RegisterCreateFunction(LabelSource::type, CreateDS(LabelSource));
+  RegisterCreateFunction(RGBDirSource::type, CreateDS(RGBDirSource));
+}
+
 void DataSourceFactory::RegisterCreateFunction(
   const std::string &id,
   std::function<DataSource*(void)> create_function) {
   ds_map_[id] = create_function;
+  DLOG(INFO)<<"register DataSource: "<<id;
 }
 
 DataSource *DataSourceFactory::Create(const std::string id) {

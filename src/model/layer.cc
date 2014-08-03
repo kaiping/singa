@@ -18,10 +18,28 @@ namespace lapis {
  *****************************************************************************/
 void Layer::Init(const LayerProto &proto) {
   name_ = proto.name();
+  drop_prob_=proto.drop_prob();
+  type_=proto.type();
 }
 
 void Layer::ToProto(LayerProto *proto) {
   proto->set_name(name_);
+}
+void Layer::Setup(int batchsize, TrainerProto::Algorithm alg,
+                     const std::vector<DataSource *> &sources) {
+  if(drop_prob_>0) {
+    in_edges_[0]->SetupTopBlob(&drop_fea_);
+    in_edges_[0]->SetupTopBlob(&drop_grad_);
+    in_edges_[0]->SetupTopBlob(&mask_);
+    VLOG(2)<<name_<<" drop prob is "<<drop_prob_<<drop_fea_.tostring();
+  }
+}
+void Layer::Forward() {
+  VLOG(3)<<name_;
+}
+
+void Layer::Backward() {
+  VLOG(3)<<name_;
 }
 
 void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
@@ -46,16 +64,15 @@ void Layer::ComputeDropoutGradient(const Blob &src ,
   dest_t = src_t * mask_t;
 }
 // Currently layers do not have parameters
-/*
 void Layer::ComputeParamUpdates(const Trainer *trainer) {
-  LOG(INFO) << "Layer " << name_ << " has no parameters to update\n";
+  VLOG(1) << "Layer " << name_ << " has no parameters to update\n";
 }
-*/
 
 /*****************************************************************************
  * Implementation for LayerFactory
  ****************************************************************************/
 #define CreateLayer(LayerClass) [](void)->Layer* {return new LayerClass();}
+std::shared_ptr<LayerFactory> LayerFactory::instance_;
 std::shared_ptr<LayerFactory> LayerFactory::Instance() {
   if (!instance_.get()) {
     instance_.reset(new  LayerFactory());

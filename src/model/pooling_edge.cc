@@ -7,7 +7,7 @@ namespace lapis {
 void PoolingEdge::Init(const EdgeProto &proto,
                        const std::map<std::string, Layer *> &layer_map) {
   Edge::Init(proto, layer_map);
-  kernel_size_ = proto.local_size();
+  kernel_size_ = proto.kernel_size();
   stride_ = proto.stride();
   pooling_method_ = proto.pooling_method();
 }
@@ -22,13 +22,14 @@ void PoolingEdge::SetupTopBlob(Blob *blob) {
                    ceil(static_cast<float>(height_ - kernel_size_) / stride_)) + 1;
   pool_width_ = static_cast<int> (
                   ceil(static_cast<float>(width_ - kernel_size_) / stride_)) + 1;
-  blob->Resize(pool_width_, pool_height_, channels_, num_);
+  blob->Resize(num_, channels_,pool_width_, pool_height_);
 }
 
 void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  VLOG(3)<<name_;
   float *src_data = src.dptr, *dest_data = dest->dptr;
-  int offset_src = height_ * width_ * channels_;
-  int offset_dest = pool_height_ * pool_width_ * channels_;
+  int offset_src = height_ * width_ ;
+  int offset_dest = pool_height_ * pool_width_;
   switch (pooling_method_) {
   case EdgeProto::kMaxPooling:
     for (int i = 0; i < dest->length(); i++)
@@ -45,7 +46,7 @@ void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
               for (int w = wstart; w < wend; w++) {
                 dest_data[ph * pool_width_ + pw] =
                   std::max(dest_data[ph * pool_width_ + pw],
-                           src_data[h * width_ + w]);
+                      src_data[h * width_ + w]);
               }
             }
           }
@@ -82,14 +83,17 @@ void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   default:
     LOG(ERROR) << "Not supported pooling method ";
   }
+  CHECK_EQ(src_data-src.dptr, src.length());
+  CHECK_EQ(dest_data-dest->dptr, dest->length());
 }
 void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                            const Blob &dest_fea, Blob *dest_grad,
                            bool overwrite) {
+  VLOG(3)<<name_;
   float *src_fea_data = src_fea.dptr, *dest_fea_data = dest_fea.dptr;
-  float *src_grad_data = src_grad.dptr, *dest_grad_data = (*dest_grad).dptr;
-  int offset_src = height_ * width_ * channels_;
-  int offset_dest = pool_height_ * pool_width_ * channels_;
+  float *src_grad_data = src_grad.dptr, *dest_grad_data = dest_grad->dptr;
+  int offset_src = pool_height_ * pool_width_;
+  int offset_dest = height_ * width_;
   switch (pooling_method_) {
   case EdgeProto::kMaxPooling:
     for (int i = 0; i < dest_grad->length(); i++)
@@ -147,7 +151,10 @@ void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   default:
     LOG(ERROR) << "Not supported pooling method ";
   }
+  CHECK_EQ(src_fea_data-src_fea.dptr, src_fea.length());
+  CHECK_EQ(src_grad_data-src_grad.dptr, src_grad.length());
+  CHECK_EQ(dest_fea_data-dest_fea.dptr, dest_fea.length());
+  CHECK_EQ(dest_grad_data-dest_grad->dptr, dest_grad->length());
 }
-
 }  // namespace lapis
 

@@ -29,6 +29,7 @@ class Trainer;
  */
 class Edge {
  public:
+   virtual ~Edge(){}
   /**
    * Set edge properties,
    * @param edge_proto user defined edge properties, e.g., edge name,
@@ -55,7 +56,7 @@ class Edge {
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add it
    */
-  virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
+  virtual void Forward(const Blob &src, Blob *dest, bool overwrite)=0;
   /**
    * Backward propagate gradient, read gradient/feature blob from src and
    * feature blob from src, then compute the gradient for parameters of this
@@ -71,7 +72,7 @@ class Edge {
    */
   virtual void Backward(const Blob &src_fea, const Blob &src_grad,
                         const Blob &dest_fea, Blob *dest_grad,
-                        bool overwrite);
+                        bool overwrite)=0;
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
    * gradients of parameters associated with this edge, which will be
@@ -95,7 +96,7 @@ class Edge {
   /**
    * Return parameters associated this edge
    */
-  std::vector<Param *> &Params() {
+  std::vector<Param *> &params() {
     return params_;
   }
   /**
@@ -128,7 +129,7 @@ class Edge {
   }
 
  protected:
-  std::string name_;
+  std::string name_,type_;
   /**
    * Sides/endpoints of the edge.
    * Normally for feed forward neural network, the edge direction is from

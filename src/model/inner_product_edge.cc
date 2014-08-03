@@ -4,7 +4,6 @@
 #include <glog/logging.h>
 #include "model/lapis.h"
 #include "model/inner_product_edge.h"
-#include "mshadow/tensor.h"
 
 namespace lapis {
 
@@ -14,6 +13,9 @@ void InnerProductEdge::Init(const EdgeProto &proto,
   Edge::Init(proto, layer_map);
   param_proto_ = proto.param();
   num_output_ = proto.num_output();
+  params_.clear();
+  params_.push_back(&weight_);
+  params_.push_back(&bias_);
 }
 
 void InnerProductEdge::Setup(bool set_param) {
@@ -49,40 +51,43 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
 }
 
 void InnerProductEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
-  const Tensor2 src2(src.dptr, Shape2(num_input_, num_));
-  Tensor2 dest2(dest->dptr, Shape2(num_output_, num_));
-  Tensor2 weight(weight_.content().dptr, Shape2(num_output_, num_input_));
+  VLOG(3)<<name_;
+  const Tensor2 src2(src.dptr, Shape2(num_, num_input_));
+  Tensor2 dest2(dest->dptr, Shape2(num_, num_output_));
+  Tensor2 weight(weight_.content().dptr, Shape2(num_input_, num_output_));
   Tensor1 bias(bias_.content().dptr, Shape1(num_output_));
+  // Note, can not join the dot and repmat operations! the resulted expr is not
+  // defined in mshadow
   if (overwrite)
-    dest2 = (src2 * weight) + mshadow::expr::repmat(bias,
-            static_cast<unsigned int>(num_));
+    dest2 = dot(src2, weight);
   else
-    dest2 += (src2 * weight) + mshadow::expr::repmat(bias,
-             static_cast<unsigned int>(num_));
+    dest2 += dot(src2, weight);
+  dest2+= mshadow::expr::repmat(bias, num_);
 }
 
 void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                                 const Blob &dest_fea, Blob *dest_grad, bool overwrite) {
-  Tensor2 dest_fea2(dest_fea.dptr, Shape2(num_input_, num_));
-  Tensor2 src_grad2(src_grad.dptr, Shape2(num_output_, num_));
-  Tensor1 bias_grad(bias_.mutable_gradient().dptr, Shape1(num_output_));
-  Tensor2 weight_grad(weight_.mutable_gradient().dptr, Shape2(num_output_,
-                      num_input_));
+  VLOG(3)<<name_;
+  Tensor2 dest_fea2(dest_fea.dptr, Shape2(num_,num_input_));
+  Tensor2 src_grad2(src_grad.dptr, Shape2(num_,num_output_));
+  Tensor2 weight_grad(weight_.mutable_gradient().dptr, Shape2(num_input_,num_output_));
   weight_grad = dot(dest_fea2.T(), src_grad2);
+
+  Tensor1 bias_grad(bias_.mutable_gradient().dptr, Shape1(num_output_));
   bias_grad = mshadow::expr::sum_rows(src_grad2);
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   if (dest_grad != nullptr) {
-    const Tensor2 weight (weight_.content().dptr, Shape2(num_output_, num_input_));;
-    Tensor2 dest_grad2(dest_grad->dptr, Shape2(num_input_, num_));
+    const Tensor2 weight (weight_.content().dptr, Shape2(num_input_, num_output_));;
+    Tensor2 dest_grad2(dest_grad->dptr, Shape2(num_,num_input_));
     if (overwrite)
-      dest_grad2 = src_grad2 * weight.T();
+      dest_grad2 = dot(src_grad2, weight.T());
     else
-      dest_grad2 = src_grad2 * weight.T();
+      dest_grad2 = dot(src_grad2, weight.T());
   }
 }
 
 void InnerProductEdge::SetupTopBlob(Blob *blob) {
-  blob->Resize(num_output_, 1, 1, num_);
+  blob->Resize(num_, 1, 1, num_output_);
 }
 }  // namespace lapis

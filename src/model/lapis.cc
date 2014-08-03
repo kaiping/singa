@@ -1,31 +1,29 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-22 19:53
+#include <glog/logging.h>
+
 #include "model/lapis.h"
 namespace lapis {
-void Blob::Resize(int length) {
-  Resize(length, 1, 1, 1);
-}
-
-void Blob::Resize(int width, int height) {
-  Resize(width, height, 1, 1);
-}
-
-void Blob::Resize(int width, int height, int channels) {
-  Resize(width, height, channels, 1);
-}
-
-void Blob::Resize(int width, int height, int channels, int num) {
+int Blob::count_=0;
+void Blob::Resize(int num, int channels, int height, int width) {
   if (num_ != num || channels_ != channels || height_ != height
       || width_ != width) {
     num_ = num;
     channels_ = channels;
     height_ = height;
     width_ = width;
+
     record_length_ = channels_ * height_ * width_;
-    length_ = num_ * record_length_;
-    if (dptr != nullptr)
-      delete dptr;
-    dptr = new float[length_];
+    if(length_!=num_*record_length_) {
+      count_-=length_;
+      length_ = num_ * record_length_;
+      count_+=length_;
+      if (dptr != nullptr) {
+        LOG(INFO)<<"DELETE BLOB DPTR!!";
+        delete dptr;
+      }
+      dptr = new float[length_];
+    }
   }
 }
 

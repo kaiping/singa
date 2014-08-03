@@ -11,7 +11,6 @@ void SGDTrainer::Init(const TrainerProto &proto) { //, ModelController *mc) {
   Trainer::Init(proto);
   // take over the control for this pointer
   sgd_proto_ = proto.sgd();
-  phase_ = Phase::kInit;
 }
 
 SGDTrainer::~SGDTrainer() {
@@ -24,8 +23,9 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
   std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
   // model_controller_->Get(params);
-  for (auto layer : layers)
+  for (auto* layer : layers) {
     layer->Forward();
+  }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
     (*layer)->Backward();
   UpdateHyperParams(step_);
@@ -45,21 +45,26 @@ void SGDTrainer::BackPropagation(Net *net, const int step) {
 }
 
 void SGDTrainer::Train(Net *net, const int step) {
-  if (phase_ != Phase::kTrain) {
+  if (phase != Phase::kTrain) {
     for (auto *layer : net->layers()) {
       layer->Setup(sgd_proto_.train_batchsize(),
                    TrainerProto::kBackPropagation,
                    train_data_);
-      for (auto *edge : layer->out_edges())
+      VLOG(3)<<layer->name();
+      for (auto *edge : layer->out_edges()){
         edge->Setup(true);
+        VLOG(3)<<edge->name();
+      }
     }
-    phase_ = Phase::kTrain;
+    phase = Phase::kTrain;
+    VLOG(1)<<"Total mem allocated for Blobs in training is "
+           <<Blob::MSize()<<" megabytes";
   }
   BackPropagation(net, step);
 }
 
 void SGDTrainer::Validate(Net *net) {
-  if (phase_ != Phase::kValidation) {
+  if (phase != Phase::kValidation) {
     for (auto *layer : net->layers()) {
       layer->Setup(sgd_proto_.validation_batchsize(),
                    TrainerProto::kBackPropagation,
@@ -67,7 +72,7 @@ void SGDTrainer::Validate(Net *net) {
       for (auto *edge : layer->out_edges())
         edge->Setup(false);
     }
-    phase_ = Phase::kValidation;
+    phase = Phase::kValidation;
   }
   /* TODO(wangwei) forward through all layers to get the loss
   for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
@@ -76,7 +81,7 @@ void SGDTrainer::Validate(Net *net) {
 }
 
 void SGDTrainer::Test(Net *net) {
-  if (phase_ != Phase::kTest) {
+  if (phase != Phase::kTest) {
     for (auto *layer : net->layers()) {
       layer->Setup(sgd_proto_.test_batchsize(),
                    TrainerProto::kBackPropagation,
@@ -84,7 +89,7 @@ void SGDTrainer::Test(Net *net) {
       for (auto *edge : layer->out_edges())
         edge->Setup(false);
     }
-    phase_ = Phase::kTest;
+    phase = Phase::kTest;
   }
   /* TODO(wangwei) forward through all layers to get the loss
   for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
@@ -130,8 +135,9 @@ float UpdateHyperParam(int step, SGDProto::ChangeProto change,
   case SGDProto::kStep:
     // a is the base learning rate, b is gamma, from caffe
     ret = a * pow(b, step / change_steps);
+    break;
   default:
-    LOG(INFO) << "Wrong hyper-parameter update method";
+    LOG(ERROR) << "Wrong hyper-parameter update method";
   }
   return ret;
 }

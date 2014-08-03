@@ -16,8 +16,9 @@ namespace lapis {
 void Edge::Init(const EdgeProto &proto,
                 const std::map<std::string, Layer *> &layer_map) {
   name_ = proto.name();
-  CHECK(layer_map.find(proto.top()) != layer_map.end());
-  CHECK(layer_map.find(proto.bottom()) != layer_map.end());
+  type_=proto.type();
+  CHECK(layer_map.find(proto.top()) != layer_map.end())<<proto.top();
+  CHECK(layer_map.find(proto.bottom()) != layer_map.end())<<proto.bottom();
   top_ = layer_map.at(proto.top());
   bottom_ = layer_map.at(proto.bottom());
   if (proto.directed()) {
@@ -36,7 +37,11 @@ void Edge::ToProto(EdgeProto *proto) {
 }
 
 void Edge::Setup(bool set_param) {
-  LOG(INFO) << "Not implemented";
+  DLOG(INFO) << name_<<" does not implemente Setup func";
+}
+
+void Edge::SetupTopBlob(Blob* blob) {
+  VLOG(1)<<"Edge "<<name_<<" does not implement SetupTopBlob";
 }
 
 void Edge::ComputeParamUpdates(const Trainer *trainer) {
@@ -60,6 +65,7 @@ void Edge::ComputeParamUpdates(const Trainer *trainer) {
  * Edge Factory Implementation
  *****************************************************************************/
 #define CreateEdge(EdgeClass) [](void)->Edge* {return new EdgeClass();}
+std::shared_ptr<EdgeFactory> EdgeFactory::instance_;
 std::shared_ptr<EdgeFactory> EdgeFactory::Instance() {
   if (!instance_.get()) {
     instance_.reset(new EdgeFactory());

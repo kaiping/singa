@@ -10,6 +10,8 @@
 
 #include "disk/data_source.h"
 #include "model/lapis.h"
+#include "proto/model.pb.h"
+
 
 namespace lapis {
 /**
@@ -17,7 +19,7 @@ namespace lapis {
  */
 class RGBDirSource : public DataSource {
  public:
-  virtual void Init(const DataSourceProto &ds_proto);
+  virtual void Init(const DataSourceProto &proto);
   virtual void GetData(Blob *blob);
   /**
    * Load rgb images.
@@ -28,7 +30,7 @@ class RGBDirSource : public DataSource {
    * @return pointer to a vector of suffix paths for image files found by this
    * function
    */
-  virtual const std::shared_ptr<StringVec> &LoadData(
+  virtual const std::shared_ptr<StringVec> LoadData(
     const std::shared_ptr<StringVec>  &keys);
   virtual int channels() {
     return 3;
@@ -48,12 +50,9 @@ class RGBDirSource : public DataSource {
   virtual bool has_width() {
     return true;
   }
-  virtual const std::string &id() {
-    return id_;
-  }
 
   //! the identifier, i.e., "RGBSource"
-  static const std::string id_;
+  static const std::string type;
 
  private:
   /**
@@ -64,13 +63,16 @@ class RGBDirSource : public DataSource {
   /**
    * expected height of the image, assume all images are of the same shape; if
    * the real shape is not the same as the expected, then resize it. The
-   * channels is fixed to be 3, because this is rgb image.
    */
   int height_;
   //! width of the image, assume all images are of the same shape
   int width_;
-  //! size of one record in terms of floats
-  int record_length_;
+  // should be fixed to 3, because this is rgb feature.
+  int channels_;
+  //! image size in terms of floats
+  int image_size_;
+  std::string mean_file_;
+  MeanProto data_mean_;
   //! names of images under the directory_
   std::shared_ptr<StringVec> image_names_;
 };

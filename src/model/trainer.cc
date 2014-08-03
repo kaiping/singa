@@ -2,18 +2,26 @@
 // 2014-07-14 14:28
 
 #include <google/protobuf/repeated_field.h>
+#include <glog/logging.h>
 #include <vector>
+
 #include "proto/model.pb.h"
 #include "model/trainer.h"
 
 namespace lapis {
 
+Phase Trainer::phase=Phase::kInit;
+
 void Trainer::InitDataSource(
   const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
   std::vector<DataSource *> *sources) {
+  std::shared_ptr<std::vector<std::string>> filenames;
   for (auto &proto : protos) {
-    DataSource *ds = DataSourceFactory::Instance()->Create(proto.id());
+    DataSource *ds = DataSourceFactory::Instance()->Create(proto.type());
     ds->Init(proto);
+    LOG(INFO)<<"Created datasource: "<<ds->name();
+    // TODO(this is for imagenet dataset)
+    filenames=ds->LoadData(filenames);
     sources->push_back(ds);
   }
 }
@@ -31,13 +39,15 @@ void Trainer::Init(const TrainerProto &proto) { // , ModelController *mc) {
   display_prefix_ = proto.display_prefix();
   validate_after_steps_ = proto.validate_after_steps();
   validate_every_steps_ = proto.validate_every_steps();
-  InitDataSource(proto.train_data(), &train_data_);
-  InitDataSource(proto.validation_data(), &validation_data_);
-  InitDataSource(proto.test_data(), &test_data_);
+
   perf_prefix_ = proto.perf_prefix();
   do_train_ = proto.do_train();
   do_test_ = proto.do_test();
-  //model_controller_ = mc;
+
+  InitDataSource(proto.train_data(), &train_data_);
+  InitDataSource(proto.validation_data(), &validation_data_);
+  InitDataSource(proto.test_data(), &test_data_);
+    //model_controller_ = mc;
 }
 
 void Trainer::ToProto(TrainerProto *proto) {
@@ -68,9 +78,11 @@ void Trainer::ToProto(TrainerProto *proto) {
 void Trainer::Run(Net *net) {
   if (do_train_) {
     while (!HasFinished(step_)) {
+      LOG(INFO)<<step_;
       if (ValidateNow(step_))
         Validate(net);
       Train(net, step_);
+      IncStep();
     }
   }
   if (do_test_)

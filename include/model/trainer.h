@@ -114,9 +114,9 @@ class Trainer {
     return step_;
   }
 
+  static Phase phase;
  protected:
   //! current phase, need this field to change the data sources for input layer
-  Phase phase_;
   //! current training step, e.g., such num of mini-batches have been processed
   int step_;
 

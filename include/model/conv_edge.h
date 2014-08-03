@@ -27,7 +27,6 @@ class ConvEdge : public Edge {
    */
   virtual void Init(const EdgeProto &proto,
                     const std::map<std::string, Layer *> &layer_map);
-  virtual void ToProto(EdgeProto *proto);
   virtual void Setup(bool set_param);
   /**
    * Do convolution as the class description.

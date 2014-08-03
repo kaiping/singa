@@ -9,23 +9,26 @@ CXX := $(HOME_DIR)/bin/g++
 # Change this variable!! header folder for system and external libs.
 INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include
 # Change this variable!! lib folder for system and external libs
-LIBRARY_DIRS := $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 # folder for compiled file
 BUILD_DIR := build
 
-CXXFLAGS := -Wall -g -pthread -msse3 -O3 -fPIC -std=c++11 -Wno-unknown-pragmas -funroll-loops \
-					-DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_CUDA=0 \
-						$(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
+	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-LIBRARIES := glog gflags protobuf boost_system boost_regex \
-						boost_filesystem opencv_highgui opencv_imgproc opencv_core cblas atlas
+LIBRARIES := glog gflags protobuf boost_system boost_regex boost_filesystem \
+	opencv_highgui opencv_imgproc opencv_core cblas atlas
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library))
 
 ###############################################################################
-# Build core of Lapis into .a and .so library
+# Build Lapis into .a and .so library
 ###############################################################################
 .PHONY: proto core init model utils flint clean
+
+
+
 ###############################################################################
 # Build headers and sources under Proto/, i.e. the google protobuf messages
 ###############################################################################
@@ -39,16 +42,14 @@ PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
 proto: init $(PROTO_OBJS)
 
+$(PROTO_OBJS): $(BUILD_DIR)/%.o : %.cc
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+	@echo
+
 $(PROTO_HDRS) $(PROTO_SRCS): $(PROTOS)
 	protoc --proto_path=src/proto --cpp_out=src/proto $(PROTOS)
 	mkdir -p include/proto/
 	cp src/proto/*.pb.h include/proto/
-	@echo
-
-$(PROTO_OBJS): $(PROTO_HDRS) $(PROTO_SRCS)
-
-$(PROTO_OBJS): $(BUILD_DIR)/%.o : %.cc
-	$(CXX) $< $(CXXFLAGS) -c -o $@
 	@echo
 
 ###############################################################################
@@ -60,9 +61,7 @@ UTL_OBJS :=$(addprefix $(BUILD_DIR)/, $(UTL_SRCS:.cc=.o))
 
 utils: init proto $(UTL_OBJS)
 
-$(UTL_OBJS): $(UTL_HDRS) $(UTL_SRCS)
-
-$(UTL_OBJS): $(BUILD_DIR)/%.o : %.cc
+$(UTL_OBJS): $(BUILD_DIR)/%.o : %.cc $(UTL_SRCS) $(UTL_HDRS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 	@echo
 
@@ -90,11 +89,13 @@ MODEL_SRCS :=$(shell find src/model -name "*.cc" -type f)
 MODEL_SRCS += $(addprefix src/disk/, data_source.cc label_source.cc rgb_dir_source.cc)
 MODEL_OBJS :=$(addprefix $(BUILD_DIR)/, $(MODEL_SRCS:.cc=.o))
 
-model: init proto utils $(MODEL_OBJS)
+model: init proto utils model.so
 
-$(MODEL_OBJS): $(MODEL_HDRS) $(MODEL_SRCS)
+model.so: $(MODEL_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
+	$(CXX) -shared -o model.so $(MODEL_OBJS) $(PROTO_OBJS) $(UTL_OBJS) $(CXXFLAGS) $(LDFLAGS)
+	@echo
 
-$(MODEL_OBJS): $(BUILD_DIR)/%.o : %.cc
+$(MODEL_OBJS): $(BUILD_DIR)/%.o : %.cc $(MODEL_HDRS) $(MODEL_SRCS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 	@echo
 
@@ -112,7 +113,7 @@ MAIN_SRCS := src/main.cc $(WORKER_SRCS) $(CORRD_SRCS) $(MC_SRCS)
 MAIN_HDRS:= $(WORKER_HDRS) $(CORRD_HDRS) $(MC_HDRS)
 MAIN_OBJS :=$(addprefix $(BUILD_DIR)/, $(MAIN_SRCS:.cc=.o))
 
-main: init proto model $(MAIN_OBJS)
+main : init proto model $(MAIN_OBJS)
 
 $(MAIN_OBJS): $(MAIN_SRCS) $(MAIN_HDRS)
 
@@ -139,8 +140,8 @@ $(MAIN_OBJS): $(BUILD_DIR)/%.o : %.cc
 
 # each lapis src file will generate a .o file
 #LAPIS_OBJS :=$(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o))
-LAPIS_HDRS: =$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
-LAPIS_SRCS: =$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
+LAPIS_HDRS :=$(CORE_HDRS) $(MODEL_HDRS) $(MAIN_HDRS) $(PROTO_HDRS) $(UTL_HDRS)
+LAPIS_SRCS :=$(CORE_SRCS) $(MODEL_SRCS) $(MAIN_SRCS) $(PROTO_SRCS) $(UTL_SRCS)
 LAPIS_OBJS := $(CORE_OBJS) $(MODEL_OBJS) $(MAIN_OBJS) $(PROTO_OBJS) $(UTL_OBJS)
 
 lapis: init proto lapis.so
@@ -172,20 +173,21 @@ init:
 TEST_LIBRARIES := $(LIBRARIES) gtest
 TEST_LDFLAGS := $(LDFLAGS) -lgtest
 
-TEST_MAIN := src/test/test_main.cc
-TEST_SRCS := $(shell find src/test/ -name "test_*.cc")
+TEST_MAIN := src/test/test_model.cc
+TEST_SRCS := $(shell find src/test/model -name "test_*.cc")
 TEST_SRCS :=$(filter-out $(TEST_MAIN), $(TEST_SRCS))
 
 TEST_OBJS := $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o))
 TEST_BINS := $(addprefix $(BUILD_DIR)/bin/, $(TEST_SRCS:.cc=.bin))
 
-test: lapis.a lapis.so $(TEST_BINS) $(LAPIS_SRCS) $(LAPIS_HDRS)
+test_model: model.so $(TEST_MAIN)
+	$(CXX) $(TEST_MAIN) model.so -o model.bin $(CXXFLAGS) $(TEST_LDFLAGS)
 
-$(TEST_BINS): $(BUILD_DIR)/bin/src/test/%.bin: $(BUILD_DIR)/src/test/%.o
-	$(CXX) $(TEST_MAIN) $< lapis.a -o $@ $(CXXFLAGS) $(TEST_LDFLAGS)
+#$(TEST_BINS): $(BUILD_DIR)/bin/src/test/%.bin: $(BUILD_DIR)/src/test/%.o $(TEST_OBJS) model.so
+#	$(CXX) $(TEST_MAIN) $< model.so -o $@ $(CXXFLAGS) $(TEST_LDFLAGS)
 
-$(BUILD_DIR)/src/test/%.o: src/test/%.cc
-	$(CXX) $< $(CXXFLAGS) -c -o $@
+#$(BUILD_DIR)/src/test/%.o: src/test/%.cc
+#	$(CXX) $< $(CXXFLAGS) -c -o $@
 
 
 ###############################################################################
@@ -212,7 +214,7 @@ flint: $(FL_HDRS) $(FL_SRCS)
 # Clean files generated by previous targets
 ###############################################################################
 clean:
-	rm -rf lapis.a lapis.so
+	rm -rf *.a *.so
 	rm -rf include/proto/*
 	rm -rf src/proto/*.pb.h src/proto/*.pb.cc
 	rm -rf $(BUILD_DIR)

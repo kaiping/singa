@@ -68,13 +68,15 @@ class DataLayer : public Layer {
   virtual Blob &gradient(Edge *edge) {
     return data_;
   }
-
   /** identifier for this layer.
    * LayerFactory will create an instance of this based on this identifier
    */
 
  private:
-  Blob data_;
+  bool mirror_;
+  int cropsize_;
+  int batchsize_, channels_,height_,width_;
+  Blob data_, tmp_;
   DataSource *data_source_;
   std::string data_source_name_;
 };

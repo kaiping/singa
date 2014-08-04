@@ -399,7 +399,7 @@ void protobuf_AddDesc_model_2eproto() {
     "fset\030\t \001(\003:\0010\022\021\n\tmean_file\030\n \001(\t\"\344\003\n\nPar"
     "amProto\022\014\n\004name\030\001 \002(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013"
     "init_method\030\003 \001(\0162\034.lapis.ParamProto.Ini"
-    "tMethod:\tkConstant\022\020\n\005value\030\004 \001(\002:\0010\022\017\n\003"
+    "tMethod:\tkConstant\022\020\n\005value\030\004 \001(\002:\0011\022\017\n\003"
     "low\030\005 \001(\002:\002-1\022\017\n\004high\030\006 \001(\002:\0011\022\017\n\004mean\030\007"
     " \001(\002:\0010\022\016\n\003std\030\010 \001(\002:\0011\022\036\n\023momentum_mult"
     "iplier\030\t \001(\002:\0011\022#\n\030learning_rate_multipl"
@@ -1177,7 +1177,7 @@ void ParamProto::SharedCtor() {
   _cached_size_ = 0;
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   init_method_ = 0;
-  value_ = 0;
+  value_ = 1;
   low_ = -1;
   high_ = 1;
   mean_ = 0;
@@ -1229,7 +1229,7 @@ void ParamProto::Clear() {
       }
     }
     init_method_ = 0;
-    value_ = 0;
+    value_ = 1;
     low_ = -1;
     high_ = 1;
     mean_ = 0;
@@ -1312,7 +1312,7 @@ bool ParamProto::MergePartialFromCodedStream(
         break;
       }
 
-      // optional float value = 4 [default = 0];
+      // optional float value = 4 [default = 1];
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
@@ -1521,7 +1521,7 @@ void ParamProto::SerializeWithCachedSizes(
       3, this->init_method(), output);
   }
 
-  // optional float value = 4 [default = 0];
+  // optional float value = 4 [default = 1];
   if (has_value()) {
     ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->value(), output);
   }
@@ -1611,7 +1611,7 @@ void ParamProto::SerializeWithCachedSizes(
       3, this->init_method(), target);
   }
 
-  // optional float value = 4 [default = 0];
+  // optional float value = 4 [default = 1];
   if (has_value()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->value(), target);
   }
@@ -1703,7 +1703,7 @@ int ParamProto::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->init_method());
     }
 
-    // optional float value = 4 [default = 0];
+    // optional float value = 4 [default = 1];
     if (has_value()) {
       total_size += 1 + 4;
     }

@@ -30,6 +30,7 @@ class Net {
   const std::vector<Param *> &params() {
     return params_;
   }
+  ~Net();
  private:
   std::vector<Layer *> layers_;
   std::vector<Edge *> edges_;

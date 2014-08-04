@@ -20,7 +20,7 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   for (int i = 0; i < num_; i++) {
     float mmax = data[0];
     float sum = 0.0f;
-    for (int j = 0; j < dim_; j++)
+    for (int j = 1; j < dim_; j++)
       if (mmax < data[j]) mmax = data[j];
     for (int j = 0; j < dim_; j++) {
       prob[j] = std::exp(data[j] - mmax);
@@ -31,6 +31,9 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
     data += dim_;
     prob += dim_;
   }
+  CHECK_EQ(data-src.dptr, src.length());
+  CHECK_EQ(prob-prob_.dptr, prob_.length());
+
 }
 
 void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,

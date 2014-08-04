@@ -37,6 +37,7 @@ class Trainer {
    * @param trainer_proto user configuration for the trainer
    */
   virtual void Init(const TrainerProto &proto); // ModelController *mc);
+  virtual ~Trainer();
   /**
    * Init a DataSource object based on DataSourceProto
    */

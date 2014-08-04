@@ -50,8 +50,11 @@ void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
   Tensor1 dest_t(dest->dptr, Shape1(len));
   Tensor1 mask_t(mask->dptr, Shape1(len));
   Tensor1 src_t(src.dptr, Shape1(len));
-  mask_t = mshadow::expr::F<mshadow::op::threshold>(rnd.uniform(mask_t.shape),
-           keep_prob);
+//  mask_t = mshadow::expr::F<mshadow::op::threshold>(rnd.uniform(mask_t.shape), keep_prob);
+  rnd.SampleUniform(mask_t);
+  float* maskdptr=mask->dptr;
+  for(int i=0;i<len;i++)
+    maskdptr[i]=maskdptr[i]<=keep_prob?1.0f:0.0f;
   dest_t = src_t * mask_t *(1.0 / keep_prob);
 }
 

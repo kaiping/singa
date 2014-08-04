@@ -2,6 +2,7 @@
 // 2014-07-14 18:48
 #ifndef INCLUDE_MODEL_LAPIS_H_
 #define INCLUDE_MODEL_LAPIS_H_
+#include <glog/logging.h>
 #include <memory>
 #include <chrono>
 #include <sstream>
@@ -27,6 +28,7 @@ class Blob {
           height_(0), width_(0), length_(0){}
   Blob(int num, int channels, int height, int width);
   ~Blob() {
+    VLOG(3)<<"Free Blob at "<<dptr;
     if(dptr!=nullptr)
       delete dptr;
   }
@@ -112,6 +114,10 @@ class Blob {
   static const int MSize() {
     return count_*sizeof(float)/(1024*1024);
   }
+
+  int Gt(float v);
+  int Lt(float v);
+  bool Nan();
   float *dptr;
  private:
   int num_, channels_, height_, width_;

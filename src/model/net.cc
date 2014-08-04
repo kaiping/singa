@@ -96,4 +96,10 @@ void Net::ToProto(NetProto *net_proto) {
     edge->ToProto(edge_proto);
   }
 }
+Net::~Net() {
+  for(auto* layer: layers_)
+    delete layer;
+  for(auto* edge: edges_)
+    delete edge;
+}
 }  // namespace lapis

@@ -52,7 +52,7 @@ message ParamProto {
     kUniformSqrtFanInOut = 6;
   }
   optional InitMethod init_method = 3 [default = kConstant];
-  optional float value = 4 [default = 0];
+  optional float value = 4 [default = 1.0];
   // for uniform sampling
   optional float low = 5 [default = -1];
   optional float high = 6 [default = 1];

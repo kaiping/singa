@@ -88,4 +88,12 @@ void Trainer::Run(Net *net) {
   if (do_test_)
     Test(net);
 }
+Trainer::~Trainer() {
+  for(auto* ds: train_data_)
+    delete ds;
+  for(auto* ds: validation_data_)
+    delete ds;
+  for(auto* ds: test_data_)
+    delete ds;
+}
 }  // namespace lapis

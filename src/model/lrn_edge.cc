@@ -44,9 +44,9 @@ void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
     pad_square.Slice(pre_pad_, pre_pad_ + channels_) =
       mshadow::expr::F<mshadow::op::square>(src3[n]) * alpha_over_size; //ai^2
     Tensor2 accum_fea2= accum_fea3[n];
-    accum_fea2[0] = sum_rows(pad_square.Slice(0, local_size_));
+    accum_fea2[0] += sum_rows(pad_square.Slice(0, local_size_));
     for (int c = 1; c < channels_; c++)
-      accum_fea2[c] = accum_fea2[c - 1] + pad_square[c + local_size_ - 1] -
+      accum_fea2[c] += accum_fea2[c - 1] + pad_square[c + local_size_ - 1] -
                       pad_square[c - 1];
   }
   Tensor3 dest3(dest->dptr, Shape3(num_, channels_, height_ * width_));

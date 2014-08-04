@@ -90,8 +90,9 @@ void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                            const Blob &dest_fea, Blob *dest_grad,
                            bool overwrite) {
   VLOG(3)<<name_;
-  float *src_fea_data = src_fea.dptr, *dest_fea_data = dest_fea.dptr;
-  float *src_grad_data = src_grad.dptr, *dest_grad_data = dest_grad->dptr;
+  const float *src_fea_data = src_fea.dptr, *dest_fea_data = dest_fea.dptr;
+  const float *src_grad_data = src_grad.dptr;
+  float *dest_grad_data = dest_grad->dptr;
   int offset_src = pool_height_ * pool_width_;
   int offset_dest = height_ * width_;
   switch (pooling_method_) {

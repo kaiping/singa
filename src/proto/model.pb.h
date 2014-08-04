@@ -428,7 +428,7 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::lapis::ParamProto_InitMethod init_method() const;
   inline void set_init_method(::lapis::ParamProto_InitMethod value);
 
-  // optional float value = 4 [default = 0];
+  // optional float value = 4 [default = 1];
   inline bool has_value() const;
   inline void clear_value();
   static const int kValueFieldNumber = 4;
@@ -2614,7 +2614,7 @@ inline void ParamProto::set_init_method(::lapis::ParamProto_InitMethod value) {
   init_method_ = value;
 }
 
-// optional float value = 4 [default = 0];
+// optional float value = 4 [default = 1];
 inline bool ParamProto::has_value() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -2625,7 +2625,7 @@ inline void ParamProto::clear_has_value() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void ParamProto::clear_value() {
-  value_ = 0;
+  value_ = 1;
   clear_has_value();
 }
 inline float ParamProto::value() const {

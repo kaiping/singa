@@ -135,6 +135,9 @@ void ConvEdge::Backward(const Blob &src_grad, const Blob &src_fea,
         weight_grad[g] = dot(src_grad3[g], col_fea[g].T());
     }
   }
+  CHECK_EQ(dest_fea_dptr-dest_fea.dptr, dest_fea.length());
+  if(dest_grad!=nullptr)
+    CHECK_EQ(dest_grad_dptr-dest_grad->dptr, dest_grad->length());
 }
 
 void im2col(const float *data_im, const int channels,

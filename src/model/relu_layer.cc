@@ -58,4 +58,3 @@ void ReLULayer::Backward() {
   }
 }
 }  // namespace lapis
-

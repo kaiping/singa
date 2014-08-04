@@ -26,7 +26,26 @@ void Blob::Resize(int num, int channels, int height, int width) {
     }
   }
 }
-
+int Blob::Gt(float v) {
+  int ret=0;
+  for(unsigned int i=0;i<length_;i++)
+    if(dptr[i]>v)
+      ret++;
+  return ret;
+}
+int Blob::Lt(float v) {
+  int ret=0;
+  for(unsigned int i=0;i<length_;i++)
+    if(dptr[i]<v)
+      ret++;
+  return ret;
+}
+bool Blob::Nan() {
+  for(unsigned int i=0;i<length_;i++)
+    if(isnan(dptr[i]))
+      return true;
+  return false;
+}
 std::shared_ptr<Lapis> Lapis::instance_;
 }  // namespace lapis
 

@@ -22,7 +22,7 @@ class GlobalContext {
  public:
   bool IsRoleOf(const Role &role, int rank);
   void Init(const std::string &system_conf_path,
-                         const std::string &model_conf_path);
+            const std::string &model_conf_path);
   bool single(){return single_;}
 
   int num_memory_servers() {
@@ -34,8 +34,12 @@ class GlobalContext {
   const char *model_conf_path() {
     return model_conf_path_.c_str();
   }
-  int StartRankOf(Role role) {return role_rank_.at(role).first;}
-  int EndRankOf(Role role) { return role_rank_.at(role).second;}
+  int StartRankOf(Role role) {
+    return role_rank_.at(role).first;
+  }
+  int EndRankOf(Role role) {
+    return role_rank_.at(role).second;
+  }
   static GlobalContext *Get();
  private:
   // map from role to (start_rank, end_rank) pair
@@ -46,7 +50,7 @@ class GlobalContext {
   int num_disk_servers_;
   bool single_;
   std::string model_conf_path_;
-  GlobalContext(){}
+  GlobalContext() {}
 };
 }  // namespace lapis
 

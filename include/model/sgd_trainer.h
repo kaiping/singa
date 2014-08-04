@@ -8,6 +8,7 @@
 #include "model/param.h"
 #include "model/trainer.h"
 #include "proto/model.pb.h"
+#include "model_controller/model.h"
 
 namespace lapis {
 /**
@@ -23,14 +24,22 @@ class SGDTrainer : public Trainer {
   virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished(const int step);
 
-  float learning_rate() const {return learning_rate_;}
-  float momentum() const {return momentum_;}
-  float weight_decay() const  {return weight_decay_;}
+  float learning_rate() const {
+    return learning_rate_;
+  }
+  float momentum() const {
+    return momentum_;
+  }
+  float weight_decay() const  {
+    return weight_decay_;
+  }
   void UpdateHyperParams(const int step);
   ~SGDTrainer();
  protected:
+  /*
   float UpdateHyperParam(int step, SGDProto_ChangeProto change,
                          int change_steps, float base_val, float final_val);
+                         */
 
   void BackPropagation(Net *net, const int step);
 

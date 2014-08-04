@@ -7,19 +7,16 @@
 #include "proto/model.pb.h"
 namespace lapis {
 
-struct MyAcc : public Accumulator<float_vector_message>
-{
-    void Accumulate(float_vector_message * a, const float_vector_message &b)
-    {
-        const int vector_size = b.myfloat_size();
-        for(int i = 0; i < vector_size; i++)
-        {
-            float temp = a->myfloat(i);
-            temp += b.myfloat(i);
-            a->set_myfloat(i,temp);
-        }
-        return;
+struct MyAcc : public Accumulator<float_vector_message> {
+  void Accumulate(float_vector_message *a, const float_vector_message &b) {
+    const int vector_size = b.myfloat_size();
+    for (int i = 0; i < vector_size; i++) {
+      float temp = a->myfloat(i);
+      temp += b.myfloat(i);
+      a->set_myfloat(i, temp);
     }
+    return;
+  }
 };
 }  // namespace lapis
 #endif  // INCLUDE_MC_MYACC_H_

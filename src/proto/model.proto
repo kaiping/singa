@@ -2,35 +2,24 @@ package lapis;
 
 message DataSourceProto {
   required string name = 1;
-  required string id = 2;
-  optional string path = 3;
+  // e.g., RGBDirSource and LabelSource
+  required string type = 2;
+  // directory for RGBDirSource and file for LabelSource
+  required string path = 3;
+  // dataset size
   optional int64 size = 4;
-/*
-  enum DataType {
-    FEATURE = 0;
-    LABEL = 1;
-  }
-
-  optional DataType type = 5;
-  */
-
   // following three fields will be used for rgb image feature
-  optional int32 channels = 6 [default = 1];
+  optional int32 channels = 6 [default = 3];
+  // expected input height, if not the same, resize the image
   optional int32 height = 7 [default = 0];
-  // for one dimension feature, this is the length of the feature
+  // expected input image width, if not the same, resize the image
+  // it can also be the length of one dimension feature
   optional int32 width = 8 [default = 0];
 
   // offset of record to be read.
   optional int64 offset =9 [default=0];
-}
-
-message RGBDatum {
-  optional int32 channels = 1 [default = 3];
-
-  // size of the cropped image, default setting is no crop
-  optional int32 height = 2 [default = 0];
-  optional int32 width = 3 [default = 0];
-  required string content = 4;
+  // MeanProto file, has the mean of images, used by RGBDirSource
+  optional string mean_file=10;
 }
 
 message ParamProto {
@@ -43,14 +32,18 @@ message ParamProto {
 
   enum InitMethod {
     kConstant = 0;
+    // sample gaussian with std and mean
     kGaussain = 1;
+    // uniform sampling between low and high
     kUniform = 2;
+    // copy the content and history which are from previous training
     kPretrained = 3;
     // from Toronto Convnet, let a=1/sqrt(fan_in), w*=a after generating from
     // Gaussian distribution
     kGaussainSqrtFanIn = 4;
     // from Toronto Convnet, rectified linear activation, let
-    // a=sqrt(3)/sqrt(fan_in), range is [-a, +a]
+    // a=sqrt(3)/sqrt(fan_in), range is [-a, +a]; no need to set value=sqrt(3),
+    // the program will multiply it.
     kUniformSqrtFanIn = 5;
     // from Theano MLP tutorial, let a=1/sqrt(fan_in+fan_out). for tanh
     // activation, range is [-6a, +6a], for sigmoid activation, range is
@@ -59,16 +52,20 @@ message ParamProto {
     kUniformSqrtFanInOut = 6;
   }
   optional InitMethod init_method = 3 [default = kConstant];
-  optional float value = 4 [default = 0];
+  optional float value = 4 [default = 1.0];
+  // for uniform sampling
   optional float low = 5 [default = -1];
   optional float high = 6 [default = 1];
+  // for gaussian sampling
   optional float mean = 7 [default = 0];
   optional float std = 8 [default = 1];
   // optional string partitioner = 4; // e.g., row or column partition
-  optional float momentum_multiplier =9;
-  optional float learning_rate_multiplier =10;
-  optional float weight_decay_multiplier =11;
+  optional float momentum_multiplier =9 [default=1];
+  optional float learning_rate_multiplier =10 [default=1];
+  optional float weight_decay_multiplier =11 [default=1];
+  // data of the parameter
   repeated float content = 13 [packed = true];
+  // history gradient of the parameter
   repeated float history = 14 [packed = true];
 }
 
@@ -83,23 +80,32 @@ message EdgeProto {
   optional string bottom =7;
   // for convolutional and pooling edge.
   optional int32 kernel_size = 8;
-  optional int32 stride = 9;
-  optional int32 pad = 10;
+  optional int32 stride = 9 [default=1];
+  optional int32 pad = 10 [default=0];
+  optional int32 num_groups =11 [default=1];
 
   // for local response normalization edge
-  optional float alpha = 11;
-  optional float beta = 12;
-  optional int32 local_size = 13;
+  optional float alpha = 12;
+  optional float beta = 13;
+  optional float knorm = 14 [default =1.0];
+  optional int32 local_size = 15;
 
   // for pooling edge
   enum PoolingMethod {
     kMaxPooling=1;
     kAvgPooling=2;
   }
-  optional PoolingMethod pooling_method = 14;
+  optional PoolingMethod pooling_method = 16;
 }
 
-message BlobProto{
+// used to load image mean provided by caffe, in RGBDirSource
+message MeanProto{
+  optional int32 num =1;
+  optional int32 channels = 2;
+  optional int32 height = 3;
+  optional int32 width = 4;
+  repeated float data=5 [packed=true];
+  repeated float diff=6 [packed=true];
 }
 
 message LayerProto {
@@ -111,6 +117,10 @@ message LayerProto {
   // repeated string in_edge = 6;
   optional string data_source = 7;
   optional float drop_prob = 8 [default=0.0];
+
+  // for DataLayer to process image data
+  optional int32 cropsize =9;
+  optional bool mirror = 10;
 }
 
 message NetProto {
@@ -123,9 +133,11 @@ message SGDProto {
   required float base_learning_rate = 1;
   optional float base_momentum = 2 [default = 0];
   optional float base_weight_decay = 3 [default = 0];
-  optional float final_momentum = 4;
-  optional float final_learning_rate = 5;
-  optional float final_weight_decay = 6;
+  // the *_x field can be used for multiple purposes, e.g., final_*
+  optional float momentum_x = 4;
+  // for SGDProto::kStep, this field is the gamma used in caffe
+  optional float learning_rate_x = 5;
+  optional float weight_decay_x = 6;
   optional int32 learning_rate_change_steps = 7;
   optional int32 momentum_change_steps = 8;
   optional int32 weight_decay_change_steps = 9;

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "model/trainer.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 #include "model/layer.h"
 #include "model/param.h"
 #include "proto/model.pb.h"
@@ -29,13 +29,14 @@ class Trainer;
  */
 class Edge {
  public:
+   virtual ~Edge(){}
   /**
    * Set edge properties,
    * @param edge_proto user defined edge properties, e.g., edge name,
    * parameters, type
    */
   virtual void Init(const EdgeProto &proto,
-                 const std::map<std::string, Layer *> &layer_map);
+                    const std::map<std::string, Layer *> &layer_map);
   /**
    * Setup properties of this edge based on bottom layer, e.g, parameter shape.
    * Allocate memory for parameters and initialize them according to user
@@ -55,7 +56,7 @@ class Edge {
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add it
    */
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
+  virtual void Forward(const Blob &src, Blob *dest, bool overwrite)=0;
   /**
    * Backward propagate gradient, read gradient/feature blob from src and
    * feature blob from src, then compute the gradient for parameters of this
@@ -69,9 +70,9 @@ class Edge {
    * the bottom layer is DataLayer, the no need to compute for the dest_grad.
    * @param overwrite if true overwrite dest_grad otherwise add to it
    */
-  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
-                        bool overwrite);
+  virtual void Backward(const Blob &src_fea, const Blob &src_grad,
+                        const Blob &dest_fea, Blob *dest_grad,
+                        bool overwrite)=0;
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
    * gradients of parameters associated with this edge, which will be
@@ -91,11 +92,11 @@ class Edge {
    * this edge will decide the shape of the blob and is responsible to setup it
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob* blob);
+  virtual void SetupTopBlob(Blob *blob);
   /**
    * Return parameters associated this edge
    */
-  std::vector<Param *> &Params() {
+  std::vector<Param *> &params() {
     return params_;
   }
   /**
@@ -128,7 +129,7 @@ class Edge {
   }
 
  protected:
-  std::string name_;
+  std::string name_,type_;
   /**
    * Sides/endpoints of the edge.
    * Normally for feed forward neural network, the edge direction is from
@@ -164,7 +165,7 @@ class EdgeFactory {
   /**
    * static method to get instance of this factory
    */
-  static EdgeFactory *Instance();
+  static std::shared_ptr<EdgeFactory> Instance();
   /**
    * Register user defined edge, i.e., add the edge type and a
    * function which creats an instance of the edge. This function is called by
@@ -182,9 +183,10 @@ class EdgeFactory {
 
  private:
   //! To avoid creating multiple instances of this factory in the program
-  EdgeFactory() {}
+  EdgeFactory();
   //! Map that stores the registered Layers
-  std::map<std::string, std::function<Edge*(void)>> layer_map_;
+  std::map<std::string, std::function<Edge*(void)>> edge_map_;
+  static std::shared_ptr<EdgeFactory> instance_;
 };
 
 }  // namespace lapis

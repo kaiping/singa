@@ -31,8 +31,12 @@ class LinearLayer : public Layer {
    * Assume only one out going edge currently.
    */
   virtual void Backward();
-  virtual Blob *feature(Edge *edge) {return &fea_;}
-  virtual Blob *gradient(Edge *edge) {return &grad_;}
+  virtual Blob &feature(Edge *edge) {
+    return fea_;
+  }
+  virtual Blob &gradient(Edge *edge) {
+    return grad_;
+  }
  private:
   Blob fea_, grad_;
 };

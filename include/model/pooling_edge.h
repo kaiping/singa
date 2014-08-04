@@ -15,21 +15,22 @@ namespace lapis {
 class PoolingEdge : public Edge {
  public:
   virtual void Init(const EdgeProto &proto,
-                 const std::map<std::string, Layer *> &layer_map);
-  virtual void ToProto(EdgeProto *proto);
-  virtual void Forward(const Blob *src, Blob *dest, bool overwrite);
-  virtual void Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
+                    const std::map<std::string, Layer *> &layer_map);
+  virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
+  virtual void Backward(const Blob &src_fea, const Blob &src_grad,
+                        const Blob &dest_fea, Blob *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob* blob);
+  virtual void SetupTopBlob(Blob *blob);
  private:
   //! pooling kernel shape
   int kernel_size_, stride_;
   //! shape for bottom layer feature
-  int channels_, height_,width_;
+  int channels_, height_, width_;
   //! shape after pooling
   int pool_height_, pool_width_;
+  //! batchsize
+  int num_;
   EdgeProto::PoolingMethod pooling_method_;
 };
 }  // namespace

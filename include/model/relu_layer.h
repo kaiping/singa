@@ -2,7 +2,8 @@
 // 2014-07-23 15:21
 #ifndef INCLUDE_MODEL_RELU_LAYER_H_
 #define INCLUDE_MODEL_RELU_LAYER_H_
-
+#include <vector>
+#include <string>
 #include "layer.h"
 #include "proto/model.pb.h"
 
@@ -19,12 +20,14 @@ class ReLULayer : public Layer {
                      const std::vector<DataSource *> &sources);
   virtual void Forward();
   virtual void Backward();
-  virtual bool HasInput() {return false;}
-  virtual Blob *feature(Edge *edge) {
-    return edge->bottom()==this? &fea_:&act_;
+  virtual bool HasInput() {
+    return false;
   }
-  virtual Blob *gradient(Edge *edge) {
-    return edge->bottom()==this? &fea_grad_:&act_grad_;
+  virtual Blob &feature(Edge *edge) {
+    return edge->bottom() == this ? fea_ : act_;
+  }
+  virtual Blob &gradient(Edge *edge) {
+    return edge->bottom() == this ? fea_grad_ : act_grad_;
   }
 
  private:

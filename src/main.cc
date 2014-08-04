@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   // TODO(by wangwei) register partition/fileparser/layer classes
   lapis::GlobalContext::Get()->Init(FLAGS_system_conf, FLAGS_model_conf);
-
   // TODO(Anh) DistributedDisk
   // lapis::DistributedDisk distributed_disk(global_context);
   lapis::ModelController model_controller;

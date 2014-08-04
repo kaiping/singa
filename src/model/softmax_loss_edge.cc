@@ -6,30 +6,52 @@
 #include "model/softmax_loss_edge.h"
 namespace lapis {
 void SoftmaxLossEdge::Setup(bool set_param) {
-  Blob* b=bottom_->feature(this);
-  prob_.Reshape(b->num(), b->record_length());
+  Blob &b = bottom_->feature(this);
+  num_ = b.num();
+  dim_ = b.length() / num_;
+  prob_.Resize(num_, 1,1 ,dim_);
+  VLOG(2)<<"prob shape "<<prob_.tostring();
 }
 
-void SoftmaxLossEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  AMat src_mat(src->mutable_data(), src->num(),src->record_length());
-  AMat prob_mat(prob_.mutable_data(), prob_.num(),prob_.record_length());
-  prob_mat=src_mat.exp();
-  prob_mat=prob_mat.colwise()/(prob_mat.rowwise().sum());
-}
-
-void SoftmaxLossEdge::Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
-                        bool overwirte) {
-  const float* prob_data=prob_.data();
-  const float* label=src_fea->data();
-  float* dest_grad_data=dest_grad->mutable_data();
-  memcpy(dest_grad_data, prob_data, prob_.length()*sizeof(float));
-  int record_length=dest_grad->record_length();
-  float loss=0;
-  for(int i=0;i<dest_grad->num();i++){
-    int k=static_cast<int>(label[i]);
-    dest_grad_data[i*record_length+k]-=1.f;
-    loss+=-log(std::max(prob_data[i*record_length+k], FLT_MIN));
+void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  VLOG(3)<<name_;
+  float *data = src.dptr;
+  float *prob = prob_.dptr;
+  for (int i = 0; i < num_; i++) {
+    float mmax = data[0];
+    float sum = 0.0f;
+    for (int j = 1; j < dim_; j++)
+      if (mmax < data[j]) mmax = data[j];
+    for (int j = 0; j < dim_; j++) {
+      prob[j] = std::exp(data[j] - mmax);
+      sum += prob[j];
+    }
+    for (int j = 0; j < dim_; j++)
+      prob[j] /= sum;
+    data += dim_;
+    prob += dim_;
   }
+  CHECK_EQ(data-src.dptr, src.length());
+  CHECK_EQ(prob-prob_.dptr, prob_.length());
+
+}
+
+void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,
+                               const Blob &dest_fea, Blob *dest_grad,
+                               bool overwirte) {
+  VLOG(3)<<name_;
+  float *dest = dest_grad->dptr;
+  const float *label = src_fea.dptr;
+  const float *prob = prob_.dptr;
+  float loss = 0;
+  for(int i=0;i<prob_.length();i++)
+    dest[i]=prob[i];
+  for (int i = 0; i < num_; i++) {
+    int k = static_cast<int>(label[i]);
+    dest[i * dim_ + k] -= 1.f;
+    loss += -log(std::max(prob[i * dim_ + k], FLT_MIN));
+  }
+  for(int i=0;i<prob_.length();i++)
+    dest[i]/=num_;
 }
 }  // namespace lapis

@@ -1,98 +1,94 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-23 22:14
 
+#include <glog/logging.h>
+
 #include "model/lrn_edge.h"
+#include "mshadow/tensor.h"
+
 namespace lapis {
 void LRNEdge:: Init(const EdgeProto &proto,
-                 const std::map<std::string, Layer *> &layer_map) {
+                    const std::map<std::string, Layer *> &layer_map) {
   Edge::Init(proto, layer_map);
-  local_size_=proto.local_size();
-  pre_pad_=(local_size_-1)/2;
-  alpha_=proto.alpha();
-  beta_=proto.beta();
+  local_size_ = proto.local_size();
+  pre_pad_ = (local_size_ - 1) / 2;
+  alpha_ = proto.alpha();
+  beta_ = proto.beta();
+  knorm_=proto.knorm();
 }
 
 void LRNEdge::Setup(bool set_param) {
-  Blob* b=bottom_->feature(this);
-  num_=b->num();
-  channels_=b->channels();
-  height_=b->height();
-  width_=b->width();
-  pad_square_.Reshape(1, channels_+local_size_-1, height_, width_);
-  pad_grad_.Reshape(1, channels_+local_size_-1, height_, width_);
-  accum_fea_.Reshape(num_, channels_, height_, width_);
+  Blob &b = bottom_->feature(this);
+  num_ = b.num();
+  channels_ = b.channels();
+  height_ = b.height();
+  width_ = b.width();
+  pad_tmp_.Resize(1,channels_ + local_size_ - 1,1, height_ * width_);
+  accum_fea_.Resize( num_, channels_,1, height_ * width_);
+  accum_grad_.Resize(1,1,1,height_ * width_);
+
+  VLOG(2)<<"padded image shape "<<pad_tmp_.tostring();
+  VLOG(2)<<"accum fea shape "<<accum_fea_.tostring();
+  VLOG(2)<<"accum grad shape "<<accum_grad_.tostring();
 }
-void LRNEdge::Forward(const Blob *src, Blob *dest, bool overwrite) {
-  int record_length=channels_*height_*width_;
-  int length=height_*width_;
-  float alpha_over_size=alpha_/local_size_;
-  AVec pad_square_vec(pad_square_.mutable_data(), pad_square_.length());
-  AVec accum_fea_vec(accum_fea_.mutable_data(), accum_fea_.length());
-  accum_fea_vec.setOnes();
-  AVec src_fea_vec(src->offset(0), record_length);
-  AMat pad_square_mat(pad_square_.mutable_data(), local_size_, length);;
-  for(int n=0;n<num_;n++) {
-    new (&pad_square_vec)AVec(pad_square_.offset(0, pre_pad_), record_length);
-    new (&src_fea_vec)AVec(src->offset(n), record_length);
-    pad_square_vec=src_fea_vec.square(); //ai^2
-
-    new (&accum_fea_vec)AVec(accum_fea_.offset(n),length);
-    accum_fea_vec+=pad_square_mat.colwise().sum()*alpha_over_size; //*alpha
-
-    for (int c=1;c<channels_;c++){
-      memcpy(accum_fea_.offset(n,c), accum_fea_.offset(n,c-1), length*sizeof(float));
-      new (&pad_square_vec)AVec(pad_square_.offset(0, c+local_size_-1), length);
-      new (&accum_fea_vec)AVec(accum_fea_.offset(n,c), length);
-      accum_fea_vec+=pad_square_vec*alpha_over_size;
-      new (&pad_square_vec)AVec(pad_square_.offset(0,c-1), length);
-      accum_fea_vec-=pad_square_vec*alpha_over_size;
-    }
+void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  VLOG(3)<<name_;
+  float alpha_over_size = alpha_ / local_size_;
+  Tensor2 pad_square(pad_tmp_.dptr,
+                     Shape2(channels_ + local_size_ - 1,height_ * width_));
+  Tensor3 accum_fea3(accum_fea_.dptr,
+                    Shape3( num_, channels_,height_ * width_));
+  accum_fea3 = knorm_;
+  Tensor3 src3(src.dptr, Shape3(num_, channels_, height_ * width_));
+  for (int n = 0; n < num_; n++) {
+    pad_square.Slice(pre_pad_, pre_pad_ + channels_) =
+      mshadow::expr::F<mshadow::op::square>(src3[n]) * alpha_over_size; //ai^2
+    Tensor2 accum_fea2= accum_fea3[n];
+    accum_fea2[0] += sum_rows(pad_square.Slice(0, local_size_));
+    for (int c = 1; c < channels_; c++)
+      accum_fea2[c] += accum_fea2[c - 1] + pad_square[c + local_size_ - 1] -
+                      pad_square[c - 1];
   }
-  new (&accum_fea_vec)AVec(accum_fea_.mutable_data(), record_length);
-  new (&src_fea_vec)AVec(src->mutable_data(), record_length);
-  AVec dest_fea_vec(dest->mutable_data(), record_length);
-  dest_fea_vec=accum_fea_vec.pow(-beta_)*src_fea_vec; //ai*xi^(-beta)
+  Tensor3 dest3(dest->dptr, Shape3(num_, channels_, height_ * width_));
+  dest3 = mshadow::expr::F<mshadow::op::power>(accum_fea3, -beta_) * src3;
 }
 
-void LRNEdge::Backward(const Blob *src_fea, const Blob *src_grad,
-                        const Blob *dest_fea, Blob *dest_grad,
-                        bool overwrite) {
-  int inverse_pre_pad=local_size_-(local_size_+1)/2;
-  int record_length=channels_*height_*width_;
-  int length=height_*width_;
-  float factor=2.*alpha_*beta_/local_size_;
+void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
+                       const Blob &dest_fea, Blob *dest_grad,
+                       bool overwrite) {
+  VLOG(3)<<name_;
+  int inverse_pre_pad = local_size_ - (local_size_ + 1) / 2;
+  float factor = -2.*alpha_ * beta_ / local_size_;
 
-  AVec src_grad_vec(src_grad->mutable_data(), src_grad->length());
-  AVec dest_grad_vec(dest_grad->mutable_data(), dest_grad->length());
-  AVec accum_fea_vec(accum_fea_.mutable_data(), accum_fea_.length());
-  dest_grad_vec=accum_fea_vec.pow(-beta_)*src_grad_vec;
-  AVec dest_fea_vec(dest_fea->mutable_data(), dest_fea->length());
-  EigenAVector grad_vec(length);
-  AVec pad_grad_vec(pad_grad_.offset(0, inverse_pre_pad), record_length);
-  AVec src_fea_vec(src_fea->offset(0), record_length);
-  AMat pad_grad_mat(pad_grad_.mutable_data(), local_size_-1, length);
-  for(int n=0;n<num_;n++){
-    new (&pad_grad_vec)AVec(pad_grad_.offset(0, inverse_pre_pad), record_length);
-    new (&src_fea_vec)AVec(src_fea->offset(n), record_length);
-    new (&src_grad_vec)AVec(src_grad->offset(n), record_length);
-    new (&accum_fea_vec)AVec(accum_fea_.offset(n), record_length);
-    pad_grad_vec=src_grad_vec*src_fea_vec/accum_fea_vec; //src_grad*b_i/x_i
+  Tensor3 accum_fea(accum_fea_.dptr, Shape3(num_, channels_,height_ * width_));
+  Tensor3 src_grad3(src_grad.dptr, Shape3(num_,channels_,height_ * width_));
+  Tensor3 dest_grad3(dest_grad->dptr, Shape3(num_, channels_, height_ * width_));
+  dest_grad3 = mshadow::expr::F<mshadow::op::power>(accum_fea, -beta_)
+    * src_grad3; // the first part, 1/x_i^beta
+
+  Tensor1 accum_grad(accum_grad_.dptr, Shape1(height_ * width_));
+  Tensor2 pad_grad(pad_tmp_.dptr,
+                   Shape2( channels_ + local_size_ - 1,height_ * width_));
+  Tensor3 src_fea3(src_fea.dptr, Shape3(num_, channels_, height_ * width_));
+  for (int n = 0; n < num_; n++) {
+    Tensor2 src_fea2 = src_fea3[n];
+    pad_grad.Slice(inverse_pre_pad, inverse_pre_pad + channels_) =
+      src_grad3[n] * src_fea3[n] / accum_fea[n]; //src_grad*b_i/x_i
+    accum_grad = mshadow::expr::sum_rows(pad_grad.Slice(0, local_size_ - 1));
     // TODO(wangwei) use colwise operation instead of for loop
-    grad_vec=pad_grad_mat.colwise().sum();
-    for (int c=0;c<channels_;c++) {
-      new (&pad_grad_vec)AVec(pad_grad_.offset(0,c+local_size_-1), length);
-      grad_vec+=pad_grad_vec;
-      new (&dest_fea_vec)AVec(dest_fea->offset(n,c), length);
-      new (&dest_grad_vec)AVec(dest_grad->offset(n,c), length);
-      dest_grad_vec+=grad_vec*dest_fea_vec*factor; // *ai*alpha*beta*2
-      new (&pad_grad_vec)AVec(pad_grad_.offset(0,c), length);
-      grad_vec-=pad_grad_vec;
+    Tensor2 dest_grad2 = dest_grad3[n];
+    for (int c = 0; c < channels_; c++) {
+      accum_grad += pad_grad[c + local_size_ - 1];
+      // +src_grad*factor*b_i*a_j/x_i
+      dest_grad2[c] += src_fea2[c] * accum_grad * factor;
+      accum_grad -= pad_grad[c];
+      // *ai*alpha*beta*2
     }
   }
 }
 
-void LRNEdge::SetupTopBlob(Blob* blob) {
-  blob->Reshape(num_,channels_,height_, width_);
+void LRNEdge::SetupTopBlob(Blob *blob) {
+  blob->Resize(num_, channels_, height_, width_);
 }
 
 }  // namespace lapis

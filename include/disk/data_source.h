@@ -7,7 +7,9 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include "model/blob.h"
+#include <functional>
+
+#include "model/lapis.h"
 #include "proto/model.pb.h"
 
 
@@ -21,6 +23,7 @@ typedef std::vector<std::string> StringVec;
  */
 class DataSource {
  public:
+  virtual ~DataSource(){}
   virtual void Init(const DataSourceProto &ds_proto);
   virtual void ToProto(DataSourceProto *ds_proto);
   /**
@@ -42,13 +45,13 @@ class DataSource {
    * @param keys it specifies the order of records to read.
    * @return the keys of records which specifies the order records read.
    */
-  virtual const std::shared_ptr<StringVec> &LoadData(
+  virtual const std::shared_ptr<StringVec> LoadData(
     const std::shared_ptr<StringVec>  &keys) = 0;
 
   /**
    * Return the identifier of the DataSource
+  virtual const std::string &type() = 0;
    */
-  virtual const std::string &id() = 0;
 
   /**
    * Return the number of channels, e.g., 3 for rgb data
@@ -129,7 +132,7 @@ class DataSourceFactory {
    * Static method to get instance of this factory, there should be only one
    * instance of this factory.
    */
-  static DataSourceFactory *Instance();
+  static std::shared_ptr<DataSourceFactory> Instance();
 
   /**
    * Register user defined DataSource, i.e., add it with its identifier (the
@@ -149,9 +152,10 @@ class DataSourceFactory {
 
  private:
   //! To avoid creating multiple instances of this factory in the program.
-  DataSourceFactory() {}
+  DataSourceFactory();
   //! Map from DataSource identifier to creating function.
   std::map<const std::string, std::function<DataSource*(void)>> ds_map_;
+  static std::shared_ptr<DataSourceFactory> instance_;
 };
 
 }  // namespace lapis

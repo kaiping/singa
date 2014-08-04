@@ -11,8 +11,7 @@
 #include <random>
 
 #include "proto/model.pb.h"
-#include "utils/lapis.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 
 // Base paramter class.
 // TODO(Jingyang) define split/partition function.
@@ -33,51 +32,38 @@ class Param {
   /**
    * Return const mem address for the content of this parameter
    */
-  const float *content() const {
-    return content_.data();
+  const Blob &content() {
+    return content_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  float *mutable_content() const {
-    return content_.mutable_data();
+  Blob &mutable_content() {
+    return content_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const float *gradient() const {
-    return grad_.data();
+  const Blob &gradient() {
+    return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  float *mutable_gradient() const {
-    return grad_.mutable_data();
+  Blob &mutable_gradient() {
+    return grad_;
   }
   /**
    * Return const mem address for the history gradient of this parameter
    */
-  const float *history() const {
-    return history_grad_.data();
+  const Blob &history() {
+    return history_grad_;
   }
   /**
    * Return mem address for the history gradient of this parameter
    */
-  float *mutable_history() const {
-    return history_grad_.mutable_data();
-  }
-
-  /**
-   * Return num of rows for matrix parameters
-   */
-  const int height() {
-    return content_.height();
-  }
-  /**
-   * Return num of columns for matrix parameters
-   */
-  const int width() {
-    return content_.width();
+  Blob &mutable_history() {
+    return history_grad_;
   }
   /**
    * Return num of floats for this (vector) parameter
@@ -85,8 +71,12 @@ class Param {
   const int length() {
     return content_.length();
   }
-  int id() { return id_;}
-  void set_id(int id) {id_=id;}
+  int id() {
+    return id_;
+  }
+  void set_id(int id) {
+    id_ = id;
+  }
 
   float momentum() {
     return momentum_;
@@ -106,12 +96,12 @@ class Param {
    * @param factor the generated data is multiplied to this number
    * @param val float array to store the generated data
    */
-  void FillUniformData(int length, float low, float high, float factor, float *val);
+  void FillUniformData(float low, float high, float factor);
   /**
    * Similar to ::FillGaussainData(), except the data are generated from
    * Gaussain distribution.
    */
-  void FillGaussainData(int length, float mean, float std, float factor, float *val);
+  void FillGaussainData(float mean, float std, float factor);
 
   /**
    * name of the parameter used to identify the ParamProto configed in

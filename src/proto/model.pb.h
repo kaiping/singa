@@ -35,10 +35,9 @@ void protobuf_AssignDesc_model_2eproto();
 void protobuf_ShutdownFile_model_2eproto();
 
 class DataSourceProto;
-class RGBDatum;
 class ParamProto;
 class EdgeProto;
-class BlobProto;
+class MeanProto;
 class LayerProto;
 class NetProto;
 class SGDProto;
@@ -199,19 +198,19 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::std::string* release_name();
   inline void set_allocated_name(::std::string* name);
 
-  // required string id = 2;
-  inline bool has_id() const;
-  inline void clear_id();
-  static const int kIdFieldNumber = 2;
-  inline const ::std::string& id() const;
-  inline void set_id(const ::std::string& value);
-  inline void set_id(const char* value);
-  inline void set_id(const char* value, size_t size);
-  inline ::std::string* mutable_id();
-  inline ::std::string* release_id();
-  inline void set_allocated_id(::std::string* id);
+  // required string type = 2;
+  inline bool has_type() const;
+  inline void clear_type();
+  static const int kTypeFieldNumber = 2;
+  inline const ::std::string& type() const;
+  inline void set_type(const ::std::string& value);
+  inline void set_type(const char* value);
+  inline void set_type(const char* value, size_t size);
+  inline ::std::string* mutable_type();
+  inline ::std::string* release_type();
+  inline void set_allocated_type(::std::string* type);
 
-  // optional string path = 3;
+  // required string path = 3;
   inline bool has_path() const;
   inline void clear_path();
   static const int kPathFieldNumber = 3;
@@ -230,7 +229,7 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 size() const;
   inline void set_size(::google::protobuf::int64 value);
 
-  // optional int32 channels = 6 [default = 1];
+  // optional int32 channels = 6 [default = 3];
   inline bool has_channels() const;
   inline void clear_channels();
   static const int kChannelsFieldNumber = 6;
@@ -258,12 +257,24 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int64 offset() const;
   inline void set_offset(::google::protobuf::int64 value);
 
+  // optional string mean_file = 10;
+  inline bool has_mean_file() const;
+  inline void clear_mean_file();
+  static const int kMeanFileFieldNumber = 10;
+  inline const ::std::string& mean_file() const;
+  inline void set_mean_file(const ::std::string& value);
+  inline void set_mean_file(const char* value);
+  inline void set_mean_file(const char* value, size_t size);
+  inline ::std::string* mutable_mean_file();
+  inline ::std::string* release_mean_file();
+  inline void set_allocated_mean_file(::std::string* mean_file);
+
   // @@protoc_insertion_point(class_scope:lapis.DataSourceProto)
  private:
   inline void set_has_name();
   inline void clear_has_name();
-  inline void set_has_id();
-  inline void clear_has_id();
+  inline void set_has_type();
+  inline void clear_has_type();
   inline void set_has_path();
   inline void clear_has_path();
   inline void set_has_size();
@@ -276,20 +287,23 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_width();
   inline void set_has_offset();
   inline void clear_has_offset();
+  inline void set_has_mean_file();
+  inline void clear_has_mean_file();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
-  ::std::string* id_;
+  ::std::string* type_;
   ::std::string* path_;
   ::google::protobuf::int64 size_;
   ::google::protobuf::int32 channels_;
   ::google::protobuf::int32 height_;
   ::google::protobuf::int64 offset_;
+  ::std::string* mean_file_;
   ::google::protobuf::int32 width_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -297,123 +311,6 @@ class DataSourceProto : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static DataSourceProto* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class RGBDatum : public ::google::protobuf::Message {
- public:
-  RGBDatum();
-  virtual ~RGBDatum();
-
-  RGBDatum(const RGBDatum& from);
-
-  inline RGBDatum& operator=(const RGBDatum& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const RGBDatum& default_instance();
-
-  void Swap(RGBDatum* other);
-
-  // implements Message ----------------------------------------------
-
-  RGBDatum* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const RGBDatum& from);
-  void MergeFrom(const RGBDatum& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional int32 channels = 1 [default = 3];
-  inline bool has_channels() const;
-  inline void clear_channels();
-  static const int kChannelsFieldNumber = 1;
-  inline ::google::protobuf::int32 channels() const;
-  inline void set_channels(::google::protobuf::int32 value);
-
-  // optional int32 height = 2 [default = 0];
-  inline bool has_height() const;
-  inline void clear_height();
-  static const int kHeightFieldNumber = 2;
-  inline ::google::protobuf::int32 height() const;
-  inline void set_height(::google::protobuf::int32 value);
-
-  // optional int32 width = 3 [default = 0];
-  inline bool has_width() const;
-  inline void clear_width();
-  static const int kWidthFieldNumber = 3;
-  inline ::google::protobuf::int32 width() const;
-  inline void set_width(::google::protobuf::int32 value);
-
-  // required string content = 4;
-  inline bool has_content() const;
-  inline void clear_content();
-  static const int kContentFieldNumber = 4;
-  inline const ::std::string& content() const;
-  inline void set_content(const ::std::string& value);
-  inline void set_content(const char* value);
-  inline void set_content(const char* value, size_t size);
-  inline ::std::string* mutable_content();
-  inline ::std::string* release_content();
-  inline void set_allocated_content(::std::string* content);
-
-  // @@protoc_insertion_point(class_scope:lapis.RGBDatum)
- private:
-  inline void set_has_channels();
-  inline void clear_has_channels();
-  inline void set_has_height();
-  inline void clear_has_height();
-  inline void set_has_width();
-  inline void clear_has_width();
-  inline void set_has_content();
-  inline void clear_has_content();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::int32 channels_;
-  ::google::protobuf::int32 height_;
-  ::std::string* content_;
-  ::google::protobuf::int32 width_;
-
-  mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
-
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static RGBDatum* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -531,7 +428,7 @@ class ParamProto : public ::google::protobuf::Message {
   inline ::lapis::ParamProto_InitMethod init_method() const;
   inline void set_init_method(::lapis::ParamProto_InitMethod value);
 
-  // optional float value = 4 [default = 0];
+  // optional float value = 4 [default = 1];
   inline bool has_value() const;
   inline void clear_value();
   static const int kValueFieldNumber = 4;
@@ -566,21 +463,21 @@ class ParamProto : public ::google::protobuf::Message {
   inline float std() const;
   inline void set_std(float value);
 
-  // optional float momentum_multiplier = 9;
+  // optional float momentum_multiplier = 9 [default = 1];
   inline bool has_momentum_multiplier() const;
   inline void clear_momentum_multiplier();
   static const int kMomentumMultiplierFieldNumber = 9;
   inline float momentum_multiplier() const;
   inline void set_momentum_multiplier(float value);
 
-  // optional float learning_rate_multiplier = 10;
+  // optional float learning_rate_multiplier = 10 [default = 1];
   inline bool has_learning_rate_multiplier() const;
   inline void clear_learning_rate_multiplier();
   static const int kLearningRateMultiplierFieldNumber = 10;
   inline float learning_rate_multiplier() const;
   inline void set_learning_rate_multiplier(float value);
 
-  // optional float weight_decay_multiplier = 11;
+  // optional float weight_decay_multiplier = 11 [default = 1];
   inline bool has_weight_decay_multiplier() const;
   inline void clear_weight_decay_multiplier();
   static const int kWeightDecayMultiplierFieldNumber = 11;
@@ -823,45 +720,59 @@ class EdgeProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 kernel_size() const;
   inline void set_kernel_size(::google::protobuf::int32 value);
 
-  // optional int32 stride = 9;
+  // optional int32 stride = 9 [default = 1];
   inline bool has_stride() const;
   inline void clear_stride();
   static const int kStrideFieldNumber = 9;
   inline ::google::protobuf::int32 stride() const;
   inline void set_stride(::google::protobuf::int32 value);
 
-  // optional int32 pad = 10;
+  // optional int32 pad = 10 [default = 0];
   inline bool has_pad() const;
   inline void clear_pad();
   static const int kPadFieldNumber = 10;
   inline ::google::protobuf::int32 pad() const;
   inline void set_pad(::google::protobuf::int32 value);
 
-  // optional float alpha = 11;
+  // optional int32 num_groups = 11 [default = 1];
+  inline bool has_num_groups() const;
+  inline void clear_num_groups();
+  static const int kNumGroupsFieldNumber = 11;
+  inline ::google::protobuf::int32 num_groups() const;
+  inline void set_num_groups(::google::protobuf::int32 value);
+
+  // optional float alpha = 12;
   inline bool has_alpha() const;
   inline void clear_alpha();
-  static const int kAlphaFieldNumber = 11;
+  static const int kAlphaFieldNumber = 12;
   inline float alpha() const;
   inline void set_alpha(float value);
 
-  // optional float beta = 12;
+  // optional float beta = 13;
   inline bool has_beta() const;
   inline void clear_beta();
-  static const int kBetaFieldNumber = 12;
+  static const int kBetaFieldNumber = 13;
   inline float beta() const;
   inline void set_beta(float value);
 
-  // optional int32 local_size = 13;
+  // optional float knorm = 14 [default = 1];
+  inline bool has_knorm() const;
+  inline void clear_knorm();
+  static const int kKnormFieldNumber = 14;
+  inline float knorm() const;
+  inline void set_knorm(float value);
+
+  // optional int32 local_size = 15;
   inline bool has_local_size() const;
   inline void clear_local_size();
-  static const int kLocalSizeFieldNumber = 13;
+  static const int kLocalSizeFieldNumber = 15;
   inline ::google::protobuf::int32 local_size() const;
   inline void set_local_size(::google::protobuf::int32 value);
 
-  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+  // optional .lapis.EdgeProto.PoolingMethod pooling_method = 16;
   inline bool has_pooling_method() const;
   inline void clear_pooling_method();
-  static const int kPoolingMethodFieldNumber = 14;
+  static const int kPoolingMethodFieldNumber = 16;
   inline ::lapis::EdgeProto_PoolingMethod pooling_method() const;
   inline void set_pooling_method(::lapis::EdgeProto_PoolingMethod value);
 
@@ -885,10 +796,14 @@ class EdgeProto : public ::google::protobuf::Message {
   inline void clear_has_stride();
   inline void set_has_pad();
   inline void clear_has_pad();
+  inline void set_has_num_groups();
+  inline void clear_has_num_groups();
   inline void set_has_alpha();
   inline void clear_has_alpha();
   inline void set_has_beta();
   inline void clear_has_beta();
+  inline void set_has_knorm();
+  inline void clear_has_knorm();
   inline void set_has_local_size();
   inline void clear_has_local_size();
   inline void set_has_pooling_method();
@@ -906,13 +821,15 @@ class EdgeProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 kernel_size_;
   ::google::protobuf::int32 stride_;
   ::google::protobuf::int32 pad_;
+  ::google::protobuf::int32 num_groups_;
   float alpha_;
   float beta_;
+  float knorm_;
   ::google::protobuf::int32 local_size_;
   int pooling_method_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(14 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(16 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -923,14 +840,14 @@ class EdgeProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class BlobProto : public ::google::protobuf::Message {
+class MeanProto : public ::google::protobuf::Message {
  public:
-  BlobProto();
-  virtual ~BlobProto();
+  MeanProto();
+  virtual ~MeanProto();
 
-  BlobProto(const BlobProto& from);
+  MeanProto(const MeanProto& from);
 
-  inline BlobProto& operator=(const BlobProto& from) {
+  inline MeanProto& operator=(const MeanProto& from) {
     CopyFrom(from);
     return *this;
   }
@@ -944,17 +861,17 @@ class BlobProto : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const BlobProto& default_instance();
+  static const MeanProto& default_instance();
 
-  void Swap(BlobProto* other);
+  void Swap(MeanProto* other);
 
   // implements Message ----------------------------------------------
 
-  BlobProto* New() const;
+  MeanProto* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const BlobProto& from);
-  void MergeFrom(const BlobProto& from);
+  void CopyFrom(const MeanProto& from);
+  void MergeFrom(const MeanProto& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -977,21 +894,89 @@ class BlobProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // @@protoc_insertion_point(class_scope:lapis.BlobProto)
+  // optional int32 num = 1;
+  inline bool has_num() const;
+  inline void clear_num();
+  static const int kNumFieldNumber = 1;
+  inline ::google::protobuf::int32 num() const;
+  inline void set_num(::google::protobuf::int32 value);
+
+  // optional int32 channels = 2;
+  inline bool has_channels() const;
+  inline void clear_channels();
+  static const int kChannelsFieldNumber = 2;
+  inline ::google::protobuf::int32 channels() const;
+  inline void set_channels(::google::protobuf::int32 value);
+
+  // optional int32 height = 3;
+  inline bool has_height() const;
+  inline void clear_height();
+  static const int kHeightFieldNumber = 3;
+  inline ::google::protobuf::int32 height() const;
+  inline void set_height(::google::protobuf::int32 value);
+
+  // optional int32 width = 4;
+  inline bool has_width() const;
+  inline void clear_width();
+  static const int kWidthFieldNumber = 4;
+  inline ::google::protobuf::int32 width() const;
+  inline void set_width(::google::protobuf::int32 value);
+
+  // repeated float data = 5 [packed = true];
+  inline int data_size() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 5;
+  inline float data(int index) const;
+  inline void set_data(int index, float value);
+  inline void add_data(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      data() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_data();
+
+  // repeated float diff = 6 [packed = true];
+  inline int diff_size() const;
+  inline void clear_diff();
+  static const int kDiffFieldNumber = 6;
+  inline float diff(int index) const;
+  inline void set_diff(int index, float value);
+  inline void add_diff(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      diff() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_diff();
+
+  // @@protoc_insertion_point(class_scope:lapis.MeanProto)
  private:
+  inline void set_has_num();
+  inline void clear_has_num();
+  inline void set_has_channels();
+  inline void clear_has_channels();
+  inline void set_has_height();
+  inline void clear_has_height();
+  inline void set_has_width();
+  inline void clear_has_width();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
+  ::google::protobuf::int32 num_;
+  ::google::protobuf::int32 channels_;
+  ::google::protobuf::int32 height_;
+  ::google::protobuf::int32 width_;
+  ::google::protobuf::RepeatedField< float > data_;
+  mutable int _data_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > diff_;
+  mutable int _diff_cached_byte_size_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[1];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static BlobProto* default_instance_;
+  static MeanProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1092,6 +1077,20 @@ class LayerProto : public ::google::protobuf::Message {
   inline float drop_prob() const;
   inline void set_drop_prob(float value);
 
+  // optional int32 cropsize = 9;
+  inline bool has_cropsize() const;
+  inline void clear_cropsize();
+  static const int kCropsizeFieldNumber = 9;
+  inline ::google::protobuf::int32 cropsize() const;
+  inline void set_cropsize(::google::protobuf::int32 value);
+
+  // optional bool mirror = 10;
+  inline bool has_mirror() const;
+  inline void clear_mirror();
+  static const int kMirrorFieldNumber = 10;
+  inline bool mirror() const;
+  inline void set_mirror(bool value);
+
   // @@protoc_insertion_point(class_scope:lapis.LayerProto)
  private:
   inline void set_has_name();
@@ -1102,6 +1101,10 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_data_source();
   inline void set_has_drop_prob();
   inline void clear_has_drop_prob();
+  inline void set_has_cropsize();
+  inline void clear_has_cropsize();
+  inline void set_has_mirror();
+  inline void clear_has_mirror();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -1109,9 +1112,11 @@ class LayerProto : public ::google::protobuf::Message {
   ::std::string* type_;
   ::std::string* data_source_;
   float drop_prob_;
+  ::google::protobuf::int32 cropsize_;
+  bool mirror_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1322,26 +1327,26 @@ class SGDProto : public ::google::protobuf::Message {
   inline float base_weight_decay() const;
   inline void set_base_weight_decay(float value);
 
-  // optional float final_momentum = 4;
-  inline bool has_final_momentum() const;
-  inline void clear_final_momentum();
-  static const int kFinalMomentumFieldNumber = 4;
-  inline float final_momentum() const;
-  inline void set_final_momentum(float value);
+  // optional float momentum_x = 4;
+  inline bool has_momentum_x() const;
+  inline void clear_momentum_x();
+  static const int kMomentumXFieldNumber = 4;
+  inline float momentum_x() const;
+  inline void set_momentum_x(float value);
 
-  // optional float final_learning_rate = 5;
-  inline bool has_final_learning_rate() const;
-  inline void clear_final_learning_rate();
-  static const int kFinalLearningRateFieldNumber = 5;
-  inline float final_learning_rate() const;
-  inline void set_final_learning_rate(float value);
+  // optional float learning_rate_x = 5;
+  inline bool has_learning_rate_x() const;
+  inline void clear_learning_rate_x();
+  static const int kLearningRateXFieldNumber = 5;
+  inline float learning_rate_x() const;
+  inline void set_learning_rate_x(float value);
 
-  // optional float final_weight_decay = 6;
-  inline bool has_final_weight_decay() const;
-  inline void clear_final_weight_decay();
-  static const int kFinalWeightDecayFieldNumber = 6;
-  inline float final_weight_decay() const;
-  inline void set_final_weight_decay(float value);
+  // optional float weight_decay_x = 6;
+  inline bool has_weight_decay_x() const;
+  inline void clear_weight_decay_x();
+  static const int kWeightDecayXFieldNumber = 6;
+  inline float weight_decay_x() const;
+  inline void set_weight_decay_x(float value);
 
   // optional int32 learning_rate_change_steps = 7;
   inline bool has_learning_rate_change_steps() const;
@@ -1421,12 +1426,12 @@ class SGDProto : public ::google::protobuf::Message {
   inline void clear_has_base_momentum();
   inline void set_has_base_weight_decay();
   inline void clear_has_base_weight_decay();
-  inline void set_has_final_momentum();
-  inline void clear_has_final_momentum();
-  inline void set_has_final_learning_rate();
-  inline void clear_has_final_learning_rate();
-  inline void set_has_final_weight_decay();
-  inline void clear_has_final_weight_decay();
+  inline void set_has_momentum_x();
+  inline void clear_has_momentum_x();
+  inline void set_has_learning_rate_x();
+  inline void clear_has_learning_rate_x();
+  inline void set_has_weight_decay_x();
+  inline void clear_has_weight_decay_x();
   inline void set_has_learning_rate_change_steps();
   inline void clear_has_learning_rate_change_steps();
   inline void set_has_momentum_change_steps();
@@ -1453,9 +1458,9 @@ class SGDProto : public ::google::protobuf::Message {
   float base_learning_rate_;
   float base_momentum_;
   float base_weight_decay_;
-  float final_momentum_;
-  float final_learning_rate_;
-  float final_weight_decay_;
+  float momentum_x_;
+  float learning_rate_x_;
+  float weight_decay_x_;
   ::google::protobuf::int32 learning_rate_change_steps_;
   ::google::protobuf::int32 momentum_change_steps_;
   ::google::protobuf::int32 weight_decay_change_steps_;
@@ -2167,77 +2172,77 @@ inline void DataSourceProto::set_allocated_name(::std::string* name) {
   }
 }
 
-// required string id = 2;
-inline bool DataSourceProto::has_id() const {
+// required string type = 2;
+inline bool DataSourceProto::has_type() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void DataSourceProto::set_has_id() {
+inline void DataSourceProto::set_has_type() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void DataSourceProto::clear_has_id() {
+inline void DataSourceProto::clear_has_type() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void DataSourceProto::clear_id() {
-  if (id_ != &::google::protobuf::internal::kEmptyString) {
-    id_->clear();
+inline void DataSourceProto::clear_type() {
+  if (type_ != &::google::protobuf::internal::kEmptyString) {
+    type_->clear();
   }
-  clear_has_id();
+  clear_has_type();
 }
-inline const ::std::string& DataSourceProto::id() const {
-  return *id_;
+inline const ::std::string& DataSourceProto::type() const {
+  return *type_;
 }
-inline void DataSourceProto::set_id(const ::std::string& value) {
-  set_has_id();
-  if (id_ == &::google::protobuf::internal::kEmptyString) {
-    id_ = new ::std::string;
+inline void DataSourceProto::set_type(const ::std::string& value) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::kEmptyString) {
+    type_ = new ::std::string;
   }
-  id_->assign(value);
+  type_->assign(value);
 }
-inline void DataSourceProto::set_id(const char* value) {
-  set_has_id();
-  if (id_ == &::google::protobuf::internal::kEmptyString) {
-    id_ = new ::std::string;
+inline void DataSourceProto::set_type(const char* value) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::kEmptyString) {
+    type_ = new ::std::string;
   }
-  id_->assign(value);
+  type_->assign(value);
 }
-inline void DataSourceProto::set_id(const char* value, size_t size) {
-  set_has_id();
-  if (id_ == &::google::protobuf::internal::kEmptyString) {
-    id_ = new ::std::string;
+inline void DataSourceProto::set_type(const char* value, size_t size) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::kEmptyString) {
+    type_ = new ::std::string;
   }
-  id_->assign(reinterpret_cast<const char*>(value), size);
+  type_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* DataSourceProto::mutable_id() {
-  set_has_id();
-  if (id_ == &::google::protobuf::internal::kEmptyString) {
-    id_ = new ::std::string;
+inline ::std::string* DataSourceProto::mutable_type() {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::kEmptyString) {
+    type_ = new ::std::string;
   }
-  return id_;
+  return type_;
 }
-inline ::std::string* DataSourceProto::release_id() {
-  clear_has_id();
-  if (id_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* DataSourceProto::release_type() {
+  clear_has_type();
+  if (type_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = id_;
-    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = type_;
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void DataSourceProto::set_allocated_id(::std::string* id) {
-  if (id_ != &::google::protobuf::internal::kEmptyString) {
-    delete id_;
+inline void DataSourceProto::set_allocated_type(::std::string* type) {
+  if (type_ != &::google::protobuf::internal::kEmptyString) {
+    delete type_;
   }
-  if (id) {
-    set_has_id();
-    id_ = id;
+  if (type) {
+    set_has_type();
+    type_ = type;
   } else {
-    clear_has_id();
-    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_type();
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
-// optional string path = 3;
+// required string path = 3;
 inline bool DataSourceProto::has_path() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -2329,7 +2334,7 @@ inline void DataSourceProto::set_size(::google::protobuf::int64 value) {
   size_ = value;
 }
 
-// optional int32 channels = 6 [default = 1];
+// optional int32 channels = 6 [default = 3];
 inline bool DataSourceProto::has_channels() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
@@ -2340,7 +2345,7 @@ inline void DataSourceProto::clear_has_channels() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void DataSourceProto::clear_channels() {
-  channels_ = 1;
+  channels_ = 3;
   clear_has_channels();
 }
 inline ::google::protobuf::int32 DataSourceProto::channels() const {
@@ -2417,143 +2422,73 @@ inline void DataSourceProto::set_offset(::google::protobuf::int64 value) {
   offset_ = value;
 }
 
-// -------------------------------------------------------------------
-
-// RGBDatum
-
-// optional int32 channels = 1 [default = 3];
-inline bool RGBDatum::has_channels() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
+// optional string mean_file = 10;
+inline bool DataSourceProto::has_mean_file() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
-inline void RGBDatum::set_has_channels() {
-  _has_bits_[0] |= 0x00000001u;
+inline void DataSourceProto::set_has_mean_file() {
+  _has_bits_[0] |= 0x00000100u;
 }
-inline void RGBDatum::clear_has_channels() {
-  _has_bits_[0] &= ~0x00000001u;
+inline void DataSourceProto::clear_has_mean_file() {
+  _has_bits_[0] &= ~0x00000100u;
 }
-inline void RGBDatum::clear_channels() {
-  channels_ = 3;
-  clear_has_channels();
-}
-inline ::google::protobuf::int32 RGBDatum::channels() const {
-  return channels_;
-}
-inline void RGBDatum::set_channels(::google::protobuf::int32 value) {
-  set_has_channels();
-  channels_ = value;
-}
-
-// optional int32 height = 2 [default = 0];
-inline bool RGBDatum::has_height() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void RGBDatum::set_has_height() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void RGBDatum::clear_has_height() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void RGBDatum::clear_height() {
-  height_ = 0;
-  clear_has_height();
-}
-inline ::google::protobuf::int32 RGBDatum::height() const {
-  return height_;
-}
-inline void RGBDatum::set_height(::google::protobuf::int32 value) {
-  set_has_height();
-  height_ = value;
-}
-
-// optional int32 width = 3 [default = 0];
-inline bool RGBDatum::has_width() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void RGBDatum::set_has_width() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void RGBDatum::clear_has_width() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void RGBDatum::clear_width() {
-  width_ = 0;
-  clear_has_width();
-}
-inline ::google::protobuf::int32 RGBDatum::width() const {
-  return width_;
-}
-inline void RGBDatum::set_width(::google::protobuf::int32 value) {
-  set_has_width();
-  width_ = value;
-}
-
-// required string content = 4;
-inline bool RGBDatum::has_content() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void RGBDatum::set_has_content() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void RGBDatum::clear_has_content() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void RGBDatum::clear_content() {
-  if (content_ != &::google::protobuf::internal::kEmptyString) {
-    content_->clear();
+inline void DataSourceProto::clear_mean_file() {
+  if (mean_file_ != &::google::protobuf::internal::kEmptyString) {
+    mean_file_->clear();
   }
-  clear_has_content();
+  clear_has_mean_file();
 }
-inline const ::std::string& RGBDatum::content() const {
-  return *content_;
+inline const ::std::string& DataSourceProto::mean_file() const {
+  return *mean_file_;
 }
-inline void RGBDatum::set_content(const ::std::string& value) {
-  set_has_content();
-  if (content_ == &::google::protobuf::internal::kEmptyString) {
-    content_ = new ::std::string;
+inline void DataSourceProto::set_mean_file(const ::std::string& value) {
+  set_has_mean_file();
+  if (mean_file_ == &::google::protobuf::internal::kEmptyString) {
+    mean_file_ = new ::std::string;
   }
-  content_->assign(value);
+  mean_file_->assign(value);
 }
-inline void RGBDatum::set_content(const char* value) {
-  set_has_content();
-  if (content_ == &::google::protobuf::internal::kEmptyString) {
-    content_ = new ::std::string;
+inline void DataSourceProto::set_mean_file(const char* value) {
+  set_has_mean_file();
+  if (mean_file_ == &::google::protobuf::internal::kEmptyString) {
+    mean_file_ = new ::std::string;
   }
-  content_->assign(value);
+  mean_file_->assign(value);
 }
-inline void RGBDatum::set_content(const char* value, size_t size) {
-  set_has_content();
-  if (content_ == &::google::protobuf::internal::kEmptyString) {
-    content_ = new ::std::string;
+inline void DataSourceProto::set_mean_file(const char* value, size_t size) {
+  set_has_mean_file();
+  if (mean_file_ == &::google::protobuf::internal::kEmptyString) {
+    mean_file_ = new ::std::string;
   }
-  content_->assign(reinterpret_cast<const char*>(value), size);
+  mean_file_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* RGBDatum::mutable_content() {
-  set_has_content();
-  if (content_ == &::google::protobuf::internal::kEmptyString) {
-    content_ = new ::std::string;
+inline ::std::string* DataSourceProto::mutable_mean_file() {
+  set_has_mean_file();
+  if (mean_file_ == &::google::protobuf::internal::kEmptyString) {
+    mean_file_ = new ::std::string;
   }
-  return content_;
+  return mean_file_;
 }
-inline ::std::string* RGBDatum::release_content() {
-  clear_has_content();
-  if (content_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* DataSourceProto::release_mean_file() {
+  clear_has_mean_file();
+  if (mean_file_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = content_;
-    content_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = mean_file_;
+    mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void RGBDatum::set_allocated_content(::std::string* content) {
-  if (content_ != &::google::protobuf::internal::kEmptyString) {
-    delete content_;
+inline void DataSourceProto::set_allocated_mean_file(::std::string* mean_file) {
+  if (mean_file_ != &::google::protobuf::internal::kEmptyString) {
+    delete mean_file_;
   }
-  if (content) {
-    set_has_content();
-    content_ = content;
+  if (mean_file) {
+    set_has_mean_file();
+    mean_file_ = mean_file;
   } else {
-    clear_has_content();
-    content_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_mean_file();
+    mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -2679,7 +2614,7 @@ inline void ParamProto::set_init_method(::lapis::ParamProto_InitMethod value) {
   init_method_ = value;
 }
 
-// optional float value = 4 [default = 0];
+// optional float value = 4 [default = 1];
 inline bool ParamProto::has_value() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -2690,7 +2625,7 @@ inline void ParamProto::clear_has_value() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void ParamProto::clear_value() {
-  value_ = 0;
+  value_ = 1;
   clear_has_value();
 }
 inline float ParamProto::value() const {
@@ -2789,7 +2724,7 @@ inline void ParamProto::set_std(float value) {
   std_ = value;
 }
 
-// optional float momentum_multiplier = 9;
+// optional float momentum_multiplier = 9 [default = 1];
 inline bool ParamProto::has_momentum_multiplier() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
@@ -2800,7 +2735,7 @@ inline void ParamProto::clear_has_momentum_multiplier() {
   _has_bits_[0] &= ~0x00000100u;
 }
 inline void ParamProto::clear_momentum_multiplier() {
-  momentum_multiplier_ = 0;
+  momentum_multiplier_ = 1;
   clear_has_momentum_multiplier();
 }
 inline float ParamProto::momentum_multiplier() const {
@@ -2811,7 +2746,7 @@ inline void ParamProto::set_momentum_multiplier(float value) {
   momentum_multiplier_ = value;
 }
 
-// optional float learning_rate_multiplier = 10;
+// optional float learning_rate_multiplier = 10 [default = 1];
 inline bool ParamProto::has_learning_rate_multiplier() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
@@ -2822,7 +2757,7 @@ inline void ParamProto::clear_has_learning_rate_multiplier() {
   _has_bits_[0] &= ~0x00000200u;
 }
 inline void ParamProto::clear_learning_rate_multiplier() {
-  learning_rate_multiplier_ = 0;
+  learning_rate_multiplier_ = 1;
   clear_has_learning_rate_multiplier();
 }
 inline float ParamProto::learning_rate_multiplier() const {
@@ -2833,7 +2768,7 @@ inline void ParamProto::set_learning_rate_multiplier(float value) {
   learning_rate_multiplier_ = value;
 }
 
-// optional float weight_decay_multiplier = 11;
+// optional float weight_decay_multiplier = 11 [default = 1];
 inline bool ParamProto::has_weight_decay_multiplier() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
@@ -2844,7 +2779,7 @@ inline void ParamProto::clear_has_weight_decay_multiplier() {
   _has_bits_[0] &= ~0x00000400u;
 }
 inline void ParamProto::clear_weight_decay_multiplier() {
-  weight_decay_multiplier_ = 0;
+  weight_decay_multiplier_ = 1;
   clear_has_weight_decay_multiplier();
 }
 inline float ParamProto::weight_decay_multiplier() const {
@@ -3280,7 +3215,7 @@ inline void EdgeProto::set_kernel_size(::google::protobuf::int32 value) {
   kernel_size_ = value;
 }
 
-// optional int32 stride = 9;
+// optional int32 stride = 9 [default = 1];
 inline bool EdgeProto::has_stride() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
@@ -3291,7 +3226,7 @@ inline void EdgeProto::clear_has_stride() {
   _has_bits_[0] &= ~0x00000100u;
 }
 inline void EdgeProto::clear_stride() {
-  stride_ = 0;
+  stride_ = 1;
   clear_has_stride();
 }
 inline ::google::protobuf::int32 EdgeProto::stride() const {
@@ -3302,7 +3237,7 @@ inline void EdgeProto::set_stride(::google::protobuf::int32 value) {
   stride_ = value;
 }
 
-// optional int32 pad = 10;
+// optional int32 pad = 10 [default = 0];
 inline bool EdgeProto::has_pad() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
@@ -3324,15 +3259,37 @@ inline void EdgeProto::set_pad(::google::protobuf::int32 value) {
   pad_ = value;
 }
 
-// optional float alpha = 11;
-inline bool EdgeProto::has_alpha() const {
+// optional int32 num_groups = 11 [default = 1];
+inline bool EdgeProto::has_num_groups() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void EdgeProto::set_has_alpha() {
+inline void EdgeProto::set_has_num_groups() {
   _has_bits_[0] |= 0x00000400u;
 }
-inline void EdgeProto::clear_has_alpha() {
+inline void EdgeProto::clear_has_num_groups() {
   _has_bits_[0] &= ~0x00000400u;
+}
+inline void EdgeProto::clear_num_groups() {
+  num_groups_ = 1;
+  clear_has_num_groups();
+}
+inline ::google::protobuf::int32 EdgeProto::num_groups() const {
+  return num_groups_;
+}
+inline void EdgeProto::set_num_groups(::google::protobuf::int32 value) {
+  set_has_num_groups();
+  num_groups_ = value;
+}
+
+// optional float alpha = 12;
+inline bool EdgeProto::has_alpha() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void EdgeProto::set_has_alpha() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void EdgeProto::clear_has_alpha() {
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void EdgeProto::clear_alpha() {
   alpha_ = 0;
@@ -3346,15 +3303,15 @@ inline void EdgeProto::set_alpha(float value) {
   alpha_ = value;
 }
 
-// optional float beta = 12;
+// optional float beta = 13;
 inline bool EdgeProto::has_beta() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
+  return (_has_bits_[0] & 0x00001000u) != 0;
 }
 inline void EdgeProto::set_has_beta() {
-  _has_bits_[0] |= 0x00000800u;
+  _has_bits_[0] |= 0x00001000u;
 }
 inline void EdgeProto::clear_has_beta() {
-  _has_bits_[0] &= ~0x00000800u;
+  _has_bits_[0] &= ~0x00001000u;
 }
 inline void EdgeProto::clear_beta() {
   beta_ = 0;
@@ -3368,15 +3325,37 @@ inline void EdgeProto::set_beta(float value) {
   beta_ = value;
 }
 
-// optional int32 local_size = 13;
+// optional float knorm = 14 [default = 1];
+inline bool EdgeProto::has_knorm() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void EdgeProto::set_has_knorm() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void EdgeProto::clear_has_knorm() {
+  _has_bits_[0] &= ~0x00002000u;
+}
+inline void EdgeProto::clear_knorm() {
+  knorm_ = 1;
+  clear_has_knorm();
+}
+inline float EdgeProto::knorm() const {
+  return knorm_;
+}
+inline void EdgeProto::set_knorm(float value) {
+  set_has_knorm();
+  knorm_ = value;
+}
+
+// optional int32 local_size = 15;
 inline bool EdgeProto::has_local_size() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00004000u) != 0;
 }
 inline void EdgeProto::set_has_local_size() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00004000u;
 }
 inline void EdgeProto::clear_has_local_size() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00004000u;
 }
 inline void EdgeProto::clear_local_size() {
   local_size_ = 0;
@@ -3390,15 +3369,15 @@ inline void EdgeProto::set_local_size(::google::protobuf::int32 value) {
   local_size_ = value;
 }
 
-// optional .lapis.EdgeProto.PoolingMethod pooling_method = 14;
+// optional .lapis.EdgeProto.PoolingMethod pooling_method = 16;
 inline bool EdgeProto::has_pooling_method() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
+  return (_has_bits_[0] & 0x00008000u) != 0;
 }
 inline void EdgeProto::set_has_pooling_method() {
-  _has_bits_[0] |= 0x00002000u;
+  _has_bits_[0] |= 0x00008000u;
 }
 inline void EdgeProto::clear_has_pooling_method() {
-  _has_bits_[0] &= ~0x00002000u;
+  _has_bits_[0] &= ~0x00008000u;
 }
 inline void EdgeProto::clear_pooling_method() {
   pooling_method_ = 1;
@@ -3415,7 +3394,145 @@ inline void EdgeProto::set_pooling_method(::lapis::EdgeProto_PoolingMethod value
 
 // -------------------------------------------------------------------
 
-// BlobProto
+// MeanProto
+
+// optional int32 num = 1;
+inline bool MeanProto::has_num() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void MeanProto::set_has_num() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void MeanProto::clear_has_num() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void MeanProto::clear_num() {
+  num_ = 0;
+  clear_has_num();
+}
+inline ::google::protobuf::int32 MeanProto::num() const {
+  return num_;
+}
+inline void MeanProto::set_num(::google::protobuf::int32 value) {
+  set_has_num();
+  num_ = value;
+}
+
+// optional int32 channels = 2;
+inline bool MeanProto::has_channels() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void MeanProto::set_has_channels() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void MeanProto::clear_has_channels() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void MeanProto::clear_channels() {
+  channels_ = 0;
+  clear_has_channels();
+}
+inline ::google::protobuf::int32 MeanProto::channels() const {
+  return channels_;
+}
+inline void MeanProto::set_channels(::google::protobuf::int32 value) {
+  set_has_channels();
+  channels_ = value;
+}
+
+// optional int32 height = 3;
+inline bool MeanProto::has_height() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void MeanProto::set_has_height() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void MeanProto::clear_has_height() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void MeanProto::clear_height() {
+  height_ = 0;
+  clear_has_height();
+}
+inline ::google::protobuf::int32 MeanProto::height() const {
+  return height_;
+}
+inline void MeanProto::set_height(::google::protobuf::int32 value) {
+  set_has_height();
+  height_ = value;
+}
+
+// optional int32 width = 4;
+inline bool MeanProto::has_width() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void MeanProto::set_has_width() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void MeanProto::clear_has_width() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void MeanProto::clear_width() {
+  width_ = 0;
+  clear_has_width();
+}
+inline ::google::protobuf::int32 MeanProto::width() const {
+  return width_;
+}
+inline void MeanProto::set_width(::google::protobuf::int32 value) {
+  set_has_width();
+  width_ = value;
+}
+
+// repeated float data = 5 [packed = true];
+inline int MeanProto::data_size() const {
+  return data_.size();
+}
+inline void MeanProto::clear_data() {
+  data_.Clear();
+}
+inline float MeanProto::data(int index) const {
+  return data_.Get(index);
+}
+inline void MeanProto::set_data(int index, float value) {
+  data_.Set(index, value);
+}
+inline void MeanProto::add_data(float value) {
+  data_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+MeanProto::data() const {
+  return data_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+MeanProto::mutable_data() {
+  return &data_;
+}
+
+// repeated float diff = 6 [packed = true];
+inline int MeanProto::diff_size() const {
+  return diff_.size();
+}
+inline void MeanProto::clear_diff() {
+  diff_.Clear();
+}
+inline float MeanProto::diff(int index) const {
+  return diff_.Get(index);
+}
+inline void MeanProto::set_diff(int index, float value) {
+  diff_.Set(index, value);
+}
+inline void MeanProto::add_diff(float value) {
+  diff_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+MeanProto::diff() const {
+  return diff_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+MeanProto::mutable_diff() {
+  return &diff_;
+}
 
 // -------------------------------------------------------------------
 
@@ -3653,6 +3770,50 @@ inline void LayerProto::set_drop_prob(float value) {
   drop_prob_ = value;
 }
 
+// optional int32 cropsize = 9;
+inline bool LayerProto::has_cropsize() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void LayerProto::set_has_cropsize() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void LayerProto::clear_has_cropsize() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void LayerProto::clear_cropsize() {
+  cropsize_ = 0;
+  clear_has_cropsize();
+}
+inline ::google::protobuf::int32 LayerProto::cropsize() const {
+  return cropsize_;
+}
+inline void LayerProto::set_cropsize(::google::protobuf::int32 value) {
+  set_has_cropsize();
+  cropsize_ = value;
+}
+
+// optional bool mirror = 10;
+inline bool LayerProto::has_mirror() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void LayerProto::set_has_mirror() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void LayerProto::clear_has_mirror() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void LayerProto::clear_mirror() {
+  mirror_ = false;
+  clear_has_mirror();
+}
+inline bool LayerProto::mirror() const {
+  return mirror_;
+}
+inline void LayerProto::set_mirror(bool value) {
+  set_has_mirror();
+  mirror_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // NetProto
@@ -3777,70 +3938,70 @@ inline void SGDProto::set_base_weight_decay(float value) {
   base_weight_decay_ = value;
 }
 
-// optional float final_momentum = 4;
-inline bool SGDProto::has_final_momentum() const {
+// optional float momentum_x = 4;
+inline bool SGDProto::has_momentum_x() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void SGDProto::set_has_final_momentum() {
+inline void SGDProto::set_has_momentum_x() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void SGDProto::clear_has_final_momentum() {
+inline void SGDProto::clear_has_momentum_x() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void SGDProto::clear_final_momentum() {
-  final_momentum_ = 0;
-  clear_has_final_momentum();
+inline void SGDProto::clear_momentum_x() {
+  momentum_x_ = 0;
+  clear_has_momentum_x();
 }
-inline float SGDProto::final_momentum() const {
-  return final_momentum_;
+inline float SGDProto::momentum_x() const {
+  return momentum_x_;
 }
-inline void SGDProto::set_final_momentum(float value) {
-  set_has_final_momentum();
-  final_momentum_ = value;
+inline void SGDProto::set_momentum_x(float value) {
+  set_has_momentum_x();
+  momentum_x_ = value;
 }
 
-// optional float final_learning_rate = 5;
-inline bool SGDProto::has_final_learning_rate() const {
+// optional float learning_rate_x = 5;
+inline bool SGDProto::has_learning_rate_x() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void SGDProto::set_has_final_learning_rate() {
+inline void SGDProto::set_has_learning_rate_x() {
   _has_bits_[0] |= 0x00000010u;
 }
-inline void SGDProto::clear_has_final_learning_rate() {
+inline void SGDProto::clear_has_learning_rate_x() {
   _has_bits_[0] &= ~0x00000010u;
 }
-inline void SGDProto::clear_final_learning_rate() {
-  final_learning_rate_ = 0;
-  clear_has_final_learning_rate();
+inline void SGDProto::clear_learning_rate_x() {
+  learning_rate_x_ = 0;
+  clear_has_learning_rate_x();
 }
-inline float SGDProto::final_learning_rate() const {
-  return final_learning_rate_;
+inline float SGDProto::learning_rate_x() const {
+  return learning_rate_x_;
 }
-inline void SGDProto::set_final_learning_rate(float value) {
-  set_has_final_learning_rate();
-  final_learning_rate_ = value;
+inline void SGDProto::set_learning_rate_x(float value) {
+  set_has_learning_rate_x();
+  learning_rate_x_ = value;
 }
 
-// optional float final_weight_decay = 6;
-inline bool SGDProto::has_final_weight_decay() const {
+// optional float weight_decay_x = 6;
+inline bool SGDProto::has_weight_decay_x() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void SGDProto::set_has_final_weight_decay() {
+inline void SGDProto::set_has_weight_decay_x() {
   _has_bits_[0] |= 0x00000020u;
 }
-inline void SGDProto::clear_has_final_weight_decay() {
+inline void SGDProto::clear_has_weight_decay_x() {
   _has_bits_[0] &= ~0x00000020u;
 }
-inline void SGDProto::clear_final_weight_decay() {
-  final_weight_decay_ = 0;
-  clear_has_final_weight_decay();
+inline void SGDProto::clear_weight_decay_x() {
+  weight_decay_x_ = 0;
+  clear_has_weight_decay_x();
 }
-inline float SGDProto::final_weight_decay() const {
-  return final_weight_decay_;
+inline float SGDProto::weight_decay_x() const {
+  return weight_decay_x_;
 }
-inline void SGDProto::set_final_weight_decay(float value) {
-  set_has_final_weight_decay();
-  final_weight_decay_ = value;
+inline void SGDProto::set_weight_decay_x(float value) {
+  set_has_weight_decay_x();
+  weight_decay_x_ = value;
 }
 
 // optional int32 learning_rate_change_steps = 7;

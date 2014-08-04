@@ -9,7 +9,7 @@
 
 namespace lapis {
 Worker::Worker(ModelController *mc): model_controller_(mc) {
-  LOG(INFO)<<"Working constructor...";
+  LOG(INFO) << "Working constructor...";
 }
 
 void Worker::Run() {

@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "disk/data_source.h"
-#include "model/blob.h"
+#include "model/lapis.h"
 
 
 namespace lapis {
@@ -23,8 +23,8 @@ class LabelSource : public DataSource {
    * Init this data source, get the label file path from ds_proto
    * @param ds_proto the user configured data source meta info
    */
-  virtual void Init(const DataSourceProto &ds_proto);
-  virtual void ToProto(DataSourceProto *ds_proto);
+  virtual void Init(const DataSourceProto &proto);
+  virtual void ToProto(DataSourceProto *proto);
   /**
    * Fill the blob with labels. If rich end of the label list, then repeat from
    * the beginning.
@@ -37,7 +37,7 @@ class LabelSource : public DataSource {
    * put them to distributed disk depending on the availability of the
    * distributed disk.
    */
-  virtual const std::shared_ptr<StringVec> &LoadData(
+  virtual const std::shared_ptr<StringVec> LoadData(
     const std::shared_ptr<StringVec>  &keys);
 
   /**
@@ -57,11 +57,7 @@ class LabelSource : public DataSource {
   virtual bool has_height() {return true;}
   virtual bool has_width() {return true;}
   */
-
-  virtual const std::string &id() {
-    return id_;
-  }
-  static const std::string id_;
+  static const std::string type;
 
  private:
   //! path for the label file

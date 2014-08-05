@@ -13,7 +13,6 @@
 //  sleep duration between reading messages off the network.
 //  update mode: synchronous vs asynchronous
 DEFINE_double(sleep_time, 0.001, "");
-DECLARE_bool(sync_update);
 
 namespace lapis {
 
@@ -82,7 +81,7 @@ NetworkThread::NetworkThread() {
   }
 //  initialize message queue
   GlobalContext *gc = GlobalContext::Get();
-  if (FLAGS_sync_update)
+  if (gc->is_sync_update())
     request_queue_ = new SyncRequestQueue(gc->num_memory_servers());
   else
     request_queue_ = new AsyncRequestQueue(gc->num_memory_servers());

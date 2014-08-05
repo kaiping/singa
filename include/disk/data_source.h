@@ -16,13 +16,14 @@
 namespace lapis {
 typedef std::vector<std::string> StringVec;
 /**
- * Base class to data source.
+ * Base class of data source which provides training records for applications.
  * It has 2 tasks. One is to fill the blob for DataLayer either from local disk
  * or distributed disk; Another one is for the Coordinator to load data from
  * local disk to distributed disk.
  */
 class DataSource {
  public:
+
   virtual ~DataSource(){}
   virtual void Init(const DataSourceProto &ds_proto);
   virtual void ToProto(DataSourceProto *ds_proto);

@@ -75,13 +75,13 @@ void Trainer::ToProto(TrainerProto *proto) {
   }
 }
 
-void Trainer::Run(Net *net) {
+void Trainer::Run(const char flag, Net *net) {
   if (do_train_) {
     while (!HasFinished(step_)) {
       LOG(INFO)<<step_;
       if (ValidateNow(step_))
         Validate(net);
-      Train(net, step_);
+      Train(step_,net,flag);
       IncStep();
     }
   }

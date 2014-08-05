@@ -23,7 +23,7 @@ class Param {
    * corresponding memory and initialize the parameter. Copy content and
    * history from ParamProto if available.
    */
-  virtual void Init(const ParamProto &proto);
+  virtual void Init(const ParamProto &proto, const char flag);
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto

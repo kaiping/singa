@@ -30,7 +30,7 @@ void ConvEdge::Init(const EdgeProto &proto,
   params_.push_back(&bias_);
 }
 
-void ConvEdge::Setup(bool set_param) {
+void ConvEdge::Setup(const char flag) {
   // assume kernel is squre shape, size = width =height
   const Blob &b = bottom_->feature(this);
   num_ = b.num();
@@ -51,30 +51,28 @@ void ConvEdge::Setup(bool set_param) {
   K_ = kernel_size_ * kernel_size_ * channels_ / num_groups_;
   N_ = conv_height_ * conv_width_;
   // allocate memory for processing one image to save memory
-  col_fea_.Resize(1,1,1,N_* K_ * num_groups_);
-  col_grad_.Resize(1,1,1,N_* K_ * num_groups_);
+  col_fea_.Resize(1,1,1,N_* K_ * num_groups_, AllocData(flag));
+  col_grad_.Resize(1,1,1,N_* K_ * num_groups_, AllocData(flag));
   // setup parameter shape and init
-  if (set_param) {
-    CHECK(param_proto_.size() <= 2);
-    for (auto proto : param_proto_) {
-      if (proto.name() == "weight") {
-        proto.clear_shape();
-        proto.add_shape(num_kernels_);
-        proto.add_shape(K_);
-        weight_.Init(proto);
-        params_.push_back(&weight_);
-      } else if (proto.name() == "bias") {
-        proto.clear_shape();
-        proto.add_shape(num_kernels_);
-        bias_.Init(proto);
-        params_.push_back(&bias_);
-      }
+  CHECK(param_proto_.size() <= 2);
+  for (auto proto : param_proto_) {
+    if (proto.name() == "weight") {
+      proto.clear_shape();
+      proto.add_shape(num_kernels_);
+      proto.add_shape(K_);
+      weight_.Init(proto, flag);
+      params_.push_back(&weight_);
+    } else if (proto.name() == "bias") {
+      proto.clear_shape();
+      proto.add_shape(num_kernels_);
+      bias_.Init(proto, flag);
+      params_.push_back(&bias_);
     }
   }
 }
 
-void ConvEdge::SetupTopBlob(Blob *blob) {
-  blob->Resize(num_, num_kernels_, conv_height_, conv_width_);
+void ConvEdge::SetupTopBlob(bool alloc, Blob *blob) {
+  blob->Resize(num_, num_kernels_, conv_height_, conv_width_, alloc);
 }
 
 void ConvEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {

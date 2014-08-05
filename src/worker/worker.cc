@@ -8,18 +8,21 @@
 #include "utils/proto_helper.h"
 
 namespace lapis {
-Worker::Worker(ModelController *mc): model_controller_(mc) {
+Worker::Worker(ModelController *mc) {
   LOG(INFO) << "Working constructor...";
+  model_controller_=mc;
 }
 
 void Worker::Run() {
-  ModelProto model_proto;
-  ReadProtoFromTextFile(GlobalContext::Get()->model_conf_path(), &model_proto);
+  model_proto_=model_controller_->Init();
   Net net;
-  net.Init(model_proto.net());
+  net.Init(model_proto_->net());
   SGDTrainer trainer;
-  trainer.Init(model_proto.trainer(), model_controller_);
-  trainer.Run(&net);
+  trainer.Init(model_proto_->trainer(), model_controller_);
+  if(model_controller_->issinglemachine())
+    trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
+  else
+    trainer.Run(kAllocData|kAllocParam, &net);
   model_controller_->Finish();
 }
 }  // namespace lapis

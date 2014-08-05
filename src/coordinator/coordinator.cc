@@ -7,13 +7,15 @@
 #include "disk/data_source.h"
 #include "model_controller/model.h"
 #include "proto/model.pb.h"
+#include "model/data_layer.h"
+
 #include "model/net.h"
 
 
 namespace lapis {
-Coordinator::Coordinator(ModelController *mc)
-  : model_controller_(mc) {
-  LOG(INFO) << "starting coordinator...\n";
+Coordinator::Coordinator(ModelController *mc){
+  LOG(INFO) << "starting coordinator...";
+  model_controller_=mc;
 }
 
 // no model splitting currently
@@ -21,7 +23,7 @@ Coordinator::Coordinator(ModelController *mc)
 int Coordinator::InitModel(const ModelProto &model_proto) {
   Net net;
   // set user configured fields
-  net.Init(model_proto_.net());
+  net.Init(model_proto.net());
   // setup training data which is necessary to setup the DataLayer that is in
   // turn required by upper edges and layers to setup.
   std::vector<DataSource *> train_data;
@@ -29,10 +31,14 @@ int Coordinator::InitModel(const ModelProto &model_proto) {
   Trainer::InitDataSource(trainer.train_data(), &train_data);
   SGDProto sgd = trainer.sgd();
   // allocate memory for parameters and init them
-  for (auto layer : net.layers()) {
-    layer->Setup(sgd.train_batchsize(), trainer.alg(), train_data);
+  for (auto layer : net.layers())
+    if (layer->HasInput())
+      (dynamic_cast<DataLayer*>(layer))->SetupDataSource(sgd.train_batchsize(),
+                                                       train_data);
+  for (auto* layer: net.layers()){
+    layer->Setup(kAllocParam|kInitParam);
     for (auto *edge : layer->out_edges())
-      edge->Setup(true);
+      edge->Setup(kAllocParam|kInitParam);
   }
   // put parameters into distributed memory
   model_controller_->Put(net.params());
@@ -45,7 +51,9 @@ void Coordinator::Run() {
   //LoadData();
   ModelProto model_proto;
   ReadProtoFromTextFile(GlobalContext::Get()->model_conf_path(), &model_proto);
-  InitModel(model_proto);
+  if(!model_controller_->issinglemachine())
+    InitModel(model_proto);
+  model_controller_->CommenceBroadcast(model_proto);
   model_controller_->Finish();
 }
 }  // namespace lapis

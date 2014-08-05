@@ -27,7 +27,7 @@ class ConvEdge : public Edge {
    */
   virtual void Init(const EdgeProto &proto,
                     const std::map<std::string, Layer *> &layer_map);
-  virtual void Setup(bool set_param);
+  virtual void Setup(const char flag);
   /**
    * Do convolution as the class description.
    * @param src_fea the image/feature to be processed
@@ -49,7 +49,7 @@ class ConvEdge : public Edge {
    * conv_width=(height_+2*pad_-kernel_size_)/stride_+1;
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob *blob);
+  virtual void SetupTopBlob(const bool alloc, Blob *blob);
 
  private:
   //! the feature (e.g., input image) shape for the bottom layer

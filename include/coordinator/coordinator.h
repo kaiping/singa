@@ -19,7 +19,6 @@ namespace lapis {
 class Coordinator {
  public:
   Coordinator(ModelController *mc);
-  ~Coordinator();
 
   // TODO(wangwei) load all data into distributed disk
   int LoadData();
@@ -32,7 +31,8 @@ class Coordinator {
   void Run();
  private:
   ModelController *model_controller_;
-  ModelProto model_proto_;
+  // TODO(wangwei) add DataConverter to put records into distributed table as
+  // key-val pairs
 };
 
 }  // namespace lapis

@@ -5,7 +5,18 @@
 #include "model/lapis.h"
 namespace lapis {
 int Blob::count_=0;
-void Blob::Resize(int num, int channels, int height, int width) {
+Blob::Blob(int num, int channels, int height, int width, const bool alloc) {
+  num_ = num;
+  channels_ = channels;
+  height_ = height;
+  width_ = width;
+  record_length_ = channels_ * height_ * width_;
+  length_=num_*record_length_;
+  if(alloc)
+    dptr=new float[length_];
+}
+void Blob::Resize(int num, int channels, int height,
+                  int width, const bool alloc) {
   if (num_ != num || channels_ != channels || height_ != height
       || width_ != width) {
     num_ = num;
@@ -22,7 +33,8 @@ void Blob::Resize(int num, int channels, int height, int width) {
         LOG(INFO)<<"DELETE BLOB DPTR!!";
         delete dptr;
       }
-      dptr = new float[length_];
+      if (alloc)
+        dptr = new float[length_];
     }
   }
 }

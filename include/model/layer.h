@@ -60,8 +60,7 @@ class Layer {
    * TODO (wangwei), add support for Contrastive Divergence
    * @param sources data providers, can be null for layers do not accept inputs
    */
-  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
-                     const std::vector<DataSource *> &sources);
+  virtual void Setup(const char flag);
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the

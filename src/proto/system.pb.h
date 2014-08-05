@@ -140,6 +140,13 @@ class SystemProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 disk_end() const;
   inline void set_disk_end(::google::protobuf::int32 value);
 
+  // optional bool standalone = 8 [default = true];
+  inline bool has_standalone() const;
+  inline void clear_standalone();
+  static const int kStandaloneFieldNumber = 8;
+  inline bool standalone() const;
+  inline void set_standalone(bool value);
+
   // @@protoc_insertion_point(class_scope:lapis.SystemProto)
  private:
   inline void set_has_coordinator();
@@ -156,6 +163,8 @@ class SystemProto : public ::google::protobuf::Message {
   inline void clear_has_disk_start();
   inline void set_has_disk_end();
   inline void clear_has_disk_end();
+  inline void set_has_standalone();
+  inline void clear_has_standalone();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -166,9 +175,10 @@ class SystemProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 memory_end_;
   ::google::protobuf::int32 disk_start_;
   ::google::protobuf::int32 disk_end_;
+  bool standalone_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
 
   friend void  protobuf_AddDesc_system_2eproto();
   friend void protobuf_AssignDesc_system_2eproto();
@@ -336,6 +346,28 @@ inline ::google::protobuf::int32 SystemProto::disk_end() const {
 inline void SystemProto::set_disk_end(::google::protobuf::int32 value) {
   set_has_disk_end();
   disk_end_ = value;
+}
+
+// optional bool standalone = 8 [default = true];
+inline bool SystemProto::has_standalone() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void SystemProto::set_has_standalone() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void SystemProto::clear_has_standalone() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void SystemProto::clear_standalone() {
+  standalone_ = true;
+  clear_has_standalone();
+}
+inline bool SystemProto::standalone() const {
+  return standalone_;
+}
+inline void SystemProto::set_standalone(bool value) {
+  set_has_standalone();
+  standalone_ = value;
 }
 
 

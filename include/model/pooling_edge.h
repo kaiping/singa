@@ -21,7 +21,7 @@ class PoolingEdge : public Edge {
                         const Blob &dest_fea, Blob *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob *blob);
+  virtual void SetupTopBlob(const bool alloc, Blob *blob);
  private:
   //! pooling kernel shape
   int kernel_size_, stride_;

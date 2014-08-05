@@ -12,7 +12,7 @@ void PoolingEdge::Init(const EdgeProto &proto,
   pooling_method_ = proto.pooling_method();
 }
 
-void PoolingEdge::SetupTopBlob(Blob *blob) {
+void PoolingEdge::SetupTopBlob(const bool alloc, Blob* blob) {
   Blob &b = bottom_->feature(this);
   num_ = b.num();
   channels_ = b.channels();
@@ -22,7 +22,7 @@ void PoolingEdge::SetupTopBlob(Blob *blob) {
                    ceil(static_cast<float>(height_ - kernel_size_) / stride_)) + 1;
   pool_width_ = static_cast<int> (
                   ceil(static_cast<float>(width_ - kernel_size_) / stride_)) + 1;
-  blob->Resize(num_, channels_,pool_width_, pool_height_);
+  blob->Resize(num_, channels_,pool_width_, pool_height_, alloc);
 }
 
 void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {

@@ -4,10 +4,11 @@
 #include <google/protobuf/repeated_field.h>
 #include <glog/logging.h>
 #include "model/param.h"
+#include "utils/common.h"
 using google::protobuf::RepeatedField;
 
 namespace lapis {
-void Param::Init(const ParamProto &proto) {
+void Param::Init(const ParamProto &proto, const char flag) {
   const RepeatedField<int>& shape = proto.shape();
   momentum_ = proto.momentum_multiplier();
   learning_rate_ = proto.learning_rate_multiplier();
@@ -16,49 +17,51 @@ void Param::Init(const ParamProto &proto) {
   if (shape.size() == 2) {
     int h = shape.Get(0);
     int w = shape.Get(1);
-    content_.Resize(1,1,h,w);
-    grad_.Resize(1,1,h,w);
-    history_grad_.Resize(1,1,h,w);
+    content_.Resize(1,1,h,w, AllocParam(flag));
+    grad_.Resize(1,1,h,w, AllocParam(flag));
+    history_grad_.Resize(1,1,h,w, AllocParam(flag));
     VLOG(2)<<"Weight shape "<<content_.tostring();
   } else {
     int len = shape.Get(0);
-    content_.Resize(1,1,1,len);
-    grad_.Resize(1,1,1,len);
-    history_grad_.Resize(1,1,1,len);
+    content_.Resize(1,1,1,len, AllocParam(flag));
+    grad_.Resize(1,1,1,len, AllocParam(flag));
+    history_grad_.Resize(1,1,1,len, AllocParam(flag));
     VLOG(2)<<"Bias shape "<<content_.tostring();
   }
-  switch (proto.init_method()) {
-    case ParamProto::kConstant:
+  if(InitParam(flag)){
+      switch (proto.init_method()) {
+      case ParamProto::kConstant:
       for (int i = 0; i < content_.length(); i++)
-        content_.dptr[i] = proto.value();
+      content_.dptr[i] = proto.value();
       break;
-    case ParamProto::kUniform:
+      case ParamProto::kUniform:
       FillUniformData(proto.low(), proto.high(), proto.value());
       break;
-    case ParamProto::kUniformSqrtFanIn:
+      case ParamProto::kUniformSqrtFanIn:
       CHECK_EQ(shape.size(), 2);
       FillUniformData(proto.low(), proto.high(),
-          proto.value() / sqrt(shape.Get(0) / 3.0f));
+        proto.value() / sqrt(shape.Get(0) / 3.0f));
       break;
-    case ParamProto::kUniformSqrtFanInOut:
+      case ParamProto::kUniformSqrtFanInOut:
       CHECK_EQ(shape.size(), 2);
       FillUniformData(proto.low(), proto.high(),
-          proto.value() / sqrt(shape.Get(0) + shape.Get(1)));
+        proto.value() / sqrt(shape.Get(0) + shape.Get(1)));
       break;
-    case ParamProto::kGaussain:
+      case ParamProto::kGaussain:
       FillGaussainData(proto.mean(), proto.std(), proto.value());
       break;
-    case ParamProto::kGaussainSqrtFanIn:
+      case ParamProto::kGaussainSqrtFanIn:
       CHECK_EQ(shape.size(), 2);
       FillGaussainData(proto.mean(), proto.std(),
           proto.value() / sqrt(shape.Get(0)));
       break;
-    case ParamProto::kPretrained:
+      case ParamProto::kPretrained:
       LOG(ERROR)<<"Not implemented yet";
       break;
-    default:
+      default:
       LOG(ERROR) << "Illegal parameter init method " << proto.init_method();
       break;
+      }
   }
   name_ = proto.name();
 }

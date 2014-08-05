@@ -11,7 +11,7 @@
 namespace lapis {
 class SoftmaxLossEdge : public Edge {
  public:
-  virtual void Setup(bool set_param);
+  virtual void Setup(const char flag);
   virtual void Forward(const Blob &src, Blob *dest, bool overwrite);
   virtual void Backward(const Blob &src_fea, const Blob &src_grad,
                         const Blob &dest_fea, Blob *dest_grad,

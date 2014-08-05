@@ -2,21 +2,20 @@
 // 2014-07-23 15:29
 
 #include <glog/logging.h>
-
+#include "utils/common.h"
 #include "model/relu_layer.h"
 
 namespace lapis {
 
 const std::string type = "ReLULayer";
 
-void ReLULayer::Setup(int batchsize, TrainerProto::Algorithm alg,
-                      const std::vector<DataSource *> &sources) {
-  Layer::Setup(batchsize, alg, sources);
+void ReLULayer::Setup(const char flag){
+  Layer::Setup(flag);
   CHECK(in_edges_.size() == 1);
-  in_edges_[0]->SetupTopBlob(&fea_);
-  in_edges_[0]->SetupTopBlob(&fea_grad_);
-  in_edges_[0]->SetupTopBlob(&act_);
-  in_edges_[0]->SetupTopBlob(&act_grad_);
+  in_edges_[0]->SetupTopBlob( AllocData(flag),&fea_);
+  in_edges_[0]->SetupTopBlob(AllocData(flag),&fea_grad_);
+  in_edges_[0]->SetupTopBlob( AllocData(flag),&act_);
+  in_edges_[0]->SetupTopBlob( AllocData(flag),&act_grad_);
   VLOG(2)<<name_<<" Shape "<<fea_.tostring();
 }
 

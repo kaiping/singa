@@ -5,17 +5,17 @@
 #define INCLUDE_WORKER_WORKER_H_
 #include "model_controller/model.h"
 #include "utils/global_context.h"
-
+#include "proto/model.pb.h"
 
 namespace lapis {
 class Worker {
  public:
-  Worker(ModelController *mc);
+  Worker(ModelController* mc);
   void Run();
 
  private:
-  GlobalContext *global_context_;
   ModelController *model_controller_;
+  ModelProto *model_proto_;
 };
 }  // namespace lapis
 

@@ -22,7 +22,7 @@ class InnerProductEdge : public Edge {
                     const std::map<std::string, Layer *> &layer_map);
   virtual void ToProto(EdgeProto *edge_proto);
 
-  virtual void Setup(bool set_param);
+  virtual void Setup(const char flag);
   /**
    * Read src Blob multiply with weight Param, plus bias Param and set the
    * result to the dest Blob
@@ -40,7 +40,7 @@ class InnerProductEdge : public Edge {
                         const Blob &dest_fea, Blob *dest_grad,
                         bool overwrite);
 
-  virtual void SetupTopBlob(Blob *blob);
+  virtual void SetupTopBlob(const bool alloc, Blob *blob);
  private:
   //! the dimension of the output feature i.e., the feature for the top layer
   int num_output_;

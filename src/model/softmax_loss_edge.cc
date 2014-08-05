@@ -2,14 +2,14 @@
 // 2014-07-24 15:06
 #include <glog/logging.h>
 #include <cfloat>
-
+#include "utils/common.h"
 #include "model/softmax_loss_edge.h"
 namespace lapis {
-void SoftmaxLossEdge::Setup(bool set_param) {
+void SoftmaxLossEdge::Setup(const char flag) {
   Blob &b = bottom_->feature(this);
   num_ = b.num();
   dim_ = b.length() / num_;
-  prob_.Resize(num_, 1,1 ,dim_);
+  prob_.Resize(num_, 1,1 ,dim_, AllocData(flag));
   VLOG(2)<<"prob shape "<<prob_.tostring();
 }
 

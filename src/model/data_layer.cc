@@ -21,28 +21,31 @@ void DataLayer::ToProto(LayerProto *layer_proto) {
   layer_proto->set_data_source(data_source_name_);
 }
 
-void DataLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
-                      const std::vector<DataSource *> &sources) {
+void DataLayer::SetupDataSource(int batchsize,
+                                const std::vector<DataSource *> &sources) {
+  batchsize_=batchsize;
   for (auto *source : sources) {
     if (source->name() == data_source_name_) {
       data_source_ = source;
       break;
     }
   }
-  CHECK(data_source_ != nullptr) << "Cannot find data source for " << name_;
+  CHECK(data_source_ != nullptr) << "Cannot find data source: " << name_;
+}
+
+void DataLayer::Setup(const char flag) {
   width_=data_source_->width();
   height_=data_source_->height();
   channels_=data_source_->channels();
-  batchsize_=batchsize;
   VLOG(2)<<"DataLayer: "<<name_<<" cropsize "<<cropsize_;
   if(cropsize_){
-    data_.Resize(batchsize_, channels_,cropsize_, cropsize_);
-    tmp_.Resize(batchsize_,channels_,width_, height_);
+    data_.Resize(batchsize_, channels_,cropsize_, cropsize_, AllocData(flag));
+    tmp_.Resize(batchsize_,channels_,width_, height_, AllocData(flag));
     VLOG(2)<<" shape before crop "<<tmp_.tostring()
       <<" shape after crop "<<data_.tostring();
   }
   else {
-    data_.Resize(batchsize_,channels_, height_,width_);
+    data_.Resize(batchsize_,channels_, height_,width_,AllocData(flag));
     VLOG(2) <<" shape "<<data_.tostring();
   }
 }

@@ -36,11 +36,11 @@ void Edge::ToProto(EdgeProto *proto) {
   proto->set_name(name_);
 }
 
-void Edge::Setup(bool set_param) {
+void Edge::Setup(const char flag) {
   DLOG(INFO) << name_<<" does not implemente Setup func";
 }
 
-void Edge::SetupTopBlob(Blob* blob) {
+void Edge::SetupTopBlob(const bool alloc, Blob* blob) {
   VLOG(1)<<"Edge "<<name_<<" does not implement SetupTopBlob";
 }
 

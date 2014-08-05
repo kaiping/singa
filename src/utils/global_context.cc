@@ -13,6 +13,8 @@ void GlobalContext::Init(const std::string &system_conf_path,
   model_conf_path_ = model_conf_path;
   SystemProto system_conf;
   ReadProtoFromTextFile(system_conf_path.c_str(), &system_conf);
+  single_=system_conf.standalone();
+  sync_= system_conf.sync();
   role_rank_[kCoordinator] = std::make_pair(system_conf.coordinator(),
                              system_conf.coordinator());
   role_rank_[kWorker] = std::make_pair(system_conf.worker_start(),

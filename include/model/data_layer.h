@@ -35,8 +35,9 @@ class DataLayer : public Layer {
    * label) from which this layer will select one based on data source
    * identifier, i.e., name.
    */
-  virtual void Setup(int batchsize, TrainerProto::Algorithm alg,
-                     const std::vector<DataSource *> &sources);
+  virtual void SetupDataSource(int batchsize,
+                               const std::vector<DataSource *> &sources);
+  virtual void Setup(const char flag);
   /**
    * fetch data from data source
    */

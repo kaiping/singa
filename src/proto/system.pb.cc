@@ -34,7 +34,7 @@ void protobuf_AssignDesc_system_2eproto() {
       "system.proto");
   GOOGLE_CHECK(file != NULL);
   SystemProto_descriptor_ = file->message_type(0);
-  static const int SystemProto_offsets_[7] = {
+  static const int SystemProto_offsets_[8] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, coordinator_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, worker_start_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, worker_end_),
@@ -42,6 +42,7 @@ void protobuf_AssignDesc_system_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, memory_end_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, disk_start_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, disk_end_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, standalone_),
   };
   SystemProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -84,12 +85,12 @@ void protobuf_AddDesc_system_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\014system.proto\022\005lapis\"\261\001\n\013SystemProto\022\026\n"
+    "\n\014system.proto\022\005lapis\"\313\001\n\013SystemProto\022\026\n"
     "\013coordinator\030\001 \002(\005:\0010\022\027\n\014worker_start\030\002 "
     "\002(\005:\0011\022\025\n\nworker_end\030\003 \002(\005:\0011\022\027\n\014memory_"
     "start\030\004 \001(\005:\0011\022\025\n\nmemory_end\030\005 \001(\005:\0011\022\025\n"
     "\ndisk_start\030\006 \001(\005:\0011\022\023\n\010disk_end\030\007 \001(\005:\001"
-    "1", 201);
+    "1\022\030\n\nstandalone\030\010 \001(\010:\004true", 227);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "system.proto", &protobuf_RegisterTypes);
   SystemProto::default_instance_ = new SystemProto();
@@ -114,6 +115,7 @@ const int SystemProto::kMemoryStartFieldNumber;
 const int SystemProto::kMemoryEndFieldNumber;
 const int SystemProto::kDiskStartFieldNumber;
 const int SystemProto::kDiskEndFieldNumber;
+const int SystemProto::kStandaloneFieldNumber;
 #endif  // !_MSC_VER
 
 SystemProto::SystemProto()
@@ -139,6 +141,7 @@ void SystemProto::SharedCtor() {
   memory_end_ = 1;
   disk_start_ = 1;
   disk_end_ = 1;
+  standalone_ = true;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -181,6 +184,7 @@ void SystemProto::Clear() {
     memory_end_ = 1;
     disk_start_ = 1;
     disk_end_ = 1;
+    standalone_ = true;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -299,6 +303,22 @@ bool SystemProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(64)) goto parse_standalone;
+        break;
+      }
+
+      // optional bool standalone = 8 [default = true];
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_standalone:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &standalone_)));
+          set_has_standalone();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -356,6 +376,11 @@ void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->disk_end(), output);
   }
 
+  // optional bool standalone = 8 [default = true];
+  if (has_standalone()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(8, this->standalone(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -397,6 +422,11 @@ void SystemProto::SerializeWithCachedSizes(
   // optional int32 disk_end = 7 [default = 1];
   if (has_disk_end()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(7, this->disk_end(), target);
+  }
+
+  // optional bool standalone = 8 [default = true];
+  if (has_standalone()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(8, this->standalone(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -459,6 +489,11 @@ int SystemProto::ByteSize() const {
           this->disk_end());
     }
 
+    // optional bool standalone = 8 [default = true];
+    if (has_standalone()) {
+      total_size += 1 + 1;
+    }
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -507,6 +542,9 @@ void SystemProto::MergeFrom(const SystemProto& from) {
     if (from.has_disk_end()) {
       set_disk_end(from.disk_end());
     }
+    if (from.has_standalone()) {
+      set_standalone(from.standalone());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -538,6 +576,7 @@ void SystemProto::Swap(SystemProto* other) {
     std::swap(memory_end_, other->memory_end_);
     std::swap(disk_start_, other->disk_start_);
     std::swap(disk_end_, other->disk_end_);
+    std::swap(standalone_, other->standalone_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

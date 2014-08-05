@@ -4,6 +4,8 @@
 #include <glog/logging.h>
 
 #include "model/lrn_edge.h"
+#include "utils/common.h"
+
 #include "mshadow/tensor.h"
 
 namespace lapis {
@@ -17,15 +19,15 @@ void LRNEdge:: Init(const EdgeProto &proto,
   knorm_=proto.knorm();
 }
 
-void LRNEdge::Setup(bool set_param) {
+void LRNEdge::Setup(const char flag) {
   Blob &b = bottom_->feature(this);
   num_ = b.num();
   channels_ = b.channels();
   height_ = b.height();
   width_ = b.width();
   pad_tmp_.Resize(1,channels_ + local_size_ - 1,1, height_ * width_);
-  accum_fea_.Resize( num_, channels_,1, height_ * width_);
-  accum_grad_.Resize(1,1,1,height_ * width_);
+  accum_fea_.Resize( num_, channels_,1, height_ * width_, AllocData(flag));
+  accum_grad_.Resize(1,1,1,height_ * width_,AllocData(flag));
 
   VLOG(2)<<"padded image shape "<<pad_tmp_.tostring();
   VLOG(2)<<"accum fea shape "<<accum_fea_.tostring();
@@ -87,8 +89,8 @@ void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   }
 }
 
-void LRNEdge::SetupTopBlob(Blob *blob) {
-  blob->Resize(num_, channels_, height_, width_);
+void LRNEdge::SetupTopBlob(const bool alloc, Blob* blob) {
+  blob->Resize(num_, channels_, height_, width_, alloc);
 }
 
 }  // namespace lapis

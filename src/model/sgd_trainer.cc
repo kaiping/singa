@@ -3,6 +3,8 @@
 
 #include <math.h>
 #include <glog/logging.h>
+#include "model/data_layer.h"
+
 #include "model/sgd_trainer.h"
 
 namespace lapis {
@@ -17,84 +19,91 @@ SGDTrainer::~SGDTrainer() {
   sgd_proto_.Clear();
 }
 
-void SGDTrainer::BackPropagation(Net *net, const int step) {
+void SGDTrainer::BackPropagation(const int step, Net* net) {
   std::vector<Layer *> layers = net->layers();
   std::vector<Edge *> edges = net->edges();
   std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
-  // model_controller_->Get(params);
-  for (auto* layer : layers) {
+  model_controller_->Get(params);
+
+  for (auto* layer : layers)
     layer->Forward();
-  }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
     (*layer)->Backward();
   UpdateHyperParams(step_);
-  for (auto edge : edges) {
+  for (auto edge : edges)
     edge->ComputeParamUpdates(this);
-  }
-  for (auto layer : layers) {
+  for (auto layer : layers)
     layer->ComputeParamUpdates(this);
-  }
+
+  model_controller_->Update(params);
   // update parameters either locally or distributedly depending on the
   // system (single machine or a cluster)
+  /*
   for (auto *param : params) {
     Tensor1 p(param->mutable_content().dptr, Shape1(param->length()));
     const Tensor1 h(param->history().dptr, Shape1(param->length()));
     p += h;
   }
+  */
 }
 
-void SGDTrainer::Train(Net *net, const int step) {
+void SGDTrainer::Train(const int step, Net *net, const char flag) {
   if (phase != Phase::kTrain) {
-    for (auto *layer : net->layers()) {
-      layer->Setup(sgd_proto_.train_batchsize(),
-                   TrainerProto::kBackPropagation,
-                   train_data_);
-      VLOG(3)<<layer->name();
-      for (auto *edge : layer->out_edges()){
-        edge->Setup(true);
-        VLOG(3)<<edge->name();
-      }
+    char local_flag=step==0?flag: kAllocData;
+    for (auto *layer : net->layers())
+      if (layer->HasInput())
+        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
+        sgd_proto_.train_batchsize(), train_data_);
+    for(auto *layer : net->layers()) {
+        layer->Setup(local_flag);
+      for (auto *edge : layer->out_edges())
+        edge->Setup(local_flag);
     }
     phase = Phase::kTrain;
     VLOG(1)<<"Total mem allocated for Blobs in training is "
-           <<Blob::MSize()<<" megabytes";
+      <<Blob::MSize()<<" megabytes";
   }
-  BackPropagation(net, step);
+  BackPropagation(step, net);
 }
 
 void SGDTrainer::Validate(Net *net) {
   if (phase != Phase::kValidation) {
-    for (auto *layer : net->layers()) {
-      layer->Setup(sgd_proto_.validation_batchsize(),
-                   TrainerProto::kBackPropagation,
-                   validation_data_);
+    for (auto *layer : net->layers())
+      if (layer->HasInput())
+        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
+            sgd_proto_.validation_batchsize(), validation_data_);
+    for(auto *layer : net->layers()) {
+      layer->Setup(kAllocData);
       for (auto *edge : layer->out_edges())
-        edge->Setup(false);
+        edge->Setup(kAllocData);
     }
     phase = Phase::kValidation;
   }
   /* TODO(wangwei) forward through all layers to get the loss
-  for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
-    Forward();
-  */
+     for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
+     Forward();
+     */
 }
 
 void SGDTrainer::Test(Net *net) {
   if (phase != Phase::kTest) {
-    for (auto *layer : net->layers()) {
-      layer->Setup(sgd_proto_.test_batchsize(),
-                   TrainerProto::kBackPropagation,
-                   test_data_);
+    for (auto *layer : net->layers())
+      if (layer->HasInput())
+        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
+            sgd_proto_.test_batchsize(), test_data_);
+    for(auto *layer : net->layers()) {
+      layer->Setup(kAllocData);
       for (auto *edge : layer->out_edges())
-        edge->Setup(false);
+        edge->Setup(kAllocData);
     }
+
     phase = Phase::kTest;
   }
   /* TODO(wangwei) forward through all layers to get the loss
-  for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
-    Forward();
-  */
+     for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
+     Forward();
+     */
 }
 
 void SGDTrainer::ToProto(TrainerProto *proto) {
@@ -110,50 +119,50 @@ bool SGDTrainer::HasFinished(int step) {
 }
 
 float UpdateHyperParam(int step, SGDProto::ChangeProto change,
-                       int change_steps, float a,
-                       float b) {
+    int change_steps, float a,
+    float b) {
   float ret = 0., r = 0.;
   switch (change) {
-  case SGDProto::kFixed:
-    ret = a;
-    break;
-  case SGDProto::kLinear:
-    // a is init, b is the final
-    r = step * 1.0  / change_steps;
-    ret = (1.0 - r) * a + r * b;
-    break;
-  case SGDProto::kExponential:
-    // a is init, b is the final, from convnet
-    CHECK_EQ(a, 2 * b) << "final value should be the half";
-    ret = a / pow(2, step * 1. / change_steps);
-    break;
-  case SGDProto::kInverse_t:
-    // a is init, b is the final, from convnet
-    CHECK_EQ(a, 2 * b) << "final value should be the half";
-    ret = a / (1. + step * 1. / b);
-    break;
-  case SGDProto::kStep:
-    // a is the base learning rate, b is gamma, from caffe
-    ret = a * pow(b, step / change_steps);
-    break;
-  default:
-    LOG(ERROR) << "Wrong hyper-parameter update method";
+    case SGDProto::kFixed:
+      ret = a;
+      break;
+    case SGDProto::kLinear:
+      // a is init, b is the final
+      r = step * 1.0  / change_steps;
+      ret = (1.0 - r) * a + r * b;
+      break;
+    case SGDProto::kExponential:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / pow(2, step * 1. / change_steps);
+      break;
+    case SGDProto::kInverse_t:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / (1. + step * 1. / b);
+      break;
+    case SGDProto::kStep:
+      // a is the base learning rate, b is gamma, from caffe
+      ret = a * pow(b, step / change_steps);
+      break;
+    default:
+      LOG(ERROR) << "Wrong hyper-parameter update method";
   }
   return ret;
 }
 
 void SGDTrainer::UpdateHyperParams(int step) {
   learning_rate_ = UpdateHyperParam(step, sgd_proto_.learning_rate_change(),
-                                    sgd_proto_.learning_rate_change_steps(),
-                                    sgd_proto_.base_learning_rate(),
-                                    sgd_proto_.learning_rate_x());
+      sgd_proto_.learning_rate_change_steps(),
+      sgd_proto_.base_learning_rate(),
+      sgd_proto_.learning_rate_x());
   momentum_ = UpdateHyperParam(step, sgd_proto_.momentum_change(),
-                               sgd_proto_.momentum_change_steps(),
-                               sgd_proto_.base_momentum(),
-                               sgd_proto_.momentum_x());
+      sgd_proto_.momentum_change_steps(),
+      sgd_proto_.base_momentum(),
+      sgd_proto_.momentum_x());
   weight_decay_ = UpdateHyperParam(step, sgd_proto_.weight_decay_change(),
-                                   sgd_proto_.weight_decay_change_steps(),
-                                   sgd_proto_.base_weight_decay(),
-                                   sgd_proto_.weight_decay_x());
+      sgd_proto_.weight_decay_change_steps(),
+      sgd_proto_.base_weight_decay(),
+      sgd_proto_.weight_decay_x());
 }
 }  // namespace lapis

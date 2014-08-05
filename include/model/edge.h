@@ -45,7 +45,7 @@ class Edge {
    * results.
    * @param set_param set parameters; true for network init; false otherwise.
    */
-  virtual void Setup(bool set_param);
+  virtual void Setup(const char flag);
   /**
    * Marshal edge properties into google protobuf object
    */
@@ -92,7 +92,7 @@ class Edge {
    * this edge will decide the shape of the blob and is responsible to setup it
    * @param blob the top blob to set setup.
    */
-  virtual void SetupTopBlob(Blob *blob);
+  virtual void SetupTopBlob(const bool alloc, Blob *blob);
   /**
    * Return parameters associated this edge
    */

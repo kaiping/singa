@@ -4,6 +4,8 @@
 #include <glog/logging.h>
 #include "model/lapis.h"
 #include "model/inner_product_edge.h"
+#include "utils/common.h"
+
 
 namespace lapis {
 
@@ -18,25 +20,23 @@ void InnerProductEdge::Init(const EdgeProto &proto,
   params_.push_back(&bias_);
 }
 
-void InnerProductEdge::Setup(bool set_param) {
+void InnerProductEdge::Setup(const char flag) {
   const Blob &b = bottom_->feature(this);
   num_ = b.num();
   num_input_ = b.length() / num_;
-  if (set_param) {
-    CHECK(param_proto_.size() <= 2);
-    for (auto proto : param_proto_) {
-      if (proto.name() == "weight") {
-        proto.clear_shape();
-        proto.add_shape(num_input_);
-        proto.add_shape(num_output_);
-        weight_.Init(proto);
-        params_.push_back(&weight_);
-      } else if (proto.name() == "bias") {
-        proto.clear_shape();
-        proto.add_shape(num_output_);
-        bias_.Init(proto);
-        params_.push_back(&bias_);
-      }
+  CHECK(param_proto_.size() <= 2);
+  for (auto proto : param_proto_) {
+    if (proto.name() == "weight") {
+      proto.clear_shape();
+      proto.add_shape(num_input_);
+      proto.add_shape(num_output_);
+      weight_.Init(proto, flag);
+      params_.push_back(&weight_);
+    } else if (proto.name() == "bias") {
+      proto.clear_shape();
+      proto.add_shape(num_output_);
+      bias_.Init(proto, flag);
+      params_.push_back(&bias_);
     }
   }
 }
@@ -87,7 +87,7 @@ void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   }
 }
 
-void InnerProductEdge::SetupTopBlob(Blob *blob) {
-  blob->Resize(num_, 1, 1, num_output_);
+void InnerProductEdge::SetupTopBlob(const bool alloc, Blob *blob) {
+  blob->Resize(num_, 1, 1, num_output_, alloc);
 }
 }  // namespace lapis

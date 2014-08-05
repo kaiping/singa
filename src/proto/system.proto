@@ -19,4 +19,8 @@ message SystemProto{
   optional int32 disk_start = 6 [default = 1];
   //end rank for distributed disk table
   optional int32 disk_end = 7 [default = 1];
+  // one node mode, no coordinator/memory servers
+  optional bool standalone = 8 [default =true];
+  // synschronous update if true
+  optional bool sync = 9 [default = true];
 }

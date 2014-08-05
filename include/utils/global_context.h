@@ -24,7 +24,7 @@ class GlobalContext {
   void Init(const std::string &system_conf_path,
             const std::string &model_conf_path);
   bool single(){return single_;}
-
+  bool sync() {return sync_;}
   int num_memory_servers() {
     return num_memory_servers_;
   }

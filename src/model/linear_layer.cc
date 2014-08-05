@@ -5,11 +5,10 @@
 #include "model/linear_layer.h"
 
 namespace lapis {
-void LinearLayer::Setup(int batchsize, TrainerProto::Algorithm alg,
-                        const std::vector<DataSource *> &sources) {
+void LinearLayer::Setup(const char flag) {
   CHECK(in_edges_.size() == 1);
-  in_edges_[0]->SetupTopBlob(&fea_);
-  in_edges_[0]->SetupTopBlob(&grad_);
+  in_edges_[0]->SetupTopBlob( AllocData(flag),&fea_);
+  in_edges_[0]->SetupTopBlob( AllocData(flag),&grad_);
   VLOG(2)<<name_<<" shape: "<< fea_.tostring();
 }
 

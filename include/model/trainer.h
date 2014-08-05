@@ -9,6 +9,7 @@
 #include "model/net.h"
 #include "disk/data_source.h"
 #include "model_controller/model.h"
+#include "utils/common.h"
 
 namespace lapis {
 /**
@@ -51,7 +52,8 @@ class Trainer {
    * @param net the Net object to be trained
    * @param step the current training step, e.g., id of the mini-batch
    */
-  virtual void Train(Net *net, int step) = 0;
+  virtual void Train(const int step,Net* net,
+                     const char flag=kAllocData|kAllocParam|kInitParam);
   /**
    * test performance on validation dataset
    * @param net the Net object
@@ -66,7 +68,7 @@ class Trainer {
    * Run the trainer
    * @param net the neural network
    */
-  virtual void Run(Net *net);
+  virtual void Run(const char flag, Net *net);
 
   /**
    * marshal the state of the trainer to google protobuf object, which will

@@ -19,6 +19,7 @@ using mshadow::Shape1;
 using mshadow::Shape2;
 using mshadow::Shape3;
 using mshadow::Shape4;
+
 /**
  * Blob stores the data of both parameters and (raw/intermediate) features.
  */
@@ -26,7 +27,7 @@ class Blob {
  public:
   Blob(): dptr(nullptr), num_(0), channels_(0),
           height_(0), width_(0), length_(0){}
-  Blob(int num, int channels, int height, int width);
+  Blob(int num, int channels, int height, int width, const bool alloc=true);
   ~Blob() {
     VLOG(3)<<"Free Blob at "<<dptr;
     if(dptr!=nullptr)
@@ -65,7 +66,8 @@ class Blob {
    * @param height e.g., num of rows of the weight matrix
    * @param width e.g., num of cols of the weight matrix
    */
-  void Resize(int num, int channels, int height, int width);
+  void Resize(int num, int channels, int height,
+              int width, const bool alloc=true);
 
   /**
    * Return num of instances stored in this blob

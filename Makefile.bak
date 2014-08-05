@@ -13,7 +13,7 @@ CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
 	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
+MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\

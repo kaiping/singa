@@ -7,6 +7,7 @@
 #include <vector>
 #include "model/param.h"
 #include "model/trainer.h"
+#include "utils/common.h"
 #include "proto/model.pb.h"
 #include "model_controller/model.h"
 
@@ -18,12 +19,14 @@ namespace lapis {
 class SGDTrainer : public Trainer {
  public:
   virtual void Init(const TrainerProto &trainer_proto, ModelController *mc);
-  virtual void Train(Net *net, int step);
+  virtual void Train(const int step,Net* net,
+                     const char flag=kAllocData|kAllocParam|kInitParam);
   virtual void Validate(Net *net);
   virtual void Test(Net *net);
   virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished(const int step);
 
+  void BackPropagation(const int step, Net* net) ;
   float learning_rate() const {
     return learning_rate_;
   }

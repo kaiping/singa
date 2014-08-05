@@ -25,12 +25,11 @@ void Layer::Init(const LayerProto &proto) {
 void Layer::ToProto(LayerProto *proto) {
   proto->set_name(name_);
 }
-void Layer::Setup(int batchsize, TrainerProto::Algorithm alg,
-                     const std::vector<DataSource *> &sources) {
+void Layer::Setup(const char flag){
   if(drop_prob_>0) {
-    in_edges_[0]->SetupTopBlob(&drop_fea_);
-    in_edges_[0]->SetupTopBlob(&drop_grad_);
-    in_edges_[0]->SetupTopBlob(&mask_);
+    in_edges_[0]->SetupTopBlob(AllocData(flag),&drop_fea_);
+    in_edges_[0]->SetupTopBlob(AllocData(flag),&drop_grad_);
+    in_edges_[0]->SetupTopBlob(AllocData(flag),&mask_);
     VLOG(2)<<name_<<" drop prob is "<<drop_prob_<<drop_fea_.tostring();
   }
 }

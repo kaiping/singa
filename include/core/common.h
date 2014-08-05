@@ -72,12 +72,12 @@ struct Sharder {
 template <class T, class Enable = void>
 struct Marshal {
   virtual void marshal(const T &t, string *out) {
-    GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
+    //GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
     out->assign(reinterpret_cast<const char *>(&t), sizeof(t));
   }
 
   virtual void unmarshal(const StringPiece &s, T *t) {
-    GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
+    //GOOGLE_GLOG_COMPILE_ASSERT(std::tr1::is_pod<T>::value, Invalid_Value_Type);
     *t = *reinterpret_cast<const T *>(s.data);
   }
 };

@@ -147,6 +147,13 @@ class SystemProto : public ::google::protobuf::Message {
   inline bool standalone() const;
   inline void set_standalone(bool value);
 
+  // optional bool sync = 9 [default = true];
+  inline bool has_sync() const;
+  inline void clear_sync();
+  static const int kSyncFieldNumber = 9;
+  inline bool sync() const;
+  inline void set_sync(bool value);
+
   // @@protoc_insertion_point(class_scope:lapis.SystemProto)
  private:
   inline void set_has_coordinator();
@@ -165,6 +172,8 @@ class SystemProto : public ::google::protobuf::Message {
   inline void clear_has_disk_end();
   inline void set_has_standalone();
   inline void clear_has_standalone();
+  inline void set_has_sync();
+  inline void clear_has_sync();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -176,9 +185,10 @@ class SystemProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 disk_start_;
   ::google::protobuf::int32 disk_end_;
   bool standalone_;
+  bool sync_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
 
   friend void  protobuf_AddDesc_system_2eproto();
   friend void protobuf_AssignDesc_system_2eproto();
@@ -368,6 +378,28 @@ inline bool SystemProto::standalone() const {
 inline void SystemProto::set_standalone(bool value) {
   set_has_standalone();
   standalone_ = value;
+}
+
+// optional bool sync = 9 [default = true];
+inline bool SystemProto::has_sync() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void SystemProto::set_has_sync() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void SystemProto::clear_has_sync() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void SystemProto::clear_sync() {
+  sync_ = true;
+  clear_has_sync();
+}
+inline bool SystemProto::sync() const {
+  return sync_;
+}
+inline void SystemProto::set_sync(bool value) {
+  set_has_sync();
+  sync_ = value;
 }
 
 

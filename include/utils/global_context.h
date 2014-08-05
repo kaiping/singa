@@ -24,7 +24,7 @@ class GlobalContext {
   void Init(const std::string &system_conf_path,
             const std::string &model_conf_path);
   bool single(){return single_;}
-  bool sync() {return sync_;}
+  bool is_sync_update() {return sync_;}
   int num_memory_servers() {
     return num_memory_servers_;
   }
@@ -48,7 +48,7 @@ class GlobalContext {
   int num_memory_servers_;
   // # of nodes have disk tables
   int num_disk_servers_;
-  bool single_;
+  bool single_, sync_;
   std::string model_conf_path_;
   GlobalContext() {}
 };

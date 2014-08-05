@@ -17,8 +17,10 @@
 
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "model.conf", "DL model configuration file");
+DEFINE_int32(v, 3, "vlog controller");
 
 int main(int argc, char **argv) {
+  FLAGS_logtostderr=1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -27,9 +29,12 @@ int main(int argc, char **argv) {
   // TODO(all) Init memory servers here?
 
   // Init GlobalContext
+  VLOG(3)<<"before global context";
   lapis::GlobalContext::Get()->Init(FLAGS_system_conf, FLAGS_model_conf);
+  VLOG(3)<<"after global context";
   lapis::ModelController mc;
   mc.Init();
+  VLOG(3)<<"after model controller";
   // There are two type of working units: coordinator, worker
   if (mc.iscoordinator()) {
     lapis::Coordinator coordinator(&mc);

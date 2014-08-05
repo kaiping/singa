@@ -11,6 +11,7 @@ namespace lapis {
 
 ModelProto *ModelController::Init()
 {
+  VLOG(3)<<"In model controller";
   GlobalContext* gc=GlobalContext::Get();
   my_split_tpye_ = 0;
   my_machine_num_ = gc->num_memory_servers();
@@ -18,22 +19,30 @@ ModelProto *ModelController::Init()
   //start the lower level network part
   issinglemachine_ = gc->single();
   //start the lower level network part
+  VLOG(3)<<"before Get network thread";
+  net_ = NetworkThread::Get();
+  VLOG(3)<<"Get network thread";
+  NetworkThread::Init();
+  VLOG(3)<<"init network thread";
+
   if(!issinglemachine_)
   {
-    net_ = NetworkThread::Get();
-    my_rank_ = net_->id();
     isdmm_ = IsDistributedMemoryManager();
-    NetworkThread::Init();
     if (isdmm_) {
       dmm_ = DistributedMemoryManager::Get();
       DistributedMemoryManager::Init();
+      VLOG(3)<<"finish init dmm";
       dmm_->StartMemoryManager();
+      VLOG(3)<<"finish start mem manager";
       dmm_->AssignTables();
+      VLOG(3)<<"finish assign  mem manager";
     } else {
       ms_ = new MemoryServer();
       ms_-> StartMemoryServer();
+    VLOG(3)<<"start mem server";
     }
   }
+  my_rank_ = net_->id();
   int start_rank = gc->StartRankOf(lapis::kCoordinator);
   int end_rank = gc->EndRankOf(lapis::kCoordinator);
   iscoordinator_ = (my_rank_ <= end_rank && my_rank_ >= start_rank);
@@ -42,10 +51,13 @@ ModelProto *ModelController::Init()
     //do nothing?
   } else {
     net_->Read(start_rank,MTYPE_MC_CONFIG, dynamic_cast<Message*>(model_proto));
+    VLOG(3)<<"work read model_proto";
   }
-  if(!issinglemachine_)
+  if(!issinglemachine_){
     distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
         new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
+    VLOG(3)<<"create table";
+  }
   return model_proto;
 }
 

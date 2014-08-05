@@ -53,7 +53,7 @@ class Trainer {
    * @param step the current training step, e.g., id of the mini-batch
    */
   virtual void Train(const int step,Net* net,
-                     const char flag=kAllocData|kAllocParam|kInitParam);
+                     const char flag=kAllocData|kAllocParam|kInitParam)=0;
   /**
    * test performance on validation dataset
    * @param net the Net object

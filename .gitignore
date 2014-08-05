@@ -7,5 +7,8 @@
 *.so
 *.dat
 *~
-examples/
+*.bak
+*.P
+*.odp
 cscope.*
+build/

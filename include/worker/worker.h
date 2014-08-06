@@ -10,7 +10,7 @@
 namespace lapis {
 class Worker {
  public:
-  Worker(ModelController* mc);
+  Worker(ModelProto *proto, ModelController* mc);
   void Run();
 
  private:

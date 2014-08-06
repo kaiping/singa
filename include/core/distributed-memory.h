@@ -46,6 +46,8 @@ class DistributedMemoryManager {
   void ShutdownServers(); //  shut down other clients
 
   static DistributedMemoryManager *Get() {
+    if (dmm_==nullptr)
+      dmm_=new DistributedMemoryManager();
     return dmm_;
   }
 

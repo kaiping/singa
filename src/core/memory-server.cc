@@ -18,7 +18,9 @@ void MemoryServer::StartMemoryServer() {
   //  register to the manager
   RegisterWorkerRequest req;
   req.set_id(server_id_);
+  VLOG(3)<<"before send msg to "<<manager_id_;
   net_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
+  VLOG(3)<<"after send msg to "<<manager_id_;
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&MemoryServer::HandleShardAssignment, this));

@@ -13,6 +13,8 @@
 #include "worker/worker.h"
 #include "coordinator/coordinator.h"
 #include "model_controller/model.h"
+#include "proto/model.pb.h"
+
 
 
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
@@ -33,14 +35,14 @@ int main(int argc, char **argv) {
   lapis::GlobalContext::Get()->Init(FLAGS_system_conf, FLAGS_model_conf);
   VLOG(3)<<"after global context";
   lapis::ModelController mc;
-  mc.Init();
+  lapis::ModelProto *model_proto= mc.Init();
   VLOG(3)<<"after model controller";
   // There are two type of working units: coordinator, worker
   if (mc.iscoordinator()) {
     lapis::Coordinator coordinator(&mc);
     coordinator.Run();
   } else {
-    lapis::Worker worker(&mc);
+    lapis::Worker worker(model_proto, &mc);
     worker.Run();
   }
   return 0;

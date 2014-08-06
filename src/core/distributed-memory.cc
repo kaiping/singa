@@ -18,17 +18,21 @@ DistributedMemoryManager::~DistributedMemoryManager() {
 
 void DistributedMemoryManager::StartMemoryManager() {
   net_ = NetworkThread::Get();
+  VLOG(3)<<"begining of start mem manger in manager id: "<<net_->id();
   GlobalContext *context_ = GlobalContext::Get();
   for (int i = 0; i < net_->size() - 1; ++i) {
+    VLOG(3)<<"in start mem manger "<<i;
     RegisterWorkerRequest req;
     int src = 0;
+    VLOG(3)<<"before read msg ";
     net_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
+    VLOG(3)<<"after read msg ";
     //  adding memory server.
     if (context_->IsRoleOf(kMemoryServer, i)) {
       server_states_.push_back(new ServerState(i));
     }
   }
-  LOG(INFO) << StringPrintf(" All servers registered and started up");
+  LOG(INFO) << " All servers registered and started up";
   //  set itself as the current worker for the table
   TableRegistry::Map &t = TableRegistry::Get()->tables();
   for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
@@ -39,7 +43,9 @@ void DistributedMemoryManager::StartMemoryManager() {
 //  assigning which workers own which shards
 void DistributedMemoryManager::AssignTables() {
   TableRegistry::Map &tables = TableRegistry::Get()->tables();
+  VLOG(3)<<"in assign tables :"<<tables.size();
   for (TableRegistry::Map::iterator i = tables.begin(); i != tables.end(); ++i) {
+    VLOG(3)<<"num of shards "<<i->second->num_shards();
     for (int j = 0; j < i->second->num_shards(); ++j) {
       assign_worker(i->first, j);
     }

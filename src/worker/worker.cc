@@ -8,13 +8,13 @@
 #include "utils/proto_helper.h"
 
 namespace lapis {
-Worker::Worker(ModelController *mc) {
+Worker::Worker(ModelProto* proto, ModelController *mc) {
   LOG(INFO) << "Working constructor...";
   model_controller_=mc;
+  model_proto_=proto;
 }
 
 void Worker::Run() {
-  model_proto_=model_controller_->Init();
   Net net;
   net.Init(model_proto_->net());
   SGDTrainer trainer;

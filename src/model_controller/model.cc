@@ -19,19 +19,23 @@ ModelProto *ModelController::Init()
   //start the lower level network part
   issinglemachine_ = gc->single();
   //start the lower level network part
-  VLOG(3)<<"before Get network thread";
-  net_ = NetworkThread::Get();
-  VLOG(3)<<"Get network thread";
-  NetworkThread::Init();
   VLOG(3)<<"init network thread";
-
+  NetworkThread::Init();
+  VLOG(3)<<"Get network thread";
+  net_ = NetworkThread::Get();
+  if(!issinglemachine_){
+    VLOG(3)<<"before create table num of machines "<<my_machine_num_;
+    distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
+        new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
+    VLOG(3)<<"create table";
+  }
   if(!issinglemachine_)
   {
     isdmm_ = IsDistributedMemoryManager();
     if (isdmm_) {
       dmm_ = DistributedMemoryManager::Get();
       DistributedMemoryManager::Init();
-      VLOG(3)<<"finish init dmm";
+      VLOG(3)<<"finish init dmm"<<dmm_;
       dmm_->StartMemoryManager();
       VLOG(3)<<"finish start mem manager";
       dmm_->AssignTables();
@@ -39,7 +43,7 @@ ModelProto *ModelController::Init()
     } else {
       ms_ = new MemoryServer();
       ms_-> StartMemoryServer();
-    VLOG(3)<<"start mem server";
+      VLOG(3)<<"start mem server";
     }
   }
   my_rank_ = net_->id();
@@ -53,11 +57,7 @@ ModelProto *ModelController::Init()
     net_->Read(start_rank,MTYPE_MC_CONFIG, dynamic_cast<Message*>(model_proto));
     VLOG(3)<<"work read model_proto";
   }
-  if(!issinglemachine_){
-    distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
-        new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
-    VLOG(3)<<"create table";
-  }
+
   return model_proto;
 }
 
@@ -148,6 +148,8 @@ void ModelController::Get(const std::vector<Param*> &params)
     {
       int mykey = paramid*my_machine_num_*my_split_size_+j;
       float_vector_message mymessage = distributed_store_->get(mykey);
+      VLOG(3)<<"msg size "<<mymessage.myfloat_size();
+      VLOG(3)<<splitoffset;
       for(int k = 0; k < splitoffset; k++)
       {
         if(curoffset >= largestoffset) break;
@@ -163,8 +165,11 @@ void ModelController::Get(const std::vector<Param*> &params)
 
 void ModelController::CommenceBroadcast(const Message &modelconfig)
 {
-  if (iscoordinator_)
+  if (iscoordinator_) {
+    VLOG(3)<<"before broadcast";
     net_->Broadcast(MTYPE_MC_CONFIG,modelconfig);
+    VLOG(3)<<"after Broadcast";
+  }
 }
 
 void ModelController::CommenceSpecialConfig(const Message &modelconfig, int dst)

@@ -24,7 +24,9 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   std::vector<Edge *> edges = net->edges();
   std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
+  VLOG(3)<<"before get params from distributed mem";
   model_controller_->Get(params);
+  VLOG(3)<<"after get params from distributed mem";
 
   for (auto* layer : layers)
     layer->Forward();
@@ -36,7 +38,9 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   for (auto layer : layers)
     layer->ComputeParamUpdates(this);
 
+  VLOG(3)<<"before update params from distributed mem";
   model_controller_->Update(params);
+  VLOG(3)<<"after update params from distributed mem";
   // update parameters either locally or distributedly depending on the
   // system (single machine or a cluster)
   /*

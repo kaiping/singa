@@ -112,6 +112,7 @@ void NetworkThread::CollectActive() {
     }
     ++i;
   }
+  VLOG(3)<<"end of ColelctActive";
 }
 
 //  loop that receives messages. unlike in piccolo, all requests

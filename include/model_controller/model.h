@@ -30,10 +30,6 @@ class ModelController {
   void CommenceBroadcast(const Message &modelconfig);
   void CommenceSpecialConfig(const Message &modelconfig, int dst);
   void Finish();
-  bool iscoordinator(){return iscoordinator_;}
-  bool isdmm(){return isdmm_;}
-  bool issinglemachine(){return issinglemachine_;}
-  int my_rank(){return my_rank_;}
   //set split type to 0 and split size to 2
   ModelProto* Init();
 

@@ -4,10 +4,11 @@
 #include "utils/global_context.h"
 #include "proto/system.pb.h"
 #include "utils/proto_helper.h"
+#include "utils/network_thread.h"
 
 namespace lapis {
 
-shared_ptr<GlobalContext> GlobalContext::instance_;
+std::shared_ptr<GlobalContext> GlobalContext::instance_;
 
 GlobalContext::GlobalContext(const std::string &system_conf,
     const std::string &model_conf): model_conf_(model_conf) {

@@ -11,11 +11,7 @@
 #include <glog/logging.h>
 #include "utils/global_context.h"
 #include "worker/worker.h"
-#include "coordinator/coordinator.h"
-#include "model_controller/model.h"
 #include "proto/model.pb.h"
-
-
 
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "model.conf", "DL model configuration file");
@@ -35,13 +31,8 @@ int main(int argc, char **argv) {
   VLOG(3)<<"before global context";
   auto gc=lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
   VLOG(3)<<"after global context";
-  // There are two type of working units: coordinator, worker
-  if (gc->AmICoordinator()) {
-    lapis::Coordinator coordinator();
-    coordinator.Run();
-  } else {
-    lapis::Worker worker();
-    worker.Run();
-  }
+  // TODO(wangwei, anh) InitServers
+  lapis::Worker worker();
+  worker.Run();
   return 0;
 }

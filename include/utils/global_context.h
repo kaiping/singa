@@ -37,7 +37,6 @@ class GlobalContext {
   // All processes are workers except the coordinator
   bool AmIWorker() {return rank_!=kCoordinatorRank;}
 
-
  private:
   GlobalContext(const string sys_conf, const string model_conf);
 

@@ -25,32 +25,6 @@ ModelProto *ModelController::Init()
         new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
     VLOG(3)<<"create table";
   }
-  if(!issinglemachine_)
-  {
-    isdmm_ = IsDistributedMemoryManager();
-    if (isdmm_) {
-      dmm_ = DistributedMemoryManager::Get();
-      DistributedMemoryManager::Init();
-      VLOG(3)<<"finish init dmm"<<dmm_;
-      dmm_->StartMemoryManager();
-      VLOG(3)<<"finish start mem manager";
-      dmm_->AssignTables();
-      VLOG(3)<<"finish assign  mem manager";
-    } else {
-      ms_ = new MemoryServer();
-      ms_-> StartMemoryServer();
-      VLOG(3)<<"start mem server";
-    }
-  }
-  my_rank_ = net_->id();
-  ModelProto *model_proto=new ModelProto();
-  if (gc->AmICoordinator()) {
-    //do nothing?
-  } else {
-    net_->Read(start_rank,MTYPE_MC_CONFIG, dynamic_cast<Message*>(model_proto));
-    VLOG(3)<<"work read model_proto";
-  }
-
   return model_proto;
 }
 

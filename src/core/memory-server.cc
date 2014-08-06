@@ -40,8 +40,7 @@ void MemoryServer::ShutdownMemoryServer() {
 }
 
 void MemoryServer::HandleShardAssignment() {
-  CHECK(GlobalContext::Get()->IsRoleOf(kMemoryServer,
-                                       id())) << "Assign table to wrong server " << id();
+  CHECK(GlobalContext::Get()->IsMemoryServer(id())) << "Assign table to wrong server " << id();
   ShardAssignmentRequest shard_req;
   net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req);
   //  request read from DistributedMemoryManager

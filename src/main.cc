@@ -19,10 +19,11 @@
 
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "model.conf", "DL model configuration file");
+// for debugging use
 DEFINE_int32(v, 3, "vlog controller");
+DEFINE_int32(logtostderr, 1 "log to stderr");
 
 int main(int argc, char **argv) {
-  FLAGS_logtostderr=1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -34,15 +35,12 @@ int main(int argc, char **argv) {
   VLOG(3)<<"before global context";
   lapis::GlobalContext::Get()->Init(FLAGS_system_conf, FLAGS_model_conf);
   VLOG(3)<<"after global context";
-  lapis::ModelController mc;
-  lapis::ModelProto *model_proto= mc.Init();
-  VLOG(3)<<"after model controller";
   // There are two type of working units: coordinator, worker
-  if (mc.iscoordinator()) {
-    lapis::Coordinator coordinator(&mc);
+  if (gc.AmICoordinator()) {
+    lapis::Coordinator coordinator();
     coordinator.Run();
   } else {
-    lapis::Worker worker(model_proto, &mc);
+    lapis::Worker worker();
     worker.Run();
   }
   return 0;

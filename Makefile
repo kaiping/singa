@@ -44,8 +44,6 @@ LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
 LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 								-o \( -name "*.cc" -type f \) -print )
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
-DEPDIR = $(BUILD_DIR)/deps
-df = $(DEPDIR)/$(*F)
 -include $(LAPIS_OBJS:%.o=%.P)
 
 run_lapis:
@@ -66,7 +64,6 @@ $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 
 # create folders
 init:
-	@ mkdir -p $(DEPDIR)
 	@ mkdir -p $(foreach obj, $(LAPIS_OBJS), $(dir $(obj)))
 	@echo
 

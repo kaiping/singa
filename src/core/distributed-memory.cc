@@ -28,7 +28,7 @@ void DistributedMemoryManager::StartMemoryManager() {
     net_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
     VLOG(3)<<"after read msg ";
     //  adding memory server.
-    if (context_->IsRoleOf(kMemoryServer, i)) {
+    if (context_->IsMemoryServer(i)) {
       server_states_.push_back(new ServerState(i));
     }
   }

@@ -17,7 +17,7 @@ ModelProto *ModelController::Init()
   my_machine_num_ = gc->num_memory_servers();
   my_split_size_ = 2;
   //start the lower level network part
-  issinglemachine_ = gc->single();
+  issinglemachine_ = gc->standalone();
   //start the lower level network part
   VLOG(3)<<"init network thread";
   NetworkThread::Init();

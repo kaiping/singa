@@ -35,13 +35,6 @@ void GlobalContext::Init(const std::string &system_conf_path,
                       role_rank_[kDiskServer].first + 1;
 }
 
-bool GlobalContext::IsRoleOf(const Role &role, int rank) {
-  if (rank <= role_rank_[role].second && rank >= role_rank_[role].first)
-    return true;
-  else
-    return false;
-}
-
 GlobalContext *GlobalContext::Get() {
   static GlobalContext *gc =  new GlobalContext();
   return gc;

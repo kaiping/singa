@@ -84,17 +84,17 @@ void ModelController::Update(const std::vector<Param*> &params)
     {
       int paramid = param->id();
       int largestoffset = param->length();
-int splitsize = my_machine_num_*my_split_size_;
-	int splitoffset = largestoffset/splitsize;
+      int splitsize = my_machine_num_*my_split_size_;
+      int splitoffset = largestoffset/splitsize;
       if (largestoffset%splitsize) splitoffset++;
       if (splitoffset > 1000000)
-	{
-	splitoffset = 1000000;
-	splitsize = largestoffset/splitoffset + 1;
-	}
-	if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
-	int curoffset = 0;
-      
+      {
+        splitoffset = 1000000;
+        splitsize = largestoffset/splitoffset + 1;
+      }
+      if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+      int curoffset = 0;
+
       const float * grad_addr = param->gradient().dptr;
       for(int j = 0; j < splitsize; j++)
       {
@@ -128,7 +128,7 @@ int splitsize = my_machine_num_*my_split_size_;
 	{
 	splitoffset = 1000000;
 	splitsize = largestoffset/splitoffset + 1;
-	} 
+	}
     if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
 int curoffset = 0;
     const float * content_addr = param->content().dptr;
@@ -162,7 +162,7 @@ void ModelController::Get(const std::vector<Param*> &params)
 	{
 	splitoffset = 1000000;
 	splitsize = largestoffset/splitoffset + 1;
-	} 
+	}
     if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
 int curoffset = 0;
     float * content_addr = param->mutable_content().dptr;

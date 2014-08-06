@@ -83,12 +83,20 @@ void ModelController::Update(const std::vector<Param*> &params)
     for(auto* param: params)
     {
       int paramid = param->id();
-      int splitoffset = param->length()/(my_machine_num_*my_split_size_);
-      if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
-      int curoffset = 0;
       int largestoffset = param->length();
+int splitsize = my_machine_num_*my_split_size_;
+	int splitoffset = largestoffset/splitsize;
+      if (largestoffset%splitsize) splitoffset++;
+      if (splitoffset > 1000000)
+	{
+	splitoffset = 1000000;
+	splitsize = largestoffset/splitoffset + 1;
+	}
+	if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+	int curoffset = 0;
+      
       const float * grad_addr = param->gradient().dptr;
-      for(int j = 0; j < my_machine_num_*my_split_size_; j++)
+      for(int j = 0; j < splitsize; j++)
       {
         float_vector_message mymessage;
         mymessage.clear_myfloat();
@@ -98,7 +106,7 @@ void ModelController::Update(const std::vector<Param*> &params)
           mymessage.add_myfloat(grad_addr[curoffset]);
           curoffset++;
         }
-        int mykey = paramid*my_machine_num_*my_split_size_+j;
+        int mykey = paramid*2048+j;
         distributed_store_->update(mykey,mymessage);
       }
     }
@@ -112,12 +120,19 @@ void ModelController::Put(const std::vector<Param*> &params)
   for(auto* param: params)
   {
     int paramid = param->id();
-    int splitoffset = param->length()/(my_machine_num_*my_split_size_);
-    if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
-    int curoffset = 0;
     int largestoffset = param->length();
+int splitsize = my_machine_num_*my_split_size_;
+	int splitoffset = largestoffset/splitsize;
+      if (largestoffset%splitsize) splitoffset++;
+      if (splitoffset > 1000000)
+	{
+	splitoffset = 1000000;
+	splitsize = largestoffset/splitoffset + 1;
+	} 
+    if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+int curoffset = 0;
     const float * content_addr = param->content().dptr;
-    for(int j = 0; j < my_machine_num_*my_split_size_; j++)
+    for(int j = 0; j < splitsize; j++)
     {
       float_vector_message mymessage;
       mymessage.clear_myfloat();
@@ -127,7 +142,7 @@ void ModelController::Put(const std::vector<Param*> &params)
         mymessage.add_myfloat(content_addr[curoffset]);
         curoffset++;
       }
-      int mykey = paramid*my_machine_num_*my_split_size_+j;
+      int mykey = paramid*2048+j;
       distributed_store_->put(mykey,mymessage);
     }
   }
@@ -139,14 +154,21 @@ void ModelController::Get(const std::vector<Param*> &params)
   for(auto* param : params)
   {
     int paramid = param->id();
-    int splitoffset = param->length()/(my_machine_num_*my_split_size_);
-    if (param->length()%(my_machine_num_*my_split_size_)) splitoffset++;
-    int curoffset = 0;
     int largestoffset = param->length();
+	int splitsize = my_machine_num_*my_split_size_;
+	int splitoffset = largestoffset/splitsize;
+      if (largestoffset%splitsize) splitoffset++;
+      if (splitoffset > 1000000)
+	{
+	splitoffset = 1000000;
+	splitsize = largestoffset/splitoffset + 1;
+	} 
+    if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+int curoffset = 0;
     float * content_addr = param->mutable_content().dptr;
-    for(int j = 0; j < my_machine_num_*my_split_size_; j++)
+    for(int j = 0; j < splitsize; j++)
     {
-      int mykey = paramid*my_machine_num_*my_split_size_+j;
+      int mykey = paramid*2048+j;
       float_vector_message mymessage = distributed_store_->get(mykey);
       VLOG(3)<<"msg size "<<mymessage.myfloat_size();
       VLOG(3)<<splitoffset;

@@ -33,10 +33,10 @@ int main(int argc, char **argv) {
 
   // Init GlobalContext
   VLOG(3)<<"before global context";
-  lapis::GlobalContext::Get()->Init(FLAGS_system_conf, FLAGS_model_conf);
+  auto gc=lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
   VLOG(3)<<"after global context";
   // There are two type of working units: coordinator, worker
-  if (gc.AmICoordinator()) {
+  if (gc->AmICoordinator()) {
     lapis::Coordinator coordinator();
     coordinator.Run();
   } else {

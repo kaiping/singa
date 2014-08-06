@@ -80,8 +80,8 @@ NetworkThread::NetworkThread() {
     handles_[i] = NULL;
   }
 //  initialize message queue
-  GlobalContext *gc = GlobalContext::Get();
-  if (gc->is_sync_update())
+  auto gc = GlobalContext::Get();
+  if (gc->synchronous())
     request_queue_ = new SyncRequestQueue(gc->num_memory_servers());
   else
     request_queue_ = new AsyncRequestQueue(gc->num_memory_servers());

@@ -19,7 +19,7 @@ DistributedMemoryManager::~DistributedMemoryManager() {
 void DistributedMemoryManager::StartMemoryManager() {
   net_ = NetworkThread::Get();
   VLOG(3)<<"begining of start mem manger in manager id: "<<net_->id();
-  GlobalContext *context_ = GlobalContext::Get();
+  auto context_ = GlobalContext::Get();
   for (int i = 0; i < net_->size() - 1; ++i) {
     VLOG(3)<<"in start mem manger "<<i;
     RegisterWorkerRequest req;

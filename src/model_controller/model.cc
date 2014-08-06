@@ -12,17 +12,13 @@ namespace lapis {
 ModelProto *ModelController::Init()
 {
   VLOG(3)<<"In model controller";
-  GlobalContext* gc=GlobalContext::Get();
+  auto gc=GlobalContext::Get();
   my_split_tpye_ = 0;
   my_machine_num_ = gc->num_memory_servers();
   my_split_size_ = 2;
   //start the lower level network part
   issinglemachine_ = gc->standalone();
   //start the lower level network part
-  VLOG(3)<<"init network thread";
-  NetworkThread::Init();
-  VLOG(3)<<"Get network thread";
-  net_ = NetworkThread::Get();
   if(!issinglemachine_){
     VLOG(3)<<"before create table num of machines "<<my_machine_num_;
     distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
@@ -47,11 +43,8 @@ ModelProto *ModelController::Init()
     }
   }
   my_rank_ = net_->id();
-  int start_rank = gc->StartRankOf(lapis::kCoordinator);
-  int end_rank = gc->EndRankOf(lapis::kCoordinator);
-  iscoordinator_ = (my_rank_ <= end_rank && my_rank_ >= start_rank);
   ModelProto *model_proto=new ModelProto();
-  if (iscoordinator_) {
+  if (gc->AmICoordinator()) {
     //do nothing?
   } else {
     net_->Read(start_rank,MTYPE_MC_CONFIG, dynamic_cast<Message*>(model_proto));

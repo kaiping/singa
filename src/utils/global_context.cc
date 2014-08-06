@@ -5,38 +5,52 @@
 #include "proto/system.pb.h"
 #include "utils/proto_helper.h"
 
-DEFINE_string(system_conf_path, "", "");
-DEFINE_string(model_conf_path, "", "");
 namespace lapis {
-void GlobalContext::Init(const std::string &system_conf_path,
-                         const std::string &model_conf_path) {
-  model_conf_path_ = model_conf_path;
-  SystemProto system_conf;
-  ReadProtoFromTextFile(system_conf_path.c_str(), &system_conf);
-  single_=system_conf.standalone();
-  sync_= system_conf.sync();
-  role_rank_[kCoordinator] = std::make_pair(system_conf.coordinator(),
-                             system_conf.coordinator());
-  role_rank_[kWorker] = std::make_pair(system_conf.worker_start(),
-                                       system_conf.worker_end());
-  if (system_conf.has_memory_start() && system_conf.has_memory_end())
-    role_rank_[kMemoryServer] = std::make_pair(system_conf.memory_start(),
-                                system_conf.memory_end());
-  else
-    role_rank_[kMemoryServer] = role_rank_[kWorker];
-  if (system_conf.has_disk_start() && system_conf.has_disk_end())
-    role_rank_[kDiskServer] = std::make_pair(system_conf.disk_start(),
-                              system_conf.disk_end());
-  else
-    role_rank_[kDiskServer] = role_rank_[kWorker];
-  num_memory_servers_ = role_rank_[kMemoryServer].second -
-                        role_rank_[kMemoryServer].first + 1;
-  num_disk_servers_ = role_rank_[kDiskServer].second -
-                      role_rank_[kDiskServer].first + 1;
+
+shared_ptr<GlobalContext> GlobalContext::instance_;
+
+GlobalContext::GlobalContext(const std::string &system_conf,
+    const std::string &model_conf): model_conf_(model_conf) {
+  SystemProto proto;
+  ReadProtoFromTextFile(system_conf.c_str(), &proto);
+  standalone_=proto.standalone();
+  synchronous_= proto.synchronous();
+  if (proto.has_mem_server_start() && proto.has_mem_server_end()) {
+    mem_server_start_=proto.mem_server_start();
+    mem_server_end_=proto.mem_server_end();
+  }
+  else {
+    mem_server_start_=0;
+    mem_server_start_=0;
+  }
 }
 
-GlobalContext *GlobalContext::Get() {
-  static GlobalContext *gc =  new GlobalContext();
-  return gc;
+shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf,
+                                             const std::string &model_conf) {
+  if(!instance_) {
+    instance_.reset(new GlobalContext(sys_conf, model_conf));
+    VLOG(3)<<"init network thread";
+    NetworkThread::Init();
+    auto net=NetworkThread::Get();
+    rank_=->id();
+    num_processes_=net->size();
+    if(mem_server_start_==0&&mem_server_end_==0){
+      mem_server_start_=0;
+      mem_server_end_=num_processes_;
+    } else{
+      CHECK(mem_server_start_>=0);
+      CHECK(mem_server_start_<mem_server_end_);
+      CHECK(mem_server_end_<=num_processes_);
+    }
+  }
+  return instance_;
+}
+
+shared_ptr<GlobalContext> GlobalContext::Get() {
+  if(!instance_) {
+    LOG(ERROR)<<"The first call to Get should "
+              <<"provide the sys/model conf path";
+  }
+  return instance_;
 }
 }  // namespace lapis

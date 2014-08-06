@@ -49,9 +49,10 @@ int Coordinator::InitModel(const ModelProto &model_proto) {
 // It shutdown until all works have finished.
 void Coordinator::Run() {
   //LoadData();
+  auto gc=GlobalContext::Get();
   ModelProto model_proto;
-  ReadProtoFromTextFile(GlobalContext::Get()->model_conf_path(), &model_proto);
-  if(!model_controller_->issinglemachine())
+  ReadProtoFromTextFile(gc->model_conf(), &model_proto);
+  if(!gc->standalone())
     InitModel(model_proto);
   model_controller_->CommenceBroadcast(model_proto);
   model_controller_->Finish();

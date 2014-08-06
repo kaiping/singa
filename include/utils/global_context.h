@@ -3,60 +3,55 @@
 #ifndef INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 #define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 
-#include <map>
 #include <string>
 #include <utility>
+#include <memory>
 
 #include <gflags/gflags.h>
 
 using std::shared_ptr;
-namespace lapis {
-enum Role {
-  kCoordinator,
-  kWorker,
-  kMemoryServer,
-  kDiskServer
-};
 
+namespace lapis {
+// assume the rank of coordinator is 0
+const int kCoordinatorRank=0;
 //  assume that the coordinator's rank is (num_servers()-1)
 class GlobalContext {
  public:
-  bool IsRoleOf(const Role &role, int rank);
-  bool single(){return single_;}
-  bool is_sync_update() {return sync_;}
-  int num_memory_servers() {
-    mem_server_end_-mem_server_start_;
-  }
-
-  const char *model_conf_path() {
-    return model_conf_path_.c_str();
-  }
-
-  int StartRankOf(Role role) {
-    return role_rank_.at(role).first;
-  }
-  int EndRankOf(Role role) {
-    return role_rank_.at(role).second;
-  }
-
-  bool GlobalContext::IsMemoryServer(int rank) {
-    return rank>=mem_server_start_&&rank<mem_server_end_;
-  }
-
-
   static shared_ptr<GlobalContext> Get();
   static shared_ptr<GlobalContext> Get(const string sys_conf,
                                        const string model_conf);
+  const char *model_conf() { return model_conf_.c_str(); }
+  // True if running in standalone mode
+  bool standalone() { return standalone_; }
+  // True if running in synchronous update mode
+  bool synchronous() {return synchronous_;}
+  // num of memory servers, default is the num of processes
+  int num_memory_servers() { mem_server_end_-mem_server_start_; }
+  bool IsMemoryServer(int rank) {
+    return rank>=mem_server_start_&&rank<mem_server_end_;
+  }
+  // There is only one coordinator with rank 0
+  bool AmICoordinator() { return rank_==kCoordinatorRank;}
+  // Memory server should have rank [start, end)
+  bool AmIMemoryServer() { return IsMemoryServer(rank_); }
+  // All processes are workers except the coordinator
+  bool AmIWorker() {return rank_!=kCoordinatorRank;}
+
+
  private:
   GlobalContext(const string sys_conf, const string model_conf);
 
  private:
+  // total number of processes started by mpi
+  int num_processes_;
   // start and end rank for memory server, [start, end)
   int mem_server_start_, mem_server_end_;
-  // # of nodes have memory tables
-  int num_memory_servers_;
-  bool standalone_, sync_;
-  std::string model_conf_path_;
+  // standalone or cluster mode;
+  bool standalone_;
+  // update in synchronous or asynchronous mode
+  bool synchronous_;
+  // path of model config
+  std::string model_conf_;
 };
 }  // namespace lapis
 

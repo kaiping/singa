@@ -11,7 +11,7 @@
 #include <random>
 
 #include "proto/model.pb.h"
-#include "model/lapis.h"
+#include "net/lapis.h"
 
 // Base paramter class.
 // TODO(Jingyang) define split/partition function.

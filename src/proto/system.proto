@@ -2,25 +2,12 @@ package lapis;
 
 
 message SystemProto{
-  //rank for coordinator
-  required int32 coordinator = 1 [default = 0];
-  //start rank for worker, both start and end ranks are included.
-  required int32 worker_start = 2 [default = 1];
-  //end rank for worker
-  required int32 worker_end = 3 [default = 1];
-
-  //if the following fields are omitted, then use the setting of workers
-
   //start rank for distributed memory table
-  optional int32 memory_start = 4 [default = 1];
+  optional int32 table_server_start = 1 ;
   //end rank for distributed memory table
-  optional int32 memory_end = 5 [default =1];
-  //start rank for distributed disk table
-  optional int32 disk_start = 6 [default = 1];
-  //end rank for distributed disk table
-  optional int32 disk_end = 7 [default = 1];
+  optional int32 table_server_end = 2 ;
   // one node mode, no coordinator/memory servers
-  optional bool standalone = 8 [default =true];
+  optional bool standalone = 3 [default =true];
   // synschronous update if true
-  optional bool sync = 9 [default = true];
+  optional bool synchronous = 4 [default = true];
 }

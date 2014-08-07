@@ -53,11 +53,11 @@ enum MessageTypes {
   MTYPE_WORKER_APPLY = 10,
   MTYPE_WORKER_APPLY_DONE = 11,
   MTYPE_WORKER_END = 12,
-  MTYPE_MC_CONFIG = 13
+  MTYPE_MODEL_CONFIG = 13
 };
 bool MessageTypes_IsValid(int value);
 const MessageTypes MessageTypes_MIN = MTYPE_PUT_REQUEST;
-const MessageTypes MessageTypes_MAX = MTYPE_MC_CONFIG;
+const MessageTypes MessageTypes_MAX = MTYPE_MODEL_CONFIG;
 const int MessageTypes_ARRAYSIZE = MessageTypes_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageTypes_descriptor();

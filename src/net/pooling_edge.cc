@@ -2,7 +2,7 @@
 // 2014-07-23 17:03
 #include <glog/logging.h>
 #include <cfloat>
-#include "model/pooling_edge.h"
+#include "net/pooling_edge.h"
 namespace lapis {
 void PoolingEdge::Init(const EdgeProto &proto,
                        const std::map<std::string, Layer *> &layer_map) {

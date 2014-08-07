@@ -3,7 +3,7 @@
 
 #include <glog/logging.h>
 #include "utils/common.h"
-#include "model/relu_layer.h"
+#include "net/relu_layer.h"
 
 namespace lapis {
 

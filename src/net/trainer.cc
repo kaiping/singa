@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "proto/model.pb.h"
-#include "model/trainer.h"
+#include "net/trainer.h"
 
 namespace lapis {
 

@@ -1,10 +1,10 @@
 #ifndef INCLUDE_CORE_TABLE_H_
 #define INCLUDE_CORE_TABLE_H_
-
+#include <glog/logging.h>
+#include <boost/thread.hpp>
 #include "core/common.h"
 #include "core/file.h"
 #include "proto/worker.pb.h"
-#include <boost/thread.hpp>
 
 namespace lapis {
 

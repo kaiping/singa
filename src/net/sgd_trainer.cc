@@ -3,9 +3,9 @@
 
 #include <math.h>
 #include <glog/logging.h>
-#include "model/data_layer.h"
+#include "net/data_layer.h"
 
-#include "model/sgd_trainer.h"
+#include "net/sgd_trainer.h"
 
 namespace lapis {
 
@@ -55,15 +55,9 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
 void SGDTrainer::Train(const int step, Net *net, const char flag) {
   if (phase != Phase::kTrain) {
     char local_flag=step==0?flag: kAllocData;
-    for (auto *layer : net->layers())
-      if (layer->HasInput())
-        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
-        sgd_proto_.train_batchsize(), train_data_);
-    for(auto *layer : net->layers()) {
-        layer->Setup(local_flag);
-      for (auto *edge : layer->out_edges())
-        edge->Setup(local_flag);
-    }
+    net->Setup(sgd_proto_.train_batchsize(),
+               local_flag,
+               train_data_);
     phase = Phase::kTrain;
     VLOG(1)<<"Total mem allocated for Blobs in training is "
       <<Blob::MSize()<<" megabytes";
@@ -73,15 +67,9 @@ void SGDTrainer::Train(const int step, Net *net, const char flag) {
 
 void SGDTrainer::Validate(Net *net) {
   if (phase != Phase::kValidation) {
-    for (auto *layer : net->layers())
-      if (layer->HasInput())
-        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
-            sgd_proto_.validation_batchsize(), validation_data_);
-    for(auto *layer : net->layers()) {
-      layer->Setup(kAllocData);
-      for (auto *edge : layer->out_edges())
-        edge->Setup(kAllocData);
-    }
+    net->Setup(sgd_proto_.validation_batchsize(),
+               kAllocData,
+               validation_data_);
     phase = Phase::kValidation;
   }
   /* TODO(wangwei) forward through all layers to get the loss
@@ -92,16 +80,9 @@ void SGDTrainer::Validate(Net *net) {
 
 void SGDTrainer::Test(Net *net) {
   if (phase != Phase::kTest) {
-    for (auto *layer : net->layers())
-      if (layer->HasInput())
-        (dynamic_cast<DataLayer*>(layer))->SetupDataSource(
-            sgd_proto_.test_batchsize(), test_data_);
-    for(auto *layer : net->layers()) {
-      layer->Setup(kAllocData);
-      for (auto *edge : layer->out_edges())
-        edge->Setup(kAllocData);
-    }
-
+    net->Setup(sgd_proto_.test_batchsize(),
+               kAllocData,
+               test_data_);
     phase = Phase::kTest;
   }
   /* TODO(wangwei) forward through all layers to get the loss

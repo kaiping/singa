@@ -91,104 +91,54 @@ class SystemProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required int32 coordinator = 1 [default = 0];
-  inline bool has_coordinator() const;
-  inline void clear_coordinator();
-  static const int kCoordinatorFieldNumber = 1;
-  inline ::google::protobuf::int32 coordinator() const;
-  inline void set_coordinator(::google::protobuf::int32 value);
+  // optional int32 table_server_start = 1;
+  inline bool has_table_server_start() const;
+  inline void clear_table_server_start();
+  static const int kTableServerStartFieldNumber = 1;
+  inline ::google::protobuf::int32 table_server_start() const;
+  inline void set_table_server_start(::google::protobuf::int32 value);
 
-  // required int32 worker_start = 2 [default = 1];
-  inline bool has_worker_start() const;
-  inline void clear_worker_start();
-  static const int kWorkerStartFieldNumber = 2;
-  inline ::google::protobuf::int32 worker_start() const;
-  inline void set_worker_start(::google::protobuf::int32 value);
+  // optional int32 table_server_end = 2;
+  inline bool has_table_server_end() const;
+  inline void clear_table_server_end();
+  static const int kTableServerEndFieldNumber = 2;
+  inline ::google::protobuf::int32 table_server_end() const;
+  inline void set_table_server_end(::google::protobuf::int32 value);
 
-  // required int32 worker_end = 3 [default = 1];
-  inline bool has_worker_end() const;
-  inline void clear_worker_end();
-  static const int kWorkerEndFieldNumber = 3;
-  inline ::google::protobuf::int32 worker_end() const;
-  inline void set_worker_end(::google::protobuf::int32 value);
-
-  // optional int32 memory_start = 4 [default = 1];
-  inline bool has_memory_start() const;
-  inline void clear_memory_start();
-  static const int kMemoryStartFieldNumber = 4;
-  inline ::google::protobuf::int32 memory_start() const;
-  inline void set_memory_start(::google::protobuf::int32 value);
-
-  // optional int32 memory_end = 5 [default = 1];
-  inline bool has_memory_end() const;
-  inline void clear_memory_end();
-  static const int kMemoryEndFieldNumber = 5;
-  inline ::google::protobuf::int32 memory_end() const;
-  inline void set_memory_end(::google::protobuf::int32 value);
-
-  // optional int32 disk_start = 6 [default = 1];
-  inline bool has_disk_start() const;
-  inline void clear_disk_start();
-  static const int kDiskStartFieldNumber = 6;
-  inline ::google::protobuf::int32 disk_start() const;
-  inline void set_disk_start(::google::protobuf::int32 value);
-
-  // optional int32 disk_end = 7 [default = 1];
-  inline bool has_disk_end() const;
-  inline void clear_disk_end();
-  static const int kDiskEndFieldNumber = 7;
-  inline ::google::protobuf::int32 disk_end() const;
-  inline void set_disk_end(::google::protobuf::int32 value);
-
-  // optional bool standalone = 8 [default = true];
+  // optional bool standalone = 3 [default = true];
   inline bool has_standalone() const;
   inline void clear_standalone();
-  static const int kStandaloneFieldNumber = 8;
+  static const int kStandaloneFieldNumber = 3;
   inline bool standalone() const;
   inline void set_standalone(bool value);
 
-  // optional bool sync = 9 [default = true];
-  inline bool has_sync() const;
-  inline void clear_sync();
-  static const int kSyncFieldNumber = 9;
-  inline bool sync() const;
-  inline void set_sync(bool value);
+  // optional bool synchronous = 4 [default = true];
+  inline bool has_synchronous() const;
+  inline void clear_synchronous();
+  static const int kSynchronousFieldNumber = 4;
+  inline bool synchronous() const;
+  inline void set_synchronous(bool value);
 
   // @@protoc_insertion_point(class_scope:lapis.SystemProto)
  private:
-  inline void set_has_coordinator();
-  inline void clear_has_coordinator();
-  inline void set_has_worker_start();
-  inline void clear_has_worker_start();
-  inline void set_has_worker_end();
-  inline void clear_has_worker_end();
-  inline void set_has_memory_start();
-  inline void clear_has_memory_start();
-  inline void set_has_memory_end();
-  inline void clear_has_memory_end();
-  inline void set_has_disk_start();
-  inline void clear_has_disk_start();
-  inline void set_has_disk_end();
-  inline void clear_has_disk_end();
+  inline void set_has_table_server_start();
+  inline void clear_has_table_server_start();
+  inline void set_has_table_server_end();
+  inline void clear_has_table_server_end();
   inline void set_has_standalone();
   inline void clear_has_standalone();
-  inline void set_has_sync();
-  inline void clear_has_sync();
+  inline void set_has_synchronous();
+  inline void clear_has_synchronous();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::google::protobuf::int32 coordinator_;
-  ::google::protobuf::int32 worker_start_;
-  ::google::protobuf::int32 worker_end_;
-  ::google::protobuf::int32 memory_start_;
-  ::google::protobuf::int32 memory_end_;
-  ::google::protobuf::int32 disk_start_;
-  ::google::protobuf::int32 disk_end_;
+  ::google::protobuf::int32 table_server_start_;
+  ::google::protobuf::int32 table_server_end_;
   bool standalone_;
-  bool sync_;
+  bool synchronous_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
 
   friend void  protobuf_AddDesc_system_2eproto();
   friend void protobuf_AssignDesc_system_2eproto();
@@ -204,169 +154,59 @@ class SystemProto : public ::google::protobuf::Message {
 
 // SystemProto
 
-// required int32 coordinator = 1 [default = 0];
-inline bool SystemProto::has_coordinator() const {
+// optional int32 table_server_start = 1;
+inline bool SystemProto::has_table_server_start() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void SystemProto::set_has_coordinator() {
+inline void SystemProto::set_has_table_server_start() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void SystemProto::clear_has_coordinator() {
+inline void SystemProto::clear_has_table_server_start() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void SystemProto::clear_coordinator() {
-  coordinator_ = 0;
-  clear_has_coordinator();
+inline void SystemProto::clear_table_server_start() {
+  table_server_start_ = 0;
+  clear_has_table_server_start();
 }
-inline ::google::protobuf::int32 SystemProto::coordinator() const {
-  return coordinator_;
+inline ::google::protobuf::int32 SystemProto::table_server_start() const {
+  return table_server_start_;
 }
-inline void SystemProto::set_coordinator(::google::protobuf::int32 value) {
-  set_has_coordinator();
-  coordinator_ = value;
+inline void SystemProto::set_table_server_start(::google::protobuf::int32 value) {
+  set_has_table_server_start();
+  table_server_start_ = value;
 }
 
-// required int32 worker_start = 2 [default = 1];
-inline bool SystemProto::has_worker_start() const {
+// optional int32 table_server_end = 2;
+inline bool SystemProto::has_table_server_end() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void SystemProto::set_has_worker_start() {
+inline void SystemProto::set_has_table_server_end() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void SystemProto::clear_has_worker_start() {
+inline void SystemProto::clear_has_table_server_end() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void SystemProto::clear_worker_start() {
-  worker_start_ = 1;
-  clear_has_worker_start();
+inline void SystemProto::clear_table_server_end() {
+  table_server_end_ = 0;
+  clear_has_table_server_end();
 }
-inline ::google::protobuf::int32 SystemProto::worker_start() const {
-  return worker_start_;
+inline ::google::protobuf::int32 SystemProto::table_server_end() const {
+  return table_server_end_;
 }
-inline void SystemProto::set_worker_start(::google::protobuf::int32 value) {
-  set_has_worker_start();
-  worker_start_ = value;
+inline void SystemProto::set_table_server_end(::google::protobuf::int32 value) {
+  set_has_table_server_end();
+  table_server_end_ = value;
 }
 
-// required int32 worker_end = 3 [default = 1];
-inline bool SystemProto::has_worker_end() const {
+// optional bool standalone = 3 [default = true];
+inline bool SystemProto::has_standalone() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void SystemProto::set_has_worker_end() {
+inline void SystemProto::set_has_standalone() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void SystemProto::clear_has_worker_end() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void SystemProto::clear_worker_end() {
-  worker_end_ = 1;
-  clear_has_worker_end();
-}
-inline ::google::protobuf::int32 SystemProto::worker_end() const {
-  return worker_end_;
-}
-inline void SystemProto::set_worker_end(::google::protobuf::int32 value) {
-  set_has_worker_end();
-  worker_end_ = value;
-}
-
-// optional int32 memory_start = 4 [default = 1];
-inline bool SystemProto::has_memory_start() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void SystemProto::set_has_memory_start() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void SystemProto::clear_has_memory_start() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void SystemProto::clear_memory_start() {
-  memory_start_ = 1;
-  clear_has_memory_start();
-}
-inline ::google::protobuf::int32 SystemProto::memory_start() const {
-  return memory_start_;
-}
-inline void SystemProto::set_memory_start(::google::protobuf::int32 value) {
-  set_has_memory_start();
-  memory_start_ = value;
-}
-
-// optional int32 memory_end = 5 [default = 1];
-inline bool SystemProto::has_memory_end() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void SystemProto::set_has_memory_end() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void SystemProto::clear_has_memory_end() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void SystemProto::clear_memory_end() {
-  memory_end_ = 1;
-  clear_has_memory_end();
-}
-inline ::google::protobuf::int32 SystemProto::memory_end() const {
-  return memory_end_;
-}
-inline void SystemProto::set_memory_end(::google::protobuf::int32 value) {
-  set_has_memory_end();
-  memory_end_ = value;
-}
-
-// optional int32 disk_start = 6 [default = 1];
-inline bool SystemProto::has_disk_start() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void SystemProto::set_has_disk_start() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void SystemProto::clear_has_disk_start() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void SystemProto::clear_disk_start() {
-  disk_start_ = 1;
-  clear_has_disk_start();
-}
-inline ::google::protobuf::int32 SystemProto::disk_start() const {
-  return disk_start_;
-}
-inline void SystemProto::set_disk_start(::google::protobuf::int32 value) {
-  set_has_disk_start();
-  disk_start_ = value;
-}
-
-// optional int32 disk_end = 7 [default = 1];
-inline bool SystemProto::has_disk_end() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void SystemProto::set_has_disk_end() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void SystemProto::clear_has_disk_end() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void SystemProto::clear_disk_end() {
-  disk_end_ = 1;
-  clear_has_disk_end();
-}
-inline ::google::protobuf::int32 SystemProto::disk_end() const {
-  return disk_end_;
-}
-inline void SystemProto::set_disk_end(::google::protobuf::int32 value) {
-  set_has_disk_end();
-  disk_end_ = value;
-}
-
-// optional bool standalone = 8 [default = true];
-inline bool SystemProto::has_standalone() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void SystemProto::set_has_standalone() {
-  _has_bits_[0] |= 0x00000080u;
-}
 inline void SystemProto::clear_has_standalone() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void SystemProto::clear_standalone() {
   standalone_ = true;
@@ -380,26 +220,26 @@ inline void SystemProto::set_standalone(bool value) {
   standalone_ = value;
 }
 
-// optional bool sync = 9 [default = true];
-inline bool SystemProto::has_sync() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+// optional bool synchronous = 4 [default = true];
+inline bool SystemProto::has_synchronous() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void SystemProto::set_has_sync() {
-  _has_bits_[0] |= 0x00000100u;
+inline void SystemProto::set_has_synchronous() {
+  _has_bits_[0] |= 0x00000008u;
 }
-inline void SystemProto::clear_has_sync() {
-  _has_bits_[0] &= ~0x00000100u;
+inline void SystemProto::clear_has_synchronous() {
+  _has_bits_[0] &= ~0x00000008u;
 }
-inline void SystemProto::clear_sync() {
-  sync_ = true;
-  clear_has_sync();
+inline void SystemProto::clear_synchronous() {
+  synchronous_ = true;
+  clear_has_synchronous();
 }
-inline bool SystemProto::sync() const {
-  return sync_;
+inline bool SystemProto::synchronous() const {
+  return synchronous_;
 }
-inline void SystemProto::set_sync(bool value) {
-  set_has_sync();
-  sync_ = value;
+inline void SystemProto::set_synchronous(bool value) {
+  set_has_synchronous();
+  synchronous_ = value;
 }
 
 

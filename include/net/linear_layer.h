@@ -3,7 +3,7 @@
 #ifndef INCLUDE_MODEL_LINEAR_LAYER_H_
 #define INCLUDE_MODEL_LINEAR_LAYER_H_
 
-#include "model/layer.h"
+#include "net/layer.h"
 namespace lapis {
 /**
  * LinearLayer whose activation function is dummy.

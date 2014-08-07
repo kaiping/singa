@@ -1,5 +1,6 @@
 #include "core/global-table.h"
-#include "core/memory-server.h"
+#include "core/table_server.h"
+#include "utils/network_thread.h"
 
 static const int kMaxNetworkPending = 1 << 26;
 static const int kMaxNetworkChunk = 1 << 20;
@@ -68,7 +69,7 @@ void GlobalTable::resize(int64_t new_size) {
   }
 }
 
-void GlobalTable::set_worker(MemoryServer *w) {
+void GlobalTable::set_worker(TableServer *w) {
   w_ = w;
   worker_id_ = w->id();
 }

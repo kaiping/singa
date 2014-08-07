@@ -3,8 +3,8 @@
 
 #include <map>
 #include <stack>
-
-#include "model/net.h"
+#include "net/data_layer.h"
+#include "net/net.h"
 
 namespace lapis {
 // visited all out going layers and then push current layer into the stack
@@ -86,6 +86,18 @@ void Net::Init(const NetProto &net_proto) {
   topology_sort(&layers_);
 }
 
+void Net::Setup(int batchsize,
+                const char flag,
+                const std::vector<DataSource*>& ds){
+  for (auto *layer : layers())
+    if (layer->HasInput())
+      (dynamic_cast<DataLayer*>(layer))->SetupDataSource(batchsize, ds);
+  for(auto *layer : layers()) {
+    layer->Setup(flag);
+    for (auto *edge : layer->out_edges())
+      edge->Setup(flag);
+  }
+}
 void Net::ToProto(NetProto *net_proto) {
   for (Layer *layer : layers_) {
     LayerProto *layer_proto = net_proto->add_layer();

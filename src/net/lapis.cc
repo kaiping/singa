@@ -2,7 +2,7 @@
 // 2014-07-22 19:53
 #include <glog/logging.h>
 
-#include "model/lapis.h"
+#include "net/lapis.h"
 namespace lapis {
 int Blob::count_=0;
 Blob::Blob(int num, int channels, int height, int width, const bool alloc) {

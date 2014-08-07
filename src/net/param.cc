@@ -3,7 +3,7 @@
 
 #include <google/protobuf/repeated_field.h>
 #include <glog/logging.h>
-#include "model/param.h"
+#include "net/param.h"
 #include "utils/common.h"
 using google::protobuf::RepeatedField;
 

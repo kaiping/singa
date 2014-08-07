@@ -34,16 +34,11 @@ void protobuf_AssignDesc_system_2eproto() {
       "system.proto");
   GOOGLE_CHECK(file != NULL);
   SystemProto_descriptor_ = file->message_type(0);
-  static const int SystemProto_offsets_[9] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, coordinator_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, worker_start_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, worker_end_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, memory_start_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, memory_end_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, disk_start_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, disk_end_),
+  static const int SystemProto_offsets_[4] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, table_server_start_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, table_server_end_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, standalone_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, sync_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, synchronous_),
   };
   SystemProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -86,13 +81,10 @@ void protobuf_AddDesc_system_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\014system.proto\022\005lapis\"\337\001\n\013SystemProto\022\026\n"
-    "\013coordinator\030\001 \002(\005:\0010\022\027\n\014worker_start\030\002 "
-    "\002(\005:\0011\022\025\n\nworker_end\030\003 \002(\005:\0011\022\027\n\014memory_"
-    "start\030\004 \001(\005:\0011\022\025\n\nmemory_end\030\005 \001(\005:\0011\022\025\n"
-    "\ndisk_start\030\006 \001(\005:\0011\022\023\n\010disk_end\030\007 \001(\005:\001"
-    "1\022\030\n\nstandalone\030\010 \001(\010:\004true\022\022\n\004sync\030\t \001("
-    "\010:\004true", 247);
+    "\n\014system.proto\022\005lapis\"x\n\013SystemProto\022\032\n\022"
+    "table_server_start\030\001 \001(\005\022\030\n\020table_server"
+    "_end\030\002 \001(\005\022\030\n\nstandalone\030\003 \001(\010:\004true\022\031\n\013"
+    "synchronous\030\004 \001(\010:\004true", 143);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "system.proto", &protobuf_RegisterTypes);
   SystemProto::default_instance_ = new SystemProto();
@@ -110,15 +102,10 @@ struct StaticDescriptorInitializer_system_2eproto {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int SystemProto::kCoordinatorFieldNumber;
-const int SystemProto::kWorkerStartFieldNumber;
-const int SystemProto::kWorkerEndFieldNumber;
-const int SystemProto::kMemoryStartFieldNumber;
-const int SystemProto::kMemoryEndFieldNumber;
-const int SystemProto::kDiskStartFieldNumber;
-const int SystemProto::kDiskEndFieldNumber;
+const int SystemProto::kTableServerStartFieldNumber;
+const int SystemProto::kTableServerEndFieldNumber;
 const int SystemProto::kStandaloneFieldNumber;
-const int SystemProto::kSyncFieldNumber;
+const int SystemProto::kSynchronousFieldNumber;
 #endif  // !_MSC_VER
 
 SystemProto::SystemProto()
@@ -137,15 +124,10 @@ SystemProto::SystemProto(const SystemProto& from)
 
 void SystemProto::SharedCtor() {
   _cached_size_ = 0;
-  coordinator_ = 0;
-  worker_start_ = 1;
-  worker_end_ = 1;
-  memory_start_ = 1;
-  memory_end_ = 1;
-  disk_start_ = 1;
-  disk_end_ = 1;
+  table_server_start_ = 0;
+  table_server_end_ = 0;
   standalone_ = true;
-  sync_ = true;
+  synchronous_ = true;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -181,17 +163,10 @@ SystemProto* SystemProto::New() const {
 
 void SystemProto::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    coordinator_ = 0;
-    worker_start_ = 1;
-    worker_end_ = 1;
-    memory_start_ = 1;
-    memory_end_ = 1;
-    disk_start_ = 1;
-    disk_end_ = 1;
+    table_server_start_ = 0;
+    table_server_end_ = 0;
     standalone_ = true;
-  }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    sync_ = true;
+    synchronous_ = true;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -203,119 +178,39 @@ bool SystemProto::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required int32 coordinator = 1 [default = 0];
+      // optional int32 table_server_start = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &coordinator_)));
-          set_has_coordinator();
+                 input, &table_server_start_)));
+          set_has_table_server_start();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(16)) goto parse_worker_start;
+        if (input->ExpectTag(16)) goto parse_table_server_end;
         break;
       }
 
-      // required int32 worker_start = 2 [default = 1];
+      // optional int32 table_server_end = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_worker_start:
+         parse_table_server_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &worker_start_)));
-          set_has_worker_start();
+                 input, &table_server_end_)));
+          set_has_table_server_end();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(24)) goto parse_worker_end;
+        if (input->ExpectTag(24)) goto parse_standalone;
         break;
       }
 
-      // required int32 worker_end = 3 [default = 1];
+      // optional bool standalone = 3 [default = true];
       case 3: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_worker_end:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &worker_end_)));
-          set_has_worker_end();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(32)) goto parse_memory_start;
-        break;
-      }
-
-      // optional int32 memory_start = 4 [default = 1];
-      case 4: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_memory_start:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &memory_start_)));
-          set_has_memory_start();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(40)) goto parse_memory_end;
-        break;
-      }
-
-      // optional int32 memory_end = 5 [default = 1];
-      case 5: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_memory_end:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &memory_end_)));
-          set_has_memory_end();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(48)) goto parse_disk_start;
-        break;
-      }
-
-      // optional int32 disk_start = 6 [default = 1];
-      case 6: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_disk_start:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &disk_start_)));
-          set_has_disk_start();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(56)) goto parse_disk_end;
-        break;
-      }
-
-      // optional int32 disk_end = 7 [default = 1];
-      case 7: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_disk_end:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &disk_end_)));
-          set_has_disk_end();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(64)) goto parse_standalone;
-        break;
-      }
-
-      // optional bool standalone = 8 [default = true];
-      case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_standalone:
@@ -326,19 +221,19 @@ bool SystemProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(72)) goto parse_sync;
+        if (input->ExpectTag(32)) goto parse_synchronous;
         break;
       }
 
-      // optional bool sync = 9 [default = true];
-      case 9: {
+      // optional bool synchronous = 4 [default = true];
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_sync:
+         parse_synchronous:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &sync_)));
-          set_has_sync();
+                 input, &synchronous_)));
+          set_has_synchronous();
         } else {
           goto handle_uninterpreted;
         }
@@ -364,49 +259,24 @@ bool SystemProto::MergePartialFromCodedStream(
 
 void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required int32 coordinator = 1 [default = 0];
-  if (has_coordinator()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->coordinator(), output);
+  // optional int32 table_server_start = 1;
+  if (has_table_server_start()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->table_server_start(), output);
   }
 
-  // required int32 worker_start = 2 [default = 1];
-  if (has_worker_start()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->worker_start(), output);
+  // optional int32 table_server_end = 2;
+  if (has_table_server_end()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->table_server_end(), output);
   }
 
-  // required int32 worker_end = 3 [default = 1];
-  if (has_worker_end()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->worker_end(), output);
-  }
-
-  // optional int32 memory_start = 4 [default = 1];
-  if (has_memory_start()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->memory_start(), output);
-  }
-
-  // optional int32 memory_end = 5 [default = 1];
-  if (has_memory_end()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->memory_end(), output);
-  }
-
-  // optional int32 disk_start = 6 [default = 1];
-  if (has_disk_start()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->disk_start(), output);
-  }
-
-  // optional int32 disk_end = 7 [default = 1];
-  if (has_disk_end()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->disk_end(), output);
-  }
-
-  // optional bool standalone = 8 [default = true];
+  // optional bool standalone = 3 [default = true];
   if (has_standalone()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(8, this->standalone(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->standalone(), output);
   }
 
-  // optional bool sync = 9 [default = true];
-  if (has_sync()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(9, this->sync(), output);
+  // optional bool synchronous = 4 [default = true];
+  if (has_synchronous()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->synchronous(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -417,49 +287,24 @@ void SystemProto::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* SystemProto::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required int32 coordinator = 1 [default = 0];
-  if (has_coordinator()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->coordinator(), target);
+  // optional int32 table_server_start = 1;
+  if (has_table_server_start()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->table_server_start(), target);
   }
 
-  // required int32 worker_start = 2 [default = 1];
-  if (has_worker_start()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->worker_start(), target);
+  // optional int32 table_server_end = 2;
+  if (has_table_server_end()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->table_server_end(), target);
   }
 
-  // required int32 worker_end = 3 [default = 1];
-  if (has_worker_end()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->worker_end(), target);
-  }
-
-  // optional int32 memory_start = 4 [default = 1];
-  if (has_memory_start()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->memory_start(), target);
-  }
-
-  // optional int32 memory_end = 5 [default = 1];
-  if (has_memory_end()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->memory_end(), target);
-  }
-
-  // optional int32 disk_start = 6 [default = 1];
-  if (has_disk_start()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->disk_start(), target);
-  }
-
-  // optional int32 disk_end = 7 [default = 1];
-  if (has_disk_end()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(7, this->disk_end(), target);
-  }
-
-  // optional bool standalone = 8 [default = true];
+  // optional bool standalone = 3 [default = true];
   if (has_standalone()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(8, this->standalone(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(3, this->standalone(), target);
   }
 
-  // optional bool sync = 9 [default = true];
-  if (has_sync()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(9, this->sync(), target);
+  // optional bool synchronous = 4 [default = true];
+  if (has_synchronous()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->synchronous(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -473,64 +318,27 @@ int SystemProto::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required int32 coordinator = 1 [default = 0];
-    if (has_coordinator()) {
+    // optional int32 table_server_start = 1;
+    if (has_table_server_start()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->coordinator());
+          this->table_server_start());
     }
 
-    // required int32 worker_start = 2 [default = 1];
-    if (has_worker_start()) {
+    // optional int32 table_server_end = 2;
+    if (has_table_server_end()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->worker_start());
+          this->table_server_end());
     }
 
-    // required int32 worker_end = 3 [default = 1];
-    if (has_worker_end()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->worker_end());
-    }
-
-    // optional int32 memory_start = 4 [default = 1];
-    if (has_memory_start()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->memory_start());
-    }
-
-    // optional int32 memory_end = 5 [default = 1];
-    if (has_memory_end()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->memory_end());
-    }
-
-    // optional int32 disk_start = 6 [default = 1];
-    if (has_disk_start()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->disk_start());
-    }
-
-    // optional int32 disk_end = 7 [default = 1];
-    if (has_disk_end()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->disk_end());
-    }
-
-    // optional bool standalone = 8 [default = true];
+    // optional bool standalone = 3 [default = true];
     if (has_standalone()) {
       total_size += 1 + 1;
     }
 
-  }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    // optional bool sync = 9 [default = true];
-    if (has_sync()) {
+    // optional bool synchronous = 4 [default = true];
+    if (has_synchronous()) {
       total_size += 1 + 1;
     }
 
@@ -561,34 +369,17 @@ void SystemProto::MergeFrom(const ::google::protobuf::Message& from) {
 void SystemProto::MergeFrom(const SystemProto& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_coordinator()) {
-      set_coordinator(from.coordinator());
+    if (from.has_table_server_start()) {
+      set_table_server_start(from.table_server_start());
     }
-    if (from.has_worker_start()) {
-      set_worker_start(from.worker_start());
-    }
-    if (from.has_worker_end()) {
-      set_worker_end(from.worker_end());
-    }
-    if (from.has_memory_start()) {
-      set_memory_start(from.memory_start());
-    }
-    if (from.has_memory_end()) {
-      set_memory_end(from.memory_end());
-    }
-    if (from.has_disk_start()) {
-      set_disk_start(from.disk_start());
-    }
-    if (from.has_disk_end()) {
-      set_disk_end(from.disk_end());
+    if (from.has_table_server_end()) {
+      set_table_server_end(from.table_server_end());
     }
     if (from.has_standalone()) {
       set_standalone(from.standalone());
     }
-  }
-  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    if (from.has_sync()) {
-      set_sync(from.sync());
+    if (from.has_synchronous()) {
+      set_synchronous(from.synchronous());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -607,22 +398,16 @@ void SystemProto::CopyFrom(const SystemProto& from) {
 }
 
 bool SystemProto::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
 
   return true;
 }
 
 void SystemProto::Swap(SystemProto* other) {
   if (other != this) {
-    std::swap(coordinator_, other->coordinator_);
-    std::swap(worker_start_, other->worker_start_);
-    std::swap(worker_end_, other->worker_end_);
-    std::swap(memory_start_, other->memory_start_);
-    std::swap(memory_end_, other->memory_end_);
-    std::swap(disk_start_, other->disk_start_);
-    std::swap(disk_end_, other->disk_end_);
+    std::swap(table_server_start_, other->table_server_start_);
+    std::swap(table_server_end_, other->table_server_end_);
     std::swap(standalone_, other->standalone_);
-    std::swap(sync_, other->sync_);
+    std::swap(synchronous_, other->synchronous_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

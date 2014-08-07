@@ -5,8 +5,8 @@
 #define INCLUDE_MODEL_SGD_TRAINER_H_
 
 #include <vector>
-#include "model/param.h"
-#include "model/trainer.h"
+#include "net/param.h"
+#include "net/trainer.h"
 #include "utils/common.h"
 #include "proto/model.pb.h"
 #include "model_controller/model.h"

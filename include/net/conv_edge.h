@@ -2,7 +2,7 @@
 // 2014-07-22 21:13
 
 #include <google/protobuf/repeated_field.h>
-#include "model/edge.h"
+#include "net/edge.h"
 
 namespace lapis {
 class ConvEdge : public Edge {

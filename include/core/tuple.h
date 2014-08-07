@@ -76,7 +76,6 @@ inline vector<A> MakeVector(const A &x, const A &y, const A &z) {
 }  // namespace lapis
 
 namespace std {
-namespace tr1 {
 template <class A, class B>
 struct hash<pair<A, B>> : public unary_function<pair<A, B> , size_t> {
   hash<A> ha;
@@ -112,7 +111,6 @@ struct hash<lapis::tuple3<A, B, C>> : public
   }
 };
 
-}
 }
 
 namespace std {

@@ -16,17 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "glog/logging.h"
-#include "gflags/gflags.h"
-
 #include "proto/common.pb.h"
 #include "core/hash.h"
 #include "core/static-initializers.h"
 #include "core/stringpiece.h"
 #include "core/timer.h"
 
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -36,23 +33,13 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::make_pair;
-using std::tr1::unordered_map;
-using std::tr1::unordered_set;
+using std::unordered_map;
+using std::unordered_set;
 
 namespace lapis {
 
-//  start servers on MPI process, either memory server of manager
-//  called once for every process, NULL is returned if
-//  the current process is not the manager.
-void InitServers(int argc, char **argv);
-
-//  called at the end.
-void Finish();
-
 //  true if the current process is the memory manager,
 //	false if it is a memory server
-bool IsDistributedMemoryManager();
-
 void Sleep(double t);
 
 template <class V>

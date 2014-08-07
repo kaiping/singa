@@ -179,7 +179,7 @@ void protobuf_AddDesc_common_2eproto() {
     "s\022\030\n\004attr\030\001 \003(\0132\n.lapis.Arg\022\026\n\013compressi"
     "on\030\002 \001(\005:\0010\"G\n\nConfigData\022\023\n\013num_workers"
     "\030\001 \002(\005\022\021\n\tworker_id\030\002 \002(\005\022\021\n\tmaster_id\030\003"
-    " \002(\005*\334\002\n\014MessageTypes\022\025\n\021MTYPE_PUT_REQUE"
+    " \002(\005*\337\002\n\014MessageTypes\022\025\n\021MTYPE_PUT_REQUE"
     "ST\020\001\022\025\n\021MTYPE_GET_REQUEST\020\002\022\026\n\022MTYPE_GET"
     "_RESPONSE\020\003\022\031\n\025MTYPE_WORKER_SHUTDOWN\020\004\022\031"
     "\n\025MTYPE_REGISTER_WORKER\020\005\022\026\n\022MTYPE_WORKE"
@@ -187,9 +187,9 @@ void protobuf_AddDesc_common_2eproto() {
     "\n\026MTYPE_SHARD_ASSIGNMENT\020\010\022\037\n\033MTYPE_SHAR"
     "D_ASSIGNMENT_DONE\020\t\022\026\n\022MTYPE_WORKER_APPL"
     "Y\020\n\022\033\n\027MTYPE_WORKER_APPLY_DONE\020\013\022\024\n\020MTYP"
-    "E_WORKER_END\020\014\022\023\n\017MTYPE_MC_CONFIG\020\r*0\n\021C"
-    "ompressionFormat\022\010\n\004NONE\020\000\022\007\n\003LZO\020\001\022\010\n\004Z"
-    "LIB\020\002", 645);
+    "E_WORKER_END\020\014\022\026\n\022MTYPE_MODEL_CONFIG\020\r*0"
+    "\n\021CompressionFormat\022\010\n\004NONE\020\000\022\007\n\003LZO\020\001\022\010"
+    "\n\004ZLIB\020\002", 648);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "common.proto", &protobuf_RegisterTypes);
   EmptyMessage::default_instance_ = new EmptyMessage();

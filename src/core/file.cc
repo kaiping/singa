@@ -1,9 +1,9 @@
+#include <stdio.h>
+#include <glob.h>
+#include <glog/logging.h>
 #include "core/file.h"
 #include "core/common.h"
 #include "google/protobuf/message.h"
-#include <stdio.h>
-#include <glob.h>
-
 namespace lapis {
 
 static const int kFileBufferSize = 4 * 1024 * 1024;

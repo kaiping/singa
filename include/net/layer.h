@@ -11,10 +11,10 @@
 #include <memory>
 
 #include "proto/model.pb.h"
-#include "model/edge.h"
-#include "model/trainer.h"
-#include "model/param.h"
-#include "disk/data_source.h"
+#include "net/edge.h"
+#include "net/trainer.h"
+#include "net/param.h"
+#include "datasource/data_source.h"
 
 /**
  * \file this file includes the declarations of both Layer and LayerFactory

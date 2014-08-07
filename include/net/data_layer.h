@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "model/layer.h"
-#include "model/trainer.h"
+#include "net/layer.h"
+#include "net/trainer.h"
 
 
 namespace lapis {

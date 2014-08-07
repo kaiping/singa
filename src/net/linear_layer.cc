@@ -2,7 +2,7 @@
 // 2014-07-23 16:24
 
 #include <glog/logging.h>
-#include "model/linear_layer.h"
+#include "net/linear_layer.h"
 
 namespace lapis {
 void LinearLayer::Setup(const char flag) {

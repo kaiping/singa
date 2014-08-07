@@ -8,8 +8,8 @@
 #include <vector>
 #include <memory>
 
-#include "disk/data_source.h"
-#include "model/lapis.h"
+#include "datasource/data_source.h"
+#include "net/lapis.h"
 #include "proto/model.pb.h"
 
 

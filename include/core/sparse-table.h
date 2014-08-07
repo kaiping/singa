@@ -1,9 +1,10 @@
 #ifndef INCLUDE_CORE_SPARSE_TABLE_H_
 #define INCLUDE_CORE_SPARSE_TABLE_H_
-
+#include <functional>
 #include "core/common.h"
 #include "proto/worker.pb.h"
 #include "core/table.h"
+#include "core/tuple.h"
 #include "local-table.h"
 #include <boost/noncopyable.hpp>
 
@@ -152,7 +153,7 @@ class SparseTable :
   int64_t entries_;
   int64_t size_;
 
-  std::tr1::hash<K> hashobj_;
+  std::hash<K> hashobj_;
 };
 
 template <class K, class V>

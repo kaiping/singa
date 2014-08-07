@@ -2,14 +2,14 @@
 // 2014-07-14 11:42
 
 #include <glog/logging.h>
-#include "model/edge.h"
-#include "model/sgd_trainer.h"
-#include "model/lapis.h"
-#include "model/conv_edge.h"
-#include "model/inner_product_edge.h"
-#include "model/lrn_edge.h"
-#include "model/pooling_edge.h"
-#include "model/softmax_loss_edge.h"
+#include "net/edge.h"
+#include "net/sgd_trainer.h"
+#include "net/lapis.h"
+#include "net/conv_edge.h"
+#include "net/inner_product_edge.h"
+#include "net/lrn_edge.h"
+#include "net/pooling_edge.h"
+#include "net/softmax_loss_edge.h"
 
 
 namespace lapis {

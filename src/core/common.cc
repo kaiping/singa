@@ -1,7 +1,6 @@
 #include "core/common.h"
 #include "core/rpc.h"
-#include "core/distributed-memory.h"
-#include "core/memory-server.h"
+#include "core/table_server.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -20,26 +19,16 @@
 //#include <lzo/lzo1x.h>
 #include <mpi.h>
 
-DEFINE_bool(localtest, false, "");
-DEFINE_bool(run_tests, false, "");
-
-DEFINE_string(hostfile, "conf/mpi-beakers", "");
-DEFINE_int32(workers, 2, "");
-
 namespace lapis {
 
 //DistributedMemoryManager *manager;
-//MemoryServer *server;
+//TableServer *server;
 
 void Sleep(double t) {
   timespec req;
   req.tv_sec = (int)t;
   req.tv_nsec = (int64_t)(1e9 * (t - (int64_t)t));
   nanosleep(&req, NULL);
-}
-
-bool IsDistributedMemoryManager() {
-  return NetworkThread::Get()->id() == (NetworkThread::Get()->size() - 1);
 }
 
 }

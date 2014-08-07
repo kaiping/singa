@@ -5,9 +5,11 @@
 #define INCLUDE_MODEL_NET_H_
 
 #include <vector>
-#include "model/layer.h"
-#include "model/edge.h"
-#include "model/param.h"
+#include "net/layer.h"
+#include "net/edge.h"
+#include "net/param.h"
+#include "datasource/data_source.h"
+
 namespace lapis {
 /**
  * Forward declaration of Edge and Layer
@@ -20,6 +22,10 @@ class Layer;
 class Net {
  public:
   void Init(const NetProto &net);
+  void Setup(int batchsize,
+             const char flag,
+             const std::vector<DataSource*> &ds);
+
   void ToProto(NetProto *net_proto);
   std::vector<Layer *> &layers() {
     return layers_;

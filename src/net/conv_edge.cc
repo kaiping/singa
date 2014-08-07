@@ -2,8 +2,8 @@
 // 2014-07-22 21:32
 #include <glog/logging.h>
 #include <google/protobuf/repeated_field.h>
-#include "model/conv_edge.h"
-#include "model/lapis.h"
+#include "net/conv_edge.h"
+#include "net/lapis.h"
 #include "mshadow/tensor_expr_ext.h"
 
 

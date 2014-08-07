@@ -4,7 +4,7 @@
 #ifndef INCLUDE_MODEL_LRN_EDGE_H_
 #define INCLUDE_MODEL_LRN_EDGE_H_
 #include "proto/model.pb.h"
-#include "model/edge.h"
+#include "net/edge.h"
 namespace lapis {
 /**
  * Local Response Normalization edge

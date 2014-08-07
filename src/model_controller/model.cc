@@ -9,12 +9,12 @@
 
 namespace lapis {
 
-ModelProto *ModelController::Init()
+void ModelController::Init()
 {
   VLOG(3)<<"In model controller";
   auto gc=GlobalContext::Get();
   my_split_tpye_ = 0;
-  my_machine_num_ = gc->num_memory_servers();
+  my_machine_num_ = gc->num_table_servers();
   my_split_size_ = 2;
   //start the lower level network part
   issinglemachine_ = gc->standalone();
@@ -25,7 +25,6 @@ ModelProto *ModelController::Init()
         new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
     VLOG(3)<<"create table";
   }
-  return model_proto;
 }
 
 void ModelController::Update(const std::vector<Param*> &params)
@@ -151,26 +150,5 @@ int curoffset = 0;
   return;
 }
 
-
-void ModelController::CommenceBroadcast(const Message &modelconfig)
-{
-  if (iscoordinator_) {
-    VLOG(3)<<"before broadcast";
-    net_->Broadcast(MTYPE_MC_CONFIG,modelconfig);
-    VLOG(3)<<"after Broadcast";
-  }
-}
-
-void ModelController::CommenceSpecialConfig(const Message &modelconfig, int dst)
-{
-  if (iscoordinator_)
-    net_->Send(dst,MTYPE_MC_CONFIG,modelconfig);
-}
-
-void ModelController::Finish() {
-  if(issinglemachine_)return;
-  isdmm_ ? dmm_->ShutdownServers() : ms_->ShutdownMemoryServer();
-  return;
-}
 
 }  // namespace lapis

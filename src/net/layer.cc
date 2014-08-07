@@ -7,10 +7,10 @@
 #include "mshadow/tensor.h"
 
 
-#include "model/layer.h"
-#include "model/data_layer.h"
-#include "model/linear_layer.h"
-#include "model/relu_layer.h"
+#include "net/layer.h"
+#include "net/data_layer.h"
+#include "net/linear_layer.h"
+#include "net/relu_layer.h"
 
 namespace lapis {
 /*****************************************************************************

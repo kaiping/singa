@@ -7,10 +7,10 @@
 #include <map>
 #include <vector>
 
-#include "model/trainer.h"
-#include "model/lapis.h"
-#include "model/layer.h"
-#include "model/param.h"
+#include "net/trainer.h"
+#include "net/lapis.h"
+#include "net/layer.h"
+#include "net/param.h"
 #include "proto/model.pb.h"
 
 namespace lapis {

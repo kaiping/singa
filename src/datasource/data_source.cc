@@ -3,9 +3,9 @@
 #include <glog/logging.h>
 #include <memory>
 
-#include "disk/label_source.h"
-#include "disk/rgb_dir_source.h"
-#include "disk/data_source.h"
+#include "datasource/label_source.h"
+#include "datasource/rgb_dir_source.h"
+#include "datasource/data_source.h"
 namespace lapis {
 /*****************************************************************************
  * Implementation for DataSource

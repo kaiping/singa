@@ -1,7 +1,20 @@
 // From Piccolo ??
 #ifndef INCLUDE_UTILS_NETWORK_THREAD_H_
 #define INCLUDE_UTILS_NETWORK_THREAD_H_
+#include <mpi.h>
+#include <google/protobuf/message.h>
+#include <boost/thread.hpp>
+#include <boost/function.hpp>
+#include <unordered_set>
+#include <gflags/gflags.h>
+#include "proto/common.pb.h"
+#include "core/rpc.h"
+
+
+using google::protobuf::Message;
 namespace lapis {
+// sleep duration between reading messages off the network.
+
 // Hackery to get around mpi's unhappiness with threads.  This thread
 // simply polls MPI continuously for any kind of update and adds it to
 // a local queue.
@@ -29,11 +42,7 @@ class NetworkThread {
     return world_->Get_size();
   }
 
-  static NetworkThread *Get() {
-    return net_;
-  }
-
-  static void Init();
+  static std::shared_ptr<NetworkThread> Get();
 
   // callback to function (in worker.cc) to handle top-priority message
   // such as shard assignment, etc.
@@ -56,7 +65,7 @@ class NetworkThread {
 
   typedef deque<string> Queue;
 
-  static NetworkThread *net_;
+  static std::shared_ptr<NetworkThread> instance_;
 
   //  set to false when receiving MTYPE_WORKER_SHUTDOWN from the manager
   //  shared by the receiving thread and processing thread.
@@ -67,7 +76,7 @@ class NetworkThread {
 
   //queues of sent messages
   deque<RPCRequest *> pending_sends_;
-  unordered_set<RPCRequest *> active_sends_;
+  std::unordered_set<RPCRequest *> active_sends_;
 
   int id_;
   MPI::Comm *world_;

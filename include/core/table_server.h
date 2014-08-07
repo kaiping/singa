@@ -13,17 +13,18 @@
 #include "core/global-table.h"
 #include "core/local-table.h"
 #include "proto/worker.pb.h"
+#include "utils/network_thread.h"
 
 namespace lapis {
 
-class MemoryServer : private boost::noncopyable {
+class TableServer : private boost::noncopyable {
  public:
-  ~MemoryServer() {}
+  ~TableServer() {}
 
-  void StartMemoryServer();
+  void StartTableServer();
 
   //  sends signals to the manager and ends gracefully
-  void ShutdownMemoryServer();
+  void ShutdownTableServer();
 
   int id() {
     return server_id_;
@@ -50,11 +51,11 @@ class MemoryServer : private boost::noncopyable {
 
   mutable boost::recursive_mutex state_lock_;
 
-  NetworkThread *net_;
+  std::shared_ptr<NetworkThread> net_;
 };
 
 //  start memory server, only if rank < size()-1
-bool StartMemoryServer();
+// bool StartTableServer();
 
 }  //  namespace lapis
 

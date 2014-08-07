@@ -4,7 +4,7 @@
 #define INCLUDE_MODEL_POOLING_EDGE_H_
 
 #include "proto/model.pb.h"
-#include "model/edge.h"
+#include "net/edge.h"
 
 namespace lapis {
 /**

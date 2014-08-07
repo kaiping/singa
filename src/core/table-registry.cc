@@ -21,5 +21,3 @@ GlobalTable *TableRegistry::table(int id) {
 }
 
 }
-
-

@@ -9,7 +9,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "disk/rgb_dir_source.h"
+#include "datasource/rgb_dir_source.h"
 #include "utils/proto_helper.h"
 
 namespace lapis {

@@ -3,7 +3,7 @@
 #include <glog/logging.h>
 #include <cfloat>
 #include "utils/common.h"
-#include "model/softmax_loss_edge.h"
+#include "net/softmax_loss_edge.h"
 namespace lapis {
 void SoftmaxLossEdge::Setup(const char flag) {
   Blob &b = bottom_->feature(this);

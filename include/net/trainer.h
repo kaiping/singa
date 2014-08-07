@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 #include "proto/model.pb.h"
-#include "model/net.h"
-#include "disk/data_source.h"
+#include "net/net.h"
+#include "datasource/data_source.h"
 #include "model_controller/model.h"
 #include "utils/common.h"
 

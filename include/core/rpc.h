@@ -27,16 +27,37 @@
 #include <mpi.h>
 
 
-DECLARE_bool(sync_update);
-
 namespace lapis {
-
 typedef google::protobuf::Message Message;
 
-// Wrapper of the network message
-struct RPCRequest;
+struct TaggedMessage : private boost::noncopyable {
+  int tag;
+  string data;
+  TaggedMessage() {}
+  TaggedMessage(int t, const string &dat);
+  ~TaggedMessage();
+};
 
-class TaggedMessage;
+// Represents an active RPC to a remote peer.
+struct RPCRequest : private boost::noncopyable {
+  int target;
+  int rpc_type;
+  int failures;
+
+  string payload;
+  MPI::Request mpi_req;
+  MPI::Status status;
+  double start_time;
+
+  RPCRequest(int target, int method, const Message &msg);
+  ~RPCRequest();
+
+  //  if message has been sent successfully
+  bool finished() {
+    return mpi_req.Test(status);
+  }
+};
+
 
 class RequestQueue {
  public:

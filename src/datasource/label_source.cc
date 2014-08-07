@@ -2,7 +2,7 @@
 // 2014-07-02 19:50
 
 #include <glog/logging.h>
-#include "disk/label_source.h"
+#include "datasource/label_source.h"
 namespace lapis {
 const std::string LabelSource::type = "LabelSource";
 

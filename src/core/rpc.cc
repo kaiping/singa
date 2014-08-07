@@ -3,46 +3,17 @@
 // modified from piccolo/rpc.cc
 
 #include <signal.h>
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 #include "core/rpc.h"
 #include "core/common.h"
 #include "proto/common.pb.h"
 #include "proto/worker.pb.h"
 #include "utils/global_context.h"
+#include "utils/network_thread.h"
 
-
-//  sleep duration between reading messages off the network.
-//  update mode: synchronous vs asynchronous
-DEFINE_double(sleep_time, 0.001, "");
-
+DECLARE_double(sleep_time);
 namespace lapis {
-
-// Represents an active RPC to a remote peer.
-struct RPCRequest : private boost::noncopyable {
-  int target;
-  int rpc_type;
-  int failures;
-
-  string payload;
-  MPI::Request mpi_req;
-  MPI::Status status;
-  double start_time;
-
-  RPCRequest(int target, int method, const Message &msg);
-  ~RPCRequest();
-
-  //  if message has been sent successfully
-  bool finished() {
-    return mpi_req.Test(status);
-  }
-};
-
-struct TaggedMessage : private boost::noncopyable {
-  int tag;
-  string data;
-  TaggedMessage() {}
-  TaggedMessage(int t, const string &dat);
-  ~TaggedMessage();
-};
 
 RPCRequest::~RPCRequest() {}
 
@@ -59,11 +30,6 @@ TaggedMessage::~TaggedMessage() {}
 TaggedMessage::TaggedMessage(int t, const string &dat) {
   tag = t;
   data = dat;
-}
-
-
-static void ShutdownMPI() {
-  NetworkThread::Get()->Shutdown();
 }
 
 

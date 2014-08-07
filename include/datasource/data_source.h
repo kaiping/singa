@@ -9,7 +9,7 @@
 #include <vector>
 #include <functional>
 
-#include "model/lapis.h"
+#include "net/lapis.h"
 #include "proto/model.pb.h"
 
 

@@ -3,6 +3,8 @@
 
 #ifndef INCLUDE_WORKER_H_
 #define INCLUDE_WORKER_H_
+#include "net/net.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 /**

@@ -7,9 +7,9 @@
 #include <google/protobuf/repeated_field.h>
 #include <string>
 #include <map>
-#include "model/edge.h"
-#include "model/param.h"
-#include "model/lapis.h"
+#include "net/edge.h"
+#include "net/param.h"
+#include "net/lapis.h"
 
 namespace lapis {
 class InnerProductEdge : public Edge {

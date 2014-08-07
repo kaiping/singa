@@ -1,8 +1,24 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 // modified from piccolo/rpc.cc
+#include <glog/logging.h>
 #include "utils/network_thread.h"
+#include "utils/global_context.h"
+#include "proto/worker.pb.h"
+
+// sleep duration between reading messages off the network.
+DEFINE_double(sleep_time, 0.001, "");
 
 namespace lapis {
+std::shared_ptr<NetworkThread> NetworkThread::instance_;
+void ShutdownMPI() {
+  NetworkThread::Get()->Shutdown();
+}
+std::shared_ptr<NetworkThread> NetworkThread::Get() {
+  if(!instance_)
+    instance_.reset(new NetworkThread());
+  atexit(&ShutdownMPI);
+  return instance_;
+}
 NetworkThread::NetworkThread() {
   if (!getenv("OMPI_COMM_WORLD_RANK")) {
     world_ = NULL;
@@ -24,9 +40,9 @@ NetworkThread::NetworkThread() {
 //  initialize message queue
   auto gc = GlobalContext::Get();
   if (gc->synchronous())
-    request_queue_ = new SyncRequestQueue(gc->num_memory_servers());
+    request_queue_ = new SyncRequestQueue(gc->num_table_servers());
   else
-    request_queue_ = new AsyncRequestQueue(gc->num_memory_servers());
+    request_queue_ = new AsyncRequestQueue(gc->num_table_servers());
 }
 
 bool NetworkThread::active() const {
@@ -213,11 +229,5 @@ void NetworkThread::WaitForSync(int reply, int count) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);
     --count;
   }
-}
-
-NetworkThread *NetworkThread::net_;
-void NetworkThread::Init() {
-  net_ = new NetworkThread();
-  atexit(&ShutdownMPI);
 }
 }  // namespace lapis

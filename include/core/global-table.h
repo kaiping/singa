@@ -1,15 +1,15 @@
 #ifndef INCLUDE_CORE_GLOBAL_TABLE_H_
 #define INCLUDE_CORE_GLOBAL_TABLE_H_
 
+#include <glog/logging.h>
 #include "core/table.h"
 #include "core/local-table.h"
-
 #include "core/file.h"
 #include "core/rpc.h"
 
 namespace lapis {
 
-class MemoryServer;
+class TableServer;
 
 class GlobalTable :
   public TableBase {
@@ -67,11 +67,11 @@ class GlobalTable :
   volatile int pending_writes_;
   boost::recursive_mutex m_;
 
-  friend class MemoryServer;
-  MemoryServer *w_;
+  friend class TableServer;
+  TableServer *w_;
 
 
-  void set_worker(MemoryServer *w);
+  void set_worker(TableServer *w);
 
   // Fetch key k from the node owning it.  Returns true if the key exists.
   bool get_remote(int shard, const StringPiece &k, string *v);

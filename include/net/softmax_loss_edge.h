@@ -3,9 +3,9 @@
 #ifndef INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_
 #define INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_
 
-#include "model/edge.h"
+#include "net/edge.h"
 #include "proto/model.pb.h"
-#include "model/lapis.h"
+#include "net/lapis.h"
 
 
 namespace lapis {

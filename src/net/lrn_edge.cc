@@ -3,7 +3,7 @@
 
 #include <glog/logging.h>
 
-#include "model/lrn_edge.h"
+#include "net/lrn_edge.h"
 #include "utils/common.h"
 
 #include "mshadow/tensor.h"

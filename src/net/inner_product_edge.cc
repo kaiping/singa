@@ -2,8 +2,8 @@
 // 2014-07-15 18:46
 
 #include <glog/logging.h>
-#include "model/lapis.h"
-#include "model/inner_product_edge.h"
+#include "net/lapis.h"
+#include "net/inner_product_edge.h"
 #include "utils/common.h"
 
 

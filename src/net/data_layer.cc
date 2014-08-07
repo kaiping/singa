@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-15 11:11
 #include <glog/logging.h>
-#include "model/data_layer.h"
-#include "model/trainer.h"
+#include "net/data_layer.h"
+#include "net/trainer.h"
 
 namespace lapis {
 

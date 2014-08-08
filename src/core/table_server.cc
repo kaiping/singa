@@ -10,18 +10,19 @@ namespace lapis {
 void TableServer::StartTableServer() {
   net_ = NetworkThread::Get();
   server_id_ = net_->id();
-  manager_id_ = net_->size() - 1;
+  VLOG(3)<<"table server id "<<server_id_;
   //  set itself as the current worker for the table
   TableRegistry::Map &t = TableRegistry::Get()->tables();
   for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
+    VLOG(3)<<"in set worker";
     i->second->set_worker(this);
   }
   //  register to the manager
   RegisterWorkerRequest req;
   req.set_id(server_id_);
-  VLOG(3)<<"before send msg to "<<manager_id_;
-  net_->Send(manager_id_, MTYPE_REGISTER_WORKER, req);
-  VLOG(3)<<"after send msg to "<<manager_id_;
+  VLOG(3)<<"before send msg to "<<GlobalContext::kCoordinatorRank;
+  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_REGISTER_WORKER, req);
+  VLOG(3)<<"after send msg to "<<GlobalContext::kCoordinatorRank;
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableServer::HandleShardAssignment, this));
@@ -33,10 +34,10 @@ void TableServer::StartTableServer() {
 
 void TableServer::ShutdownTableServer() {
   net_->Flush();
-  net_->Send(manager_id_, MTYPE_WORKER_END, EmptyMessage());
+  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;
   int src = 0;
-  net_->Read(manager_id_, MTYPE_WORKER_SHUTDOWN, &msg, &src);
+  net_->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
   net_->Shutdown();
 }
 
@@ -44,14 +45,14 @@ void TableServer::HandleShardAssignment() {
   CHECK(GlobalContext::Get()->IsTableServer(id()))
     << "Assign table to wrong server " << id();
   ShardAssignmentRequest shard_req;
-  net_->Read(manager_id_, MTYPE_SHARD_ASSIGNMENT, &shard_req);
+  net_->Read(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT, &shard_req);
   //  request read from coordinator
   for (int i = 0; i < shard_req.assign_size(); i++) {
     const ShardAssignment &a = shard_req.assign(i);
     GlobalTable *t = TableRegistry::Get()->table(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
     EmptyMessage empty;
-    net_->Send(manager_id_, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+    net_->Send(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
     LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)",
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }

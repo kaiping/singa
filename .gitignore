@@ -10,5 +10,6 @@
 *.bak
 *.P
 *.odp
+log
 cscope.*
 build/

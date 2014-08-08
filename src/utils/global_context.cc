@@ -9,15 +9,10 @@
 namespace lapis {
 
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
-
-const int GlobalContext::kCoordinatorRank=0;
+int GlobalContext::kCoordinatorRank;
 
 GlobalContext::GlobalContext(const std::string &system_conf,
     const std::string &model_conf): model_conf_(model_conf) {
-  auto net=NetworkThread::Get();
-  rank_=net->id();
-  num_processes_=net->size();
-
   SystemProto proto;
   ReadProtoFromTextFile(system_conf.c_str(), &proto);
   standalone_=proto.standalone();
@@ -27,18 +22,29 @@ GlobalContext::GlobalContext(const std::string &system_conf,
     table_server_end_=proto.table_server_end();
     CHECK(table_server_start_>=0);
     CHECK(table_server_start_<table_server_end_);
-    CHECK(table_server_end_<=num_processes_);
   }
   else {
     table_server_start_=0;
-    table_server_end_=num_processes_;
+    table_server_end_=0;
   }
+}
+void GlobalContext::set_num_processes(int num){
+  num_processes_=num;
+  CHECK_GE(num,2)<<"must start at least 2 processes";
+  if(table_server_end_==0)
+    table_server_end_=num-1;
+  else
+    CHECK_LE(table_server_end_, num-1);
 }
 
 shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf,
     const std::string &model_conf) {
   if(!instance_) {
     instance_.reset(new GlobalContext(sys_conf, model_conf));
+    auto net=NetworkThread::Get();
+    instance_->set_rank(net->id());
+    instance_->set_num_processes(net->size());
+    kCoordinatorRank=net->size()-1;
     VLOG(3)<<"init network thread";
   }
   return instance_;

@@ -19,13 +19,14 @@ Worker::Worker(){
   LOG(INFO) << "starting Worker...";
 }
 void Worker::Run() {
+  ModelController mc;
+  mc.Init();
+
   TableServer *ts=nullptr;
   if(GlobalContext::Get()->AmITableServer()) {
     TableServer *ts=new TableServer();
     ts->StartTableServer();
   }
-  ModelController mc;
-  mc.Init();
   ModelProto proto;
   NetworkThread::Get()->Read(GlobalContext::kCoordinatorRank,
                              MTYPE_MODEL_CONFIG,

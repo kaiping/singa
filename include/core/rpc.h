@@ -17,16 +17,21 @@
 #ifndef INCLUDE_CORE_RPC_H_
 #define INCLUDE_CORE_RPC_H_
 
-#include "core/common.h"
-#include "core/file.h"
 #include "proto/common.pb.h"
-
 #include <boost/thread.hpp>
 #include <boost/function.hpp>
 #include <google/protobuf/message.h>
 #include <mpi.h>
+#include <vector>
+#include <map>
+#include <deque>
+#include <string>
 
 
+using std::vector;
+using std::map;
+using std::deque;
+using std::string;
 namespace lapis {
 typedef google::protobuf::Message Message;
 
@@ -37,6 +42,9 @@ struct TaggedMessage : private boost::noncopyable {
   TaggedMessage(int t, const string &dat);
   ~TaggedMessage();
 };
+//  true if the current process is the memory manager,
+//	false if it is a memory server
+
 
 // Represents an active RPC to a remote peer.
 struct RPCRequest : private boost::noncopyable {

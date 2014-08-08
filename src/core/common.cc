@@ -24,11 +24,4 @@ namespace lapis {
 //DistributedMemoryManager *manager;
 //TableServer *server;
 
-void Sleep(double t) {
-  timespec req;
-  req.tv_sec = (int)t;
-  req.tv_nsec = (int64_t)(1e9 * (t - (int64_t)t));
-  nanosleep(&req, NULL);
-}
-
 }

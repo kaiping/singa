@@ -24,6 +24,7 @@ class GlobalContext {
   // num of memory servers, default is the num of processes
   int num_table_servers() { return table_server_end_-table_server_start_; }
   int num_processes() { return num_processes_; }
+  void set_num_processes(int num) ;
   bool IsTableServer(int rank) {
     return rank>=table_server_start_&&rank<table_server_end_;
   }
@@ -33,8 +34,9 @@ class GlobalContext {
   bool AmITableServer() { return IsTableServer(rank_); }
   // All processes are workers except the coordinator
   bool AmIWorker() {return rank_!=kCoordinatorRank;}
+  void set_rank(int rank) {rank_=rank;}
   // assume the rank of coordinator is 0
-  static const int kCoordinatorRank;
+  static int kCoordinatorRank;
  private:
   GlobalContext(const string &sys_conf, const string &model_conf);
 

@@ -6,7 +6,6 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include "core/rpc.h"
-#include "core/common.h"
 #include "proto/common.pb.h"
 #include "proto/worker.pb.h"
 #include "utils/global_context.h"

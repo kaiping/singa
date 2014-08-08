@@ -4,6 +4,8 @@
 #ifndef INCLUDE_CORE_TUPLE_H_
 #define INCLUDE_CORE_TUPLE_H_
 #include <vector>
+#include "utils/hash.h"
+
 
 #ifndef SWIG
 

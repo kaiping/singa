@@ -17,10 +17,10 @@
 #include <string.h>
 
 #include "proto/common.pb.h"
-#include "core/hash.h"
+#include "utils/hash.h"
 #include "core/static-initializers.h"
-#include "core/stringpiece.h"
-#include "core/timer.h"
+#include "utils/stringpiece.h"
+#include "utils/timer.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -37,10 +37,6 @@ using std::unordered_map;
 using std::unordered_set;
 
 namespace lapis {
-
-//  true if the current process is the memory manager,
-//	false if it is a memory server
-void Sleep(double t);
 
 template <class V>
 struct Accumulator {
@@ -106,5 +102,5 @@ T unmarshal(Marshal<T> *m, const StringPiece &s) {
 
 }
 
-#include "core/tuple.h"
+#include "utils/tuple.h"
 #endif  // INCLUDE_CORE_COMMON_H_

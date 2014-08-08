@@ -4,7 +4,7 @@
 #include "core/common.h"
 #include "proto/worker.pb.h"
 #include "core/table.h"
-#include "core/tuple.h"
+#include "utils/tuple.h"
 #include "local-table.h"
 #include <boost/noncopyable.hpp>
 

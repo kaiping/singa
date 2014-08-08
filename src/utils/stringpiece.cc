@@ -1,5 +1,5 @@
-#include "core/stringpiece.h"
-#include "core/hash.h"
+#include "utils/stringpiece.h"
+#include "utils/hash.h"
 #include "core/static-initializers.h"
 
 #include "glog/logging.h"

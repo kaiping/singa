@@ -47,7 +47,7 @@ LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OB
 -include $(LAPIS_OBJS:%.o=%.P)
 
 run_lapis:
-	mpirun -hostfile examples/imagenet12/hostfile  -nooversubscribe \
+	mpirun -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3
 

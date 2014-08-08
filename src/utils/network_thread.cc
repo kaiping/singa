@@ -1,8 +1,13 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 // modified from piccolo/rpc.cc
 #include <glog/logging.h>
+#include <unordered_set>
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
+#include "utils/tuple.h"
+#include "utils/stringpiece.h"
+#include "utils/timer.h"
+
 #include "proto/worker.pb.h"
 
 // sleep duration between reading messages off the network.
@@ -10,6 +15,12 @@ DEFINE_double(sleep_time, 0.001, "");
 
 namespace lapis {
 std::shared_ptr<NetworkThread> NetworkThread::instance_;
+void Sleep(double t){
+  timespec req;
+  req.tv_sec = (int)t;
+  req.tv_nsec = (int64_t)(1e9 * (t - (int64_t)t));
+  nanosleep(&req, NULL);
+}
 void ShutdownMPI() {
   NetworkThread::Get()->Shutdown();
 }
@@ -33,6 +44,7 @@ NetworkThread::NetworkThread() {
       this);
   processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
   id_ = world_->Get_rank();
+  VLOG(3)<<"rank of this process "<<id_;
   for (int i = 0; i < kMaxMethods; ++i) {
     callbacks_[i] = NULL;
     handles_[i] = NULL;
@@ -53,7 +65,7 @@ void NetworkThread::CollectActive() {
   if (active_sends_.empty())
     return;
   boost::recursive_mutex::scoped_lock sl(send_lock);
-  unordered_set<RPCRequest *>::iterator i = active_sends_.begin();
+  std::unordered_set<RPCRequest *>::iterator i = active_sends_.begin();
   VLOG(3) << "Pending sends: " << active_sends_.size();
   while (i != active_sends_.end()) {
     RPCRequest *r = (*i);
@@ -110,8 +122,10 @@ void NetworkThread::NetworkLoop() {
       RPCRequest *s = pending_sends_.front();
       pending_sends_.pop_front();
       s->start_time = Now();
+      VLOG(3)<<"before send to "<<s->target;
       s->mpi_req = world_->Isend(
                      s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
+      VLOG(3)<<"after send to "<<s->target;
       active_sends_.insert(s);
     }
     CollectActive();

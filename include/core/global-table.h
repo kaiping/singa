@@ -178,13 +178,16 @@ void TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 template<class K, class V>
 V TypedGlobalTable<K, V>::get(const K &k) {
   int shard = this->get_shard(k);
+  VLOG(3)<<"global table shard :"<<shard<< " is local "<<is_local_shard(shard);
   if (is_local_shard(shard)) {
     return get_local(k);
   }
   string v_str;
+  VLOG(3)<<"try get remote";
   get_remote(shard,
              marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k),
              &v_str);
+  VLOG(3)<<"get remote succ";
   return unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
 }
 

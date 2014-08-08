@@ -82,21 +82,22 @@ void ModelController::Update(const std::vector<Param*> &params)
 
 void ModelController::Put(const std::vector<Param*> &params)
 {
+  VLOG(3)<<"model controller put";
   if(issinglemachine_)return;
   for(auto* param: params)
   {
     int paramid = param->id();
     int largestoffset = param->length();
-int splitsize = my_machine_num_*my_split_size_;
-	int splitoffset = largestoffset/splitsize;
-      if (largestoffset%splitsize) splitoffset++;
-      if (splitoffset > 1000000)
-	{
-	splitoffset = 1000000;
-	splitsize = largestoffset/splitoffset + 1;
-	}
+    int splitsize = my_machine_num_*my_split_size_;
+    int splitoffset = largestoffset/splitsize;
+    if (largestoffset%splitsize) splitoffset++;
+    if (splitoffset > 1000000)
+    {
+      splitoffset = 1000000;
+      splitsize = largestoffset/splitoffset + 1;
+    }
     if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
-int curoffset = 0;
+    int curoffset = 0;
     const float * content_addr = param->content().dptr;
     for(int j = 0; j < splitsize; j++)
     {
@@ -121,16 +122,16 @@ void ModelController::Get(const std::vector<Param*> &params)
   {
     int paramid = param->id();
     int largestoffset = param->length();
-	int splitsize = my_machine_num_*my_split_size_;
-	int splitoffset = largestoffset/splitsize;
-      if (largestoffset%splitsize) splitoffset++;
-      if (splitoffset > 1000000)
-	{
-	splitoffset = 1000000;
-	splitsize = largestoffset/splitoffset + 1;
-	}
+    int splitsize = my_machine_num_*my_split_size_;
+    int splitoffset = largestoffset/splitsize;
+    if (largestoffset%splitsize) splitoffset++;
+    if (splitoffset > 1000000)
+    {
+      splitoffset = 1000000;
+      splitsize = largestoffset/splitoffset + 1;
+    }
     if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
-int curoffset = 0;
+    int curoffset = 0;
     float * content_addr = param->mutable_content().dptr;
     for(int j = 0; j < splitsize; j++)
     {

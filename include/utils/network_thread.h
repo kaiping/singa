@@ -13,6 +13,8 @@
 
 using google::protobuf::Message;
 namespace lapis {
+
+void Sleep(double t) ;
 // sleep duration between reading messages off the network.
 
 // Hackery to get around mpi's unhappiness with threads.  This thread

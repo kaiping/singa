@@ -47,10 +47,7 @@ class TableServer : private boost::noncopyable {
  private:
 
   int server_id_;
-  int manager_id_;
-
   mutable boost::recursive_mutex state_lock_;
-
   std::shared_ptr<NetworkThread> net_;
 };
 

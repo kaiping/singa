@@ -25,8 +25,8 @@ Coordinator::~Coordinator() {
 }
 
 void Coordinator::InitTableServers() {
-  for (int i = 0; i < context_->num_processes() - 1; ++i) {
-    VLOG(3)<<"in start mem manger "<<i;
+  for (int i = 0; i < context_->num_processes()-1; ++i) {
+    VLOG(3)<<"in start table server "<<i;
     RegisterWorkerRequest req;
     int src = 0;
     VLOG(3)<<"before read msg ";
@@ -56,6 +56,7 @@ void Coordinator::InitTableServers() {
       server_idx = (server_idx + 1) % server_states_.size();
     }
   }
+  VLOG(3)<<"table assignment";
   //  then send table assignment
   ShardAssignmentRequest req;
   for (size_t i = 0; i < server_states_.size(); ++i) {
@@ -75,12 +76,14 @@ void Coordinator::InitTableServers() {
 }
 
 void Coordinator::StartWorkers(ModelProto &proto){
+  VLOG(3)<<"start worker";
   net_->Broadcast(MTYPE_MODEL_CONFIG,proto);
 }
 //  wait for MTYPE_WORKER_END from other servers
 //  send MTYPE_WORKER_SHUTDOWN messages to other
 //  do not have to wait, simply exit.
 void Coordinator::WaitWorkersFinish() {
+  VLOG(3)<<"wait workers to finish";
   for (int i = 0; i < net_->size() - 1; i++) {
     EmptyMessage end_msg;
     int src = 0;
@@ -93,12 +96,14 @@ void Coordinator::WaitWorkersFinish() {
   net_->Flush();
 }
 void Coordinator::Run() {
-  ModelProto model_proto;
-  ReadProtoFromTextFile(context_->model_conf(), &model_proto);
-  Net net;
-  net.Init(model_proto.net());
   ModelController mc;
   mc.Init();
+
+  ModelProto model_proto;
+  ReadProtoFromTextFile(context_->model_conf(), &model_proto);
+
+  Net net;
+  net.Init(model_proto.net());
 
   if(context_->standalone()){
     SGDTrainer trainer;
@@ -108,6 +113,7 @@ void Coordinator::Run() {
     trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
   }else {
     InitTableServers();
+    VLOG(3)<<"init table server finish";
     // setup training data which is necessary to setup the DataLayer that is in
     // turn required by upper edges and layers to setup.
     TrainerProto trainer = model_proto.trainer();

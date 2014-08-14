@@ -23,7 +23,8 @@ class LabelSource : public DataSource {
    * Init this data source, get the label file path from ds_proto
    * @param ds_proto the user configured data source meta info
    */
-  virtual void Init(const DataSourceProto &proto);
+  const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+      std::shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *proto);
   /**
    * Fill the blob with labels. If rich end of the label list, then repeat from
@@ -32,6 +33,7 @@ class LabelSource : public DataSource {
    * memory, this function just copy the labels to the blob
    */
   virtual void GetData(Blob *blob);
+  virtual void NextRecord(Blob* blob);
   /**
    * Single label file is small, this function do load them into memory; and
    * put them to distributed disk depending on the availability of the

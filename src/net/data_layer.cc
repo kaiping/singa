@@ -11,7 +11,6 @@ const std::string DataLayer::kType = "DataLayer";
 void DataLayer::Init(const LayerProto &proto) {
   Layer::Init(proto);
   data_source_name_ = proto.data_source();
-  data_source_ = nullptr;
   mirror_=proto.mirror();
   cropsize_=proto.cropsize();
 }
@@ -21,22 +20,14 @@ void DataLayer::ToProto(LayerProto *layer_proto) {
   layer_proto->set_data_source(data_source_name_);
 }
 
-void DataLayer::SetupDataSource(int batchsize,
-                                const std::vector<DataSource *> &sources) {
+void DataLayer::SetBatchShape(int batchsize, const Shape &data_shape){
   batchsize_=batchsize;
-  for (auto *source : sources) {
-    if (source->name() == data_source_name_) {
-      data_source_ = source;
-      break;
-    }
-  }
-  CHECK(data_source_ != nullptr) << "Cannot find data source: " << name_;
+  width_=data_shape.width();
+  height_=data_shape.height();
+  channels_=data_shape.channels();
 }
 
 void DataLayer::Setup(const char flag) {
-  width_=data_source_->width();
-  height_=data_source_->height();
-  channels_=data_source_->channels();
   VLOG(2)<<"DataLayer: "<<name_<<" cropsize "<<cropsize_;
   if(cropsize_){
     data_.Resize(batchsize_, channels_,cropsize_, cropsize_, AllocData(flag));
@@ -50,15 +41,12 @@ void DataLayer::Setup(const char flag) {
   }
 }
 
+
 void DataLayer::Forward() {
   VLOG(3)<<name_;
   for(auto* edge: in_edges_) {
     edge->Forward(edge->OtherSide(this)->feature(edge), nullptr,true);
   }
-  if(cropsize_)
-    data_source_->GetData(&tmp_);
-  else
-    data_source_->GetData(&data_);
   if (cropsize_) {
     float* data_dptr=data_.dptr;
     float* tmp_dptr=tmp_.dptr;

@@ -27,9 +27,14 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   VLOG(3)<<"before get params from distributed mem";
   model_controller_->Get(params);
   VLOG(3)<<"after get params from distributed mem";
-
-  for (auto* layer : layers)
+  for (auto* layer : layers){
+    if(layer->HasInput()){
+      // TODO(wangwei) Error has not implemented mc.GetData.
+      Blob& blob=dynamic_cast<DataLayer*>(layer)->feature(nullptr);
+      model_controller_->GetData(layer->name(), &blob);
+    }
     layer->Forward();
+  }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
     (*layer)->Backward();
   UpdateHyperParams(step_);
@@ -52,40 +57,28 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   */
 }
 
-void SGDTrainer::Train(const int step, Net *net, const char flag) {
-  if (phase != Phase::kTrain) {
-    char local_flag=step==0?flag: kAllocData;
-    net->Setup(sgd_proto_.train_batchsize(),
-               local_flag,
-               train_data_);
-    phase = Phase::kTrain;
-    VLOG(1)<<"Total mem allocated for Blobs in training is "
-      <<Blob::MSize()<<" megabytes";
-  }
+void SGDTrainer::Train(const int step, Net *net){
   BackPropagation(step, net);
 }
-
 void SGDTrainer::Validate(Net *net) {
+/*
   if (phase != Phase::kValidation) {
-    net->Setup(sgd_proto_.validation_batchsize(),
-               kAllocData,
-               validation_data_);
+    net->Setup( kAllocData, validation_data_shapes_);
     phase = Phase::kValidation;
   }
-  /* TODO(wangwei) forward through all layers to get the loss
+   TODO(wangwei) forward through all layers to get the loss
      for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
      Forward();
      */
 }
 
 void SGDTrainer::Test(Net *net) {
+  /*
   if (phase != Phase::kTest) {
-    net->Setup(sgd_proto_.test_batchsize(),
-               kAllocData,
-               test_data_);
+    net->Setup(kAllocData, test_data_shapes_);
     phase = Phase::kTest;
   }
-  /* TODO(wangwei) forward through all layers to get the loss
+   TODO(wangwei) forward through all layers to get the loss
      for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
      Forward();
      */

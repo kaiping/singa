@@ -9,6 +9,7 @@
 #include "core/table-registry.h"
 #include "utils/network_thread.h"
 #include "utils/proto_helper.h"
+#include "datasource/data_source.h"
 
 namespace lapis {
 Coordinator::Coordinator() {
@@ -24,7 +25,7 @@ Coordinator::~Coordinator() {
   }
 }
 
-void Coordinator::InitTableServers() {
+void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   for (int i = 0; i < context_->num_processes()-1; ++i) {
     VLOG(3)<<"in start table server "<<i;
     RegisterWorkerRequest req;
@@ -39,18 +40,19 @@ void Coordinator::InitTableServers() {
   }
   LOG(INFO) << " All servers registered and started up";
   //  set itself as the current worker for the table
-  for (auto &entry: TableRegistry::Get()->tables())
+  for (auto &entry: tables)
     entry.second->worker_id_ = net_->id();
 
   // memory servers are specified in global context. Round-robin assignment
   int server_idx = 0;
-  for (auto &entry: TableRegistry::Get()->tables()){
+  for (auto &entry: tables){
     VLOG(3)<<"num of shards "<<entry.second->num_shards();
     int table=entry.first;
     for (int shard = 0; shard < entry.second->num_shards(); ++shard) {
       ServerState &server = *server_states_[server_idx];
       LOG(INFO) << "Assigning table ("<<table<<","<<shard<<") to server "
                 <<server_states_[server_idx]->server_id;
+      // TODO(Anh) may overwrite this field if #shards>#table_servers
       server.shard_id = shard;
       server.local_shards.insert(new TaskId(table, shard));
       server_idx = (server_idx + 1) % server_states_.size();
@@ -67,7 +69,8 @@ void Coordinator::InitTableServers() {
       s->set_table(task->table);
       s->set_shard(task->shard);
       //  update local tables
-      GlobalTable *t = TableRegistry::Get()->table(task->table);
+      CHECK(tables.find(task->table)!=tables.end());
+      GlobalTable *t = tables.at(task->table);
       t->get_partition_info(task->shard)->owner = server.server_id;
       delete task;
     }
@@ -101,28 +104,47 @@ void Coordinator::Run() {
 
   ModelProto model_proto;
   ReadProtoFromTextFile(context_->model_conf(), &model_proto);
-
-  Net net;
-  net.Init(model_proto.net());
+  Net net(model_proto.net());
 
   if(context_->standalone()){
+    /*
     SGDTrainer trainer;
     trainer.Init(model_proto.trainer(), &mc);
     // workers should allocate memory for data and parameters. No need to
     // Init parameters, because they Get parameters from distributed table
     trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
+    */
   }else {
-    InitTableServers();
-    VLOG(3)<<"init table server finish";
     // setup training data which is necessary to setup the DataLayer that is in
     // turn required by upper edges and layers to setup.
-    TrainerProto trainer = model_proto.trainer();
-    std::vector<DataSource *> train_data;
-    Trainer::InitDataSource(trainer.train_data(), &train_data);
+    //std::vector<DataSource *> train_data;
+    //Trainer::InitDataSource(model_proto.train_data(), &train_data);
     // allocate memory for parameters and init them
-    net.Setup(trainer.sgd().train_batchsize(),
-        kAllocParam|kInitParam,
-        train_data);
+    auto& train_data=model_proto.train_data();
+    for(auto ds_proto: train_data)
+      mc.CreateDataStore();
+    mc.CreateParamStore();
+    InitTableServers(mc.tables());
+    VLOG(3)<<"init table server finish";
+
+    // load data
+    std::shared_ptr<std::vector<std::string>> filenames;
+    for(auto ds_proto: train_data){
+      DataSource *ds=DataSourceFactory::Instance()->Create(ds_proto.type());
+      filenames=ds->Init(ds_proto, filenames);
+      int rid=0;
+      Shape s(ds_proto.shape());
+      s.set_num(1);
+      Blob record(s);
+      while(!ds->eof()){
+        ds->NextRecord(&record);
+        mc.PutData(ds->name(), rid++, record);
+      }
+    }
+    // load parameter
+    int batchsize=model_proto.trainer().sgd().train_batchsize();
+    auto shapes=DataSource::MapDataShape(train_data);
+    net.Setup(batchsize,kAllocParam|kInitParam, shapes);
     mc.Put(net.params());
     StartWorkers(model_proto);
     WaitWorkersFinish();

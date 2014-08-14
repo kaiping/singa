@@ -31,13 +31,15 @@ void Worker::Run() {
   NetworkThread::Get()->Read(GlobalContext::kCoordinatorRank,
                              MTYPE_MODEL_CONFIG,
                              &proto);
-  Net net;
-  net.Init(proto.net());
+  Net net(proto.net());
+  int batchsize=proto.trainer().sgd().train_batchsize();
+  auto shapes=DataSource::MapDataShape(proto.train_data());
+  net.Setup(batchsize, kAllocData|kAllocParam, shapes);
   SGDTrainer trainer;
   trainer.Init(proto.trainer(), &mc);
   // workers should allocate memory for data and parameters. No need to
   // Init parameters, because they Get parameters from distributed table
-  trainer.Run(kAllocData|kAllocParam, &net);
+  trainer.Run(&net);
 
   if(ts!=nullptr){
     ts->ShutdownTableServer();

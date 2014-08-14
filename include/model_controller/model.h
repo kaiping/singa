@@ -28,10 +28,18 @@ class ModelController {
   void Put(const std::vector<Param *> &params);
   //set split type to 0 and split size to 2
   void Init();
+  void CreateDataStore();
+  void CreateParamStore();
+
+  void PutData(std::string store, int rid, const Blob &blob);
+  void GetData(std::string store, Blob *blob);
+
+  const std::map<int,GlobalTable*>& tables() {return tables_;}
  private:
   int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;
   TypedGlobalTable<int, float_vector_message>* distributed_store_;
   bool issinglemachine_,iscoordinator_,isdmm_;
+  std::map<int,GlobalTable*> tables_;
   //ModelConfProto model_conf_proto_;
 };
 }  // namespace lapis

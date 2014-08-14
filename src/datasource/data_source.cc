@@ -10,19 +10,29 @@ namespace lapis {
 /*****************************************************************************
  * Implementation for DataSource
  ****************************************************************************/
-void DataSource::Init(const DataSourceProto &proto) {
-  size_ = proto.size();
-  name_ = proto.name();
-  offset_ = proto.offset();
+std::map<std::string, Shape> DataSource::MapDataShape(
+    const RepeatedPtrField<DataSourceProto> &sources) {
+  std::map<std::string, Shape> shape_map;
+  for(auto& source: sources) {
+    shape_map[source.name()]=source.shape();
+  }
+  return shape_map;
+}
+
+const std::shared_ptr<StringVec> DataSource::Init(
+    const DataSourceProto &ds_proto,
+    std::shared_ptr<StringVec>& filenames){
+  size_ = ds_proto.shape().num();
+  name_ = ds_proto.name();
+  offset_ = ds_proto.offset();
+  return filenames;
   // record_size_=channels_*height_*width_*sizeof(float);
 }
 
 void DataSource::ToProto(DataSourceProto *proto) {
-  proto->set_size(size_);
   proto->set_name(name_);
   proto->set_offset(offset_);
 }
-
 
 /*
 void DataSource::GetData(Blob *blob) {

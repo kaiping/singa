@@ -5,7 +5,9 @@
 #define COORDINATOR_H_
 #include <unordered_set>
 #include <vector>
+#include <map>
 
+#include "core/global-table.h"
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
 #include "proto/model.pb.h"
@@ -37,7 +39,7 @@ class Coordinator {
   ~Coordinator();
  private:
   void StartWorkers(ModelProto &proto);
-  void InitTableServers();
+  void InitTableServers(const std::map<int, GlobalTable*>& tables);
   void WaitWorkersFinish();
  private:
   //  keep track of the table assignments, only to the memory servers

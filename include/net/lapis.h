@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "mshadow/tensor.h"
+#include "proto/model.pb.h"
 
 namespace lapis {
 typedef mshadow::Tensor<mshadow::cpu, 4> Tensor4;
@@ -28,6 +29,7 @@ class Blob {
   Blob(): dptr(nullptr), num_(0), channels_(0),
           height_(0), width_(0), length_(0){}
   Blob(int num, int channels, int height, int width, const bool alloc=true);
+  explicit Blob(const Shape &shape);
   ~Blob() {
     VLOG(3)<<"Free Blob at "<<dptr;
     if(dptr!=nullptr)

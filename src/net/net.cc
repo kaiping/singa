@@ -65,7 +65,7 @@ void topology_sort(std::vector<Layer *> *layers) {
   }
 }
 
-void Net::Init(const NetProto &net_proto) {
+Net::Net(const NetProto &net_proto) {
   std::map<std::string, Layer *> layer_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
@@ -86,12 +86,16 @@ void Net::Init(const NetProto &net_proto) {
   topology_sort(&layers_);
 }
 
-void Net::Setup(int batchsize,
+void Net::Setup(const int batchsize,
                 const char flag,
-                const std::vector<DataSource*>& ds){
-  for (auto *layer : layers())
-    if (layer->HasInput())
-      (dynamic_cast<DataLayer*>(layer))->SetupDataSource(batchsize, ds);
+                const std::map<std::string, Shape> &shapes){
+  for (auto *layer : layers()){
+    if (layer->HasInput()){
+      CHECK(shapes.find(layer->name())!=shapes.end());
+      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+      dlayer->SetBatchShape(batchsize, shapes.at(dlayer->name()));
+    }
+  }
   for(auto *layer : layers()) {
     layer->Setup(flag);
     for (auto *edge : layer->out_edges())

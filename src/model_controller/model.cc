@@ -19,6 +19,21 @@ void ModelController::Init()
   //start the lower level network part
   issinglemachine_ = gc->standalone();
   //start the lower level network part
+
+}
+void ModelController::PutData(std::string store, int rid, const Blob &blob){
+
+}
+
+void ModelController::GetData(std::string store, Blob *blob) {
+
+}
+
+void ModelController::CreateDataStore() {
+
+}
+
+void ModelController::CreateParamStore() {
   if(!issinglemachine_){
     VLOG(3)<<"before create table num of machines "<<my_machine_num_;
     distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
@@ -26,7 +41,6 @@ void ModelController::Init()
     VLOG(3)<<"create table";
   }
 }
-
 void ModelController::Update(const std::vector<Param*> &params)
 {
   if(issinglemachine_)

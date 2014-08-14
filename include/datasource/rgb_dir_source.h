@@ -19,8 +19,11 @@ namespace lapis {
  */
 class RGBDirSource : public DataSource {
  public:
-  virtual void Init(const DataSourceProto &proto);
+  const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+      std::shared_ptr<StringVec>& filenames);
   virtual void GetData(Blob *blob);
+  virtual void NextRecord(Blob *blob);
+
   /**
    * Load rgb images.
    * Do nothing except setting the suffix paths for images, if load to single

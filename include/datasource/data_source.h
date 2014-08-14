@@ -3,6 +3,7 @@
 
 #ifndef INCLUDE_DISK_DATA_SOURCE_H_
 #define INCLUDE_DISK_DATA_SOURCE_H_
+#include <google/protobuf/repeated_field.h>
 #include <string>
 #include <memory>
 #include <map>
@@ -12,7 +13,7 @@
 #include "net/lapis.h"
 #include "proto/model.pb.h"
 
-
+using google::protobuf::RepeatedPtrField;
 namespace lapis {
 typedef std::vector<std::string> StringVec;
 /**
@@ -23,10 +24,13 @@ typedef std::vector<std::string> StringVec;
  */
 class DataSource {
  public:
-
+  static std::map<std::string, Shape> MapDataShape(
+    const RepeatedPtrField<DataSourceProto> &sources);
   virtual ~DataSource(){}
-  virtual void Init(const DataSourceProto &ds_proto);
+  const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+      std::shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *ds_proto);
+  virtual void NextRecord(Blob* blob)=0;
   /**
    * Put one batch data into blob, the blob will specify the num of instances
    * to read (the blob is setup by layer Setup(), which has the batchsize as
@@ -91,6 +95,10 @@ class DataSource {
    */
   int offset() {
     return offset_;
+  }
+
+  bool eof() {
+    return offset_>=size_;
   }
 
  protected:

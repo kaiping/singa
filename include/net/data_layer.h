@@ -8,6 +8,7 @@
 #include <map>
 #include "net/layer.h"
 #include "net/trainer.h"
+#include "net/lapis.h"
 
 
 namespace lapis {
@@ -27,16 +28,14 @@ class DataLayer : public Layer {
    */
   virtual void Init(const LayerProto &proto);
   /**
-   * Setup the data source/provider.
-   * ::Forward() function will fetch one batch of data from this data source
-   * @param batchsize num of instance in one batch
-   * @param alg
-   * @param sources, a vector of DataSource objects (e.g., rgb feature or
-   * label) from which this layer will select one based on data source
-   * identifier, i.e., name.
+   * Set the input batch shape, including batchsize, channels, height, width.
+   * @param shape
    */
-  virtual void SetupDataSource(int batchsize,
-                               const std::vector<DataSource *> &sources);
+  void SetBatchShape(int batchsize, const Shape &data_shape);
+  void SetData(const Blob &blob);
+  /**
+   * allocate memory
+   */
   virtual void Setup(const char flag);
   /**
    * fetch data from data source
@@ -54,11 +53,15 @@ class DataLayer : public Layer {
     return true;
   }
   /**
-   * Return the data provided by DataSource
-   * @param edge not used currently.
+   * @param edge if edge is nullptr it means this function is called to fill
+   * new records for the layer. hence return the tmp blob if the image should
+   * be croped; otherwise return the data blob
    */
   virtual Blob &feature(Edge *edge) {
-    return data_;
+    if(edge==nullptr&& cropsize_)
+      return tmp_;
+    else
+      return data_;
   }
   /**
    * Because DataLayer is usually connected from loss edges, hence this

@@ -12,6 +12,7 @@ namespace lapis {
 
 Phase Trainer::phase=Phase::kInit;
 
+/*
 void Trainer::InitDataSource(
   const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
   std::vector<DataSource *> *sources) {
@@ -25,6 +26,7 @@ void Trainer::InitDataSource(
     sources->push_back(ds);
   }
 }
+*/
 
 void Trainer::Init(const TrainerProto &proto , ModelController *mc) {
   //! if step_>0, then the trainer is restored from a checkpoint
@@ -44,9 +46,6 @@ void Trainer::Init(const TrainerProto &proto , ModelController *mc) {
   do_train_ = proto.do_train();
   do_test_ = proto.do_test();
 
-  InitDataSource(proto.train_data(), &train_data_);
-  InitDataSource(proto.validation_data(), &validation_data_);
-  InitDataSource(proto.test_data(), &test_data_);
   model_controller_ = mc;
 }
 
@@ -58,6 +57,7 @@ void Trainer::ToProto(TrainerProto *proto) {
   proto->set_display_after_steps(display_after_steps_);
   proto->set_display_every_steps(display_every_steps_);
   proto->set_display_prefix(display_prefix_);
+  /*
   proto->clear_train_data();
   for (DataSource *ds : train_data_) {
     DataSourceProto *ds_proto = proto->add_train_data();
@@ -73,15 +73,16 @@ void Trainer::ToProto(TrainerProto *proto) {
     DataSourceProto *ds_proto = proto->add_test_data();
     ds->ToProto(ds_proto);
   }
+  */
 }
 
-void Trainer::Run(const char flag, Net *net) {
+void Trainer::Run(Net *net) {
   if (do_train_) {
     while (!HasFinished(step_)) {
       LOG(INFO)<<step_;
       if (ValidateNow(step_))
         Validate(net);
-      Train(step_,net,flag);
+      Train(step_,net);
       IncStep();
     }
   }
@@ -89,11 +90,5 @@ void Trainer::Run(const char flag, Net *net) {
     Test(net);
 }
 Trainer::~Trainer() {
-  for(auto* ds: train_data_)
-    delete ds;
-  for(auto* ds: validation_data_)
-    delete ds;
-  for(auto* ds: test_data_)
-    delete ds;
 }
 }  // namespace lapis

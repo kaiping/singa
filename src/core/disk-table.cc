@@ -32,13 +32,12 @@ DiskData* DiskTableIterator::value(){ return data_;}
 
 void DiskTable::Load(){
 	//  get all files
-	//TODO
-	vector<File::Info> files = File::MatchingFileinfo("");//StringPrintf("%s/%s*",FLAGS_data_dir,name_prefix()));
+	vector<File::Info> files =
+			File::MatchingFileinfo(StringPrintf("%s/%s",FLAGS_data_dir.c_str(),info()->name_prefix.c_str()));
 	for (int i=0; i<files.size(); i++){
 		FileBlock *block = new FileBlock();
 		block->info = files[i];
-		//TODO
-		block->end_pos = 0; //files[i].stat.st_size();
+		block->end_pos = files[i].stat.st_size;
 		blocks_.push_back(block);
 	}
 
@@ -52,11 +51,11 @@ void DiskTable::Load(){
 
 void DiskTable::DumpToFile(const DiskData* data){
 	if (!file_)
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir,info()->name_prefix,data->block_number()), "w");
+		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),info()->name_prefix.c_str(),data->block_number()), "w");
 
 	if (data->block_number()!=current_block_){
 		delete file_;
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir,info()->name_prefix,data->block_number()), "w");
+		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),info()->name_prefix.c_str(),data->block_number()), "w");
 		current_block_ = data->block_number();
 	}
 

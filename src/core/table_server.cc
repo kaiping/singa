@@ -73,7 +73,9 @@ void TableServer::HandleDataPut(){
 void TableServer::FinishDataPut(){
 	EmptyMessage msg;
 	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_FINISH, &msg);
-	finalize_data();
+	for (auto t : TableRegistry::Get()->tables()){
+		(static_cast<DiskTable*>(t.second))->finalize_data();
+	}
 	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE, msg);
 }
 

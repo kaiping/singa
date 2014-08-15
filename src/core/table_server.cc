@@ -26,6 +26,11 @@ void TableServer::StartTableServer() {
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableServer::HandleShardAssignment, this));
+  net_->RegisterCallback(MTYPE_DATA_PUT_REQUEST,
+		  	  	  	  	 boost::bind(&TableServer::HandleDataPut, this));
+  net_->RegisterCallback(MTYPE_DATA_PUT_REQUEST_FINISH,
+		  	  	  	  	 boost::bind(&TableServer::FinishDataPut, this));
+
   net_->RegisterRequestHandler(MTYPE_PUT_REQUEST,
                                boost::bind(&TableServer::HandleUpdateRequest, this, _1));
   net_->RegisterRequestHandler(MTYPE_GET_REQUEST,
@@ -56,6 +61,20 @@ void TableServer::HandleShardAssignment() {
     LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)",
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }
+}
+
+
+void TableServer::HandleDataPut(){
+	DiskData data;
+	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST, &data);
+	(static_cast<DiskTable*>(TableRegistry::Get()->table(data.table())))->DumpToFile(&data);
+}
+
+void TableServer::FinishDataPut(){
+	EmptyMessage msg;
+	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_FINISH, &msg);
+	finalize_data();
+	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE, msg);
 }
 
 //  respond to request

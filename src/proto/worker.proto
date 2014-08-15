@@ -55,4 +55,9 @@ message TableData {
   optional bool missing_key = 8;
 }
 
+message DiskData{
+  required uint32 block_number = 1;
+  required uint32 table = 2;  
+  repeated Arg records = 3; 
+}
 

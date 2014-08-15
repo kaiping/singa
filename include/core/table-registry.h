@@ -6,6 +6,7 @@
 #include "core/global-table.h"
 #include "core/local-table.h"
 #include "core/sparse-table.h"
+#include "core/disk-table.h"
 
 namespace lapis {
 
@@ -42,6 +43,25 @@ TypedGlobalTable<K, V> *CreateTable(int id, int num_shards, Sharder<K> *skey,
   return t;
 }
 
+template<class K, class V>
+TypedDiskTable<K,V>* CreateDiskTable(int id, int max_size,
+		string name, Marshal<K>* mkey, Marshal<V>* mval){
+	DiskTableDescriptor *info = new DiskTableDescriptor(id, name, max_size);
+	info->key_marshal = mkey;
+	info->value_marshal = mval;
+	TypedDiskTable<K,V> *t = new TypedDiskTable<K,V>(info);
+	TableRegistry::Get()->tables().insert(make_pair(info->id, t));
+	return t;
+}
+
+//  one desginated server stores the data
+template<class K, class V>
+TypedDiskTable<K,V>* CreateDiskTable(int id, int fixed_server_id, int max_size,
+		string name, Marshal<K>* mkey, Marshal<V>* mval){
+	TypedDiskTable<K,V>* t = CreateDiskTable(id, max_size, name, mkey, mval);
+	t->info()->fixed_server_id = fixed_server_id;
+	return t;
+}
 
 /*
 template<class K, class V>

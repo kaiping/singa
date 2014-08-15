@@ -19,6 +19,10 @@ enum MessageTypes {
 
   MTYPE_WORKER_END = 12;
   MTYPE_MODEL_CONFIG = 13;
+  
+  MTYPE_DATA_PUT_REQUEST = 14; 
+  MTYPE_DATA_PUT_REQUEST_FINISH = 15;
+  MTYPE_DATA_PUT_REQUEST_DONE = 16;    
 };
 
 message EmptyMessage {}

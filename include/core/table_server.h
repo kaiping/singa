@@ -35,6 +35,12 @@ class TableServer : private boost::noncopyable {
   //  assignment happens only once at the beginning
   void HandleShardAssignment();
 
+  //  read DiskData and dump to file
+  void HandleDataPut();
+
+  //  get notified from the coordinator that there's no more data
+  void FinishDataPut();
+
   //  shutdown gracefully
   void HandleServerShutdown();
 

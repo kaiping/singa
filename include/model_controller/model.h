@@ -35,12 +35,13 @@ class ModelController {
   void GetData(std::string store, Blob *blob);
 
   const std::map<int,GlobalTable*>& tables() {return tables_;}
+  const std::map<int,int> GetStoreTableMap();
  private:
-  int my_split_tpye_,my_machine_num_,my_split_size_,my_rank_;
-  TypedGlobalTable<int, float_vector_message>* distributed_store_;
+  int split_tpye_,machine_num_,split_size_,rank_;
+  TypedGlobalTable<int, FloatVector>* param_table_;
   bool issinglemachine_,iscoordinator_,isdmm_;
   std::map<int,GlobalTable*> tables_;
-  //ModelConfProto model_conf_proto_;
+  int num_data_store_, num_param_store_;
 };
 }  // namespace lapis
 #endif  // INCLUDE_MODEL_CONTROLLER_MODEL_H_

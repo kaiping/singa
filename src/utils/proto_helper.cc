@@ -16,6 +16,24 @@ using google::protobuf::io::ZeroCopyInputStream;
 using std::fstream;
 
 namespace lapis {
+template<K, V, M>
+std::map<K, V> ToStdMap(const M& gmap) {
+  std::map<K, V> stdmap;
+  for(auto& pair: gmap)
+    stdmap[pair.first]=pair.second;
+  return stdmap;
+}
+template<K, V, M, P>
+M* ToGoogleMap(std::map<K,V> stdmap){
+  M* gmap=new M();
+  for(auto& entry: stdmap) {
+    P *pair=gmap.add_pair();
+    pair->set_key(entry.first);
+    pair->set_val(entry.second);
+  }
+  return gmap;
+}
+
 void ReadProtoFromTextFile(const char *filename, Message *proto) {
   int fd = open(filename, O_RDONLY);
   CHECK_NE(fd, -1) << "File not found: " << filename;

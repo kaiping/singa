@@ -18,11 +18,41 @@ enum MessageTypes {
   MTYPE_WORKER_APPLY_DONE = 11;
 
   MTYPE_WORKER_END = 12;
+
   MTYPE_MODEL_CONFIG = 13;
+  MTYPE_VALIDATION = 14;
+  MTYPE_INSTRUCTION = 15;
+  MTYPE_PERFORMANCE = 16;
+  MTYPE_STORAGE_CONFIG = 17;
 };
 
-message EmptyMessage {}
+message StringIntPair{
+  required string key;
+  required int32 val;
+}
+message StoreMap{
+  repeated StringIntPair pair;
+}
+message StorageConfig {
+  optional StoreMap train_store;
+  optional StoreMap val_store;
+  optional StoreMap test_store;
+  optional TableMap table;
+}
 
+message IntIntPair {
+  required int32 key;
+  required int32 val;
+}
+
+message TableMap {
+  repeated IntIntPair pair;
+}
+message EmptyMessage {}
+msssage ShortMsg {
+  optional int32 step = 1;
+  optional bool answer = 2;
+}
 message Arg {
   required bytes key = 1;
   required bytes value = 2;

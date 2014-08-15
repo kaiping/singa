@@ -20,6 +20,10 @@ class Worker {
 
  private:
   void SetupNet(const ModelProto &model_proto, Net *net);
+
+ private:
+  std::shared_ptr<NetworkThread> mpi_;
+  ModelController* mc_;
 };
 }  // namespace lapis
 

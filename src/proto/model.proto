@@ -171,6 +171,7 @@ message PerformanceProto {
   optional float recall = 2;
   optional float map = 3;
   optional float precision50 = 4;
+  optional int32 step = 5;
 }
 
 message TrainerProto {
@@ -223,10 +224,8 @@ message ModelProto {
   repeated DataSourceProto train_data = 12;
   repeated DataSourceProto validation_data = 13;
   repeated DataSourceProto test_data = 14;
-
-
 }
 
-message float_vector_message {
-  repeated float myfloat = 1;
+message FloatVector {
+  repeated float data = 1;
 }

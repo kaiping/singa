@@ -6,13 +6,13 @@
 #include "datasource/label_source.h"
 #include "datasource/rgb_dir_source.h"
 #include "datasource/data_source.h"
+
 namespace lapis {
 /*****************************************************************************
  * Implementation for DataSource
  ****************************************************************************/
-std::map<std::string, Shape> DataSource::MapDataShape(
-    const RepeatedPtrField<DataSourceProto> &sources) {
-  std::map<std::string, Shape> shape_map;
+std::map<string, Shape> DataSource::ShapesOf(const DataSourceProtos &sources) {
+  std::map<string, Shape> shape_map;
   for(auto& source: sources) {
     shape_map[source.name()]=source.shape();
   }
@@ -36,7 +36,7 @@ void DataSource::ToProto(DataSourceProto *proto) {
 
 /*
 void DataSource::GetData(Blob *blob) {
-  std::string key;
+  string key;
   float *addr=blob->content();
   for (int i=0;i<blob->num();i++)
     reader_->ReadNextRecord(&key, addr+i*record_size_);
@@ -61,13 +61,13 @@ DataSourceFactory::DataSourceFactory() {
 }
 
 void DataSourceFactory::RegisterCreateFunction(
-  const std::string &id,
+  const string &id,
   std::function<DataSource*(void)> create_function) {
   ds_map_[id] = create_function;
   DLOG(INFO)<<"register DataSource: "<<id;
 }
 
-DataSource *DataSourceFactory::Create(const std::string id) {
+DataSource *DataSourceFactory::Create(const string id) {
   CHECK(ds_map_.find(id) != ds_map_.end()) << "The reader " << id
       << " has not been registered\n";
   return ds_map_.at(id)();

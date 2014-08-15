@@ -30,8 +30,9 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   for (auto* layer : layers){
     if(layer->HasInput()){
       // TODO(wangwei) Error has not implemented mc.GetData.
-      Blob& blob=dynamic_cast<DataLayer*>(layer)->feature(nullptr);
-      model_controller_->GetData(layer->name(), &blob);
+      auto dlayer=dynamic_cast<DataLayer*>(layer);
+      Blob& blob=dlayer->feature(nullptr);
+      model_controller_->GetData(dlayer->store_id(), &blob);
     }
     layer->Forward();
   }
@@ -57,9 +58,11 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   */
 }
 
-void SGDTrainer::Train(const int step, Net *net){
-  BackPropagation(step, net);
+void SGDTrainer::TrainOneBatch(Net *net){
+  BackPropagation(step_, net);
+  IncStep();
 }
+
 void SGDTrainer::Validate(Net *net) {
 /*
   if (phase != Phase::kValidation) {
@@ -89,8 +92,8 @@ void SGDTrainer::ToProto(TrainerProto *proto) {
   proto->set_allocated_sgd(&sgd_proto_);
 }
 
-bool SGDTrainer::HasFinished(int step) {
-  if (step >= sgd_proto_.total_steps())
+bool SGDTrainer::HasFinished() {
+  if (step_ >= sgd_proto_.total_steps())
     return true;
   else
     return false;

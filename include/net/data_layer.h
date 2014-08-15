@@ -31,7 +31,7 @@ class DataLayer : public Layer {
    * Set the input batch shape, including batchsize, channels, height, width.
    * @param shape
    */
-  void SetBatchShape(int batchsize, const Shape &data_shape);
+  void SeInput(int batchsize, int store_id, const Shape &data_shape);
   void SetData(const Blob &blob);
   /**
    * allocate memory
@@ -72,6 +72,10 @@ class DataLayer : public Layer {
   virtual Blob &gradient(Edge *edge) {
     return data_;
   }
+
+  inline int store_id() {
+    return  store_id_;
+  }
   /** identifier for this layer.
    * LayerFactory will create an instance of this based on this identifier
    */
@@ -81,8 +85,8 @@ class DataLayer : public Layer {
   int cropsize_;
   int batchsize_, channels_,height_,width_;
   Blob data_, tmp_;
-  DataSource *data_source_;
   std::string data_source_name_;
+  int store_id_;
 };
 
 }  // namespace lapis

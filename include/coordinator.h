@@ -38,15 +38,22 @@ class Coordinator {
   void Run();
   ~Coordinator();
  private:
+  void InitCluster(const ModelProto& model, Net* net){
   void StartWorkers(ModelProto &proto);
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
-  void WaitWorkersFinish();
+  void Shutdown();
+  std::map<string, int> CreateDataStores(const DataSourceProtos& sources);
+  void RunStandalone(const ModelProto& model, Net *net);
+  void RunOnCluster(const ModelProto& model, Net *net);
+  void LoadData(const DataSourceProtos& sources,
+                const std::map<std::string, int>& stores);
+
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;
-
   shared_ptr<GlobalContext> context_;
-  std::shared_ptr<NetworkThread> net_;
+  std::shared_ptr<NetworkThread> mpi_;
+  ModelController mc_;
 };
 }  // namespace lapis
 #endif  // COORDINATOR_H_

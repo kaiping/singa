@@ -76,19 +76,6 @@ void Trainer::ToProto(TrainerProto *proto) {
   */
 }
 
-void Trainer::Run(Net *net) {
-  if (do_train_) {
-    while (!HasFinished(step_)) {
-      LOG(INFO)<<step_;
-      if (ValidateNow(step_))
-        Validate(net);
-      Train(step_,net);
-      IncStep();
-    }
-  }
-  if (do_test_)
-    Test(net);
-}
 Trainer::~Trainer() {
 }
 }  // namespace lapis

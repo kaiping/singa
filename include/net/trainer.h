@@ -48,11 +48,10 @@ class Trainer {
    */
 
   /**
-   * train the model by either backpropagation or contrastive divergence
+   * train the model for one-minibatch by either backpropagation or contrastive divergence
    * @param net the Net object to be trained
-   * @param step the current training step, e.g., id of the mini-batch
    */
-  virtual void Train(const int step,Net* net)=0;
+  virtual void TrainOneBatch(Net* net)=0;
   /**
    * test performance on validation dataset
    * @param net the Net object
@@ -64,12 +63,6 @@ class Trainer {
    */
   virtual void Test(Net *net) = 0;
   /**
-   * Run the trainer
-   * @param net the neural network
-   */
-  virtual void Run(Net *net);
-
-  /**
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()
    */
@@ -77,9 +70,8 @@ class Trainer {
   /**
    * return true if the stop condition is satisfied, e.g., the maximum number
    * of steps have been reached.
-   * @param step such number of iterations have been processed
    */
-  virtual bool HasFinished(const int step) = 0;
+  virtual bool HasFinished()=0;
   /**
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
@@ -91,6 +83,8 @@ class Trainer {
     }
     return false;
   }
+
+  const bool CheckpointNow() {return CheckpointNow(step_);}
   /**
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
@@ -102,6 +96,7 @@ class Trainer {
     }
     return false;
   }
+  const bool ValidateNow() {return ValidateNow(step_);}
   /**
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().

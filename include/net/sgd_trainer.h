@@ -19,11 +19,11 @@ namespace lapis {
 class SGDTrainer : public Trainer {
  public:
   virtual void Init(const TrainerProto &trainer_proto, ModelController *mc);
-  virtual void Train(const int step,Net* net);
+  virtual void TrainOneBatch(Net* net);
   virtual void Validate(Net *net);
   virtual void Test(Net *net);
   virtual void ToProto(TrainerProto *proto);
-  virtual bool HasFinished(const int step);
+  virtual bool HasFinished();
 
   void BackPropagation(const int step, Net* net) ;
   float learning_rate() const {

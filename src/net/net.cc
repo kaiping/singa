@@ -88,12 +88,14 @@ Net::Net(const NetProto &net_proto) {
 
 void Net::Setup(const int batchsize,
                 const char flag,
-                const std::map<std::string, Shape> &shapes){
+                const std::map<std::string, Shape> &shapes,
+                const std::map<std::string, int>& stores){
   for (auto *layer : layers()){
     if (layer->HasInput()){
       CHECK(shapes.find(layer->name())!=shapes.end());
       DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      dlayer->SetBatchShape(batchsize, shapes.at(dlayer->name()));
+      std::string name=dlayer->name();
+      dlayer->SetInput(batchsize, stores.at(name), shapes.at(name));
     }
   }
   for(auto *layer : layers()) {

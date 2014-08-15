@@ -19,28 +19,44 @@ void ModelController::Init()
   //start the lower level network part
   issinglemachine_ = gc->standalone();
   //start the lower level network part
-
-}
-void ModelController::PutData(std::string store, int rid, const Blob &blob){
-
 }
 
-void ModelController::GetData(std::string store, Blob *blob) {
+void ModelController::PutData(int sid, int rid, const FloatVector &data){
 
 }
 
-void ModelController::CreateDataStore() {
+void ModelController::GetData(int sid, Blob *blob) {
 
 }
 
-void ModelController::CreateParamStore() {
-  if(!issinglemachine_){
-    VLOG(3)<<"before create table num of machines "<<my_machine_num_;
-    distributed_store_ = CreateTable(0, my_machine_num_, new Sharding::Mod,
-        new MyAcc, new Marshal<int>, new Marshal<float_vector_message>);
-    VLOG(3)<<"create table";
+const std::map<int,int> ModelController::GetStoreTableMap() {
+  std::map<int, int> store_table_map;
+  for(auto& entry: tables_) {
+    store_table_map[entry.first]=entry.second->id();
   }
+  return store_table_map;
 }
+
+int ModelController::CreateDataStore() {
+  int sid=2*num_data_store+kDataStore;
+  tables_[sid]=CreateDiskTable(num_table_);
+  num_table_++;
+  num_data_store_++;
+  return sid;
+}
+
+int ModelController::CreateParamStore() {
+  if(issinglemachine_) return;
+  int sid=kParamStore;
+  VLOG(3)<<"before create table num of machines "<<my_machine_num_;
+  tables_[sid]= CreateTable(num_table_, my_machine_num_, new Sharding::Mod,
+        new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
+  param_table_=tables_[sid];
+  num_table_++;
+  VLOG(3)<<"create table";
+  return kParamStore;
+}
+
 void ModelController::Update(const std::vector<Param*> &params)
 {
   if(issinglemachine_)
@@ -78,16 +94,16 @@ void ModelController::Update(const std::vector<Param*> &params)
       const float * grad_addr = param->gradient().dptr;
       for(int j = 0; j < splitsize; j++)
       {
-        float_vector_message mymessage;
-        mymessage.clear_myfloat();
+        FloatVector mymessage;
+        mymessage.clear_data();
         for(int k = 0; k < splitoffset; k++)
         {
           if(curoffset >= largestoffset) break;
-          mymessage.add_myfloat(grad_addr[curoffset]);
+          mymessage.add_data(grad_addr[curoffset]);
           curoffset++;
         }
         int mykey = paramid*2048+j;
-        distributed_store_->update(mykey,mymessage);
+        param_table_->update(mykey,mymessage);
       }
     }
   }
@@ -115,16 +131,16 @@ void ModelController::Put(const std::vector<Param*> &params)
     const float * content_addr = param->content().dptr;
     for(int j = 0; j < splitsize; j++)
     {
-      float_vector_message mymessage;
-      mymessage.clear_myfloat();
+      FloatVector mymessage;
+      mymessage.clear_data();
       for(int k = 0; k < splitoffset; k++)
       {
         if(curoffset >= largestoffset) break;
-        mymessage.add_myfloat(content_addr[curoffset]);
+        mymessage.add_data(content_addr[curoffset]);
         curoffset++;
       }
       int mykey = paramid*2048+j;
-      distributed_store_->put(mykey,mymessage);
+      param_table_->put(mykey,mymessage);
     }
   }
 }
@@ -150,14 +166,14 @@ void ModelController::Get(const std::vector<Param*> &params)
     for(int j = 0; j < splitsize; j++)
     {
       int mykey = paramid*2048+j;
-      float_vector_message mymessage = distributed_store_->get(mykey);
-      VLOG(3)<<"msg size "<<mymessage.myfloat_size();
+      FloatVector mymessage = param_table_->get(mykey);
+      VLOG(3)<<"msg size "<<mymessage.data_size();
       VLOG(3)<<splitoffset;
       for(int k = 0; k < splitoffset; k++)
       {
         if(curoffset >= largestoffset) break;
         //to pass new float to the params
-        content_addr[curoffset] = mymessage.myfloat(k);
+        content_addr[curoffset] = mymessage.data(k);
         curoffset++;
       }
     }
@@ -165,5 +181,28 @@ void ModelController::Get(const std::vector<Param*> &params)
   return;
 }
 
+void ModelController::CreateTables(std::map<int, int> tables){
+  for(auto& entry: tables) {
+    if(entry.first%2==kParamStore)
+      tables_[entry.first]=CreateTable(entry.second);
+    else
+      tables_[entry.first]=CreateDiskTable(entry.second);
+  }
+}
+
+template<class K, class V>
+std::shared_ptr<TypedGlobalTable<K, V>> ModelController::CreateTable(
+    int id, int num_shards, Sharder<K> *skey,
+    Accumulator<V> *accum, Marshal<K> *mkey, Marshal<V> *mval) {
+  TableDescriptor *info = new TableDescriptor(id, num_shards);
+  info->key_marshal = mkey;
+  info->value_marshal = mval;
+  info->sharder = skey;
+  info->accum = accum;
+  info->partition_factory = new typename SparseTable<K, V>::Factory;
+  auto table=make_shared<TypedGlobalTable<K, V>>(new TypedGlobalTable<K, V>());
+  table->Init(info);
+  return table;
+}
 
 }  // namespace lapis

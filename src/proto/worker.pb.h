@@ -41,6 +41,7 @@ class ShardInfo;
 class MethodStats;
 class HashGet;
 class TableData;
+class DiskData;
 
 // ===================================================================
 
@@ -837,6 +838,111 @@ class TableData : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static TableData* default_instance_;
 };
+// -------------------------------------------------------------------
+
+class DiskData : public ::google::protobuf::Message {
+ public:
+  DiskData();
+  virtual ~DiskData();
+
+  DiskData(const DiskData& from);
+
+  inline DiskData& operator=(const DiskData& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DiskData& default_instance();
+
+  void Swap(DiskData* other);
+
+  // implements Message ----------------------------------------------
+
+  DiskData* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DiskData& from);
+  void MergeFrom(const DiskData& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required uint32 block_number = 1;
+  inline bool has_block_number() const;
+  inline void clear_block_number();
+  static const int kBlockNumberFieldNumber = 1;
+  inline ::google::protobuf::uint32 block_number() const;
+  inline void set_block_number(::google::protobuf::uint32 value);
+
+  // required uint32 table = 2;
+  inline bool has_table() const;
+  inline void clear_table();
+  static const int kTableFieldNumber = 2;
+  inline ::google::protobuf::uint32 table() const;
+  inline void set_table(::google::protobuf::uint32 value);
+
+  // repeated .lapis.Arg records = 3;
+  inline int records_size() const;
+  inline void clear_records();
+  static const int kRecordsFieldNumber = 3;
+  inline const ::lapis::Arg& records(int index) const;
+  inline ::lapis::Arg* mutable_records(int index);
+  inline ::lapis::Arg* add_records();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
+      records() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
+      mutable_records();
+
+  // @@protoc_insertion_point(class_scope:lapis.DiskData)
+ private:
+  inline void set_has_block_number();
+  inline void clear_has_block_number();
+  inline void set_has_table();
+  inline void clear_has_table();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 block_number_;
+  ::google::protobuf::uint32 table_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::Arg > records_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_worker_2eproto();
+  friend void protobuf_AssignDesc_worker_2eproto();
+  friend void protobuf_ShutdownFile_worker_2eproto();
+
+  void InitAsDefaultInstance();
+  static DiskData* default_instance_;
+};
 // ===================================================================
 
 
@@ -1610,6 +1716,79 @@ inline bool TableData::missing_key() const {
 inline void TableData::set_missing_key(bool value) {
   set_has_missing_key();
   missing_key_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// DiskData
+
+// required uint32 block_number = 1;
+inline bool DiskData::has_block_number() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DiskData::set_has_block_number() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DiskData::clear_has_block_number() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DiskData::clear_block_number() {
+  block_number_ = 0u;
+  clear_has_block_number();
+}
+inline ::google::protobuf::uint32 DiskData::block_number() const {
+  return block_number_;
+}
+inline void DiskData::set_block_number(::google::protobuf::uint32 value) {
+  set_has_block_number();
+  block_number_ = value;
+}
+
+// required uint32 table = 2;
+inline bool DiskData::has_table() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void DiskData::set_has_table() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void DiskData::clear_has_table() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void DiskData::clear_table() {
+  table_ = 0u;
+  clear_has_table();
+}
+inline ::google::protobuf::uint32 DiskData::table() const {
+  return table_;
+}
+inline void DiskData::set_table(::google::protobuf::uint32 value) {
+  set_has_table();
+  table_ = value;
+}
+
+// repeated .lapis.Arg records = 3;
+inline int DiskData::records_size() const {
+  return records_.size();
+}
+inline void DiskData::clear_records() {
+  records_.Clear();
+}
+inline const ::lapis::Arg& DiskData::records(int index) const {
+  return records_.Get(index);
+}
+inline ::lapis::Arg* DiskData::mutable_records(int index) {
+  return records_.Mutable(index);
+}
+inline ::lapis::Arg* DiskData::add_records() {
+  return records_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
+DiskData::records() const {
+  return records_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
+DiskData::mutable_records() {
+  return &records_;
 }
 
 

@@ -9,6 +9,8 @@
 #include "utils/proto_helper.h"
 #include "datasource/data_source.h"
 #include "utils/proto_helper.h"
+#include "proto/common.pb.h"
+
 
 using std::string;
 DECLARE_double(sleep_time);
@@ -80,7 +82,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 }
 
-void Coordinator::StartWorkers(ModelProto &model){
+void Coordinator::StartWorkers(const ModelProto &model){
   VLOG(3)<<"start worker";
   mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
 }
@@ -104,14 +106,15 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
   std::shared_ptr<std::vector<string>> filenames;
   for(auto source: sources){
     DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
-    filenames=ds->Init(ds_proto, filenames);
+    filenames=ds->Init(source, filenames);
     int rid=0;
     Shape s(source.shape());
-    s.set_num(1);
     FloatVector record;
+    for(int i=0;i<s.width()*s.height()*s.channels();i++)
+      record.add_data(0);
     while(!ds->eof()){
       ds->NextRecord(&record);
-      mc.PutData(stores.at(ds->name()), rid++, record);
+      mc_.PutData(stores.at(ds->name()), rid++, record);
     }
     delete ds;
   }
@@ -134,29 +137,43 @@ std::map<string, int> Coordinator::CreateDataStores(
     const DataSourceProtos& sources) {
   std::map<string, int> stores;
   for(auto& ds: sources)
-    stores[ds.name()]= =mc_->CreateDataStore();
+    stores[ds.name()]= mc_.CreateDataStore(ds.name());
   return stores;
 }
+StringIntMap * ToProtoMap(std::map<std::string,int> stdmap){
+  StringIntMap* gmap=new StringIntMap();
+  for(auto& entry: stdmap) {
+    StringIntPair *pair=gmap->add_pair();
+    pair->set_key(entry.first);
+    pair->set_val(entry.second);
+  }
+  return gmap;
+}
+IntIntMap * ToProtoMap(std::map<int, int> stdmap){
+  IntIntMap* gmap=new IntIntMap();
+  for(auto& entry: stdmap) {
+    IntIntPair *pair=gmap->add_pair();
+    pair->set_key(entry.first);
+    pair->set_val(entry.second);
+  }
+  return gmap;
+}
 
-void Coordinator::InitCluster(const ModelProto& model, Net* net){
+void Coordinator::InitDistributedStorage(const ModelProto& model, Net* net){
   // create stores for train/validate/test data
   std::map<string, int> train_stores=CreateDataStores(model.train_data());
-  std::map<string, int> val_stores=CreateDataStores(model.validate_data());
+  std::map<string, int> val_stores=CreateDataStores(model.validation_data());
   std::map<string, int> test_stores=CreateDataStores(model.test_data());
-  mc_->CreateParamStore();
-  StorageConfig sconfig;
-  sconfig.set_allocated_train_store(ToGoogleMap<string, int,
-      StringIntMap, StringIntPair>(train_stores));
-  sconfig.set_allocated_val_store(ToGoogleMap<string, int,
-      StringIntMap, StringIntPair>(val_stores));
-  sconfig.set_allocated_test_store(ToGoogleMap<string, int,
-      StringIntMap, StringIntPair>(test_stores));
-  sconfig.set_allocated_table(
-      ToGoogleMap<int, int, IntIntMap, IntIntPair>(mc_->GetStoreTableMap());
+  mc_.CreateParamStore();
+  DistributedStorageConfig sconfig;
+  sconfig.set_allocated_train_stores(ToProtoMap(train_stores));
+  sconfig.set_allocated_val_stores(ToProtoMap(val_stores));
+  sconfig.set_allocated_test_stores(ToProtoMap(test_stores));
+  sconfig.set_allocated_tables(ToProtoMap(mc_.GetStoreTableMap()));
   mpi_->Broadcast(MTYPE_STORAGE_CONFIG, sconfig);
 
   // init table servers, must be after creating stores which creating tables
-  InitTableServers(mc_->tables());
+  InitTableServers(mc_.GetTables());
   VLOG(3)<<"init table server finish";
 
   LoadData(model.train_data(), train_stores);
@@ -165,17 +182,17 @@ void Coordinator::InitCluster(const ModelProto& model, Net* net){
 
   // setup the net, init parameters
   int batchsize=model.trainer().sgd().train_batchsize();
-  auto shapes=DataSource::ShapesOf(train_sources());
-  net.Setup(batchsize, kAllocParam|kInitParam, shapes, train_stores);
+  auto shapes=DataSource::ShapesOf(model.train_data());
+  net->Setup(batchsize, kAllocParam|kInitParam, shapes, train_stores);
   // TODO(Jingyang, Wei) model partition
-  mc_>Put(net.params());
+  mc_.Put(net->params());
 }
 
 void Coordinator::RunOnCluster(const ModelProto& model, Net *net) {
-  InitCluster(model,net);
+  InitDistributedStorage(model,net);
   StartWorkers(model);
   bool *alive_workers=new bool[mpi_->size()];
-  for(int =0;i<mpi_->size();i++)
+  for(int i=0;i<mpi_->size();i++)
     alive_workers[i]=true;
   int num_alives=mpi_->size();
   while(alive_workers>0) {
@@ -205,6 +222,10 @@ void Coordinator::RunOnCluster(const ModelProto& model, Net *net) {
   Shutdown();
 }
 
+bool Coordinator::DoValidationOn(int worker_id) {
+  // TODO(wangwei) use policy to decide which worker to do validation
+  return worker_id==0;
+}
 void Coordinator::RunStandalone(const ModelProto& model, Net *net) {
   // workers should allocate memory for data and parameters. No need to
   // Init parameters, because they Get parameters from distributed table
@@ -214,7 +235,6 @@ void Coordinator::Run() {
   ModelProto model;
   ReadProtoFromTextFile(context_->model_conf(), &model);
   Net net(model.net());
-  mc_.Init();
 
   if(context_->standalone()){
     RunStandalone(model, &net);

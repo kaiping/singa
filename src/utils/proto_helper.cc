@@ -10,29 +10,21 @@
 
 #include <fstream> //NOLINT
 
+#include "proto/common.pb.h"
+
 using google::protobuf::io::FileInputStream;
 using google::protobuf::io::FileOutputStream;
 using google::protobuf::io::ZeroCopyInputStream;
 using std::fstream;
 
 namespace lapis {
-template<K, V, M>
-std::map<K, V> ToStdMap(const M& gmap) {
-  std::map<K, V> stdmap;
-  for(auto& pair: gmap)
-    stdmap[pair.first]=pair.second;
-  return stdmap;
-}
-template<K, V, M, P>
-M* ToGoogleMap(std::map<K,V> stdmap){
-  M* gmap=new M();
-  for(auto& entry: stdmap) {
-    P *pair=gmap.add_pair();
-    pair->set_key(entry.first);
-    pair->set_val(entry.second);
-  }
-  return gmap;
-}
+/*
+template<> std::map<int, int> ToStdMap(const IntIntMap& gmap);
+template<> std::map<std::string, int> ToStdMap(const StringIntMap& gmap);
+template<> StringIntMap* ToGoogleMap(std::map<std::string,int> stdmap);
+template<> IntIntMap* ToGoogleMap(std::map<int,int> stdmap);
+*/
+
 
 void ReadProtoFromTextFile(const char *filename, Message *proto) {
   int fd = open(filename, O_RDONLY);

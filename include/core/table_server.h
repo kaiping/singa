@@ -21,7 +21,7 @@ class TableServer : private boost::noncopyable {
  public:
   ~TableServer() {}
 
-  void StartTableServer();
+  void StartTableServer(const std::map<int, GlobalTable*> &tables);
 
   //  sends signals to the manager and ends gracefully
   void ShutdownTableServer();
@@ -34,6 +34,12 @@ class TableServer : private boost::noncopyable {
   //  storing the data will received this
   //  assignment happens only once at the beginning
   void HandleShardAssignment();
+
+  //  read DiskData and dump to file
+  void HandleDataPut();
+
+  //  get notified from the coordinator that there's no more data
+  void FinishDataPut();
 
   //  shutdown gracefully
   void HandleServerShutdown();
@@ -49,6 +55,7 @@ class TableServer : private boost::noncopyable {
   int server_id_;
   mutable boost::recursive_mutex state_lock_;
   std::shared_ptr<NetworkThread> net_;
+  std::map<int, GlobalTable*> tables_;
 };
 
 //  start memory server, only if rank < size()-1

@@ -9,6 +9,7 @@
 #include "net/layer.h"
 #include "net/trainer.h"
 #include "net/lapis.h"
+#include "proto/model.pb.h"
 
 
 namespace lapis {
@@ -31,7 +32,7 @@ class DataLayer : public Layer {
    * Set the input batch shape, including batchsize, channels, height, width.
    * @param shape
    */
-  void SeInput(int batchsize, int store_id, const Shape &data_shape);
+  void SetInput(int batchsize, int store_id, const Shape &data_shape);
   void SetData(const Blob &blob);
   /**
    * allocate memory

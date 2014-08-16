@@ -10,7 +10,6 @@ namespace lapis {
 
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
 int GlobalContext::kCoordinatorRank;
-
 GlobalContext::GlobalContext(const std::string &system_conf,
     const std::string &model_conf): model_conf_(model_conf) {
   SystemProto proto;

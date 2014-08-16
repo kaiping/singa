@@ -22,7 +22,7 @@ class RGBDirSource : public DataSource {
   const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
       std::shared_ptr<StringVec>& filenames);
   virtual void GetData(Blob *blob);
-  virtual void NextRecord(Blob *blob);
+  virtual void NextRecord(FloatVector* record);
 
   /**
    * Load rgb images.

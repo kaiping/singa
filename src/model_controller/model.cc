@@ -5,61 +5,48 @@
 
 #include "model_controller/myacc.h"
 #include "model_controller/model.h"
-
+#include "core/disk-table.h"
+#include "core/table.h"
 
 namespace lapis {
 
-void ModelController::Init()
+ModelController::ModelController()
 {
   VLOG(3)<<"In model controller";
-  auto gc=GlobalContext::Get();
-  my_split_tpye_ = 0;
-  my_machine_num_ = gc->num_table_servers();
-  my_split_size_ = 2;
+  split_tpye_ = 0;
+  split_size_ = 2;
   //start the lower level network part
-  issinglemachine_ = gc->standalone();
   //start the lower level network part
 }
 
 void ModelController::PutData(int sid, int rid, const FloatVector &data){
+  CHECK(disk_tables_.find(sid)!=disk_tables_.end());
+  dynamic_cast<TDiskTable *>(disk_tables_[sid])->put(rid, data);
+}
 
+void ModelController::FlushData(int sid){
+  CHECK(disk_tables_.find(sid)!=disk_tables_.end());
+  dynamic_cast<TDiskTable*>(disk_tables_[sid])->finish_put();
 }
 
 void ModelController::GetData(int sid, Blob *blob) {
-
-}
-
-const std::map<int,int> ModelController::GetStoreTableMap() {
-  std::map<int, int> store_table_map;
-  for(auto& entry: tables_) {
-    store_table_map[entry.first]=entry.second->id();
+  TDiskTable* table= dynamic_cast<TDiskTable*>(disk_tables_.at(sid));
+  if(!table->has_loaded())
+    table->Load();
+  int len=blob->record_length();
+  for(int i=0;i<blob->num();i++){
+    int k;
+    FloatVector *v=nullptr;
+    if(table->done())
+      table->Load();
+    table->get(&k, v);
+    memcpy(blob->dptr+i*len, v->mutable_data(), len*sizeof(float));
   }
-  return store_table_map;
-}
-
-int ModelController::CreateDataStore() {
-  int sid=2*num_data_store+kDataStore;
-  tables_[sid]=CreateDiskTable(num_table_);
-  num_table_++;
-  num_data_store_++;
-  return sid;
-}
-
-int ModelController::CreateParamStore() {
-  if(issinglemachine_) return;
-  int sid=kParamStore;
-  VLOG(3)<<"before create table num of machines "<<my_machine_num_;
-  tables_[sid]= CreateTable(num_table_, my_machine_num_, new Sharding::Mod,
-        new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
-  param_table_=tables_[sid];
-  num_table_++;
-  VLOG(3)<<"create table";
-  return kParamStore;
 }
 
 void ModelController::Update(const std::vector<Param*> &params)
 {
-  if(issinglemachine_)
+  if(GlobalContext::Get()->standalone())
   {
     for(auto* param: params)
     {
@@ -72,15 +59,12 @@ void ModelController::Update(const std::vector<Param*> &params)
       }
     }
     return;
-  }
-
-  if(!issinglemachine_)
-  {
+  }else {
     for(auto* param: params)
     {
       int paramid = param->id();
       int largestoffset = param->length();
-      int splitsize = my_machine_num_*my_split_size_;
+      int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
       int splitoffset = largestoffset/splitsize;
       if (largestoffset%splitsize) splitoffset++;
       if (splitoffset > 1000000)
@@ -113,12 +97,12 @@ void ModelController::Update(const std::vector<Param*> &params)
 void ModelController::Put(const std::vector<Param*> &params)
 {
   VLOG(3)<<"model controller put";
-  if(issinglemachine_)return;
+  if(GlobalContext::Get()->standalone())return;
   for(auto* param: params)
   {
     int paramid = param->id();
     int largestoffset = param->length();
-    int splitsize = my_machine_num_*my_split_size_;
+    int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
     int splitoffset = largestoffset/splitsize;
     if (largestoffset%splitsize) splitoffset++;
     if (splitoffset > 1000000)
@@ -147,12 +131,12 @@ void ModelController::Put(const std::vector<Param*> &params)
 
 void ModelController::Get(const std::vector<Param*> &params)
 {
-  if(issinglemachine_)return;
+  if(GlobalContext::Get()->standalone())return;
   for(auto* param : params)
   {
     int paramid = param->id();
     int largestoffset = param->length();
-    int splitsize = my_machine_num_*my_split_size_;
+    int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
     int splitoffset = largestoffset/splitsize;
     if (largestoffset%splitsize) splitoffset++;
     if (splitoffset > 1000000)
@@ -181,17 +165,59 @@ void ModelController::Get(const std::vector<Param*> &params)
   return;
 }
 
-void ModelController::CreateTables(std::map<int, int> tables){
+const std::map<int,GlobalTable*> ModelController::GetTables() {
+  std::map<int,GlobalTable*> tables;
+  for(auto& entry: disk_tables_)
+    tables[entry.second->id()]=dynamic_cast<GlobalTable*>(entry.second);
+  tables[param_table_->id()]=dynamic_cast<GlobalTable*>(param_table_);
+}
+
+
+const std::map<int,int> ModelController::GetStoreTableMap() {
+  std::map<int, int> store_table_map;
+  for(auto& entry: disk_tables_) {
+    store_table_map[entry.first]=entry.second->id();
+  }
+  store_table_map[kParamStore]=param_table_->id();
+  return store_table_map;
+}
+
+int ModelController::CreateDataStore(std::string name, int fixed_server_id) {
+  int sid=2*num_data_store_+kDataStore;
+  if(fixed_server_id>=0)
+    disk_tables_[sid]=CreateDiskTable(num_tables_, fixed_server_id, 256*10, name,
+        new Marshal<int>, new Marshal<FloatVector>);
+  else
+    disk_tables_[sid]=CreateDiskTable(num_tables_, 256*10, name,
+        new Marshal<int>, new Marshal<FloatVector>);
+  num_tables_++;
+  num_data_store_++;
+  return sid;
+}
+
+int ModelController::CreateParamStore() {
+  if(GlobalContext::Get()->standalone()) return -1;
+  param_table_= CreateTable(num_tables_, GlobalContext::Get()->num_table_servers(),
+      new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
+  num_tables_++;
+  VLOG(3)<<"create table";
+  return kParamStore;
+}
+
+void ModelController::CreateTables(const std::map<int, int>& tables){
   for(auto& entry: tables) {
     if(entry.first%2==kParamStore)
-      tables_[entry.first]=CreateTable(entry.second);
+      param_table_=CreateTable(entry.second,
+          GlobalContext::Get()->num_table_servers(), new Sharding::Mod,
+          new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
     else
-      tables_[entry.first]=CreateDiskTable(entry.second);
+      disk_tables_[entry.first]=CreateDiskTable(entry.second,256*10, "unknown",
+        new Marshal<int>, new Marshal<FloatVector>);
   }
 }
 
 template<class K, class V>
-std::shared_ptr<TypedGlobalTable<K, V>> ModelController::CreateTable(
+TypedGlobalTable<K, V> *ModelController::CreateTable(
     int id, int num_shards, Sharder<K> *skey,
     Accumulator<V> *accum, Marshal<K> *mkey, Marshal<V> *mval) {
   TableDescriptor *info = new TableDescriptor(id, num_shards);
@@ -200,9 +226,29 @@ std::shared_ptr<TypedGlobalTable<K, V>> ModelController::CreateTable(
   info->sharder = skey;
   info->accum = accum;
   info->partition_factory = new typename SparseTable<K, V>::Factory;
-  auto table=make_shared<TypedGlobalTable<K, V>>(new TypedGlobalTable<K, V>());
+  auto table=new TypedGlobalTable<K, V>();
   table->Init(info);
   return table;
+}
+
+template<class K, class V>
+TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id, int max_size,
+		string name, Marshal<K>* mkey, Marshal<V>* mval){
+	DiskTableDescriptor *info = new DiskTableDescriptor(id, name, max_size);
+	info->key_marshal = mkey;
+	info->value_marshal = mval;
+	TypedDiskTable<K,V> *t = new TypedDiskTable<K,V>(info);
+	return t;
+}
+
+//  one desginated server stores the data
+template<class K, class V>
+TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id,
+    int fixed_server_id, int max_size,
+		string name, Marshal<K>* mkey, Marshal<V>* mval){
+	TypedDiskTable<K,V>* t = CreateDiskTable(id, max_size, name, mkey, mval);
+	t->info()->fixed_server_id = fixed_server_id;
+	return t;
 }
 
 }  // namespace lapis

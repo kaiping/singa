@@ -57,9 +57,9 @@ const ::google::protobuf::EnumDescriptor* TrainerProto_Algorithm_descriptor_ = N
 const ::google::protobuf::Descriptor* ModelProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   ModelProto_reflection_ = NULL;
-const ::google::protobuf::Descriptor* float_vector_message_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* FloatVector_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  float_vector_message_reflection_ = NULL;
+  FloatVector_reflection_ = NULL;
 
 }  // namespace
 
@@ -255,11 +255,12 @@ void protobuf_AssignDesc_model_2eproto() {
       sizeof(SGDProto));
   SGDProto_ChangeProto_descriptor_ = SGDProto_descriptor_->enum_type(0);
   PerformanceProto_descriptor_ = file->message_type(8);
-  static const int PerformanceProto_offsets_[4] = {
+  static const int PerformanceProto_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, precision_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, recall_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, map_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, precision50_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, step_),
   };
   PerformanceProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -322,21 +323,21 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelProto));
-  float_vector_message_descriptor_ = file->message_type(11);
-  static const int float_vector_message_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, myfloat_),
+  FloatVector_descriptor_ = file->message_type(11);
+  static const int FloatVector_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FloatVector, data_),
   };
-  float_vector_message_reflection_ =
+  FloatVector_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
-      float_vector_message_descriptor_,
-      float_vector_message::default_instance_,
-      float_vector_message_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(float_vector_message, _unknown_fields_),
+      FloatVector_descriptor_,
+      FloatVector::default_instance_,
+      FloatVector_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FloatVector, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FloatVector, _unknown_fields_),
       -1,
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(float_vector_message));
+      sizeof(FloatVector));
 }
 
 namespace {
@@ -372,7 +373,7 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     ModelProto_descriptor_, &ModelProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    float_vector_message_descriptor_, &float_vector_message::default_instance());
+    FloatVector_descriptor_, &FloatVector::default_instance());
 }
 
 }  // namespace
@@ -403,8 +404,8 @@ void protobuf_ShutdownFile_model_2eproto() {
   delete TrainerProto::_default_perf_prefix_;
   delete ModelProto::default_instance_;
   delete ModelProto_reflection_;
-  delete float_vector_message::default_instance_;
-  delete float_vector_message_reflection_;
+  delete FloatVector::default_instance_;
+  delete FloatVector_reflection_;
 }
 
 void protobuf_AddDesc_model_2eproto() {
@@ -465,31 +466,31 @@ void protobuf_AddDesc_model_2eproto() {
     "in_batchsize\030\016 \001(\005\022\034\n\024validation_batchsi"
     "ze\030\017 \001(\005\022\026\n\016test_batchsize\030\020 \001(\005\"S\n\013Chan"
     "geProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014k"
-    "Exponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004\"W\n"
+    "Exponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004\"e\n"
     "\020PerformanceProto\022\021\n\tprecision\030\001 \001(\002\022\016\n\006"
     "recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002\022\023\n\013precision50"
-    "\030\004 \001(\002\"\315\004\n\014TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017.l"
-    "apis.SGDProto\022!\n\026checkpoint_after_steps\030"
-    "\002 \001(\005:\0010\022!\n\026checkpoint_every_steps\030\003 \001(\005"
-    ":\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/chec"
-    "kpoint\022\032\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n\023di"
-    "splay_after_steps\030\006 \001(\005:\0010\022\036\n\023display_ev"
-    "ery_steps\030\007 \001(\005:\0010\022#\n\016display_prefix\030\010 \001"
-    "(\t:\013tmp/display\022\030\n\rvalidate_step\030\t \001(\005:\001"
-    "0\022\037\n\024validate_after_steps\030\n \001(\005:\0010\022\037\n\024va"
-    "lidate_every_steps\030\013 \001(\005:\0010\022$\n\013perf_pref"
-    "ix\030\017 \001(\t:\017tmp/performance\022<\n\003alg\030\020 \001(\0162\035"
-    ".lapis.TrainerProto.Algorithm:\020kBackProp"
-    "agation\022\026\n\010do_train\030\021 \001(\010:\004true\022\026\n\007do_te"
-    "st\030\022 \001(\010:\005false\"=\n\tAlgorithm\022\024\n\020kBackPro"
-    "pagation\020\001\022\032\n\026kContrastiveDivergence\020\002\"\346"
-    "\001\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \002(\013"
-    "2\017.lapis.NetProto\022$\n\007trainer\030\003 \002(\0132\023.lap"
-    "is.TrainerProto\022*\n\ntrain_data\030\014 \003(\0132\026.la"
-    "pis.DataSourceProto\022/\n\017validation_data\030\r"
-    " \003(\0132\026.lapis.DataSourceProto\022)\n\ttest_dat"
-    "a\030\016 \003(\0132\026.lapis.DataSourceProto\"\'\n\024float"
-    "_vector_message\022\017\n\007myfloat\030\001 \003(\002", 3032);
+    "\030\004 \001(\002\022\014\n\004step\030\005 \001(\005\"\315\004\n\014TrainerProto\022\034\n"
+    "\003sgd\030\001 \001(\0132\017.lapis.SGDProto\022!\n\026checkpoin"
+    "t_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_eve"
+    "ry_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004"
+    " \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint_step\030"
+    "\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 \001(\005:\0010"
+    "\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#\n\016disp"
+    "lay_prefix\030\010 \001(\t:\013tmp/display\022\030\n\rvalidat"
+    "e_step\030\t \001(\005:\0010\022\037\n\024validate_after_steps\030"
+    "\n \001(\005:\0010\022\037\n\024validate_every_steps\030\013 \001(\005:\001"
+    "0\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/performance\022"
+    "<\n\003alg\030\020 \001(\0162\035.lapis.TrainerProto.Algori"
+    "thm:\020kBackPropagation\022\026\n\010do_train\030\021 \001(\010:"
+    "\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAlgorit"
+    "hm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContrastive"
+    "Divergence\020\002\"\346\001\n\nModelProto\022\014\n\004name\030\001 \001("
+    "\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007train"
+    "er\030\003 \002(\0132\023.lapis.TrainerProto\022*\n\ntrain_d"
+    "ata\030\014 \003(\0132\026.lapis.DataSourceProto\022/\n\017val"
+    "idation_data\030\r \003(\0132\026.lapis.DataSourcePro"
+    "to\022)\n\ttest_data\030\016 \003(\0132\026.lapis.DataSource"
+    "Proto\"\033\n\013FloatVector\022\014\n\004data\030\001 \003(\002", 3034);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   Shape::default_instance_ = new Shape();
@@ -509,7 +510,7 @@ void protobuf_AddDesc_model_2eproto() {
       new ::std::string("tmp/performance", 15);
   TrainerProto::default_instance_ = new TrainerProto();
   ModelProto::default_instance_ = new ModelProto();
-  float_vector_message::default_instance_ = new float_vector_message();
+  FloatVector::default_instance_ = new FloatVector();
   Shape::default_instance_->InitAsDefaultInstance();
   DataSourceProto::default_instance_->InitAsDefaultInstance();
   ParamProto::default_instance_->InitAsDefaultInstance();
@@ -521,7 +522,7 @@ void protobuf_AddDesc_model_2eproto() {
   PerformanceProto::default_instance_->InitAsDefaultInstance();
   TrainerProto::default_instance_->InitAsDefaultInstance();
   ModelProto::default_instance_->InitAsDefaultInstance();
-  float_vector_message::default_instance_->InitAsDefaultInstance();
+  FloatVector::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_model_2eproto);
 }
 
@@ -5048,6 +5049,7 @@ const int PerformanceProto::kPrecisionFieldNumber;
 const int PerformanceProto::kRecallFieldNumber;
 const int PerformanceProto::kMapFieldNumber;
 const int PerformanceProto::kPrecision50FieldNumber;
+const int PerformanceProto::kStepFieldNumber;
 #endif  // !_MSC_VER
 
 PerformanceProto::PerformanceProto()
@@ -5070,6 +5072,7 @@ void PerformanceProto::SharedCtor() {
   recall_ = 0;
   map_ = 0;
   precision50_ = 0;
+  step_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -5109,6 +5112,7 @@ void PerformanceProto::Clear() {
     recall_ = 0;
     map_ = 0;
     precision50_ = 0;
+    step_ = 0;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -5179,6 +5183,22 @@ bool PerformanceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(40)) goto parse_step;
+        break;
+      }
+
+      // optional int32 step = 5;
+      case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_step:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &step_)));
+          set_has_step();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -5221,6 +5241,11 @@ void PerformanceProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->precision50(), output);
   }
 
+  // optional int32 step = 5;
+  if (has_step()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->step(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -5247,6 +5272,11 @@ void PerformanceProto::SerializeWithCachedSizes(
   // optional float precision50 = 4;
   if (has_precision50()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->precision50(), target);
+  }
+
+  // optional int32 step = 5;
+  if (has_step()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->step(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -5278,6 +5308,13 @@ int PerformanceProto::ByteSize() const {
     // optional float precision50 = 4;
     if (has_precision50()) {
       total_size += 1 + 4;
+    }
+
+    // optional int32 step = 5;
+    if (has_step()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->step());
     }
 
   }
@@ -5319,6 +5356,9 @@ void PerformanceProto::MergeFrom(const PerformanceProto& from) {
     if (from.has_precision50()) {
       set_precision50(from.precision50());
     }
+    if (from.has_step()) {
+      set_step(from.step());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -5346,6 +5386,7 @@ void PerformanceProto::Swap(PerformanceProto* other) {
     std::swap(recall_, other->recall_);
     std::swap(map_, other->map_);
     std::swap(precision50_, other->precision50_);
+    std::swap(step_, other->step_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -6674,88 +6715,88 @@ void ModelProto::Swap(ModelProto* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int float_vector_message::kMyfloatFieldNumber;
+const int FloatVector::kDataFieldNumber;
 #endif  // !_MSC_VER
 
-float_vector_message::float_vector_message()
+FloatVector::FloatVector()
   : ::google::protobuf::Message() {
   SharedCtor();
 }
 
-void float_vector_message::InitAsDefaultInstance() {
+void FloatVector::InitAsDefaultInstance() {
 }
 
-float_vector_message::float_vector_message(const float_vector_message& from)
+FloatVector::FloatVector(const FloatVector& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
 }
 
-void float_vector_message::SharedCtor() {
+void FloatVector::SharedCtor() {
   _cached_size_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
-float_vector_message::~float_vector_message() {
+FloatVector::~FloatVector() {
   SharedDtor();
 }
 
-void float_vector_message::SharedDtor() {
+void FloatVector::SharedDtor() {
   if (this != default_instance_) {
   }
 }
 
-void float_vector_message::SetCachedSize(int size) const {
+void FloatVector::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* float_vector_message::descriptor() {
+const ::google::protobuf::Descriptor* FloatVector::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return float_vector_message_descriptor_;
+  return FloatVector_descriptor_;
 }
 
-const float_vector_message& float_vector_message::default_instance() {
+const FloatVector& FloatVector::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_model_2eproto();
   return *default_instance_;
 }
 
-float_vector_message* float_vector_message::default_instance_ = NULL;
+FloatVector* FloatVector::default_instance_ = NULL;
 
-float_vector_message* float_vector_message::New() const {
-  return new float_vector_message;
+FloatVector* FloatVector::New() const {
+  return new FloatVector;
 }
 
-void float_vector_message::Clear() {
-  myfloat_.Clear();
+void FloatVector::Clear() {
+  data_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
-bool float_vector_message::MergePartialFromCodedStream(
+bool FloatVector::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated float myfloat = 1;
+      // repeated float data = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_myfloat:
+         parse_data:
           DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 1, 13, input, this->mutable_myfloat())));
+                 1, 13, input, this->mutable_data())));
         } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
                    == ::google::protobuf::internal::WireFormatLite::
                       WIRETYPE_LENGTH_DELIMITED) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, this->mutable_myfloat())));
+                 input, this->mutable_data())));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(13)) goto parse_myfloat;
+        if (input->ExpectTag(13)) goto parse_data;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -6776,12 +6817,12 @@ bool float_vector_message::MergePartialFromCodedStream(
 #undef DO_
 }
 
-void float_vector_message::SerializeWithCachedSizes(
+void FloatVector::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated float myfloat = 1;
-  for (int i = 0; i < this->myfloat_size(); i++) {
+  // repeated float data = 1;
+  for (int i = 0; i < this->data_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteFloat(
-      1, this->myfloat(i), output);
+      1, this->data(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -6790,12 +6831,12 @@ void float_vector_message::SerializeWithCachedSizes(
   }
 }
 
-::google::protobuf::uint8* float_vector_message::SerializeWithCachedSizesToArray(
+::google::protobuf::uint8* FloatVector::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // repeated float myfloat = 1;
-  for (int i = 0; i < this->myfloat_size(); i++) {
+  // repeated float data = 1;
+  for (int i = 0; i < this->data_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteFloatToArray(1, this->myfloat(i), target);
+      WriteFloatToArray(1, this->data(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -6805,14 +6846,14 @@ void float_vector_message::SerializeWithCachedSizes(
   return target;
 }
 
-int float_vector_message::ByteSize() const {
+int FloatVector::ByteSize() const {
   int total_size = 0;
 
-  // repeated float myfloat = 1;
+  // repeated float data = 1;
   {
     int data_size = 0;
-    data_size = 4 * this->myfloat_size();
-    total_size += 1 * this->myfloat_size() + data_size;
+    data_size = 4 * this->data_size();
+    total_size += 1 * this->data_size() + data_size;
   }
 
   if (!unknown_fields().empty()) {
@@ -6826,10 +6867,10 @@ int float_vector_message::ByteSize() const {
   return total_size;
 }
 
-void float_vector_message::MergeFrom(const ::google::protobuf::Message& from) {
+void FloatVector::MergeFrom(const ::google::protobuf::Message& from) {
   GOOGLE_CHECK_NE(&from, this);
-  const float_vector_message* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const float_vector_message*>(
+  const FloatVector* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const FloatVector*>(
       &from);
   if (source == NULL) {
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
@@ -6838,43 +6879,43 @@ void float_vector_message::MergeFrom(const ::google::protobuf::Message& from) {
   }
 }
 
-void float_vector_message::MergeFrom(const float_vector_message& from) {
+void FloatVector::MergeFrom(const FloatVector& from) {
   GOOGLE_CHECK_NE(&from, this);
-  myfloat_.MergeFrom(from.myfloat_);
+  data_.MergeFrom(from.data_);
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
-void float_vector_message::CopyFrom(const ::google::protobuf::Message& from) {
+void FloatVector::CopyFrom(const ::google::protobuf::Message& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void float_vector_message::CopyFrom(const float_vector_message& from) {
+void FloatVector::CopyFrom(const FloatVector& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool float_vector_message::IsInitialized() const {
+bool FloatVector::IsInitialized() const {
 
   return true;
 }
 
-void float_vector_message::Swap(float_vector_message* other) {
+void FloatVector::Swap(FloatVector* other) {
   if (other != this) {
-    myfloat_.Swap(&other->myfloat_);
+    data_.Swap(&other->data_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
   }
 }
 
-::google::protobuf::Metadata float_vector_message::GetMetadata() const {
+::google::protobuf::Metadata FloatVector::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = float_vector_message_descriptor_;
-  metadata.reflection = float_vector_message_reflection_;
+  metadata.descriptor = FloatVector_descriptor_;
+  metadata.reflection = FloatVector_reflection_;
   return metadata;
 }
 

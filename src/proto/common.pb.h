@@ -34,7 +34,13 @@ void  protobuf_AddDesc_common_2eproto();
 void protobuf_AssignDesc_common_2eproto();
 void protobuf_ShutdownFile_common_2eproto();
 
+class StringIntPair;
+class StringIntMap;
+class DistributedStorageConfig;
+class IntIntPair;
+class IntIntMap;
 class EmptyMessage;
+class ShortMsg;
 class Arg;
 class Args;
 class FileParams;
@@ -53,11 +59,18 @@ enum MessageTypes {
   MTYPE_WORKER_APPLY = 10,
   MTYPE_WORKER_APPLY_DONE = 11,
   MTYPE_WORKER_END = 12,
-  MTYPE_MODEL_CONFIG = 13
+  MTYPE_DATA_PUT_REQUEST = 14,
+  MTYPE_DATA_PUT_REQUEST_FINISH = 15,
+  MTYPE_DATA_PUT_REQUEST_DONE = 16,
+  MTYPE_MODEL_CONFIG = 17,
+  MTYPE_VALIDATION = 18,
+  MTYPE_INSTRUCTION = 19,
+  MTYPE_PERFORMANCE = 20,
+  MTYPE_STORAGE_CONFIG = 21
 };
 bool MessageTypes_IsValid(int value);
 const MessageTypes MessageTypes_MIN = MTYPE_PUT_REQUEST;
-const MessageTypes MessageTypes_MAX = MTYPE_MODEL_CONFIG;
+const MessageTypes MessageTypes_MAX = MTYPE_STORAGE_CONFIG;
 const int MessageTypes_ARRAYSIZE = MessageTypes_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageTypes_descriptor();
@@ -91,6 +104,485 @@ inline bool CompressionFormat_Parse(
     CompressionFormat_descriptor(), name, value);
 }
 // ===================================================================
+
+class StringIntPair : public ::google::protobuf::Message {
+ public:
+  StringIntPair();
+  virtual ~StringIntPair();
+
+  StringIntPair(const StringIntPair& from);
+
+  inline StringIntPair& operator=(const StringIntPair& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const StringIntPair& default_instance();
+
+  void Swap(StringIntPair* other);
+
+  // implements Message ----------------------------------------------
+
+  StringIntPair* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const StringIntPair& from);
+  void MergeFrom(const StringIntPair& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required string key = 1;
+  inline bool has_key() const;
+  inline void clear_key();
+  static const int kKeyFieldNumber = 1;
+  inline const ::std::string& key() const;
+  inline void set_key(const ::std::string& value);
+  inline void set_key(const char* value);
+  inline void set_key(const char* value, size_t size);
+  inline ::std::string* mutable_key();
+  inline ::std::string* release_key();
+  inline void set_allocated_key(::std::string* key);
+
+  // required int32 val = 2;
+  inline bool has_val() const;
+  inline void clear_val();
+  static const int kValFieldNumber = 2;
+  inline ::google::protobuf::int32 val() const;
+  inline void set_val(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:lapis.StringIntPair)
+ private:
+  inline void set_has_key();
+  inline void clear_has_key();
+  inline void set_has_val();
+  inline void clear_has_val();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* key_;
+  ::google::protobuf::int32 val_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static StringIntPair* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class StringIntMap : public ::google::protobuf::Message {
+ public:
+  StringIntMap();
+  virtual ~StringIntMap();
+
+  StringIntMap(const StringIntMap& from);
+
+  inline StringIntMap& operator=(const StringIntMap& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const StringIntMap& default_instance();
+
+  void Swap(StringIntMap* other);
+
+  // implements Message ----------------------------------------------
+
+  StringIntMap* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const StringIntMap& from);
+  void MergeFrom(const StringIntMap& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .lapis.StringIntPair pair = 1;
+  inline int pair_size() const;
+  inline void clear_pair();
+  static const int kPairFieldNumber = 1;
+  inline const ::lapis::StringIntPair& pair(int index) const;
+  inline ::lapis::StringIntPair* mutable_pair(int index);
+  inline ::lapis::StringIntPair* add_pair();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::StringIntPair >&
+      pair() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::StringIntPair >*
+      mutable_pair();
+
+  // @@protoc_insertion_point(class_scope:lapis.StringIntMap)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::lapis::StringIntPair > pair_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static StringIntMap* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DistributedStorageConfig : public ::google::protobuf::Message {
+ public:
+  DistributedStorageConfig();
+  virtual ~DistributedStorageConfig();
+
+  DistributedStorageConfig(const DistributedStorageConfig& from);
+
+  inline DistributedStorageConfig& operator=(const DistributedStorageConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DistributedStorageConfig& default_instance();
+
+  void Swap(DistributedStorageConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  DistributedStorageConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DistributedStorageConfig& from);
+  void MergeFrom(const DistributedStorageConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .lapis.StringIntMap train_stores = 1;
+  inline bool has_train_stores() const;
+  inline void clear_train_stores();
+  static const int kTrainStoresFieldNumber = 1;
+  inline const ::lapis::StringIntMap& train_stores() const;
+  inline ::lapis::StringIntMap* mutable_train_stores();
+  inline ::lapis::StringIntMap* release_train_stores();
+  inline void set_allocated_train_stores(::lapis::StringIntMap* train_stores);
+
+  // optional .lapis.StringIntMap val_stores = 2;
+  inline bool has_val_stores() const;
+  inline void clear_val_stores();
+  static const int kValStoresFieldNumber = 2;
+  inline const ::lapis::StringIntMap& val_stores() const;
+  inline ::lapis::StringIntMap* mutable_val_stores();
+  inline ::lapis::StringIntMap* release_val_stores();
+  inline void set_allocated_val_stores(::lapis::StringIntMap* val_stores);
+
+  // optional .lapis.StringIntMap test_stores = 3;
+  inline bool has_test_stores() const;
+  inline void clear_test_stores();
+  static const int kTestStoresFieldNumber = 3;
+  inline const ::lapis::StringIntMap& test_stores() const;
+  inline ::lapis::StringIntMap* mutable_test_stores();
+  inline ::lapis::StringIntMap* release_test_stores();
+  inline void set_allocated_test_stores(::lapis::StringIntMap* test_stores);
+
+  // optional .lapis.IntIntMap tables = 4;
+  inline bool has_tables() const;
+  inline void clear_tables();
+  static const int kTablesFieldNumber = 4;
+  inline const ::lapis::IntIntMap& tables() const;
+  inline ::lapis::IntIntMap* mutable_tables();
+  inline ::lapis::IntIntMap* release_tables();
+  inline void set_allocated_tables(::lapis::IntIntMap* tables);
+
+  // @@protoc_insertion_point(class_scope:lapis.DistributedStorageConfig)
+ private:
+  inline void set_has_train_stores();
+  inline void clear_has_train_stores();
+  inline void set_has_val_stores();
+  inline void clear_has_val_stores();
+  inline void set_has_test_stores();
+  inline void clear_has_test_stores();
+  inline void set_has_tables();
+  inline void clear_has_tables();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::lapis::StringIntMap* train_stores_;
+  ::lapis::StringIntMap* val_stores_;
+  ::lapis::StringIntMap* test_stores_;
+  ::lapis::IntIntMap* tables_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static DistributedStorageConfig* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class IntIntPair : public ::google::protobuf::Message {
+ public:
+  IntIntPair();
+  virtual ~IntIntPair();
+
+  IntIntPair(const IntIntPair& from);
+
+  inline IntIntPair& operator=(const IntIntPair& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IntIntPair& default_instance();
+
+  void Swap(IntIntPair* other);
+
+  // implements Message ----------------------------------------------
+
+  IntIntPair* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const IntIntPair& from);
+  void MergeFrom(const IntIntPair& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required int32 key = 1;
+  inline bool has_key() const;
+  inline void clear_key();
+  static const int kKeyFieldNumber = 1;
+  inline ::google::protobuf::int32 key() const;
+  inline void set_key(::google::protobuf::int32 value);
+
+  // required int32 val = 2;
+  inline bool has_val() const;
+  inline void clear_val();
+  static const int kValFieldNumber = 2;
+  inline ::google::protobuf::int32 val() const;
+  inline void set_val(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:lapis.IntIntPair)
+ private:
+  inline void set_has_key();
+  inline void clear_has_key();
+  inline void set_has_val();
+  inline void clear_has_val();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::int32 key_;
+  ::google::protobuf::int32 val_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static IntIntPair* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class IntIntMap : public ::google::protobuf::Message {
+ public:
+  IntIntMap();
+  virtual ~IntIntMap();
+
+  IntIntMap(const IntIntMap& from);
+
+  inline IntIntMap& operator=(const IntIntMap& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IntIntMap& default_instance();
+
+  void Swap(IntIntMap* other);
+
+  // implements Message ----------------------------------------------
+
+  IntIntMap* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const IntIntMap& from);
+  void MergeFrom(const IntIntMap& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .lapis.IntIntPair pair = 1;
+  inline int pair_size() const;
+  inline void clear_pair();
+  static const int kPairFieldNumber = 1;
+  inline const ::lapis::IntIntPair& pair(int index) const;
+  inline ::lapis::IntIntPair* mutable_pair(int index);
+  inline ::lapis::IntIntPair* add_pair();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair >&
+      pair() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair >*
+      mutable_pair();
+
+  // @@protoc_insertion_point(class_scope:lapis.IntIntMap)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair > pair_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static IntIntMap* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class EmptyMessage : public ::google::protobuf::Message {
  public:
@@ -161,6 +653,98 @@ class EmptyMessage : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static EmptyMessage* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ShortMsg : public ::google::protobuf::Message {
+ public:
+  ShortMsg();
+  virtual ~ShortMsg();
+
+  ShortMsg(const ShortMsg& from);
+
+  inline ShortMsg& operator=(const ShortMsg& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ShortMsg& default_instance();
+
+  void Swap(ShortMsg* other);
+
+  // implements Message ----------------------------------------------
+
+  ShortMsg* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ShortMsg& from);
+  void MergeFrom(const ShortMsg& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 step = 1;
+  inline bool has_step() const;
+  inline void clear_step();
+  static const int kStepFieldNumber = 1;
+  inline ::google::protobuf::int32 step() const;
+  inline void set_step(::google::protobuf::int32 value);
+
+  // optional bool answer = 2;
+  inline bool has_answer() const;
+  inline void clear_answer();
+  static const int kAnswerFieldNumber = 2;
+  inline bool answer() const;
+  inline void set_answer(bool value);
+
+  // @@protoc_insertion_point(class_scope:lapis.ShortMsg)
+ private:
+  inline void set_has_step();
+  inline void clear_has_step();
+  inline void set_has_answer();
+  inline void clear_has_answer();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::int32 step_;
+  bool answer_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static ShortMsg* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -551,7 +1135,413 @@ class ConfigData : public ::google::protobuf::Message {
 
 // ===================================================================
 
+// StringIntPair
+
+// required string key = 1;
+inline bool StringIntPair::has_key() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void StringIntPair::set_has_key() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void StringIntPair::clear_has_key() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void StringIntPair::clear_key() {
+  if (key_ != &::google::protobuf::internal::kEmptyString) {
+    key_->clear();
+  }
+  clear_has_key();
+}
+inline const ::std::string& StringIntPair::key() const {
+  return *key_;
+}
+inline void StringIntPair::set_key(const ::std::string& value) {
+  set_has_key();
+  if (key_ == &::google::protobuf::internal::kEmptyString) {
+    key_ = new ::std::string;
+  }
+  key_->assign(value);
+}
+inline void StringIntPair::set_key(const char* value) {
+  set_has_key();
+  if (key_ == &::google::protobuf::internal::kEmptyString) {
+    key_ = new ::std::string;
+  }
+  key_->assign(value);
+}
+inline void StringIntPair::set_key(const char* value, size_t size) {
+  set_has_key();
+  if (key_ == &::google::protobuf::internal::kEmptyString) {
+    key_ = new ::std::string;
+  }
+  key_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* StringIntPair::mutable_key() {
+  set_has_key();
+  if (key_ == &::google::protobuf::internal::kEmptyString) {
+    key_ = new ::std::string;
+  }
+  return key_;
+}
+inline ::std::string* StringIntPair::release_key() {
+  clear_has_key();
+  if (key_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = key_;
+    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void StringIntPair::set_allocated_key(::std::string* key) {
+  if (key_ != &::google::protobuf::internal::kEmptyString) {
+    delete key_;
+  }
+  if (key) {
+    set_has_key();
+    key_ = key;
+  } else {
+    clear_has_key();
+    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// required int32 val = 2;
+inline bool StringIntPair::has_val() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void StringIntPair::set_has_val() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void StringIntPair::clear_has_val() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void StringIntPair::clear_val() {
+  val_ = 0;
+  clear_has_val();
+}
+inline ::google::protobuf::int32 StringIntPair::val() const {
+  return val_;
+}
+inline void StringIntPair::set_val(::google::protobuf::int32 value) {
+  set_has_val();
+  val_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// StringIntMap
+
+// repeated .lapis.StringIntPair pair = 1;
+inline int StringIntMap::pair_size() const {
+  return pair_.size();
+}
+inline void StringIntMap::clear_pair() {
+  pair_.Clear();
+}
+inline const ::lapis::StringIntPair& StringIntMap::pair(int index) const {
+  return pair_.Get(index);
+}
+inline ::lapis::StringIntPair* StringIntMap::mutable_pair(int index) {
+  return pair_.Mutable(index);
+}
+inline ::lapis::StringIntPair* StringIntMap::add_pair() {
+  return pair_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::StringIntPair >&
+StringIntMap::pair() const {
+  return pair_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::StringIntPair >*
+StringIntMap::mutable_pair() {
+  return &pair_;
+}
+
+// -------------------------------------------------------------------
+
+// DistributedStorageConfig
+
+// optional .lapis.StringIntMap train_stores = 1;
+inline bool DistributedStorageConfig::has_train_stores() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DistributedStorageConfig::set_has_train_stores() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DistributedStorageConfig::clear_has_train_stores() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DistributedStorageConfig::clear_train_stores() {
+  if (train_stores_ != NULL) train_stores_->::lapis::StringIntMap::Clear();
+  clear_has_train_stores();
+}
+inline const ::lapis::StringIntMap& DistributedStorageConfig::train_stores() const {
+  return train_stores_ != NULL ? *train_stores_ : *default_instance_->train_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_train_stores() {
+  set_has_train_stores();
+  if (train_stores_ == NULL) train_stores_ = new ::lapis::StringIntMap;
+  return train_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::release_train_stores() {
+  clear_has_train_stores();
+  ::lapis::StringIntMap* temp = train_stores_;
+  train_stores_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_train_stores(::lapis::StringIntMap* train_stores) {
+  delete train_stores_;
+  train_stores_ = train_stores;
+  if (train_stores) {
+    set_has_train_stores();
+  } else {
+    clear_has_train_stores();
+  }
+}
+
+// optional .lapis.StringIntMap val_stores = 2;
+inline bool DistributedStorageConfig::has_val_stores() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void DistributedStorageConfig::set_has_val_stores() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void DistributedStorageConfig::clear_has_val_stores() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void DistributedStorageConfig::clear_val_stores() {
+  if (val_stores_ != NULL) val_stores_->::lapis::StringIntMap::Clear();
+  clear_has_val_stores();
+}
+inline const ::lapis::StringIntMap& DistributedStorageConfig::val_stores() const {
+  return val_stores_ != NULL ? *val_stores_ : *default_instance_->val_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_val_stores() {
+  set_has_val_stores();
+  if (val_stores_ == NULL) val_stores_ = new ::lapis::StringIntMap;
+  return val_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::release_val_stores() {
+  clear_has_val_stores();
+  ::lapis::StringIntMap* temp = val_stores_;
+  val_stores_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_val_stores(::lapis::StringIntMap* val_stores) {
+  delete val_stores_;
+  val_stores_ = val_stores;
+  if (val_stores) {
+    set_has_val_stores();
+  } else {
+    clear_has_val_stores();
+  }
+}
+
+// optional .lapis.StringIntMap test_stores = 3;
+inline bool DistributedStorageConfig::has_test_stores() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void DistributedStorageConfig::set_has_test_stores() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void DistributedStorageConfig::clear_has_test_stores() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void DistributedStorageConfig::clear_test_stores() {
+  if (test_stores_ != NULL) test_stores_->::lapis::StringIntMap::Clear();
+  clear_has_test_stores();
+}
+inline const ::lapis::StringIntMap& DistributedStorageConfig::test_stores() const {
+  return test_stores_ != NULL ? *test_stores_ : *default_instance_->test_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_test_stores() {
+  set_has_test_stores();
+  if (test_stores_ == NULL) test_stores_ = new ::lapis::StringIntMap;
+  return test_stores_;
+}
+inline ::lapis::StringIntMap* DistributedStorageConfig::release_test_stores() {
+  clear_has_test_stores();
+  ::lapis::StringIntMap* temp = test_stores_;
+  test_stores_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_test_stores(::lapis::StringIntMap* test_stores) {
+  delete test_stores_;
+  test_stores_ = test_stores;
+  if (test_stores) {
+    set_has_test_stores();
+  } else {
+    clear_has_test_stores();
+  }
+}
+
+// optional .lapis.IntIntMap tables = 4;
+inline bool DistributedStorageConfig::has_tables() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void DistributedStorageConfig::set_has_tables() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void DistributedStorageConfig::clear_has_tables() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void DistributedStorageConfig::clear_tables() {
+  if (tables_ != NULL) tables_->::lapis::IntIntMap::Clear();
+  clear_has_tables();
+}
+inline const ::lapis::IntIntMap& DistributedStorageConfig::tables() const {
+  return tables_ != NULL ? *tables_ : *default_instance_->tables_;
+}
+inline ::lapis::IntIntMap* DistributedStorageConfig::mutable_tables() {
+  set_has_tables();
+  if (tables_ == NULL) tables_ = new ::lapis::IntIntMap;
+  return tables_;
+}
+inline ::lapis::IntIntMap* DistributedStorageConfig::release_tables() {
+  clear_has_tables();
+  ::lapis::IntIntMap* temp = tables_;
+  tables_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_tables(::lapis::IntIntMap* tables) {
+  delete tables_;
+  tables_ = tables;
+  if (tables) {
+    set_has_tables();
+  } else {
+    clear_has_tables();
+  }
+}
+
+// -------------------------------------------------------------------
+
+// IntIntPair
+
+// required int32 key = 1;
+inline bool IntIntPair::has_key() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void IntIntPair::set_has_key() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void IntIntPair::clear_has_key() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void IntIntPair::clear_key() {
+  key_ = 0;
+  clear_has_key();
+}
+inline ::google::protobuf::int32 IntIntPair::key() const {
+  return key_;
+}
+inline void IntIntPair::set_key(::google::protobuf::int32 value) {
+  set_has_key();
+  key_ = value;
+}
+
+// required int32 val = 2;
+inline bool IntIntPair::has_val() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void IntIntPair::set_has_val() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void IntIntPair::clear_has_val() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void IntIntPair::clear_val() {
+  val_ = 0;
+  clear_has_val();
+}
+inline ::google::protobuf::int32 IntIntPair::val() const {
+  return val_;
+}
+inline void IntIntPair::set_val(::google::protobuf::int32 value) {
+  set_has_val();
+  val_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// IntIntMap
+
+// repeated .lapis.IntIntPair pair = 1;
+inline int IntIntMap::pair_size() const {
+  return pair_.size();
+}
+inline void IntIntMap::clear_pair() {
+  pair_.Clear();
+}
+inline const ::lapis::IntIntPair& IntIntMap::pair(int index) const {
+  return pair_.Get(index);
+}
+inline ::lapis::IntIntPair* IntIntMap::mutable_pair(int index) {
+  return pair_.Mutable(index);
+}
+inline ::lapis::IntIntPair* IntIntMap::add_pair() {
+  return pair_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair >&
+IntIntMap::pair() const {
+  return pair_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair >*
+IntIntMap::mutable_pair() {
+  return &pair_;
+}
+
+// -------------------------------------------------------------------
+
 // EmptyMessage
+
+// -------------------------------------------------------------------
+
+// ShortMsg
+
+// optional int32 step = 1;
+inline bool ShortMsg::has_step() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ShortMsg::set_has_step() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ShortMsg::clear_has_step() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ShortMsg::clear_step() {
+  step_ = 0;
+  clear_has_step();
+}
+inline ::google::protobuf::int32 ShortMsg::step() const {
+  return step_;
+}
+inline void ShortMsg::set_step(::google::protobuf::int32 value) {
+  set_has_step();
+  step_ = value;
+}
+
+// optional bool answer = 2;
+inline bool ShortMsg::has_answer() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ShortMsg::set_has_answer() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ShortMsg::clear_has_answer() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ShortMsg::clear_answer() {
+  answer_ = false;
+  clear_has_answer();
+}
+inline bool ShortMsg::answer() const {
+  return answer_;
+}
+inline void ShortMsg::set_answer(bool value) {
+  set_has_answer();
+  answer_ = value;
+}
 
 // -------------------------------------------------------------------
 

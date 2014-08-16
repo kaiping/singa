@@ -88,8 +88,8 @@ void SGDTrainer::Test(Net *net) {
 }
 
 void SGDTrainer::ToProto(TrainerProto *proto) {
-  Trainer::ToProto(proto);
-  proto->set_allocated_sgd(&sgd_proto_);
+  //Trainer::ToProto(proto);
+  //proto->set_allocated_sgd(&sgd_proto_);
 }
 
 bool SGDTrainer::HasFinished() {

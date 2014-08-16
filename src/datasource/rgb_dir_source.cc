@@ -100,16 +100,11 @@ void readImage(const std::string &path, int height, int width,
   }
 }
 
-void RGBDirSource::NextRecord(Blob *blob) {
+void RGBDirSource::NextRecord(FloatVector *record) {
   VLOG(3)<<"GetData";
-  CHECK_EQ(blob->num(), 1);
-  CHECK_EQ(blob->height(), height_);
-  CHECK_EQ(blob->width(), width_);
-  CHECK_EQ(blob->channels(), channels_);
-  VLOG(3)<<"After check";
-  float *addr = blob->dptr;
   readImage(directory_ + "/" + image_names_->at(offset_), height_,
-              width_, data_mean_.data().data(), addr);
+              width_, data_mean_.data().data(),
+              record->mutable_data()->mutable_data());
   offset_++;
 }
 

@@ -27,12 +27,12 @@ using DataSourceProtos=google::protobuf::RepeatedPtrField<DataSourceProto>;
  */
 class DataSource {
  public:
-  static vector<string> NamesOf(const DataSourceProtos & sources);
+  static std::map<string, Shape> ShapesOf(const DataSourceProtos &sources);
   virtual ~DataSource(){}
   const shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
       shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *ds_proto);
-  virtual void NextRecord(Blob* blob)=0;
+  virtual void NextRecord(FloatVector* record)=0;
   /**
    * Put one batch data into blob, the blob will specify the num of instances
    * to read (the blob is setup by layer Setup(), which has the batchsize as

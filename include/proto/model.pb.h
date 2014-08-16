@@ -45,7 +45,7 @@ class SGDProto;
 class PerformanceProto;
 class TrainerProto;
 class ModelProto;
-class float_vector_message;
+class FloatVector;
 
 enum ParamProto_InitMethod {
   ParamProto_InitMethod_kConstant = 0,
@@ -1651,6 +1651,13 @@ class PerformanceProto : public ::google::protobuf::Message {
   inline float precision50() const;
   inline void set_precision50(float value);
 
+  // optional int32 step = 5;
+  inline bool has_step() const;
+  inline void clear_step();
+  static const int kStepFieldNumber = 5;
+  inline ::google::protobuf::int32 step() const;
+  inline void set_step(::google::protobuf::int32 value);
+
   // @@protoc_insertion_point(class_scope:lapis.PerformanceProto)
  private:
   inline void set_has_precision();
@@ -1661,6 +1668,8 @@ class PerformanceProto : public ::google::protobuf::Message {
   inline void clear_has_map();
   inline void set_has_precision50();
   inline void clear_has_precision50();
+  inline void set_has_step();
+  inline void clear_has_step();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -1668,9 +1677,10 @@ class PerformanceProto : public ::google::protobuf::Message {
   float recall_;
   float map_;
   float precision50_;
+  ::google::protobuf::int32 step_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -2097,14 +2107,14 @@ class ModelProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class float_vector_message : public ::google::protobuf::Message {
+class FloatVector : public ::google::protobuf::Message {
  public:
-  float_vector_message();
-  virtual ~float_vector_message();
+  FloatVector();
+  virtual ~FloatVector();
 
-  float_vector_message(const float_vector_message& from);
+  FloatVector(const FloatVector& from);
 
-  inline float_vector_message& operator=(const float_vector_message& from) {
+  inline FloatVector& operator=(const FloatVector& from) {
     CopyFrom(from);
     return *this;
   }
@@ -2118,17 +2128,17 @@ class float_vector_message : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const float_vector_message& default_instance();
+  static const FloatVector& default_instance();
 
-  void Swap(float_vector_message* other);
+  void Swap(FloatVector* other);
 
   // implements Message ----------------------------------------------
 
-  float_vector_message* New() const;
+  FloatVector* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const float_vector_message& from);
-  void MergeFrom(const float_vector_message& from);
+  void CopyFrom(const FloatVector& from);
+  void MergeFrom(const FloatVector& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -2151,24 +2161,24 @@ class float_vector_message : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // repeated float myfloat = 1;
-  inline int myfloat_size() const;
-  inline void clear_myfloat();
-  static const int kMyfloatFieldNumber = 1;
-  inline float myfloat(int index) const;
-  inline void set_myfloat(int index, float value);
-  inline void add_myfloat(float value);
+  // repeated float data = 1;
+  inline int data_size() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 1;
+  inline float data(int index) const;
+  inline void set_data(int index, float value);
+  inline void add_data(float value);
   inline const ::google::protobuf::RepeatedField< float >&
-      myfloat() const;
+      data() const;
   inline ::google::protobuf::RepeatedField< float >*
-      mutable_myfloat();
+      mutable_data();
 
-  // @@protoc_insertion_point(class_scope:lapis.float_vector_message)
+  // @@protoc_insertion_point(class_scope:lapis.FloatVector)
  private:
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::google::protobuf::RepeatedField< float > myfloat_;
+  ::google::protobuf::RepeatedField< float > data_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
@@ -2178,7 +2188,7 @@ class float_vector_message : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static float_vector_message* default_instance_;
+  static FloatVector* default_instance_;
 };
 // ===================================================================
 
@@ -4446,6 +4456,28 @@ inline void PerformanceProto::set_precision50(float value) {
   precision50_ = value;
 }
 
+// optional int32 step = 5;
+inline bool PerformanceProto::has_step() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void PerformanceProto::set_has_step() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void PerformanceProto::clear_has_step() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void PerformanceProto::clear_step() {
+  step_ = 0;
+  clear_has_step();
+}
+inline ::google::protobuf::int32 PerformanceProto::step() const {
+  return step_;
+}
+inline void PerformanceProto::set_step(::google::protobuf::int32 value) {
+  set_has_step();
+  step_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // TrainerProto
@@ -5168,31 +5200,31 @@ ModelProto::mutable_test_data() {
 
 // -------------------------------------------------------------------
 
-// float_vector_message
+// FloatVector
 
-// repeated float myfloat = 1;
-inline int float_vector_message::myfloat_size() const {
-  return myfloat_.size();
+// repeated float data = 1;
+inline int FloatVector::data_size() const {
+  return data_.size();
 }
-inline void float_vector_message::clear_myfloat() {
-  myfloat_.Clear();
+inline void FloatVector::clear_data() {
+  data_.Clear();
 }
-inline float float_vector_message::myfloat(int index) const {
-  return myfloat_.Get(index);
+inline float FloatVector::data(int index) const {
+  return data_.Get(index);
 }
-inline void float_vector_message::set_myfloat(int index, float value) {
-  myfloat_.Set(index, value);
+inline void FloatVector::set_data(int index, float value) {
+  data_.Set(index, value);
 }
-inline void float_vector_message::add_myfloat(float value) {
-  myfloat_.Add(value);
+inline void FloatVector::add_data(float value) {
+  data_.Add(value);
 }
 inline const ::google::protobuf::RepeatedField< float >&
-float_vector_message::myfloat() const {
-  return myfloat_;
+FloatVector::data() const {
+  return data_;
 }
 inline ::google::protobuf::RepeatedField< float >*
-float_vector_message::mutable_myfloat() {
-  return &myfloat_;
+FloatVector::mutable_data() {
+  return &data_;
 }
 
 

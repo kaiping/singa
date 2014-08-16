@@ -33,7 +33,7 @@ class LabelSource : public DataSource {
    * memory, this function just copy the labels to the blob
    */
   virtual void GetData(Blob *blob);
-  virtual void NextRecord(Blob* blob);
+  virtual void NextRecord(FloatVector* record);
   /**
    * Single label file is small, this function do load them into memory; and
    * put them to distributed disk depending on the availability of the

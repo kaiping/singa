@@ -25,9 +25,8 @@ void LabelSource::GetData(Blob *blob) {
     addr[i] = labels_[offset_++];
   }
 }
-void LabelSource::NextRecord(Blob *blob) {
-  CHECK_EQ(blob->num(),1);
-  *(blob->dptr) = labels_[offset_];
+void LabelSource::NextRecord(FloatVector *record){
+  record->set_data(0, labels_[offset_]);
   offset_++;
 }
 

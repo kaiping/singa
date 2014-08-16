@@ -6,11 +6,12 @@
 #include <unordered_set>
 #include <vector>
 #include <map>
-
+#include "net/net.h"
 #include "core/global-table.h"
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
 #include "proto/model.pb.h"
+#include "model_controller/model.h"
 
 
 namespace lapis {
@@ -38,16 +39,17 @@ class Coordinator {
   void Run();
   ~Coordinator();
  private:
-  void InitCluster(const ModelProto& model, Net* net){
-  void StartWorkers(ModelProto &proto);
+  void InitDistributedStorage(const ModelProto& model, Net* net);
+  void StartWorkers(const ModelProto &proto);
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
   void Shutdown();
-  std::map<string, int> CreateDataStores(const DataSourceProtos& sources);
   void RunStandalone(const ModelProto& model, Net *net);
   void RunOnCluster(const ModelProto& model, Net *net);
   void LoadData(const DataSourceProtos& sources,
                 const std::map<std::string, int>& stores);
+  std::map<string, int> CreateDataStores(const DataSourceProtos& sources);
 
+  bool DoValidationOn(int worker_id);
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;

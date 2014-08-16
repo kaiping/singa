@@ -3,6 +3,11 @@
 
 #ifndef INCLUDE_WORKER_H_
 #define INCLUDE_WORKER_H_
+#include <map>
+#include <memory>
+#include "proto/model.pb.h"
+
+
 #include "net/net.h"
 #include "proto/model.pb.h"
 
@@ -19,11 +24,16 @@ class Worker {
   void Run();
 
  private:
-  void SetupNet(const ModelProto &model_proto, Net *net);
+  void SetupNet(const int batchsize,
+              const char flag,
+              Net *net,
+              const DataSourceProtos& protos,
+              const std::map<std::string, int> &store_map);
 
+  bool ShouldIDoValidation(int worker_id);
  private:
   std::shared_ptr<NetworkThread> mpi_;
-  ModelController* mc_;
+  ModelController mc_;
 };
 }  // namespace lapis
 

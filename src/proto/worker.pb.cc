@@ -41,6 +41,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* TableData_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   TableData_reflection_ = NULL;
+const ::google::protobuf::Descriptor* DiskData_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  DiskData_reflection_ = NULL;
 
 }  // namespace
 
@@ -176,6 +179,23 @@ void protobuf_AssignDesc_worker_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(TableData));
+  DiskData_descriptor_ = file->message_type(7);
+  static const int DiskData_offsets_[3] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, block_number_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, table_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, records_),
+  };
+  DiskData_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      DiskData_descriptor_,
+      DiskData::default_instance_,
+      DiskData_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(DiskData));
 }
 
 namespace {
@@ -202,6 +222,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
     HashGet_descriptor_, &HashGet::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     TableData_descriptor_, &TableData::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    DiskData_descriptor_, &DiskData::default_instance());
 }
 
 }  // namespace
@@ -221,6 +243,8 @@ void protobuf_ShutdownFile_worker_2eproto() {
   delete HashGet_reflection_;
   delete TableData::default_instance_;
   delete TableData_reflection_;
+  delete DiskData::default_instance_;
+  delete DiskData_reflection_;
 }
 
 void protobuf_AddDesc_worker_2eproto() {
@@ -246,7 +270,9 @@ void protobuf_AddDesc_worker_2eproto() {
     "leData\022\016\n\006source\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\r\n"
     "\005shard\030\003 \002(\r\022\014\n\004done\030\004 \002(\010\022\013\n\003key\030\005 \002(\014\022"
     "\022\n\ntable_data\030\006 \001(\014\022\033\n\007kv_data\030\007 \003(\0132\n.l"
-    "apis.Arg\022\023\n\013missing_key\030\010 \001(\010B\002H\001", 633);
+    "apis.Arg\022\023\n\013missing_key\030\010 \001(\010\"L\n\010DiskDat"
+    "a\022\024\n\014block_number\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\033"
+    "\n\007records\030\003 \003(\0132\n.lapis.ArgB\002H\001", 711);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "worker.proto", &protobuf_RegisterTypes);
   RegisterWorkerRequest::default_instance_ = new RegisterWorkerRequest();
@@ -256,6 +282,7 @@ void protobuf_AddDesc_worker_2eproto() {
   MethodStats::default_instance_ = new MethodStats();
   HashGet::default_instance_ = new HashGet();
   TableData::default_instance_ = new TableData();
+  DiskData::default_instance_ = new DiskData();
   RegisterWorkerRequest::default_instance_->InitAsDefaultInstance();
   ShardAssignment::default_instance_->InitAsDefaultInstance();
   ShardAssignmentRequest::default_instance_->InitAsDefaultInstance();
@@ -263,6 +290,7 @@ void protobuf_AddDesc_worker_2eproto() {
   MethodStats::default_instance_->InitAsDefaultInstance();
   HashGet::default_instance_->InitAsDefaultInstance();
   TableData::default_instance_->InitAsDefaultInstance();
+  DiskData::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_worker_2eproto);
 }
 
@@ -2548,6 +2576,298 @@ void TableData::Swap(TableData* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = TableData_descriptor_;
   metadata.reflection = TableData_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int DiskData::kBlockNumberFieldNumber;
+const int DiskData::kTableFieldNumber;
+const int DiskData::kRecordsFieldNumber;
+#endif  // !_MSC_VER
+
+DiskData::DiskData()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void DiskData::InitAsDefaultInstance() {
+}
+
+DiskData::DiskData(const DiskData& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void DiskData::SharedCtor() {
+  _cached_size_ = 0;
+  block_number_ = 0u;
+  table_ = 0u;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+DiskData::~DiskData() {
+  SharedDtor();
+}
+
+void DiskData::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void DiskData::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* DiskData::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return DiskData_descriptor_;
+}
+
+const DiskData& DiskData::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
+  return *default_instance_;
+}
+
+DiskData* DiskData::default_instance_ = NULL;
+
+DiskData* DiskData::New() const {
+  return new DiskData;
+}
+
+void DiskData::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    block_number_ = 0u;
+    table_ = 0u;
+  }
+  records_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool DiskData::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // required uint32 block_number = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &block_number_)));
+          set_has_block_number();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(16)) goto parse_table;
+        break;
+      }
+
+      // required uint32 table = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_table:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &table_)));
+          set_has_table();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(26)) goto parse_records;
+        break;
+      }
+
+      // repeated .lapis.Arg records = 3;
+      case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_records:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_records()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(26)) goto parse_records;
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void DiskData::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // required uint32 block_number = 1;
+  if (has_block_number()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->block_number(), output);
+  }
+
+  // required uint32 table = 2;
+  if (has_table()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->table(), output);
+  }
+
+  // repeated .lapis.Arg records = 3;
+  for (int i = 0; i < this->records_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->records(i), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* DiskData::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // required uint32 block_number = 1;
+  if (has_block_number()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->block_number(), target);
+  }
+
+  // required uint32 table = 2;
+  if (has_table()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->table(), target);
+  }
+
+  // repeated .lapis.Arg records = 3;
+  for (int i = 0; i < this->records_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        3, this->records(i), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int DiskData::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required uint32 block_number = 1;
+    if (has_block_number()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->block_number());
+    }
+
+    // required uint32 table = 2;
+    if (has_table()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->table());
+    }
+
+  }
+  // repeated .lapis.Arg records = 3;
+  total_size += 1 * this->records_size();
+  for (int i = 0; i < this->records_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->records(i));
+  }
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void DiskData::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const DiskData* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const DiskData*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void DiskData::MergeFrom(const DiskData& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  records_.MergeFrom(from.records_);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_block_number()) {
+      set_block_number(from.block_number());
+    }
+    if (from.has_table()) {
+      set_table(from.table());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void DiskData::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DiskData::CopyFrom(const DiskData& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DiskData::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+
+  for (int i = 0; i < records_size(); i++) {
+    if (!this->records(i).IsInitialized()) return false;
+  }
+  return true;
+}
+
+void DiskData::Swap(DiskData* other) {
+  if (other != this) {
+    std::swap(block_number_, other->block_number_);
+    std::swap(table_, other->table_);
+    records_.Swap(&other->records_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata DiskData::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = DiskData_descriptor_;
+  metadata.reflection = DiskData_reflection_;
   return metadata;
 }
 

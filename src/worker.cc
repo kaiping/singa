@@ -12,15 +12,20 @@
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
 #include "net/sgd_trainer.h"
-#include "core/table_server.h"
 
 namespace lapis {
 Worker::Worker(){
   LOG(INFO) << "starting Worker...";
   mpi_=NetworkThread::Get();
+  table_server_=nullptr;
+}
+Worker::~Worker() {
+  Shutdown();
+  if(table_server_!=nullptr)
+    delete table_server_;
 }
 
-void Worker::SetupNet(const int batchsize,
+void SetupNet(const int batchsize,
               const char flag,
               Net *net,
               const DataSourceProtos& sources,
@@ -36,37 +41,40 @@ bool Worker::ShouldIDoValidation(int step) {
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_INSTRUCTION, &msg);
   return msg.answer();
 }
-std::map<std::string, int> ToStdMap(const StringIntMap& gmap) {
-  std::map<std::string, int> stdmap;
-  for(auto& pair: gmap.pair())
-    stdmap[pair.key()]=pair.val();
-  return stdmap;
+
+const DistributedStorageConfig Worker::InitDistributedStorage(){
+  DistributedStorageConfig config;
+  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_STORAGE_CONFIG, &config);
+  IntIntMap tables;
+  tables.CopyFrom(config.dsconfig().tables());
+  tables.MergeFrom(config.psconfig().tables());
+  std::map<int, int> stdtables=ToStdMap(tables);
+  mc_.CreateTables(stdtables);
+  if(GlobalContext::Get()->AmITableServer()){
+    table_server_=new TableServer();
+    table_server_->StartTableServer(mc_.GetTables());
+  }
+  return config;
+}
+void Worker::Shutdown() {
+  mpi_->Flush();
+  mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
+  EmptyMessage msg;
+  int src = 0;
+  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
+  mpi_->Shutdown();
 }
 
-
-std::map<int, int> ToStdMap(const IntIntMap& gmap) {
-  std::map<int, int> stdmap;
-  for(auto& pair: gmap.pair())
-    stdmap[pair.key()]=pair.val();
-  return stdmap;
-}
-void Worker::Run() {
+void Worker::Run(bool load_data, bool do_train) {
+  const DistributedStorageConfig config=InitDistributedStorage();
+  if(!do_train){
+      return;
+  }
   ModelProto model;
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
-  DistributedStorageConfig sconfig;
-  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_STORAGE_CONFIG, &sconfig);
-
-  std::map<std::string, int> train_stores=ToStdMap(sconfig.train_stores());
-  std::map<std::string, int> val_stores=ToStdMap(sconfig.val_stores());
-  std::map<std::string, int> test_stores=ToStdMap(sconfig.test_stores());
-  std::map<int, int> tables=ToStdMap(sconfig.tables());
-  mc_.CreateTables(tables);
-  TableServer *ts=nullptr;
-  if(GlobalContext::Get()->AmITableServer()) {
-    TableServer *ts=new TableServer();
-    ts->StartTableServer(mc_.GetTables());
-  }
-
+  std::map<std::string, int> train_stores=ToStdMap(config.dsconfig().train_stores());
+  std::map<std::string, int> val_stores=ToStdMap(config.dsconfig().val_stores());
+  std::map<std::string, int> test_stores=ToStdMap(config.dsconfig().test_stores());
   Net net(model.net());
   SGDTrainer trainer;
   trainer.Init(model.trainer(), &mc_);
@@ -78,11 +86,11 @@ void Worker::Run() {
       if(ShouldIDoValidation(trainer.step())){
         // do validation
         SetupNet(sgd.validation_batchsize(), kAllocData, &net,
-            model.validation_data(), val_stores);
+            model.data().validation_data(), val_stores);
         trainer.Validate(&net);
         // do test
         SetupNet(sgd.test_batchsize(), kAllocData, &net,
-            model.test_data(), test_stores);
+            model.data().test_data(), test_stores);
         trainer.Test(&net);
         reset_net_for_training=true;
       }
@@ -91,14 +99,10 @@ void Worker::Run() {
       // workers should allocate memory for data and parameters. No need to
       // Init parameters, because they Get parameters from distributed table
       SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
-                model.train_data(), train_stores);
+                model.data().train_data(), train_stores);
       reset_net_for_training=false;
     }
     trainer.TrainOneBatch(&net);
-  }
-  if(ts!=nullptr){
-    ts->ShutdownTableServer();
-    delete ts;
   }
 }
 }  // namespace lapis

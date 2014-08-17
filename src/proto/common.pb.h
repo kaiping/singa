@@ -36,9 +36,11 @@ void protobuf_ShutdownFile_common_2eproto();
 
 class StringIntPair;
 class StringIntMap;
-class DistributedStorageConfig;
 class IntIntPair;
 class IntIntMap;
+class DataStorageConfig;
+class ParamStorageConfig;
+class DistributedStorageConfig;
 class EmptyMessage;
 class ShortMsg;
 class Arg;
@@ -287,126 +289,6 @@ class StringIntMap : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class DistributedStorageConfig : public ::google::protobuf::Message {
- public:
-  DistributedStorageConfig();
-  virtual ~DistributedStorageConfig();
-
-  DistributedStorageConfig(const DistributedStorageConfig& from);
-
-  inline DistributedStorageConfig& operator=(const DistributedStorageConfig& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DistributedStorageConfig& default_instance();
-
-  void Swap(DistributedStorageConfig* other);
-
-  // implements Message ----------------------------------------------
-
-  DistributedStorageConfig* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DistributedStorageConfig& from);
-  void MergeFrom(const DistributedStorageConfig& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional .lapis.StringIntMap train_stores = 1;
-  inline bool has_train_stores() const;
-  inline void clear_train_stores();
-  static const int kTrainStoresFieldNumber = 1;
-  inline const ::lapis::StringIntMap& train_stores() const;
-  inline ::lapis::StringIntMap* mutable_train_stores();
-  inline ::lapis::StringIntMap* release_train_stores();
-  inline void set_allocated_train_stores(::lapis::StringIntMap* train_stores);
-
-  // optional .lapis.StringIntMap val_stores = 2;
-  inline bool has_val_stores() const;
-  inline void clear_val_stores();
-  static const int kValStoresFieldNumber = 2;
-  inline const ::lapis::StringIntMap& val_stores() const;
-  inline ::lapis::StringIntMap* mutable_val_stores();
-  inline ::lapis::StringIntMap* release_val_stores();
-  inline void set_allocated_val_stores(::lapis::StringIntMap* val_stores);
-
-  // optional .lapis.StringIntMap test_stores = 3;
-  inline bool has_test_stores() const;
-  inline void clear_test_stores();
-  static const int kTestStoresFieldNumber = 3;
-  inline const ::lapis::StringIntMap& test_stores() const;
-  inline ::lapis::StringIntMap* mutable_test_stores();
-  inline ::lapis::StringIntMap* release_test_stores();
-  inline void set_allocated_test_stores(::lapis::StringIntMap* test_stores);
-
-  // optional .lapis.IntIntMap tables = 4;
-  inline bool has_tables() const;
-  inline void clear_tables();
-  static const int kTablesFieldNumber = 4;
-  inline const ::lapis::IntIntMap& tables() const;
-  inline ::lapis::IntIntMap* mutable_tables();
-  inline ::lapis::IntIntMap* release_tables();
-  inline void set_allocated_tables(::lapis::IntIntMap* tables);
-
-  // @@protoc_insertion_point(class_scope:lapis.DistributedStorageConfig)
- private:
-  inline void set_has_train_stores();
-  inline void clear_has_train_stores();
-  inline void set_has_val_stores();
-  inline void clear_has_val_stores();
-  inline void set_has_test_stores();
-  inline void clear_has_test_stores();
-  inline void set_has_tables();
-  inline void clear_has_tables();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::lapis::StringIntMap* train_stores_;
-  ::lapis::StringIntMap* val_stores_;
-  ::lapis::StringIntMap* test_stores_;
-  ::lapis::IntIntMap* tables_;
-
-  mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
-
-  friend void  protobuf_AddDesc_common_2eproto();
-  friend void protobuf_AssignDesc_common_2eproto();
-  friend void protobuf_ShutdownFile_common_2eproto();
-
-  void InitAsDefaultInstance();
-  static DistributedStorageConfig* default_instance_;
-};
-// -------------------------------------------------------------------
-
 class IntIntPair : public ::google::protobuf::Message {
  public:
   IntIntPair();
@@ -581,6 +463,318 @@ class IntIntMap : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static IntIntMap* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DataStorageConfig : public ::google::protobuf::Message {
+ public:
+  DataStorageConfig();
+  virtual ~DataStorageConfig();
+
+  DataStorageConfig(const DataStorageConfig& from);
+
+  inline DataStorageConfig& operator=(const DataStorageConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataStorageConfig& default_instance();
+
+  void Swap(DataStorageConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  DataStorageConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DataStorageConfig& from);
+  void MergeFrom(const DataStorageConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .lapis.StringIntMap train_stores = 1;
+  inline bool has_train_stores() const;
+  inline void clear_train_stores();
+  static const int kTrainStoresFieldNumber = 1;
+  inline const ::lapis::StringIntMap& train_stores() const;
+  inline ::lapis::StringIntMap* mutable_train_stores();
+  inline ::lapis::StringIntMap* release_train_stores();
+  inline void set_allocated_train_stores(::lapis::StringIntMap* train_stores);
+
+  // optional .lapis.StringIntMap val_stores = 2;
+  inline bool has_val_stores() const;
+  inline void clear_val_stores();
+  static const int kValStoresFieldNumber = 2;
+  inline const ::lapis::StringIntMap& val_stores() const;
+  inline ::lapis::StringIntMap* mutable_val_stores();
+  inline ::lapis::StringIntMap* release_val_stores();
+  inline void set_allocated_val_stores(::lapis::StringIntMap* val_stores);
+
+  // optional .lapis.StringIntMap test_stores = 3;
+  inline bool has_test_stores() const;
+  inline void clear_test_stores();
+  static const int kTestStoresFieldNumber = 3;
+  inline const ::lapis::StringIntMap& test_stores() const;
+  inline ::lapis::StringIntMap* mutable_test_stores();
+  inline ::lapis::StringIntMap* release_test_stores();
+  inline void set_allocated_test_stores(::lapis::StringIntMap* test_stores);
+
+  // optional .lapis.IntIntMap tables = 4;
+  inline bool has_tables() const;
+  inline void clear_tables();
+  static const int kTablesFieldNumber = 4;
+  inline const ::lapis::IntIntMap& tables() const;
+  inline ::lapis::IntIntMap* mutable_tables();
+  inline ::lapis::IntIntMap* release_tables();
+  inline void set_allocated_tables(::lapis::IntIntMap* tables);
+
+  // @@protoc_insertion_point(class_scope:lapis.DataStorageConfig)
+ private:
+  inline void set_has_train_stores();
+  inline void clear_has_train_stores();
+  inline void set_has_val_stores();
+  inline void clear_has_val_stores();
+  inline void set_has_test_stores();
+  inline void clear_has_test_stores();
+  inline void set_has_tables();
+  inline void clear_has_tables();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::lapis::StringIntMap* train_stores_;
+  ::lapis::StringIntMap* val_stores_;
+  ::lapis::StringIntMap* test_stores_;
+  ::lapis::IntIntMap* tables_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static DataStorageConfig* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ParamStorageConfig : public ::google::protobuf::Message {
+ public:
+  ParamStorageConfig();
+  virtual ~ParamStorageConfig();
+
+  ParamStorageConfig(const ParamStorageConfig& from);
+
+  inline ParamStorageConfig& operator=(const ParamStorageConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ParamStorageConfig& default_instance();
+
+  void Swap(ParamStorageConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  ParamStorageConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ParamStorageConfig& from);
+  void MergeFrom(const ParamStorageConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .lapis.StringIntMap param_stores = 1;
+  inline bool has_param_stores() const;
+  inline void clear_param_stores();
+  static const int kParamStoresFieldNumber = 1;
+  inline const ::lapis::StringIntMap& param_stores() const;
+  inline ::lapis::StringIntMap* mutable_param_stores();
+  inline ::lapis::StringIntMap* release_param_stores();
+  inline void set_allocated_param_stores(::lapis::StringIntMap* param_stores);
+
+  // optional .lapis.IntIntMap tables = 2;
+  inline bool has_tables() const;
+  inline void clear_tables();
+  static const int kTablesFieldNumber = 2;
+  inline const ::lapis::IntIntMap& tables() const;
+  inline ::lapis::IntIntMap* mutable_tables();
+  inline ::lapis::IntIntMap* release_tables();
+  inline void set_allocated_tables(::lapis::IntIntMap* tables);
+
+  // @@protoc_insertion_point(class_scope:lapis.ParamStorageConfig)
+ private:
+  inline void set_has_param_stores();
+  inline void clear_has_param_stores();
+  inline void set_has_tables();
+  inline void clear_has_tables();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::lapis::StringIntMap* param_stores_;
+  ::lapis::IntIntMap* tables_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static ParamStorageConfig* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DistributedStorageConfig : public ::google::protobuf::Message {
+ public:
+  DistributedStorageConfig();
+  virtual ~DistributedStorageConfig();
+
+  DistributedStorageConfig(const DistributedStorageConfig& from);
+
+  inline DistributedStorageConfig& operator=(const DistributedStorageConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DistributedStorageConfig& default_instance();
+
+  void Swap(DistributedStorageConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  DistributedStorageConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DistributedStorageConfig& from);
+  void MergeFrom(const DistributedStorageConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .lapis.DataStorageConfig dsconfig = 1;
+  inline bool has_dsconfig() const;
+  inline void clear_dsconfig();
+  static const int kDsconfigFieldNumber = 1;
+  inline const ::lapis::DataStorageConfig& dsconfig() const;
+  inline ::lapis::DataStorageConfig* mutable_dsconfig();
+  inline ::lapis::DataStorageConfig* release_dsconfig();
+  inline void set_allocated_dsconfig(::lapis::DataStorageConfig* dsconfig);
+
+  // optional .lapis.ParamStorageConfig psconfig = 2;
+  inline bool has_psconfig() const;
+  inline void clear_psconfig();
+  static const int kPsconfigFieldNumber = 2;
+  inline const ::lapis::ParamStorageConfig& psconfig() const;
+  inline ::lapis::ParamStorageConfig* mutable_psconfig();
+  inline ::lapis::ParamStorageConfig* release_psconfig();
+  inline void set_allocated_psconfig(::lapis::ParamStorageConfig* psconfig);
+
+  // @@protoc_insertion_point(class_scope:lapis.DistributedStorageConfig)
+ private:
+  inline void set_has_dsconfig();
+  inline void clear_has_dsconfig();
+  inline void set_has_psconfig();
+  inline void clear_has_psconfig();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::lapis::DataStorageConfig* dsconfig_;
+  ::lapis::ParamStorageConfig* psconfig_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_common_2eproto();
+  friend void protobuf_AssignDesc_common_2eproto();
+  friend void protobuf_ShutdownFile_common_2eproto();
+
+  void InitAsDefaultInstance();
+  static DistributedStorageConfig* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1260,162 +1454,6 @@ StringIntMap::mutable_pair() {
 
 // -------------------------------------------------------------------
 
-// DistributedStorageConfig
-
-// optional .lapis.StringIntMap train_stores = 1;
-inline bool DistributedStorageConfig::has_train_stores() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void DistributedStorageConfig::set_has_train_stores() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void DistributedStorageConfig::clear_has_train_stores() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void DistributedStorageConfig::clear_train_stores() {
-  if (train_stores_ != NULL) train_stores_->::lapis::StringIntMap::Clear();
-  clear_has_train_stores();
-}
-inline const ::lapis::StringIntMap& DistributedStorageConfig::train_stores() const {
-  return train_stores_ != NULL ? *train_stores_ : *default_instance_->train_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_train_stores() {
-  set_has_train_stores();
-  if (train_stores_ == NULL) train_stores_ = new ::lapis::StringIntMap;
-  return train_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::release_train_stores() {
-  clear_has_train_stores();
-  ::lapis::StringIntMap* temp = train_stores_;
-  train_stores_ = NULL;
-  return temp;
-}
-inline void DistributedStorageConfig::set_allocated_train_stores(::lapis::StringIntMap* train_stores) {
-  delete train_stores_;
-  train_stores_ = train_stores;
-  if (train_stores) {
-    set_has_train_stores();
-  } else {
-    clear_has_train_stores();
-  }
-}
-
-// optional .lapis.StringIntMap val_stores = 2;
-inline bool DistributedStorageConfig::has_val_stores() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void DistributedStorageConfig::set_has_val_stores() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void DistributedStorageConfig::clear_has_val_stores() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void DistributedStorageConfig::clear_val_stores() {
-  if (val_stores_ != NULL) val_stores_->::lapis::StringIntMap::Clear();
-  clear_has_val_stores();
-}
-inline const ::lapis::StringIntMap& DistributedStorageConfig::val_stores() const {
-  return val_stores_ != NULL ? *val_stores_ : *default_instance_->val_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_val_stores() {
-  set_has_val_stores();
-  if (val_stores_ == NULL) val_stores_ = new ::lapis::StringIntMap;
-  return val_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::release_val_stores() {
-  clear_has_val_stores();
-  ::lapis::StringIntMap* temp = val_stores_;
-  val_stores_ = NULL;
-  return temp;
-}
-inline void DistributedStorageConfig::set_allocated_val_stores(::lapis::StringIntMap* val_stores) {
-  delete val_stores_;
-  val_stores_ = val_stores;
-  if (val_stores) {
-    set_has_val_stores();
-  } else {
-    clear_has_val_stores();
-  }
-}
-
-// optional .lapis.StringIntMap test_stores = 3;
-inline bool DistributedStorageConfig::has_test_stores() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void DistributedStorageConfig::set_has_test_stores() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void DistributedStorageConfig::clear_has_test_stores() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void DistributedStorageConfig::clear_test_stores() {
-  if (test_stores_ != NULL) test_stores_->::lapis::StringIntMap::Clear();
-  clear_has_test_stores();
-}
-inline const ::lapis::StringIntMap& DistributedStorageConfig::test_stores() const {
-  return test_stores_ != NULL ? *test_stores_ : *default_instance_->test_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::mutable_test_stores() {
-  set_has_test_stores();
-  if (test_stores_ == NULL) test_stores_ = new ::lapis::StringIntMap;
-  return test_stores_;
-}
-inline ::lapis::StringIntMap* DistributedStorageConfig::release_test_stores() {
-  clear_has_test_stores();
-  ::lapis::StringIntMap* temp = test_stores_;
-  test_stores_ = NULL;
-  return temp;
-}
-inline void DistributedStorageConfig::set_allocated_test_stores(::lapis::StringIntMap* test_stores) {
-  delete test_stores_;
-  test_stores_ = test_stores;
-  if (test_stores) {
-    set_has_test_stores();
-  } else {
-    clear_has_test_stores();
-  }
-}
-
-// optional .lapis.IntIntMap tables = 4;
-inline bool DistributedStorageConfig::has_tables() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void DistributedStorageConfig::set_has_tables() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void DistributedStorageConfig::clear_has_tables() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void DistributedStorageConfig::clear_tables() {
-  if (tables_ != NULL) tables_->::lapis::IntIntMap::Clear();
-  clear_has_tables();
-}
-inline const ::lapis::IntIntMap& DistributedStorageConfig::tables() const {
-  return tables_ != NULL ? *tables_ : *default_instance_->tables_;
-}
-inline ::lapis::IntIntMap* DistributedStorageConfig::mutable_tables() {
-  set_has_tables();
-  if (tables_ == NULL) tables_ = new ::lapis::IntIntMap;
-  return tables_;
-}
-inline ::lapis::IntIntMap* DistributedStorageConfig::release_tables() {
-  clear_has_tables();
-  ::lapis::IntIntMap* temp = tables_;
-  tables_ = NULL;
-  return temp;
-}
-inline void DistributedStorageConfig::set_allocated_tables(::lapis::IntIntMap* tables) {
-  delete tables_;
-  tables_ = tables;
-  if (tables) {
-    set_has_tables();
-  } else {
-    clear_has_tables();
-  }
-}
-
-// -------------------------------------------------------------------
-
 // IntIntPair
 
 // required int32 key = 1;
@@ -1489,6 +1527,322 @@ IntIntMap::pair() const {
 inline ::google::protobuf::RepeatedPtrField< ::lapis::IntIntPair >*
 IntIntMap::mutable_pair() {
   return &pair_;
+}
+
+// -------------------------------------------------------------------
+
+// DataStorageConfig
+
+// optional .lapis.StringIntMap train_stores = 1;
+inline bool DataStorageConfig::has_train_stores() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DataStorageConfig::set_has_train_stores() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DataStorageConfig::clear_has_train_stores() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DataStorageConfig::clear_train_stores() {
+  if (train_stores_ != NULL) train_stores_->::lapis::StringIntMap::Clear();
+  clear_has_train_stores();
+}
+inline const ::lapis::StringIntMap& DataStorageConfig::train_stores() const {
+  return train_stores_ != NULL ? *train_stores_ : *default_instance_->train_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::mutable_train_stores() {
+  set_has_train_stores();
+  if (train_stores_ == NULL) train_stores_ = new ::lapis::StringIntMap;
+  return train_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::release_train_stores() {
+  clear_has_train_stores();
+  ::lapis::StringIntMap* temp = train_stores_;
+  train_stores_ = NULL;
+  return temp;
+}
+inline void DataStorageConfig::set_allocated_train_stores(::lapis::StringIntMap* train_stores) {
+  delete train_stores_;
+  train_stores_ = train_stores;
+  if (train_stores) {
+    set_has_train_stores();
+  } else {
+    clear_has_train_stores();
+  }
+}
+
+// optional .lapis.StringIntMap val_stores = 2;
+inline bool DataStorageConfig::has_val_stores() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void DataStorageConfig::set_has_val_stores() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void DataStorageConfig::clear_has_val_stores() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void DataStorageConfig::clear_val_stores() {
+  if (val_stores_ != NULL) val_stores_->::lapis::StringIntMap::Clear();
+  clear_has_val_stores();
+}
+inline const ::lapis::StringIntMap& DataStorageConfig::val_stores() const {
+  return val_stores_ != NULL ? *val_stores_ : *default_instance_->val_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::mutable_val_stores() {
+  set_has_val_stores();
+  if (val_stores_ == NULL) val_stores_ = new ::lapis::StringIntMap;
+  return val_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::release_val_stores() {
+  clear_has_val_stores();
+  ::lapis::StringIntMap* temp = val_stores_;
+  val_stores_ = NULL;
+  return temp;
+}
+inline void DataStorageConfig::set_allocated_val_stores(::lapis::StringIntMap* val_stores) {
+  delete val_stores_;
+  val_stores_ = val_stores;
+  if (val_stores) {
+    set_has_val_stores();
+  } else {
+    clear_has_val_stores();
+  }
+}
+
+// optional .lapis.StringIntMap test_stores = 3;
+inline bool DataStorageConfig::has_test_stores() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void DataStorageConfig::set_has_test_stores() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void DataStorageConfig::clear_has_test_stores() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void DataStorageConfig::clear_test_stores() {
+  if (test_stores_ != NULL) test_stores_->::lapis::StringIntMap::Clear();
+  clear_has_test_stores();
+}
+inline const ::lapis::StringIntMap& DataStorageConfig::test_stores() const {
+  return test_stores_ != NULL ? *test_stores_ : *default_instance_->test_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::mutable_test_stores() {
+  set_has_test_stores();
+  if (test_stores_ == NULL) test_stores_ = new ::lapis::StringIntMap;
+  return test_stores_;
+}
+inline ::lapis::StringIntMap* DataStorageConfig::release_test_stores() {
+  clear_has_test_stores();
+  ::lapis::StringIntMap* temp = test_stores_;
+  test_stores_ = NULL;
+  return temp;
+}
+inline void DataStorageConfig::set_allocated_test_stores(::lapis::StringIntMap* test_stores) {
+  delete test_stores_;
+  test_stores_ = test_stores;
+  if (test_stores) {
+    set_has_test_stores();
+  } else {
+    clear_has_test_stores();
+  }
+}
+
+// optional .lapis.IntIntMap tables = 4;
+inline bool DataStorageConfig::has_tables() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void DataStorageConfig::set_has_tables() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void DataStorageConfig::clear_has_tables() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void DataStorageConfig::clear_tables() {
+  if (tables_ != NULL) tables_->::lapis::IntIntMap::Clear();
+  clear_has_tables();
+}
+inline const ::lapis::IntIntMap& DataStorageConfig::tables() const {
+  return tables_ != NULL ? *tables_ : *default_instance_->tables_;
+}
+inline ::lapis::IntIntMap* DataStorageConfig::mutable_tables() {
+  set_has_tables();
+  if (tables_ == NULL) tables_ = new ::lapis::IntIntMap;
+  return tables_;
+}
+inline ::lapis::IntIntMap* DataStorageConfig::release_tables() {
+  clear_has_tables();
+  ::lapis::IntIntMap* temp = tables_;
+  tables_ = NULL;
+  return temp;
+}
+inline void DataStorageConfig::set_allocated_tables(::lapis::IntIntMap* tables) {
+  delete tables_;
+  tables_ = tables;
+  if (tables) {
+    set_has_tables();
+  } else {
+    clear_has_tables();
+  }
+}
+
+// -------------------------------------------------------------------
+
+// ParamStorageConfig
+
+// optional .lapis.StringIntMap param_stores = 1;
+inline bool ParamStorageConfig::has_param_stores() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ParamStorageConfig::set_has_param_stores() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ParamStorageConfig::clear_has_param_stores() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ParamStorageConfig::clear_param_stores() {
+  if (param_stores_ != NULL) param_stores_->::lapis::StringIntMap::Clear();
+  clear_has_param_stores();
+}
+inline const ::lapis::StringIntMap& ParamStorageConfig::param_stores() const {
+  return param_stores_ != NULL ? *param_stores_ : *default_instance_->param_stores_;
+}
+inline ::lapis::StringIntMap* ParamStorageConfig::mutable_param_stores() {
+  set_has_param_stores();
+  if (param_stores_ == NULL) param_stores_ = new ::lapis::StringIntMap;
+  return param_stores_;
+}
+inline ::lapis::StringIntMap* ParamStorageConfig::release_param_stores() {
+  clear_has_param_stores();
+  ::lapis::StringIntMap* temp = param_stores_;
+  param_stores_ = NULL;
+  return temp;
+}
+inline void ParamStorageConfig::set_allocated_param_stores(::lapis::StringIntMap* param_stores) {
+  delete param_stores_;
+  param_stores_ = param_stores;
+  if (param_stores) {
+    set_has_param_stores();
+  } else {
+    clear_has_param_stores();
+  }
+}
+
+// optional .lapis.IntIntMap tables = 2;
+inline bool ParamStorageConfig::has_tables() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ParamStorageConfig::set_has_tables() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ParamStorageConfig::clear_has_tables() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ParamStorageConfig::clear_tables() {
+  if (tables_ != NULL) tables_->::lapis::IntIntMap::Clear();
+  clear_has_tables();
+}
+inline const ::lapis::IntIntMap& ParamStorageConfig::tables() const {
+  return tables_ != NULL ? *tables_ : *default_instance_->tables_;
+}
+inline ::lapis::IntIntMap* ParamStorageConfig::mutable_tables() {
+  set_has_tables();
+  if (tables_ == NULL) tables_ = new ::lapis::IntIntMap;
+  return tables_;
+}
+inline ::lapis::IntIntMap* ParamStorageConfig::release_tables() {
+  clear_has_tables();
+  ::lapis::IntIntMap* temp = tables_;
+  tables_ = NULL;
+  return temp;
+}
+inline void ParamStorageConfig::set_allocated_tables(::lapis::IntIntMap* tables) {
+  delete tables_;
+  tables_ = tables;
+  if (tables) {
+    set_has_tables();
+  } else {
+    clear_has_tables();
+  }
+}
+
+// -------------------------------------------------------------------
+
+// DistributedStorageConfig
+
+// optional .lapis.DataStorageConfig dsconfig = 1;
+inline bool DistributedStorageConfig::has_dsconfig() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DistributedStorageConfig::set_has_dsconfig() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DistributedStorageConfig::clear_has_dsconfig() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DistributedStorageConfig::clear_dsconfig() {
+  if (dsconfig_ != NULL) dsconfig_->::lapis::DataStorageConfig::Clear();
+  clear_has_dsconfig();
+}
+inline const ::lapis::DataStorageConfig& DistributedStorageConfig::dsconfig() const {
+  return dsconfig_ != NULL ? *dsconfig_ : *default_instance_->dsconfig_;
+}
+inline ::lapis::DataStorageConfig* DistributedStorageConfig::mutable_dsconfig() {
+  set_has_dsconfig();
+  if (dsconfig_ == NULL) dsconfig_ = new ::lapis::DataStorageConfig;
+  return dsconfig_;
+}
+inline ::lapis::DataStorageConfig* DistributedStorageConfig::release_dsconfig() {
+  clear_has_dsconfig();
+  ::lapis::DataStorageConfig* temp = dsconfig_;
+  dsconfig_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_dsconfig(::lapis::DataStorageConfig* dsconfig) {
+  delete dsconfig_;
+  dsconfig_ = dsconfig;
+  if (dsconfig) {
+    set_has_dsconfig();
+  } else {
+    clear_has_dsconfig();
+  }
+}
+
+// optional .lapis.ParamStorageConfig psconfig = 2;
+inline bool DistributedStorageConfig::has_psconfig() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void DistributedStorageConfig::set_has_psconfig() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void DistributedStorageConfig::clear_has_psconfig() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void DistributedStorageConfig::clear_psconfig() {
+  if (psconfig_ != NULL) psconfig_->::lapis::ParamStorageConfig::Clear();
+  clear_has_psconfig();
+}
+inline const ::lapis::ParamStorageConfig& DistributedStorageConfig::psconfig() const {
+  return psconfig_ != NULL ? *psconfig_ : *default_instance_->psconfig_;
+}
+inline ::lapis::ParamStorageConfig* DistributedStorageConfig::mutable_psconfig() {
+  set_has_psconfig();
+  if (psconfig_ == NULL) psconfig_ = new ::lapis::ParamStorageConfig;
+  return psconfig_;
+}
+inline ::lapis::ParamStorageConfig* DistributedStorageConfig::release_psconfig() {
+  clear_has_psconfig();
+  ::lapis::ParamStorageConfig* temp = psconfig_;
+  psconfig_ = NULL;
+  return temp;
+}
+inline void DistributedStorageConfig::set_allocated_psconfig(::lapis::ParamStorageConfig* psconfig) {
+  delete psconfig_;
+  psconfig_ = psconfig;
+  if (psconfig) {
+    set_has_psconfig();
+  } else {
+    clear_has_psconfig();
+  }
 }
 
 // -------------------------------------------------------------------

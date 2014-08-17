@@ -25,10 +25,11 @@ class Layer;
 class Net {
  public:
   explicit Net(const NetProto &net_proto);
-  void Setup(int batchsize,
-             const char flag,
+  void Setup(const char flag,int batchsize,
              const std::map<std::string, Shape> &shapes,
              const std::map<std::string, int> & stores);
+  void Setup(const char flag,int batchsize,
+             const std::map<std::string, Shape> &shapes);
 
   void ToProto(NetProto *net_proto);
   std::vector<Layer *> &layers() {

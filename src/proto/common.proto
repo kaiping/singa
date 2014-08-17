@@ -38,20 +38,28 @@ message StringIntPair{
 message StringIntMap{
   repeated StringIntPair pair=1;
 }
-message DistributedStorageConfig {
+message IntIntPair {
+  required int32 key=1;
+  required int32 val=2;
+}
+message IntIntMap {
+  repeated IntIntPair pair=1;
+}
+message DataStorageConfig{
   optional StringIntMap train_stores=1;
   optional StringIntMap val_stores=2;
   optional StringIntMap test_stores=3;
   optional IntIntMap tables=4;
 }
 
-message IntIntPair {
-  required int32 key=1;
-  required int32 val=2;
+message ParamStorageConfig {
+  optional StringIntMap param_stores=1;
+  optional IntIntMap tables=2;
 }
 
-message IntIntMap {
-  repeated IntIntPair pair=1;
+message DistributedStorageConfig{
+  optional DataStorageConfig dsconfig=1;
+  optional ParamStorageConfig psconfig=2;
 }
 message EmptyMessage {}
 message ShortMsg {

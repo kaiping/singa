@@ -17,6 +17,8 @@
 
 DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "model.conf", "DL model configuration file");
+DEFINE_bool(load_data, true, "Load data to distributed tables");
+DEFINE_bool(run, true,  "run training algorithm");
 // for debugging use
 DEFINE_int32(v, 3, "vlog controller");
 
@@ -33,10 +35,10 @@ int main(int argc, char **argv) {
   VLOG(3)<<"after global context";
   if(gc->AmICoordinator()) {
     lapis::Coordinator coordinator;
-    coordinator.Run();
+    coordinator.Run(FLAGS_load_data, FLAGS_run);
   }else {
     lapis::Worker worker;
-    worker.Run();
+    worker.Run(FLAGS_load_data, FLAGS_run);
   }
   return 0;
 }

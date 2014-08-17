@@ -5,10 +5,19 @@
 
 #include <google/protobuf/message.h>
 #include <map>
+#include "proto/common.pb.h"
+#include "proto/model.pb.h"
+
+
 using google::protobuf::Message;
 
 namespace lapis {
 
+const IntIntMap ToProtoMap(std::map<int, int> stdmap);
+const StringIntMap ToProtoMap(std::map<std::string,int> stdmap);
+const std::map<int, int> ToStdMap(const IntIntMap& gmap);
+const std::map<std::string, int> ToStdMap(const StringIntMap& gmap);
+std::string FormatPerformance(const PerformanceProto& perf);
 void ReadProtoFromTextFile(const char *filename, Message *proto);
 void WriteProtoToTextFile(const Message &proto, const char *filename);
 void ReadProtoFromBinaryFile(const char *filename, Message *proto);

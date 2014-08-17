@@ -54,6 +54,9 @@ const ::google::protobuf::Descriptor* TrainerProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   TrainerProto_reflection_ = NULL;
 const ::google::protobuf::EnumDescriptor* TrainerProto_Algorithm_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* DataProto_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  DataProto_reflection_ = NULL;
 const ::google::protobuf::Descriptor* ModelProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   ModelProto_reflection_ = NULL;
@@ -303,14 +306,29 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(TrainerProto));
   TrainerProto_Algorithm_descriptor_ = TrainerProto_descriptor_->enum_type(0);
-  ModelProto_descriptor_ = file->message_type(10);
-  static const int ModelProto_offsets_[6] = {
+  DataProto_descriptor_ = file->message_type(10);
+  static const int DataProto_offsets_[3] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataProto, train_data_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataProto, validation_data_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataProto, test_data_),
+  };
+  DataProto_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      DataProto_descriptor_,
+      DataProto::default_instance_,
+      DataProto_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataProto, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataProto, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(DataProto));
+  ModelProto_descriptor_ = file->message_type(11);
+  static const int ModelProto_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, net_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, trainer_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, train_data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, validation_data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, test_data_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ModelProto, data_),
   };
   ModelProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -323,7 +341,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelProto));
-  FloatVector_descriptor_ = file->message_type(11);
+  FloatVector_descriptor_ = file->message_type(12);
   static const int FloatVector_offsets_[1] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FloatVector, data_),
   };
@@ -371,6 +389,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     TrainerProto_descriptor_, &TrainerProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    DataProto_descriptor_, &DataProto::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     ModelProto_descriptor_, &ModelProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     FloatVector_descriptor_, &FloatVector::default_instance());
@@ -402,6 +422,8 @@ void protobuf_ShutdownFile_model_2eproto() {
   delete TrainerProto::_default_checkpoint_prefix_;
   delete TrainerProto::_default_display_prefix_;
   delete TrainerProto::_default_perf_prefix_;
+  delete DataProto::default_instance_;
+  delete DataProto_reflection_;
   delete ModelProto::default_instance_;
   delete ModelProto_reflection_;
   delete FloatVector::default_instance_;
@@ -484,13 +506,14 @@ void protobuf_AddDesc_model_2eproto() {
     "thm:\020kBackPropagation\022\026\n\010do_train\030\021 \001(\010:"
     "\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAlgorit"
     "hm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContrastive"
-    "Divergence\020\002\"\346\001\n\nModelProto\022\014\n\004name\030\001 \001("
-    "\t\022\034\n\003net\030\002 \002(\0132\017.lapis.NetProto\022$\n\007train"
-    "er\030\003 \002(\0132\023.lapis.TrainerProto\022*\n\ntrain_d"
-    "ata\030\014 \003(\0132\026.lapis.DataSourceProto\022/\n\017val"
-    "idation_data\030\r \003(\0132\026.lapis.DataSourcePro"
-    "to\022)\n\ttest_data\030\016 \003(\0132\026.lapis.DataSource"
-    "Proto\"\033\n\013FloatVector\022\014\n\004data\030\001 \003(\002", 3034);
+    "Divergence\020\002\"\223\001\n\tDataProto\022*\n\ntrain_data"
+    "\030\001 \003(\0132\026.lapis.DataSourceProto\022/\n\017valida"
+    "tion_data\030\002 \003(\0132\026.lapis.DataSourceProto\022"
+    ")\n\ttest_data\030\003 \003(\0132\026.lapis.DataSourcePro"
+    "to\"~\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 "
+    "\001(\0132\017.lapis.NetProto\022$\n\007trainer\030\003 \001(\0132\023."
+    "lapis.TrainerProto\022\036\n\004data\030\004 \001(\0132\020.lapis"
+    ".DataProto\"\033\n\013FloatVector\022\014\n\004data\030\001 \003(\002", 3079);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   Shape::default_instance_ = new Shape();
@@ -509,6 +532,7 @@ void protobuf_AddDesc_model_2eproto() {
   TrainerProto::_default_perf_prefix_ =
       new ::std::string("tmp/performance", 15);
   TrainerProto::default_instance_ = new TrainerProto();
+  DataProto::default_instance_ = new DataProto();
   ModelProto::default_instance_ = new ModelProto();
   FloatVector::default_instance_ = new FloatVector();
   Shape::default_instance_->InitAsDefaultInstance();
@@ -521,6 +545,7 @@ void protobuf_AddDesc_model_2eproto() {
   SGDProto::default_instance_->InitAsDefaultInstance();
   PerformanceProto::default_instance_->InitAsDefaultInstance();
   TrainerProto::default_instance_->InitAsDefaultInstance();
+  DataProto::default_instance_->InitAsDefaultInstance();
   ModelProto::default_instance_->InitAsDefaultInstance();
   FloatVector::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_model_2eproto);
@@ -6264,12 +6289,302 @@ void TrainerProto::Swap(TrainerProto* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
+const int DataProto::kTrainDataFieldNumber;
+const int DataProto::kValidationDataFieldNumber;
+const int DataProto::kTestDataFieldNumber;
+#endif  // !_MSC_VER
+
+DataProto::DataProto()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void DataProto::InitAsDefaultInstance() {
+}
+
+DataProto::DataProto(const DataProto& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void DataProto::SharedCtor() {
+  _cached_size_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+DataProto::~DataProto() {
+  SharedDtor();
+}
+
+void DataProto::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void DataProto::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* DataProto::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return DataProto_descriptor_;
+}
+
+const DataProto& DataProto::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_model_2eproto();
+  return *default_instance_;
+}
+
+DataProto* DataProto::default_instance_ = NULL;
+
+DataProto* DataProto::New() const {
+  return new DataProto;
+}
+
+void DataProto::Clear() {
+  train_data_.Clear();
+  validation_data_.Clear();
+  test_data_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool DataProto::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // repeated .lapis.DataSourceProto train_data = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_train_data:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_train_data()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(10)) goto parse_train_data;
+        if (input->ExpectTag(18)) goto parse_validation_data;
+        break;
+      }
+
+      // repeated .lapis.DataSourceProto validation_data = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_validation_data:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_validation_data()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_validation_data;
+        if (input->ExpectTag(26)) goto parse_test_data;
+        break;
+      }
+
+      // repeated .lapis.DataSourceProto test_data = 3;
+      case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_test_data:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_test_data()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(26)) goto parse_test_data;
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void DataProto::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // repeated .lapis.DataSourceProto train_data = 1;
+  for (int i = 0; i < this->train_data_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->train_data(i), output);
+  }
+
+  // repeated .lapis.DataSourceProto validation_data = 2;
+  for (int i = 0; i < this->validation_data_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->validation_data(i), output);
+  }
+
+  // repeated .lapis.DataSourceProto test_data = 3;
+  for (int i = 0; i < this->test_data_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->test_data(i), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* DataProto::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // repeated .lapis.DataSourceProto train_data = 1;
+  for (int i = 0; i < this->train_data_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        1, this->train_data(i), target);
+  }
+
+  // repeated .lapis.DataSourceProto validation_data = 2;
+  for (int i = 0; i < this->validation_data_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->validation_data(i), target);
+  }
+
+  // repeated .lapis.DataSourceProto test_data = 3;
+  for (int i = 0; i < this->test_data_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        3, this->test_data(i), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int DataProto::ByteSize() const {
+  int total_size = 0;
+
+  // repeated .lapis.DataSourceProto train_data = 1;
+  total_size += 1 * this->train_data_size();
+  for (int i = 0; i < this->train_data_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->train_data(i));
+  }
+
+  // repeated .lapis.DataSourceProto validation_data = 2;
+  total_size += 1 * this->validation_data_size();
+  for (int i = 0; i < this->validation_data_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->validation_data(i));
+  }
+
+  // repeated .lapis.DataSourceProto test_data = 3;
+  total_size += 1 * this->test_data_size();
+  for (int i = 0; i < this->test_data_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->test_data(i));
+  }
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void DataProto::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const DataProto* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const DataProto*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void DataProto::MergeFrom(const DataProto& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  train_data_.MergeFrom(from.train_data_);
+  validation_data_.MergeFrom(from.validation_data_);
+  test_data_.MergeFrom(from.test_data_);
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void DataProto::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DataProto::CopyFrom(const DataProto& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DataProto::IsInitialized() const {
+
+  for (int i = 0; i < train_data_size(); i++) {
+    if (!this->train_data(i).IsInitialized()) return false;
+  }
+  for (int i = 0; i < validation_data_size(); i++) {
+    if (!this->validation_data(i).IsInitialized()) return false;
+  }
+  for (int i = 0; i < test_data_size(); i++) {
+    if (!this->test_data(i).IsInitialized()) return false;
+  }
+  return true;
+}
+
+void DataProto::Swap(DataProto* other) {
+  if (other != this) {
+    train_data_.Swap(&other->train_data_);
+    validation_data_.Swap(&other->validation_data_);
+    test_data_.Swap(&other->test_data_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata DataProto::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = DataProto_descriptor_;
+  metadata.reflection = DataProto_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
 const int ModelProto::kNameFieldNumber;
 const int ModelProto::kNetFieldNumber;
 const int ModelProto::kTrainerFieldNumber;
-const int ModelProto::kTrainDataFieldNumber;
-const int ModelProto::kValidationDataFieldNumber;
-const int ModelProto::kTestDataFieldNumber;
+const int ModelProto::kDataFieldNumber;
 #endif  // !_MSC_VER
 
 ModelProto::ModelProto()
@@ -6280,6 +6595,7 @@ ModelProto::ModelProto()
 void ModelProto::InitAsDefaultInstance() {
   net_ = const_cast< ::lapis::NetProto*>(&::lapis::NetProto::default_instance());
   trainer_ = const_cast< ::lapis::TrainerProto*>(&::lapis::TrainerProto::default_instance());
+  data_ = const_cast< ::lapis::DataProto*>(&::lapis::DataProto::default_instance());
 }
 
 ModelProto::ModelProto(const ModelProto& from)
@@ -6293,6 +6609,7 @@ void ModelProto::SharedCtor() {
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   net_ = NULL;
   trainer_ = NULL;
+  data_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -6307,6 +6624,7 @@ void ModelProto::SharedDtor() {
   if (this != default_instance_) {
     delete net_;
     delete trainer_;
+    delete data_;
   }
 }
 
@@ -6344,10 +6662,10 @@ void ModelProto::Clear() {
     if (has_trainer()) {
       if (trainer_ != NULL) trainer_->::lapis::TrainerProto::Clear();
     }
+    if (has_data()) {
+      if (data_ != NULL) data_->::lapis::DataProto::Clear();
+    }
   }
-  train_data_.Clear();
-  validation_data_.Clear();
-  test_data_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -6374,7 +6692,7 @@ bool ModelProto::MergePartialFromCodedStream(
         break;
       }
 
-      // required .lapis.NetProto net = 2;
+      // optional .lapis.NetProto net = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -6388,7 +6706,7 @@ bool ModelProto::MergePartialFromCodedStream(
         break;
       }
 
-      // required .lapis.TrainerProto trainer = 3;
+      // optional .lapis.TrainerProto trainer = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
@@ -6398,51 +6716,20 @@ bool ModelProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(98)) goto parse_train_data;
+        if (input->ExpectTag(34)) goto parse_data;
         break;
       }
 
-      // repeated .lapis.DataSourceProto train_data = 12;
-      case 12: {
+      // optional .lapis.DataProto data = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_train_data:
+         parse_data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_train_data()));
+               input, mutable_data()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(98)) goto parse_train_data;
-        if (input->ExpectTag(106)) goto parse_validation_data;
-        break;
-      }
-
-      // repeated .lapis.DataSourceProto validation_data = 13;
-      case 13: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_validation_data:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_validation_data()));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(106)) goto parse_validation_data;
-        if (input->ExpectTag(114)) goto parse_test_data;
-        break;
-      }
-
-      // repeated .lapis.DataSourceProto test_data = 14;
-      case 14: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_test_data:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_test_data()));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(114)) goto parse_test_data;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -6474,34 +6761,22 @@ void ModelProto::SerializeWithCachedSizes(
       1, this->name(), output);
   }
 
-  // required .lapis.NetProto net = 2;
+  // optional .lapis.NetProto net = 2;
   if (has_net()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, this->net(), output);
   }
 
-  // required .lapis.TrainerProto trainer = 3;
+  // optional .lapis.TrainerProto trainer = 3;
   if (has_trainer()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       3, this->trainer(), output);
   }
 
-  // repeated .lapis.DataSourceProto train_data = 12;
-  for (int i = 0; i < this->train_data_size(); i++) {
+  // optional .lapis.DataProto data = 4;
+  if (has_data()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      12, this->train_data(i), output);
-  }
-
-  // repeated .lapis.DataSourceProto validation_data = 13;
-  for (int i = 0; i < this->validation_data_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      13, this->validation_data(i), output);
-  }
-
-  // repeated .lapis.DataSourceProto test_data = 14;
-  for (int i = 0; i < this->test_data_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      14, this->test_data(i), output);
+      4, this->data(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -6522,39 +6797,25 @@ void ModelProto::SerializeWithCachedSizes(
         1, this->name(), target);
   }
 
-  // required .lapis.NetProto net = 2;
+  // optional .lapis.NetProto net = 2;
   if (has_net()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         2, this->net(), target);
   }
 
-  // required .lapis.TrainerProto trainer = 3;
+  // optional .lapis.TrainerProto trainer = 3;
   if (has_trainer()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         3, this->trainer(), target);
   }
 
-  // repeated .lapis.DataSourceProto train_data = 12;
-  for (int i = 0; i < this->train_data_size(); i++) {
+  // optional .lapis.DataProto data = 4;
+  if (has_data()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        12, this->train_data(i), target);
-  }
-
-  // repeated .lapis.DataSourceProto validation_data = 13;
-  for (int i = 0; i < this->validation_data_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteMessageNoVirtualToArray(
-        13, this->validation_data(i), target);
-  }
-
-  // repeated .lapis.DataSourceProto test_data = 14;
-  for (int i = 0; i < this->test_data_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteMessageNoVirtualToArray(
-        14, this->test_data(i), target);
+        4, this->data(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -6575,45 +6836,28 @@ int ModelProto::ByteSize() const {
           this->name());
     }
 
-    // required .lapis.NetProto net = 2;
+    // optional .lapis.NetProto net = 2;
     if (has_net()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->net());
     }
 
-    // required .lapis.TrainerProto trainer = 3;
+    // optional .lapis.TrainerProto trainer = 3;
     if (has_trainer()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->trainer());
     }
 
-  }
-  // repeated .lapis.DataSourceProto train_data = 12;
-  total_size += 1 * this->train_data_size();
-  for (int i = 0; i < this->train_data_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->train_data(i));
-  }
+    // optional .lapis.DataProto data = 4;
+    if (has_data()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->data());
+    }
 
-  // repeated .lapis.DataSourceProto validation_data = 13;
-  total_size += 1 * this->validation_data_size();
-  for (int i = 0; i < this->validation_data_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->validation_data(i));
   }
-
-  // repeated .lapis.DataSourceProto test_data = 14;
-  total_size += 1 * this->test_data_size();
-  for (int i = 0; i < this->test_data_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->test_data(i));
-  }
-
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -6639,9 +6883,6 @@ void ModelProto::MergeFrom(const ::google::protobuf::Message& from) {
 
 void ModelProto::MergeFrom(const ModelProto& from) {
   GOOGLE_CHECK_NE(&from, this);
-  train_data_.MergeFrom(from.train_data_);
-  validation_data_.MergeFrom(from.validation_data_);
-  test_data_.MergeFrom(from.test_data_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_name()) {
       set_name(from.name());
@@ -6651,6 +6892,9 @@ void ModelProto::MergeFrom(const ModelProto& from) {
     }
     if (from.has_trainer()) {
       mutable_trainer()->::lapis::TrainerProto::MergeFrom(from.trainer());
+    }
+    if (from.has_data()) {
+      mutable_data()->::lapis::DataProto::MergeFrom(from.data());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -6669,7 +6913,6 @@ void ModelProto::CopyFrom(const ModelProto& from) {
 }
 
 bool ModelProto::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000006) != 0x00000006) return false;
 
   if (has_net()) {
     if (!this->net().IsInitialized()) return false;
@@ -6677,14 +6920,8 @@ bool ModelProto::IsInitialized() const {
   if (has_trainer()) {
     if (!this->trainer().IsInitialized()) return false;
   }
-  for (int i = 0; i < train_data_size(); i++) {
-    if (!this->train_data(i).IsInitialized()) return false;
-  }
-  for (int i = 0; i < validation_data_size(); i++) {
-    if (!this->validation_data(i).IsInitialized()) return false;
-  }
-  for (int i = 0; i < test_data_size(); i++) {
-    if (!this->test_data(i).IsInitialized()) return false;
+  if (has_data()) {
+    if (!this->data().IsInitialized()) return false;
   }
   return true;
 }
@@ -6694,9 +6931,7 @@ void ModelProto::Swap(ModelProto* other) {
     std::swap(name_, other->name_);
     std::swap(net_, other->net_);
     std::swap(trainer_, other->trainer_);
-    train_data_.Swap(&other->train_data_);
-    validation_data_.Swap(&other->validation_data_);
-    test_data_.Swap(&other->test_data_);
+    std::swap(data_, other->data_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

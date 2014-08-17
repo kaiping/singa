@@ -20,11 +20,14 @@ void DataLayer::ToProto(LayerProto *layer_proto) {
   layer_proto->set_data_source(data_source_name_);
 }
 
-void DataLayer::SetInput(int batchsize, int store_id, const Shape &data_shape){
+void DataLayer::SetInputShape(int batchsize, const Shape &data_shape){
   batchsize_=batchsize;
   width_=data_shape.width();
   height_=data_shape.height();
   channels_=data_shape.channels();
+}
+
+void DataLayer::SetInputStore(int store_id) {
   store_id_=store_id;
 }
 

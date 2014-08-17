@@ -32,7 +32,8 @@ class DataLayer : public Layer {
    * Set the input batch shape, including batchsize, channels, height, width.
    * @param shape
    */
-  void SetInput(int batchsize, int store_id, const Shape &data_shape);
+  void SetInputShape(int batchsize, const Shape &data_shape);
+  void SetInputStore(int store_id);
   void SetData(const Blob &blob);
   /**
    * allocate memory

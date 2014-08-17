@@ -5,9 +5,8 @@
 #define INCLUDE_WORKER_H_
 #include <map>
 #include <memory>
-#include "proto/model.pb.h"
 
-
+#include "core/table_server.h"
 #include "net/net.h"
 #include "proto/model.pb.h"
 
@@ -21,18 +20,18 @@ namespace lapis {
 class Worker {
  public:
   Worker();
-  void Run();
+  ~Worker();
+  void Run(bool load_data, bool do_run);
 
  private:
-  void SetupNet(const int batchsize,
-              const char flag,
-              Net *net,
-              const DataSourceProtos& protos,
-              const std::map<std::string, int> &store_map);
-
   bool ShouldIDoValidation(int worker_id);
+
+  const DistributedStorageConfig InitDistributedStorage();
+
+  void Shutdown();
  private:
   std::shared_ptr<NetworkThread> mpi_;
+  TableServer *table_server_;
   ModelController mc_;
 };
 }  // namespace lapis

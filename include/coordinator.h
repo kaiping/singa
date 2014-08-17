@@ -36,20 +36,20 @@ struct ServerState {
 class Coordinator {
  public:
   Coordinator();
-  void Run();
+  void Run(bool load_data, bool do_run);
   ~Coordinator();
  private:
-  void InitDistributedStorage(const ModelProto& model, Net* net);
-  void StartWorkers(const ModelProto &proto);
+  void InitDistributedStorage(bool load_data, bool do_run, const ModelProto& model);
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
-  void Shutdown();
-  void RunStandalone(const ModelProto& model, Net *net);
-  void RunOnCluster(const ModelProto& model, Net *net);
+  void RunStandalone(const ModelProto& model);
+  void RunOnCluster(const ModelProto& model);
   void LoadData(const DataSourceProtos& sources,
                 const std::map<std::string, int>& stores);
-  std::map<string, int> CreateDataStores(const DataSourceProtos& sources);
-
+  const StringIntMap CreateDataStores(const DataSourceProtos& sources);
+  const ParamStorageConfig CreateParamStorage();
+  const DataStorageConfig CreateDataStorage(const DataProto& data);
   bool DoValidationOn(int worker_id);
+  void Shutdown();
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;

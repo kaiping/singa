@@ -82,10 +82,6 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 }
 
-void Coordinator::StartWorkers(const ModelProto &model){
-  VLOG(3)<<"start worker";
-  mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
-}
 
 //  wait for MTYPE_WORKER_END from other servers
 //  send MTYPE_WORKER_SHUTDOWN messages to other
@@ -120,77 +116,78 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
   }
 }
 
-string FormatPerformance(const PerformanceProto& perf) {
-  stringstream ss;
-  if (perf.has_precision())
-    ss<<StringPrintf("Precision %.3f, ", perf.precision());
-  if (perf.has_recall())
-    ss<<StringPrintf("Recall %.3f, ", perf.recall());
-  if (perf.has_recall())
-    ss<<StringPrintf("MAP %.3f ", perf.map());
-  if (perf.has_recall())
-    ss<<StringPrintf("Precision@50 %.3f ", perf.precision50());
-  return ss.str();
-}
 
-std::map<string, int> Coordinator::CreateDataStores(
+const StringIntMap Coordinator::CreateDataStores(
     const DataSourceProtos& sources) {
   std::map<string, int> stores;
-  for(auto& ds: sources)
+  for(auto& ds: sources){
+    CHECK(stores.find(ds.name())==stores.end());
     stores[ds.name()]= mc_.CreateDataStore(ds.name());
-  return stores;
-}
-StringIntMap * ToProtoMap(std::map<std::string,int> stdmap){
-  StringIntMap* gmap=new StringIntMap();
-  for(auto& entry: stdmap) {
-    StringIntPair *pair=gmap->add_pair();
-    pair->set_key(entry.first);
-    pair->set_val(entry.second);
   }
-  return gmap;
-}
-IntIntMap * ToProtoMap(std::map<int, int> stdmap){
-  IntIntMap* gmap=new IntIntMap();
-  for(auto& entry: stdmap) {
-    IntIntPair *pair=gmap->add_pair();
-    pair->set_key(entry.first);
-    pair->set_val(entry.second);
-  }
-  return gmap;
+  return ToProtoMap(stores);
 }
 
-void Coordinator::InitDistributedStorage(const ModelProto& model, Net* net){
+const DataStorageConfig Coordinator::CreateDataStorage(
+    const DataProto& data){
   // create stores for train/validate/test data
-  std::map<string, int> train_stores=CreateDataStores(model.train_data());
-  std::map<string, int> val_stores=CreateDataStores(model.validation_data());
-  std::map<string, int> test_stores=CreateDataStores(model.test_data());
-  mc_.CreateParamStore();
-  DistributedStorageConfig sconfig;
-  sconfig.set_allocated_train_stores(ToProtoMap(train_stores));
-  sconfig.set_allocated_val_stores(ToProtoMap(val_stores));
-  sconfig.set_allocated_test_stores(ToProtoMap(test_stores));
-  sconfig.set_allocated_tables(ToProtoMap(mc_.GetStoreTableMap()));
-  mpi_->Broadcast(MTYPE_STORAGE_CONFIG, sconfig);
+  DataStorageConfig conf;
+  conf.mutable_train_stores()->CopyFrom(CreateDataStores(data.train_data()));
+  conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data()));
+  conf.mutable_test_stores()->CopyFrom(CreateDataStores(data.test_data()));
+  conf.mutable_tables()->CopyFrom(ToProtoMap(mc_.GetDataStoreTable()));
+  return conf;
+}
 
+const ParamStorageConfig Coordinator::CreateParamStorage() {
+  ParamStorageConfig config;
+  int sid=mc_.CreateParamStore();
+  StringIntMap *map=config.mutable_param_stores();
+  StringIntPair *p=map->add_pair();;
+  p->set_key("param");
+  p->set_val(sid);
+  config.mutable_tables()->CopyFrom(ToProtoMap(mc_.GetParamStoreTable()));
+  return config;
+}
+void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
+    const ModelProto& model){
+  Net net(model.net());
+  DistributedStorageConfig config;
+  if(load_data)
+    config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
+  if(do_train)
+    config.mutable_psconfig()->CopyFrom(CreateParamStorage());
+  mpi_->Broadcast(MTYPE_STORAGE_CONFIG, config);
   // init table servers, must be after creating stores which creating tables
   InitTableServers(mc_.GetTables());
-  VLOG(3)<<"init table server finish";
 
-  LoadData(model.train_data(), train_stores);
-  LoadData(model.validation_data(), val_stores);
-  LoadData(model.test_data(), test_stores);
-
-  // setup the net, init parameters
-  int batchsize=model.trainer().sgd().train_batchsize();
-  auto shapes=DataSource::ShapesOf(model.train_data());
-  net->Setup(batchsize, kAllocParam|kInitParam, shapes, train_stores);
-  // TODO(Jingyang, Wei) model partition
-  mc_.Put(net->params());
+  if(load_data){
+    LoadData(model.data().train_data(), ToStdMap(config.dsconfig().train_stores()));
+    LoadData(model.data().validation_data(), ToStdMap(config.dsconfig().val_stores()));
+    LoadData(model.data().test_data(), ToStdMap(config.dsconfig().test_stores()));
+  }
+  if(do_train){
+    // TODO(Jingyang, Wei) model partition
+    Net net(model.net());
+    // setup the net, init parameters
+    auto shapes=DataSource::ShapesOf(model.data().train_data());
+    net.Setup(1, kAllocParam|kInitParam, shapes);
+    mc_.Put(net.params());
+  }
 }
 
-void Coordinator::RunOnCluster(const ModelProto& model, Net *net) {
-  InitDistributedStorage(model,net);
-  StartWorkers(model);
+bool Coordinator::DoValidationOn(int worker_id) {
+  // TODO(wangwei) use policy to decide which worker to do validation
+  return worker_id==0;
+}
+void Coordinator::RunStandalone(const ModelProto& model) {
+  // workers should allocate memory for data and parameters. No need to
+  // Init parameters, because they Get parameters from distributed table
+  //trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
+}
+
+void Coordinator::RunOnCluster(const ModelProto& model) {
+  VLOG(3)<<"start worker";
+  mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
   bool *alive_workers=new bool[mpi_->size()];
   for(int i=0;i<mpi_->size();i++)
     alive_workers[i]=true;
@@ -222,24 +219,14 @@ void Coordinator::RunOnCluster(const ModelProto& model, Net *net) {
   Shutdown();
 }
 
-bool Coordinator::DoValidationOn(int worker_id) {
-  // TODO(wangwei) use policy to decide which worker to do validation
-  return worker_id==0;
-}
-void Coordinator::RunStandalone(const ModelProto& model, Net *net) {
-  // workers should allocate memory for data and parameters. No need to
-  // Init parameters, because they Get parameters from distributed table
-  //trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
-}
-void Coordinator::Run() {
+void Coordinator::Run(bool load_data, bool do_train) {
   ModelProto model;
   ReadProtoFromTextFile(context_->model_conf(), &model);
-  Net net(model.net());
+  if(do_train&&context_->standalone())
+    RunStandalone(model);
 
-  if(context_->standalone()){
-    RunStandalone(model, &net);
-  }else {
-    RunOnCluster(model, &net);
-  }
+  InitDistributedStorage(load_data, do_train, model);
+  if(do_train&&!context_->standalone())
+    RunOnCluster(model);
 }
 }  // namespace lapis

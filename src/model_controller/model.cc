@@ -13,6 +13,9 @@ namespace lapis {
 ModelController::ModelController()
 {
   VLOG(3)<<"In model controller";
+  num_data_store_=0;
+  num_param_store_=0;
+  num_tables_=0;
   split_tpye_ = 0;
   split_size_ = 2;
   //start the lower level network part
@@ -173,11 +176,16 @@ const std::map<int,GlobalTable*> ModelController::GetTables() {
 }
 
 
-const std::map<int,int> ModelController::GetStoreTableMap() {
+const std::map<int,int> ModelController::GetDataStoreTable() {
   std::map<int, int> store_table_map;
   for(auto& entry: disk_tables_) {
     store_table_map[entry.first]=entry.second->id();
   }
+  store_table_map[kParamStore]=param_table_->id();
+  return store_table_map;
+}
+const std::map<int,int> ModelController::GetParamStoreTable() {
+  std::map<int, int> store_table_map;
   store_table_map[kParamStore]=param_table_->id();
   return store_table_map;
 }

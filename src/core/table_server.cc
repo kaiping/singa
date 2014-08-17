@@ -38,14 +38,6 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
                                boost::bind(&TableServer::HandleGetRequest, this, _1));
 }
 
-void TableServer::ShutdownTableServer() {
-  net_->Flush();
-  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
-  EmptyMessage msg;
-  int src = 0;
-  net_->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
-  net_->Shutdown();
-}
 
 void TableServer::HandleShardAssignment() {
   CHECK(GlobalContext::Get()->IsTableServer(id()))

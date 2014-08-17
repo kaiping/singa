@@ -85,23 +85,34 @@ Net::Net(const NetProto &net_proto) {
   }
   topology_sort(&layers_);
 }
-
-void Net::Setup(const int batchsize,
-                const char flag,
-                const std::map<std::string, Shape> &shapes,
-                const std::map<std::string, int>& stores){
+void Net::Setup(const char flag,const int batchsize,
+                const std::map<std::string, Shape> &shapes){
   for (auto *layer : layers()){
     if (layer->HasInput()){
       CHECK(shapes.find(layer->name())!=shapes.end());
       DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
       std::string name=dlayer->name();
-      dlayer->SetInput(batchsize, stores.at(name), shapes.at(name));
+      dlayer->SetInputShape(batchsize, shapes.at(name));
     }
   }
   for(auto *layer : layers()) {
     layer->Setup(flag);
     for (auto *edge : layer->out_edges())
       edge->Setup(flag);
+  }
+}
+
+void Net::Setup(const char flag,const int batchsize,
+                const std::map<std::string, Shape> &shapes,
+                const std::map<std::string, int>& stores){
+  Setup(flag, batchsize, shapes);
+  for (auto *layer : layers()){
+    if (layer->HasInput()){
+      CHECK(shapes.find(layer->name())!=shapes.end());
+      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+      std::string name=dlayer->name();
+      dlayer->SetInputStore(stores.at(name));
+    }
   }
 }
 void Net::ToProto(NetProto *net_proto) {

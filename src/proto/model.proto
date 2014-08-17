@@ -216,14 +216,17 @@ message TrainerProto {
   optional bool do_test= 18 [default = false];
 }
 
+message DataProto {
+  repeated DataSourceProto train_data = 1;
+  repeated DataSourceProto validation_data = 2;
+  repeated DataSourceProto test_data = 3;
+}
 message ModelProto {
   // model name
   optional string name = 1;
-  required NetProto net = 2;
-  required TrainerProto trainer = 3;
-  repeated DataSourceProto train_data = 12;
-  repeated DataSourceProto validation_data = 13;
-  repeated DataSourceProto test_data = 14;
+  optional NetProto net = 2;
+  optional TrainerProto trainer = 3;
+  optional DataProto data =4;
 }
 
 message FloatVector {

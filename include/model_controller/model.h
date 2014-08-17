@@ -41,8 +41,10 @@ class ModelController {
   void GetData(int sid, Blob *blob);
   void FlushData(int sid);
 
+  const std::map<int,int> GetDataStoreTable();
+  const std::map<int,int> GetParamStoreTable();
+
   const std::map<int,GlobalTable*> GetTables();
-  const std::map<int,int> GetStoreTableMap();
   void CreateTables(const std::map<int, int>& tables);
 
  private:

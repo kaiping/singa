@@ -1,7 +1,6 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-06-28 14:41
 
-#include "utils/proto_helper.h"
 #include <fcntl.h>
 
 #include <google/protobuf/text_format.h>
@@ -11,6 +10,8 @@
 #include <fstream> //NOLINT
 
 #include "proto/common.pb.h"
+#include "utils/stringpiece.h"
+#include "utils/proto_helper.h"
 
 using google::protobuf::io::FileInputStream;
 using google::protobuf::io::FileOutputStream;
@@ -18,13 +19,52 @@ using google::protobuf::io::ZeroCopyInputStream;
 using std::fstream;
 
 namespace lapis {
-/*
-template<> std::map<int, int> ToStdMap(const IntIntMap& gmap);
-template<> std::map<std::string, int> ToStdMap(const StringIntMap& gmap);
-template<> StringIntMap* ToGoogleMap(std::map<std::string,int> stdmap);
-template<> IntIntMap* ToGoogleMap(std::map<int,int> stdmap);
-*/
+std::string FormatPerformance(const PerformanceProto& perf) {
+  std::stringstream ss;
+  if (perf.has_precision())
+    ss<<StringPrintf("Precision %.3f, ", perf.precision());
+  if (perf.has_recall())
+    ss<<StringPrintf("Recall %.3f, ", perf.recall());
+  if (perf.has_recall())
+    ss<<StringPrintf("MAP %.3f ", perf.map());
+  if (perf.has_recall())
+    ss<<StringPrintf("Precision@50 %.3f ", perf.precision50());
+  return ss.str();
+}
+const std::map<std::string, int> ToStdMap(const StringIntMap& gmap) {
+  std::map<std::string, int> stdmap;
+  for(auto& pair: gmap.pair())
+    stdmap[pair.key()]=pair.val();
+  return stdmap;
+}
 
+
+const std::map<int, int> ToStdMap(const IntIntMap& gmap) {
+  std::map<int, int> stdmap;
+  for(auto& pair: gmap.pair())
+    stdmap[pair.key()]=pair.val();
+  return stdmap;
+}
+
+const StringIntMap ToProtoMap(std::map<std::string,int> stdmap){
+  StringIntMap gmap;
+  for(auto& entry: stdmap) {
+    StringIntPair *pair=gmap.add_pair();
+    pair->set_key(entry.first);
+    pair->set_val(entry.second);
+  }
+  return gmap;
+}
+
+const IntIntMap ToProtoMap(std::map<int, int> stdmap){
+  IntIntMap gmap;
+  for(auto& entry: stdmap) {
+    IntIntPair *pair=gmap.add_pair();
+    pair->set_key(entry.first);
+    pair->set_val(entry.second);
+  }
+  return gmap;
+}
 
 void ReadProtoFromTextFile(const char *filename, Message *proto) {
   int fd = open(filename, O_RDONLY);

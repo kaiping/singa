@@ -9,6 +9,7 @@ namespace lapis{
 
 DEFINE_string(data_dir,"/home/dinhtta/tmp/", "path to data store");
 DEFINE_int32(table_buffer, 100,0);
+DEFINE_int32(io_buffer_size,100,100);
 
 //  iterator through disk file
 DiskTableIterator::DiskTableIterator(const string name, DiskData* msg): file_(name, "r"), done_(true)
@@ -31,15 +32,26 @@ bool DiskTableIterator::done(){ return done_;}
 DiskData* DiskTableIterator::value(){ return data_;}
 
 void DiskTable::Load(){
-	//  get all files
-	vector<File::Info> files =
-			File::MatchingFileinfo(StringPrintf("%s/%s",FLAGS_data_dir.c_str(),info()->name_prefix.c_str()));
-	for (int i=0; i<files.size(); i++){
-		FileBlock *block = new FileBlock();
-		block->info = files[i];
-		block->end_pos = files[i].stat.st_size;
-		blocks_.push_back(block);
+	//  get all files on the first load.
+	//  on re-load, simply reset the pointer
+
+	if (blocks_.empty()) {
+		vector<File::Info> files = File::MatchingFileinfo(
+				StringPrintf("%s/%s", FLAGS_data_dir.c_str(),
+						info()->name_prefix.c_str()));
+		for (size_t i = 0; i < files.size(); i++) {
+			FileBlock *block = new FileBlock();
+			block->info = files[i];
+			block->end_pos = files[i].stat.st_size;
+			blocks_.push_back(block);
+		}
 	}
+
+	// starting the IO thread
+	buffer_.reset(new PrefetchedBuffer((int)FLAGS_io_buffer_size), &blocks_);
+	io_thread.reset(new boost::thread(&DiskTable::io_loop, this));
+
+
 
 	//  point the current iterator to the first file
 	current_block_ = 0;
@@ -53,7 +65,7 @@ void DiskTable::DumpToFile(const DiskData* data){
 	if (!file_)
 		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),info()->name_prefix.c_str(),data->block_number()), "w");
 
-	if (data->block_number()!=current_block_){
+	if ((int)(data->block_number())!=current_block_){
 		delete file_;
 		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),info()->name_prefix.c_str(),data->block_number()), "w");
 		current_block_ = data->block_number();
@@ -105,9 +117,33 @@ void DiskTable::finish_put(){
 
 //  reach the last record of the last file
 bool DiskTable::done(){
-	return current_iterator_->done() && current_block_>=blocks_.size();
+	return current_iterator_->done() && current_block_>=(int)(blocks_.size());
 }
 
+void DiskTable::io_loop(){
+	//  point the current iterator to the first file
+	current_block_ = 0;
+	current_iterator_ = new DiskTableIterator(
+			(blocks_[current_block_]->info).name, new DiskData());
+
+	//  more blocks to add
+	while (!done()){
+		while (!(buffer_->add_data_records(current_iterator_->value())))
+			Sleep(FLAGS_sleep);
+		current_iterator_->Next();
+
+		//  if end of file, move to next one
+		if (current_iterator_->done()){
+
+		}
+	}
+	// add first block into the buffer
+	while(!(buffer_->add_data_records(current_iterator_->value()));
+
+
+	current_idx_ = 0;
+	current_block_++;
+}
 
 // getting next value. Iterate through DiskData table and through the file as well
 void DiskTable::Next(){
@@ -121,7 +157,7 @@ void DiskTable::Next(){
 		}
 		else{ // move to the next file
 			delete current_iterator_;
-			if (current_block_<blocks_.size()){
+			if (current_block_<(int)(blocks_.size())){
 				current_iterator_ = new DiskTableIterator((blocks_[current_block_]->info).name, new DiskData());
 				current_record_ = current_iterator_->value();
 				current_idx_=0;
@@ -142,10 +178,25 @@ void DiskTable::SendDataBuffer(){
 DiskTable::~DiskTable(){
 	delete table_info_;
 
-	for (int i=0; i<blocks_.size(); i++)
+	for (size_t i=0; i<blocks_.size(); i++)
 		delete blocks_[i];
 
 	delete current_iterator_;
 	delete current_record_;
+}
+
+bool PrefetchedBuffer::add_data_records(DiskData* data){
+	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
+
+	if (data_queue_.size()<max_size_){
+		data_queue_.push_back(data);
+		return true;
+	}
+	return false;
+}
+
+DiskData* PrefetchedBuffer::get_next_data_records(){
+	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
+	return data_queue_.size()<max_size_ ? data_queue_.pop_front() : NULL;
 }
 }

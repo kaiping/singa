@@ -6,6 +6,7 @@
 #include "core/table.h"
 #include "core/file.h"
 #include "core/common.h"
+#include <deque>
 
 /*  This table stores records on disks. Records are stored in multiple "blocks",
  *  each block's name is of the form <filename>_blocknum in a DATA_PATH variables
@@ -20,10 +21,10 @@ namespace lapis {
 
 struct DiskTableDescriptor{
 		DiskTableDescriptor(int id, const string name, int max_size): id(id),
-				name_prefix(name), max_size(max_size), fixed_server_id(-1) {}
+				max_size(max_size), name_prefix(name), fixed_server_id(-1) {}
 
 		DiskTableDescriptor(const DiskTableDescriptor* table){
-			memcpy(this, table, sizeof(table));
+			memcpy(this, table, sizeof(*table));
 		}
 
 		int id, max_size;
@@ -59,12 +60,16 @@ class DiskTable: public GlobalTable {
 				uint64_t end_pos;
 		};
 
-		DiskTable(DiskTableDescriptor *table): table_info_(table), current_buffer_count_(0),
-									total_buffer_count_(0), current_block_(0), file_(NULL),
-									current_iterator_(NULL), current_record_(NULL){}
+		DiskTable(DiskTableDescriptor *table){
+			table_info_ = table;
+			current_block_ = current_buffer_count_=total_buffer_count_ = 0;
+			file_ = NULL;
+		}
+
 		~DiskTable();
 
-		//  read all the data file into block vector, ready to be read
+		//  read all the data file into block vector, ready to be read.
+		//  starting a new IO thread every time this is called.
 		void Load();
 
 		//  store the received data to file. called at the table-server
@@ -89,7 +94,13 @@ class DiskTable: public GlobalTable {
 
 		DiskTableDescriptor* info(){return table_info_;}
 
+		int get_shard_str(StringPiece key){return -1;}
+
 	private:
+
+		//  keep adding DiskData to the buffer until out of open files
+		void io_loop();
+
 		//  send the current_record_ (buffer) to the network. Invoked directly by
 		//  finish_put();
 		void SendDataBuffer();
@@ -103,13 +114,34 @@ class DiskTable: public GlobalTable {
 		vector<FileBlock*> blocks_;
 
 		int current_block_, current_buffer_count_, total_buffer_count_;
-		DiskTableIterator* current_iterator_;
-		DiskData* current_record_;
+		boost::shared_ptr<DiskTableIterator> current_iterator_;
+		boost::shared_ptr<DiskData> current_record_;
 		int current_idx_;
 
 		//  to write
 		RecordFile* file_;
 
+		boost::shared_ptr<PrefetchedBuffer> buffer_;
+
+		boost::shared_ptr<boost::thread> io_thread;
+};
+
+class PrefetchedBuffer{
+	public:
+		PrefetchedBuffer(int size): max_size_(size){}
+
+		typedef deque<DiskData*> Queue;
+
+		//  load data into the buffer, if there's space
+		bool add_data_records(DiskData* data);
+
+		//  NULL if no more data
+		DiskData* next_data_records();
+
+	private:
+		Queue data_queue_;
+		int max_size_;
+		mutable boost::recursive_mutex data_queue_lock_;
 };
 
 template <class K, class V>

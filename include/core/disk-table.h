@@ -118,6 +118,11 @@ class DiskTable: public GlobalTable {
 
 		int get_shard_str(StringPiece key){return -1;}
 
+		// override TableBase::id()
+		int id() const {
+		    return info().table_id;
+		}
+
 	private:
 
 		//  keep adding DiskData to the buffer until out of open files

@@ -102,9 +102,10 @@ class TableBase {
     return *info_;
   }
 
-  int id() const {
+  virtual int id() const {
     return info().table_id;
   }
+
   int shard() const {
     return info().shard;
   }

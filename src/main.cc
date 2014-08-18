@@ -15,10 +15,10 @@
 #include "coordinator.h"
 #include "worker.h"
 
-DEFINE_string(system_conf, "system.conf", "configuration file for node roles");
-DEFINE_string(model_conf, "model.conf", "DL model configuration file");
+DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
+DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(load_data, true, "Load data to distributed tables");
-DEFINE_bool(run, true,  "run training algorithm");
+DEFINE_bool(run, false,  "run training algorithm");
 // for debugging use
 DEFINE_int32(v, 3, "vlog controller");
 

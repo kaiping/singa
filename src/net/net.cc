@@ -66,6 +66,7 @@ void topology_sort(std::vector<Layer *> *layers) {
 }
 
 Net::Net(const NetProto &net_proto) {
+  LOG(INFO)<<"Init Neural Net";
   std::map<std::string, Layer *> layer_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
@@ -84,6 +85,7 @@ Net::Net(const NetProto &net_proto) {
     }
   }
   topology_sort(&layers_);
+  LOG(INFO)<<"Neural Net constructed";
 }
 void Net::Setup(const char flag,const int batchsize,
                 const std::map<std::string, Shape> &shapes){

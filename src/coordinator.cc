@@ -17,6 +17,7 @@ DECLARE_double(sleep_time);
 
 namespace lapis {
 Coordinator::Coordinator() {
+  LOG(INFO)<<"Start coordinator...";
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
 }
@@ -31,7 +32,7 @@ Coordinator::~Coordinator() {
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   for (int i = 0; i < context_->num_processes()-1; ++i) {
-    VLOG(3)<<"in start table server "<<i;
+    VLOG(3)<<"in table server "<<i;
     RegisterWorkerRequest req;
     int src = 0;
     VLOG(3)<<"before read msg ";
@@ -130,11 +131,19 @@ const StringIntMap Coordinator::CreateDataStores(
 const DataStorageConfig Coordinator::CreateDataStorage(
     const DataProto& data){
   // create stores for train/validate/test data
+  VLOG(3)<<"create data storages";
   DataStorageConfig conf;
-  conf.mutable_train_stores()->CopyFrom(CreateDataStores(data.train_data()));
-  conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data()));
-  conf.mutable_test_stores()->CopyFrom(CreateDataStores(data.test_data()));
+  if(data.train_data_size()>0)
+    conf.mutable_train_stores()->CopyFrom(CreateDataStores(data.train_data()));
+  VLOG(3)<<"finish train stores";
+  if(data.validation_data_size()>0)
+    conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data()));
+  VLOG(3)<<"finish val stores";
+  if(data.test_data_size()>0)
+    conf.mutable_test_stores()->CopyFrom(CreateDataStores(data.test_data()));
+  VLOG(3)<<"finish test stores";
   conf.mutable_tables()->CopyFrom(ToProtoMap(mc_.GetDataStoreTable()));
+  VLOG(3)<<"data storage finish";
   return conf;
 }
 
@@ -150,15 +159,19 @@ const ParamStorageConfig Coordinator::CreateParamStorage() {
 }
 void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     const ModelProto& model){
+  VLOG(3)<<"setup storage";
   Net net(model.net());
   DistributedStorageConfig config;
   if(load_data)
     config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
   if(do_train)
     config.mutable_psconfig()->CopyFrom(CreateParamStorage());
+  VLOG(3)<<"send storage config";
   mpi_->Broadcast(MTYPE_STORAGE_CONFIG, config);
+  VLOG(3)<<"after send storage config";
   // init table servers, must be after creating stores which creating tables
   InitTableServers(mc_.GetTables());
+  VLOG(3)<<"tableserver assigned";
 
   if(load_data){
     LoadData(model.data().train_data(), ToStdMap(config.dsconfig().train_stores()));

@@ -44,7 +44,9 @@ class ModelController {
   const std::map<int,int> GetDataStoreTable();
   const std::map<int,int> GetParamStoreTable();
 
+  // tableid->table
   const std::map<int,GlobalTable*> GetTables();
+  // storeid -> table id
   void CreateTables(const std::map<int, int>& tables);
 
  private:
@@ -62,6 +64,7 @@ class ModelController {
  private:
   int split_tpye_,split_size_;
   TypedGlobalTable<int, FloatVector>* param_table_;
+  // store id ->table
   std::map<int,TypedDiskTable<int, FloatVector>*> disk_tables_;
   int num_data_store_, num_param_store_, num_tables_;
 };

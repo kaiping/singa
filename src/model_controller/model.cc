@@ -18,6 +18,7 @@ ModelController::ModelController()
   num_tables_=0;
   split_tpye_ = 0;
   split_size_ = 2;
+  param_table_=nullptr;
   //start the lower level network part
   //start the lower level network part
 }
@@ -169,10 +170,17 @@ void ModelController::Get(const std::vector<Param*> &params)
 }
 
 const std::map<int,GlobalTable*> ModelController::GetTables() {
+  VLOG(3)<<"get tables";
   std::map<int,GlobalTable*> tables;
-  for(auto& entry: disk_tables_)
+  VLOG(2)<<"disk table size "<<disk_tables_.size();
+  for(auto& entry: disk_tables_){
     tables[entry.second->id()]=dynamic_cast<GlobalTable*>(entry.second);
-  tables[param_table_->id()]=dynamic_cast<GlobalTable*>(param_table_);
+  }
+  VLOG(3)<<"finish get disk tables";
+  if(param_table_!=nullptr)
+    tables[param_table_->id()]=dynamic_cast<GlobalTable*>(param_table_);
+  VLOG(3)<<"finish get tables";
+  return tables;
 }
 
 
@@ -181,7 +189,7 @@ const std::map<int,int> ModelController::GetDataStoreTable() {
   for(auto& entry: disk_tables_) {
     store_table_map[entry.first]=entry.second->id();
   }
-  store_table_map[kParamStore]=param_table_->id();
+  VLOG(3)<<"get data store table";
   return store_table_map;
 }
 const std::map<int,int> ModelController::GetParamStoreTable() {
@@ -191,6 +199,7 @@ const std::map<int,int> ModelController::GetParamStoreTable() {
 }
 
 int ModelController::CreateDataStore(std::string name, int fixed_server_id) {
+  VLOG(2)<<"create store for "<<name;
   int sid=2*num_data_store_+kDataStore;
   if(fixed_server_id>=0)
     disk_tables_[sid]=CreateDiskTable(num_tables_, fixed_server_id, 256*10, name,

@@ -9,6 +9,7 @@
 
 namespace lapis {
 void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
+  VLOG(3)<<"start table server";
   tables_=tables;
   net_ = NetworkThread::Get();
   server_id_ = net_->id();

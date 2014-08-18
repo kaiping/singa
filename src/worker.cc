@@ -44,16 +44,25 @@ bool Worker::ShouldIDoValidation(int step) {
 
 const DistributedStorageConfig Worker::InitDistributedStorage(){
   DistributedStorageConfig config;
+  VLOG(3)<<"read storage config";
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_STORAGE_CONFIG, &config);
+  VLOG(3)<<"recv storage config";
   IntIntMap tables;
-  tables.CopyFrom(config.dsconfig().tables());
-  tables.MergeFrom(config.psconfig().tables());
+  CHECK(config.has_dsconfig()||config.has_psconfig());
+  if(config.has_dsconfig())
+    tables.MergeFrom(config.dsconfig().tables());
+  VLOG(3)<<"merge data tables";
+  if(config.has_psconfig())
+    tables.MergeFrom(config.psconfig().tables());
+  VLOG(3)<<"merge param tables";
   std::map<int, int> stdtables=ToStdMap(tables);
   mc_.CreateTables(stdtables);
   if(GlobalContext::Get()->AmITableServer()){
     table_server_=new TableServer();
     table_server_->StartTableServer(mc_.GetTables());
+    VLOG(3)<<"table server tarted";
   }
+  VLOG(3)<<"finish init storage";
   return config;
 }
 void Worker::Shutdown() {
@@ -70,11 +79,15 @@ void Worker::Run(bool load_data, bool do_train) {
   if(!do_train){
       return;
   }
+  std::map<std::string, int> train_stores, val_stores, test_stores;
+  if(config.dsconfig().has_train_stores())
+    train_stores=ToStdMap(config.dsconfig().train_stores());
+  if(config.dsconfig().has_val_stores())
+    val_stores=ToStdMap(config.dsconfig().val_stores());
+  if(config.dsconfig().has_test_stores())
+    test_stores=ToStdMap(config.dsconfig().test_stores());
   ModelProto model;
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
-  std::map<std::string, int> train_stores=ToStdMap(config.dsconfig().train_stores());
-  std::map<std::string, int> val_stores=ToStdMap(config.dsconfig().val_stores());
-  std::map<std::string, int> test_stores=ToStdMap(config.dsconfig().test_stores());
   Net net(model.net());
   SGDTrainer trainer;
   trainer.Init(model.trainer(), &mc_);

@@ -46,10 +46,13 @@ LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 
-run_lapis:
+run:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3
+		-model_conf=examples/imagenet12/model.conf --run=false --v=3
+debug:
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb \
+		./lapis.bin
 
 lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)

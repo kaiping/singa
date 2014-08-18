@@ -53,6 +53,26 @@ class DiskTableIterator{
 		DiskData* data_;
 };
 
+class PrefetchedBuffer{
+	public:
+		PrefetchedBuffer(int size): max_size_(size){}
+
+		typedef deque<DiskData*> Queue;
+
+		//  load data into the buffer, if there's space
+		bool add_data_records(DiskData* data);
+
+		bool empty();
+
+		//  NULL if no more data
+		DiskData* next_data_records();
+
+	private:
+		Queue data_queue_;
+		int max_size_;
+		mutable boost::recursive_mutex data_queue_lock_;
+};
+
 class DiskTable: public GlobalTable {
 	public:
 		struct FileBlock{
@@ -64,6 +84,8 @@ class DiskTable: public GlobalTable {
 			table_info_ = table;
 			current_block_ = current_buffer_count_=total_buffer_count_ = 0;
 			file_ = NULL;
+			current_write_record_=NULL;
+			done_writing_ = false;
 		}
 
 		~DiskTable();
@@ -92,21 +114,21 @@ class DiskTable: public GlobalTable {
 		//  to be turned into K,V by TypedDiskTable
 		void Next();
 
-		DiskTableDescriptor* info(){return table_info_;}
+		DiskTableDescriptor* disk_info(){return table_info_;}
 
 		int get_shard_str(StringPiece key){return -1;}
 
 	private:
 
 		//  keep adding DiskData to the buffer until out of open files
-		void io_loop();
+		void read_loop();
+
+		//  reading off the buffer and send
+		void write_loop();
 
 		//  send the current_record_ (buffer) to the network. Invoked directly by
 		//  finish_put();
-		void SendDataBuffer();
-
-		string name_prefix(){return table_info_->name_prefix;}
-		int max_size(){return table_info_->max_size;}
+		void SendDataBuffer(const DiskData& data);
 
 		DiskTableDescriptor *table_info_;
 
@@ -115,7 +137,8 @@ class DiskTable: public GlobalTable {
 
 		int current_block_, current_buffer_count_, total_buffer_count_;
 		boost::shared_ptr<DiskTableIterator> current_iterator_;
-		boost::shared_ptr<DiskData> current_record_;
+		boost::shared_ptr<DiskData> current_read_record_;
+		DiskData* current_write_record_;
 		int current_idx_;
 
 		//  to write
@@ -123,25 +146,9 @@ class DiskTable: public GlobalTable {
 
 		boost::shared_ptr<PrefetchedBuffer> buffer_;
 
-		boost::shared_ptr<boost::thread> io_thread;
-};
+		boost::shared_ptr<boost::thread> read_thread_, write_thread_;
 
-class PrefetchedBuffer{
-	public:
-		PrefetchedBuffer(int size): max_size_(size){}
-
-		typedef deque<DiskData*> Queue;
-
-		//  load data into the buffer, if there's space
-		bool add_data_records(DiskData* data);
-
-		//  NULL if no more data
-		DiskData* next_data_records();
-
-	private:
-		Queue data_queue_;
-		int max_size_;
-		mutable boost::recursive_mutex data_queue_lock_;
+		bool done_writing_;
 };
 
 template <class K, class V>

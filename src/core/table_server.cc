@@ -55,6 +55,7 @@ void TableServer::HandleShardAssignment() {
     LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)",
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }
+  VLOG(3)<<"finish handle shard assignment";
 }
 
 

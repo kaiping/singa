@@ -174,7 +174,8 @@ const std::map<int,GlobalTable*> ModelController::GetTables() {
   std::map<int,GlobalTable*> tables;
   VLOG(2)<<"disk table size "<<disk_tables_.size();
   for(auto& entry: disk_tables_){
-    tables[entry.second->id()]=dynamic_cast<GlobalTable*>(entry.second);
+    tables[entry.second->id()]=(entry.second);
+    VLOG(3)<<"after cast, num shards "<<tables[entry.second->id()]->num_shards();
   }
   VLOG(3)<<"finish get disk tables";
   if(param_table_!=nullptr)
@@ -201,12 +202,14 @@ const std::map<int,int> ModelController::GetParamStoreTable() {
 int ModelController::CreateDataStore(std::string name, int fixed_server_id) {
   VLOG(2)<<"create store for "<<name;
   int sid=2*num_data_store_+kDataStore;
-  if(fixed_server_id>=0)
+  if(fixed_server_id>=0) {
     disk_tables_[sid]=CreateDiskTable(num_tables_, fixed_server_id, 256*10, name,
         new Marshal<int>, new Marshal<FloatVector>);
-  else
+  }
+  else{
     disk_tables_[sid]=CreateDiskTable(num_tables_, 256*10, name,
         new Marshal<int>, new Marshal<FloatVector>);
+  }
   num_tables_++;
   num_data_store_++;
   return sid;
@@ -245,6 +248,8 @@ TypedGlobalTable<K, V> *ModelController::CreateTable(
   info->partition_factory = new typename SparseTable<K, V>::Factory;
   auto table=new TypedGlobalTable<K, V>();
   table->Init(info);
+  VLOG(3)<<"after create param table ";
+  VLOG(3)<<"table shards num "<<table->num_shards();
   return table;
 }
 
@@ -255,6 +260,8 @@ TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id, int max_size,
 	info->key_marshal = mkey;
 	info->value_marshal = mval;
 	TypedDiskTable<K,V> *t = new TypedDiskTable<K,V>(info);
+  VLOG(3)<<"after create disk table "<<name;
+  VLOG(3)<<"table shards num "<<t->num_shards();
 	return t;
 }
 
@@ -264,7 +271,9 @@ TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id,
     int fixed_server_id, int max_size,
 		string name, Marshal<K>* mkey, Marshal<V>* mval){
 	TypedDiskTable<K,V>* t = CreateDiskTable(id, max_size, name, mkey, mval);
-	t->info()->fixed_server_id = fixed_server_id;
+	t->disk_info()->fixed_server_id = fixed_server_id;
+  VLOG(3)<<"after create disk table "<<name;
+  VLOG(3)<<"table shards num "<<t->num_shards();
 	return t;
 }
 

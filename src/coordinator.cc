@@ -51,7 +51,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   // memory servers are specified in global context. Round-robin assignment
   int server_idx = 0;
   for (auto &entry: tables){
-    VLOG(3)<<"num of shards "<<entry.second->num_shards();
+    VLOG(3)<<"num of shards"<<entry.second->num_shards()<<" for table"<< entry.first;
     int table=entry.first;
     for (int shard = 0; shard < entry.second->num_shards(); ++shard) {
       ServerState &server = *server_states_[server_idx];
@@ -67,6 +67,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   //  then send table assignment
   ShardAssignmentRequest req;
   for (size_t i = 0; i < server_states_.size(); ++i) {
+    VLOG(3)<<"server states "<<i;
     ServerState &server = *server_states_[i];
     for (auto * task: server.local_shards) {
       ShardAssignment *s  = req.add_assign();
@@ -76,11 +77,14 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
       //  update local tables
       CHECK(tables.find(task->table)!=tables.end());
       GlobalTable *t = tables.at(task->table);
+      VLOG(3)<<"table id"<<t->id();
       t->get_partition_info(task->shard)->owner = server.server_id;
       delete task;
     }
   }
+  VLOG(3)<<"finish table assignment";
   mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
+  VLOG(3)<<"finish table server init";
 }
 
 

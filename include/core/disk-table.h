@@ -6,6 +6,7 @@
 #include "core/table.h"
 #include "core/file.h"
 #include "core/common.h"
+#include <deque>
 
 /*  This table stores records on disks. Records are stored in multiple "blocks",
  *  each block's name is of the form <filename>_blocknum in a DATA_PATH variables
@@ -20,10 +21,10 @@ namespace lapis {
 
 struct DiskTableDescriptor{
 		DiskTableDescriptor(int id, const string name, int max_size): id(id),
-				name_prefix(name), max_size(max_size), fixed_server_id(-1) {}
+				max_size(max_size), name_prefix(name), fixed_server_id(-1) {}
 
 		DiskTableDescriptor(const DiskTableDescriptor* table){
-			memcpy(this, table, sizeof(table));
+			memcpy(this, table, sizeof(*table));
 		}
 
 		int id, max_size;
@@ -52,20 +53,46 @@ class DiskTableIterator{
 		DiskData* data_;
 };
 
+class PrefetchedBuffer{
+	public:
+		PrefetchedBuffer(int size): max_size_(size){}
+
+		typedef deque<DiskData*> Queue;
+
+		//  load data into the buffer, if there's space
+		bool add_data_records(DiskData* data);
+
+		bool empty();
+
+		//  NULL if no more data
+		DiskData* next_data_records();
+
+	private:
+		Queue data_queue_;
+		int max_size_;
+		mutable boost::recursive_mutex data_queue_lock_;
+};
+
 class DiskTable: public GlobalTable {
- public:
-  struct FileBlock{
-    File::Info info;
-    uint64_t end_pos;
-  };
+	public:
+		struct FileBlock{
+				File::Info info;
+				uint64_t end_pos;
+		};
 
-  DiskTable(DiskTableDescriptor *table): table_info_(table), current_buffer_count_(0),
-  total_buffer_count_(0), current_block_(0), file_(NULL),
-  current_iterator_(NULL), current_record_(NULL){}
-  ~DiskTable();
+		DiskTable(DiskTableDescriptor *table){
+			table_info_ = table;
+			current_block_ = current_buffer_count_=total_buffer_count_ = 0;
+			file_ = NULL;
+			current_write_record_=NULL;
+			done_writing_ = false;
+		}
 
-  //  read all the data file into block vector, ready to be read
-  void Load();
+		~DiskTable();
+
+		//  read all the data file into block vector, ready to be read.
+		//  starting a new IO thread every time this is called.
+		void Load();
 
   //  store the received data to file. called at the table-server
   void DumpToFile(const DiskData* data);
@@ -83,38 +110,52 @@ class DiskTable: public GlobalTable {
   void finalize_data(){if (file_) delete file_;}
 
   bool done(); //no more data
+// to be turned into K,V by TypedDiskTable
+ void Next();
+		DiskTableDescriptor* disk_info(){return table_info_;}
 
-  //  to be turned into K,V by TypedDiskTable
-  void Next();
+    bool has_loaded() {return has_loaded_;}
+		int get_shard_str(StringPiece key){return -1;}
 
-  DiskTableDescriptor* info(){return table_info_;}
+		// override TableBase::id()
+		virtual int id() {
+		    return disk_info()->id;
+		}
+    virtual int num_shards() {
+      return 0;
+    }
 
-  bool has_loaded() {return has_loaded_;}
-  virtual  int get_shard_str(StringPiece k) {
-    LOG(ERROR)<<"not implementd";
-    return -1;
-  };
- private:
-  //  send the current_record_ (buffer) to the network. Invoked directly by
-  //  finish_put();
-  void SendDataBuffer();
+	private:
+
+		//  keep adding DiskData to the buffer until out of open files
+		void read_loop();
+
+		//  reading off the buffer and send
+		void write_loop();
+
+		//  send the current_record_ (buffer) to the network. Invoked directly by
+		//  finish_put();
+		void SendDataBuffer(const DiskData& data);
 
   string name_prefix(){return table_info_->name_prefix;}
   int max_size(){return table_info_->max_size;}
 
   DiskTableDescriptor *table_info_;
+// all the blocks
+ vector<FileBlock*> blocks_;
+		int current_block_, current_buffer_count_, total_buffer_count_;
+		boost::shared_ptr<DiskTableIterator> current_iterator_;
+		boost::shared_ptr<DiskData> current_read_record_;
+		DiskData* current_write_record_;
+		int current_idx_;
 
-  //  all the blocks
-  vector<FileBlock*> blocks_;
+    // to write
+    RecordFile* file_;
+		boost::shared_ptr<PrefetchedBuffer> buffer_;
 
-  int current_block_, current_buffer_count_, total_buffer_count_;
-  DiskTableIterator* current_iterator_;
-  DiskData* current_record_;
-  int current_idx_;
+		boost::shared_ptr<boost::thread> read_thread_, write_thread_;
 
-  //  to write
-  RecordFile* file_;
-  // load indicator set to true by Load()
+		bool done_writing_;
   bool has_loaded_;
 };
 
@@ -131,8 +172,8 @@ class TypedDiskTable: public DiskTable{
 
 template <class K, class V>
 void TypedDiskTable<K,V>::put(const K& k, const V& v){
-	string k_str = marshal(static_cast<Marshal<K>*>(this->info()->value_marshal), k);
-	string v_str = marshal(static_cast<Marshal<V>*>(this->info()->value_marshal), v);
+	string k_str = marshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k);
+	string v_str = marshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v);
 	put_str(k_str,v_str);
 }
 
@@ -141,8 +182,8 @@ template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	*k = unmarshal(static_cast<Marshal<K>*>(this->info()->value_marshal), k_str);
-	*v = unmarshal(static_cast<Marshal<V>*>(this->info()->value_marshal), v_str);
+	*k = unmarshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k_str);
+	*v = unmarshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v_str);
 }
 
 }  // namespace lapis

@@ -1,21 +1,23 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
 
 #include "core/table_server.h"
-#include "core/table-registry.h"
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
+#include "core/disk-table.h"
+
 
 
 namespace lapis {
-void TableServer::StartTableServer() {
+void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
+  VLOG(3)<<"start table server";
+  tables_=tables;
   net_ = NetworkThread::Get();
   server_id_ = net_->id();
   VLOG(3)<<"table server id "<<server_id_;
   //  set itself as the current worker for the table
-  TableRegistry::Map &t = TableRegistry::Get()->tables();
-  for (TableRegistry::Map::iterator i = t.begin(); i != t.end(); ++i) {
+  for (auto& i: tables){
     VLOG(3)<<"in set worker";
-    i->second->set_worker(this);
+    i.second->set_worker(this);
   }
   //  register to the manager
   RegisterWorkerRequest req;
@@ -37,14 +39,6 @@ void TableServer::StartTableServer() {
                                boost::bind(&TableServer::HandleGetRequest, this, _1));
 }
 
-void TableServer::ShutdownTableServer() {
-  net_->Flush();
-  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
-  EmptyMessage msg;
-  int src = 0;
-  net_->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
-  net_->Shutdown();
-}
 
 void TableServer::HandleShardAssignment() {
   CHECK(GlobalContext::Get()->IsTableServer(id()))
@@ -54,27 +48,28 @@ void TableServer::HandleShardAssignment() {
   //  request read from coordinator
   for (int i = 0; i < shard_req.assign_size(); i++) {
     const ShardAssignment &a = shard_req.assign(i);
-    GlobalTable *t = TableRegistry::Get()->table(a.table());
+    GlobalTable *t = tables_.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
     EmptyMessage empty;
     net_->Send(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
     LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)",
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }
+  VLOG(3)<<"finish handle shard assignment";
 }
 
 
 void TableServer::HandleDataPut(){
 	DiskData data;
 	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST, &data);
-	(static_cast<DiskTable*>(TableRegistry::Get()->table(data.table())))->DumpToFile(&data);
+	(dynamic_cast<DiskTable*>(tables_.at(data.table())))->DumpToFile(&data);
 }
 
 void TableServer::FinishDataPut(){
 	EmptyMessage msg;
 	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_FINISH, &msg);
-	for (auto t : TableRegistry::Get()->tables()){
-		(static_cast<DiskTable*>(t.second))->finalize_data();
+	for (auto& t : tables_){
+		(dynamic_cast<DiskTable*>(t.second))->finalize_data();
 	}
 	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE, msg);
 }
@@ -92,7 +87,7 @@ void TableServer::HandleGetRequest(const Message *message) {
   get_resp.set_key(get_req->key());
   // fill data
   {
-    GlobalTable *t = TableRegistry::Get()->table(get_req->table());
+    GlobalTable *t = tables_.at(get_req->table());
     t->handle_get(*get_req, &get_resp);
   }
   net_->Send(get_req->source(), MTYPE_GET_RESPONSE, get_resp);
@@ -101,11 +96,11 @@ void TableServer::HandleGetRequest(const Message *message) {
 void TableServer::HandleUpdateRequest(const Message *message) {
   boost::recursive_mutex::scoped_lock sl(state_lock_);
   const TableData *put = static_cast<const TableData *>(message);
-  GlobalTable *t = TableRegistry::Get()->table(put->table());
+  GlobalTable *t = tables_.at(put->table());
   t->ApplyUpdates(*put);
 }
 
 int TableServer::peer_for_partition(int table, int shard) {
-  return TableRegistry::Get()->tables()[table]->owner(shard);
+  return tables_[table]->owner(shard);
 }
 }

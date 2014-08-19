@@ -1,13 +1,9 @@
 package lapis;
 
-message DataSourceProto {
-  required string name = 1;
-  // e.g., RGBDirSource and LabelSource
-  required string type = 2;
-  // directory for RGBDirSource and file for LabelSource
-  required string path = 3;
-  // dataset size
-  optional int64 size = 4;
+
+message Shape {
+    // num of instance/records
+  optional int64 num = 4;
   // following three fields will be used for rgb image feature
   optional int32 channels = 6 [default = 3];
   // expected input height, if not the same, resize the image
@@ -15,7 +11,15 @@ message DataSourceProto {
   // expected input image width, if not the same, resize the image
   // it can also be the length of one dimension feature
   optional int32 width = 8 [default = 0];
+}
 
+message DataSourceProto {
+  required string name = 1;
+  // e.g., RGBDirSource and LabelSource
+  required string type = 2;
+  // directory for RGBDirSource and file for LabelSource
+  required string path = 3;
+  optional Shape shape = 4;
   // offset of record to be read.
   optional int64 offset =9 [default=0];
   // MeanProto file, has the mean of images, used by RGBDirSource
@@ -167,6 +171,7 @@ message PerformanceProto {
   optional float recall = 2;
   optional float map = 3;
   optional float precision50 = 4;
+  optional int32 step = 5;
 }
 
 message TrainerProto {
@@ -197,10 +202,6 @@ message TrainerProto {
   optional int32 validate_every_steps = 11 [default = 0];
 
 
-  repeated DataSourceProto train_data = 12;
-  repeated DataSourceProto validation_data = 13;
-  repeated DataSourceProto test_data = 14;
-
   //optional PerformanceProto train_perf = 11;
   //optional PerformanceProto validation_perf = 12;
   //optional PerformanceProto test_perf = 13;
@@ -215,13 +216,19 @@ message TrainerProto {
   optional bool do_test= 18 [default = false];
 }
 
+message DataProto {
+  repeated DataSourceProto train_data = 1;
+  repeated DataSourceProto validation_data = 2;
+  repeated DataSourceProto test_data = 3;
+}
 message ModelProto {
   // model name
   optional string name = 1;
-  required NetProto net = 2;
-  required TrainerProto trainer = 3;
+  optional NetProto net = 2;
+  optional TrainerProto trainer = 3;
+  optional DataProto data =4;
 }
 
-message float_vector_message {
-  repeated float myfloat = 1;
+message FloatVector {
+  repeated float data = 1;
 }

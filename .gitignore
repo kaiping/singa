@@ -10,6 +10,8 @@
 *.bak
 *.P
 *.odp
+*.project
+*.cproject
 log
 cscope.*
 build/

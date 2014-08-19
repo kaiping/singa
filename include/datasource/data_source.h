@@ -3,6 +3,7 @@
 
 #ifndef INCLUDE_DISK_DATA_SOURCE_H_
 #define INCLUDE_DISK_DATA_SOURCE_H_
+#include <google/protobuf/repeated_field.h>
 #include <string>
 #include <memory>
 #include <map>
@@ -12,9 +13,12 @@
 #include "net/lapis.h"
 #include "proto/model.pb.h"
 
-
+using std::shared_ptr;
+using std::vector;
+using std::string;
 namespace lapis {
-typedef std::vector<std::string> StringVec;
+typedef vector<string> StringVec;
+using DataSourceProtos=google::protobuf::RepeatedPtrField<DataSourceProto>;
 /**
  * Base class of data source which provides training records for applications.
  * It has 2 tasks. One is to fill the blob for DataLayer either from local disk
@@ -23,10 +27,12 @@ typedef std::vector<std::string> StringVec;
  */
 class DataSource {
  public:
-
+  static std::map<string, Shape> ShapesOf(const DataSourceProtos &sources);
   virtual ~DataSource(){}
-  virtual void Init(const DataSourceProto &ds_proto);
+  const shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+      shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *ds_proto);
+  virtual void NextRecord(FloatVector* record)=0;
   /**
    * Put one batch data into blob, the blob will specify the num of instances
    * to read (the blob is setup by layer Setup(), which has the batchsize as
@@ -46,12 +52,12 @@ class DataSource {
    * @param keys it specifies the order of records to read.
    * @return the keys of records which specifies the order records read.
    */
-  virtual const std::shared_ptr<StringVec> LoadData(
-    const std::shared_ptr<StringVec>  &keys) = 0;
+  virtual const shared_ptr<StringVec> LoadData(
+    const shared_ptr<StringVec>  &keys) = 0;
 
   /**
    * Return the identifier of the DataSource
-  virtual const std::string &type() = 0;
+  virtual const string &type() = 0;
    */
 
   /**
@@ -75,7 +81,7 @@ class DataSource {
   /**
    * Return name of this data source
    */
-  const std::string &name() {
+  const string &name() {
     return name_;
   }
   /**
@@ -93,13 +99,17 @@ class DataSource {
     return offset_;
   }
 
+  bool eof() {
+    return offset_>=size_;
+  }
+
  protected:
   //! total number of instances/images
   int size_;
   //! offset from current record to the first record
   int offset_;
   //! identifier of the data source
-  std::string name_;
+  string name_;
   //! data source type
   // DataSourceProto_DataType type_;
 };
@@ -133,7 +143,7 @@ class DataSourceFactory {
    * Static method to get instance of this factory, there should be only one
    * instance of this factory.
    */
-  static std::shared_ptr<DataSourceFactory> Instance();
+  static shared_ptr<DataSourceFactory> Instance();
 
   /**
    * Register user defined DataSource, i.e., add it with its identifier (the
@@ -143,20 +153,20 @@ class DataSourceFactory {
    * macro.
    */
   void RegisterCreateFunction(
-    const std::string &id,
+    const string &id,
     std::function<DataSource*(void)> create_function);
   /**
    * Create an instance the child DataSource of identifier being id.
    * @param id the identifier of the child DataSource.
    */
-  DataSource *Create(const std::string id);
+  DataSource *Create(const string id);
 
  private:
   //! To avoid creating multiple instances of this factory in the program.
   DataSourceFactory();
   //! Map from DataSource identifier to creating function.
-  std::map<const std::string, std::function<DataSource*(void)>> ds_map_;
-  static std::shared_ptr<DataSourceFactory> instance_;
+  std::map<const string, std::function<DataSource*(void)>> ds_map_;
+  static shared_ptr<DataSourceFactory> instance_;
 };
 
 }  // namespace lapis

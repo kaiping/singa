@@ -15,18 +15,21 @@
 namespace lapis {
 const std::string RGBDirSource::type = "RGBDirSource";
 
-void RGBDirSource::Init(const DataSourceProto &proto) {
-  DataSource::Init(proto);
-  directory_ = proto.path();
-  if(proto.has_mean_file())
-    mean_file_=proto.mean_file();
+const std::shared_ptr<StringVec> RGBDirSource::Init(const DataSourceProto &ds_proto,
+      std::shared_ptr<StringVec>& filenames){
+  DataSource::Init(ds_proto, filenames);
+  directory_ = ds_proto.path();
+  if(ds_proto.has_mean_file())
+    mean_file_=ds_proto.mean_file();
   else
     mean_file_="";
-  width_ = proto.width();
-  height_ = proto.height();
-  channels_=proto.channels();
+  Shape s=ds_proto.shape();
+  width_ = s.width();
+  height_ = s.height();
+  channels_=s.channels();
   CHECK_EQ(channels_,3);
   image_size_ = 3 * width_ * height_;
+  return LoadData(filenames);
 }
 
 // the filename must end with valid image extension
@@ -95,6 +98,14 @@ void readImage(const std::string &path, int height, int width,
       }
     }
   }
+}
+
+void RGBDirSource::NextRecord(FloatVector *record) {
+  VLOG(3)<<"GetData";
+  readImage(directory_ + "/" + image_names_->at(offset_), height_,
+              width_, data_mean_.data().data(),
+              record->mutable_data()->mutable_data());
+  offset_++;
 }
 
 void RGBDirSource::GetData(Blob *blob) {

@@ -3,12 +3,14 @@
 
 #include <glog/logging.h>
 #include "datasource/label_source.h"
+using std::shared_ptr;
 namespace lapis {
 const std::string LabelSource::type = "LabelSource";
-
-void LabelSource::Init(const DataSourceProto &proto) {
-  DataSource::Init(proto);
-  label_path_ = proto.path();
+const shared_ptr<StringVec> LabelSource::Init(const DataSourceProto &ds_proto,
+      shared_ptr<StringVec>& filenames){
+  DataSource::Init(ds_proto,filenames);
+  label_path_ = ds_proto.path();
+  return LoadData(filenames);
 }
 
 void LabelSource::ToProto(DataSourceProto *proto) {
@@ -23,9 +25,14 @@ void LabelSource::GetData(Blob *blob) {
     addr[i] = labels_[offset_++];
   }
 }
+void LabelSource::NextRecord(FloatVector *record){
+  record->set_data(0, labels_[offset_]);
+  offset_++;
+}
 
-const std::shared_ptr<StringVec> LabelSource::LoadData(
-  const std::shared_ptr<StringVec> &keys) {
+
+const shared_ptr<StringVec> LabelSource::LoadData(
+  const shared_ptr<StringVec> &keys) {
   DLOG(INFO)<<"Load Label Data...";
   std::ifstream is(label_path_);
   CHECK(is.is_open()) << "Error open the label file " << label_path_;

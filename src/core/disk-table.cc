@@ -46,8 +46,7 @@ void DiskTable::Load(){
 			blocks_.push_back(block);
 		}
 	}
-
-	// starting the IO thread
+  // starting the IO thread
 	buffer_.reset(new PrefetchedBuffer((int)FLAGS_io_buffer_size));
 	read_thread_.reset(new boost::thread(&DiskTable::read_loop, this));
 
@@ -57,6 +56,7 @@ void DiskTable::Load(){
 
 	current_read_record_.reset(buffer_->next_data_records());
 	current_idx_ = 0;
+  has_loaded_=true;
 }
 
 void DiskTable::DumpToFile(const DiskData* data){

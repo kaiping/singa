@@ -4,11 +4,14 @@
 #ifndef INCLUDE_MODEL_NET_H_
 #define INCLUDE_MODEL_NET_H_
 
+#include <google/protobuf/repeated_field.h>
 #include <vector>
 #include "net/layer.h"
 #include "net/edge.h"
 #include "net/param.h"
 #include "datasource/data_source.h"
+#include "proto/model.pb.h"
+
 
 namespace lapis {
 /**
@@ -21,10 +24,12 @@ class Layer;
  */
 class Net {
  public:
-  void Init(const NetProto &net);
-  void Setup(int batchsize,
-             const char flag,
-             const std::vector<DataSource*> &ds);
+  explicit Net(const NetProto &net_proto);
+  void Setup(const char flag,int batchsize,
+             const std::map<std::string, Shape> &shapes,
+             const std::map<std::string, int> & stores);
+  void Setup(const char flag,int batchsize,
+             const std::map<std::string, Shape> &shapes);
 
   void ToProto(NetProto *net_proto);
   std::vector<Layer *> &layers() {

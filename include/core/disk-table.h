@@ -94,34 +94,36 @@ class DiskTable: public GlobalTable {
 		//  starting a new IO thread every time this is called.
 		void Load();
 
-		//  store the received data to file. called at the table-server
-		void DumpToFile(const DiskData* data);
+  //  store the received data to file. called at the table-server
+  void DumpToFile(const DiskData* data);
 
 
-		//  sending table over the network. called at the coordinator.
-		//  we will put each record into a buffer and only send when it is full
-		//  or when finish_put() is invoked
-		void put_str(const string& k, const string& v);
-		void get_str(string *k, string *v);
+  //  sending table over the network. called at the coordinator.
+  //  we will put each record into a buffer and only send when it is full
+  //  or when finish_put() is invoked
+  void put_str(const string& k, const string& v);
+  void get_str(string *k, string *v);
 
-		void finish_put(); //  end of file, flush all buffers
+  void finish_put(); //  end of file, flush all buffers
 
-		//  done storing, close open file
-		void finalize_data(){if (file_) delete file_;}
+  //  done storing, close open file
+  void finalize_data(){if (file_) delete file_;}
 
-		bool done(); //no more data
+  DiskTableDescriptor* disk_info() const {return table_info_;}
 
-		//  to be turned into K,V by TypedDiskTable
-		void Next();
+  bool done();
+  void Next();
 
-		DiskTableDescriptor* disk_info() const {return table_info_;}
-
+    bool has_loaded() {return has_loaded_;}
 		int get_shard_str(StringPiece key){return -1;}
 
-		// override TableBase::id()
-		int id() const {
+// override TableBase::id()
+   virtual int id() {
 		    return disk_info()->id;
 		}
+    virtual int num_shards() {
+      return 0;
+    }
 
 	private:
 
@@ -135,25 +137,26 @@ class DiskTable: public GlobalTable {
 		//  finish_put();
 		void SendDataBuffer(const DiskData& data);
 
-		DiskTableDescriptor *table_info_;
+  string name_prefix(){return table_info_->name_prefix;}
+  int max_size(){return table_info_->max_size;}
 
-		//  all the blocks
-		vector<FileBlock*> blocks_;
-
+  DiskTableDescriptor *table_info_;
+// all the blocks
+ vector<FileBlock*> blocks_;
 		int current_block_, current_buffer_count_, total_buffer_count_;
 		boost::shared_ptr<DiskTableIterator> current_iterator_;
 		boost::shared_ptr<DiskData> current_read_record_;
 		DiskData* current_write_record_;
 		int current_idx_;
 
-		//  to write
-		RecordFile* file_;
-
+    // to write
+    RecordFile* file_;
 		boost::shared_ptr<PrefetchedBuffer> buffer_;
 
 		boost::shared_ptr<boost::thread> read_thread_, write_thread_;
 
 		bool done_writing_;
+  bool has_loaded_;
 };
 
 template <class K, class V>
@@ -169,17 +172,18 @@ class TypedDiskTable: public DiskTable{
 
 template <class K, class V>
 void TypedDiskTable<K,V>::put(const K& k, const V& v){
-	string k_str = marshall(static_cast<Marshal<K>*>(this->disk_info()->value_marhal), k);
-	string v_str = marshall(static_cast<Marshal<V>*>(this->disk_info()->value_marhal), k);
+	string k_str = marshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k);
+	string v_str = marshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v);
 	put_str(k_str,v_str);
 }
 
+// TODO(anh, wangwei) can we reduce the memory copy to tmp string k_str here
 template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	*k = unmarshall(static_cast<Marshal<K>*>(this->disk_info()->value_marhal), k_str);
-	*v = unmarshall(static_cast<Marshal<V>*>(this->disk_info()->value_marhal), v_str);
+	*k = unmarshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k_str);
+	*v = unmarshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v_str);
 }
 
 }  // namespace lapis

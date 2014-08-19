@@ -15,6 +15,9 @@ Blob::Blob(int num, int channels, int height, int width, const bool alloc) {
   if(alloc)
     dptr=new float[length_];
 }
+Blob::Blob(const Shape& shape) {
+  Blob(shape.num(),shape.channels(), shape.height(),shape.width(), true);
+}
 void Blob::Resize(int num, int channels, int height,
                   int width, const bool alloc) {
   if (num_ != num || channels_ != channels || height_ != height

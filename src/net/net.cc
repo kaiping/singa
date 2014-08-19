@@ -65,7 +65,8 @@ void topology_sort(std::vector<Layer *> *layers) {
   }
 }
 
-void Net::Init(const NetProto &net_proto) {
+Net::Net(const NetProto &net_proto) {
+  LOG(INFO)<<"Init Neural Net";
   std::map<std::string, Layer *> layer_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
@@ -84,18 +85,36 @@ void Net::Init(const NetProto &net_proto) {
     }
   }
   topology_sort(&layers_);
+  LOG(INFO)<<"Neural Net constructed";
 }
-
-void Net::Setup(int batchsize,
-                const char flag,
-                const std::vector<DataSource*>& ds){
-  for (auto *layer : layers())
-    if (layer->HasInput())
-      (dynamic_cast<DataLayer*>(layer))->SetupDataSource(batchsize, ds);
+void Net::Setup(const char flag,const int batchsize,
+                const std::map<std::string, Shape> &shapes){
+  for (auto *layer : layers()){
+    if (layer->HasInput()){
+      CHECK(shapes.find(layer->name())!=shapes.end());
+      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+      std::string name=dlayer->name();
+      dlayer->SetInputShape(batchsize, shapes.at(name));
+    }
+  }
   for(auto *layer : layers()) {
     layer->Setup(flag);
     for (auto *edge : layer->out_edges())
       edge->Setup(flag);
+  }
+}
+
+void Net::Setup(const char flag,const int batchsize,
+                const std::map<std::string, Shape> &shapes,
+                const std::map<std::string, int>& stores){
+  Setup(flag, batchsize, shapes);
+  for (auto *layer : layers()){
+    if (layer->HasInput()){
+      CHECK(shapes.find(layer->name())!=shapes.end());
+      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+      std::string name=dlayer->name();
+      dlayer->SetInputStore(stores.at(name));
+    }
   }
 }
 void Net::ToProto(NetProto *net_proto) {

@@ -32,6 +32,7 @@ void  protobuf_AddDesc_model_2eproto();
 void protobuf_AssignDesc_model_2eproto();
 void protobuf_ShutdownFile_model_2eproto();
 
+class Shape;
 class DataSourceProto;
 class ParamProto;
 class EdgeProto;
@@ -41,8 +42,9 @@ class NetProto;
 class SGDProto;
 class PerformanceProto;
 class TrainerProto;
+class DataProto;
 class ModelProto;
-class float_vector_message;
+class FloatVector;
 
 enum ParamProto_InitMethod {
   ParamProto_InitMethod_kConstant = 0,
@@ -129,6 +131,118 @@ inline bool TrainerProto_Algorithm_Parse(
     TrainerProto_Algorithm_descriptor(), name, value);
 }
 // ===================================================================
+
+class Shape : public ::google::protobuf::Message {
+ public:
+  Shape();
+  virtual ~Shape();
+  
+  Shape(const Shape& from);
+  
+  inline Shape& operator=(const Shape& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Shape& default_instance();
+  
+  void Swap(Shape* other);
+  
+  // implements Message ----------------------------------------------
+  
+  Shape* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Shape& from);
+  void MergeFrom(const Shape& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // optional int64 num = 4;
+  inline bool has_num() const;
+  inline void clear_num();
+  static const int kNumFieldNumber = 4;
+  inline ::google::protobuf::int64 num() const;
+  inline void set_num(::google::protobuf::int64 value);
+  
+  // optional int32 channels = 6 [default = 3];
+  inline bool has_channels() const;
+  inline void clear_channels();
+  static const int kChannelsFieldNumber = 6;
+  inline ::google::protobuf::int32 channels() const;
+  inline void set_channels(::google::protobuf::int32 value);
+  
+  // optional int32 height = 7 [default = 0];
+  inline bool has_height() const;
+  inline void clear_height();
+  static const int kHeightFieldNumber = 7;
+  inline ::google::protobuf::int32 height() const;
+  inline void set_height(::google::protobuf::int32 value);
+  
+  // optional int32 width = 8 [default = 0];
+  inline bool has_width() const;
+  inline void clear_width();
+  static const int kWidthFieldNumber = 8;
+  inline ::google::protobuf::int32 width() const;
+  inline void set_width(::google::protobuf::int32 value);
+  
+  // @@protoc_insertion_point(class_scope:lapis.Shape)
+ private:
+  inline void set_has_num();
+  inline void clear_has_num();
+  inline void set_has_channels();
+  inline void clear_has_channels();
+  inline void set_has_height();
+  inline void clear_has_height();
+  inline void set_has_width();
+  inline void clear_has_width();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::google::protobuf::int64 num_;
+  ::google::protobuf::int32 channels_;
+  ::google::protobuf::int32 height_;
+  ::google::protobuf::int32 width_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+  
+  void InitAsDefaultInstance();
+  static Shape* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class DataSourceProto : public ::google::protobuf::Message {
  public:
@@ -217,33 +331,13 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::std::string* mutable_path();
   inline ::std::string* release_path();
   
-  // optional int64 size = 4;
-  inline bool has_size() const;
-  inline void clear_size();
-  static const int kSizeFieldNumber = 4;
-  inline ::google::protobuf::int64 size() const;
-  inline void set_size(::google::protobuf::int64 value);
-  
-  // optional int32 channels = 6 [default = 3];
-  inline bool has_channels() const;
-  inline void clear_channels();
-  static const int kChannelsFieldNumber = 6;
-  inline ::google::protobuf::int32 channels() const;
-  inline void set_channels(::google::protobuf::int32 value);
-  
-  // optional int32 height = 7 [default = 0];
-  inline bool has_height() const;
-  inline void clear_height();
-  static const int kHeightFieldNumber = 7;
-  inline ::google::protobuf::int32 height() const;
-  inline void set_height(::google::protobuf::int32 value);
-  
-  // optional int32 width = 8 [default = 0];
-  inline bool has_width() const;
-  inline void clear_width();
-  static const int kWidthFieldNumber = 8;
-  inline ::google::protobuf::int32 width() const;
-  inline void set_width(::google::protobuf::int32 value);
+  // optional .lapis.Shape shape = 4;
+  inline bool has_shape() const;
+  inline void clear_shape();
+  static const int kShapeFieldNumber = 4;
+  inline const ::lapis::Shape& shape() const;
+  inline ::lapis::Shape* mutable_shape();
+  inline ::lapis::Shape* release_shape();
   
   // optional int64 offset = 9 [default = 0];
   inline bool has_offset() const;
@@ -271,14 +365,8 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_type();
   inline void set_has_path();
   inline void clear_has_path();
-  inline void set_has_size();
-  inline void clear_has_size();
-  inline void set_has_channels();
-  inline void clear_has_channels();
-  inline void set_has_height();
-  inline void clear_has_height();
-  inline void set_has_width();
-  inline void clear_has_width();
+  inline void set_has_shape();
+  inline void clear_has_shape();
   inline void set_has_offset();
   inline void clear_has_offset();
   inline void set_has_mean_file();
@@ -289,15 +377,12 @@ class DataSourceProto : public ::google::protobuf::Message {
   ::std::string* name_;
   ::std::string* type_;
   ::std::string* path_;
-  ::google::protobuf::int64 size_;
-  ::google::protobuf::int32 channels_;
-  ::google::protobuf::int32 height_;
+  ::lapis::Shape* shape_;
   ::google::protobuf::int64 offset_;
   ::std::string* mean_file_;
-  ::google::protobuf::int32 width_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1552,6 +1637,13 @@ class PerformanceProto : public ::google::protobuf::Message {
   inline float precision50() const;
   inline void set_precision50(float value);
   
+  // optional int32 step = 5;
+  inline bool has_step() const;
+  inline void clear_step();
+  static const int kStepFieldNumber = 5;
+  inline ::google::protobuf::int32 step() const;
+  inline void set_step(::google::protobuf::int32 value);
+  
   // @@protoc_insertion_point(class_scope:lapis.PerformanceProto)
  private:
   inline void set_has_precision();
@@ -1562,6 +1654,8 @@ class PerformanceProto : public ::google::protobuf::Message {
   inline void clear_has_map();
   inline void set_has_precision50();
   inline void clear_has_precision50();
+  inline void set_has_step();
+  inline void clear_has_step();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
@@ -1569,9 +1663,10 @@ class PerformanceProto : public ::google::protobuf::Message {
   float recall_;
   float map_;
   float precision50_;
+  ::google::protobuf::int32 step_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1746,42 +1841,6 @@ class TrainerProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 validate_every_steps() const;
   inline void set_validate_every_steps(::google::protobuf::int32 value);
   
-  // repeated .lapis.DataSourceProto train_data = 12;
-  inline int train_data_size() const;
-  inline void clear_train_data();
-  static const int kTrainDataFieldNumber = 12;
-  inline const ::lapis::DataSourceProto& train_data(int index) const;
-  inline ::lapis::DataSourceProto* mutable_train_data(int index);
-  inline ::lapis::DataSourceProto* add_train_data();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-      train_data() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-      mutable_train_data();
-  
-  // repeated .lapis.DataSourceProto validation_data = 13;
-  inline int validation_data_size() const;
-  inline void clear_validation_data();
-  static const int kValidationDataFieldNumber = 13;
-  inline const ::lapis::DataSourceProto& validation_data(int index) const;
-  inline ::lapis::DataSourceProto* mutable_validation_data(int index);
-  inline ::lapis::DataSourceProto* add_validation_data();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-      validation_data() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-      mutable_validation_data();
-  
-  // repeated .lapis.DataSourceProto test_data = 14;
-  inline int test_data_size() const;
-  inline void clear_test_data();
-  static const int kTestDataFieldNumber = 14;
-  inline const ::lapis::DataSourceProto& test_data(int index) const;
-  inline ::lapis::DataSourceProto* mutable_test_data(int index);
-  inline ::lapis::DataSourceProto* add_test_data();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-      test_data() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-      mutable_test_data();
-  
   // optional string perf_prefix = 15 [default = "tmp/performance"];
   inline bool has_perf_prefix() const;
   inline void clear_perf_prefix();
@@ -1862,9 +1921,6 @@ class TrainerProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 validate_step_;
   ::google::protobuf::int32 validate_after_steps_;
   ::google::protobuf::int32 validate_every_steps_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > train_data_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > validation_data_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > test_data_;
   ::std::string* perf_prefix_;
   static const ::std::string _default_perf_prefix_;
   int alg_;
@@ -1872,7 +1928,7 @@ class TrainerProto : public ::google::protobuf::Message {
   bool do_test_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(18 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(15 + 31) / 32];
   
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1880,6 +1936,117 @@ class TrainerProto : public ::google::protobuf::Message {
   
   void InitAsDefaultInstance();
   static TrainerProto* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DataProto : public ::google::protobuf::Message {
+ public:
+  DataProto();
+  virtual ~DataProto();
+  
+  DataProto(const DataProto& from);
+  
+  inline DataProto& operator=(const DataProto& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataProto& default_instance();
+  
+  void Swap(DataProto* other);
+  
+  // implements Message ----------------------------------------------
+  
+  DataProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DataProto& from);
+  void MergeFrom(const DataProto& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // repeated .lapis.DataSourceProto train_data = 1;
+  inline int train_data_size() const;
+  inline void clear_train_data();
+  static const int kTrainDataFieldNumber = 1;
+  inline const ::lapis::DataSourceProto& train_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_train_data(int index);
+  inline ::lapis::DataSourceProto* add_train_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      train_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_train_data();
+  
+  // repeated .lapis.DataSourceProto validation_data = 2;
+  inline int validation_data_size() const;
+  inline void clear_validation_data();
+  static const int kValidationDataFieldNumber = 2;
+  inline const ::lapis::DataSourceProto& validation_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_validation_data(int index);
+  inline ::lapis::DataSourceProto* add_validation_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      validation_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_validation_data();
+  
+  // repeated .lapis.DataSourceProto test_data = 3;
+  inline int test_data_size() const;
+  inline void clear_test_data();
+  static const int kTestDataFieldNumber = 3;
+  inline const ::lapis::DataSourceProto& test_data(int index) const;
+  inline ::lapis::DataSourceProto* mutable_test_data(int index);
+  inline ::lapis::DataSourceProto* add_test_data();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+      test_data() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+      mutable_test_data();
+  
+  // @@protoc_insertion_point(class_scope:lapis.DataProto)
+ private:
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > train_data_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > validation_data_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto > test_data_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+  
+  void InitAsDefaultInstance();
+  static DataProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1948,7 +2115,7 @@ class ModelProto : public ::google::protobuf::Message {
   inline ::std::string* mutable_name();
   inline ::std::string* release_name();
   
-  // required .lapis.NetProto net = 2;
+  // optional .lapis.NetProto net = 2;
   inline bool has_net() const;
   inline void clear_net();
   static const int kNetFieldNumber = 2;
@@ -1956,13 +2123,21 @@ class ModelProto : public ::google::protobuf::Message {
   inline ::lapis::NetProto* mutable_net();
   inline ::lapis::NetProto* release_net();
   
-  // required .lapis.TrainerProto trainer = 3;
+  // optional .lapis.TrainerProto trainer = 3;
   inline bool has_trainer() const;
   inline void clear_trainer();
   static const int kTrainerFieldNumber = 3;
   inline const ::lapis::TrainerProto& trainer() const;
   inline ::lapis::TrainerProto* mutable_trainer();
   inline ::lapis::TrainerProto* release_trainer();
+  
+  // optional .lapis.DataProto data = 4;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 4;
+  inline const ::lapis::DataProto& data() const;
+  inline ::lapis::DataProto* mutable_data();
+  inline ::lapis::DataProto* release_data();
   
   // @@protoc_insertion_point(class_scope:lapis.ModelProto)
  private:
@@ -1972,15 +2147,18 @@ class ModelProto : public ::google::protobuf::Message {
   inline void clear_has_net();
   inline void set_has_trainer();
   inline void clear_has_trainer();
+  inline void set_has_data();
+  inline void clear_has_data();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::lapis::NetProto* net_;
   ::lapis::TrainerProto* trainer_;
+  ::lapis::DataProto* data_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1991,14 +2169,14 @@ class ModelProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class float_vector_message : public ::google::protobuf::Message {
+class FloatVector : public ::google::protobuf::Message {
  public:
-  float_vector_message();
-  virtual ~float_vector_message();
+  FloatVector();
+  virtual ~FloatVector();
   
-  float_vector_message(const float_vector_message& from);
+  FloatVector(const FloatVector& from);
   
-  inline float_vector_message& operator=(const float_vector_message& from) {
+  inline FloatVector& operator=(const FloatVector& from) {
     CopyFrom(from);
     return *this;
   }
@@ -2012,17 +2190,17 @@ class float_vector_message : public ::google::protobuf::Message {
   }
   
   static const ::google::protobuf::Descriptor* descriptor();
-  static const float_vector_message& default_instance();
+  static const FloatVector& default_instance();
   
-  void Swap(float_vector_message* other);
+  void Swap(FloatVector* other);
   
   // implements Message ----------------------------------------------
   
-  float_vector_message* New() const;
+  FloatVector* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const float_vector_message& from);
-  void MergeFrom(const float_vector_message& from);
+  void CopyFrom(const FloatVector& from);
+  void MergeFrom(const FloatVector& from);
   void Clear();
   bool IsInitialized() const;
   
@@ -2045,24 +2223,24 @@ class float_vector_message : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // repeated float myfloat = 1;
-  inline int myfloat_size() const;
-  inline void clear_myfloat();
-  static const int kMyfloatFieldNumber = 1;
-  inline float myfloat(int index) const;
-  inline void set_myfloat(int index, float value);
-  inline void add_myfloat(float value);
+  // repeated float data = 1;
+  inline int data_size() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 1;
+  inline float data(int index) const;
+  inline void set_data(int index, float value);
+  inline void add_data(float value);
   inline const ::google::protobuf::RepeatedField< float >&
-      myfloat() const;
+      data() const;
   inline ::google::protobuf::RepeatedField< float >*
-      mutable_myfloat();
+      mutable_data();
   
-  // @@protoc_insertion_point(class_scope:lapis.float_vector_message)
+  // @@protoc_insertion_point(class_scope:lapis.FloatVector)
  private:
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedField< float > myfloat_;
+  ::google::protobuf::RepeatedField< float > data_;
   
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
@@ -2072,12 +2250,104 @@ class float_vector_message : public ::google::protobuf::Message {
   friend void protobuf_ShutdownFile_model_2eproto();
   
   void InitAsDefaultInstance();
-  static float_vector_message* default_instance_;
+  static FloatVector* default_instance_;
 };
 // ===================================================================
 
 
 // ===================================================================
+
+// Shape
+
+// optional int64 num = 4;
+inline bool Shape::has_num() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Shape::set_has_num() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Shape::clear_has_num() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Shape::clear_num() {
+  num_ = GOOGLE_LONGLONG(0);
+  clear_has_num();
+}
+inline ::google::protobuf::int64 Shape::num() const {
+  return num_;
+}
+inline void Shape::set_num(::google::protobuf::int64 value) {
+  set_has_num();
+  num_ = value;
+}
+
+// optional int32 channels = 6 [default = 3];
+inline bool Shape::has_channels() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Shape::set_has_channels() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Shape::clear_has_channels() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Shape::clear_channels() {
+  channels_ = 3;
+  clear_has_channels();
+}
+inline ::google::protobuf::int32 Shape::channels() const {
+  return channels_;
+}
+inline void Shape::set_channels(::google::protobuf::int32 value) {
+  set_has_channels();
+  channels_ = value;
+}
+
+// optional int32 height = 7 [default = 0];
+inline bool Shape::has_height() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Shape::set_has_height() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Shape::clear_has_height() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Shape::clear_height() {
+  height_ = 0;
+  clear_has_height();
+}
+inline ::google::protobuf::int32 Shape::height() const {
+  return height_;
+}
+inline void Shape::set_height(::google::protobuf::int32 value) {
+  set_has_height();
+  height_ = value;
+}
+
+// optional int32 width = 8 [default = 0];
+inline bool Shape::has_width() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Shape::set_has_width() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Shape::clear_has_width() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Shape::clear_width() {
+  width_ = 0;
+  clear_has_width();
+}
+inline ::google::protobuf::int32 Shape::width() const {
+  return width_;
+}
+inline void Shape::set_width(::google::protobuf::int32 value) {
+  set_has_width();
+  width_ = value;
+}
+
+// -------------------------------------------------------------------
 
 // DataSourceProto
 
@@ -2255,103 +2525,44 @@ inline ::std::string* DataSourceProto::release_path() {
   }
 }
 
-// optional int64 size = 4;
-inline bool DataSourceProto::has_size() const {
+// optional .lapis.Shape shape = 4;
+inline bool DataSourceProto::has_shape() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void DataSourceProto::set_has_size() {
+inline void DataSourceProto::set_has_shape() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void DataSourceProto::clear_has_size() {
+inline void DataSourceProto::clear_has_shape() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void DataSourceProto::clear_size() {
-  size_ = GOOGLE_LONGLONG(0);
-  clear_has_size();
+inline void DataSourceProto::clear_shape() {
+  if (shape_ != NULL) shape_->::lapis::Shape::Clear();
+  clear_has_shape();
 }
-inline ::google::protobuf::int64 DataSourceProto::size() const {
-  return size_;
+inline const ::lapis::Shape& DataSourceProto::shape() const {
+  return shape_ != NULL ? *shape_ : *default_instance_->shape_;
 }
-inline void DataSourceProto::set_size(::google::protobuf::int64 value) {
-  set_has_size();
-  size_ = value;
+inline ::lapis::Shape* DataSourceProto::mutable_shape() {
+  set_has_shape();
+  if (shape_ == NULL) shape_ = new ::lapis::Shape;
+  return shape_;
 }
-
-// optional int32 channels = 6 [default = 3];
-inline bool DataSourceProto::has_channels() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void DataSourceProto::set_has_channels() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void DataSourceProto::clear_has_channels() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void DataSourceProto::clear_channels() {
-  channels_ = 3;
-  clear_has_channels();
-}
-inline ::google::protobuf::int32 DataSourceProto::channels() const {
-  return channels_;
-}
-inline void DataSourceProto::set_channels(::google::protobuf::int32 value) {
-  set_has_channels();
-  channels_ = value;
-}
-
-// optional int32 height = 7 [default = 0];
-inline bool DataSourceProto::has_height() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void DataSourceProto::set_has_height() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void DataSourceProto::clear_has_height() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void DataSourceProto::clear_height() {
-  height_ = 0;
-  clear_has_height();
-}
-inline ::google::protobuf::int32 DataSourceProto::height() const {
-  return height_;
-}
-inline void DataSourceProto::set_height(::google::protobuf::int32 value) {
-  set_has_height();
-  height_ = value;
-}
-
-// optional int32 width = 8 [default = 0];
-inline bool DataSourceProto::has_width() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void DataSourceProto::set_has_width() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void DataSourceProto::clear_has_width() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void DataSourceProto::clear_width() {
-  width_ = 0;
-  clear_has_width();
-}
-inline ::google::protobuf::int32 DataSourceProto::width() const {
-  return width_;
-}
-inline void DataSourceProto::set_width(::google::protobuf::int32 value) {
-  set_has_width();
-  width_ = value;
+inline ::lapis::Shape* DataSourceProto::release_shape() {
+  clear_has_shape();
+  ::lapis::Shape* temp = shape_;
+  shape_ = NULL;
+  return temp;
 }
 
 // optional int64 offset = 9 [default = 0];
 inline bool DataSourceProto::has_offset() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void DataSourceProto::set_has_offset() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void DataSourceProto::clear_has_offset() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void DataSourceProto::clear_offset() {
   offset_ = GOOGLE_LONGLONG(0);
@@ -2367,13 +2578,13 @@ inline void DataSourceProto::set_offset(::google::protobuf::int64 value) {
 
 // optional string mean_file = 10;
 inline bool DataSourceProto::has_mean_file() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void DataSourceProto::set_has_mean_file() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void DataSourceProto::clear_has_mean_file() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void DataSourceProto::clear_mean_file() {
   if (mean_file_ != &::google::protobuf::internal::kEmptyString) {
@@ -4154,6 +4365,28 @@ inline void PerformanceProto::set_precision50(float value) {
   precision50_ = value;
 }
 
+// optional int32 step = 5;
+inline bool PerformanceProto::has_step() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void PerformanceProto::set_has_step() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void PerformanceProto::clear_has_step() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void PerformanceProto::clear_step() {
+  step_ = 0;
+  clear_has_step();
+}
+inline ::google::protobuf::int32 PerformanceProto::step() const {
+  return step_;
+}
+inline void PerformanceProto::set_step(::google::protobuf::int32 value) {
+  set_has_step();
+  step_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // TrainerProto
@@ -4479,90 +4712,15 @@ inline void TrainerProto::set_validate_every_steps(::google::protobuf::int32 val
   validate_every_steps_ = value;
 }
 
-// repeated .lapis.DataSourceProto train_data = 12;
-inline int TrainerProto::train_data_size() const {
-  return train_data_.size();
-}
-inline void TrainerProto::clear_train_data() {
-  train_data_.Clear();
-}
-inline const ::lapis::DataSourceProto& TrainerProto::train_data(int index) const {
-  return train_data_.Get(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::mutable_train_data(int index) {
-  return train_data_.Mutable(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::add_train_data() {
-  return train_data_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-TrainerProto::train_data() const {
-  return train_data_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-TrainerProto::mutable_train_data() {
-  return &train_data_;
-}
-
-// repeated .lapis.DataSourceProto validation_data = 13;
-inline int TrainerProto::validation_data_size() const {
-  return validation_data_.size();
-}
-inline void TrainerProto::clear_validation_data() {
-  validation_data_.Clear();
-}
-inline const ::lapis::DataSourceProto& TrainerProto::validation_data(int index) const {
-  return validation_data_.Get(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::mutable_validation_data(int index) {
-  return validation_data_.Mutable(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::add_validation_data() {
-  return validation_data_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-TrainerProto::validation_data() const {
-  return validation_data_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-TrainerProto::mutable_validation_data() {
-  return &validation_data_;
-}
-
-// repeated .lapis.DataSourceProto test_data = 14;
-inline int TrainerProto::test_data_size() const {
-  return test_data_.size();
-}
-inline void TrainerProto::clear_test_data() {
-  test_data_.Clear();
-}
-inline const ::lapis::DataSourceProto& TrainerProto::test_data(int index) const {
-  return test_data_.Get(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::mutable_test_data(int index) {
-  return test_data_.Mutable(index);
-}
-inline ::lapis::DataSourceProto* TrainerProto::add_test_data() {
-  return test_data_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
-TrainerProto::test_data() const {
-  return test_data_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
-TrainerProto::mutable_test_data() {
-  return &test_data_;
-}
-
 // optional string perf_prefix = 15 [default = "tmp/performance"];
 inline bool TrainerProto::has_perf_prefix() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
 inline void TrainerProto::set_has_perf_prefix() {
-  _has_bits_[0] |= 0x00004000u;
+  _has_bits_[0] |= 0x00000800u;
 }
 inline void TrainerProto::clear_has_perf_prefix() {
-  _has_bits_[0] &= ~0x00004000u;
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void TrainerProto::clear_perf_prefix() {
   if (perf_prefix_ != &_default_perf_prefix_) {
@@ -4614,13 +4772,13 @@ inline ::std::string* TrainerProto::release_perf_prefix() {
 
 // optional .lapis.TrainerProto.Algorithm alg = 16 [default = kBackPropagation];
 inline bool TrainerProto::has_alg() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
+  return (_has_bits_[0] & 0x00001000u) != 0;
 }
 inline void TrainerProto::set_has_alg() {
-  _has_bits_[0] |= 0x00008000u;
+  _has_bits_[0] |= 0x00001000u;
 }
 inline void TrainerProto::clear_has_alg() {
-  _has_bits_[0] &= ~0x00008000u;
+  _has_bits_[0] &= ~0x00001000u;
 }
 inline void TrainerProto::clear_alg() {
   alg_ = 1;
@@ -4637,13 +4795,13 @@ inline void TrainerProto::set_alg(::lapis::TrainerProto_Algorithm value) {
 
 // optional bool do_train = 17 [default = true];
 inline bool TrainerProto::has_do_train() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
+  return (_has_bits_[0] & 0x00002000u) != 0;
 }
 inline void TrainerProto::set_has_do_train() {
-  _has_bits_[0] |= 0x00010000u;
+  _has_bits_[0] |= 0x00002000u;
 }
 inline void TrainerProto::clear_has_do_train() {
-  _has_bits_[0] &= ~0x00010000u;
+  _has_bits_[0] &= ~0x00002000u;
 }
 inline void TrainerProto::clear_do_train() {
   do_train_ = true;
@@ -4659,13 +4817,13 @@ inline void TrainerProto::set_do_train(bool value) {
 
 // optional bool do_test = 18 [default = false];
 inline bool TrainerProto::has_do_test() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
+  return (_has_bits_[0] & 0x00004000u) != 0;
 }
 inline void TrainerProto::set_has_do_test() {
-  _has_bits_[0] |= 0x00020000u;
+  _has_bits_[0] |= 0x00004000u;
 }
 inline void TrainerProto::clear_has_do_test() {
-  _has_bits_[0] &= ~0x00020000u;
+  _has_bits_[0] &= ~0x00004000u;
 }
 inline void TrainerProto::clear_do_test() {
   do_test_ = false;
@@ -4677,6 +4835,85 @@ inline bool TrainerProto::do_test() const {
 inline void TrainerProto::set_do_test(bool value) {
   set_has_do_test();
   do_test_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// DataProto
+
+// repeated .lapis.DataSourceProto train_data = 1;
+inline int DataProto::train_data_size() const {
+  return train_data_.size();
+}
+inline void DataProto::clear_train_data() {
+  train_data_.Clear();
+}
+inline const ::lapis::DataSourceProto& DataProto::train_data(int index) const {
+  return train_data_.Get(index);
+}
+inline ::lapis::DataSourceProto* DataProto::mutable_train_data(int index) {
+  return train_data_.Mutable(index);
+}
+inline ::lapis::DataSourceProto* DataProto::add_train_data() {
+  return train_data_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+DataProto::train_data() const {
+  return train_data_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+DataProto::mutable_train_data() {
+  return &train_data_;
+}
+
+// repeated .lapis.DataSourceProto validation_data = 2;
+inline int DataProto::validation_data_size() const {
+  return validation_data_.size();
+}
+inline void DataProto::clear_validation_data() {
+  validation_data_.Clear();
+}
+inline const ::lapis::DataSourceProto& DataProto::validation_data(int index) const {
+  return validation_data_.Get(index);
+}
+inline ::lapis::DataSourceProto* DataProto::mutable_validation_data(int index) {
+  return validation_data_.Mutable(index);
+}
+inline ::lapis::DataSourceProto* DataProto::add_validation_data() {
+  return validation_data_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+DataProto::validation_data() const {
+  return validation_data_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+DataProto::mutable_validation_data() {
+  return &validation_data_;
+}
+
+// repeated .lapis.DataSourceProto test_data = 3;
+inline int DataProto::test_data_size() const {
+  return test_data_.size();
+}
+inline void DataProto::clear_test_data() {
+  test_data_.Clear();
+}
+inline const ::lapis::DataSourceProto& DataProto::test_data(int index) const {
+  return test_data_.Get(index);
+}
+inline ::lapis::DataSourceProto* DataProto::mutable_test_data(int index) {
+  return test_data_.Mutable(index);
+}
+inline ::lapis::DataSourceProto* DataProto::add_test_data() {
+  return test_data_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >&
+DataProto::test_data() const {
+  return test_data_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto >*
+DataProto::mutable_test_data() {
+  return &test_data_;
 }
 
 // -------------------------------------------------------------------
@@ -4741,7 +4978,7 @@ inline ::std::string* ModelProto::release_name() {
   }
 }
 
-// required .lapis.NetProto net = 2;
+// optional .lapis.NetProto net = 2;
 inline bool ModelProto::has_net() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -4770,7 +5007,7 @@ inline ::lapis::NetProto* ModelProto::release_net() {
   return temp;
 }
 
-// required .lapis.TrainerProto trainer = 3;
+// optional .lapis.TrainerProto trainer = 3;
 inline bool ModelProto::has_trainer() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -4799,33 +5036,62 @@ inline ::lapis::TrainerProto* ModelProto::release_trainer() {
   return temp;
 }
 
+// optional .lapis.DataProto data = 4;
+inline bool ModelProto::has_data() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ModelProto::set_has_data() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ModelProto::clear_has_data() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ModelProto::clear_data() {
+  if (data_ != NULL) data_->::lapis::DataProto::Clear();
+  clear_has_data();
+}
+inline const ::lapis::DataProto& ModelProto::data() const {
+  return data_ != NULL ? *data_ : *default_instance_->data_;
+}
+inline ::lapis::DataProto* ModelProto::mutable_data() {
+  set_has_data();
+  if (data_ == NULL) data_ = new ::lapis::DataProto;
+  return data_;
+}
+inline ::lapis::DataProto* ModelProto::release_data() {
+  clear_has_data();
+  ::lapis::DataProto* temp = data_;
+  data_ = NULL;
+  return temp;
+}
+
 // -------------------------------------------------------------------
 
-// float_vector_message
+// FloatVector
 
-// repeated float myfloat = 1;
-inline int float_vector_message::myfloat_size() const {
-  return myfloat_.size();
+// repeated float data = 1;
+inline int FloatVector::data_size() const {
+  return data_.size();
 }
-inline void float_vector_message::clear_myfloat() {
-  myfloat_.Clear();
+inline void FloatVector::clear_data() {
+  data_.Clear();
 }
-inline float float_vector_message::myfloat(int index) const {
-  return myfloat_.Get(index);
+inline float FloatVector::data(int index) const {
+  return data_.Get(index);
 }
-inline void float_vector_message::set_myfloat(int index, float value) {
-  myfloat_.Set(index, value);
+inline void FloatVector::set_data(int index, float value) {
+  data_.Set(index, value);
 }
-inline void float_vector_message::add_myfloat(float value) {
-  myfloat_.Add(value);
+inline void FloatVector::add_data(float value) {
+  data_.Add(value);
 }
 inline const ::google::protobuf::RepeatedField< float >&
-float_vector_message::myfloat() const {
-  return myfloat_;
+FloatVector::data() const {
+  return data_;
 }
 inline ::google::protobuf::RepeatedField< float >*
-float_vector_message::mutable_myfloat() {
-  return &myfloat_;
+FloatVector::mutable_data() {
+  return &data_;
 }
 
 

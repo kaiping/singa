@@ -21,7 +21,7 @@ class TableServer : private boost::noncopyable {
  public:
   ~TableServer() {}
 
-  void StartTableServer();
+  void StartTableServer(const std::map<int, GlobalTable*> &tables);
 
   //  sends signals to the manager and ends gracefully
   void ShutdownTableServer();
@@ -55,6 +55,7 @@ class TableServer : private boost::noncopyable {
   int server_id_;
   mutable boost::recursive_mutex state_lock_;
   std::shared_ptr<NetworkThread> net_;
+  std::map<int, GlobalTable*> tables_;
 };
 
 //  start memory server, only if rank < size()-1

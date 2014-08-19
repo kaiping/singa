@@ -114,13 +114,13 @@ class DiskTable: public GlobalTable {
 		//  to be turned into K,V by TypedDiskTable
 		void Next();
 
-		DiskTableDescriptor* disk_info(){return table_info_;}
+		DiskTableDescriptor* disk_info() const {return table_info_;}
 
 		int get_shard_str(StringPiece key){return -1;}
 
 		// override TableBase::id()
 		int id() const {
-		    return info().table_id;
+		    return disk_info()->id;
 		}
 
 	private:
@@ -169,8 +169,8 @@ class TypedDiskTable: public DiskTable{
 
 template <class K, class V>
 void TypedDiskTable<K,V>::put(const K& k, const V& v){
-	string k_str = marshall(static_cast<Marshal<K>*>(this->info()->value_marhal), k);
-	string v_str = marshall(static_cast<Marshal<V>*>(this->info()->value_marhal), k);
+	string k_str = marshall(static_cast<Marshal<K>*>(this->disk_info()->value_marhal), k);
+	string v_str = marshall(static_cast<Marshal<V>*>(this->disk_info()->value_marhal), k);
 	put_str(k_str,v_str);
 }
 
@@ -178,8 +178,8 @@ template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	*k = unmarshall(static_cast<Marshal<K>*>(this->info()->value_marhal), k_str);
-	*v = unmarshall(static_cast<Marshal<V>*>(this->info()->value_marhal), v_str);
+	*k = unmarshall(static_cast<Marshal<K>*>(this->disk_info()->value_marhal), k_str);
+	*v = unmarshall(static_cast<Marshal<V>*>(this->disk_info()->value_marhal), v_str);
 }
 
 }  // namespace lapis

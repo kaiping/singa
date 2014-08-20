@@ -3,14 +3,14 @@ package lapis;
 
 message Shape {
     // num of instance/records
-  optional int64 num = 4;
+  optional int64 num = 4 [default =0];
   // following three fields will be used for rgb image feature
-  optional int32 channels = 6 [default = 3];
+  optional int32 channels = 6 [default = 1];
   // expected input height, if not the same, resize the image
-  optional int32 height = 7 [default = 0];
+  optional int32 height = 7 [default = 1];
   // expected input image width, if not the same, resize the image
   // it can also be the length of one dimension feature
-  optional int32 width = 8 [default = 0];
+  optional int32 width = 8 [default = 1];
 }
 
 message DataSourceProto {
@@ -104,10 +104,10 @@ message EdgeProto {
 
 // used to load image mean provided by caffe, in RGBDirSource
 message MeanProto{
-  optional int32 num =1;
-  optional int32 channels = 2;
-  optional int32 height = 3;
-  optional int32 width = 4;
+  optional int32 num =1 [default =0];
+  optional int32 channels = 2 [default =0];
+  optional int32 height = 3 [default =0];
+  optional int32 width = 4 [default =0];
   repeated float data=5 [packed=true];
   repeated float diff=6 [packed=true];
 }

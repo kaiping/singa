@@ -24,6 +24,7 @@ ModelController::ModelController()
 }
 
 void ModelController::PutData(int sid, int rid, const FloatVector &data){
+  VLOG(3)<<"Put record "<<rid<<"  to sid"<<sid;
   CHECK(disk_tables_.find(sid)!=disk_tables_.end());
   dynamic_cast<TDiskTable *>(disk_tables_[sid])->put(rid, data);
 }
@@ -262,7 +263,7 @@ TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id, int max_size,
 	info->key_marshal = mkey;
 	info->value_marshal = mval;
 	TypedDiskTable<K,V> *t = new TypedDiskTable<K,V>(info);
-  VLOG(3)<<"after create disk table "<<name;
+  VLOG(3)<<"after create disk table "<<name<< " max size "<<t->disk_info()->max_size;
   VLOG(3)<<"table shards num "<<t->num_shards();
 	return t;
 }

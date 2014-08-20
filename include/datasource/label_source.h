@@ -23,7 +23,7 @@ class LabelSource : public DataSource {
    * Init this data source, get the label file path from ds_proto
    * @param ds_proto the user configured data source meta info
    */
-  const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+  virtual const std::shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
       std::shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *proto);
   /**

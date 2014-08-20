@@ -82,7 +82,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
       delete task;
     }
   }
-  VLOG(3)<<"finish table assignment";
+  VLOG(3)<<"finish table assignment, req size "<<req.assign_size();
   mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
   VLOG(3)<<"finish table server init";
 }
@@ -109,14 +109,18 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
     DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
     filenames=ds->Init(source, filenames);
     int rid=0;
-    Shape s(source.shape());
+    const Shape &s=source.shape();
     FloatVector record;
     for(int i=0;i<s.width()*s.height()*s.channels();i++)
       record.add_data(0);
+    VLOG(3)<<"start loading data "<<ds->name()<<" record size "<<record.data_size();
     while(!ds->eof()){
+      VLOG(3)<<"read record";
       ds->NextRecord(&record);
+      VLOG(3)<<"put record";
       mc_.PutData(stores.at(ds->name()), rid++, record);
     }
+    VLOG(3)<<"finish loading data";
     delete ds;
   }
 }

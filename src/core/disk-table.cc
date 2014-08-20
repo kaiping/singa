@@ -38,7 +38,7 @@ void DiskTable::Load(){
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
 				StringPrintf("%s/%s", FLAGS_data_dir.c_str(),
-						disk_info()->name_prefix.c_str()));
+						table_info_->name_prefix.c_str()));
 		for (size_t i = 0; i < files.size(); i++) {
 			FileBlock *block = new FileBlock();
 			block->info = files[i];
@@ -61,11 +61,11 @@ void DiskTable::Load(){
 
 void DiskTable::DumpToFile(const DiskData* data){
 	if (!file_)
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),disk_info()->name_prefix.c_str(),data->block_number()), "w");
+		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),table_info_->name_prefix.c_str(),data->block_number()), "w");
 
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),disk_info()->name_prefix.c_str(),data->block_number()), "w");
+		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),table_info_->name_prefix.c_str(),data->block_number()), "w");
 		current_block_ = data->block_number();
 	}
 
@@ -80,19 +80,19 @@ void DiskTable::put_str(const string& k, const string& v){
 
 		current_write_record_ = new DiskData();
 		current_write_record_->set_block_number(current_block_);
-		current_write_record_->set_table(disk_info()->id);
+		current_write_record_->set_table(id());
 	}
 	if (current_buffer_count_>=FLAGS_table_buffer){
 		while (!(buffer_->add_data_records(current_write_record_)))
 				Sleep(FLAGS_sleep_time);
 
 		current_write_record_ = new DiskData();
-		if (total_buffer_count_>=disk_info()->max_size){
+		if (total_buffer_count_>=table_info_->max_size){
 			current_block_++;
 			total_buffer_count_=0;
 		}
 		current_write_record_->set_block_number(current_block_);
-		current_write_record_->set_table(disk_info()->id);
+		current_write_record_->set_table(id());
 		current_buffer_count_=0;
 	}
 
@@ -172,7 +172,7 @@ void DiskTable::Next(){
 }
 
 void DiskTable::SendDataBuffer(const DiskData& data){
-	int dest = disk_info()->fixed_server_id;
+	int dest = table_info_->fixed_server_id;
 	if (dest==-1)
 		dest = data.block_number()%(GlobalContext::Get()->num_table_servers());
 

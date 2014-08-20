@@ -8,6 +8,7 @@ namespace lapis {
 const std::string LabelSource::type = "LabelSource";
 const shared_ptr<StringVec> LabelSource::Init(const DataSourceProto &ds_proto,
       shared_ptr<StringVec>& filenames){
+  VLOG(3)<<"init label source";
   DataSource::Init(ds_proto,filenames);
   label_path_ = ds_proto.path();
   return LoadData(filenames);

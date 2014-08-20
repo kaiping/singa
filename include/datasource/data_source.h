@@ -29,7 +29,7 @@ class DataSource {
  public:
   static std::map<string, Shape> ShapesOf(const DataSourceProtos &sources);
   virtual ~DataSource(){}
-  const shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
+  virtual const shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
       shared_ptr<StringVec>& filenames);
   virtual void ToProto(DataSourceProto *ds_proto);
   virtual void NextRecord(FloatVector* record)=0;

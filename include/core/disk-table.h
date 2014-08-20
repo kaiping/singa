@@ -19,22 +19,21 @@ using google::protobuf::Message;
 
 namespace lapis {
 
-struct DiskTableDescriptor{
-		DiskTableDescriptor(int id, const string name, int max_size): id(id),
-				max_size(max_size), name_prefix(name), fixed_server_id(-1) {}
-
-		DiskTableDescriptor(const DiskTableDescriptor* table){
-			memcpy(this, table, sizeof(*table));
+struct DiskTableDescriptor: TableDescriptor{
+		DiskTableDescriptor(int id, const string name, int ms): TableDescriptor(id,0) {
+			max_size = ms;
+			name_prefix = name;
+			fixed_server_id = -1;
 		}
 
-		int id, max_size;
+		//DiskTableDescriptor(const TableDescriptor* table){
+		//	memcpy(this, table, sizeof(*table));
+		//}
+
+		int max_size;
 		string name_prefix;
 
 		int fixed_server_id;
-
-		//  this two have to be set
-		void* key_marshal;
-		void* value_marshal;
 };
 
 //  iterate through TableData messages in each block
@@ -81,6 +80,7 @@ class DiskTable: public GlobalTable {
 		};
 
 		DiskTable(DiskTableDescriptor *table){
+			Init(table);
 			table_info_ = table;
 			current_block_ = current_buffer_count_=total_buffer_count_ = 0;
 			file_ = NULL;
@@ -109,21 +109,23 @@ class DiskTable: public GlobalTable {
   //  done storing, close open file
   void finalize_data(){if (file_) delete file_;}
 
-  bool done(); //no more data
-// to be turned into K,V by TypedDiskTable
- void Next();
-		DiskTableDescriptor* disk_info(){return table_info_;}
+//  DiskTableDescriptor* disk_info() const {return table_info_;}
+
+  bool done();
+  void Next();
+
+  DiskTableDescriptor* disk_info(){return table_info_;}
 
     bool has_loaded() {return has_loaded_;}
 		int get_shard_str(StringPiece key){return -1;}
 
-		// override TableBase::id()
-		virtual int id() {
-		    return disk_info()->id;
-		}
-    virtual int num_shards() {
-      return 0;
-    }
+// override TableBase::id()
+ //  virtual int id() {
+//		    return disk_info()->id;
+//		}
+ //   virtual int num_shards() {
+ //     return 0;
+ //   }
 
 	private:
 
@@ -172,8 +174,10 @@ class TypedDiskTable: public DiskTable{
 
 template <class K, class V>
 void TypedDiskTable<K,V>::put(const K& k, const V& v){
-	string k_str = marshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k);
-	string v_str = marshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v);
+  VLOG(3)<<"put to disk table";
+	string k_str = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
+	string v_str = marshal(static_cast<Marshal<V>*>(this->info().value_marshal), v);
+  VLOG(3)<<"after marshal";
 	put_str(k_str,v_str);
 }
 
@@ -182,8 +186,8 @@ template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	*k = unmarshal(static_cast<Marshal<K>*>(this->disk_info()->value_marshal), k_str);
-	*v = unmarshal(static_cast<Marshal<V>*>(this->disk_info()->value_marshal), v_str);
+	*k = unmarshal(static_cast<Marshal<K>*>(this->info().value_marshal), k_str);
+	*v = unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
 }
 
 }  // namespace lapis

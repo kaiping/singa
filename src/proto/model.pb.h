@@ -188,28 +188,28 @@ class Shape : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional int64 num = 4;
+  // optional int64 num = 4 [default = 0];
   inline bool has_num() const;
   inline void clear_num();
   static const int kNumFieldNumber = 4;
   inline ::google::protobuf::int64 num() const;
   inline void set_num(::google::protobuf::int64 value);
 
-  // optional int32 channels = 6 [default = 3];
+  // optional int32 channels = 6 [default = 1];
   inline bool has_channels() const;
   inline void clear_channels();
   static const int kChannelsFieldNumber = 6;
   inline ::google::protobuf::int32 channels() const;
   inline void set_channels(::google::protobuf::int32 value);
 
-  // optional int32 height = 7 [default = 0];
+  // optional int32 height = 7 [default = 1];
   inline bool has_height() const;
   inline void clear_height();
   static const int kHeightFieldNumber = 7;
   inline ::google::protobuf::int32 height() const;
   inline void set_height(::google::protobuf::int32 value);
 
-  // optional int32 width = 8 [default = 0];
+  // optional int32 width = 8 [default = 1];
   inline bool has_width() const;
   inline void clear_width();
   static const int kWidthFieldNumber = 8;
@@ -980,28 +980,28 @@ class MeanProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional int32 num = 1;
+  // optional int32 num = 1 [default = 0];
   inline bool has_num() const;
   inline void clear_num();
   static const int kNumFieldNumber = 1;
   inline ::google::protobuf::int32 num() const;
   inline void set_num(::google::protobuf::int32 value);
 
-  // optional int32 channels = 2;
+  // optional int32 channels = 2 [default = 0];
   inline bool has_channels() const;
   inline void clear_channels();
   static const int kChannelsFieldNumber = 2;
   inline ::google::protobuf::int32 channels() const;
   inline void set_channels(::google::protobuf::int32 value);
 
-  // optional int32 height = 3;
+  // optional int32 height = 3 [default = 0];
   inline bool has_height() const;
   inline void clear_height();
   static const int kHeightFieldNumber = 3;
   inline ::google::protobuf::int32 height() const;
   inline void set_height(::google::protobuf::int32 value);
 
-  // optional int32 width = 4;
+  // optional int32 width = 4 [default = 0];
   inline bool has_width() const;
   inline void clear_width();
   static const int kWidthFieldNumber = 4;
@@ -2282,7 +2282,7 @@ class FloatVector : public ::google::protobuf::Message {
 
 // Shape
 
-// optional int64 num = 4;
+// optional int64 num = 4 [default = 0];
 inline bool Shape::has_num() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -2304,7 +2304,7 @@ inline void Shape::set_num(::google::protobuf::int64 value) {
   num_ = value;
 }
 
-// optional int32 channels = 6 [default = 3];
+// optional int32 channels = 6 [default = 1];
 inline bool Shape::has_channels() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -2315,7 +2315,7 @@ inline void Shape::clear_has_channels() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void Shape::clear_channels() {
-  channels_ = 3;
+  channels_ = 1;
   clear_has_channels();
 }
 inline ::google::protobuf::int32 Shape::channels() const {
@@ -2326,7 +2326,7 @@ inline void Shape::set_channels(::google::protobuf::int32 value) {
   channels_ = value;
 }
 
-// optional int32 height = 7 [default = 0];
+// optional int32 height = 7 [default = 1];
 inline bool Shape::has_height() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -2337,7 +2337,7 @@ inline void Shape::clear_has_height() {
   _has_bits_[0] &= ~0x00000004u;
 }
 inline void Shape::clear_height() {
-  height_ = 0;
+  height_ = 1;
   clear_has_height();
 }
 inline ::google::protobuf::int32 Shape::height() const {
@@ -2348,7 +2348,7 @@ inline void Shape::set_height(::google::protobuf::int32 value) {
   height_ = value;
 }
 
-// optional int32 width = 8 [default = 0];
+// optional int32 width = 8 [default = 1];
 inline bool Shape::has_width() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -2359,7 +2359,7 @@ inline void Shape::clear_has_width() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void Shape::clear_width() {
-  width_ = 0;
+  width_ = 1;
   clear_has_width();
 }
 inline ::google::protobuf::int32 Shape::width() const {
@@ -3618,7 +3618,7 @@ inline void EdgeProto::set_pooling_method(::lapis::EdgeProto_PoolingMethod value
 
 // MeanProto
 
-// optional int32 num = 1;
+// optional int32 num = 1 [default = 0];
 inline bool MeanProto::has_num() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -3640,7 +3640,7 @@ inline void MeanProto::set_num(::google::protobuf::int32 value) {
   num_ = value;
 }
 
-// optional int32 channels = 2;
+// optional int32 channels = 2 [default = 0];
 inline bool MeanProto::has_channels() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -3662,7 +3662,7 @@ inline void MeanProto::set_channels(::google::protobuf::int32 value) {
   channels_ = value;
 }
 
-// optional int32 height = 3;
+// optional int32 height = 3 [default = 0];
 inline bool MeanProto::has_height() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -3684,7 +3684,7 @@ inline void MeanProto::set_height(::google::protobuf::int32 value) {
   height_ = value;
 }
 
-// optional int32 width = 4;
+// optional int32 width = 4 [default = 0];
 inline bool MeanProto::has_width() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }

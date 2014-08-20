@@ -50,11 +50,11 @@ void TableServer::HandleShardAssignment() {
     const ShardAssignment &a = shard_req.assign(i);
     GlobalTable *t = tables_.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
-    EmptyMessage empty;
-    net_->Send(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
     LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)",
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }
+  EmptyMessage empty;
+  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
   VLOG(3)<<"finish handle shard assignment";
 }
 

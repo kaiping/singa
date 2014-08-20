@@ -93,7 +93,7 @@ class TableBase {
  public:
   virtual void Init(const TableDescriptor *info) {
     info_ = new TableDescriptor(*info);
-    CHECK(info_->accum != NULL);
+    //CHECK(info_->accum != NULL);
     CHECK(info_->key_marshal != NULL);
     CHECK(info_->value_marshal != NULL);
   }

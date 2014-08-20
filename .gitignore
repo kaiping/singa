@@ -10,6 +10,9 @@
 *.bak
 *.P
 *.odp
+*.project
+*.cproject
 log
 cscope.*
 build/
+include/proto/*.h

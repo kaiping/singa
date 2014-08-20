@@ -17,6 +17,7 @@ const std::string RGBDirSource::type = "RGBDirSource";
 
 const std::shared_ptr<StringVec> RGBDirSource::Init(const DataSourceProto &ds_proto,
       std::shared_ptr<StringVec>& filenames){
+  VLOG(3)<<"init rgb source";
   DataSource::Init(ds_proto, filenames);
   directory_ = ds_proto.path();
   if(ds_proto.has_mean_file())
@@ -46,6 +47,7 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
   if (keys){
     if(!keys->empty())
       image_names_ = keys;
+    VLOG(3)<<"copy file names";
   } else {
     image_names_ = std::make_shared<StringVec>();
     LOG(INFO) << "the dir is " << directory_;
@@ -60,6 +62,7 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
   }
   // read mean of the images
   if(mean_file_.length()) {
+    VLOG(3)<<"mean file path "<<mean_file_;
     ReadProtoFromBinaryFile(mean_file_.c_str(), &data_mean_);
     VLOG(2)<<"read mean proto, of shape: "
       <<data_mean_.num()<<" "<<data_mean_.channels()

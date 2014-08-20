@@ -174,7 +174,9 @@ const std::map<int,GlobalTable*> ModelController::GetTables() {
   std::map<int,GlobalTable*> tables;
   VLOG(2)<<"disk table size "<<disk_tables_.size();
   for(auto& entry: disk_tables_){
-    tables[entry.second->id()]=(entry.second);
+    VLOG(3)<<"table id "<<entry.second->id()<<" num shards "<<entry.second->num_shards();
+    tables[entry.second->id()]=entry.second;
+    VLOG(3)<<"after inser into table";
     VLOG(3)<<"after cast, num shards "<<tables[entry.second->id()]->num_shards();
   }
   VLOG(3)<<"finish get disk tables";

@@ -75,7 +75,7 @@ class RGBDirSource : public DataSource {
   //! image size in terms of floats
   int image_size_;
   std::string mean_file_;
-  MeanProto data_mean_;
+  MeanProto *data_mean_;
   //! names of images under the directory_
   std::shared_ptr<StringVec> image_names_;
 };

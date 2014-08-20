@@ -63,10 +63,11 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
   // read mean of the images
   if(mean_file_.length()) {
     VLOG(3)<<"mean file path "<<mean_file_;
-    ReadProtoFromBinaryFile(mean_file_.c_str(), &data_mean_);
+    data_mean_=new MeanProto();
+    ReadProtoFromBinaryFile(mean_file_.c_str(), data_mean_);
     VLOG(2)<<"read mean proto, of shape: "
-      <<data_mean_.num()<<" "<<data_mean_.channels()
-      <<" "<<data_mean_.height() <<" "<<data_mean_.width();
+      <<data_mean_->num()<<" "<<data_mean_->channels()
+      <<" "<<data_mean_->height() <<" "<<data_mean_->width();
   }
   return image_names_;
 }
@@ -106,7 +107,7 @@ void readImage(const std::string &path, int height, int width,
 void RGBDirSource::NextRecord(FloatVector *record) {
   VLOG(3)<<"GetData";
   readImage(directory_ + "/" + image_names_->at(offset_), height_,
-              width_, data_mean_.data().data(),
+              width_, data_mean_->data().data(),
               record->mutable_data()->mutable_data());
   offset_++;
 }
@@ -122,7 +123,7 @@ void RGBDirSource::GetData(Blob *blob) {
     if (offset_ == size_)
       offset_ = 0;
     readImage(directory_ + "/" + image_names_->at(offset_), height_,
-              width_, data_mean_.data().data(), &addr[i * image_size_]);
+              width_, data_mean_->data().data(), &addr[i * image_size_]);
   }
 }
 }  // namespace lapis

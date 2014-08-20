@@ -76,8 +76,9 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
-    while (key_locks_.empty() && request_queues_.empty())
+    while (key_locks_.empty() && request_queues_.empty()){
       Sleep(FLAGS_sleep_time);
+    }
     Queue &key_queue = request_queues_[key_index_];
     {
       boost::recursive_mutex &key_lock = *(key_locks_[key_index_]);

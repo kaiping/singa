@@ -5,8 +5,8 @@
 #include <gflags/gflags.h>
 
 DEFINE_string(data_dir,"/home/dinhtta/tmp/", "path to data store");
-DEFINE_int32(table_buffer, 100,0);
-DEFINE_int32(io_buffer_size,100,0);
+DEFINE_int32(table_buffer, 2,0);
+DEFINE_int32(io_buffer_size,2,0);
 DECLARE_double(sleep_time);
 
 namespace lapis{
@@ -81,11 +81,13 @@ void DiskTable::put_str(const string& k, const string& v){
 		current_write_record_ = new DiskData();
 		current_write_record_->set_block_number(current_block_);
 		current_write_record_->set_table(id());
+		VLOG(3) << "Initialized write IO buffer";
 	}
 	if (current_buffer_count_>=FLAGS_table_buffer){
+		VLOG(3) << "Try adding to IO write buffer ";
 		while (!(buffer_->add_data_records(current_write_record_)))
 				Sleep(FLAGS_sleep_time);
-
+		VLOG(3) << "Added to IO write buffer ";
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_>=table_info_->max_size){
 			current_block_++;
@@ -155,9 +157,13 @@ void DiskTable::read_loop(){
 void DiskTable::write_loop(){
 	while (!done_writing_){
 		DiskData* data;
-		while (!(data=buffer_->next_data_records()))
+		VLOG(3) << "Getting data to send to server, buffer is empty  " << buffer_->empty();
+		while (!(data=buffer_->next_data_records())){
 			Sleep(FLAGS_sleep_time);
+		}
+		VLOG(3) << "Sending data block to server ";
 		SendDataBuffer(*data);
+
 	}
 }
 
@@ -197,7 +203,7 @@ bool PrefetchedBuffer::empty(){
 bool PrefetchedBuffer::add_data_records(DiskData* data){
 	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
 
-	if ((int)(data_queue_.size())<max_size_){
+	if ((int)(data_queue_.size())<max_size_-1){
 		data_queue_.push_back(data);
 		return true;
 	}
@@ -206,7 +212,7 @@ bool PrefetchedBuffer::add_data_records(DiskData* data){
 
 DiskData* PrefetchedBuffer::next_data_records(){
 	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
-	if ((int)(data_queue_.size())<max_size_){
+	if (data_queue_.size()>0 && (int)(data_queue_.size())<max_size_){
 		DiskData* data = data_queue_.front();
 		data_queue_.pop_front();
 		return data;

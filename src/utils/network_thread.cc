@@ -40,15 +40,17 @@ NetworkThread::NetworkThread() {
   MPI::Init_thread(MPI_THREAD_SINGLE);
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
+  id_ = world_->Get_rank();
+    VLOG(3)<<"rank of this process "<<id_;
+    for (int i = 0; i < kMaxMethods; ++i) {
+      callbacks_[i] = NULL;
+      handles_[i] = NULL;
+    }
+
   sender_and_reciever_thread_ = new boost::thread(&NetworkThread::NetworkLoop,
       this);
   processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
-  id_ = world_->Get_rank();
-  VLOG(3)<<"rank of this process "<<id_;
-  for (int i = 0; i < kMaxMethods; ++i) {
-    callbacks_[i] = NULL;
-    handles_[i] = NULL;
-  }
+
 //  initialize message queue
   auto gc = GlobalContext::Get();
   if (gc->synchronous())

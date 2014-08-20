@@ -177,8 +177,8 @@ void TypedDiskTable<K,V>::put(const K& k, const V& v){
   VLOG(3)<<"put to disk table";
 	string k_str = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
 	string v_str = marshal(static_cast<Marshal<V>*>(this->info().value_marshal), v);
-  VLOG(3)<<"after marshal";
 	put_str(k_str,v_str);
+	 VLOG(3)<<"after put to disk table";
 }
 
 // TODO(anh, wangwei) can we reduce the memory copy to tmp string k_str here

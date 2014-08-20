@@ -28,6 +28,7 @@ Coordinator::~Coordinator() {
       delete taskid;
     delete state;
   }
+  Shutdown();
 }
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
@@ -194,6 +195,7 @@ void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     net.Setup(1, kAllocParam|kInitParam, shapes);
     mc_.Put(net.params());
   }
+  VLOG(3)<<"finish init dist storage";
 }
 
 bool Coordinator::DoValidationOn(int worker_id) {
@@ -237,7 +239,6 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
     }
     Sleep(FLAGS_sleep_time);
   }
-  Shutdown();
 }
 
 void Coordinator::Run(bool load_data, bool do_train) {

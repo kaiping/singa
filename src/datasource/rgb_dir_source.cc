@@ -75,10 +75,13 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
 void readImage(const std::string &path, int height, int width,
                const float *mean, float *val) {
   cv::Mat cv_img;
+  VLOG(3)<<path;
   if (height > 0 && width > 0) {
+    VLOG(3)<<"resize image";
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
     cv::resize(cv_img_origin, cv_img, cv::Size(height, width));
   } else {
+    VLOG(3)<<"no image resize";
     cv_img = cv::imread(path, CV_LOAD_IMAGE_COLOR);
   }
   CHECK(cv_img.data != NULL) << "Could not open or find file " << path;

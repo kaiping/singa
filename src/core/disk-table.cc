@@ -4,7 +4,7 @@
 #include "utils/global_context.h"
 #include <gflags/gflags.h>
 
-DEFINE_string(data_dir,"/home/dinhtta/tmp/", "path to data store");
+DEFINE_string(data_dir,"/tmp/lapis/", "path to data store");
 DEFINE_int32(table_buffer, 2,0);
 DEFINE_int32(io_buffer_size,2,0);
 DECLARE_double(sleep_time);

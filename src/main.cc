@@ -20,7 +20,7 @@ DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configurat
 DEFINE_bool(load_data, true, "Load data to distributed tables");
 DEFINE_bool(run, false,  "run training algorithm");
 // for debugging use
-//DEFINE_int32(v, 3, "vlog controller");
+DEFINE_int32(v, 3, "vlog controller");
 
 int main(int argc, char **argv) {
   FLAGS_logtostderr=1;

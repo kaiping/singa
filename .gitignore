@@ -14,4 +14,5 @@
 log
 cscope.*
 build/
+tmp/
 include/proto/*.h

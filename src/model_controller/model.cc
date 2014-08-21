@@ -230,12 +230,14 @@ int ModelController::CreateParamStore() {
 void ModelController::CreateTables(const std::map<int, int>& tables){
   for(auto& entry: tables) {
     if(entry.first%2==kParamStore)
-      param_table_=CreateTable(entry.second,
-          GlobalContext::Get()->num_table_servers(), new Sharding::Mod,
-          new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
+			param_table_ = CreateTable(entry.second,
+					GlobalContext::Get()->num_table_servers(),
+					new Sharding::Mod, new MyAcc, new Marshal<int>,
+					new Marshal<FloatVector>);
     else
-      disk_tables_[entry.first]=CreateDiskTable(entry.second,256*10, "unknown",
-        new Marshal<int>, new Marshal<FloatVector>);
+			disk_tables_[entry.first] = CreateDiskTable(entry.second, 256 * 10,
+					StringPrintf("table_%d", entry.second), new Marshal<int>,
+					new Marshal<FloatVector>);
   }
 }
 

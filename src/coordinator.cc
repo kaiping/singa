@@ -98,6 +98,7 @@ void Coordinator::Shutdown() {
     mpi_->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
   }
   mpi_->Flush();
+  mpi_->Shutdown();
 }
 
 // load all data sources (e.g., image and label) for either training data,
@@ -121,6 +122,7 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
       VLOG(3)<<"put record";
       mc_.PutData(stores.at(ds->name()), rid++, record);
     }
+    mc_.FlushData(stores.at(ds->name()));
     VLOG(3)<<"finish loading data";
     delete ds;
   }
@@ -133,6 +135,7 @@ const StringIntMap Coordinator::CreateDataStores(
   for(auto& ds: sources){
     CHECK(stores.find(ds.name())==stores.end());
     stores[ds.name()]= mc_.CreateDataStore(ds.name());
+    VLOG(3) << "Created disk table with name " << ds.name();
   }
   return ToProtoMap(stores);
 }

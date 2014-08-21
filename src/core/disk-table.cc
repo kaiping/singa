@@ -4,7 +4,7 @@
 #include "utils/global_context.h"
 #include <gflags/gflags.h>
 
-DEFINE_string(data_dir,"/tmp/lapis/", "path to data store");
+DEFINE_string(data_dir,"tmp", "path to data store");
 DEFINE_int32(table_buffer, 2,0);
 DEFINE_int32(io_buffer_size,2,0);
 DECLARE_double(sleep_time);
@@ -61,15 +61,22 @@ void DiskTable::Load(){
 
 void DiskTable::DumpToFile(const DiskData* data){
 	if (!file_)
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),table_info_->name_prefix.c_str(),data->block_number()), "w");
+		file_ = new RecordFile(
+				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), data->block_number()),
+				"w");
 
+	VLOG(3) << "DUMPING to file " << file_->name();
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
-		file_ = new RecordFile(StringPrintf("%s/%s_d",FLAGS_data_dir.c_str(),table_info_->name_prefix.c_str(),data->block_number()), "w");
+		file_ = new RecordFile(
+				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), data->block_number()),
+				"w");
 		current_block_ = data->block_number();
 	}
-
 	file_->write(*data);
+
 }
 
 void DiskTable::put_str(const string& k, const string& v){

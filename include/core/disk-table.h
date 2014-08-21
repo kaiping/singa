@@ -107,7 +107,12 @@ class DiskTable: public GlobalTable {
   void finish_put(); //  end of file, flush all buffers
 
   //  done storing, close open file
-  void finalize_data(){if (file_) delete file_;}
+  void finalize_data(){
+	  if (file_){
+		  delete file_;
+	  }
+	  file_=NULL;
+  }
 
 //  DiskTableDescriptor* disk_info() const {return table_info_;}
 

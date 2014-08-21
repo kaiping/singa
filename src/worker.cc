@@ -66,11 +66,13 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
   return config;
 }
 void Worker::Shutdown() {
+	VLOG(3) << "Worker is shutting down ...";
   mpi_->Flush();
   mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;
   int src = 0;
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
+  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
   mpi_->Shutdown();
 }
 

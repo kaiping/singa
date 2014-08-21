@@ -22,12 +22,13 @@ void Sleep(double t){
   nanosleep(&req, NULL);
 }
 void ShutdownMPI() {
+	VLOG(3) << "Calling Shutdown at exit ... ";
   NetworkThread::Get()->Shutdown();
 }
 std::shared_ptr<NetworkThread> NetworkThread::Get() {
   if(!instance_)
     instance_.reset(new NetworkThread());
-  atexit(&ShutdownMPI);
+  //atexit(&ShutdownMPI);
   return instance_;
 }
 NetworkThread::NetworkThread() {
@@ -68,10 +69,9 @@ void NetworkThread::CollectActive() {
     return;
   boost::recursive_mutex::scoped_lock sl(send_lock);
   std::unordered_set<RPCRequest *>::iterator i = active_sends_.begin();
-  VLOG(3) << "Pending sends: " << active_sends_.size();
   while (i != active_sends_.end()) {
     RPCRequest *r = (*i);
-    VLOG(3) << "Pending: " << MP(id(), MP(r->target, r->rpc_type));
+    //VLOG(3) << "Pending: " << MP(id(), MP(r->target, r->rpc_type));
     if (r->finished()) {
       if (r->failures > 0) {
         LOG(INFO) << "Send " << MP(id(), r->target) << " of size " << r->payload.size()
@@ -83,7 +83,6 @@ void NetworkThread::CollectActive() {
     }
     ++i;
   }
-  VLOG(3)<<"end of ColelctActive";
 }
 
 //  loop that receives messages. unlike in piccolo, all requests
@@ -213,10 +212,10 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 }
 
 void NetworkThread::Shutdown() {
-  LOG(INFO) << StringPrintf("Process %d is shutting down ... ", id());
   if (running_) {
     running_ = false;
     MPI_Finalize();
+
   }
 }
 

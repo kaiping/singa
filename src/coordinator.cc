@@ -121,6 +121,7 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
       VLOG(3)<<"put record";
       mc_.PutData(stores.at(ds->name()), rid++, record);
     }
+    mc_.FlushData(stores.at(ds->name()));
     VLOG(3)<<"finish loading data";
     delete ds;
   }

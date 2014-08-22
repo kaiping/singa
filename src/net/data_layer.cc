@@ -10,14 +10,14 @@ const std::string DataLayer::kType = "DataLayer";
 
 void DataLayer::Init(const LayerProto &proto) {
   Layer::Init(proto);
-  data_source_name_ = proto.data_source();
+  data_source_= proto.data_source();
   mirror_=proto.mirror();
   cropsize_=proto.cropsize();
 }
 
 void DataLayer::ToProto(LayerProto *layer_proto) {
   Layer::ToProto(layer_proto);
-  layer_proto->set_data_source(data_source_name_);
+  layer_proto->set_data_source(data_source_);
 }
 
 void DataLayer::SetInputShape(int batchsize, const Shape &data_shape){

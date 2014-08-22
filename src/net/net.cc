@@ -91,16 +91,20 @@ void Net::Setup(const char flag,const int batchsize,
                 const std::map<std::string, Shape> &shapes){
   for (auto *layer : layers()){
     if (layer->HasInput()){
-      CHECK(shapes.find(layer->name())!=shapes.end());
+      VLOG(3)<<layer->name();
       DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      std::string name=dlayer->name();
-      dlayer->SetInputShape(batchsize, shapes.at(name));
+      std::string source=dlayer->data_source();
+      CHECK(shapes.find(source)!=shapes.end());
+      dlayer->SetInputShape(batchsize, shapes.at(source));
     }
   }
   for(auto *layer : layers()) {
+    VLOG(3)<<layer->name();
     layer->Setup(flag);
-    for (auto *edge : layer->out_edges())
+    for (auto *edge : layer->out_edges()){
+      VLOG(3)<<edge->name();
       edge->Setup(flag);
+    }
   }
 }
 
@@ -110,10 +114,10 @@ void Net::Setup(const char flag,const int batchsize,
   Setup(flag, batchsize, shapes);
   for (auto *layer : layers()){
     if (layer->HasInput()){
-      CHECK(shapes.find(layer->name())!=shapes.end());
       DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      std::string name=dlayer->name();
-      dlayer->SetInputStore(stores.at(name));
+      std::string source=dlayer->data_source();
+      CHECK(shapes.find(source)!=shapes.end());
+      dlayer->SetInputStore(stores.at(source));
     }
   }
 }

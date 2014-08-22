@@ -160,6 +160,7 @@ const DataStorageConfig Coordinator::CreateDataStorage(
 }
 
 const ParamStorageConfig Coordinator::CreateParamStorage() {
+  VLOG(3)<<"create param storage";
   ParamStorageConfig config;
   int sid=mc_.CreateParamStore();
   StringIntMap *map=config.mutable_param_stores();
@@ -172,12 +173,11 @@ const ParamStorageConfig Coordinator::CreateParamStorage() {
 void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     const ModelProto& model){
   VLOG(3)<<"setup storage";
-  Net net(model.net());
   DistributedStorageConfig config;
-  if(load_data)
     config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
   if(do_train)
     config.mutable_psconfig()->CopyFrom(CreateParamStorage());
+  CHECK(config.has_dsconfig()||config.has_psconfig());
   VLOG(3)<<"send storage config";
   mpi_->Broadcast(MTYPE_STORAGE_CONFIG, config);
   VLOG(3)<<"after send storage config";

@@ -32,6 +32,7 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
       // TODO(wangwei) Error has not implemented mc.GetData.
       auto dlayer=dynamic_cast<DataLayer*>(layer);
       Blob& blob=dlayer->feature(nullptr);
+      VLOG(3)<<"getting data..";
       model_controller_->GetData(dlayer->store_id(), &blob);
     }
     layer->Forward();

@@ -69,8 +69,9 @@ class Blob {
    * @param width e.g., num of cols of the weight matrix
    */
   void Resize(int num, int channels, int height,
-              int width, const bool alloc=true);
+              int width, const bool alloc);
 
+  void Resize(int num, int channels, int height, int width);
   /**
    * Return num of instances stored in this blob
    */

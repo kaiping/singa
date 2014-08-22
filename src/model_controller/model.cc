@@ -35,17 +35,23 @@ void ModelController::FlushData(int sid){
 }
 
 void ModelController::GetData(int sid, Blob *blob) {
+  VLOG(3)<<"GetData "<<disk_tables_.size();
+  CHECK(disk_tables_.find(sid)!=disk_tables_.end());
   TDiskTable* table= dynamic_cast<TDiskTable*>(disk_tables_.at(sid));
-  if(!table->has_loaded())
+  if(!table->has_loaded()){
+    VLOG(3)<<"load table";
     table->Load();
+  }
+  VLOG(3)<<"table loaded";
   int len=blob->record_length();
+  VLOG(3)<<"record len "<<len;
+  FloatVector v;
   for(int i=0;i<blob->num();i++){
     int k;
-    FloatVector *v=nullptr;
     if(table->done())
       table->Load();
-    table->get(&k, v);
-    memcpy(blob->dptr+i*len, v->mutable_data(), len*sizeof(float));
+    table->get(&k, &v);
+    memcpy(blob->dptr+i*len, v.mutable_data(), len*sizeof(float));
   }
 }
 

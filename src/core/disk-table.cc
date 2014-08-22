@@ -34,7 +34,7 @@ DiskData* DiskTableIterator::value(){ return data_;}
 void DiskTable::Load(){
 	//  get all files on the first load.
 	//  on re-load, simply reset the pointer
-
+  VLOG(3)<<"disktable loading";
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
 				StringPrintf("%s/%s", FLAGS_data_dir.c_str(),

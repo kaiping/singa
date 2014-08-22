@@ -17,8 +17,8 @@
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_bool(load_data, true, "Load data to distributed tables");
-DEFINE_bool(run, false,  "run training algorithm");
+DEFINE_bool(load_data, false, "Load data to distributed tables");
+DEFINE_bool(run, true,  "run training algorithm");
 // for debugging use
 DEFINE_int32(v, 3, "vlog controller");
 
@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
   FLAGS_logtostderr=1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+  VLOG(3)<<"load data "<<FLAGS_load_data<<" run "<<FLAGS_run;
 
   // Note you can register you own layer/edge/datasource here
   //

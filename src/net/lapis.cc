@@ -18,8 +18,8 @@ Blob::Blob(int num, int channels, int height, int width, const bool alloc) {
 Blob::Blob(const Shape& shape) {
   Blob(shape.num(),shape.channels(), shape.height(),shape.width(), true);
 }
-void Blob::Resize(int num, int channels, int height,
-                  int width, const bool alloc) {
+
+void Blob::Resize(int num, int channels, int height, int width) {
   if (num_ != num || channels_ != channels || height_ != height
       || width_ != width) {
     num_ = num;
@@ -36,8 +36,30 @@ void Blob::Resize(int num, int channels, int height,
         LOG(INFO)<<"DELETE BLOB DPTR!!";
         delete dptr;
       }
-      if (alloc)
-        dptr = new float[length_];
+      dptr = new float[length_];
+    }
+  }
+}
+
+void Blob::Resize(int num, int channels, int height,
+                  int width, const bool alloc) {
+  if (num_ != num || channels_ != channels || height_ != height
+      || width_ != width) {
+    num_ = num;
+    channels_ = channels;
+    height_ = height;
+    width_ = width;
+
+    record_length_ = channels_ * height_ * width_;
+    if(length_!=num_*record_length_||alloc) {
+      count_-=length_;
+      length_ = num_ * record_length_;
+      count_+=length_;
+      if (dptr != nullptr) {
+        LOG(INFO)<<"DELETE BLOB DPTR!!";
+        delete dptr;
+      }
+      dptr = new float[length_];
     }
   }
 }

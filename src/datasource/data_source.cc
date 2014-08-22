@@ -30,7 +30,6 @@ const std::shared_ptr<StringVec> DataSource::Init(
 }
 
 void DataSource::ToProto(DataSourceProto *proto) {
-  proto->set_name(name_);
   proto->set_offset(offset_);
 }
 

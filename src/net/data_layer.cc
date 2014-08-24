@@ -34,6 +34,7 @@ void DataLayer::SetInputStore(int store_id) {
 void DataLayer::Setup(const char flag) {
   VLOG(2)<<"DataLayer: "<<name_<<" cropsize "<<cropsize_;
   if(cropsize_){
+    VLOG(3)<<"crop size "<<cropsize_<<" alloc data "<<AllocData(flag);
     data_.Resize(batchsize_, channels_,cropsize_, cropsize_, AllocData(flag));
     tmp_.Resize(batchsize_,channels_,width_, height_, AllocData(flag));
     VLOG(2)<<" shape before crop "<<tmp_.tostring()

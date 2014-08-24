@@ -44,14 +44,17 @@ void ModelController::GetData(int sid, Blob *blob) {
   }
   VLOG(3)<<"table loaded";
   int len=blob->record_length();
-  VLOG(3)<<"record len "<<len;
+  VLOG(3)<<"record len "<<len<<" ptr: "<<blob->dptr;
   FloatVector v;
   for(int i=0;i<blob->num();i++){
     int k;
     if(table->done())
       table->Load();
+    VLOG(3)<<"getting data for k "<<k;
     table->get(&k, &v);
+    VLOG(3)<<"done getting data for k "<<k<<" record size: "<<v.data_size();
     memcpy(blob->dptr+i*len, v.mutable_data(), len*sizeof(float));
+    VLOG(3)<<"done memory copy "<<k;
   }
 }
 

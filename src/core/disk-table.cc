@@ -4,7 +4,7 @@
 #include "utils/global_context.h"
 #include <gflags/gflags.h>
 
-DEFINE_string(data_dir,"tmp", "path to data store");
+DEFINE_string(data_dir,"/home/dinhtta/Research/Lapis/tmp", "path to data store");
 DEFINE_int32(table_buffer, 2,0);
 DEFINE_int32(io_buffer_size,2,0);
 DECLARE_double(sleep_time);
@@ -37,14 +37,17 @@ void DiskTable::Load(){
   VLOG(3)<<"disktable loading";
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
-				StringPrintf("%s/%s", FLAGS_data_dir.c_str(),
+				StringPrintf("%s/%s_*", FLAGS_data_dir.c_str(),
 						table_info_->name_prefix.c_str()));
+		VLOG(3) << "Searched for file with prefix " << table_info_->name_prefix << "from dir " << FLAGS_data_dir;
 		for (size_t i = 0; i < files.size(); i++) {
+			VLOG(3) << "Found file "<< files[i].name;
 			FileBlock *block = new FileBlock();
 			block->info = files[i];
 			block->end_pos = files[i].stat.st_size;
 			blocks_.push_back(block);
 		}
+		VLOG(3) << "Finshed loading, number of files = " << files.size();
 	}
   // starting the IO thread
 	buffer_.reset(new PrefetchedBuffer((int)FLAGS_io_buffer_size));
@@ -57,6 +60,7 @@ void DiskTable::Load(){
 	current_read_record_.reset(buffer_->next_data_records());
 	current_idx_ = 0;
   has_loaded_=true;
+  VLOG(3) << "IO thread started, current_read_record = " << current_read_record_;
 }
 
 void DiskTable::DumpToFile(const DiskData* data){
@@ -114,6 +118,7 @@ void DiskTable::put_str(const string& k, const string& v){
 }
 
 void DiskTable::get_str(string *k, string *v){
+	VLOG(3) << "trying to get_str, current_idx_ = " << current_idx_;
 	k->assign((current_read_record_->records(current_idx_)).key());
 	v->assign((current_read_record_->records(current_idx_)).value());
 }

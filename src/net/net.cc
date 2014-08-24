@@ -89,6 +89,7 @@ Net::Net(const NetProto &net_proto) {
 }
 void Net::Setup(const char flag,const int batchsize,
                 const std::map<std::string, Shape> &shapes){
+  VLOG(3)<<"Setup net allocate data: "<<AllocData(flag);
   for (auto *layer : layers()){
     if (layer->HasInput()){
       VLOG(3)<<layer->name();

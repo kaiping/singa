@@ -3,11 +3,11 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei/install
+HOME_DIR := /usr
 # Location of g++
-CXX := $(HOME_DIR)/bin/g++
+CXX := g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include
+INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
@@ -49,7 +49,7 @@ LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OB
 run:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3
+		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
 debug:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb \
 		./lapis.bin

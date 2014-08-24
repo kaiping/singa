@@ -11,6 +11,7 @@
 *.odp
 *.project
 *.cproject
+out
 log
 cscope.*
 build/

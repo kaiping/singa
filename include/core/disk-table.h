@@ -191,8 +191,11 @@ template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	*k = unmarshal(static_cast<Marshal<K>*>(this->info().value_marshal), k_str);
+	VLOG(3) << "read key and value, now marshal them , ";
+	*k = unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k_str);
+	VLOG(3) << "done marshalling key ";
 	*v = unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
+	VLOG(3) << "done marshalling value ";
 }
 
 }  // namespace lapis

@@ -31,7 +31,7 @@ void SetupNet(const int batchsize,
               const DataSourceProtos& sources,
               const std::map<std::string, int> &store_map){
   auto shapes=DataSource::ShapesOf(sources);
-  net->Setup(batchsize, flag, shapes, store_map);
+  net->Setup(flag, batchsize, shapes, store_map);
 }
 
 bool Worker::ShouldIDoValidation(int step) {
@@ -113,6 +113,7 @@ void Worker::Run(bool load_data, bool do_train) {
     if(reset_net_for_training) {
       // workers should allocate memory for data and parameters. No need to
       // Init parameters, because they Get parameters from distributed table
+      VLOG(3)<<"worker reset net for training"<<AllocData(kAllocData|kAllocParam);
       SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
                 model.data().train_data(), train_stores);
       reset_net_for_training=false;

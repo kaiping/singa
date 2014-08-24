@@ -59,6 +59,7 @@ void Blob::Resize(int num, int channels, int height,
         LOG(INFO)<<"DELETE BLOB DPTR!!";
         delete dptr;
       }
+      VLOG(3)<<"Allcoate blob length: "<<length_<<" record len "<<record_length_;
       dptr = new float[length_];
     }
   }

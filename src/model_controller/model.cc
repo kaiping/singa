@@ -53,8 +53,9 @@ void ModelController::GetData(int sid, Blob *blob) {
     VLOG(3)<<"getting data for k "<<k;
     table->get(&k, &v);
     VLOG(3)<<"done getting data for k "<<k<<" record size: "<<v.data_size();
-    memcpy(blob->dptr+i*len, v.mutable_data(), len*sizeof(float));
+    memcpy(blob->dptr+i*len, v.data().data(), len*sizeof(float));
     VLOG(3)<<"done memory copy "<<k;
+    table->Next();
   }
 }
 

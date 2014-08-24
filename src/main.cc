@@ -21,7 +21,7 @@ DEFINE_bool(load_data, false, "Load data to distributed tables");
 DEFINE_bool(run, true,  "run training algorithm");
 // for debugging use
 #ifndef FLAGS_v
-//DEFINE_int32(v, 3, "vlog controller");
+  DEFINE_int32(v, 3, "vlog controller");
 #endif
 
 int main(int argc, char **argv) {

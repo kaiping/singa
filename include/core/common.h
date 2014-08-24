@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <glog/logging.h>
+
 #include "proto/common.pb.h"
 #include "utils/hash.h"
 #include "core/static-initializers.h"

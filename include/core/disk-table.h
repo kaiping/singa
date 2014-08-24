@@ -132,6 +132,9 @@ class DiskTable: public GlobalTable {
  //     return 0;
  //   }
 
+	DiskData* current_write_record_;
+	DiskData* current_read_record_;
+
 	private:
 
 		//  keep adding DiskData to the buffer until out of open files
@@ -152,8 +155,6 @@ class DiskTable: public GlobalTable {
  vector<FileBlock*> blocks_;
 		int current_block_, current_buffer_count_, total_buffer_count_;
 		boost::shared_ptr<DiskTableIterator> current_iterator_;
-		boost::shared_ptr<DiskData> current_read_record_;
-		DiskData* current_write_record_;
 		int current_idx_;
 
     // to write
@@ -191,11 +192,11 @@ template <class K, class V>
 void TypedDiskTable<K,V>::get(K* k, V* v){
 	string k_str, v_str;
 	get_str(&k_str, &v_str);
-	VLOG(3) << "read key and value, now marshal them , ";
-	*k = unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k_str);
-	VLOG(3) << "done marshalling key ";
 	*v = unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
-	VLOG(3) << "done marshalling value ";
+
+
+	*k = unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k_str);
+
 }
 
 }  // namespace lapis

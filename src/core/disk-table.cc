@@ -5,7 +5,7 @@
 #include <gflags/gflags.h>
 
 DEFINE_string(data_dir,"tmp", "path to data store");
-DEFINE_int32(table_buffer, 2,0);
+DEFINE_int32(table_buffer, 1,0);
 DEFINE_int32(io_buffer_size,2,0);
 DECLARE_double(sleep_time);
 
@@ -24,6 +24,7 @@ DiskTableIterator::~DiskTableIterator(){
 }
 
 void DiskTableIterator::Next(){
+	VLOG(3)<< "current file " << file_.name() << " position " << file_.fp->tell();
 	done_ = !file_.read(data_);
 }
 
@@ -53,11 +54,12 @@ void DiskTable::Load(){
 	buffer_.reset(new PrefetchedBuffer((int)FLAGS_io_buffer_size));
 	read_thread_.reset(new boost::thread(&DiskTable::read_loop, this));
 
+	VLOG(3) << "waiting for the IO thread = ";
 	//  wait until we load the first DiskData
 	while (buffer_->empty())
 		Sleep(FLAGS_sleep_time);
-
-	current_read_record_.reset(buffer_->next_data_records());
+	VLOG(3) << "got the first records = ";
+	current_read_record_ = buffer_->next_data_records();
 	current_idx_ = 0;
   has_loaded_=true;
   VLOG(3) << "IO thread started, current_read_record = " << current_read_record_;
@@ -94,20 +96,6 @@ void DiskTable::put_str(const string& k, const string& v){
 		current_write_record_->set_table(id());
 		VLOG(3) << "Initialized write IO buffer";
 	}
-	if (current_buffer_count_>=FLAGS_table_buffer){
-		VLOG(3) << "Try adding to IO write buffer ";
-		while (!(buffer_->add_data_records(current_write_record_)))
-				Sleep(FLAGS_sleep_time);
-		VLOG(3) << "Added to IO write buffer ";
-		current_write_record_ = new DiskData();
-		if (total_buffer_count_>=table_info_->max_size){
-			current_block_++;
-			total_buffer_count_=0;
-		}
-		current_write_record_->set_block_number(current_block_);
-		current_write_record_->set_table(id());
-		current_buffer_count_=0;
-	}
 
 	//  serialize to disk
 	Arg* new_record = current_write_record_->add_records();
@@ -115,12 +103,31 @@ void DiskTable::put_str(const string& k, const string& v){
 	new_record->set_value(v.c_str(), v.length());
 	current_buffer_count_++;
 	total_buffer_count_++;
+
+	if (current_buffer_count_ >= FLAGS_table_buffer) {
+		VLOG(3) << "Try adding to IO write buffer ";
+		while (!(buffer_->add_data_records(current_write_record_)))
+			Sleep (FLAGS_sleep_time);
+		VLOG(3) << "Added to IO write buffer ";
+		current_write_record_ = new DiskData();
+		if (total_buffer_count_ >= table_info_->max_size) {
+			current_block_++;
+			total_buffer_count_ = 0;
+		}
+		current_write_record_->set_block_number(current_block_);
+		current_write_record_->set_table(id());
+		current_buffer_count_ = 0;
+	}
 }
 
 void DiskTable::get_str(string *k, string *v){
 	VLOG(3) << "trying to get_str, current_idx_ = " << current_idx_;
+
+	VLOG(3)	<< " of size from "	<< current_read_record_;
 	k->assign((current_read_record_->records(current_idx_)).key());
 	v->assign((current_read_record_->records(current_idx_)).value());
+	VLOG(3) << "after read, current_read_record_ = " << current_read_record_
+			<< " size = " << current_read_record_->records_size();
 }
 
 //  flush the current buffer
@@ -132,6 +139,7 @@ void DiskTable::finish_put(){
 		SendDataBuffer(*(buffer_->next_data_records()));
 	}
 
+	VLOG(3) << "Flushed all data put";
 	//  wait for other to confirm that data has been stored
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, EmptyMessage());
@@ -139,7 +147,7 @@ void DiskTable::finish_put(){
 
 //  reach the last record of the last file
 bool DiskTable::done(){
-	return current_iterator_->done() && current_block_>=(int)(blocks_.size());
+	return current_iterator_->done() && current_block_>=(int)(blocks_.size()) && buffer_->empty();
 }
 
 
@@ -148,21 +156,32 @@ void DiskTable::read_loop(){
 	current_block_ = 0;
 	current_iterator_.reset(new DiskTableIterator(
 			(blocks_[current_block_]->info).name, new DiskData()));
+	current_block_++;
 
 	//  more blocks to add
-	while (!done()){
-		while (!(buffer_->add_data_records(current_iterator_->value())))
-			Sleep(FLAGS_sleep_time);
-		current_iterator_->Next();
+	while (!done()) {
+		if (!current_iterator_->done()
+				|| current_block_ < (int) (blocks_.size())) {
+			while (!(buffer_->add_data_records(current_iterator_->value())))
+				Sleep (FLAGS_sleep_time);
+			VLOG(3) << "Next iterator ...., current iterator = " << current_iterator_;
+			current_iterator_->Next();
+			VLOG(3) << "ADDED data to READ queue, MORE to add ? "
+					<< current_iterator_->done();
 
-		//  if end of file, move to next one
-		if (current_iterator_->done()){
-			if (current_block_<(int)(blocks_.size())){
-				current_iterator_.reset(new DiskTableIterator(
-						(blocks_[current_block_]->info).name, new DiskData()));
-				current_block_++;
+			//  if end of file, move to next one
+			if (current_iterator_->done()) {
+				if (current_block_ < (int) (blocks_.size())) {
+					current_iterator_.reset(
+							new DiskTableIterator(
+									(blocks_[current_block_]->info).name,
+									new DiskData()));
+					current_block_++;
+				}
 			}
 		}
+		else
+			Sleep(FLAGS_sleep_time);
 	}
 }
 
@@ -183,8 +202,11 @@ void DiskTable::write_loop(){
 void DiskTable::Next(){
 
 	current_idx_++;
+	VLOG(3) << "NEXT: current_read_record_ = "<< current_read_record_;
 	if (current_idx_==current_read_record_->records_size()){
-		current_read_record_.reset(buffer_->next_data_records());
+		DiskData* data = buffer_->next_data_records();
+		VLOG(3) << "NEXT: resetting current_read_record_ to "<<data;
+		current_read_record_ = data;
 		current_idx_=0;
 	}
 }
@@ -214,9 +236,10 @@ bool PrefetchedBuffer::empty(){
 
 bool PrefetchedBuffer::add_data_records(DiskData* data){
 	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
-
-	if ((int)(data_queue_.size())<max_size_-1){
+	VLOG(3) << "Adding data, max_size = " << max_size_ <<" queue size = " << data_queue_.size();
+	if ((int)(data_queue_.size())<max_size_){
 		data_queue_.push_back(data);
+		VLOG(3) << "PUSHED ...";
 		return true;
 	}
 	return false;
@@ -224,12 +247,17 @@ bool PrefetchedBuffer::add_data_records(DiskData* data){
 
 DiskData* PrefetchedBuffer::next_data_records(){
 	boost::recursive_mutex::scoped_lock sl(data_queue_lock_);
-	if (data_queue_.size()>0 && (int)(data_queue_.size())<max_size_){
+	if (data_queue_.size()>0 && (int)(data_queue_.size())<=max_size_){
 		DiskData* data = data_queue_.front();
 		data_queue_.pop_front();
+		VLOG(3) << "FETCHED data from READ queue";
 		return data;
 	}
-	else
+	else{
+		VLOG(3)
+				<< " Preteched buffer returning NULL in nex_data_records(), data_queue size "
+				<< data_queue_.size();
 		return NULL;
+	}
 }
 }

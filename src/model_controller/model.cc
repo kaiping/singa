@@ -46,6 +46,7 @@ void ModelController::GetData(int sid, Blob *blob) {
   int len=blob->record_length();
   VLOG(3)<<"record len "<<len<<" ptr: "<<blob->dptr;
   FloatVector v;
+  VLOG(3) << " number of blobs = " <<blob->num();
   for(int i=0;i<blob->num();i++){
     int k;
     if(table->done())
@@ -56,6 +57,7 @@ void ModelController::GetData(int sid, Blob *blob) {
     memcpy(blob->dptr+i*len, v.data().data(), len*sizeof(float));
     VLOG(3)<<"done memory copy "<<k;
     table->Next();
+    VLOG(3)<< "is done with data reading:  "<< table->done();
   }
 }
 

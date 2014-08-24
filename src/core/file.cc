@@ -202,6 +202,7 @@ RecordFile::~RecordFile() {
     fp->sync();
     VLOG(1) << "Renaming: " << path_;
     File::Move(StringPrintf("%s.tmp", path_.c_str()), path_);
+    VLOG(3) << "Done renaming file " << path_; 
   }
   delete fp;
 }

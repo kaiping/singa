@@ -78,6 +78,7 @@ class LocalFile : public File {
   }
 
   void sync() {
+	  fflush(fp);
     fsync(fileno(fp));
   }
 

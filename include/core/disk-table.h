@@ -133,7 +133,7 @@ class DiskTable: public GlobalTable {
  //   }
 
 	DiskData* current_write_record_;
-	DiskData* current_read_record_;
+	boost::shared_ptr<DiskData> current_read_record_;
 
 	private:
 

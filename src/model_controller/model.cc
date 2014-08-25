@@ -47,17 +47,26 @@ void ModelController::GetData(int sid, Blob *blob) {
   VLOG(3)<<"record len "<<len<<" ptr: "<<blob->dptr;
   FloatVector v;
   VLOG(3) << " number of blobs = " <<blob->num();
+
   for(int i=0;i<blob->num();i++){
     int k;
-    if(table->done())
-      table->Load();
     VLOG(3)<<"getting data for k "<<k;
     table->get(&k, &v);
-    VLOG(3)<<"done getting data for k "<<k<<" record size: "<<v.data_size();
+		VLOG(3) << "done getting data for k " << k << " record size: "
+				<< v.data_size() << " vs record length, dptr = "<<blob->dptr;
     memcpy(blob->dptr+i*len, v.data().data(), len*sizeof(float));
     VLOG(3)<<"done memory copy "<<k;
-    table->Next();
+
+    if(table->done()){
+    	if (i<(blob->num()-1)){
+           	VLOG(3)<< "**** DATA LOADED AGAIN!!!, i = "<<i<<" vs. blob num = "<<blob->num();
+             table->Load();
+    	}
+    }
+    else
+    	table->Next();
     VLOG(3)<< "is done with data reading:  "<< table->done();
+
   }
 }
 

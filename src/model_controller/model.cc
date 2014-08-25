@@ -39,33 +39,23 @@ void ModelController::GetData(int sid, Blob *blob) {
   CHECK(disk_tables_.find(sid)!=disk_tables_.end());
   TDiskTable* table= dynamic_cast<TDiskTable*>(disk_tables_.at(sid));
   if(!table->has_loaded()){
-    VLOG(3)<<"load table";
     table->Load();
   }
-  VLOG(3)<<"table loaded";
   int len=blob->record_length();
-  VLOG(3)<<"record len "<<len<<" ptr: "<<blob->dptr;
   FloatVector v;
-  VLOG(3) << " number of blobs = " <<blob->num();
 
   for(int i=0;i<blob->num();i++){
     int k;
-    VLOG(3)<<"getting data for k "<<k;
     table->get(&k, &v);
-		VLOG(3) << "done getting data for k " << k << " record size: "
-				<< v.data_size() << " vs record length, dptr = "<<blob->dptr;
     memcpy(blob->dptr+i*len, v.data().data(), len*sizeof(float));
-    VLOG(3)<<"done memory copy "<<k;
 
     if(table->done()){
     	if (i<(blob->num()-1)){
-           	VLOG(3)<< "**** DATA LOADED AGAIN!!!, i = "<<i<<" vs. blob num = "<<blob->num();
              table->Load();
     	}
     }
     else
     	table->Next();
-    VLOG(3)<< "is done with data reading:  "<< table->done();
 
   }
 }
@@ -177,8 +167,6 @@ void ModelController::Get(const std::vector<Param*> &params)
     {
       int mykey = paramid*2048+j;
       FloatVector mymessage = param_table_->get(mykey);
-      VLOG(3)<<"msg size "<<mymessage.data_size();
-      VLOG(3)<<splitoffset;
       for(int k = 0; k < splitoffset; k++)
       {
         if(curoffset >= largestoffset) break;

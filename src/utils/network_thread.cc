@@ -22,7 +22,6 @@ void Sleep(double t){
   nanosleep(&req, NULL);
 }
 void ShutdownMPI() {
-	VLOG(3) << "Calling Shutdown at exit ... ";
   NetworkThread::Get()->Shutdown();
 }
 std::shared_ptr<NetworkThread> NetworkThread::Get() {
@@ -123,10 +122,8 @@ void NetworkThread::NetworkLoop() {
       RPCRequest *s = pending_sends_.front();
       pending_sends_.pop_front();
       s->start_time = Now();
-      VLOG(3)<<"before send to "<<s->target;
       s->mpi_req = world_->Isend(
                      s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
-      VLOG(3)<<"after send to "<<s->target;
       active_sends_.insert(s);
     }
     CollectActive();

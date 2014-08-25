@@ -128,7 +128,6 @@ LocalFile::LocalFile(const string &name, const string &mode) {
   path = name;
   close_on_delete = true;
   setvbuf(fp, NULL, _IONBF, kFileBufferSize);
-  VLOG(3) << "OPEN FILE "<<name<< " with pointer "<<fp;
 }
 
 template <class T>
@@ -201,9 +200,7 @@ RecordFile::~RecordFile() {
   }
   if (mode_ != "r") {
     fp->sync();
-    VLOG(1) << "Renaming: " << path_;
     File::Move(StringPrintf("%s.tmp", path_.c_str()), path_);
-    VLOG(3) << "Done renaming file " << path_; 
   }
   delete fp;
 }
@@ -223,32 +220,23 @@ void RecordFile::writeChunk(StringPiece data) {
 bool RecordFile::readChunk(string *s) {
   s->clear();
   int len;
-  VLOG(3)<<" REading length .... ";
   int bytes_read = fp->read((char *)&len, sizeof(len));
   if ((size_t)bytes_read < sizeof(int)) {
     return false;
   }
-	VLOG(3) << "READ LENGTH = " << len << " current length before resize = "
-			<< s->size();
+
   s->resize(len);
-	VLOG(3) << "LENGTH RESIZE successful, pointer " << &(*s)[0] << " of size "
-			<< s->size() << " vs. file size = ";
-  VLOG(3) << "Current file = "<<fp;
   fp->read(&(*s)[0], len);
-  VLOG(3) << "READ successful";
   return true;
 }
 
 bool RecordFile::read(google::protobuf::Message *m) {
   if (!readChunk(&buf_)) {
-	  VLOG(3) << "READ FAILS !!!!";
     return false;
   }
   if (!m)
     return true;
-  VLOG(3) << "Read from buffer of size " << buf_.size();
   CHECK(m->ParseFromString(buf_));
-  VLOG(3) << "Read successfully into message";
   return true;
 }
 

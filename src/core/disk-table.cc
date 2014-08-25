@@ -25,9 +25,7 @@ DiskTableIterator::~DiskTableIterator(){
 }
 
 void DiskTableIterator::Next(){
-	VLOG(3)<< "before read file " << file_.name() << " position " << file_.fp->tell();
 	done_ = !file_.read(data_);
-	VLOG(3)<< "after read file " << file_.name() << " position " << file_.fp->tell()<< " done = " << done_	;
 
 }
 
@@ -38,14 +36,12 @@ DiskData* DiskTableIterator::value(){ return data_;}
 void DiskTable::Load(){
 	//  get all files on the first load.
 	//  on re-load, simply reset the pointer
-  VLOG(3)<<"disktable loading";
+  VLOG(3)<<"disktable loading ... ";
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
 				StringPrintf("%s/%s_*", FLAGS_data_dir.c_str(),
 						table_info_->name_prefix.c_str()));
-		VLOG(3) << "Searched for file with prefix " << table_info_->name_prefix << "from dir " << FLAGS_data_dir;
 		for (size_t i = 0; i < files.size(); i++) {
-			VLOG(3) << "Found file "<< files[i].name;
 			FileBlock *block = new FileBlock();
 			block->info = files[i];
 			block->end_pos = files[i].stat.st_size;
@@ -62,7 +58,7 @@ void DiskTable::Load(){
 	current_read_record_.reset(buffer_->next_data_records());
 	current_idx_ = 0;
   has_loaded_=true;
-  VLOG(3) << "Got the first record " << current_read_record_;
+  VLOG(3)<<"disktable loaded";
 }
 
 void DiskTable::DumpToFile(const DiskData* data){
@@ -72,7 +68,6 @@ void DiskTable::DumpToFile(const DiskData* data){
 						table_info_->name_prefix.c_str(), data->block_number()),
 				"w");
 
-	VLOG(3) << "DUMPING to file " << file_->name();
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
 		file_ = new RecordFile(
@@ -94,7 +89,6 @@ void DiskTable::put_str(const string& k, const string& v){
 		current_write_record_ = new DiskData();
 		current_write_record_->set_block_number(current_block_);
 		current_write_record_->set_table(id());
-		VLOG(3) << "Initialized write IO buffer";
 	}
 
 	//  serialize to disk
@@ -105,10 +99,8 @@ void DiskTable::put_str(const string& k, const string& v){
 	total_buffer_count_++;
 
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
-		VLOG(3) << "Try adding to IO write buffer ";
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
-		VLOG(3) << "Added to IO write buffer ";
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_ >= table_info_->max_size) {
 			current_block_++;
@@ -122,13 +114,7 @@ void DiskTable::put_str(const string& k, const string& v){
 
 void DiskTable::get_str(string *k, string *v){
 	k->assign((current_read_record_->records(current_idx_)).key());
-
-	VLOG(3) << "getting str, current record = " << current_read_record_
-				<< " value data size = "
-				<< current_read_record_->records(current_idx_).value().size();
-
 	v->assign((current_read_record_->records(current_idx_)).value());
-	VLOG(3) << "after assigning to string, length = "<< v->size() << " current idx = "<<current_idx_;
 }
 
 //  flush the current buffer
@@ -140,7 +126,6 @@ void DiskTable::finish_put(){
 		SendDataBuffer(*(buffer_->next_data_records()));
 	}
 
-	VLOG(3) << "Flushed all data put";
 	//  wait for other to confirm that data has been stored
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, EmptyMessage());
@@ -166,11 +151,8 @@ void DiskTable::read_loop(){
 			Sleep (FLAGS_sleep_time);
 		current_iterator_->Next();
 
-		VLOG(3) << "current iterator moved to NEXT";
 		//  if end of file, move to next one
 		if (current_iterator_->done()) {
-			VLOG(3) << " end of file, NEXT BLOCK, current block = "
-					<< current_block_ << " vs. size = " << blocks_.size();
 			if (current_block_ < (int) (blocks_.size())) {
 				current_iterator_.reset(
 						new DiskTableIterator(
@@ -180,8 +162,6 @@ void DiskTable::read_loop(){
 			}
 		}
 	}
-
-	VLOG(3) << "read thread stops ....";
 }
 
 void DiskTable::write_loop(){
@@ -195,8 +175,6 @@ void DiskTable::write_loop(){
 		SendDataBuffer(*data);
 
 	}
-
-	VLOG(3) << "write thread stops ....";
 }
 
 // getting next value. Iterate through DiskData table and through the file as well
@@ -241,7 +219,6 @@ bool PrefetchedBuffer::add_data_records(DiskData* data){
 	if ((int)(data_queue_.size())<max_size_){
 		DiskData* copyData = new DiskData(*data);
 		data_queue_.push_back(copyData);
-		VLOG(3) << "Data " << copyData << " PUSHED to queue, front = " << data_queue_.front();
 		return true;
 	}
 	return false;
@@ -252,7 +229,6 @@ DiskData* PrefetchedBuffer::next_data_records(){
 	if (data_queue_.size()>0 && (int)(data_queue_.size())<=max_size_){
 		DiskData* data = data_queue_.front();
 		data_queue_.pop_front();
-		VLOG(3) << "After poping from queue, data return = " << data;
 		return data;
 	}
 	else{

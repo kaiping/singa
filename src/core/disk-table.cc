@@ -129,6 +129,7 @@ void DiskTable::finish_put(){
 	//  wait for other to confirm that data has been stored
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, EmptyMessage());
+	VLOG(3) << "done finishing put ... at process "<<NetworkThread::Get()->id();
 }
 
 //  reach the last record of the last file

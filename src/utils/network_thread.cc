@@ -211,9 +211,7 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
-    VLOG(3) << "FINALIZING ...";
     MPI_Finalize();
-    VLOG(3) << "FINALIZED ...";
   }
 }
 

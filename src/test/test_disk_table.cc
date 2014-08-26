@@ -58,34 +58,33 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 	}
 	table->finish_put();
 
-	VLOG(3) << "Coordinator is shutting down ...";
+
+	for (int i=0; i<network->size()-1; i++){
+		EmptyMessage end_msg;
+		network->Read(i,MTYPE_WORKER_END, &end_msg);
+	}
+
 	EmptyMessage shutdown_msg;
 	for (int i = 0; i < network->size() - 1; i++) {
 		network->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
 	}
 	network->Flush();
-	VLOG(3) << "done flushing";
 	network->Shutdown();
-	VLOG(3) << "Coordinator ends.";
 }
 
 void run_worker(shared_ptr<NetworkThread> network){
 	VLOG(3) << "worker running";
 	TableServer* ts = new TableServer();
 	ts->StartTableServer(tables);
-	ts->FinishDataPut();
 
-	VLOG(3) << "Worker is shutting down ...";
   network->Flush();
   network->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;
+
   int src = 0;
   network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
-  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
   network->Flush();
-  VLOG(3) << "Done flushing";
   network->Shutdown();
-  VLOG(3) << "Worker ends.";
 }
 
 int main(int argc, char **argv) {
@@ -99,7 +98,6 @@ int main(int argc, char **argv) {
 	// Note you can register you own layer/edge/datasource here
 	//
 	// Init GlobalContext
-	VLOG(3) << "before global context";
 	auto gc = lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
 	//start network thread
 			shared_ptr<NetworkThread> network = NetworkThread::Get();

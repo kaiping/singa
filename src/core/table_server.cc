@@ -68,8 +68,11 @@ void TableServer::HandleDataPut(){
 void TableServer::FinishDataPut(){
 	EmptyMessage msg;
 	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_FINISH, &msg);
+	VLOG(3) << "FINISH DATA PUT";
 	for (auto& t : tables_){
+		VLOG(3)<<"FINALIZING "<< t.first;
 		(dynamic_cast<DiskTable*>(t.second))->finalize_data();
+		VLOG(3) << "DONE FINALIZING";
 	}
 	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE, msg);
 }

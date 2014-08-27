@@ -62,11 +62,16 @@ void DiskTable::Load(){
 }
 
 void DiskTable::DumpToFile(const DiskData* data){
-	if (!file_)
+	disk_table_stat_["blocks received"]++;
+	if (disk_table_stat_["first byte stored"]==0)
+		disk_table_stat_["first byte stored"]=Now();
+
+	if (!file_){
 		file_ = new RecordFile(
 				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
 						table_info_->name_prefix.c_str(), data->block_number()),
 				"w");
+	}
 
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
@@ -76,8 +81,10 @@ void DiskTable::DumpToFile(const DiskData* data){
 				"w");
 		current_block_ = data->block_number();
 	}
-	file_->write(*data);
 
+	file_->write(*data);
+	disk_table_stat_["last byte stored"]=Now();
+	disk_table_stat_["bytes stored"]+=data->ByteSize();
 }
 
 void DiskTable::put_str(const string& k, const string& v){
@@ -97,10 +104,12 @@ void DiskTable::put_str(const string& k, const string& v){
 	new_record->set_value(v.c_str(), v.length());
 	current_buffer_count_++;
 	total_buffer_count_++;
+	disk_table_stat_["records sent"]++;
 
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
+		disk_table_stat_["bytes put"]+=current_write_record_->ByteSize();
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_ >= table_info_->max_size) {
 			current_block_++;
@@ -115,6 +124,8 @@ void DiskTable::put_str(const string& k, const string& v){
 void DiskTable::get_str(string *k, string *v){
 	k->assign((current_read_record_->records(current_idx_)).key());
 	v->assign((current_read_record_->records(current_idx_)).value());
+	disk_table_stat_["bytes get"] += current_read_record_->records(
+			current_idx_).ByteSize();
 }
 
 //  flush the current buffer
@@ -139,6 +150,8 @@ bool DiskTable::done(){
 
 
 void DiskTable::read_loop(){
+	VLOG(3) << "first byte read = " << Now();
+	disk_table_stat_["first byte read"] = Now();
 	//  point the current iterator to the first file
 	current_block_ = 0;
 	current_iterator_.reset(new DiskTableIterator(
@@ -163,19 +176,21 @@ void DiskTable::read_loop(){
 			}
 		}
 	}
+	disk_table_stat_["last byte read"] = Now();
 }
 
 void DiskTable::write_loop(){
+	disk_table_stat_["first byte written"] = Now();
 	while (!done_writing_){
+
 		DiskData* data;
-		//VLOG(3) << "Getting data to send to server, buffer is empty  " << buffer_->empty();
-		while (!(data=buffer_->next_data_records())){
+		while (!buffer_->empty() && !(data=buffer_->next_data_records())){
 			Sleep(FLAGS_sleep_time);
 		}
-		//VLOG(3) << "Sending data block to server ";
-		SendDataBuffer(*data);
-
+		if (!buffer_->empty())
+			SendDataBuffer(*data);
 	}
+	disk_table_stat_["last byte written"] = Now();
 }
 
 // getting next value. Iterate through DiskData table and through the file as well
@@ -198,6 +213,7 @@ void DiskTable::SendDataBuffer(const DiskData& data){
 		dest = data.block_number()%(GlobalContext::Get()->num_table_servers());
 
 	NetworkThread::Get()->Send(dest,MTYPE_DATA_PUT_REQUEST, data);
+	disk_table_stat_["blocks sent"]++;
 }
 
 DiskTable::~DiskTable(){

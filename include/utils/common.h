@@ -3,6 +3,12 @@
 #ifndef INCLUDE_UTILS_COMMON_H_
 #define INCLUDE_UTILS_COMMON_H_
 
+#include <string>
+#include <unordered_map>
+#include "utils/stringpiece.h"
+using std::string;
+using std::unordered_map;
+
 namespace lapis {
 
 // flag to init parameter content

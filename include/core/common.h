@@ -40,6 +40,29 @@ using std::unordered_set;
 
 namespace lapis {
 
+// Simple wrapper around a string->double map.
+struct Stats {
+  double& operator[](const string& key) {
+    return p_[key];
+  }
+
+  string ToString(string prefix) {
+    string out;
+    for (unordered_map<string, double>::iterator i = p_.begin(); i != p_.end(); ++i) {
+      out += StringPrintf("%s -- %s : %.2f\n", prefix.c_str(), i->first.c_str(), i->second);
+    }
+    return out;
+  }
+
+  void Merge(Stats &other) {
+    for (unordered_map<string, double>::iterator i = other.p_.begin(); i != other.p_.end(); ++i) {
+      p_[i->first] += i->second;
+    }
+  }
+private:
+  unordered_map<string, double> p_;
+};
+
 template <class V>
 struct Accumulator {
   virtual void Accumulate(V *a, const V &b) = 0;

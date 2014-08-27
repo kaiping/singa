@@ -73,98 +73,103 @@ class PrefetchedBuffer{
 };
 
 class DiskTable: public GlobalTable {
-	public:
-		struct FileBlock{
-				File::Info info;
-				uint64_t end_pos;
-		};
+public:
+	struct FileBlock {
+		File::Info info;
+		uint64_t end_pos;
+	};
 
-		DiskTable(DiskTableDescriptor *table){
-			Init(table);
-			table_info_ = table;
-			current_block_ = current_buffer_count_=total_buffer_count_ = 0;
-			file_ = NULL;
-			current_write_record_=NULL;
-			done_writing_ = false;
+	DiskTable(DiskTableDescriptor *table) {
+		Init(table);
+		table_info_ = table;
+		current_block_ = current_buffer_count_ = total_buffer_count_ = 0;
+		file_ = NULL;
+		current_write_record_ = NULL;
+		done_writing_ = false;
+	}
+
+	~DiskTable();
+
+	//  read all the data file into block vector, ready to be read.
+	//  starting a new IO thread every time this is called.
+	void Load();
+
+	//  store the received data to file. called at the table-server
+	void DumpToFile(const DiskData* data);
+
+	//  sending table over the network. called at the coordinator.
+	//  we will put each record into a buffer and only send when it is full
+	//  or when finish_put() is invoked
+	void put_str(const string& k, const string& v);
+	void get_str(string *k, string *v);
+
+	void finish_put(); //  end of file, flush all buffers
+
+	//  done storing, close open file
+	void finalize_data() {
+		if (file_) {
+			delete file_;
 		}
+		file_ = NULL;
+	}
 
-		~DiskTable();
+	bool done();
+	void Next();
 
-		//  read all the data file into block vector, ready to be read.
-		//  starting a new IO thread every time this is called.
-		void Load();
+	DiskTableDescriptor* disk_info() {
+		return table_info_;
+	}
 
-  //  store the received data to file. called at the table-server
-  void DumpToFile(const DiskData* data);
+	bool has_loaded() {
+		return has_loaded_;
+	}
+	int get_shard_str(StringPiece key) {
+		return -1;
+	}
 
-
-  //  sending table over the network. called at the coordinator.
-  //  we will put each record into a buffer and only send when it is full
-  //  or when finish_put() is invoked
-  void put_str(const string& k, const string& v);
-  void get_str(string *k, string *v);
-
-  void finish_put(); //  end of file, flush all buffers
-
-  //  done storing, close open file
-  void finalize_data(){
-	  if (file_){
-		  delete file_;
-	  }
-	  file_=NULL;
-  }
-
-//  DiskTableDescriptor* disk_info() const {return table_info_;}
-
-  bool done();
-  void Next();
-
-  DiskTableDescriptor* disk_info(){return table_info_;}
-
-    bool has_loaded() {return has_loaded_;}
-		int get_shard_str(StringPiece key){return -1;}
-
-// override TableBase::id()
- //  virtual int id() {
-//		    return disk_info()->id;
-//		}
- //   virtual int num_shards() {
- //     return 0;
- //   }
+	Stats stats(){ return disk_table_stat_;}
 
 	DiskData* current_write_record_;
 	boost::shared_ptr<DiskData> current_read_record_;
 
-	private:
+private:
 
-		//  keep adding DiskData to the buffer until out of open files
-		void read_loop();
+	//  keep adding DiskData to the buffer until out of open files
+	void read_loop();
 
-		//  reading off the buffer and send
-		void write_loop();
+	//  reading off the buffer and send
+	void write_loop();
 
-		//  send the current_record_ (buffer) to the network. Invoked directly by
-		//  finish_put();
-		void SendDataBuffer(const DiskData& data);
+	//  send the current_record_ (buffer) to the network. Invoked directly by
+	//  finish_put();
+	void SendDataBuffer(const DiskData& data);
 
-  string name_prefix(){return table_info_->name_prefix;}
-  int max_size(){return table_info_->max_size;}
+	string name_prefix() {
+		return table_info_->name_prefix;
+	}
+	int max_size() {
+		return table_info_->max_size;
+	}
 
-  DiskTableDescriptor *table_info_;
-// all the blocks
- vector<FileBlock*> blocks_;
-		int current_block_, current_buffer_count_, total_buffer_count_;
-		boost::shared_ptr<DiskTableIterator> current_iterator_;
-		int current_idx_;
+	DiskTableDescriptor *table_info_;
 
-    // to write
-    RecordFile* file_;
-		boost::shared_ptr<PrefetchedBuffer> buffer_;
+	// all the blocks
+	vector<FileBlock*> blocks_;
+	int current_block_, current_buffer_count_, total_buffer_count_;
+	boost::shared_ptr<DiskTableIterator> current_iterator_;
+	int current_idx_;
 
-		boost::shared_ptr<boost::thread> read_thread_, write_thread_;
+	// to write
+	RecordFile* file_;
+	boost::shared_ptr<PrefetchedBuffer> buffer_;
 
-		bool done_writing_;
-  bool has_loaded_;
+	boost::shared_ptr<boost::thread> read_thread_, write_thread_;
+
+	bool done_writing_;
+	bool has_loaded_;
+
+	Stats disk_table_stat_;
+	Timer timer;
 };
 
 template <class K, class V>

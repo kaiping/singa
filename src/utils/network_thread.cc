@@ -128,6 +128,7 @@ void NetworkThread::NetworkLoop() {
     }
     CollectActive();
   }
+  VLOG(3) << "Out of network loop";
 }
 
 //  loop through the request queue and process messages
@@ -138,6 +139,7 @@ void NetworkThread::ProcessLoop() {
     request_queue_->NextRequest(&msg);
     ProcessRequest(msg);
   }
+  VLOG(3) << "Out of processing loop";
 }
 
 void NetworkThread::ProcessRequest(const TaggedMessage &t_msg) {
@@ -211,6 +213,9 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
+    VLOG(3) << "FINALIZING MPI";
+    sender_and_reciever_thread_->join();
+    //processing_thread_->join();
     MPI_Finalize();
   }
 }

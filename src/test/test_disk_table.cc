@@ -17,8 +17,8 @@
 #include "worker.h"
 
 DEFINE_int32(record_size,100, "# elements per float vector");
-DEFINE_int32(block_size, 10, "# records per block, multiple blocks per table");
-DEFINE_int32(table_size, 500, "# records per table");
+DEFINE_int32(block_size, 500, "# records per block, multiple blocks per table");
+DEFINE_int32(table_size, 1000, "# records per table");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 using namespace lapis;
@@ -29,7 +29,7 @@ Map tables;
 //  put random message to the pointers
 void create_random_message(FloatVector* message){
 	for (int i=0; i<FLAGS_record_size; i++)
-		message->add_data(rand());
+		message->add_data(i);
 }
 
 void create_disk_table(int id){
@@ -41,7 +41,7 @@ void create_disk_table(int id){
 }
 
 void run_coordinator(shared_ptr<NetworkThread> network, int tid){
-	VLOG(3) << "coordinator running";
+	VLOG(3) << "coordinator running, table block size = "<<FLAGS_block_size;
 	// wait for wokers to be up
 	RegisterWorkerRequest req;
 	for (int i=0; i<network->size()-1; i++)
@@ -51,10 +51,12 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 	// put data in
 	TypedDiskTable<int, FloatVector>* table = static_cast<TypedDiskTable<int,
 			FloatVector>*>(tables[tid]);
+	int count = 0;
 	for (int i=0; i<FLAGS_table_size; i++){
 		FloatVector message;
 		create_random_message(&message);
 		table->put(i, message);
+		count+=message.ByteSize();
 	}
 	table->finish_put();
 
@@ -70,6 +72,14 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 	}
 	network->Flush();
 	network->Shutdown();
+
+	Stats stats =table->stats();
+	double write_time = stats["last byte written"] - stats["first byte written"];
+	VLOG(3) << "Writing " << stats["bytes put"];
+	VLOG(3) << "coordinator writes : " << stats["bytes put"] / write_time
+			<< " bps " << "over " << stats["blocks sent"] << " blocks, of "
+			<< stats["records sent"] << " records";
+
 }
 
 void run_worker(shared_ptr<NetworkThread> network){
@@ -85,15 +95,24 @@ void run_worker(shared_ptr<NetworkThread> network){
   network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg, &src);
   network->Flush();
   network->Shutdown();
+
+  Stats stats = (static_cast<TypedDiskTable<int, FloatVector>*>(tables[0]))->stats();
+	VLOG(3) << "first byte stored at " << stats["first byte stored"];
+	VLOG(3) << "last byte stored at " << stats["last byte stored"];
+	double dump_time = stats["last byte stored"] - stats["first byte stored"];
+	VLOG(3) << "Storing " << stats["bytes stored"] << " from "
+			<< stats["blocks received"] << " blocks";
+	VLOG(3) << "table server writes to disk : " << stats["bytes stored"]/dump_time
+				<< " bps ";
+
 }
 
 int main(int argc, char **argv) {
-	create_disk_table(0);
-
 	FLAGS_logtostderr = 1;
 	google::InitGoogleLogging(argv[0]);
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+	create_disk_table(0);
 
 	// Note you can register you own layer/edge/datasource here
 	//
@@ -107,6 +126,7 @@ int main(int argc, char **argv) {
 	else
 		run_worker(network);
 
+	VLOG(3) << "Test ends.  at "<<Now();
 	return 0;
 }
 

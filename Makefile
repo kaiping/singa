@@ -46,6 +46,9 @@ LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 
+TABLE_TEST_SRCS := src/test/test_disk_table.cc
+TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
+
 run_load:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
@@ -55,6 +58,13 @@ run_run:
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
 
+run_test: lapis.test
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
+		-model_conf=examples/imagenet12/model.conf --v=3 \
+		 --record_size=5000 -block_size=1000 --table_size=2000 --table_buffer=30
+
+
 debug:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb \
 		./lapis.bin
@@ -63,12 +73,20 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
+lapis.test: $(TABLE_TEST_OBJS)
+	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+	@echo
+
 $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@
 	cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P; \
 	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 		-e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P; \
 	rm -f $*.d
+
+$(TABLE_TEST_OBJS): $(TABLE_TEST_SRCS)
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+			
 
 # create folders
 init:

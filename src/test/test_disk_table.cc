@@ -21,15 +21,18 @@ DEFINE_int32(block_size, 500, "# records per block, multiple blocks per table");
 DEFINE_int32(table_size, 1000, "# records per table");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
+DECLARE_int32(debug_index);
+
 using namespace lapis;
 
 typedef map<int, GlobalTable*> Map;
 Map tables;
 
 //  put random message to the pointers
-void create_random_message(FloatVector* message){
-	for (int i=0; i<FLAGS_record_size; i++)
-		message->add_data(i);
+void create_random_message(FloatVector* message, const int count){
+	for (int i=0; i<FLAGS_record_size; i++){
+		message->add_data(count*FLAGS_record_size+i);
+	}
 }
 
 void create_disk_table(int id){
@@ -54,7 +57,7 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 	int count = 0;
 	for (int i=0; i<FLAGS_table_size; i++){
 		FloatVector message;
-		create_random_message(&message);
+		create_random_message(&message, i);
 		table->put(i, message);
 		count+=message.ByteSize();
 	}
@@ -72,16 +75,7 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 	}
 	network->Flush();
 	network->Shutdown();
-
-	Stats stats =table->stats();
-	double write_time = stats["last byte written"] - stats["first byte written"];
-	VLOG(3) << "Writing " << stats["bytes put"];
-	VLOG(3) << "coordinator writes : " << stats["bytes put"] / write_time
-			<< " bps " << "over " << stats["blocks sent"] << " blocks, of "
-			<< stats["records sent"] << " records";
-
-	VLOG(3) << "cooridinator: total sent = " << network->stats()["total sent"]
-			<< " over " << (network->stats()["last sent"] - network->stats()["firs sent"]);
+	table->PrintStats();
 
 }
 
@@ -99,15 +93,8 @@ void run_worker(shared_ptr<NetworkThread> network){
   network->Flush();
   network->Shutdown();
 
-  Stats stats = (static_cast<TypedDiskTable<int, FloatVector>*>(tables[0]))->stats();
-	VLOG(3) << "first byte stored at " << stats["first byte stored"];
-	VLOG(3) << "last byte stored at " << stats["last byte stored"];
-	double dump_time = stats["last byte stored"] - stats["first byte stored"];
-	VLOG(3) << "Storing " << stats["bytes stored"] << " from "
-			<< stats["blocks received"] << " blocks";
-	VLOG(3) << "table server writes to disk : " << stats["bytes stored"]/dump_time
-				<< " bps ";
-
+  (static_cast<TypedDiskTable<int, FloatVector>*>(tables[0]))->PrintStats();
+  network->PrintStats();
 }
 
 int main(int argc, char **argv) {

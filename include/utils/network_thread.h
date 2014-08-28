@@ -63,7 +63,8 @@ class NetworkThread {
 
   bool active() const;
 
-  Stats stats(){return network_thread_stats_;}
+  void PrintStats();
+
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;

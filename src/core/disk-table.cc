@@ -3,13 +3,21 @@
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
 #include <gflags/gflags.h>
+#include "proto/model.pb.h"
+#include "proto/worker.pb.h"
 
 DEFINE_string(data_dir,"tmp", "path to data store");
 DEFINE_int32(table_buffer, 1,0);
 DEFINE_int32(io_buffer_size,5,0);
 DECLARE_double(sleep_time);
-
+DEFINE_int32(debug_index,0,0);
 namespace lapis{
+
+string FIRST_BYTE_STORED="first byte stored";
+string LAST_BYTE_STORED="last byte stored";
+string TOTAL_BYTE_STORED="total byte stored";
+string TOTAL_SUB_BLOCK_SENT="total sub blocks sent";
+string TOTAL_SUB_BLOCK_RECEIVED="total sub blocks received";
 
 //  iterator through disk file
 DiskTableIterator::DiskTableIterator(const string name, DiskData* msg): file_(name, "r"), done_(true)
@@ -32,6 +40,20 @@ void DiskTableIterator::Next(){
 bool DiskTableIterator::done(){ return done_;}
 
 DiskData* DiskTableIterator::value(){ return data_;}
+
+DiskTable::DiskTable(DiskTableDescriptor *table) {
+		VLOG(3) << "NEW DISK TABLE CREATED !!!!";
+		Init(table);
+		table_info_ = table;
+		current_block_ = current_buffer_count_ = total_buffer_count_ = 0;
+		file_ = NULL;
+		current_write_record_ = NULL;
+		done_writing_ = false;
+		disk_table_stat_[FIRST_BYTE_STORED] = 0;
+		disk_table_stat_[LAST_BYTE_STORED] = disk_table_stat_[TOTAL_BYTE_STORED] = 0;
+		disk_table_stat_[TOTAL_SUB_BLOCK_SENT] = disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED] = 0;
+
+}
 
 void DiskTable::Load(){
 	//  get all files on the first load.
@@ -61,10 +83,9 @@ void DiskTable::Load(){
   VLOG(3)<<"disktable loaded";
 }
 
-void DiskTable::DumpToFile(const DiskData* data){
-	disk_table_stat_["blocks received"]++;
-	if (disk_table_stat_["first byte stored"]==0)
-		disk_table_stat_["first byte stored"]=Now();
+void DiskTable::store(const DiskData* data){
+	if (disk_table_stat_[FIRST_BYTE_STORED]==0)
+		disk_table_stat_[FIRST_BYTE_STORED]=Now();
 
 	if (!file_){
 		file_ = new RecordFile(
@@ -83,20 +104,22 @@ void DiskTable::DumpToFile(const DiskData* data){
 	}
 
 	file_->write(*data);
-	disk_table_stat_["last byte stored"]=Now();
-	disk_table_stat_["bytes stored"]+=data->ByteSize();
+
+	disk_table_stat_[LAST_BYTE_STORED]=Now();
+	disk_table_stat_[TOTAL_BYTE_STORED]+=data->ByteSize();
 }
 
 void DiskTable::put_str(const string& k, const string& v){
 	if (!current_write_record_){ // first time
 		// starting write IO thread
 		buffer_.reset(new PrefetchedBuffer((int)FLAGS_io_buffer_size));
-		write_thread_.reset(new boost::thread(&DiskTable::write_loop, this));
+		network_write_thread_.reset(new boost::thread(&DiskTable::write_loop, this));
 
 		current_write_record_ = new DiskData();
 		current_write_record_->set_block_number(current_block_);
 		current_write_record_->set_table(id());
 	}
+
 
 	//  serialize to disk
 	Arg* new_record = current_write_record_->add_records();
@@ -104,7 +127,6 @@ void DiskTable::put_str(const string& k, const string& v){
 	new_record->set_value(v.c_str(), v.length());
 	current_buffer_count_++;
 	total_buffer_count_++;
-	disk_table_stat_["records sent"]++;
 
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
@@ -123,8 +145,6 @@ void DiskTable::put_str(const string& k, const string& v){
 void DiskTable::get_str(string *k, string *v){
 	k->assign((current_read_record_->records(current_idx_)).key());
 	v->assign((current_read_record_->records(current_idx_)).value());
-	disk_table_stat_["bytes get"] += current_read_record_->records(
-			current_idx_).ByteSize();
 }
 
 //  flush the current buffer
@@ -132,14 +152,22 @@ void DiskTable::finish_put(){
 
 	//  done, flush the buffer
 	done_writing_ = true;
+	//  wait to send all the data first
+	network_write_thread_->join();
+
 	while (!buffer_->empty()){
 		SendDataBuffer(*(buffer_->next_data_records()));
 	}
 
+	//  write the left over
+	if (current_buffer_count_>0)
+		SendDataBuffer(*current_write_record_);
+
 	//  wait for other to confirm that data has been stored
+	FlushDiskTable message;
+	message.set_table(id());
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
-							MTYPE_DATA_PUT_REQUEST_DONE, EmptyMessage());
-	VLOG(3) << "done finishing put ... at process "<<NetworkThread::Get()->id();
+							MTYPE_DATA_PUT_REQUEST_DONE, message);
 }
 
 //  reach the last record of the last file
@@ -149,8 +177,6 @@ bool DiskTable::done(){
 
 
 void DiskTable::read_loop(){
-	VLOG(3) << "first byte read = " << Now();
-	disk_table_stat_["first byte read"] = Now();
 	//  point the current iterator to the first file
 	current_block_ = 0;
 	current_iterator_.reset(new DiskTableIterator(
@@ -175,23 +201,19 @@ void DiskTable::read_loop(){
 			}
 		}
 	}
-	disk_table_stat_["last byte read"] = Now();
 }
 
 void DiskTable::write_loop(){
-	disk_table_stat_["first byte written"] = Now();
 	while (!done_writing_){
 
-		DiskData* data;
+		DiskData* data=NULL;
 		while (!buffer_->empty() && !(data=buffer_->next_data_records())){
 			Sleep(FLAGS_sleep_time);
 		}
-		if (data){
-			disk_table_stat_["bytes put"]+=data->ByteSize();
+		if (data!=NULL){
 			SendDataBuffer(*data);
 		}
 	}
-	disk_table_stat_["last byte written"] = Now();
 }
 
 // getting next value. Iterate through DiskData table and through the file as well
@@ -209,12 +231,24 @@ void DiskTable::Next(){
 }
 
 void DiskTable::SendDataBuffer(const DiskData& data){
+
 	int dest = table_info_->fixed_server_id;
 	if (dest==-1)
 		dest = data.block_number()%(GlobalContext::Get()->num_table_servers());
 
 	NetworkThread::Get()->Send(dest,MTYPE_DATA_PUT_REQUEST, data);
-	disk_table_stat_["blocks sent"]++;
+	disk_table_stat_[TOTAL_SUB_BLOCK_SENT]++;
+}
+
+void DiskTable::PrintStats(){
+	VLOG(3) << "total number of sub block sent: "<<disk_table_stat_[TOTAL_SUB_BLOCK_SENT];
+	VLOG(3) << "total data stored: " << disk_table_stat_[TOTAL_BYTE_STORED]
+			<< " in " << disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED] << " sub blocks";
+
+	VLOG(3) << "disk write bandwidth = "
+			<< disk_table_stat_[TOTAL_BYTE_STORED]
+					/ (disk_table_stat_[LAST_BYTE_STORED]
+							- disk_table_stat_[FIRST_BYTE_STORED]);
 }
 
 DiskTable::~DiskTable(){

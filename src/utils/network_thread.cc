@@ -14,6 +14,12 @@
 DEFINE_double(sleep_time, 0.001, "");
 
 namespace lapis {
+
+string FIRST_BYTE_RECEIVED="first byte received";
+string LAST_BYTE_RECEIVED="last byte received";
+string TOTAL_BYTE_RECEIVED="total byte received";
+
+
 std::shared_ptr<NetworkThread> NetworkThread::instance_;
 void Sleep(double t){
   timespec req;
@@ -51,12 +57,18 @@ NetworkThread::NetworkThread() {
       this);
   processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
 
+
 //  initialize message queue
   auto gc = GlobalContext::Get();
   if (gc->synchronous())
     request_queue_ = new SyncRequestQueue(gc->num_table_servers());
   else
     request_queue_ = new AsyncRequestQueue(gc->num_table_servers());
+
+  //  init stats
+	network_thread_stats_[FIRST_BYTE_RECEIVED] =
+			network_thread_stats_[LAST_BYTE_RECEIVED] =
+					network_thread_stats_[TOTAL_BYTE_RECEIVED] = 0;
 }
 
 bool NetworkThread::active() const {
@@ -96,7 +108,18 @@ void NetworkThread::NetworkLoop() {
       int bytes = st.Get_count(MPI::BYTE);
       string data;
       data.resize(bytes);
+      if (tag==MTYPE_DATA_PUT_REQUEST && network_thread_stats_[FIRST_BYTE_RECEIVED]==0)
+    	  network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
+
       world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
+
+			if (tag == MTYPE_DATA_PUT_REQUEST) {
+				network_thread_stats_[LAST_BYTE_RECEIVED] = Now();
+				network_thread_stats_[TOTAL_BYTE_RECEIVED] += bytes;
+			}
+
+
+
       //  put request to the queue
       if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
         request_queue_->Enqueue(tag, data);
@@ -110,20 +133,16 @@ void NetworkThread::NetworkLoop() {
         callbacks_[tag]();
       }
     } else {
-      //Sleep(FLAGS_sleep_time);
+      Sleep(FLAGS_sleep_time);
     }
     //  push the send queue through
     while (!pending_sends_.empty()) {
       boost::recursive_mutex::scoped_lock sl(send_lock);
-      if (network_thread_stats_["first sent"] == 0)
-    	  network_thread_stats_["first sent"]= Now();
       RPCRequest *s = pending_sends_.front();
       pending_sends_.pop_front();
       s->start_time = Now();
       s->mpi_req = world_->Isend(
                      s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
-      network_thread_stats_["last sent"] = Now();
-      network_thread_stats_["total sent"]+=s->payload.size();
       active_sends_.insert(s);
     }
     CollectActive();
@@ -242,5 +261,12 @@ void NetworkThread::WaitForSync(int reply, int count) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);
     --count;
   }
+}
+
+void NetworkThread::PrintStats(){
+	VLOG(3) << "Network throughput = "
+			<< network_thread_stats_[TOTAL_BYTE_RECEIVED]
+					/ (network_thread_stats_[LAST_BYTE_RECEIVED]
+							- network_thread_stats_[FIRST_BYTE_RECEIVED]);
 }
 }  // namespace lapis

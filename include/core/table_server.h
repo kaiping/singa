@@ -19,12 +19,14 @@ namespace lapis {
 
 class TableServer : private boost::noncopyable {
  public:
+	TableServer();
+
   ~TableServer() {}
 
   void StartTableServer(const std::map<int, GlobalTable*> &tables);
 
   //  sends signals to the manager and ends gracefully
-  void ShutdownTableServer();
+  void ShutdownTableServer(){ done_writing_ = true; }
 
   int id() {
     return server_id_;
@@ -56,6 +58,12 @@ class TableServer : private boost::noncopyable {
   mutable boost::recursive_mutex state_lock_;
   std::shared_ptr<NetworkThread> net_;
   std::map<int, GlobalTable*> tables_;
+  boost::thread *disk_write_thread_;
+  bool done_writing_, has_finalized_;
+
+  void write_to_disk_loop();
+  void data_put(const DiskData& data);
+
 };
 
 //  start memory server, only if rank < size()-1

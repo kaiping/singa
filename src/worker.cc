@@ -67,6 +67,7 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
 }
 void Worker::Shutdown() {
 	VLOG(3) << "Worker is shutting down ...";
+	table_server_->ShutdownTableServer();
   mpi_->Flush();
   mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;

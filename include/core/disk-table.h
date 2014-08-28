@@ -79,23 +79,13 @@ public:
 		uint64_t end_pos;
 	};
 
-	DiskTable(DiskTableDescriptor *table) {
-		Init(table);
-		table_info_ = table;
-		current_block_ = current_buffer_count_ = total_buffer_count_ = 0;
-		file_ = NULL;
-		current_write_record_ = NULL;
-		done_writing_ = false;
-	}
+	DiskTable(DiskTableDescriptor *table);
 
 	~DiskTable();
 
 	//  read all the data file into block vector, ready to be read.
 	//  starting a new IO thread every time this is called.
 	void Load();
-
-	//  store the received data to file. called at the table-server
-	void DumpToFile(const DiskData* data);
 
 	//  sending table over the network. called at the coordinator.
 	//  we will put each record into a buffer and only send when it is full
@@ -107,6 +97,7 @@ public:
 
 	//  done storing, close open file
 	void finalize_data() {
+		done_writing_ = true;
 		if (file_) {
 			delete file_;
 		}
@@ -127,7 +118,10 @@ public:
 		return -1;
 	}
 
-	Stats stats(){ return disk_table_stat_;}
+	void PrintStats();
+
+	//  thread for writing to disk at the table server
+	void store(const DiskData* data);
 
 	DiskData* current_write_record_;
 	boost::shared_ptr<DiskData> current_read_record_;
@@ -139,6 +133,7 @@ private:
 
 	//  reading off the buffer and send
 	void write_loop();
+
 
 	//  send the current_record_ (buffer) to the network. Invoked directly by
 	//  finish_put();
@@ -163,7 +158,8 @@ private:
 	RecordFile* file_;
 	boost::shared_ptr<PrefetchedBuffer> buffer_;
 
-	boost::shared_ptr<boost::thread> read_thread_, write_thread_;
+	boost::shared_ptr<boost::thread> read_thread_, network_write_thread_;
+
 
 	bool done_writing_;
 	bool has_loaded_;

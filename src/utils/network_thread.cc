@@ -97,10 +97,6 @@ void NetworkThread::NetworkLoop() {
       string data;
       data.resize(bytes);
       world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
-      if (tag == MTYPE_SHARD_ASSIGNMENT)
-        LOG(INFO) << StringPrintf("Process %d: RECEIVED SHARD_ASSIGNMENT REQUEST", id_);
-      else if (tag == MTYPE_WORKER_SHUTDOWN)
-        LOG(INFO) << StringPrintf("Process %d: RECEIVED WORKER_SHUTDOWN REQUEST", id_);
       //  put request to the queue
       if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
         request_queue_->Enqueue(tag, data);
@@ -114,21 +110,24 @@ void NetworkThread::NetworkLoop() {
         callbacks_[tag]();
       }
     } else {
-      Sleep(FLAGS_sleep_time);
+      //Sleep(FLAGS_sleep_time);
     }
     //  push the send queue through
     while (!pending_sends_.empty()) {
       boost::recursive_mutex::scoped_lock sl(send_lock);
+      if (network_thread_stats_["first sent"] == 0)
+    	  network_thread_stats_["first sent"]= Now();
       RPCRequest *s = pending_sends_.front();
       pending_sends_.pop_front();
       s->start_time = Now();
       s->mpi_req = world_->Isend(
                      s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
+      network_thread_stats_["last sent"] = Now();
+      network_thread_stats_["total sent"]+=s->payload.size();
       active_sends_.insert(s);
     }
     CollectActive();
   }
-  VLOG(3) << "Out of network loop";
 }
 
 //  loop through the request queue and process messages
@@ -139,7 +138,6 @@ void NetworkThread::ProcessLoop() {
     request_queue_->NextRequest(&msg);
     ProcessRequest(msg);
   }
-  VLOG(3) << "Out of processing loop";
 }
 
 void NetworkThread::ProcessRequest(const TaggedMessage &t_msg) {
@@ -213,7 +211,6 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
-    VLOG(3) << "FINALIZING MPI";
     sender_and_reciever_thread_->join();
     //processing_thread_->join();
     MPI_Finalize();

@@ -80,6 +80,9 @@ void run_coordinator(shared_ptr<NetworkThread> network, int tid){
 			<< " bps " << "over " << stats["blocks sent"] << " blocks, of "
 			<< stats["records sent"] << " records";
 
+	VLOG(3) << "cooridinator: total sent = " << network->stats()["total sent"]
+			<< " over " << (network->stats()["last sent"] - network->stats()["firs sent"]);
+
 }
 
 void run_worker(shared_ptr<NetworkThread> network){

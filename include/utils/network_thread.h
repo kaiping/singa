@@ -9,6 +9,7 @@
 #include <gflags/gflags.h>
 #include "proto/common.pb.h"
 #include "core/rpc.h"
+#include "core/common.h"
 
 
 using google::protobuf::Message;
@@ -61,6 +62,8 @@ class NetworkThread {
   }
 
   bool active() const;
+
+  Stats stats(){return network_thread_stats_;}
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;
@@ -97,6 +100,8 @@ class NetworkThread {
 
   //response queue (read)
   Queue response_queue_[kMaxMethods][kMaxHosts];
+
+  Stats network_thread_stats_;
 
   bool check_queue(int src, int type, Message *data);
 

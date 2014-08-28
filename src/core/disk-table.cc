@@ -109,7 +109,6 @@ void DiskTable::put_str(const string& k, const string& v){
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
-		disk_table_stat_["bytes put"]+=current_write_record_->ByteSize();
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_ >= table_info_->max_size) {
 			current_block_++;
@@ -187,8 +186,10 @@ void DiskTable::write_loop(){
 		while (!buffer_->empty() && !(data=buffer_->next_data_records())){
 			Sleep(FLAGS_sleep_time);
 		}
-		if (!buffer_->empty())
+		if (data){
+			disk_table_stat_["bytes put"]+=data->ByteSize();
 			SendDataBuffer(*data);
+		}
 	}
 	disk_table_stat_["last byte written"] = Now();
 }

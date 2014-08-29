@@ -96,13 +96,7 @@ public:
 	void finish_put(); //  end of file, flush all buffers
 
 	//  done storing, close open file
-	void finalize_data() {
-		done_writing_ = true;
-		if (file_) {
-			delete file_;
-		}
-		file_ = NULL;
-	}
+	void finalize_data();
 
 	bool done();
 	void Next();
@@ -119,6 +113,8 @@ public:
 	}
 
 	void PrintStats();
+
+	Stats stats(){ return disk_table_stat_;}
 
 	//  thread for writing to disk at the table server
 	void store(const DiskData* data);
@@ -153,6 +149,8 @@ private:
 	int current_block_, current_buffer_count_, total_buffer_count_;
 	boost::shared_ptr<DiskTableIterator> current_iterator_;
 	int current_idx_;
+
+	boost::recursive_mutex disk_lock_;
 
 	// to write
 	RecordFile* file_;

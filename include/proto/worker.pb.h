@@ -41,6 +41,7 @@ class MethodStats;
 class HashGet;
 class TableData;
 class DiskData;
+class FlushDiskTable;
 
 // ===================================================================
 
@@ -904,10 +905,17 @@ class DiskData : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 table() const;
   inline void set_table(::google::protobuf::uint32 value);
   
-  // repeated .lapis.Arg records = 3;
+  // optional bool is_empty = 3;
+  inline bool has_is_empty() const;
+  inline void clear_is_empty();
+  static const int kIsEmptyFieldNumber = 3;
+  inline bool is_empty() const;
+  inline void set_is_empty(bool value);
+  
+  // repeated .lapis.Arg records = 4;
   inline int records_size() const;
   inline void clear_records();
-  static const int kRecordsFieldNumber = 3;
+  static const int kRecordsFieldNumber = 4;
   inline const ::lapis::Arg& records(int index) const;
   inline ::lapis::Arg* mutable_records(int index);
   inline ::lapis::Arg* add_records();
@@ -922,15 +930,18 @@ class DiskData : public ::google::protobuf::Message {
   inline void clear_has_block_number();
   inline void set_has_table();
   inline void clear_has_table();
+  inline void set_has_is_empty();
+  inline void clear_has_is_empty();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
   ::google::protobuf::uint32 block_number_;
   ::google::protobuf::uint32 table_;
   ::google::protobuf::RepeatedPtrField< ::lapis::Arg > records_;
+  bool is_empty_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_worker_2eproto();
   friend void protobuf_AssignDesc_worker_2eproto();
@@ -938,6 +949,88 @@ class DiskData : public ::google::protobuf::Message {
   
   void InitAsDefaultInstance();
   static DiskData* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class FlushDiskTable : public ::google::protobuf::Message {
+ public:
+  FlushDiskTable();
+  virtual ~FlushDiskTable();
+  
+  FlushDiskTable(const FlushDiskTable& from);
+  
+  inline FlushDiskTable& operator=(const FlushDiskTable& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const FlushDiskTable& default_instance();
+  
+  void Swap(FlushDiskTable* other);
+  
+  // implements Message ----------------------------------------------
+  
+  FlushDiskTable* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const FlushDiskTable& from);
+  void MergeFrom(const FlushDiskTable& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required uint32 table = 1;
+  inline bool has_table() const;
+  inline void clear_table();
+  static const int kTableFieldNumber = 1;
+  inline ::google::protobuf::uint32 table() const;
+  inline void set_table(::google::protobuf::uint32 value);
+  
+  // @@protoc_insertion_point(class_scope:lapis.FlushDiskTable)
+ private:
+  inline void set_has_table();
+  inline void clear_has_table();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::google::protobuf::uint32 table_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_worker_2eproto();
+  friend void protobuf_AssignDesc_worker_2eproto();
+  friend void protobuf_ShutdownFile_worker_2eproto();
+  
+  void InitAsDefaultInstance();
+  static FlushDiskTable* default_instance_;
 };
 // ===================================================================
 
@@ -1726,7 +1819,29 @@ inline void DiskData::set_table(::google::protobuf::uint32 value) {
   table_ = value;
 }
 
-// repeated .lapis.Arg records = 3;
+// optional bool is_empty = 3;
+inline bool DiskData::has_is_empty() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void DiskData::set_has_is_empty() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void DiskData::clear_has_is_empty() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void DiskData::clear_is_empty() {
+  is_empty_ = false;
+  clear_has_is_empty();
+}
+inline bool DiskData::is_empty() const {
+  return is_empty_;
+}
+inline void DiskData::set_is_empty(bool value) {
+  set_has_is_empty();
+  is_empty_ = value;
+}
+
+// repeated .lapis.Arg records = 4;
 inline int DiskData::records_size() const {
   return records_.size();
 }
@@ -1749,6 +1864,32 @@ DiskData::records() const {
 inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
 DiskData::mutable_records() {
   return &records_;
+}
+
+// -------------------------------------------------------------------
+
+// FlushDiskTable
+
+// required uint32 table = 1;
+inline bool FlushDiskTable::has_table() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void FlushDiskTable::set_has_table() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void FlushDiskTable::clear_has_table() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void FlushDiskTable::clear_table() {
+  table_ = 0u;
+  clear_has_table();
+}
+inline ::google::protobuf::uint32 FlushDiskTable::table() const {
+  return table_;
+}
+inline void FlushDiskTable::set_table(::google::protobuf::uint32 value) {
+  set_has_table();
+  table_ = value;
 }
 
 

@@ -16,8 +16,14 @@ namespace lapis{
 string FIRST_BYTE_STORED="first byte stored";
 string LAST_BYTE_STORED="last byte stored";
 string TOTAL_BYTE_STORED="total byte stored";
-string TOTAL_SUB_BLOCK_SENT="total sub blocks sent";
-string TOTAL_SUB_BLOCK_RECEIVED="total sub blocks received";
+string TOTAL_SUB_BLOCK_SENT="total sub block sent";
+string TOTAL_RECORD_SENT="total record sent";
+string TOTAL_RECORD_STORED="total record stored";
+string TOTAL_SUB_BLOCK_RECEIVED="total sub block received";
+string FIRST_BYTE_READ="first byte read";
+string LAST_BYTE_READ="last byte read";
+string TOTAL_BYTE_READ="total byte read";
+string TOTAL_RECORD_READ="total record read";
 
 //  iterator through disk file
 DiskTableIterator::DiskTableIterator(const string name, DiskData* msg): file_(name, "r"), done_(true)
@@ -42,7 +48,6 @@ bool DiskTableIterator::done(){ return done_;}
 DiskData* DiskTableIterator::value(){ return data_;}
 
 DiskTable::DiskTable(DiskTableDescriptor *table) {
-		VLOG(3) << "NEW DISK TABLE CREATED !!!!";
 		Init(table);
 		table_info_ = table;
 		current_block_ = current_buffer_count_ = total_buffer_count_ = 0;
@@ -52,7 +57,8 @@ DiskTable::DiskTable(DiskTableDescriptor *table) {
 		disk_table_stat_[FIRST_BYTE_STORED] = 0;
 		disk_table_stat_[LAST_BYTE_STORED] = disk_table_stat_[TOTAL_BYTE_STORED] = 0;
 		disk_table_stat_[TOTAL_SUB_BLOCK_SENT] = disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED] = 0;
-
+	disk_table_stat_[FIRST_BYTE_READ] = disk_table_stat_[LAST_BYTE_READ] =
+			disk_table_stat_[TOTAL_BYTE_READ] = 0;
 }
 
 void DiskTable::Load(){
@@ -107,6 +113,8 @@ void DiskTable::store(const DiskData* data){
 
 	disk_table_stat_[LAST_BYTE_STORED]=Now();
 	disk_table_stat_[TOTAL_BYTE_STORED]+=data->ByteSize();
+	disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED]++;
+	disk_table_stat_[TOTAL_RECORD_STORED]+=data->records_size();
 }
 
 void DiskTable::put_str(const string& k, const string& v){
@@ -143,8 +151,14 @@ void DiskTable::put_str(const string& k, const string& v){
 }
 
 void DiskTable::get_str(string *k, string *v){
+	if (disk_table_stat_[FIRST_BYTE_READ]==0)
+		disk_table_stat_[FIRST_BYTE_READ] = Now();
 	k->assign((current_read_record_->records(current_idx_)).key());
 	v->assign((current_read_record_->records(current_idx_)).value());
+
+	disk_table_stat_[LAST_BYTE_READ] = Now();
+	disk_table_stat_[TOTAL_BYTE_READ]+= (k->size() + v->size());
+	disk_table_stat_[TOTAL_RECORD_READ]++;
 }
 
 //  flush the current buffer
@@ -164,15 +178,27 @@ void DiskTable::finish_put(){
 		SendDataBuffer(*current_write_record_);
 
 	//  wait for other to confirm that data has been stored
-	FlushDiskTable message;
+	DiskData message;
 	message.set_table(id());
+	message.set_is_empty(true);
+	message.set_block_number(-1);
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, message);
 }
 
+void DiskTable::finalize_data(){
+		done_writing_ = true;
+		if (file_) {
+			delete file_;
+		}
+		file_ = NULL;
+}
+
 //  reach the last record of the last file
 bool DiskTable::done(){
-	return current_iterator_->done() && current_block_>=(int)(blocks_.size()) && buffer_->empty();
+	return  current_idx_==(current_read_record_->records_size()-1)
+			&& current_iterator_->done()
+			&& current_block_ >= (int) (blocks_.size()) && buffer_->empty();
 }
 
 
@@ -185,7 +211,6 @@ void DiskTable::read_loop(){
 
 	//  more blocks to add
 	while (!current_iterator_->done() || current_block_ < (int) (blocks_.size())) {
-		//VLOG(3) << "Trying to add data ++++";
 		while (!(buffer_->add_data_records(current_iterator_->value())))
 			Sleep (FLAGS_sleep_time);
 		current_iterator_->Next();
@@ -238,12 +263,13 @@ void DiskTable::SendDataBuffer(const DiskData& data){
 
 	NetworkThread::Get()->Send(dest,MTYPE_DATA_PUT_REQUEST, data);
 	disk_table_stat_[TOTAL_SUB_BLOCK_SENT]++;
+	disk_table_stat_[TOTAL_RECORD_SENT]+=data.records_size();
 }
 
 void DiskTable::PrintStats(){
-	VLOG(3) << "total number of sub block sent: "<<disk_table_stat_[TOTAL_SUB_BLOCK_SENT];
-	VLOG(3) << "total data stored: " << disk_table_stat_[TOTAL_BYTE_STORED]
-			<< " in " << disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED] << " sub blocks";
+	//VLOG(3) << "total number of sub block sent: "<<disk_table_stat_[TOTAL_SUB_BLOCK_SENT];
+	//VLOG(3) << "total data stored: " << disk_table_stat_[TOTAL_BYTE_STORED]
+	//		<< " in " << disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED] << " sub blocks";
 
 	VLOG(3) << "disk write bandwidth = "
 			<< disk_table_stat_[TOTAL_BYTE_STORED]

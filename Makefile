@@ -58,11 +58,19 @@ run_run:
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
 
-run_test: lapis.test
+run_test_load: lapis.test
+	rm -rf tmp/*
+	sync
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=5000 -block_size=1000 --table_size=2000 --table_buffer=30
+		 --record_size=10000 -block_size=1000 --table_size=20000 --table_buffer=1000
+
+run_test_get: lapis.test
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
+		-model_conf=examples/imagenet12/model.conf --v=3 \
+		 --record_size=10000 -block_size=5000 --table_size=20000 --table_buffer=1000 --nois_testing_put
 
 
 debug:
@@ -73,7 +81,7 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis.test: $(TABLE_TEST_OBJS)
+lapis.test: lapis.bin $(TABLE_TEST_OBJS)
 	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 

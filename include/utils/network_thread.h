@@ -61,7 +61,13 @@ class NetworkThread {
     handles_[message_type] = cb;
   }
 
+  void RegisterDiskHandler(Handle cb){
+	  disk_write_handle_ = cb;
+  }
+
   bool active() const;
+
+  bool is_empty_queue(int src, int type);
 
   void PrintStats();
 
@@ -78,7 +84,7 @@ class NetworkThread {
   volatile bool running_;
 
   Callback callbacks_[kMaxMethods];
-  Handle handles_[kMaxMethods];
+  Handle handles_[kMaxMethods], disk_write_handle_;
 
   //queues of sent messages
   deque<RPCRequest *> pending_sends_;
@@ -88,12 +94,12 @@ class NetworkThread {
   MPI::Comm *world_;
 
   //send lock
-  mutable boost::recursive_mutex send_lock;
+  mutable boost::recursive_mutex send_lock, disk_lock_;
   //received locks, one for each kMaxHosts
   boost::recursive_mutex response_queue_locks_[kMaxMethods];
 
   mutable boost::thread *sender_and_reciever_thread_;
-  mutable boost::thread *processing_thread_;
+  mutable boost::thread *processing_thread_, *disk_thread_;
 
 
   //request (put/get) queue
@@ -101,6 +107,7 @@ class NetworkThread {
 
   //response queue (read)
   Queue response_queue_[kMaxMethods][kMaxHosts];
+  Queue disk_queue_;
 
   Stats network_thread_stats_;
 
@@ -118,6 +125,9 @@ class NetworkThread {
   //  loop that processes received messages
   void ProcessLoop();
 
+  //  for writing to disk. Put both DATA_PUT and DATA_PUT_FINISH to this queue,
+  //  the latter being the last message to process
+  void WriteToDiskLoop();
 
   //  helper for ProcessLoop();
   void ProcessRequest(const TaggedMessage &t_msg);

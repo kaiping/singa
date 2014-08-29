@@ -41,6 +41,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* DiskData_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   DiskData_reflection_ = NULL;
+const ::google::protobuf::Descriptor* FlushDiskTable_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  FlushDiskTable_reflection_ = NULL;
 
 }  // namespace
 
@@ -177,9 +180,10 @@ void protobuf_AssignDesc_worker_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(TableData));
   DiskData_descriptor_ = file->message_type(7);
-  static const int DiskData_offsets_[3] = {
+  static const int DiskData_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, block_number_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, table_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, is_empty_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, records_),
   };
   DiskData_reflection_ =
@@ -193,6 +197,21 @@ void protobuf_AssignDesc_worker_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(DiskData));
+  FlushDiskTable_descriptor_ = file->message_type(8);
+  static const int FlushDiskTable_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, table_),
+  };
+  FlushDiskTable_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      FlushDiskTable_descriptor_,
+      FlushDiskTable::default_instance_,
+      FlushDiskTable_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(FlushDiskTable));
 }
 
 namespace {
@@ -221,6 +240,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
     TableData_descriptor_, &TableData::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     DiskData_descriptor_, &DiskData::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    FlushDiskTable_descriptor_, &FlushDiskTable::default_instance());
 }
 
 }  // namespace
@@ -242,6 +263,8 @@ void protobuf_ShutdownFile_worker_2eproto() {
   delete TableData_reflection_;
   delete DiskData::default_instance_;
   delete DiskData_reflection_;
+  delete FlushDiskTable::default_instance_;
+  delete FlushDiskTable_reflection_;
 }
 
 void protobuf_AddDesc_worker_2eproto() {
@@ -267,9 +290,11 @@ void protobuf_AddDesc_worker_2eproto() {
     "leData\022\016\n\006source\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\r\n"
     "\005shard\030\003 \002(\r\022\014\n\004done\030\004 \002(\010\022\013\n\003key\030\005 \002(\014\022"
     "\022\n\ntable_data\030\006 \001(\014\022\033\n\007kv_data\030\007 \003(\0132\n.l"
-    "apis.Arg\022\023\n\013missing_key\030\010 \001(\010\"L\n\010DiskDat"
-    "a\022\024\n\014block_number\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\033"
-    "\n\007records\030\003 \003(\0132\n.lapis.ArgB\002H\001", 711);
+    "apis.Arg\022\023\n\013missing_key\030\010 \001(\010\"^\n\010DiskDat"
+    "a\022\024\n\014block_number\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\020"
+    "\n\010is_empty\030\003 \001(\010\022\033\n\007records\030\004 \003(\0132\n.lapi"
+    "s.Arg\"\037\n\016FlushDiskTable\022\r\n\005table\030\001 \002(\rB\002"
+    "H\001", 762);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "worker.proto", &protobuf_RegisterTypes);
   RegisterWorkerRequest::default_instance_ = new RegisterWorkerRequest();
@@ -280,6 +305,7 @@ void protobuf_AddDesc_worker_2eproto() {
   HashGet::default_instance_ = new HashGet();
   TableData::default_instance_ = new TableData();
   DiskData::default_instance_ = new DiskData();
+  FlushDiskTable::default_instance_ = new FlushDiskTable();
   RegisterWorkerRequest::default_instance_->InitAsDefaultInstance();
   ShardAssignment::default_instance_->InitAsDefaultInstance();
   ShardAssignmentRequest::default_instance_->InitAsDefaultInstance();
@@ -288,6 +314,7 @@ void protobuf_AddDesc_worker_2eproto() {
   HashGet::default_instance_->InitAsDefaultInstance();
   TableData::default_instance_->InitAsDefaultInstance();
   DiskData::default_instance_->InitAsDefaultInstance();
+  FlushDiskTable::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_worker_2eproto);
 }
 
@@ -2576,6 +2603,7 @@ void TableData::Swap(TableData* other) {
 #ifndef _MSC_VER
 const int DiskData::kBlockNumberFieldNumber;
 const int DiskData::kTableFieldNumber;
+const int DiskData::kIsEmptyFieldNumber;
 const int DiskData::kRecordsFieldNumber;
 #endif  // !_MSC_VER
 
@@ -2597,6 +2625,7 @@ void DiskData::SharedCtor() {
   _cached_size_ = 0;
   block_number_ = 0u;
   table_ = 0u;
+  is_empty_ = false;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -2633,6 +2662,7 @@ void DiskData::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     block_number_ = 0u;
     table_ = 0u;
+    is_empty_ = false;
   }
   records_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -2672,12 +2702,28 @@ bool DiskData::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_records;
+        if (input->ExpectTag(24)) goto parse_is_empty;
         break;
       }
       
-      // repeated .lapis.Arg records = 3;
+      // optional bool is_empty = 3;
       case 3: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_is_empty:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &is_empty_)));
+          set_has_is_empty();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(34)) goto parse_records;
+        break;
+      }
+      
+      // repeated .lapis.Arg records = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_records:
@@ -2686,7 +2732,7 @@ bool DiskData::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_records;
+        if (input->ExpectTag(34)) goto parse_records;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2719,10 +2765,15 @@ void DiskData::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->table(), output);
   }
   
-  // repeated .lapis.Arg records = 3;
+  // optional bool is_empty = 3;
+  if (has_is_empty()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->is_empty(), output);
+  }
+  
+  // repeated .lapis.Arg records = 4;
   for (int i = 0; i < this->records_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->records(i), output);
+      4, this->records(i), output);
   }
   
   if (!unknown_fields().empty()) {
@@ -2743,11 +2794,16 @@ void DiskData::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->table(), target);
   }
   
-  // repeated .lapis.Arg records = 3;
+  // optional bool is_empty = 3;
+  if (has_is_empty()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(3, this->is_empty(), target);
+  }
+  
+  // repeated .lapis.Arg records = 4;
   for (int i = 0; i < this->records_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        3, this->records(i), target);
+        4, this->records(i), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -2775,8 +2831,13 @@ int DiskData::ByteSize() const {
           this->table());
     }
     
+    // optional bool is_empty = 3;
+    if (has_is_empty()) {
+      total_size += 1 + 1;
+    }
+    
   }
-  // repeated .lapis.Arg records = 3;
+  // repeated .lapis.Arg records = 4;
   total_size += 1 * this->records_size();
   for (int i = 0; i < this->records_size(); i++) {
     total_size +=
@@ -2817,6 +2878,9 @@ void DiskData::MergeFrom(const DiskData& from) {
     if (from.has_table()) {
       set_table(from.table());
     }
+    if (from.has_is_empty()) {
+      set_is_empty(from.is_empty());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -2846,6 +2910,7 @@ void DiskData::Swap(DiskData* other) {
   if (other != this) {
     std::swap(block_number_, other->block_number_);
     std::swap(table_, other->table_);
+    std::swap(is_empty_, other->is_empty_);
     records_.Swap(&other->records_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -2858,6 +2923,214 @@ void DiskData::Swap(DiskData* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = DiskData_descriptor_;
   metadata.reflection = DiskData_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int FlushDiskTable::kTableFieldNumber;
+#endif  // !_MSC_VER
+
+FlushDiskTable::FlushDiskTable()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void FlushDiskTable::InitAsDefaultInstance() {
+}
+
+FlushDiskTable::FlushDiskTable(const FlushDiskTable& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void FlushDiskTable::SharedCtor() {
+  _cached_size_ = 0;
+  table_ = 0u;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+FlushDiskTable::~FlushDiskTable() {
+  SharedDtor();
+}
+
+void FlushDiskTable::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void FlushDiskTable::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* FlushDiskTable::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return FlushDiskTable_descriptor_;
+}
+
+const FlushDiskTable& FlushDiskTable::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();  return *default_instance_;
+}
+
+FlushDiskTable* FlushDiskTable::default_instance_ = NULL;
+
+FlushDiskTable* FlushDiskTable::New() const {
+  return new FlushDiskTable;
+}
+
+void FlushDiskTable::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    table_ = 0u;
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool FlushDiskTable::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // required uint32 table = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &table_)));
+          set_has_table();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+      
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void FlushDiskTable::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // required uint32 table = 1;
+  if (has_table()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->table(), output);
+  }
+  
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* FlushDiskTable::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // required uint32 table = 1;
+  if (has_table()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->table(), target);
+  }
+  
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int FlushDiskTable::ByteSize() const {
+  int total_size = 0;
+  
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required uint32 table = 1;
+    if (has_table()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->table());
+    }
+    
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void FlushDiskTable::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const FlushDiskTable* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const FlushDiskTable*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void FlushDiskTable::MergeFrom(const FlushDiskTable& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_table()) {
+      set_table(from.table());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void FlushDiskTable::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void FlushDiskTable::CopyFrom(const FlushDiskTable& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool FlushDiskTable::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
+  
+  return true;
+}
+
+void FlushDiskTable::Swap(FlushDiskTable* other) {
+  if (other != this) {
+    std::swap(table_, other->table_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata FlushDiskTable::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = FlushDiskTable_descriptor_;
+  metadata.reflection = FlushDiskTable_reflection_;
   return metadata;
 }
 

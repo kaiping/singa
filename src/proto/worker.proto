@@ -57,7 +57,11 @@ message TableData {
 
 message DiskData{
   required uint32 block_number = 1;
-  required uint32 table = 2;  
-  repeated Arg records = 3; 
+  required uint32 table = 2;
+  optional bool is_empty = 3;   
+  repeated Arg records = 4; 
 }
 
+message FlushDiskTable{
+  required uint32 table = 1; 
+}

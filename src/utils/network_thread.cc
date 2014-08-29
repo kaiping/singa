@@ -52,11 +52,12 @@ NetworkThread::NetworkThread() {
       callbacks_[i] = NULL;
       handles_[i] = NULL;
     }
+    disk_write_handle_ = NULL;
 
   sender_and_reciever_thread_ = new boost::thread(&NetworkThread::NetworkLoop,
       this);
   processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
-
+  disk_thread_ = new boost::thread(&NetworkThread::WriteToDiskLoop, this);
 
 //  initialize message queue
   auto gc = GlobalContext::Get();
@@ -100,53 +101,56 @@ void NetworkThread::CollectActive() {
 //  are added to the queue. Other requests (shard assignment, etc.)
 //  are processed right away
 void NetworkThread::NetworkLoop() {
-  while (running_) {
-    MPI::Status st;
-    if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
-      int tag = st.Get_tag();
-      int source = st.Get_source();
-      int bytes = st.Get_count(MPI::BYTE);
-      string data;
-      data.resize(bytes);
-      if (tag==MTYPE_DATA_PUT_REQUEST && network_thread_stats_[FIRST_BYTE_RECEIVED]==0)
-    	  network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
+	while (running_) {
+		MPI::Status st;
+		if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
+			int tag = st.Get_tag();
+			int source = st.Get_source();
+			int bytes = st.Get_count(MPI::BYTE);
+			string data;
+			data.resize(bytes);
+			if (tag == MTYPE_DATA_PUT_REQUEST
+					&& network_thread_stats_[FIRST_BYTE_RECEIVED] == 0)
+				network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
 
-      world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
-
+			world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
 			if (tag == MTYPE_DATA_PUT_REQUEST) {
 				network_thread_stats_[LAST_BYTE_RECEIVED] = Now();
 				network_thread_stats_[TOTAL_BYTE_RECEIVED] += bytes;
 			}
 
-
-
-      //  put request to the queue
-      if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
-        request_queue_->Enqueue(tag, data);
-      } else { //  put reponse, etc. to the response queue. This is read
-        //  actively by the client
-        boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
-        response_queue_[tag][source].push_back(data);
-      }
-      //  other messages that need to be processed right away, e.g. shard assignment
-      if (callbacks_[tag] != NULL) {
-        callbacks_[tag]();
-      }
-    } else {
-      Sleep(FLAGS_sleep_time);
-    }
-    //  push the send queue through
-    while (!pending_sends_.empty()) {
-      boost::recursive_mutex::scoped_lock sl(send_lock);
-      RPCRequest *s = pending_sends_.front();
-      pending_sends_.pop_front();
-      s->start_time = Now();
-      s->mpi_req = world_->Isend(
-                     s->payload.data(), s->payload.size(), MPI::BYTE, s->target, s->rpc_type);
-      active_sends_.insert(s);
-    }
-    CollectActive();
-  }
+			//  put request to the queue
+			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
+				request_queue_->Enqueue(tag, data);
+			} else if (tag == MTYPE_DATA_PUT_REQUEST
+					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
+				boost::recursive_mutex::scoped_lock sl(disk_lock_);
+				disk_queue_.push_back(data);
+			}
+			else { //  put reponse, etc. to the response queue. This is read
+				//  actively by the client
+				boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
+				response_queue_[tag][source].push_back(data);
+			}
+			//  other messages that need to be processed right away, e.g. shard assignment
+			if (callbacks_[tag] != NULL) {
+				callbacks_[tag]();
+			}
+		} else {
+			Sleep (FLAGS_sleep_time);
+		}
+		//  push the send queue through
+		while (!pending_sends_.empty()) {
+			boost::recursive_mutex::scoped_lock sl(send_lock);
+			RPCRequest *s = pending_sends_.front();
+			pending_sends_.pop_front();
+			s->start_time = Now();
+			s->mpi_req = world_->Isend(s->payload.data(), s->payload.size(),
+					MPI::BYTE, s->target, s->rpc_type);
+			active_sends_.insert(s);
+		}
+		CollectActive();
+	}
 }
 
 //  loop through the request queue and process messages
@@ -157,6 +161,21 @@ void NetworkThread::ProcessLoop() {
     request_queue_->NextRequest(&msg);
     ProcessRequest(msg);
   }
+}
+
+void NetworkThread::WriteToDiskLoop() {
+	while (running_) {
+		DiskData *data = new DiskData();
+		boost::recursive_mutex::scoped_lock sl(disk_lock_);
+		if (disk_queue_.empty())
+			Sleep(FLAGS_sleep_time);
+		else{
+			const string &s = disk_queue_.front();
+			data->ParseFromArray(s.data(), s.size());
+			disk_queue_.pop_front();
+			disk_write_handle_(data);
+		}
+	}
 }
 
 void NetworkThread::ProcessRequest(const TaggedMessage &t_msg) {
@@ -187,6 +206,12 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     return true;
   }
   return false;
+}
+
+bool NetworkThread::is_empty_queue(int src, int type){
+	boost::recursive_mutex::scoped_lock sl(response_queue_locks_[type]);
+	Queue &q = response_queue_[type][src];
+	return q.empty();
 }
 
 //  blocking read for the given source and message type.
@@ -231,6 +256,7 @@ void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
     sender_and_reciever_thread_->join();
+    disk_thread_->join();
     //processing_thread_->join();
     MPI_Finalize();
   }

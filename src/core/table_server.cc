@@ -8,8 +8,6 @@
 DECLARE_double(sleep_time);
 namespace lapis {
 TableServer::TableServer(){
-	done_writing_ = has_finalized_ = false;
-	disk_write_thread_ = new boost::thread(&TableServer::write_to_disk_loop, this);
 }
 
 void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
@@ -17,24 +15,19 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   tables_=tables;
   net_ = NetworkThread::Get();
   server_id_ = net_->id();
-  VLOG(3)<<"table server id "<<server_id_;
   //  set itself as the current worker for the table
   for (auto& i: tables){
-    VLOG(3)<<"in set worker";
     i.second->set_worker(this);
   }
   //  register to the manager
   RegisterWorkerRequest req;
   req.set_id(server_id_);
-  VLOG(3)<<"before send msg to "<<GlobalContext::kCoordinatorRank;
   net_->Send(GlobalContext::kCoordinatorRank, MTYPE_REGISTER_WORKER, req);
-  VLOG(3)<<"after send msg to "<<GlobalContext::kCoordinatorRank;
+
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableServer::HandleShardAssignment, this));
-  net_->RegisterCallback(MTYPE_DATA_PUT_REQUEST_FINISH,
-		  	  	  	  	 boost::bind(&TableServer::FinishDataPut, this));
-
+  net_->RegisterDiskHandler(boost::bind(&TableServer::HandleDisk, this, _1));
 
   net_->RegisterRequestHandler(MTYPE_PUT_REQUEST,
                                boost::bind(&TableServer::HandleUpdateRequest, this, _1));
@@ -61,57 +54,29 @@ void TableServer::HandleShardAssignment() {
   VLOG(3)<<"finish handle shard assignment";
 }
 
+void TableServer::HandleDisk(const Message* data){
+	const DiskData *dt = static_cast<const DiskData*>(data);
+	if (dt->is_empty())
+		FinishDataPut(dt);
+	else
+		HandleDataPut(dt);
+}
 
-void TableServer::data_put(const DiskData& data){
+void TableServer::HandleDataPut(const DiskData* data){
 	for (auto& t : tables_){
-		if ((int)data.table()==t.first)
-			(dynamic_cast<DiskTable*>(t.second))->store(&data);
+		if ((int)data->table()==t.first)
+			(dynamic_cast<DiskTable*>(t.second))->store(data);
 	}
 }
 
-void TableServer::write_to_disk_loop(){
-	while (!done_writing_) {
-
-		DiskData data;
-		if (NetworkThread::Get()->TryRead(GlobalContext::kCoordinatorRank,
-						MTYPE_DATA_PUT_REQUEST, &data))
-		data_put(data);
-		else
-		Sleep(FLAGS_sleep_time);
-	}
-
-	// flush
-	while (true) {
-		DiskData data;
-		if (NetworkThread::Get()->TryRead(GlobalContext::kCoordinatorRank,
-				MTYPE_DATA_PUT_REQUEST, &data)) {
-			data_put(data);
-		} else
-			break;
-	}
-
-}
-
-
-void TableServer::FinishDataPut(){
-	// flush
-	while (true) {
-		DiskData data;
-		if (NetworkThread::Get()->TryRead(GlobalContext::kCoordinatorRank,
-				MTYPE_DATA_PUT_REQUEST, &data)) {
-			data_put(data);
-		} else
-			break;
-	}
-
-	FlushDiskTable msg;
-	net_->Read(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_FINISH, &msg);
-	for (auto& t : tables_){
-		if (t.first==(int)msg.table()){
+void TableServer::FinishDataPut(const DiskData* data) {
+	for (auto& t : tables_) {
+		if (t.first == (int) data->table()) {
 			(dynamic_cast<DiskTable*>(t.second))->finalize_data();
 		}
 	}
-	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE, msg);
+	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE,
+			EmptyMessage());
 }
 
 //  respond to request

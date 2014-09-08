@@ -3,9 +3,9 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /usr
+HOME_DIR := /home/wangwei/install
 # Location of g++
-CXX := g++
+CXX := $(HOME_DIR)/bin/g++
 # Header folder for system and external libs. You may need to change it.
 INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
 
@@ -49,11 +49,11 @@ LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OB
 TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
-run_load:
+run_load: lapis.bin
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3
-run_run:
+run_run: lapis.bin
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
@@ -94,7 +94,7 @@ $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 
 $(TABLE_TEST_OBJS): $(TABLE_TEST_SRCS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
-			
+
 
 # create folders
 init:

@@ -172,6 +172,11 @@ int test_disk(int tid) {
 	return 0;
 }
 
+// for debugging use
+#ifndef FLAGS_v
+  DEFINE_int32(v, 3, "vlog controller");
+#endif
+
 int main(int argc, char **argv) {
 	FLAGS_logtostderr = 1;
 	google::InitGoogleLogging(argv[0]);

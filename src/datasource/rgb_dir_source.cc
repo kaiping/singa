@@ -9,6 +9,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <fstream>
+
 #include "datasource/rgb_dir_source.h"
 #include "utils/proto_helper.h"
 
@@ -47,7 +49,7 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
   if (keys){
     if(!keys->empty())
       image_names_ = keys;
-    VLOG(3)<<"copy file names";
+    VLOG(3)<<"copy file names ";
   } else {
     image_names_ = std::make_shared<StringVec>();
     LOG(INFO) << "the dir is " << directory_;
@@ -58,6 +60,7 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
       std::string filename = iterator->path().filename().string();
       if (isImage(filename))
         image_names_->push_back(filename);
+      VLOG(3) << "push file name " << filename; 
     }
   }
   // read mean of the images
@@ -67,7 +70,7 @@ const std::shared_ptr<StringVec> RGBDirSource::LoadData(
     ReadProtoFromBinaryFile(mean_file_.c_str(), data_mean_);
     VLOG(2)<<"read mean proto, of shape: "
       <<data_mean_->num()<<" "<<data_mean_->channels()
-      <<" "<<data_mean_->height() <<" "<<data_mean_->width();
+      <<" "<<data_mean_->height() <<" "<<data_mean_->width()<<" "<<data_mean_->data().size();
   }
   return image_names_;
 }
@@ -77,8 +80,11 @@ void readImage(const std::string &path, int height, int width,
   cv::Mat cv_img;
   VLOG(3)<<path;
   if (height > 0 && width > 0) {
-    VLOG(3)<<"resize image";
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
+    if(! cv_img_origin.data )  // Check for invalid input
+    {
+        VLOG(3) <<  "Could not open or find the image";
+    }
     cv::resize(cv_img_origin, cv_img, cv::Size(height, width));
   } else {
     VLOG(3)<<"no image resize";
@@ -125,6 +131,7 @@ void RGBDirSource::GetData(Blob *blob) {
   for (int i = 0; i < blob->num(); i++) {
     if (offset_ == size_)
       offset_ = 0;
+    // TODO trim beginning spaces of the path
     readImage(directory_ + "/" + image_names_->at(offset_), height_,
               width_, data_mean_->data().data(), &addr[i * image_size_]);
   }

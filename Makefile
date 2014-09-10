@@ -3,11 +3,11 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei/install
+HOME_DIR := /usr
 # Location of g++
-CXX := $(HOME_DIR)/bin/g++
+CXX := g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
+INCLUDE_DIRS := /users/dinhtta/local/include ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
@@ -19,7 +19,7 @@ LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
 							opencv_core cblas atlas
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
+LIBRARY_DIRS := /users/dinhtta/local/lib $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
@@ -49,28 +49,30 @@ LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OB
 TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
-run_load: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+run_load:
+	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3
-run_run: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3 --data_dir=/data/anh/tmp \
+		--table_buffer=20 --block_size=10
+run_run:
+	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
+		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3 --data_dir=/data/anh/tmp \
+		--table_buffer=20 --block_size=10
 
 run_test_load: lapis.test
 	rm -rf tmp/*
 	sync
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun --prefix /users/dinhtta/local -np 4 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=10000 -block_size=1000 --table_size=20000 --table_buffer=1000
+		 --record_size=1000 --block_size=1000 --table_size=20000 --table_buffer=1000 --io_buffer_size=10 --data_dir=/data/anh/tmp
 
 run_test_get: lapis.test
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=10000 -block_size=5000 --table_size=20000 --table_buffer=1000 --nois_testing_put
+		 --record_size=10000 --block_size=5000 --table_size=20000 --table_buffer=1000 --nois_testing_put
 
 
 debug:
@@ -94,7 +96,7 @@ $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 
 $(TABLE_TEST_OBJS): $(TABLE_TEST_SRCS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
-
+			
 
 # create folders
 init:

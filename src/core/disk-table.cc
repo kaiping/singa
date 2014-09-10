@@ -9,6 +9,7 @@
 DEFINE_string(data_dir,"tmp", "path to data store");
 DEFINE_int32(table_buffer, 1,0);
 DEFINE_int32(io_buffer_size,5,0);
+DEFINE_int32(block_size,10,0); 
 DECLARE_double(sleep_time);
 DEFINE_int32(debug_index,0,0);
 namespace lapis{
@@ -140,7 +141,7 @@ void DiskTable::put_str(const string& k, const string& v){
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
 		current_write_record_ = new DiskData();
-		if (total_buffer_count_ >= table_info_->max_size) {
+		if (total_buffer_count_ >= FLAGS_block_size){ //table_info_->max_size) {
 			current_block_++;
 			total_buffer_count_ = 0;
 		}

@@ -40,24 +40,23 @@ void Edge::Setup(const char flag) {
   DLOG(INFO) << name_<<" does not implemente Setup func";
 }
 
-void Edge::SetupTopBlob(const bool alloc, Blob* blob) {
-  VLOG(1)<<"Edge "<<name_<<" does not implement SetupTopBlob";
+void Edge::SetupTop(const bool alloc, DAry* ary) {
+  DLOG(INFO)<<"Edge "<<name_<<" does not implement SetupTopBlob";
 }
 
 void Edge::ComputeParamUpdates(const Trainer *trainer) {
   const SGDTrainer *sgd = reinterpret_cast<const SGDTrainer *> (trainer);
-  float momentum = sgd->momentum();
-  float weight_decay = sgd->weight_decay();
-  float learning_rate = sgd->learning_rate();
+  float mom= sgd->momentum();
+  float wdecay = sgd->weight_decay();
+  float lr = sgd->learning_rate();
   for (Param *param : params_) {
-    int len = param->length();
-    Tensor1 history(param->mutable_history().dptr, Shape1(len));
-    const Tensor1 gradient(param->gradient().dptr, Shape1(len));
-    const Tensor1 data(param->content().dptr, Shape1(len));
-    momentum *= param->momentum();
-    weight_decay *= param->weight_decay();
-    learning_rate *= param->learning_rate();
-    history = history * momentum - (gradient + weight_decay * data) * learning_rate;
+    mom*= param->momentum();
+    wdecay *= param->weight_decay();
+    lr*= param->learning_rate();
+    DAry* history=param->mutable_history();
+    Mult(history, param->history, mom);
+    Axpb(history, -lr, param->gradient(), param->history());
+    Axpb(history, -lr*wdecay, param->data(), param->history());
   }
 }
 
@@ -75,6 +74,8 @@ std::shared_ptr<EdgeFactory> EdgeFactory::Instance() {
 
 EdgeFactory::EdgeFactory() {
   RegisterCreateFunction("ConvEdge", CreateEdge(ConvEdge));
+  RegisterCreateFunction("DropoutEdge", CreateEdge(DropoutEdge));
+  RegisterCreateFunction("ReLUEdge", CreateEdge(ReLUEdge));
   RegisterCreateFunction("InnerProductEdge", CreateEdge(InnerProductEdge));
   RegisterCreateFunction("LRNEdge", CreateEdge(LRNEdge));
   RegisterCreateFunction("PoolingEdge", CreateEdge(PoolingEdge));

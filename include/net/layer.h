@@ -55,10 +55,6 @@ class Layer {
   virtual void Init(const LayerProto &proto);
   /**
    * allocate memory for storing activations/features/gradients, etc.
-   * @param batchsize num of instances processed in one mini-batch
-   * @param alg algorithm to compute gradients, i.e., Backpropagation,
-   * TODO (wangwei), add support for Contrastive Divergence
-   * @param sources data providers, can be null for layers do not accept inputs
    */
   virtual void Setup(const char flag);
   /**
@@ -74,14 +70,6 @@ class Layer {
    */
   virtual void Backward();
   /**
-   * Combine momentum, learning rate, weight decay, etc,  with the gradients
-   * of parameters associated with this layer
-   * @param trainer Trainer pointer which provides the hyper-parameters for
-   * computing updates; May need cast it into SGDTrainer, to get momentum,
-   * weight_decay, etc.
-   */
-  virtual void ComputeParamUpdates(const Trainer *trainer);
-  /**
    * Apply dropout to src blob and write to dest blob, record the mask
    * @param drop_prob probability for drop out a neuron
    * @param scale a scale factor to be applied to every neuron after dropout
@@ -90,8 +78,6 @@ class Layer {
    * @param mask record which neuron is dropped for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
-  virtual void Dropout(float drop_prob, const Blob &src,
-                       Blob *dest, Blob *mask);
   /**
    * Back propagate the gradient for dropout operation
    * @param scale a scale factor multiplied to the gradient
@@ -100,8 +86,6 @@ class Layer {
    * @param mask it records which neuron was dropped in ::Dropout(), and
    * directs how to pass the gradient from src to dest.
    */
-  virtual void ComputeDropoutGradient(const Blob &src ,
-                                      const Blob &mask, Blob *dest);
   /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -118,7 +102,7 @@ class Layer {
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual Blob &feature(Edge *edge)=0;
+  virtual DAry &data(Edge *edge)=0;
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -127,14 +111,7 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual Blob &gradient(Edge *edge)=0;
-  /**
-   * Return parameters of this layer
-
-    std::vector<Param *> &params() {
-      return params_;
-    }
-   */
+  virtual DAry &grad(Edge *edge)=0;
   /**
    * Return name of this layer
    */
@@ -161,11 +138,10 @@ class Layer {
   }
 
  protected:
-  float drop_prob_;
   std::string name_, type_;
   std::vector<Edge *> out_edges_;
   std::vector<Edge *> in_edges_;
-  Blob drop_fea_, drop_grad_, mask_;
+  DAry data_, grad_;
 };
 
 /****************************************************************************/

@@ -35,40 +35,18 @@ void Layer::Setup(const char flag){
 }
 void Layer::Forward() {
   VLOG(3)<<name_;
+  for(auto * edge: in_edges_)
+    edge->Forward(&data_, edge->OtherSide(this)->data());
 }
 
 void Layer::Backward() {
   VLOG(3)<<name_;
+  for(auto* edge: out_edges_){
+    Layer * layer=edge->OtherSize(this).grad();
+    edge->Backward(&grad_, data_, layer->grad(), layer->data());
+  }
 }
 
-void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
-  Random &rnd = Lapis::Instance()->rnd();
-  // with 1-drop_prob to keep one neuron, i.e., mask=1
-  float keep_prob = 1.0 - drop_prob;
-  int len = dest->length();
-  Tensor1 dest_t(dest->dptr, Shape1(len));
-  Tensor1 mask_t(mask->dptr, Shape1(len));
-  Tensor1 src_t(src.dptr, Shape1(len));
-//  mask_t = mshadow::expr::F<mshadow::op::threshold>(rnd.uniform(mask_t.shape), keep_prob);
-  rnd.SampleUniform(mask_t);
-  float* maskdptr=mask->dptr;
-  for(int i=0;i<len;i++)
-    maskdptr[i]=maskdptr[i]<=keep_prob?1.0f:0.0f;
-  dest_t = src_t * mask_t *(1.0 / keep_prob);
-}
-
-void Layer::ComputeDropoutGradient(const Blob &src ,
-                                   const Blob &mask, Blob *dest) {
-  int len = dest->length();
-  Tensor1 dest_t(dest->dptr, Shape1(len));
-  Tensor1 mask_t(mask.dptr, Shape1(len));
-  Tensor1 src_t(src.dptr, Shape1(len));
-  dest_t = src_t * mask_t;
-}
-// Currently layers do not have parameters
-void Layer::ComputeParamUpdates(const Trainer *trainer) {
-  VLOG(1) << "Layer " << name_ << " has no parameters to update\n";
-}
 
 /*****************************************************************************
  * Implementation for LayerFactory
@@ -84,8 +62,6 @@ std::shared_ptr<LayerFactory> LayerFactory::Instance() {
 
 LayerFactory::LayerFactory() {
   RegisterCreateFunction("DataLayer", CreateLayer(DataLayer));
-  RegisterCreateFunction("LinearLayer", CreateLayer(LinearLayer));
-  RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
 }
 
 void LayerFactory::RegisterCreateFunction(

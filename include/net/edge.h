@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-10 22:29
 
-#ifndef INCLUDE_MODEL_EDGE_H_
-#define INCLUDE_MODEL_EDGE_H_
+#ifndef INCLUDE_NET_EDGE_H_
+#define INCLUDE_NET_EDGE_H_
 #include <string>
 #include <map>
 #include <vector>
@@ -23,9 +23,9 @@ class Trainer;
  * One edge connects two layers. The edge can be directed, e.g., in feed
  * forward neural network, or undirected, e.g., in RBM and DBM. In DBN,
  * there are both directed edges and undirected edges.
- * Normally, the edge contains parameters. It operates on output features
- * (or gradient of activations) of one layer and assigns the results to
- * activations (or gradient of output features) of another layer.
+ * Normally, the edge contains parameters. It operates on data
+ * (or gradient) of one layer and assigns the results to
+ * data (or gradient) of another layer.
  */
 class Edge {
  public:
@@ -34,6 +34,8 @@ class Edge {
    * Set edge properties,
    * @param edge_proto user defined edge properties, e.g., edge name,
    * parameters, type
+   * @param layer_map map from layer name to layer pointer, the edge will
+   * select the corresponding connecting layers
    */
   virtual void Init(const EdgeProto &proto,
                     const std::map<std::string, Layer *> &layer_map);
@@ -51,28 +53,27 @@ class Edge {
    */
   virtual void ToProto(EdgeProto *proto);
   /**
-   * Forward propagate feature, read from src and write to dest
+   * Forward-propagate feature, read from src and write to dest
    * @param src source feature
    * @param dest destination feature/activation to be set
-   * #param overwrite if true overwrite the dest otherwise add it
+   * #param overwrite if true overwrite the dest otherwise add to it
    */
-  virtual void Forward(const Blob &src, Blob *dest, bool overwrite)=0;
+  virtual void Forward(const DAry &src, DAry *dest, bool overwrite)=0;
   /**
-   * Backward propagate gradient, read gradient/feature blob from src and
-   * feature blob from src, then compute the gradient for parameters of this
+   * Backward propagate gradient, read gradient/feature from src and
+   * feature from src, then compute the gradient for parameters of this
    * edge and dest layer.
-   * @param src_fea feature (or activation) blob from the source layer that
+   * @param dsrc feature (or activation) from the source layer that
    * connected to this edge
-   * @param src_grad gradient blob from the source layer connected to this edge
-   * @param dest_fea feature blob from the dest layer connected to this layer
-   * @param dest_grad gradient blob from the dest layer connected to this edge,
-   * If no need to compute that gradient, then set dest_grad=nullptr, e.g., if
-   * the bottom layer is DataLayer, the no need to compute for the dest_grad.
+   * @param gsrc gradient of the source layer connected to this edge
+   * @param ddst feature of the dest layer connected to this edge
+   * @param gdst gradient of the dest layer connected to this edge,
+   * If no need to compute that gradient, then set gdst=nullptr, e.g., if
+   * the bottom layer is DataLayer, the no need to compute for the gradient.
    * @param overwrite if true overwrite dest_grad otherwise add to it
    */
-  virtual void Backward(const Blob &src_fea, const Blob &src_grad,
-                        const Blob &dest_fea, Blob *dest_grad,
-                        bool overwrite)=0;
+  virtual void Backward(const DAry &dsrc, const DAry &gsrc,
+                        const DAry &ddst, DAry *gdst, bool overwrite)=0;
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
    * gradients of parameters associated with this edge, which will be
@@ -87,16 +88,16 @@ class Edge {
    */
   virtual void ComputeParamUpdates(const Trainer *trainer);
   /**
-   * Setup (Reshape) the blob from top layer connected to this edge. Because
-   * the top blob is generated (although owned by the top layer) by this edge,
-   * this edge will decide the shape of the blob and is responsible to setup it
-   * @param blob the top blob to set setup.
+   * Setup (Reshape) the from top layer connected to this edge. Because
+   * the top  is generated (although owned by the top layer) by this edge,
+   * this edge will decide the shape of the  and is responsible to setup it
+   * @param  the top  to set setup.
    */
-  virtual void SetupTopBlob(const bool alloc, Blob *blob);
+  virtual void SetupTop(const bool alloc, DAry *);
   /**
    * Return parameters associated this edge
    */
-  std::vector<Param *> &params() {
+  std::vector<DAry *> &params() {
     return params_;
   }
   /**
@@ -190,4 +191,4 @@ class EdgeFactory {
 };
 
 }  // namespace lapis
-#endif  // INCLUDE_MODEL_EDGE_H_
+#endif  // INCLUDE_NET_EDGE_H_

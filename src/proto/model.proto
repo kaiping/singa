@@ -166,12 +166,14 @@ message SGDProto {
 }
 
 
-message PerformanceProto {
-  optional float precision = 1;
-  optional float recall = 2;
-  optional float map = 3;
-  optional float precision50 = 4;
-  optional int32 step = 5;
+message Performance{
+  optional float precision = 2;
+  optional float recall = 3;
+  optional float map = 4;
+  optional float precision50 = 5;
+  optional int32 step = 6;
+  optional int32 ncorrect = 7;
+  optional int32 ntotal = 8;
 }
 
 message TrainerProto {

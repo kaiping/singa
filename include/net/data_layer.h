@@ -83,7 +83,7 @@ class DataLayer : public Layer {
     return data_source_;
   }
 
- private:
+ protected:
   bool mirror_;
   int cropsize_;
   int batchsize_, channels_,height_,width_;

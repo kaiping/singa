@@ -64,16 +64,25 @@ void SGDTrainer::TrainOneBatch(Net *net){
   IncStep();
 }
 
-void SGDTrainer::Validate(Net *net) {
-/*
-  if (phase != Phase::kValidation) {
-    net->Setup( kAllocData, validation_data_shapes_);
-    phase = Phase::kValidation;
+void SGDTrainer::Validate(Net *net, int nbatches) {
+  std::vector<Layer *> layers = net->layers();
+  std::vector<Param *> params = net->params();
+  // get newest parameters for layers and edges
+  VLOG(3)<<"before get params from distributed mem";
+  model_controller_->Get(params);
+  VLOG(3)<<"after get params from distributed mem";
+  for(int k=0;k<nbatches;k++){
+    for (auto* layer : layers){
+      if(layer->HasInput()){
+        // TODO(wangwei) Error has not implemented mc.GetData.
+        auto dlayer=dynamic_cast<DataLayer*>(layer);
+        Blob& blob=dlayer->feature(nullptr);
+        VLOG(3)<<"getting data..";
+        model_controller_->GetData(dlayer->store_id(), &blob);
+      }
+      layer->Forward();
+    }
   }
-   TODO(wangwei) forward through all layers to get the loss
-     for(int i=0;i<test_data_[0].size()/sgd_proto_.test_batchsize();i++)
-     Forward();
-     */
 }
 
 void SGDTrainer::Test(Net *net) {

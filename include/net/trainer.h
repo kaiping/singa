@@ -55,13 +55,15 @@ class Trainer {
   /**
    * test performance on validation dataset
    * @param net the Net object
+   * @param nbatches number of batches
    */
-  virtual void Validate(Net *net) = 0;
+  virtual void Validate(Net *net, int nbatches) = 0;
   /**
    * test performance on test dataset
    * @param net the current Net object
+   * @param nbatches number of batches
    */
-  virtual void Test(Net *net) = 0;
+  virtual void Test(Net *net, int nbatches) = 0;
   /**
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()

@@ -103,11 +103,14 @@ void Worker::Run(bool load_data, bool do_train) {
         // do validation
         SetupNet(sgd.validation_batchsize(), kAllocData, &net,
             model.data().validation_data(), val_stores);
-        trainer.Validate(&net);
+        const DataSourceProto& nvalimgs=model.data().validation_data(0).shape().num();
+        trainer.Validate(&net, nvalimgs/sgd.validation_batchsize());
         // do test
+        /*
         SetupNet(sgd.test_batchsize(), kAllocData, &net,
             model.data().test_data(), test_stores);
         trainer.Test(&net);
+        */
         reset_net_for_training=true;
       }
     }

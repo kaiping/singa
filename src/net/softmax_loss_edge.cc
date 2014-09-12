@@ -33,7 +33,6 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   }
   CHECK_EQ(data-src.dptr, src.length());
   CHECK_EQ(prob-prob_.dptr, prob_.length());
-
 }
 
 void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,

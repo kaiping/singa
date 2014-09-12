@@ -13,6 +13,7 @@ void DataLayer::Init(const LayerProto &proto) {
   data_source_= proto.data_source();
   mirror_=proto.mirror();
   cropsize_=proto.cropsize();
+  store_id_=-1;
 }
 
 void DataLayer::ToProto(LayerProto *layer_proto) {
@@ -49,9 +50,6 @@ void DataLayer::Setup(const char flag) {
 
 void DataLayer::Forward() {
   VLOG(3)<<name_;
-  for(auto* edge: in_edges_) {
-    edge->Forward(edge->OtherSide(this)->feature(edge), nullptr,true);
-  }
   if (cropsize_) {
     float* data_dptr=data_.dptr;
     float* tmp_dptr=tmp_.dptr;

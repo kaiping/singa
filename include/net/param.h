@@ -77,6 +77,9 @@ class Param {
   void set_id(int id) {
     id_ = id;
   }
+  std::string name() {
+    return name_;
+  }
 
   float momentum() {
     return momentum_;

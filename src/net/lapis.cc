@@ -65,21 +65,38 @@ void Blob::Resize(int num, int channels, int height,
     }
   }
 }
-int Blob::Gt(float v) {
+int Blob::Gt(float v, int n) const {
   int ret=0;
-  for(unsigned int i=0;i<length_;i++)
+  int s=0, e=length_;
+  if(n>=0){
+    s=n*record_length_;
+    e=(n+1)*record_length_;
+  }
+  for(unsigned int i=s;i<e;i++)
     if(dptr[i]>v)
       ret++;
   return ret;
 }
-int Blob::Lt(float v) {
+int Blob::Lt(float v,int n) const {
   int ret=0;
-  for(unsigned int i=0;i<length_;i++)
+  int s=0, e=length_;
+  if(n>=0){
+    s=n*record_length_;
+    e=(n+1)*record_length_;
+  }
+  for(unsigned int i=s;i<e;i++)
     if(dptr[i]<v)
       ret++;
   return ret;
 }
-bool Blob::Nan() {
+float Blob::Norm() const {
+  float norm=0.0;
+  for(int i=0;i<length_;i++)
+    norm+=dptr[i]*dptr[i];
+  return std::sqrt(norm/length_);
+}
+
+bool Blob::Nan() const {
   for(unsigned int i=0;i<length_;i++)
     if(isnan(dptr[i]))
       return true;

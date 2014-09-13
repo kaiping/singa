@@ -83,11 +83,11 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
   req.set_shard(shard);
   req.set_source(worker_id_);
   int peer = w_->peer_for_partition(info().table_id, shard);
-  VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
-  VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Read(peer, MTYPE_GET_RESPONSE, &resp);
-  VLOG(3)<<"get remote ater read"<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote ater read"<<peer<<" from "<<worker_id_;
   if (resp.missing_key()) {
     return false;
   }
@@ -109,7 +109,7 @@ void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
     kv->set_key(get_req.key());
     kv->set_value(t->get_str(get_req.key()));
   }
-  VLOG(3)<<"end of handle_get local";
+  //VLOG(3)<<"end of handle_get local";
 }
 
 

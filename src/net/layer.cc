@@ -11,6 +11,7 @@
 #include "net/data_layer.h"
 #include "net/linear_layer.h"
 #include "net/relu_layer.h"
+#include "net/prediction_layer.h"
 
 namespace lapis {
 /*****************************************************************************
@@ -34,11 +35,11 @@ void Layer::Setup(const char flag){
   }
 }
 void Layer::Forward() {
-  VLOG(3)<<name_;
+  VLOG(1)<<"forward layer "<<name_;
 }
 
 void Layer::Backward() {
-  VLOG(3)<<name_;
+  VLOG(1)<<"backward layer "<<name_;
 }
 
 void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
@@ -86,6 +87,7 @@ LayerFactory::LayerFactory() {
   RegisterCreateFunction("DataLayer", CreateLayer(DataLayer));
   RegisterCreateFunction("LinearLayer", CreateLayer(LinearLayer));
   RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
+  RegisterCreateFunction("SoftmaxPredictionLayer", CreateLayer(SoftmaxPredictionLayer));
 }
 
 void LayerFactory::RegisterCreateFunction(

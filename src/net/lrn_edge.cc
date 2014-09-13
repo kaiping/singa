@@ -34,31 +34,53 @@ void LRNEdge::Setup(const char flag) {
   VLOG(2)<<"accum grad shape "<<accum_grad_.tostring();
 }
 void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
-  VLOG(3)<<name_;
   float alpha_over_size = alpha_ / local_size_;
-  Tensor2 pad_square(pad_tmp_.dptr,
-                     Shape2(channels_ + local_size_ - 1,height_ * width_));
-  Tensor3 accum_fea3(accum_fea_.dptr,
-                    Shape3( num_, channels_,height_ * width_));
-  accum_fea3 = knorm_;
+  VLOG(1)<<"forward lrn"<<name_<<" "<<local_size_<<" "<<height_<<" "<<width_<<" "<<accum_fea_.record_length();
+  Tensor2 pad_square(pad_tmp_.dptr, Shape2(channels_ + local_size_ - 1,height_ * width_));
+  pad_square=0.0;
+  Tensor3 accum_fea3(accum_fea_.dptr, Shape3( num_, channels_,height_ * width_));
+  accum_fea3=0.0;
   Tensor3 src3(src.dptr, Shape3(num_, channels_, height_ * width_));
+  VLOG(1)<<"lrn src has negative "<<src.Lt(0.0);
   for (int n = 0; n < num_; n++) {
-    pad_square.Slice(pre_pad_, pre_pad_ + channels_) =
-      mshadow::expr::F<mshadow::op::square>(src3[n]) * alpha_over_size; //ai^2
+    pad_square.Slice(pre_pad_, pre_pad_ + channels_) = mshadow::expr::F<mshadow::op::square>(src3[n]) * alpha_over_size; //ai^2
     Tensor2 accum_fea2= accum_fea3[n];
-    accum_fea2[0] += sum_rows(pad_square.Slice(0, local_size_));
-    for (int c = 1; c < channels_; c++)
-      accum_fea2[c] += accum_fea2[c - 1] + pad_square[c + local_size_ - 1] -
-                      pad_square[c - 1];
+    //accum_fea2[0] = mshadow::expr::sum_rows(pad_square.Slice(0, local_size_));
+    /*
+    for(int c=0;c<local_size_;c++)
+      accum_fea2[0]+=pad_square[c];
+    LOG(INFO)<<"lrn accum has negative"<<accum_fea_.Lt(0.0, n);
+    LOG(INFO)<<"lrn accum has postive"<<accum_fea_.Gt(0.0, n);
+    for (int c = 1; c < channels_; c++){
+      accum_fea2[c] = accum_fea2[c - 1] + pad_square[c + local_size_ - 1];
+      accum_fea2[c]-= pad_square[c - 1];
+      LOG(INFO)<<"lrn accum has negative"<<accum_fea_.Lt(0.0, n)<<" "<<c;
+    }
+    */
+    for(int c=0;c<channels_;c++){
+      for(int cc=0;cc<local_size_;cc++)
+        accum_fea2[c]+=pad_square[cc+c];
+        //LOG(INFO)<<"lrn accum has negative"<<accum_fea_.Lt(0.0, n)<<" "<<c;
+    }
+  //  LOG(INFO)<<"lrn accum has negative"<<accum_fea_.Lt(0.0, n);
+   // LOG(INFO)<<"lrn accum has postive"<<accum_fea_.Gt(0.0, n);
   }
+  if(knorm_>0)
+    accum_fea3+=knorm_;
+  if(accum_fea_.Nan())
+    LOG(INFO)<<"lrn edge accum generate nan";
+  LOG(INFO)<<"lrn edge accum generate negative "<<accum_fea_.Lt(0.0);
   Tensor3 dest3(dest->dptr, Shape3(num_, channels_, height_ * width_));
   dest3 = mshadow::expr::F<mshadow::op::power>(accum_fea3, -beta_) * src3;
+  if(dest->Nan())
+    LOG(INFO)<<"lrn edge generate nan";
+  VLOG(1)<<dest->Norm();
 }
 
 void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                        const Blob &dest_fea, Blob *dest_grad,
                        bool overwrite) {
-  VLOG(3)<<name_;
+  VLOG(1)<<"backward lrn "<<name_;
   int inverse_pre_pad = local_size_ - (local_size_ + 1) / 2;
   float factor = -2.*alpha_ * beta_ / local_size_;
 
@@ -87,6 +109,10 @@ void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
       // *ai*alpha*beta*2
     }
   }
+  if(dest_grad->Nan())
+    LOG(INFO)<<"lrn back generate nan";
+
+  VLOG(1)<<dest_grad->Norm();
 }
 
 void LRNEdge::SetupTopBlob(const bool alloc, Blob* blob) {

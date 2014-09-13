@@ -96,15 +96,17 @@ void Worker::Run(bool load_data, bool do_train) {
   trainer.Init(model.trainer(), &mc_);
   const SGDProto sgd=model.trainer().sgd();
   bool reset_net_for_training=true;
+  Performance perf;
   while (!trainer.HasFinished()) {
-    LOG(INFO)<<trainer.step();
+    perf.set_step(trainer.step());
     if(trainer.ValidateNow()){
       if(ShouldIDoValidation(trainer.step())){
         // do validation
         SetupNet(sgd.validation_batchsize(), kAllocData, &net,
             model.data().validation_data(), val_stores);
-        const DataSourceProto& nvalimgs=model.data().validation_data(0).shape().num();
-        trainer.Validate(&net, nvalimgs/sgd.validation_batchsize());
+        int nvalimgs=model.data().validation_data(0).shape().num();
+        trainer.Validate(&net, &perf, nvalimgs/sgd.validation_batchsize());
+        mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
         // do test
         /*
         SetupNet(sgd.test_batchsize(), kAllocData, &net,
@@ -122,7 +124,8 @@ void Worker::Run(bool load_data, bool do_train) {
                 model.data().train_data(), train_stores);
       reset_net_for_training=false;
     }
-    trainer.TrainOneBatch(&net);
+    trainer.TrainOneBatch(&net, &perf);
+    mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
   }
 }
 }  // namespace lapis

@@ -42,7 +42,7 @@ class MeanProto;
 class LayerProto;
 class NetProto;
 class SGDProto;
-class PerformanceProto;
+class Performance;
 class TrainerProto;
 class DataProto;
 class ModelProto;
@@ -1570,14 +1570,14 @@ class SGDProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class PerformanceProto : public ::google::protobuf::Message {
+class Performance : public ::google::protobuf::Message {
  public:
-  PerformanceProto();
-  virtual ~PerformanceProto();
+  Performance();
+  virtual ~Performance();
 
-  PerformanceProto(const PerformanceProto& from);
+  Performance(const Performance& from);
 
-  inline PerformanceProto& operator=(const PerformanceProto& from) {
+  inline Performance& operator=(const Performance& from) {
     CopyFrom(from);
     return *this;
   }
@@ -1591,17 +1591,17 @@ class PerformanceProto : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const PerformanceProto& default_instance();
+  static const Performance& default_instance();
 
-  void Swap(PerformanceProto* other);
+  void Swap(Performance* other);
 
   // implements Message ----------------------------------------------
 
-  PerformanceProto* New() const;
+  Performance* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const PerformanceProto& from);
-  void MergeFrom(const PerformanceProto& from);
+  void CopyFrom(const Performance& from);
+  void MergeFrom(const Performance& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -1624,43 +1624,64 @@ class PerformanceProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional float precision = 1;
+  // optional float loss = 1;
+  inline bool has_loss() const;
+  inline void clear_loss();
+  static const int kLossFieldNumber = 1;
+  inline float loss() const;
+  inline void set_loss(float value);
+
+  // optional float precision = 2;
   inline bool has_precision() const;
   inline void clear_precision();
-  static const int kPrecisionFieldNumber = 1;
+  static const int kPrecisionFieldNumber = 2;
   inline float precision() const;
   inline void set_precision(float value);
 
-  // optional float recall = 2;
+  // optional float recall = 3;
   inline bool has_recall() const;
   inline void clear_recall();
-  static const int kRecallFieldNumber = 2;
+  static const int kRecallFieldNumber = 3;
   inline float recall() const;
   inline void set_recall(float value);
 
-  // optional float map = 3;
+  // optional float map = 4;
   inline bool has_map() const;
   inline void clear_map();
-  static const int kMapFieldNumber = 3;
+  static const int kMapFieldNumber = 4;
   inline float map() const;
   inline void set_map(float value);
 
-  // optional float precision50 = 4;
+  // optional float precision50 = 5;
   inline bool has_precision50() const;
   inline void clear_precision50();
-  static const int kPrecision50FieldNumber = 4;
+  static const int kPrecision50FieldNumber = 5;
   inline float precision50() const;
   inline void set_precision50(float value);
 
-  // optional int32 step = 5;
+  // optional int32 step = 6;
   inline bool has_step() const;
   inline void clear_step();
-  static const int kStepFieldNumber = 5;
+  static const int kStepFieldNumber = 6;
   inline ::google::protobuf::int32 step() const;
   inline void set_step(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:lapis.PerformanceProto)
+  // optional string prefix = 7;
+  inline bool has_prefix() const;
+  inline void clear_prefix();
+  static const int kPrefixFieldNumber = 7;
+  inline const ::std::string& prefix() const;
+  inline void set_prefix(const ::std::string& value);
+  inline void set_prefix(const char* value);
+  inline void set_prefix(const char* value, size_t size);
+  inline ::std::string* mutable_prefix();
+  inline ::std::string* release_prefix();
+  inline void set_allocated_prefix(::std::string* prefix);
+
+  // @@protoc_insertion_point(class_scope:lapis.Performance)
  private:
+  inline void set_has_loss();
+  inline void clear_has_loss();
   inline void set_has_precision();
   inline void clear_has_precision();
   inline void set_has_recall();
@@ -1671,24 +1692,28 @@ class PerformanceProto : public ::google::protobuf::Message {
   inline void clear_has_precision50();
   inline void set_has_step();
   inline void clear_has_step();
+  inline void set_has_prefix();
+  inline void clear_has_prefix();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
+  float loss_;
   float precision_;
   float recall_;
   float map_;
   float precision50_;
   ::google::protobuf::int32 step_;
+  ::std::string* prefix_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static PerformanceProto* default_instance_;
+  static Performance* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -4451,116 +4476,208 @@ inline void SGDProto::set_test_batchsize(::google::protobuf::int32 value) {
 
 // -------------------------------------------------------------------
 
-// PerformanceProto
+// Performance
 
-// optional float precision = 1;
-inline bool PerformanceProto::has_precision() const {
+// optional float loss = 1;
+inline bool Performance::has_loss() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void PerformanceProto::set_has_precision() {
+inline void Performance::set_has_loss() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void PerformanceProto::clear_has_precision() {
+inline void Performance::clear_has_loss() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void PerformanceProto::clear_precision() {
+inline void Performance::clear_loss() {
+  loss_ = 0;
+  clear_has_loss();
+}
+inline float Performance::loss() const {
+  return loss_;
+}
+inline void Performance::set_loss(float value) {
+  set_has_loss();
+  loss_ = value;
+}
+
+// optional float precision = 2;
+inline bool Performance::has_precision() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Performance::set_has_precision() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Performance::clear_has_precision() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Performance::clear_precision() {
   precision_ = 0;
   clear_has_precision();
 }
-inline float PerformanceProto::precision() const {
+inline float Performance::precision() const {
   return precision_;
 }
-inline void PerformanceProto::set_precision(float value) {
+inline void Performance::set_precision(float value) {
   set_has_precision();
   precision_ = value;
 }
 
-// optional float recall = 2;
-inline bool PerformanceProto::has_recall() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
+// optional float recall = 3;
+inline bool Performance::has_recall() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void PerformanceProto::set_has_recall() {
-  _has_bits_[0] |= 0x00000002u;
+inline void Performance::set_has_recall() {
+  _has_bits_[0] |= 0x00000004u;
 }
-inline void PerformanceProto::clear_has_recall() {
-  _has_bits_[0] &= ~0x00000002u;
+inline void Performance::clear_has_recall() {
+  _has_bits_[0] &= ~0x00000004u;
 }
-inline void PerformanceProto::clear_recall() {
+inline void Performance::clear_recall() {
   recall_ = 0;
   clear_has_recall();
 }
-inline float PerformanceProto::recall() const {
+inline float Performance::recall() const {
   return recall_;
 }
-inline void PerformanceProto::set_recall(float value) {
+inline void Performance::set_recall(float value) {
   set_has_recall();
   recall_ = value;
 }
 
-// optional float map = 3;
-inline bool PerformanceProto::has_map() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+// optional float map = 4;
+inline bool Performance::has_map() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void PerformanceProto::set_has_map() {
-  _has_bits_[0] |= 0x00000004u;
+inline void Performance::set_has_map() {
+  _has_bits_[0] |= 0x00000008u;
 }
-inline void PerformanceProto::clear_has_map() {
-  _has_bits_[0] &= ~0x00000004u;
+inline void Performance::clear_has_map() {
+  _has_bits_[0] &= ~0x00000008u;
 }
-inline void PerformanceProto::clear_map() {
+inline void Performance::clear_map() {
   map_ = 0;
   clear_has_map();
 }
-inline float PerformanceProto::map() const {
+inline float Performance::map() const {
   return map_;
 }
-inline void PerformanceProto::set_map(float value) {
+inline void Performance::set_map(float value) {
   set_has_map();
   map_ = value;
 }
 
-// optional float precision50 = 4;
-inline bool PerformanceProto::has_precision50() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+// optional float precision50 = 5;
+inline bool Performance::has_precision50() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void PerformanceProto::set_has_precision50() {
-  _has_bits_[0] |= 0x00000008u;
+inline void Performance::set_has_precision50() {
+  _has_bits_[0] |= 0x00000010u;
 }
-inline void PerformanceProto::clear_has_precision50() {
-  _has_bits_[0] &= ~0x00000008u;
+inline void Performance::clear_has_precision50() {
+  _has_bits_[0] &= ~0x00000010u;
 }
-inline void PerformanceProto::clear_precision50() {
+inline void Performance::clear_precision50() {
   precision50_ = 0;
   clear_has_precision50();
 }
-inline float PerformanceProto::precision50() const {
+inline float Performance::precision50() const {
   return precision50_;
 }
-inline void PerformanceProto::set_precision50(float value) {
+inline void Performance::set_precision50(float value) {
   set_has_precision50();
   precision50_ = value;
 }
 
-// optional int32 step = 5;
-inline bool PerformanceProto::has_step() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+// optional int32 step = 6;
+inline bool Performance::has_step() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void PerformanceProto::set_has_step() {
-  _has_bits_[0] |= 0x00000010u;
+inline void Performance::set_has_step() {
+  _has_bits_[0] |= 0x00000020u;
 }
-inline void PerformanceProto::clear_has_step() {
-  _has_bits_[0] &= ~0x00000010u;
+inline void Performance::clear_has_step() {
+  _has_bits_[0] &= ~0x00000020u;
 }
-inline void PerformanceProto::clear_step() {
+inline void Performance::clear_step() {
   step_ = 0;
   clear_has_step();
 }
-inline ::google::protobuf::int32 PerformanceProto::step() const {
+inline ::google::protobuf::int32 Performance::step() const {
   return step_;
 }
-inline void PerformanceProto::set_step(::google::protobuf::int32 value) {
+inline void Performance::set_step(::google::protobuf::int32 value) {
   set_has_step();
   step_ = value;
+}
+
+// optional string prefix = 7;
+inline bool Performance::has_prefix() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void Performance::set_has_prefix() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void Performance::clear_has_prefix() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void Performance::clear_prefix() {
+  if (prefix_ != &::google::protobuf::internal::kEmptyString) {
+    prefix_->clear();
+  }
+  clear_has_prefix();
+}
+inline const ::std::string& Performance::prefix() const {
+  return *prefix_;
+}
+inline void Performance::set_prefix(const ::std::string& value) {
+  set_has_prefix();
+  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+    prefix_ = new ::std::string;
+  }
+  prefix_->assign(value);
+}
+inline void Performance::set_prefix(const char* value) {
+  set_has_prefix();
+  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+    prefix_ = new ::std::string;
+  }
+  prefix_->assign(value);
+}
+inline void Performance::set_prefix(const char* value, size_t size) {
+  set_has_prefix();
+  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+    prefix_ = new ::std::string;
+  }
+  prefix_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Performance::mutable_prefix() {
+  set_has_prefix();
+  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+    prefix_ = new ::std::string;
+  }
+  return prefix_;
+}
+inline ::std::string* Performance::release_prefix() {
+  clear_has_prefix();
+  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = prefix_;
+    prefix_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Performance::set_allocated_prefix(::std::string* prefix) {
+  if (prefix_ != &::google::protobuf::internal::kEmptyString) {
+    delete prefix_;
+  }
+  if (prefix) {
+    set_has_prefix();
+    prefix_ = prefix;
+  } else {
+    clear_has_prefix();
+    prefix_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 // -------------------------------------------------------------------

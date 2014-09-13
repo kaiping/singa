@@ -45,7 +45,7 @@ class Coordinator {
   void RunOnCluster(const ModelProto& model);
   void LoadData(const DataSourceProtos& sources,
                 const std::map<std::string, int>& stores);
-  const StringIntMap CreateDataStores(const DataSourceProtos& sources);
+  const StringIntMap CreateDataStores(const DataSourceProtos& sources, int fixed_server_id=-1);
   const ParamStorageConfig CreateParamStorage();
   const DataStorageConfig CreateDataStorage(const DataProto& data);
   bool DoValidationOn(int worker_id);

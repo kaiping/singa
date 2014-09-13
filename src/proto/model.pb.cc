@@ -47,9 +47,9 @@ const ::google::protobuf::Descriptor* SGDProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   SGDProto_reflection_ = NULL;
 const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor_ = NULL;
-const ::google::protobuf::Descriptor* PerformanceProto_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* Performance_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  PerformanceProto_reflection_ = NULL;
+  Performance_reflection_ = NULL;
 const ::google::protobuf::Descriptor* TrainerProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   TrainerProto_reflection_ = NULL;
@@ -257,25 +257,27 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(SGDProto));
   SGDProto_ChangeProto_descriptor_ = SGDProto_descriptor_->enum_type(0);
-  PerformanceProto_descriptor_ = file->message_type(8);
-  static const int PerformanceProto_offsets_[5] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, precision_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, recall_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, map_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, precision50_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, step_),
+  Performance_descriptor_ = file->message_type(8);
+  static const int Performance_offsets_[7] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, loss_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, precision_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, recall_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, map_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, precision50_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, step_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, prefix_),
   };
-  PerformanceProto_reflection_ =
+  Performance_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
-      PerformanceProto_descriptor_,
-      PerformanceProto::default_instance_,
-      PerformanceProto_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PerformanceProto, _unknown_fields_),
+      Performance_descriptor_,
+      Performance::default_instance_,
+      Performance_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Performance, _unknown_fields_),
       -1,
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(PerformanceProto));
+      sizeof(Performance));
   TrainerProto_descriptor_ = file->message_type(9);
   static const int TrainerProto_offsets_[15] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TrainerProto, sgd_),
@@ -385,7 +387,7 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     SGDProto_descriptor_, &SGDProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    PerformanceProto_descriptor_, &PerformanceProto::default_instance());
+    Performance_descriptor_, &Performance::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     TrainerProto_descriptor_, &TrainerProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
@@ -415,8 +417,8 @@ void protobuf_ShutdownFile_model_2eproto() {
   delete NetProto_reflection_;
   delete SGDProto::default_instance_;
   delete SGDProto_reflection_;
-  delete PerformanceProto::default_instance_;
-  delete PerformanceProto_reflection_;
+  delete Performance::default_instance_;
+  delete Performance_reflection_;
   delete TrainerProto::default_instance_;
   delete TrainerProto_reflection_;
   delete TrainerProto::_default_checkpoint_prefix_;
@@ -489,32 +491,32 @@ void protobuf_AddDesc_model_2eproto() {
     "idation_batchsize\030\017 \001(\005\022\026\n\016test_batchsiz"
     "e\030\020 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkI"
     "nverse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020"
-    "\003\022\t\n\005kStep\020\004\"e\n\020PerformanceProto\022\021\n\tprec"
-    "ision\030\001 \001(\002\022\016\n\006recall\030\002 \001(\002\022\013\n\003map\030\003 \001(\002"
-    "\022\023\n\013precision50\030\004 \001(\002\022\014\n\004step\030\005 \001(\005\"\315\004\n\014"
-    "TrainerProto\022\034\n\003sgd\030\001 \001(\0132\017.lapis.SGDPro"
-    "to\022!\n\026checkpoint_after_steps\030\002 \001(\005:\0010\022!\n"
-    "\026checkpoint_every_steps\030\003 \001(\005:\0010\022)\n\021chec"
-    "kpoint_prefix\030\004 \001(\t:\016tmp/checkpoint\022\032\n\017c"
-    "heckpoint_step\030\005 \001(\005:\0010\022\036\n\023display_after"
-    "_steps\030\006 \001(\005:\0010\022\036\n\023display_every_steps\030\007"
-    " \001(\005:\0010\022#\n\016display_prefix\030\010 \001(\t:\013tmp/dis"
-    "play\022\030\n\rvalidate_step\030\t \001(\005:\0010\022\037\n\024valida"
-    "te_after_steps\030\n \001(\005:\0010\022\037\n\024validate_ever"
-    "y_steps\030\013 \001(\005:\0010\022$\n\013perf_prefix\030\017 \001(\t:\017t"
-    "mp/performance\022<\n\003alg\030\020 \001(\0162\035.lapis.Trai"
-    "nerProto.Algorithm:\020kBackPropagation\022\026\n\010"
-    "do_train\030\021 \001(\010:\004true\022\026\n\007do_test\030\022 \001(\010:\005f"
-    "alse\"=\n\tAlgorithm\022\024\n\020kBackPropagation\020\001\022"
-    "\032\n\026kContrastiveDivergence\020\002\"\223\001\n\tDataProt"
-    "o\022*\n\ntrain_data\030\001 \003(\0132\026.lapis.DataSource"
-    "Proto\022/\n\017validation_data\030\002 \003(\0132\026.lapis.D"
-    "ataSourceProto\022)\n\ttest_data\030\003 \003(\0132\026.lapi"
-    "s.DataSourceProto\"~\n\nModelProto\022\014\n\004name\030"
-    "\001 \001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.NetProto\022$\n\007t"
-    "rainer\030\003 \001(\0132\023.lapis.TrainerProto\022\036\n\004dat"
-    "a\030\004 \001(\0132\020.lapis.DataProto\"\033\n\013FloatVector"
-    "\022\014\n\004data\030\001 \003(\002", 3094);
+    "\003\022\t\n\005kStep\020\004\"~\n\013Performance\022\014\n\004loss\030\001 \001("
+    "\002\022\021\n\tprecision\030\002 \001(\002\022\016\n\006recall\030\003 \001(\002\022\013\n\003"
+    "map\030\004 \001(\002\022\023\n\013precision50\030\005 \001(\002\022\014\n\004step\030\006"
+    " \001(\005\022\016\n\006prefix\030\007 \001(\t\"\315\004\n\014TrainerProto\022\034\n"
+    "\003sgd\030\001 \001(\0132\017.lapis.SGDProto\022!\n\026checkpoin"
+    "t_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_eve"
+    "ry_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004"
+    " \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint_step\030"
+    "\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 \001(\005:\0010"
+    "\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#\n\016disp"
+    "lay_prefix\030\010 \001(\t:\013tmp/display\022\030\n\rvalidat"
+    "e_step\030\t \001(\005:\0010\022\037\n\024validate_after_steps\030"
+    "\n \001(\005:\0010\022\037\n\024validate_every_steps\030\013 \001(\005:\001"
+    "0\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/performance\022"
+    "<\n\003alg\030\020 \001(\0162\035.lapis.TrainerProto.Algori"
+    "thm:\020kBackPropagation\022\026\n\010do_train\030\021 \001(\010:"
+    "\004true\022\026\n\007do_test\030\022 \001(\010:\005false\"=\n\tAlgorit"
+    "hm\022\024\n\020kBackPropagation\020\001\022\032\n\026kContrastive"
+    "Divergence\020\002\"\223\001\n\tDataProto\022*\n\ntrain_data"
+    "\030\001 \003(\0132\026.lapis.DataSourceProto\022/\n\017valida"
+    "tion_data\030\002 \003(\0132\026.lapis.DataSourceProto\022"
+    ")\n\ttest_data\030\003 \003(\0132\026.lapis.DataSourcePro"
+    "to\"~\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 "
+    "\001(\0132\017.lapis.NetProto\022$\n\007trainer\030\003 \001(\0132\023."
+    "lapis.TrainerProto\022\036\n\004data\030\004 \001(\0132\020.lapis"
+    ".DataProto\"\033\n\013FloatVector\022\014\n\004data\030\001 \003(\002", 3119);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   Shape::default_instance_ = new Shape();
@@ -525,7 +527,7 @@ void protobuf_AddDesc_model_2eproto() {
   LayerProto::default_instance_ = new LayerProto();
   NetProto::default_instance_ = new NetProto();
   SGDProto::default_instance_ = new SGDProto();
-  PerformanceProto::default_instance_ = new PerformanceProto();
+  Performance::default_instance_ = new Performance();
   TrainerProto::_default_checkpoint_prefix_ =
       new ::std::string("tmp/checkpoint", 14);
   TrainerProto::_default_display_prefix_ =
@@ -544,7 +546,7 @@ void protobuf_AddDesc_model_2eproto() {
   LayerProto::default_instance_->InitAsDefaultInstance();
   NetProto::default_instance_->InitAsDefaultInstance();
   SGDProto::default_instance_->InitAsDefaultInstance();
-  PerformanceProto::default_instance_->InitAsDefaultInstance();
+  Performance::default_instance_->InitAsDefaultInstance();
   TrainerProto::default_instance_->InitAsDefaultInstance();
   DataProto::default_instance_->InitAsDefaultInstance();
   ModelProto::default_instance_->InitAsDefaultInstance();
@@ -5071,89 +5073,118 @@ void SGDProto::Swap(SGDProto* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int PerformanceProto::kPrecisionFieldNumber;
-const int PerformanceProto::kRecallFieldNumber;
-const int PerformanceProto::kMapFieldNumber;
-const int PerformanceProto::kPrecision50FieldNumber;
-const int PerformanceProto::kStepFieldNumber;
+const int Performance::kLossFieldNumber;
+const int Performance::kPrecisionFieldNumber;
+const int Performance::kRecallFieldNumber;
+const int Performance::kMapFieldNumber;
+const int Performance::kPrecision50FieldNumber;
+const int Performance::kStepFieldNumber;
+const int Performance::kPrefixFieldNumber;
 #endif  // !_MSC_VER
 
-PerformanceProto::PerformanceProto()
+Performance::Performance()
   : ::google::protobuf::Message() {
   SharedCtor();
 }
 
-void PerformanceProto::InitAsDefaultInstance() {
+void Performance::InitAsDefaultInstance() {
 }
 
-PerformanceProto::PerformanceProto(const PerformanceProto& from)
+Performance::Performance(const Performance& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
 }
 
-void PerformanceProto::SharedCtor() {
+void Performance::SharedCtor() {
   _cached_size_ = 0;
+  loss_ = 0;
   precision_ = 0;
   recall_ = 0;
   map_ = 0;
   precision50_ = 0;
   step_ = 0;
+  prefix_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
-PerformanceProto::~PerformanceProto() {
+Performance::~Performance() {
   SharedDtor();
 }
 
-void PerformanceProto::SharedDtor() {
+void Performance::SharedDtor() {
+  if (prefix_ != &::google::protobuf::internal::kEmptyString) {
+    delete prefix_;
+  }
   if (this != default_instance_) {
   }
 }
 
-void PerformanceProto::SetCachedSize(int size) const {
+void Performance::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* PerformanceProto::descriptor() {
+const ::google::protobuf::Descriptor* Performance::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return PerformanceProto_descriptor_;
+  return Performance_descriptor_;
 }
 
-const PerformanceProto& PerformanceProto::default_instance() {
+const Performance& Performance::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_model_2eproto();
   return *default_instance_;
 }
 
-PerformanceProto* PerformanceProto::default_instance_ = NULL;
+Performance* Performance::default_instance_ = NULL;
 
-PerformanceProto* PerformanceProto::New() const {
-  return new PerformanceProto;
+Performance* Performance::New() const {
+  return new Performance;
 }
 
-void PerformanceProto::Clear() {
+void Performance::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    loss_ = 0;
     precision_ = 0;
     recall_ = 0;
     map_ = 0;
     precision50_ = 0;
     step_ = 0;
+    if (has_prefix()) {
+      if (prefix_ != &::google::protobuf::internal::kEmptyString) {
+        prefix_->clear();
+      }
+    }
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
-bool PerformanceProto::MergePartialFromCodedStream(
+bool Performance::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional float precision = 1;
+      // optional float loss = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &loss_)));
+          set_has_loss();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(21)) goto parse_precision;
+        break;
+      }
+
+      // optional float precision = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
+         parse_precision:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
                  input, &precision_)));
@@ -5161,12 +5192,12 @@ bool PerformanceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(21)) goto parse_recall;
+        if (input->ExpectTag(29)) goto parse_recall;
         break;
       }
 
-      // optional float recall = 2;
-      case 2: {
+      // optional float recall = 3;
+      case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_recall:
@@ -5177,12 +5208,12 @@ bool PerformanceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(29)) goto parse_map;
+        if (input->ExpectTag(37)) goto parse_map;
         break;
       }
 
-      // optional float map = 3;
-      case 3: {
+      // optional float map = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_map:
@@ -5193,12 +5224,12 @@ bool PerformanceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(37)) goto parse_precision50;
+        if (input->ExpectTag(45)) goto parse_precision50;
         break;
       }
 
-      // optional float precision50 = 4;
-      case 4: {
+      // optional float precision50 = 5;
+      case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_precision50:
@@ -5209,12 +5240,12 @@ bool PerformanceProto::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(40)) goto parse_step;
+        if (input->ExpectTag(48)) goto parse_step;
         break;
       }
 
-      // optional int32 step = 5;
-      case 5: {
+      // optional int32 step = 6;
+      case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_step:
@@ -5222,6 +5253,23 @@ bool PerformanceProto::MergePartialFromCodedStream(
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &step_)));
           set_has_step();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(58)) goto parse_prefix;
+        break;
+      }
+
+      // optional string prefix = 7;
+      case 7: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_prefix:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_prefix()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->prefix().data(), this->prefix().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
         }
@@ -5245,31 +5293,45 @@ bool PerformanceProto::MergePartialFromCodedStream(
 #undef DO_
 }
 
-void PerformanceProto::SerializeWithCachedSizes(
+void Performance::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // optional float precision = 1;
+  // optional float loss = 1;
+  if (has_loss()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->loss(), output);
+  }
+
+  // optional float precision = 2;
   if (has_precision()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->precision(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->precision(), output);
   }
 
-  // optional float recall = 2;
+  // optional float recall = 3;
   if (has_recall()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->recall(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->recall(), output);
   }
 
-  // optional float map = 3;
+  // optional float map = 4;
   if (has_map()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->map(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->map(), output);
   }
 
-  // optional float precision50 = 4;
+  // optional float precision50 = 5;
   if (has_precision50()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->precision50(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->precision50(), output);
   }
 
-  // optional int32 step = 5;
+  // optional int32 step = 6;
   if (has_step()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->step(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->step(), output);
+  }
+
+  // optional string prefix = 7;
+  if (has_prefix()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->prefix().data(), this->prefix().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      7, this->prefix(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -5278,31 +5340,46 @@ void PerformanceProto::SerializeWithCachedSizes(
   }
 }
 
-::google::protobuf::uint8* PerformanceProto::SerializeWithCachedSizesToArray(
+::google::protobuf::uint8* Performance::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // optional float precision = 1;
+  // optional float loss = 1;
+  if (has_loss()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->loss(), target);
+  }
+
+  // optional float precision = 2;
   if (has_precision()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->precision(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->precision(), target);
   }
 
-  // optional float recall = 2;
+  // optional float recall = 3;
   if (has_recall()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->recall(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->recall(), target);
   }
 
-  // optional float map = 3;
+  // optional float map = 4;
   if (has_map()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->map(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->map(), target);
   }
 
-  // optional float precision50 = 4;
+  // optional float precision50 = 5;
   if (has_precision50()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->precision50(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->precision50(), target);
   }
 
-  // optional int32 step = 5;
+  // optional int32 step = 6;
   if (has_step()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->step(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->step(), target);
+  }
+
+  // optional string prefix = 7;
+  if (has_prefix()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->prefix().data(), this->prefix().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        7, this->prefix(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -5312,35 +5389,47 @@ void PerformanceProto::SerializeWithCachedSizes(
   return target;
 }
 
-int PerformanceProto::ByteSize() const {
+int Performance::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional float precision = 1;
+    // optional float loss = 1;
+    if (has_loss()) {
+      total_size += 1 + 4;
+    }
+
+    // optional float precision = 2;
     if (has_precision()) {
       total_size += 1 + 4;
     }
 
-    // optional float recall = 2;
+    // optional float recall = 3;
     if (has_recall()) {
       total_size += 1 + 4;
     }
 
-    // optional float map = 3;
+    // optional float map = 4;
     if (has_map()) {
       total_size += 1 + 4;
     }
 
-    // optional float precision50 = 4;
+    // optional float precision50 = 5;
     if (has_precision50()) {
       total_size += 1 + 4;
     }
 
-    // optional int32 step = 5;
+    // optional int32 step = 6;
     if (has_step()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->step());
+    }
+
+    // optional string prefix = 7;
+    if (has_prefix()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->prefix());
     }
 
   }
@@ -5355,10 +5444,10 @@ int PerformanceProto::ByteSize() const {
   return total_size;
 }
 
-void PerformanceProto::MergeFrom(const ::google::protobuf::Message& from) {
+void Performance::MergeFrom(const ::google::protobuf::Message& from) {
   GOOGLE_CHECK_NE(&from, this);
-  const PerformanceProto* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const PerformanceProto*>(
+  const Performance* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const Performance*>(
       &from);
   if (source == NULL) {
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
@@ -5367,9 +5456,12 @@ void PerformanceProto::MergeFrom(const ::google::protobuf::Message& from) {
   }
 }
 
-void PerformanceProto::MergeFrom(const PerformanceProto& from) {
+void Performance::MergeFrom(const Performance& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_loss()) {
+      set_loss(from.loss());
+    }
     if (from.has_precision()) {
       set_precision(from.precision());
     }
@@ -5385,45 +5477,50 @@ void PerformanceProto::MergeFrom(const PerformanceProto& from) {
     if (from.has_step()) {
       set_step(from.step());
     }
+    if (from.has_prefix()) {
+      set_prefix(from.prefix());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
-void PerformanceProto::CopyFrom(const ::google::protobuf::Message& from) {
+void Performance::CopyFrom(const ::google::protobuf::Message& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void PerformanceProto::CopyFrom(const PerformanceProto& from) {
+void Performance::CopyFrom(const Performance& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool PerformanceProto::IsInitialized() const {
+bool Performance::IsInitialized() const {
 
   return true;
 }
 
-void PerformanceProto::Swap(PerformanceProto* other) {
+void Performance::Swap(Performance* other) {
   if (other != this) {
+    std::swap(loss_, other->loss_);
     std::swap(precision_, other->precision_);
     std::swap(recall_, other->recall_);
     std::swap(map_, other->map_);
     std::swap(precision50_, other->precision50_);
     std::swap(step_, other->step_);
+    std::swap(prefix_, other->prefix_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
   }
 }
 
-::google::protobuf::Metadata PerformanceProto::GetMetadata() const {
+::google::protobuf::Metadata Performance::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = PerformanceProto_descriptor_;
-  metadata.reflection = PerformanceProto_reflection_;
+  metadata.descriptor = Performance_descriptor_;
+  metadata.reflection = Performance_reflection_;
   return metadata;
 }
 

@@ -17,13 +17,12 @@ class SoftmaxLossEdge : public Edge {
                         const Blob &dest_fea, Blob *dest_grad,
                         bool overwirte);
 
+  void SetupTopBlob(bool alloc, Blob* blob);
  private:
   //! batch size
   int num_;
   //! dimension of the feature of this layer
   int dim_;
-  //! prob after softmax norm
-  Blob prob_;
 };
 }  // namespace lapis
 #endif  // INCLUDE_MODEL_SOFTMAX_LOSS_EDGE_H_

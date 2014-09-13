@@ -24,7 +24,6 @@ ModelController::ModelController()
 }
 
 void ModelController::PutData(int sid, int rid, const FloatVector &data){
-  VLOG(3)<<"Put record "<<rid<<"  to sid"<<sid;
   CHECK(disk_tables_.find(sid)!=disk_tables_.end());
   dynamic_cast<TDiskTable *>(disk_tables_[sid])->put(rid, data);
 }
@@ -35,7 +34,6 @@ void ModelController::FlushData(int sid){
 }
 
 void ModelController::GetData(int sid, Blob *blob) {
-  VLOG(3)<<"GetData "<<disk_tables_.size();
   CHECK(disk_tables_.find(sid)!=disk_tables_.end());
   TDiskTable* table= dynamic_cast<TDiskTable*>(disk_tables_.at(sid));
   if(!table->has_loaded()){
@@ -112,7 +110,6 @@ void ModelController::Update(const std::vector<Param*> &params)
 
 void ModelController::Put(const std::vector<Param*> &params)
 {
-  VLOG(3)<<"model controller put";
   if(GlobalContext::Get()->standalone())return;
   for(auto* param: params)
   {
@@ -184,12 +181,8 @@ const std::map<int,GlobalTable*> ModelController::GetTables() {
   std::map<int,GlobalTable*> tables;
   VLOG(2)<<"disk table size "<<disk_tables_.size();
   for(auto& entry: disk_tables_){
-    VLOG(3)<<"table id "<<entry.second->id()<<" num shards "<<entry.second->num_shards();
     tables[entry.second->id()]=entry.second;
-    VLOG(3)<<"after inser into table";
-    VLOG(3)<<"after cast, num shards "<<tables[entry.second->id()]->num_shards();
   }
-  VLOG(3)<<"finish get disk tables";
   if(param_table_!=nullptr)
     tables[param_table_->id()]=dynamic_cast<GlobalTable*>(param_table_);
   VLOG(3)<<"finish get tables";
@@ -202,7 +195,6 @@ const std::map<int,int> ModelController::GetDataStoreTable() {
   for(auto& entry: disk_tables_) {
     store_table_map[entry.first]=entry.second->id();
   }
-  VLOG(3)<<"get data store table";
   return store_table_map;
 }
 const std::map<int,int> ModelController::GetParamStoreTable() {
@@ -232,7 +224,6 @@ int ModelController::CreateParamStore() {
   param_table_= CreateTable(num_tables_, GlobalContext::Get()->num_table_servers(),
       new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<FloatVector>);
   num_tables_++;
-  VLOG(3)<<"create table";
   return kParamStore;
 }
 
@@ -262,8 +253,6 @@ TypedGlobalTable<K, V> *ModelController::CreateTable(
   info->partition_factory = new typename SparseTable<K, V>::Factory;
   auto table=new TypedGlobalTable<K, V>();
   table->Init(info);
-  VLOG(3)<<"after create param table ";
-  VLOG(3)<<"table shards num "<<table->num_shards();
   return table;
 }
 
@@ -274,8 +263,6 @@ TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id, int max_size,
 	info->key_marshal = mkey;
 	info->value_marshal = mval;
 	TypedDiskTable<K,V> *t = new TypedDiskTable<K,V>(info);
-  VLOG(3)<<"after create disk table "<<name<< " max size "<<t->disk_info()->max_size;
-  VLOG(3)<<"table shards num "<<t->num_shards();
 	return t;
 }
 
@@ -286,8 +273,6 @@ TypedDiskTable<K,V>* ModelController::CreateDiskTable(int id,
 		string name, Marshal<K>* mkey, Marshal<V>* mval){
 	TypedDiskTable<K,V>* t = CreateDiskTable(id, max_size, name, mkey, mval);
 	t->disk_info()->fixed_server_id = fixed_server_id;
-  VLOG(3)<<"after create disk table "<<name;
-  VLOG(3)<<"table shards num "<<t->num_shards();
 	return t;
 }
 

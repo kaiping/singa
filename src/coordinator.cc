@@ -130,11 +130,11 @@ void Coordinator::LoadData(const DataSourceProtos& sources,
 
 
 const StringIntMap Coordinator::CreateDataStores(
-    const DataSourceProtos& sources) {
+    const DataSourceProtos& sources, int fixed_server_id) {
   std::map<string, int> stores;
   for(auto& ds: sources){
     CHECK(stores.find(ds.name())==stores.end());
-    stores[ds.name()]= mc_.CreateDataStore(ds.name());
+    stores[ds.name()]= mc_.CreateDataStore(ds.name(), fixed_server_id);
     VLOG(3) << "Created disk table with name " << ds.name();
   }
   return ToProtoMap(stores);
@@ -149,7 +149,7 @@ const DataStorageConfig Coordinator::CreateDataStorage(
     conf.mutable_train_stores()->CopyFrom(CreateDataStores(data.train_data()));
   VLOG(3)<<"finish train stores";
   if(data.validation_data_size()>0)
-    conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data()));
+    conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data(), 0));
   VLOG(3)<<"finish val stores";
   if(data.test_data_size()>0)
     conf.mutable_test_stores()->CopyFrom(CreateDataStores(data.test_data()));
@@ -236,9 +236,9 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
       mpi_->Send(src, MTYPE_INSTRUCTION,msg);
     }
 
-    PerformanceProto perf;
+    Performance perf;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
-      LOG(INFO)<<FormatPerformance(perf);
+      LOG(INFO)<<FormatPerformance(src, perf);
     }
     Sleep(FLAGS_sleep_time);
   }

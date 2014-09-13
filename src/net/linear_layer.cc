@@ -13,16 +13,16 @@ void LinearLayer::Setup(const char flag) {
 }
 
 void LinearLayer::Forward() {
-  VLOG(3)<<name_;
   Edge *edge = in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge), &fea_, true);
+  VLOG(1)<<"forwar linear layer "<<name_;
 }
 
 void LinearLayer::Backward() {
-  VLOG(3)<<name_;
   Edge *edge = out_edges_[0];
   Layer *top = edge->OtherSide(this);
   edge->Backward(top->feature(edge), top->gradient(edge), fea_, &grad_, true);
+  VLOG(1)<<"backward linear layer "<<name_;
 }
 }  // namespace lapis
 

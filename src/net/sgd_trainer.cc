@@ -4,8 +4,8 @@
 #include <math.h>
 #include <glog/logging.h>
 #include "net/data_layer.h"
-
 #include "net/sgd_trainer.h"
+#include "net/prediction_layer.h"
 
 namespace lapis {
 
@@ -19,7 +19,8 @@ SGDTrainer::~SGDTrainer() {
   sgd_proto_.Clear();
 }
 
-void SGDTrainer::BackPropagation(const int step, Net* net) {
+void SGDTrainer::TrainOneBatch(Net* net, Performance* perf) {
+  perf->set_prefix("train");
   std::vector<Layer *> layers = net->layers();
   std::vector<Edge *> edges = net->edges();
   std::vector<Param *> params = net->params();
@@ -32,11 +33,12 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
       // TODO(wangwei) Error has not implemented mc.GetData.
       auto dlayer=dynamic_cast<DataLayer*>(layer);
       Blob& blob=dlayer->feature(nullptr);
-      VLOG(3)<<"getting data..";
+      VLOG(1)<<"getting data..";
       model_controller_->GetData(dlayer->store_id(), &blob);
     }
     layer->Forward();
   }
+  perf->MergeFrom(dynamic_cast<SoftmaxPredictionLayer*>(layers.back())->CalcPerf(true, false));
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
     (*layer)->Backward();
   UpdateHyperParams(step_);
@@ -48,29 +50,18 @@ void SGDTrainer::BackPropagation(const int step, Net* net) {
   VLOG(3)<<"before update params from distributed mem";
   model_controller_->Update(params);
   VLOG(3)<<"after update params from distributed mem";
-  // update parameters either locally or distributedly depending on the
-  // system (single machine or a cluster)
-  /*
-  for (auto *param : params) {
-    Tensor1 p(param->mutable_content().dptr, Shape1(param->length()));
-    const Tensor1 h(param->history().dptr, Shape1(param->length()));
-    p += h;
-  }
-  */
-}
-
-void SGDTrainer::TrainOneBatch(Net *net){
-  BackPropagation(step_, net);
   IncStep();
 }
 
-void SGDTrainer::Validate(Net *net, int nbatches) {
+void SGDTrainer::Validate(Net *net, Performance* perf, int nbatches) {
+  perf->set_prefix("val");
   std::vector<Layer *> layers = net->layers();
   std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
   VLOG(3)<<"before get params from distributed mem";
   model_controller_->Get(params);
   VLOG(3)<<"after get params from distributed mem";
+  float loss=0.0f, precision=0.0f;
   for(int k=0;k<nbatches;k++){
     for (auto* layer : layers){
       if(layer->HasInput()){
@@ -82,10 +73,15 @@ void SGDTrainer::Validate(Net *net, int nbatches) {
       }
       layer->Forward();
     }
+    Performance p=dynamic_cast<SoftmaxPredictionLayer*>(layers.back())->CalcPerf();
+    loss+=p.loss();
+    precision+=p.precision();
   }
+  perf->set_loss(loss/nbatches);
+  perf->set_precision(precision/nbatches);
 }
 
-void SGDTrainer::Test(Net *net) {
+void SGDTrainer::Test(Net *net, Performance* perf, int nbatches) {
   /*
   if (phase != Phase::kTest) {
     net->Setup(kAllocData, test_data_shapes_);

@@ -51,19 +51,19 @@ class Trainer {
    * train the model for one-minibatch by either backpropagation or contrastive divergence
    * @param net the Net object to be trained
    */
-  virtual void TrainOneBatch(Net* net)=0;
+  virtual void TrainOneBatch(Net* net, Performance* perf)=0;
   /**
    * test performance on validation dataset
    * @param net the Net object
    * @param nbatches number of batches
    */
-  virtual void Validate(Net *net, int nbatches) = 0;
+  virtual void Validate(Net *net, Performance* perf, int nbatches) = 0;
   /**
    * test performance on test dataset
    * @param net the current Net object
    * @param nbatches number of batches
    */
-  virtual void Test(Net *net, int nbatches) = 0;
+  virtual void Test(Net *net, Performance* perf, int nbatches) = 0;
   /**
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()

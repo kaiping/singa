@@ -120,9 +120,10 @@ class Blob {
     return count_*sizeof(float)/(1024*1024);
   }
 
-  int Gt(float v);
-  int Lt(float v);
-  bool Nan();
+  int Gt(float v, int n=-1) const;
+  int Lt(float v, int n=-1) const;
+  bool Nan() const;
+  float Norm() const ;
   float *dptr;
  private:
   int num_, channels_, height_, width_;

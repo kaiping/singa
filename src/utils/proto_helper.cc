@@ -9,6 +9,8 @@
 #include <glog/logging.h>
 
 #include <fstream> //NOLINT
+#include <string>
+
 
 #include "proto/common.pb.h"
 #include "utils/stringpiece.h"
@@ -26,6 +28,7 @@ using google::protobuf::io::ZeroCopyOutputStream;
 using google::protobuf::io::CodedOutputStream;
 
 namespace lapis {
+const int kPerfBufLen=1024;
 void ReadProtoFromTextFile(const char* filename,
     ::google::protobuf::Message* proto) {
   int fd = open(filename, O_RDONLY);
@@ -89,18 +92,6 @@ void WriteProtoToBinaryFile(const Message &proto, const char *filename) {
   CHECK(proto.SerializeToOstream(&output));
 }
 */
-std::string FormatPerformance(const PerformanceProto& perf) {
-  std::stringstream ss;
-  if (perf.has_precision())
-    ss<<StringPrintf("Precision %.3f, ", perf.precision());
-  if (perf.has_recall())
-    ss<<StringPrintf("Recall %.3f, ", perf.recall());
-  if (perf.has_recall())
-    ss<<StringPrintf("MAP %.3f ", perf.map());
-  if (perf.has_recall())
-    ss<<StringPrintf("Precision@50 %.3f ", perf.precision50());
-  return ss.str();
-}
 const std::map<std::string, int> ToStdMap(const StringIntMap& gmap) {
   std::map<std::string, int> stdmap;
   for(auto& pair: gmap.pair())
@@ -134,5 +125,24 @@ const IntIntMap ToProtoMap(std::map<int, int> stdmap){
     pair->set_val(entry.second);
   }
   return gmap;
+}
+
+const std::string FormatPerformance(int src, const Performance &perf) {
+  int step=-1;
+  float loss=-1.0f, precision=-1.0f;
+  std::string prefix="unknown";
+  if(perf.has_prefix())
+    prefix=perf.prefix();
+  if(perf.has_step())
+    step=perf.step();
+  if(perf.has_loss())
+    loss=perf.loss();
+  if(perf.has_precision())
+    precision=perf.precision();
+  char buf[kPerfBufLen];
+  sprintf(buf, "%10s, slot:%3d, step:%5d, loss:%6.4f, precision:%6.4f",
+      prefix.c_str(), src, step, loss, precision);
+  std::string s(buf);
+  return s;
 }
 }  // namespace lapis

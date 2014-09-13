@@ -20,9 +20,9 @@ void ReLULayer::Setup(const char flag){
 }
 
 void ReLULayer::Forward() {
-  VLOG(3)<<name_;
   Edge *edge = in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge), &act_, true);
+  VLOG(1)<<"forward relu";
   float *act = act_.dptr;
   if(drop_prob_>0) {
     float *drop_fea = drop_fea_.dptr;
@@ -34,14 +34,18 @@ void ReLULayer::Forward() {
     for (int i = 0; i < act_.length(); i++)
       fea[i] = std::max(act[i], 0.0f);
   }
+  if(fea_.Lt(0))
+    VLOG(1)<<"relu generate negative";
+  if(fea_.Nan())
+    VLOG(1)<<"relu generate nan";
 }
 
 void ReLULayer::Backward() {
-  VLOG(3)<<name_;
   Edge *edge = out_edges_[0];
   Layer *layer = edge->OtherSide(this);
   edge->Backward(layer->feature(edge), layer->gradient(edge), fea_, &fea_grad_,
                  true);
+  VLOG(1)<<"backward relu";
   float *act_grad=act_grad_.dptr;
   if(drop_prob_>0){
     ComputeDropoutGradient(fea_grad_, mask_, &drop_grad_);

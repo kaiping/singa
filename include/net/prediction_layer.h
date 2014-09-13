@@ -3,26 +3,31 @@
 
 #ifndef INCLUDE_NET_PREDICTION_LAYER_H
 #define INCLUDE_NET_PREDICTION_LAYER_H
+#include "proto/model.pb.h"
+#include "net/data_layer.h"
 
 namespace lapis {
 class PredictionLayer : public DataLayer {
  public:
-  virtual Performance CalcAccuracy()=0;
+  virtual Performance CalcPerf(bool loss=true, bool precision=true)=0;
 
- private:
+ protected:
   Blob prediction_;
 };
 
-
-class SoftmaxPredictionLayer : PredictionLayer {
+class SoftmaxPredictionLayer : public PredictionLayer {
  public:
+  virtual void Setup(const char flag);
   virtual void Forward();
-  virtual void Performance CalcAccuracy();
+  virtual Performance CalcPerf(bool loss=true, bool precision=true);
   virtual Blob& gradient(Edge* edge) {
     return data_;
   }
   virtual Blob& feature(Edge* edge) {
-    return prediction_;
+    if(edge==nullptr)
+      return data_;
+    else
+      return prediction_;
   }
 
  private:

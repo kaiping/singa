@@ -49,7 +49,7 @@ void DataLayer::Setup(const char flag) {
 
 
 void DataLayer::Forward() {
-  VLOG(3)<<name_;
+  VLOG(1)<<"forward data layer "<<name_;
   if (cropsize_) {
     float* data_dptr=data_.dptr;
     float* tmp_dptr=tmp_.dptr;

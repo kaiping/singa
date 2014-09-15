@@ -117,6 +117,7 @@ void DiskTable::store(const DiskData* data){
 	disk_table_stat_[TOTAL_BYTE_STORED]+=data->ByteSize();
 	disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED]++;
 	disk_table_stat_[TOTAL_RECORD_STORED]+=data->records_size();
+	delete data;
 }
 
 void DiskTable::put_str(const string& k, const string& v){
@@ -141,6 +142,7 @@ void DiskTable::put_str(const string& k, const string& v){
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
+		delete current_write_record_; 
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_ >= FLAGS_block_size){ //table_info_->max_size) {
 			current_block_++;
@@ -244,6 +246,7 @@ void DiskTable::write_loop(){
 		}
 		if (data!=NULL){
 			SendDataBuffer(*data);
+			delete data; 
 		}
 	}
 }

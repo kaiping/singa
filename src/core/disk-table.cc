@@ -65,12 +65,13 @@ DiskTable::DiskTable(DiskTableDescriptor *table) {
 void DiskTable::Load(){
 	//  get all files on the first load.
 	//  on re-load, simply reset the pointer
-  VLOG(3)<<"disktable loading ... ";
+	VLOG(3) << "disk table loading ...";
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
-				StringPrintf("%s/%s_*", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str()));
+				StringPrintf("%s/%s_%d_*", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id()));
 		for (size_t i = 0; i < files.size(); i++) {
+			VLOG(3) << "Loading file " << files[i].name;
 			FileBlock *block = new FileBlock();
 			block->info = files[i];
 			block->end_pos = files[i].stat.st_size;
@@ -96,16 +97,16 @@ void DiskTable::store(const DiskData* data){
 
 	if (!file_){
 		file_ = new RecordFile(
-				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str(), data->block_number()),
+				StringPrintf("%s/%s_%d_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id(), data->block_number()),
 				"w");
 	}
 
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
 		file_ = new RecordFile(
-				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str(), data->block_number()),
+				StringPrintf("%s/%s_%d_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id(), data->block_number()),
 				"w");
 		current_block_ = data->block_number();
 	}

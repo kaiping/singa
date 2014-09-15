@@ -31,12 +31,10 @@ void InnerProductEdge::Setup(const char flag) {
       proto.add_shape(num_input_);
       proto.add_shape(num_output_);
       weight_.Init(proto, flag);
-      params_.push_back(&weight_);
     } else if (proto.name() == "bias") {
       proto.clear_shape();
       proto.add_shape(num_output_);
       bias_.Init(proto, flag);
-      params_.push_back(&bias_);
     }
   }
 }
@@ -58,13 +56,11 @@ void InnerProductEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   Tensor1 bias(bias_.content().dptr, Shape1(num_output_));
   // Note, can not join the dot and repmat operations! the resulted expr is not
   // defined in mshadow
-  LOG(INFO)<<">10000 "<<src.Gt(10000.0);
-  LOG(INFO)<<"<-10000 "<<src.Lt(-10000.0);
+  VLOG(1)<<">10000 "<<src.Gt(10000.0);
+  VLOG(1)<<"<-10000 "<<src.Lt(-10000.0);
   dest2 = dot(src2, weight);
   dest2+= mshadow::expr::repmat(bias, num_);
 
-  if(dest->Nan())
-    LOG(INFO)<<"inner product generate nan";
   VLOG(1)<<dest->Norm();
 }
 
@@ -84,8 +80,6 @@ void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
     const Tensor2 weight (weight_.content().dptr, Shape2(num_input_, num_output_));;
     Tensor2 dest_grad2(dest_grad->dptr, Shape2(num_,num_input_));
     dest_grad2 = dot(src_grad2, weight.T());
-    if(dest_grad->Nan())
-      LOG(INFO)<<"inner product back generate nan";
     VLOG(1)<<dest_grad->Norm();
   }
 }

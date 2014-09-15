@@ -37,6 +37,7 @@ class GlobalContext {
   void set_rank(int rank) {rank_=rank;}
   // assume the rank of coordinator is 0
   static int kCoordinatorRank;
+  static void GDB();
  private:
   GlobalContext(const string &sys_conf, const string &model_conf);
 

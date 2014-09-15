@@ -16,8 +16,6 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   float *data = src.dptr;
   float *prob = dest->dptr;
   VLOG(3)<<"before loop";
-  if(src.Nan())
-    LOG(INFO)<<"src has nan";
   for (int i = 0; i < num_; i++) {
     float mmax = data[0];
     float sum = 0.0f;
@@ -32,8 +30,6 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
     data += dim_;
     prob += dim_;
   }
-  if(dest->Nan())
-    LOG(INFO)<<"softmax loss generate nan";
   VLOG(3)<<"after loop";
   CHECK_EQ(data-src.dptr, src.length());
   CHECK_EQ(prob-dest->dptr, dest->length());
@@ -55,8 +51,6 @@ void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   }
   for(int i=0;i<src_fea.length();i++)
     dest[i]/=num_;
-  if(dest_grad->Nan())
-    LOG(INFO)<<"softmax loss back generate nan";
   VLOG(1)<<dest_grad->Norm();
 
 }

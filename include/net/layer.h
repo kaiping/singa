@@ -100,7 +100,7 @@ class Layer {
    * @param mask it records which neuron was dropped in ::Dropout(), and
    * directs how to pass the gradient from src to dest.
    */
-  virtual void ComputeDropoutGradient(const Blob &src ,
+  virtual void ComputeDropoutGradient(float drop_prob, const Blob &src ,
                                       const Blob &mask, Blob *dest);
   /**
    * Marshal layer properties and parameters into google protobuf object

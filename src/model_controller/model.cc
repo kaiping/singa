@@ -64,7 +64,7 @@ void ModelController::Update(const std::vector<Param*> &params)
   {
     for(auto* param: params)
     {
-      const float * grad_addr = param->gradient().dptr;
+      const float * grad_addr = param->history().dptr;
       float * content_addr = param->mutable_content().dptr;
       int largestoffset = param->length();
       for(int j = 0; j < largestoffset; j++)
@@ -89,7 +89,7 @@ void ModelController::Update(const std::vector<Param*> &params)
       if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
       int curoffset = 0;
 
-      const float * grad_addr = param->gradient().dptr;
+      const float * grad_addr = param->history().dptr;
       for(int j = 0; j < splitsize; j++)
       {
         FloatVector mymessage;

@@ -3,11 +3,11 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /usr
+HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := /users/dinhtta/local/include ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
+INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
@@ -50,15 +50,13 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load:
-	mpirun --prefix /users/dinhtta/local -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun  -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
+		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3 --data_dir=/data0/wangwei/tmp \
 		--table_buffer=20 --block_size=10
 run_run:
-	mpirun --prefix /users/dinhtta/local -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
-		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=1 --data_dir=/data/tmp \
-		--table_buffer=20 --block_size=10
+	mpirun  -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
+	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf --v=0 --load_data=false --run=true --data_dir=/data0/wangwei/tmp  --table_buffer=20 --block_size=10
 
 run_test_load: lapis.test
 	rm -rf tmp/*
@@ -76,8 +74,7 @@ run_test_get: lapis.test
 
 
 debug:
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb \
-		./lapis.bin
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb ./lapis.bin
 
 lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)

@@ -67,13 +67,8 @@ void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   }
   if(knorm_>0)
     accum_fea3+=knorm_;
-  if(accum_fea_.Nan())
-    LOG(INFO)<<"lrn edge accum generate nan";
-  LOG(INFO)<<"lrn edge accum generate negative "<<accum_fea_.Lt(0.0);
   Tensor3 dest3(dest->dptr, Shape3(num_, channels_, height_ * width_));
   dest3 = mshadow::expr::F<mshadow::op::power>(accum_fea3, -beta_) * src3;
-  if(dest->Nan())
-    LOG(INFO)<<"lrn edge generate nan";
   VLOG(1)<<dest->Norm();
 }
 
@@ -109,8 +104,6 @@ void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
       // *ai*alpha*beta*2
     }
   }
-  if(dest_grad->Nan())
-    LOG(INFO)<<"lrn back generate nan";
 
   VLOG(1)<<dest_grad->Norm();
 }

@@ -37,6 +37,7 @@ void Blob::Resize(int num, int channels, int height, int width) {
         delete dptr;
       }
       dptr = new float[length_];
+      memset(dptr,0, length_*sizeof(float));
     }
   }
 }
@@ -60,6 +61,7 @@ void Blob::Resize(int num, int channels, int height,
         delete dptr;
       }
       dptr = new float[length_];
+      memset(dptr,0, length_*sizeof(float));
 			VLOG(3) << "Allcoate blob length: " << length_ << " record len "
 					<< record_length_ << " to pointer " << dptr;
     }

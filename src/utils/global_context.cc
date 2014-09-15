@@ -56,4 +56,14 @@ shared_ptr<GlobalContext> GlobalContext::Get() {
   }
   return instance_;
 }
+
+void GlobalContext::GDB() {
+  int i = 0;
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+  LOG(INFO)<<"PID "<<getpid()<<"on "<<hostname<<" ready for attach";
+  fflush(stdout);
+  while (0 == i)
+    sleep(5);
+}
 }  // namespace lapis

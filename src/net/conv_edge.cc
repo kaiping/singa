@@ -61,12 +61,10 @@ void ConvEdge::Setup(const char flag) {
       proto.add_shape(num_kernels_);
       proto.add_shape(K_);
       weight_.Init(proto, flag);
-      params_.push_back(&weight_);
     } else if (proto.name() == "bias") {
       proto.clear_shape();
       proto.add_shape(num_kernels_);
       bias_.Init(proto, flag);
-      params_.push_back(&bias_);
     }
   }
 }
@@ -95,12 +93,10 @@ void ConvEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   const Tensor1 bias(bias_.content().dptr, Shape1(num_kernels_));
   Tensor3 dest_fea3(dest->dptr, Shape3(num_, num_kernels_,N_));
   dest_fea3 += mshadow::expr::broadcast<1>(bias, dest_fea3.shape);
-  if(dest->Nan())
-    LOG(INFO)<<"conv edge generate nan";
   VLOG(1)<<dest->Norm();
 }
 
-void ConvEdge::Backward(const Blob &src_grad, const Blob &src_fea,
+void ConvEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                         const Blob &dest_fea, Blob *dest_grad, bool overwrite) {
   VLOG(1)<<"backward conv "<<name_;
   // col_fea reshaped image by img2col to a matrix,
@@ -112,6 +108,7 @@ void ConvEdge::Backward(const Blob &src_grad, const Blob &src_fea,
 
   const Tensor3 weight(weight_.content().dptr, Shape3(num_groups_,M_,K_));
   Tensor3 weight_grad(weight_.mutable_gradient().dptr, Shape3(num_groups_,M_,K_));
+  weight_grad=0.0;
   Tensor3 col_fea(col_fea_.dptr, Shape3(num_groups_, K_, N_));
   int imgsize = channels_ * height_ * width_;
   float  *dest_fea_dptr = dest_fea.dptr, *dest_grad_dptr=nullptr;
@@ -125,7 +122,7 @@ void ConvEdge::Backward(const Blob &src_grad, const Blob &src_fea,
     if(dest_grad!=nullptr) {
       Tensor3 col_grad(col_grad_.dptr, Shape3(num_groups_, K_, N_));
       for (int g = 0; g < num_groups_; g++) {
-        weight_grad[g] = dot(src_grad3[g], col_fea[g].T());
+        weight_grad[g] += dot(src_grad3[g], col_fea[g].T());
         col_grad[g] = dot(weight[g].T(), src_grad3[g]);
       }
       col2im(col_grad_.dptr, channels_, height_, width_, kernel_size_, pad_,
@@ -133,14 +130,12 @@ void ConvEdge::Backward(const Blob &src_grad, const Blob &src_fea,
       dest_grad_dptr += imgsize;
     } else {
       for (int g = 0; g < num_groups_; g++)
-        weight_grad[g] = dot(src_grad3[g], col_fea[g].T());
+        weight_grad[g] += dot(src_grad3[g], col_fea[g].T());
     }
   }
   CHECK_EQ(dest_fea_dptr-dest_fea.dptr, dest_fea.length());
   if(dest_grad!=nullptr){
     CHECK_EQ(dest_grad_dptr-dest_grad->dptr, dest_grad->length());
-    if(dest_grad->Nan())
-      LOG(INFO)<<"conv back generate nan";
     VLOG(1)<<dest_grad->Norm();
   }
 

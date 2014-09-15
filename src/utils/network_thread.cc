@@ -278,10 +278,12 @@ void NetworkThread::Broadcast(int method, const Message &msg) {
 
 void NetworkThread::SyncBroadcast(int method, int reply, const Message &msg) {
   Broadcast(method, msg);
+  VLOG(3)<<"wait for "<<size()-1<<" rplies";
   WaitForSync(reply, size() - 1);
 }
 
 void NetworkThread::WaitForSync(int reply, int count) {
+  VLOG(3)<<"wat for braodcast";
   EmptyMessage empty;
   while (count > 0) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);

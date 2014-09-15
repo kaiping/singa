@@ -58,13 +58,14 @@ void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
   dest_t = src_t * mask_t *(1.0 / keep_prob);
 }
 
-void Layer::ComputeDropoutGradient(const Blob &src ,
+void Layer::ComputeDropoutGradient(float drop_prob, const Blob &src ,
                                    const Blob &mask, Blob *dest) {
   int len = dest->length();
   Tensor1 dest_t(dest->dptr, Shape1(len));
   Tensor1 mask_t(mask.dptr, Shape1(len));
   Tensor1 src_t(src.dptr, Shape1(len));
-  dest_t = src_t * mask_t;
+  float scale=1.0/(1-drop_prob_);
+  dest_t = src_t * mask_t*scale;
 }
 // Currently layers do not have parameters
 void Layer::ComputeParamUpdates(const Trainer *trainer) {

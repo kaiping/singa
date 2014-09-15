@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
     coordinator.Run(FLAGS_load_data, FLAGS_run);
   }else {
     lapis::Worker worker;
+//    gc->GDB();
     worker.Run(FLAGS_load_data, FLAGS_run);
   }
   return 0;

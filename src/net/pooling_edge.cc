@@ -85,10 +85,6 @@ void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   }
   CHECK_EQ(src_data-src.dptr, src.length());
   CHECK_EQ(dest_data-dest->dptr, dest->length());
-  if(dest->Lt(0))
-    LOG(INFO)<<"pooling edge dest has negative";
-  if(dest->Nan())
-    LOG(INFO)<<"pooling edge generate nan";
   VLOG(1)<<dest->Norm();
 
 }
@@ -162,8 +158,6 @@ void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   CHECK_EQ(src_grad_data-src_grad.dptr, src_grad.length());
   CHECK_EQ(dest_fea_data-dest_fea.dptr, dest_fea.length());
   CHECK_EQ(dest_grad_data-dest_grad->dptr, dest_grad->length());
-  if(dest_grad->Nan())
-    LOG(INFO)<<"pooling back generate nan";
   VLOG(1)<<dest_grad->Norm();
 
 }

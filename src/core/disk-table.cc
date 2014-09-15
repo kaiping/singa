@@ -6,10 +6,10 @@
 #include "proto/model.pb.h"
 #include "proto/worker.pb.h"
 
-DEFINE_string(data_dir,"tmp", "path to data store");
-DEFINE_int32(table_buffer, 1,0);
+DEFINE_string(data_dir,"/data0/wangwei/tmp", "path to data store");
+DEFINE_int32(table_buffer, 20,0);
 DEFINE_int32(io_buffer_size,5,0);
-DEFINE_int32(block_size,10,0); 
+DEFINE_int32(block_size,10,0);
 DECLARE_double(sleep_time);
 DEFINE_int32(debug_index,0,0);
 namespace lapis{
@@ -164,16 +164,19 @@ void DiskTable::get_str(string *k, string *v){
 
 //  flush the current buffer
 void DiskTable::finish_put(){
+  VLOG(3)<<"disk table finish put";
 
 	//  done, flush the buffer
 	done_writing_ = true;
 	//  wait to send all the data first
 	network_write_thread_->join();
+  VLOG(3)<<"disk table finish put join";
 
 	while (!buffer_->empty()){
 		SendDataBuffer(*(buffer_->next_data_records()));
 	}
 
+  VLOG(3)<<"disk table finish put write left";
 	//  write the left over
 	if (current_buffer_count_>0)
 		SendDataBuffer(*current_write_record_);
@@ -183,8 +186,10 @@ void DiskTable::finish_put(){
 	message.set_table(id());
 	message.set_is_empty(true);
 	message.set_block_number(-1);
+  VLOG(3)<<"disk table finish put broadcast";
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, message);
+  VLOG(3)<<"disk table finish put end";
 }
 
 void DiskTable::finalize_data(){
@@ -257,7 +262,6 @@ void DiskTable::Next(){
 }
 
 void DiskTable::SendDataBuffer(const DiskData& data){
-
 	int dest = table_info_->fixed_server_id;
 	if (dest==-1)
 		dest = data.block_number()%(GlobalContext::Get()->num_table_servers());

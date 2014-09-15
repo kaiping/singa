@@ -3,7 +3,7 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei/install
+HOME_DIR := /users/dinhtta/local
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
@@ -19,7 +19,7 @@ LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
 							opencv_core cblas atlas
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := /users/dinhtta/local/lib $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
@@ -50,13 +50,14 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load:
-	mpirun  -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3 --data_dir=/data0/wangwei/tmp \
+		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
 		--table_buffer=20 --block_size=10
 run_run:
-	mpirun  -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
-	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf --v=0 --load_data=false --run=true --data_dir=/data0/wangwei/tmp  --table_buffer=20 --block_size=10
+	mpirun --prefix /users/dinhtta/local  -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
+	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
+	--load_data=false --run=true --v=0 --data_dir=/data/tmp  --table_buffer=20 --block_size=10
 
 run_test_load: lapis.test
 	rm -rf tmp/*

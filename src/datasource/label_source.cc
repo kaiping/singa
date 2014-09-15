@@ -2,6 +2,10 @@
 // 2014-07-02 19:50
 
 #include <glog/logging.h>
+#include <algorithm>
+#include <random>
+#include <chrono>
+
 #include "datasource/label_source.h"
 using std::shared_ptr;
 namespace lapis {
@@ -40,10 +44,15 @@ const shared_ptr<StringVec> LabelSource::LoadData(
   int v;
   std::string k;
   image_names_ = std::make_shared<StringVec>();
+  std::vector<std::pair<std::string, int>> lines ;
+  while(is>>k>>v) {
+    lines.push_back(std::make_pair(k,v));
+  }
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::shuffle(lines.begin(), lines.end(), std::default_random_engine(seed));
   for (int i = 0; i < size_; i++) {
-    is >> k >> v;
-    image_names_->push_back(k);
-    labels_.push_back(static_cast<float>(v));
+    image_names_->push_back(lines[i].first);
+    labels_.push_back(lines[i].second);
   }
   is.close();
   CHECK_GE(labels_.size(), size_) << "The size from conf file is " << size_

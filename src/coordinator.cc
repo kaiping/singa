@@ -173,7 +173,7 @@ void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     const ModelProto& model){
   VLOG(3)<<"setup storage";
   DistributedStorageConfig config;
-    config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
+  config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
   if(do_train)
     config.mutable_psconfig()->CopyFrom(CreateParamStorage());
   CHECK(config.has_dsconfig()||config.has_psconfig());
@@ -213,28 +213,26 @@ void Coordinator::RunStandalone(const ModelProto& model) {
 void Coordinator::RunOnCluster(const ModelProto& model) {
   VLOG(3)<<"start worker";
   mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
-  bool *alive_workers=new bool[mpi_->size()];
-  for(int i=0;i<mpi_->size();i++)
-    alive_workers[i]=true;
-  int num_alives=mpi_->size();
-  while(alive_workers>0) {
+  int num_alive_workers=GlobalContext::Get()->num_processes()-1;
+  std::map<int, bool> worker_state; // state: true if alive; false if dead
+  for(int i=0;i<num_alive_workers;i++)
+    worker_state[i]=true;
+  while(num_alive_workers>0) {
     int src = 0;
-
     EmptyMessage end_msg;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {
-      alive_workers[src]=false;
-      num_alives--;
+      if(worker_state.at(src)==false)
+        LOG(WARNING)<<"repeat worker end msg from "<<src;
+      else {
+        worker_state.at(src)=true;
+        num_alive_workers--;
+      }
     }
-
     ShortMsg msg;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_VALIDATION, &msg, &src)) {
-      if (DoValidationOn(src))
-        msg.set_answer(true);
-      else
-        msg.set_answer(false);
+      msg.set_answer(DoValidationOn(src));
       mpi_->Send(src, MTYPE_INSTRUCTION,msg);
     }
-
     Performance perf;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
       LOG(INFO)<<FormatPerformance(src, perf);

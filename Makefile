@@ -50,12 +50,12 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load:
-	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun --prefix /users/dinhtta/local -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
 		--table_buffer=20 --block_size=10
 run_run:
-	mpirun --prefix /users/dinhtta/local  -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
+	mpirun --prefix /users/dinhtta/local  -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--load_data=false --run=true --v=0 --data_dir=/data/tmp  --table_buffer=20 --block_size=10
 

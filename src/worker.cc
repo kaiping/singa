@@ -66,7 +66,7 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
   return config;
 }
 void Worker::Shutdown() {
-	VLOG(3) << "Worker is shutting down ...";
+	LOG(INFO) << "Worker is shutting down ...";
   mpi_->Flush();
   mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;
@@ -101,6 +101,7 @@ void Worker::Run(bool load_data, bool do_train) {
     perf.set_step(trainer.step());
     if(trainer.ValidateNow()){
       if(ShouldIDoValidation(trainer.step())){
+        VLOG(1)<<"start validation";
         // do validation
         SetupNet(sgd.validation_batchsize(), kAllocData, &net,
             model.data().validation_data(), val_stores);

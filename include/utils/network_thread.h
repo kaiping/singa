@@ -90,6 +90,8 @@ class NetworkThread {
   deque<RPCRequest *> pending_sends_;
   std::unordered_set<RPCRequest *> active_sends_;
 
+  int outstanding_request_;
+
   int id_;
   MPI::Comm *world_;
 

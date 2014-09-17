@@ -162,6 +162,7 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   if (!is_local_shard(shard)) {
     SendUpdates();
   }
+
 }
 
 template<class K, class V>
@@ -170,8 +171,11 @@ void TypedGlobalTable<K, V>::update(const K &k, const V &v) {
   //  boost::recursive_mutex::scoped_lock sl(mutex());
   partition(shard)->update(k, v);
   //  always send
-  if (!is_local_shard(shard))
+  if (!is_local_shard(shard)){
+
     SendUpdates();
+  }
+
 }
 
 // Return the value associated with 'k', possibly blocking for a remote fetch.

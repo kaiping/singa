@@ -60,8 +60,9 @@ NetworkThread::NetworkThread() {
   disk_thread_ = new boost::thread(&NetworkThread::WriteToDiskLoop, this);
 
 //  initialize message queue
+  outstanding_request_=0;
   auto gc = GlobalContext::Get();
-  if (gc->synchronous())
+  if (!gc->synchronous())
     request_queue_ = new SyncRequestQueue(gc->num_table_servers());
   else
     request_queue_ = new AsyncRequestQueue(gc->num_table_servers());
@@ -73,7 +74,7 @@ NetworkThread::NetworkThread() {
 }
 
 bool NetworkThread::active() const {
-  return active_sends_.size() + pending_sends_.size() > 0;
+  return active_sends_.size() + pending_sends_.size() +outstanding_request_ > 0;
 }
 
 void NetworkThread::CollectActive() {
@@ -101,6 +102,7 @@ void NetworkThread::CollectActive() {
 //  are added to the queue. Other requests (shard assignment, etc.)
 //  are processed right away
 void NetworkThread::NetworkLoop() {
+	VLOG(3) << "In network loop of process " << id();
 	while (running_) {
 		MPI::Status st;
 		if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
@@ -122,6 +124,7 @@ void NetworkThread::NetworkLoop() {
 			//  put request to the queue
 			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
 				request_queue_->Enqueue(tag, data);
+				outstanding_request_++;
 			} else if (tag == MTYPE_DATA_PUT_REQUEST
 					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
 				boost::recursive_mutex::scoped_lock sl(disk_lock_);
@@ -156,10 +159,12 @@ void NetworkThread::NetworkLoop() {
 //  loop through the request queue and process messages
 //  get the next message, then invoke call back
 void NetworkThread::ProcessLoop() {
+	VLOG(3) << "In process loop of process "<< id();
   while (running_) {
     TaggedMessage msg;
     request_queue_->NextRequest(&msg);
     ProcessRequest(msg);
+    outstanding_request_--;
   }
 }
 

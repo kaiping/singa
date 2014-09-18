@@ -4,6 +4,7 @@
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
 #include "core/disk-table.h"
+#include "core/request_dispatcher.h"
 
 DECLARE_double(sleep_time);
 namespace lapis {
@@ -27,12 +28,15 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableServer::HandleShardAssignment, this));
-  net_->RegisterDiskHandler(boost::bind(&TableServer::HandleDisk, this, _1));
 
-  net_->RegisterRequestHandler(MTYPE_PUT_REQUEST,
+  // Start dispatcher
+  VLOG(3) << "start request dispatchers from TableServer";
+  RequestDispatcher *dispatcher = RequestDispatcher::Get();
+  dispatcher->RegisterTableCallback(MTYPE_PUT_REQUEST,
                                boost::bind(&TableServer::HandleUpdateRequest, this, _1));
-  net_->RegisterRequestHandler(MTYPE_GET_REQUEST,
+  dispatcher->RegisterTableCallback(MTYPE_GET_REQUEST,
                                boost::bind(&TableServer::HandleGetRequest, this, _1));
+  dispatcher->RegisterDiskCallback(boost::bind(&TableServer::HandleDisk, this, _1));
 }
 
 

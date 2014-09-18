@@ -113,6 +113,17 @@ void worker_test_data(){
 	for (int i=0; i<FLAGS_num_keys; i++)
 		VLOG(3) << StringPrintf("(%d,%d)", i, table->get(i));
 
+	VLOG(3) << "Worker update data ...";
+	for (int i=0; i<FLAGS_num_keys; i++)
+		table->update(i,i);
+
+	VLOG(3) << "Worker update data AGAIN ...";
+		for (int i=0; i<FLAGS_num_keys; i++)
+			table->update(i,i);
+
+	VLOG(3) << "Done?";
+	//for (int i=0; i<FLAGS_num_keys; i++)
+	//		VLOG(3) << StringPrintf("(%d,%d)", i, table->get(i));
 }
 
 void shutdown(){
@@ -136,6 +147,7 @@ void shutdown(){
 	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
 	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
 	  table_server->ShutdownTableServer();
+	  VLOG(3) << "Flushing node " << network->id();
 	  network->Shutdown();
 	}
 }
@@ -172,6 +184,7 @@ int main(int argc, char **argv) {
 	else{
 		worker_table_init();
 		barrier();
+		//Sleep(1);
 		worker_test_data();
 	}
 

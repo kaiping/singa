@@ -5,7 +5,6 @@
 #include "core/table.h"
 #include "core/local-table.h"
 #include "core/file.h"
-#include "core/rpc.h"
 
 namespace lapis {
 

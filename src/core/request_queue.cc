@@ -1,11 +1,12 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 
-// modified from piccolo/rpc.cc
-
+/*
+ *  Implementation of the request queue
+ */
 #include <signal.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include "core/rpc.h"
+#include "core/request_queue.h"
 #include "proto/common.pb.h"
 #include "proto/worker.pb.h"
 #include "utils/global_context.h"
@@ -13,24 +14,6 @@
 
 DECLARE_double(sleep_time);
 namespace lapis {
-
-RPCRequest::~RPCRequest() {}
-
-// Send the given message type and data to this peer.
-RPCRequest::RPCRequest(int tgt, int method, const Message &ureq) {
-  failures = 0;
-  target = tgt;
-  rpc_type = method;
-  ureq.AppendToString(&payload);
-}
-
-TaggedMessage::~TaggedMessage() {}
-
-TaggedMessage::TaggedMessage(int t, const string &dat) {
-  tag = t;
-  data = dat;
-}
-
 
 void RequestQueue::ExtractKey(int tag, string data, string *key) {
   if (tag == MTYPE_GET_REQUEST) {
@@ -46,7 +29,7 @@ void RequestQueue::ExtractKey(int tag, string data, string *key) {
 
 //  put the TaggedMessage into the synchronous queues, one queue
 //  per key
-void SyncRequestQueue::Enqueue(int tag, string &data) {
+void ASyncRequestQueue::Enqueue(int tag, string &data) {
   // extract the key
   string key;
   ExtractKey(tag, data, &key);
@@ -72,7 +55,7 @@ void SyncRequestQueue::Enqueue(int tag, string &data) {
 
 //  get the next request, by going through the request queue,
 //  key by key
-void SyncRequestQueue::NextRequest(TaggedMessage *message) {
+void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
@@ -97,7 +80,7 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   }
 }
 
-void AsyncRequestQueue::Enqueue(int tag, string &data) {
+void SyncRequestQueue::Enqueue(int tag, string &data) {
   // extract the key
   string key;
   ExtractKey(tag, data, &key);
@@ -121,14 +104,14 @@ void AsyncRequestQueue::Enqueue(int tag, string &data) {
   //  now insert to the queue
   {
     boost::recursive_mutex::scoped_lock sl(key_lock);
-    /*
+
     if (tag == MTYPE_PUT_REQUEST)
       CHECK_LT(put_queues_[idx].size(),
                num_mem_servers_) << "failed at key index " << idx;
     else if (tag == MTYPE_GET_REQUEST)
       CHECK_LT(get_queues_[idx].size(),
                num_mem_servers_) << "failed at key index " << idx;
-    */
+
     if (tag == MTYPE_GET_REQUEST) {
       get_queues_[idx].push_back(new TaggedMessage(tag, data));
     } else {
@@ -141,7 +124,7 @@ void AsyncRequestQueue::Enqueue(int tag, string &data) {
 //  switching between put and get message queue.
 //  guarantee: at queue X, return num_mem_servers_ messages before
 //  switching to queue Y
-void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
+void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {

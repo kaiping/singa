@@ -83,7 +83,7 @@ NetworkThread::NetworkThread() {
 
 bool NetworkThread::active() const {
 	return (active_sends_.size() + pending_sends_.size() > 0)
-			&& RequestDispatcher::Get()->active();
+			|| RequestDispatcher::Get()->active();
 }
 
 void NetworkThread::CollectActive() {

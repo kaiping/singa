@@ -101,29 +101,31 @@ void worker_table_init(){
 
 void coordinator_load_data(){
 	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
-	for (int i = 0; i<FLAGS_num_keys; i++){
+	for (int i = 1; i<=FLAGS_num_keys; i++){
 		table->put(i,i);
 	}
 	VLOG(3) << "Loaded data successfully ...";
 }
 
 void worker_test_data(){
-	VLOG(3) << "Worker get data ...";
 	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
-	for (int i=0; i<FLAGS_num_keys; i++)
-		VLOG(3) << StringPrintf("(%d,%d)", i, table->get(i));
+	for (int i=1; i<=FLAGS_num_keys; i++)
+		VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
 
-	VLOG(3) << "Worker update data ...";
-	for (int i=0; i<FLAGS_num_keys; i++)
+
+	if (NetworkThread::Get()->id()!=0)
+	for (int i=1; i<=FLAGS_num_keys; i++)
 		table->update(i,i);
-
+/*
 	VLOG(3) << "Worker update data AGAIN ...";
 		for (int i=0; i<FLAGS_num_keys; i++)
 			table->update(i,i);
 
-	VLOG(3) << "Done?";
-	//for (int i=0; i<FLAGS_num_keys; i++)
-	//		VLOG(3) << StringPrintf("(%d,%d)", i, table->get(i));
+
+*/
+	for (int i=1; i<=FLAGS_num_keys; i++)
+			VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
+
 }
 
 void shutdown(){
@@ -140,8 +142,9 @@ void shutdown(){
 		  network->Shutdown();
 	}
 	else{
-		VLOG(3) << "Worker is shutting down ...";
+		VLOG(3) << "Worker " << network->id() << " is shutting down ...";
 	  network->Flush();
+	  VLOG(3) << "Done flushing the network thread";
 	  network->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
 	  EmptyMessage msg;
 	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
@@ -160,8 +163,9 @@ void barrier(){
 		EmptyMessage msg;
 		network->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG,
 				&msg);
-		VLOG(3) << "Waiting for flush ...";
+		VLOG(3) << "Waiting for flush at process " << network->id();
 		network->Flush();
+		VLOG(3) << "Done flushing at process " << network->id();
 	}
 }
 

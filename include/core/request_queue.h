@@ -41,6 +41,8 @@ class RequestQueue {
   virtual void NextRequest(TaggedMessage *msg) {}
   virtual void Enqueue(int tag, string &data) {}
 
+  virtual bool sync_local_get(string &key){return true;}
+  virtual bool sync_local_put(string &key){return true;}
   // extract the key from message stored in data
   void ExtractKey(int tag, string data, string *key);
 
@@ -65,6 +67,8 @@ class ASyncRequestQueue: public RequestQueue {
   ASyncRequestQueue(int ns): RequestQueue(ns) {}
   void NextRequest(TaggedMessage *msg);
   void Enqueue(int tag, string &data);
+  bool sync_local_get(string &key){return true;}
+  bool sync_local_put(string &key){return true;}
  private:
 
   vector<Queue> request_queues_;
@@ -76,6 +80,8 @@ class SyncRequestQueue: public RequestQueue {
   SyncRequestQueue(int ns): RequestQueue(ns) {}
   void NextRequest(TaggedMessage *msg);
   void Enqueue(int tag, string &data);
+  bool sync_local_get(string &key);
+  bool sync_local_put(string &key);
  private:
 
   vector<Queue> put_queues_, get_queues_;

@@ -48,8 +48,11 @@ class RequestDispatcher {
 		return instance_;
 	}
 
-	bool active(){ return num_outstanding_request_>0;}
+	bool active();
 
+	//  block on local get/put to ensure the synchronous semantics.
+	bool sync_local_get(string &key){ return table_queue_->sync_local_get(key);}
+	bool sync_local_put(string &key){return table_queue_->sync_local_put(key);}
  private:
 	RequestDispatcher();
 	void table_dispatch_loop();

@@ -32,11 +32,27 @@ namespace lapis {
 			table_queue_ = new ASyncRequestQueue(gc->num_table_servers());
 		}
 
+		num_outstanding_request_=0;
+
 		//start the dispatch loop
 		table_dispatch_thread_ = new boost::thread(&RequestDispatcher::table_dispatch_loop, this);
 		disk_dispatch_thread_ = new boost::thread(&RequestDispatcher::disk_dispatch_loop, this);
 	}
 
+	void sync_local_get(){
+		if (!GlobalContext::Get()->synchronous())
+			return;
+
+	}
+
+	void sync_local_put(){
+		if (GlobalContext::Get()->synchronous())
+			return;
+	}
+
+	bool RequestDispatcher::active(){
+		return num_outstanding_request_>0;
+	}
 	void RequestDispatcher::Enqueue(int tag, string &data){
 		if (tag==MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST){
 			table_queue_->Enqueue(tag, data);

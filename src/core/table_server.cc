@@ -37,6 +37,7 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   dispatcher->RegisterTableCallback(MTYPE_GET_REQUEST,
                                boost::bind(&TableServer::HandleGetRequest, this, _1));
   dispatcher->RegisterDiskCallback(boost::bind(&TableServer::HandleDisk, this, _1));
+  VLOG(3) << "done registering callback for dipsatcher";
 }
 
 

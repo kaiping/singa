@@ -23,10 +23,8 @@ namespace lapis {
 	RequestDispatcher::RequestDispatcher(){
 		shared_ptr<GlobalContext> gc = GlobalContext::Get();
 
-		VLOG(3) << "Synchronous update, again = " << gc->synchronous();
 		if (gc->synchronous()){
 			table_queue_ = new SyncRequestQueue(gc->num_table_servers());
-			VLOG(3) << "Synchronous queue";
 		}
 		else{
 			table_queue_ = new ASyncRequestQueue(gc->num_table_servers());
@@ -35,19 +33,27 @@ namespace lapis {
 		num_outstanding_request_=0;
 
 		//start the dispatch loop
-		table_dispatch_thread_ = new boost::thread(&RequestDispatcher::table_dispatch_loop, this);
-		disk_dispatch_thread_ = new boost::thread(&RequestDispatcher::disk_dispatch_loop, this);
+		new boost::thread(&RequestDispatcher::table_dispatch_loop, this);
+		new boost::thread(&RequestDispatcher::disk_dispatch_loop, this);
 	}
 
-	void sync_local_get(){
+	void RequestDispatcher::sync_local_get(string &key){
 		if (!GlobalContext::Get()->synchronous())
 			return;
 
+		while (!table_queue_->sync_local_get(key))
+			Sleep(FLAGS_sleep_time);
 	}
 
-	void sync_local_put(){
-		if (GlobalContext::Get()->synchronous())
+	void RequestDispatcher::sync_local_put(string &key){
+		if (!GlobalContext::Get()->synchronous())
 			return;
+		while (!table_queue_->sync_local_put(key))
+					Sleep(FLAGS_sleep_time);
+	}
+
+	void RequestDispatcher::event_complete(string &key){
+		table_queue_->event_complete(key);
 	}
 
 	bool RequestDispatcher::active(){
@@ -68,7 +74,9 @@ namespace lapis {
 		VLOG(3) << "In table dispatch loop of process " << NetworkThread::Get()->id();
 		while (true) {
 			TaggedMessage t_msg;
+			string key;
 			table_queue_->NextRequest(&t_msg);
+			table_queue_->ExtractKey(t_msg.tag, t_msg.data, &key);
 
 			boost::scoped_ptr <Message> message;
 			if (t_msg.tag == MTYPE_GET_REQUEST)
@@ -81,6 +89,7 @@ namespace lapis {
 			callbacks_[t_msg.tag](message.get());
 
 			num_outstanding_request_--;
+			table_queue_->event_complete(key);
 		}
 	}
 

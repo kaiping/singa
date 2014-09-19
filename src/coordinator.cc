@@ -198,6 +198,9 @@ void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     mc_.Put(net.params());
   }
   VLOG(3)<<"finish init dist storage";
+
+  // Added by Anh, making sure all data is ready at the server
+  mpi_->barrier();
 }
 
 bool Coordinator::DoValidationOn(int worker_id) {

@@ -96,6 +96,7 @@ void coordinator_assign_tables(int id){
 void worker_table_init(){
 	table_server = new TableServer();
 	table_server->StartTableServer(tables);
+	VLOG(3) << "done starting table server";
 }
 
 
@@ -113,19 +114,20 @@ void worker_test_data(){
 		VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
 
 
-	if (NetworkThread::Get()->id()!=0)
-	for (int i=1; i<=FLAGS_num_keys; i++)
-		table->update(i,i);
-/*
-	VLOG(3) << "Worker update data AGAIN ...";
-		for (int i=0; i<FLAGS_num_keys; i++)
-			table->update(i,i);
+	for (int j = 0; j < 2; j++) {
+		for (int i = 1; i <= FLAGS_num_keys; i++)
+			table->update(i, i);
 
+		for (int i = 1; i <= FLAGS_num_keys; i++)
+			VLOG(3)
+					<< StringPrintf("Worker %d got (%d,%d)",
+							NetworkThread::Get()->id(), i, table->get(i));
+	}
 
-*/
-	for (int i=1; i<=FLAGS_num_keys; i++)
-			VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
-
+	for (int i = 1; i <= FLAGS_num_keys; i++)
+				VLOG(3)
+						<< StringPrintf("Worker %d got (%d,%d)",
+								NetworkThread::Get()->id(), i, table->get(i));
 }
 
 void shutdown(){
@@ -155,19 +157,6 @@ void shutdown(){
 	}
 }
 
-void barrier(){
-	if (context->AmICoordinator()){
-		network->Broadcast(MTYPE_MODEL_CONFIG, EmptyMessage());
-	}
-	else{
-		EmptyMessage msg;
-		network->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG,
-				&msg);
-		VLOG(3) << "Waiting for flush at process " << network->id();
-		network->Flush();
-		VLOG(3) << "Done flushing at process " << network->id();
-	}
-}
 
 int main(int argc, char **argv) {
 	FLAGS_logtostderr = 1;
@@ -183,11 +172,12 @@ int main(int argc, char **argv) {
 	if (context->AmICoordinator()){
 		coordinator_assign_tables(0);
 		coordinator_load_data();
-		barrier();
+		network->barrier();
 	}
 	else{
 		worker_table_init();
-		barrier();
+		network->barrier();
+		VLOG(3) << "passed the barrier";
 		//Sleep(1);
 		worker_test_data();
 	}

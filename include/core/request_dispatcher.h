@@ -51,8 +51,11 @@ class RequestDispatcher {
 	bool active();
 
 	//  block on local get/put to ensure the synchronous semantics.
-	bool sync_local_get(string &key){ return table_queue_->sync_local_get(key);}
-	bool sync_local_put(string &key){return table_queue_->sync_local_put(key);}
+	void sync_local_get(string &key);
+	void sync_local_put(string &key);
+
+	void event_complete(string &key);
+
  private:
 	RequestDispatcher();
 	void table_dispatch_loop();
@@ -67,7 +70,7 @@ class RequestDispatcher {
 
 	Callback callbacks_[kMaxMethods], disk_write_callback_;
 
-	mutable boost::thread *table_dispatch_thread_, *disk_dispatch_thread_;
+	boost::thread *table_dispatch_thread_, *disk_dispatch_thread_;
 
 	mutable boost::recursive_mutex disk_lock_;
 

@@ -60,9 +60,13 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
   if(GlobalContext::Get()->AmITableServer()){
     table_server_=new TableServer();
     table_server_->StartTableServer(mc_.GetTables());
-    VLOG(3)<<"table server tarted";
+    VLOG(3)<<"table server started";
   }
   VLOG(3)<<"finish init storage";
+
+  // Added by Anh, making sure all data is there
+  mpi_->barrier();
+
   return config;
 }
 void Worker::Shutdown() {

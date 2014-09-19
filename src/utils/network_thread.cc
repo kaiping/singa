@@ -140,6 +140,8 @@ void NetworkThread::NetworkLoop() {
 				//  actively by the client
 				boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
 				response_queue_[tag][source].push_back(data);
+				if (tag==MTYPE_MODEL_CONFIG)
+					VLOG(3) << "Barrier message received for process " << id();
 			}
 			//  other messages that need to be processed right away, e.g. shard assignment
 			if (callbacks_[tag] != NULL) {
@@ -191,6 +193,8 @@ bool NetworkThread::is_empty_queue(int src, int type){
 void NetworkThread::Read(int desired_src, int type, Message *data,
                          int *source) {
   while (!TryRead(desired_src, type, data, source)) {
+	  if (type==MTYPE_MODEL_CONFIG)
+		  VLOG(3) << "Waiting for barrier to clear, at process "<<id();
     Sleep(FLAGS_sleep_time);
   }
 }
@@ -269,4 +273,19 @@ void NetworkThread::PrintStats(){
 					/ (network_thread_stats_[LAST_BYTE_RECEIVED]
 							- network_thread_stats_[FIRST_BYTE_RECEIVED]);
 }
+
+void NetworkThread::barrier(){
+	if (GlobalContext::Get()->AmICoordinator()){
+		SyncBroadcast(MTYPE_BARRIER_REQUEST, MTYPE_BARRIER_REPLY, EmptyMessage());
+		Broadcast(MTYPE_BARRIER_READY, EmptyMessage());
+	}
+	else{
+		EmptyMessage msg;
+		Read(GlobalContext::kCoordinatorRank, MTYPE_BARRIER_REQUEST, &msg);
+		Flush();
+		Send(GlobalContext::kCoordinatorRank, MTYPE_BARRIER_REPLY, msg);
+		Read(GlobalContext::kCoordinatorRank, MTYPE_BARRIER_READY, &msg);
+	}
+}
+
 }  // namespace lapis

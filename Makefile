@@ -55,17 +55,17 @@ MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
 run_load:
 	mpirun --prefix /users/dinhtta/local -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
-		--table_buffer=20 --block_size=10
+		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=tmp \
+		--table_buffer=3 --block_size=1
 run_run:
 	mpirun --prefix /users/dinhtta/local  -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=0 --data_dir=/data/tmp  --table_buffer=20 --block_size=10
+	--v=0 --data_dir=tmp --load_data=false --run=true --table_buffer=3 --block_size=1
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=/data/tmp \
+		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
 		--table_buffer=20 --block_size=10
 
 run_test_disk_load: lapis.test.disk
@@ -74,7 +74,7 @@ run_test_disk_load: lapis.test.disk
 	mpirun --prefix /users/dinhtta/local -np 4 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=1000 --block_size=1000 --table_size=20000 --table_buffer=1000 --io_buffer_size=10 --data_dir=/data/anh/tmp
+		 --record_size=1000 --block_size=1000 --table_size=20000 --table_buffer=1000 --io_buffer_size=10 --data_dir=tmp
 
 run_test_get: lapis.test.disk
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

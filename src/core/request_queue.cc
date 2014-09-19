@@ -115,19 +115,19 @@ void SyncRequestQueue::Enqueue(int tag, string &data) {
 
     if (tag == MTYPE_GET_REQUEST) {
       get_queues_[idx].push_back(new TaggedMessage(tag, data));
-      VLOG(3) << "get queue idx " << idx << " at process " << NetworkThread::Get()->id() << " size = " << get_queues_[idx].size();
     } else {
       CHECK_EQ(tag, MTYPE_PUT_REQUEST);
       put_queues_[idx].push_back(new TaggedMessage(tag, data));
-      VLOG(3) << "put queue idx " << idx << " at process " << NetworkThread::Get()->id() << " size = " << put_queues_[idx].size();
     }
   }
 }
 
 bool SyncRequestQueue::sync_local_get(string &key){
 	int idx = key_map_[key];
-		boost::recursive_mutex &key_lock = *(key_locks_[idx]);
-		boost::recursive_mutex::scoped_lock sl(key_lock);
+	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
+	boost::recursive_mutex::scoped_lock sl(key_lock);
+	return is_in_put_queue_[idx]==0;
+	/*
 		int &counter = access_counters_[idx];
 		int &is_put = is_in_put_queue_[idx];
 		if (!is_put){
@@ -135,21 +135,21 @@ bool SyncRequestQueue::sync_local_get(string &key){
 			if (counter==num_mem_servers_){
 				counter=0;
 				is_put = 1;
-				VLOG(3) << "Process " << NetworkThread::Get()->id()
-            			<< " SWITCHED TO PUT QUEUE for key idx "
-            			<< key_index_ << " curent put queue size = "
-            			<< put_queues_[key_index_].size();
 			}
 			return true;
 		}
 		else
 			return false;
+	*/
 }
 
 bool SyncRequestQueue::sync_local_put(string &key){
+
 	int idx = key_map_[key];
 	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
 	boost::recursive_mutex::scoped_lock sl(key_lock);
+	return is_in_put_queue_[idx]==1;
+	/*
 	int &counter = access_counters_[idx];
 	int &is_put = is_in_put_queue_[idx];
 
@@ -159,22 +159,43 @@ bool SyncRequestQueue::sync_local_put(string &key){
 			is_put = 0;
 			counter = 0;
 			is_first_update_[key_index_] = 0;
-			VLOG(3) << "Process " << NetworkThread::Get()->id()
-					<< " SWITCHED TO GET QUEUE for key idx " << key_index_
-					<< " curent get queue size = "
-					<< get_queues_[key_index_].size();
 		}
 		if (counter == num_mem_servers_) {
 			is_put = 0;
 			counter = 0;
-			VLOG(3) << "Process " << NetworkThread::Get()->id()
-					<< " SWITCHED TO GET QUEUE for key idx " << key_index_
-					<< " curent get queue size = "
-					<< get_queues_[key_index_].size();
 		}
 		return true;
 	}
 	else return false;
+	*/
+}
+
+void SyncRequestQueue::event_complete(string &key){
+	int idx = key_map_[key];
+	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
+	boost::recursive_mutex::scoped_lock sl(key_lock);
+	int &counter = access_counters_[idx];
+	//int &is_put = is_in_put_queue_[idx];
+
+	if (is_in_put_queue_[idx]) {
+		access_counters_[idx]++;
+		if (is_first_update_[idx]) {
+			is_in_put_queue_[idx] = 0;
+			access_counters_[idx] = 0;
+			is_first_update_[idx] = 0;
+		}
+		if (access_counters_[idx] == num_mem_servers_) {
+			is_in_put_queue_[idx] = 0;
+			access_counters_[idx] = 0;
+		}
+	}
+	else {
+		access_counters_[idx]++;
+		if (access_counters_[idx] == num_mem_servers_) {
+			access_counters_[idx] = 0;
+			is_in_put_queue_[idx] = 1;
+		}
+	}
 }
 
 //  switching between put and get message queue.
@@ -190,7 +211,8 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
     {
       boost::recursive_mutex &key_lock = *(key_locks_[key_index_]);
       boost::recursive_mutex::scoped_lock sl(key_lock);
-      int &counter = access_counters_[key_index_];
+      //int &counter = access_counters_[key_index_];
+
       int &is_put = is_in_put_queue_[key_index_];
       //are we in put queue or in get queue?
       if (is_put) {
@@ -199,24 +221,18 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
           message->tag = q_msg->tag;
           message->data = q_msg->data;
           put_queues_[key_index_].pop_front();
-          counter++;
+
+      /*    counter++;
           if (is_first_update_[key_index_]) {
             is_put = 0;
             counter = 0;
             is_first_update_[key_index_] = 0;
-						VLOG(3) << "Process " << NetworkThread::Get()->id()
-								<< " SWITCHED TO GET QUEUE for key idx "
-								<< key_index_ << " curent get queue size = "
-								<< get_queues_[key_index_].size();
           }
           if (counter == num_mem_servers_) {
             is_put = 0;
             counter = 0;
-            VLOG(3) << "Process " << NetworkThread::Get()->id()
-            								<< " SWITCHED TO GET QUEUE for key idx "
-            								<< key_index_ << " curent get queue size = "
-            								<< get_queues_[key_index_].size();
           }
+       */
           delete q_msg;
           success = true;
         }
@@ -226,15 +242,13 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
           message->tag = q_msg->tag;
           message->data = q_msg->data;
           get_queues_[key_index_].pop_front();
+          /*
           counter++;
           if (counter == num_mem_servers_) {
             is_put = 1;
             counter = 0;
-            VLOG(3) << "Process " << NetworkThread::Get()->id()
-            								<< " SWITCHED TO PUT QUEUE for key idx "
-            								<< key_index_ << " curent put queue size = "
-            								<< put_queues_[key_index_].size();
           }
+          */
           delete q_msg;
           success = true;
         }

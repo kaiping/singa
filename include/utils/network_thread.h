@@ -88,6 +88,9 @@ class NetworkThread {
 
   void PrintStats();
 
+  // set the barrier
+  void barrier();
+
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;
@@ -136,7 +139,10 @@ class NetworkThread {
 
   void WaitForSync(int method, int count);
 
+
   NetworkThread();
+
+
 };
 }  // namespace lapis
 #endif  // INCLUDE_UTILS_NETWORK_THREAD_H_

@@ -33,6 +33,12 @@ struct ServerState {
   ServerState(int id): server_id(id), shard_id(-1) {}
 };
 
+typedef struct WorkerState_{
+  int worker_id; // rank of the  worker
+  int step; // current step of the worker
+  bool alive; // state: true if alive; false if dead
+} WorkerState;
+
 class Coordinator {
  public:
   Coordinator();

@@ -41,6 +41,7 @@ class InnerProductEdge : public Edge {
                         bool overwrite);
 
   virtual void SetupTopBlob(const bool alloc, Blob *blob);
+  virtual char PrefixAbbrev() {return 'i';}
  private:
   //! the dimension of the output feature i.e., the feature for the top layer
   int num_output_;

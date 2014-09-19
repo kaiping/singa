@@ -28,7 +28,7 @@ using google::protobuf::io::ZeroCopyOutputStream;
 using google::protobuf::io::CodedOutputStream;
 
 namespace lapis {
-const int kPerfBufLen=1024;
+const int kBufLen=1024;
 void ReadProtoFromTextFile(const char* filename,
     ::google::protobuf::Message* proto) {
   int fd = open(filename, O_RDONLY);
@@ -139,9 +139,17 @@ const std::string FormatPerformance(int src, const Performance &perf) {
     loss=perf.loss();
   if(perf.has_precision())
     precision=perf.precision();
-  char buf[kPerfBufLen];
+  char buf[kBufLen];
   sprintf(buf, "%10s, slot:%3d, step:%5d, loss:%6.4f, precision:%6.4f",
       prefix.c_str(), src, step, loss, precision);
+  std::string s(buf);
+  return s;
+}
+
+const std::string FormatTime(int step, double tcomp, double tcomm, double tsync){
+  char buf[kBufLen];
+  sprintf(buf, "%4d, comp:%4.2f, comm:%4.2f, syn:%4.2f", step, tcomp/step,
+      tcomm/step, tsync/step);
   std::string s(buf);
   return s;
 }

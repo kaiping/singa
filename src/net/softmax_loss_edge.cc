@@ -12,6 +12,7 @@ void SoftmaxLossEdge::Setup(const char flag) {
 }
 
 void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"forward softmax loss";
   float *data = src.dptr;
   float *prob = dest->dptr;
@@ -34,11 +35,13 @@ void SoftmaxLossEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   CHECK_EQ(data-src.dptr, src.length());
   CHECK_EQ(prob-dest->dptr, dest->length());
   VLOG(1)<<dest->Norm();
+  forward_time_+=timer.elapsed();
 }
 
 void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                                const Blob &dest_fea, Blob *dest_grad,
                                bool overwirte) {
+  timer.reset();
   VLOG(1)<<"backward softmax loss";
   float *dest = dest_grad->dptr;
   const float *label = src_grad.dptr;
@@ -52,7 +55,7 @@ void SoftmaxLossEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   for(int i=0;i<src_fea.length();i++)
     dest[i]/=num_;
   VLOG(1)<<dest_grad->Norm();
-
+  backward_time_+=timer.elapsed();
 }
 
 void SoftmaxLossEdge::SetupTopBlob(bool alloc, Blob* blob) {

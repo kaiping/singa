@@ -49,6 +49,7 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
 }
 
 void InnerProductEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"forward inner product "<<name_;
   const Tensor2 src2(src.dptr, Shape2(num_, num_input_));
   Tensor2 dest2(dest->dptr, Shape2(num_, num_output_));
@@ -62,10 +63,12 @@ void InnerProductEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   dest2+= mshadow::expr::repmat(bias, num_);
 
   VLOG(1)<<dest->Norm();
+  forward_time_+=timer.elapsed();
 }
 
 void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                                 const Blob &dest_fea, Blob *dest_grad, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"backward inner product "<<name_;
   Tensor2 dest_fea2(dest_fea.dptr, Shape2(num_,num_input_));
   Tensor2 src_grad2(src_grad.dptr, Shape2(num_,num_output_));
@@ -82,6 +85,7 @@ void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
     dest_grad2 = dot(src_grad2, weight.T());
     VLOG(1)<<dest_grad->Norm();
   }
+  backward_time_+=timer.elapsed();
 }
 
 void InnerProductEdge::SetupTopBlob(const bool alloc, Blob *blob) {

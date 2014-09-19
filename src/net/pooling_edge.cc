@@ -26,6 +26,7 @@ void PoolingEdge::SetupTopBlob(const bool alloc, Blob* blob) {
 }
 
 void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"forward pooling";
   float *src_data = src.dptr, *dest_data = dest->dptr;
   int offset_src = height_ * width_ ;
@@ -86,11 +87,12 @@ void PoolingEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   CHECK_EQ(src_data-src.dptr, src.length());
   CHECK_EQ(dest_data-dest->dptr, dest->length());
   VLOG(1)<<dest->Norm();
-
+  forward_time_+=timer.elapsed();
 }
 void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                            const Blob &dest_fea, Blob *dest_grad,
                            bool overwrite) {
+  timer.reset();
   VLOG(1)<<"backward pooling";
   const float *src_fea_data = src_fea.dptr, *dest_fea_data = dest_fea.dptr;
   const float *src_grad_data = src_grad.dptr;
@@ -159,7 +161,7 @@ void PoolingEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   CHECK_EQ(dest_fea_data-dest_fea.dptr, dest_fea.length());
   CHECK_EQ(dest_grad_data-dest_grad->dptr, dest_grad->length());
   VLOG(1)<<dest_grad->Norm();
-
+  backward_time_+=timer.elapsed();
 }
 }  // namespace lapis
 

@@ -18,6 +18,7 @@ class SoftmaxLossEdge : public Edge {
                         bool overwirte);
 
   void SetupTopBlob(bool alloc, Blob* blob);
+  virtual char PrefixAbbrev() {return 's';}
  private:
   //! batch size
   int num_;

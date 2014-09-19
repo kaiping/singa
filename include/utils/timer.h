@@ -4,6 +4,7 @@
 #ifndef INCLUDE_CORE_TIMER_H_
 #define INCLUDE_CORE_TIMER_H_
 
+
 namespace lapis {
 static uint64_t rdtsc() {
   uint32_t hi, lo;
@@ -20,10 +21,10 @@ inline double Now() {
 class Timer {
  public:
   Timer() {
-    Reset();
+    reset();
   }
 
-  void Reset() {
+  void reset() {
     start_time_ = Now();
     start_cycle_ = rdtsc();
   }

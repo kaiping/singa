@@ -56,10 +56,10 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
     tables.MergeFrom(config.psconfig().tables());
   VLOG(3)<<"merge param tables";
   std::map<int, int> stdtables=ToStdMap(tables);
-  mc_.CreateTables(stdtables);
+  model_controller_.CreateTables(stdtables);
   if(GlobalContext::Get()->AmITableServer()){
     table_server_=new TableServer();
-    table_server_->StartTableServer(mc_.GetTables());
+    table_server_->StartTableServer(model_controller_.GetTables());
     VLOG(3)<<"table server tarted";
   }
   VLOG(3)<<"finish init storage";
@@ -77,10 +77,19 @@ void Worker::Shutdown() {
   mpi_->Shutdown();
 }
 
+void Worker::Barrier(int step) {
+  ShortMsg msg;
+  msg.set_step(step);
+  mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_BARRIER, msg);
+  int src;
+  // blocked until the coordinator reply, i.e., recv barriers from all workers
+  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_INSTRUCTION, &msg, &src);
+}
+
 void Worker::Run(bool load_data, bool do_train) {
   const DistributedStorageConfig config=InitDistributedStorage();
   if(!do_train){
-      return;
+    return;
   }
   std::map<std::string, int> train_stores, val_stores, test_stores;
   if(config.dsconfig().has_train_stores())
@@ -93,12 +102,18 @@ void Worker::Run(bool load_data, bool do_train) {
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
   Net net(model.net());
   SGDTrainer trainer;
-  trainer.Init(model.trainer(), &mc_);
+  trainer.Init(model.trainer(), &model_controller_);
   const SGDProto sgd=model.trainer().sgd();
   bool reset_net_for_training=true;
   Performance perf;
+  std::vector<Param *> params = net.params();
+  double comp_time=0.0, comm_time=0.0, sync_time=0.0;
+  Timer clock;
   while (!trainer.HasFinished()) {
     perf.set_step(trainer.step());
+    clock.reset();
+    model_controller_.Get(params);
+    comm_time+=clock.elapsed();
     if(trainer.ValidateNow()){
       if(ShouldIDoValidation(trainer.step())){
         VLOG(1)<<"start validation";
@@ -110,10 +125,10 @@ void Worker::Run(bool load_data, bool do_train) {
         mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
         // do test
         /*
-        SetupNet(sgd.test_batchsize(), kAllocData, &net,
-            model.data().test_data(), test_stores);
-        trainer.Test(&net);
-        */
+           SetupNet(sgd.test_batchsize(), kAllocData, &net,
+           model.data().test_data(), test_stores);
+           trainer.Test(&net);
+           */
         reset_net_for_training=true;
       }
     }
@@ -122,11 +137,21 @@ void Worker::Run(bool load_data, bool do_train) {
       // Init parameters, because they Get parameters from distributed table
       VLOG(3)<<"worker reset net for training"<<AllocData(kAllocData|kAllocParam);
       SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
-                model.data().train_data(), train_stores);
+          model.data().train_data(), train_stores);
       reset_net_for_training=false;
     }
+    clock.reset();
+    if(GlobalContext::Get()->synchronous())
+      Barrier(trainer.step());
+    sync_time+=clock.elapsed();
+    clock.reset();
     trainer.TrainOneBatch(&net, &perf);
+    comp_time+=clock.elapsed();
+    clock.reset();
     mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
+    model_controller_.Update(params);
+    comm_time+=clock.elapsed();
+    LOG(INFO)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
   }
 }
 }  // namespace lapis

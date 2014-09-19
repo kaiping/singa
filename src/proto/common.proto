@@ -29,6 +29,7 @@ enum MessageTypes {
   MTYPE_INSTRUCTION = 19;
   MTYPE_PERFORMANCE = 20;
   MTYPE_STORAGE_CONFIG = 21;
+  MTYPE_BARRIER =22;
 };
 
 message StringIntPair{

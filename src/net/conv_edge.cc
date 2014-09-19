@@ -74,6 +74,7 @@ void ConvEdge::SetupTopBlob(bool alloc, Blob *blob) {
 }
 
 void ConvEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"forward conv "<<name_;
   // the convolutioned image is treated as a matrix of shape
   // num_kernels*(conv_height*conv_width)
@@ -94,10 +95,12 @@ void ConvEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   Tensor3 dest_fea3(dest->dptr, Shape3(num_, num_kernels_,N_));
   dest_fea3 += mshadow::expr::broadcast<1>(bias, dest_fea3.shape);
   VLOG(1)<<dest->Norm();
+  forward_time_+=timer.elapsed();
 }
 
 void ConvEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                         const Blob &dest_fea, Blob *dest_grad, bool overwrite) {
+  timer.reset();
   VLOG(1)<<"backward conv "<<name_;
   // col_fea reshaped image by img2col to a matrix,
   // treat one image as a matrix, i.e., the inner product result from
@@ -138,7 +141,7 @@ void ConvEdge::Backward(const Blob &src_fea, const Blob &src_grad,
     CHECK_EQ(dest_grad_dptr-dest_grad->dptr, dest_grad->length());
     VLOG(1)<<dest_grad->Norm();
   }
-
+  backward_time_+=timer.elapsed();
 }
 
 void im2col(const float *data_im, const int channels,

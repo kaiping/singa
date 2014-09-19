@@ -34,6 +34,7 @@ void LRNEdge::Setup(const char flag) {
   VLOG(2)<<"accum grad shape "<<accum_grad_.tostring();
 }
 void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
+  timer.reset();
   float alpha_over_size = alpha_ / local_size_;
   VLOG(1)<<"forward lrn"<<name_<<" "<<local_size_<<" "<<height_<<" "<<width_<<" "<<accum_fea_.record_length();
   Tensor2 pad_square(pad_tmp_.dptr, Shape2(channels_ + local_size_ - 1,height_ * width_));
@@ -70,11 +71,13 @@ void LRNEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
   Tensor3 dest3(dest->dptr, Shape3(num_, channels_, height_ * width_));
   dest3 = mshadow::expr::F<mshadow::op::power>(accum_fea3, -beta_) * src3;
   VLOG(1)<<dest->Norm();
+  forward_time_+=timer.elapsed();
 }
 
 void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                        const Blob &dest_fea, Blob *dest_grad,
                        bool overwrite) {
+  timer.reset();
   VLOG(1)<<"backward lrn "<<name_;
   int inverse_pre_pad = local_size_ - (local_size_ + 1) / 2;
   float factor = -2.*alpha_ * beta_ / local_size_;
@@ -106,6 +109,7 @@ void LRNEdge::Backward(const Blob &src_fea, const Blob &src_grad,
   }
 
   VLOG(1)<<dest_grad->Norm();
+  backward_time_+=timer.elapsed();
 }
 
 void LRNEdge::SetupTopBlob(const bool alloc, Blob* blob) {

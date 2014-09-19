@@ -12,7 +12,7 @@
 #include "net/layer.h"
 #include "net/param.h"
 #include "proto/model.pb.h"
-
+#include "utils/timer.h"
 namespace lapis {
 //! forward declaration for Layer.
 class Layer;
@@ -128,6 +128,13 @@ class Edge {
     return name_;
   }
 
+  double forward_time() {
+    return forward_time_;
+  }
+  double backward_time() {
+    return backward_time_;
+  }
+  virtual char PrefixAbbrev() {return 'e';}
  protected:
   std::string name_,type_;
   /**
@@ -138,6 +145,9 @@ class Edge {
    */
   Layer *top_, * bottom_;
   std::vector<Param *> params_;
+  // accumulated time for forward and backward operation
+  double forward_time_, backward_time_;
+  Timer timer;
 };
 
 

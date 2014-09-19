@@ -26,6 +26,7 @@ class LRNEdge : public Edge {
 
   virtual void SetupTopBlob(const bool alloc, Blob *blob);
 
+  virtual char PrefixAbbrev() {return 'l';}
  private:
   //! shape of the bottom layer feature
   int num_, channels_, height_, width_;

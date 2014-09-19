@@ -68,11 +68,12 @@ enum MessageTypes {
   MTYPE_VALIDATION = 18,
   MTYPE_INSTRUCTION = 19,
   MTYPE_PERFORMANCE = 20,
-  MTYPE_STORAGE_CONFIG = 21
+  MTYPE_STORAGE_CONFIG = 21,
+  MTYPE_BARRIER = 22
 };
 bool MessageTypes_IsValid(int value);
 const MessageTypes MessageTypes_MIN = MTYPE_PUT_REQUEST;
-const MessageTypes MessageTypes_MAX = MTYPE_STORAGE_CONFIG;
+const MessageTypes MessageTypes_MAX = MTYPE_BARRIER;
 const int MessageTypes_ARRAYSIZE = MessageTypes_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageTypes_descriptor();

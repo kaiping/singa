@@ -61,10 +61,10 @@ NetworkThread::NetworkThread() {
 
 //  initialize message queue
   auto gc = GlobalContext::Get();
-  if (gc->synchronous())
-    request_queue_ = new SyncRequestQueue(gc->num_table_servers());
+  if (!gc->synchronous())
+    request_queue_ = new SyncRequestQueue(size()-1);
   else
-    request_queue_ = new AsyncRequestQueue(gc->num_table_servers());
+    request_queue_ = new AsyncRequestQueue(size()-1);
 
   //  init stats
 	network_thread_stats_[FIRST_BYTE_RECEIVED] =

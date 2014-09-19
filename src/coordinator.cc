@@ -213,26 +213,42 @@ void Coordinator::RunStandalone(const ModelProto& model) {
 void Coordinator::RunOnCluster(const ModelProto& model) {
   VLOG(3)<<"start worker";
   mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
-  int num_alive_workers=GlobalContext::Get()->num_processes()-1;
-  std::map<int, bool> worker_state; // state: true if alive; false if dead
-  for(int i=0;i<num_alive_workers;i++)
-    worker_state[i]=true;
-  while(num_alive_workers>0) {
+  int nworkers=GlobalContext::Get()->num_processes()-1;
+  int nbarriers=0;
+  std::map<int, WorkerState> worker;
+  for(int i=0;i<nworkers;i++)
+    worker[i]={i, 0, true};
+  while(nworkers>0) {
     int src = 0;
     EmptyMessage end_msg;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {
-      if(worker_state.at(src)==false)
+      if(worker.at(src).alive==false)
         LOG(WARNING)<<"repeat worker end msg from "<<src;
       else {
-        worker_state.at(src)=true;
-        num_alive_workers--;
+        worker.at(src).alive=false;
+        nworkers--;
       }
     }
+
     ShortMsg msg;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_VALIDATION, &msg, &src)) {
       msg.set_answer(DoValidationOn(src));
       mpi_->Send(src, MTYPE_INSTRUCTION,msg);
     }
+
+    // process barraier for synchronization
+    if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_BARRIER, &msg, &src)) {
+      worker.at(src).step=msg.step();
+      nbarriers++;
+      VLOG(3)<<"nbarriers "<<nbarriers;
+      if(nbarriers==nworkers){
+        // all workers reach the barrier, send notice them to start next iter
+        msg.set_answer(true);
+        mpi_->Broadcast(MTYPE_INSTRUCTION, msg);
+        nbarriers=0;
+      }
+    }
+
     Performance perf;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
       LOG(INFO)<<FormatPerformance(src, perf);

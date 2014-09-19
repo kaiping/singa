@@ -17,11 +17,12 @@ const IntIntMap ToProtoMap(std::map<int, int> stdmap);
 const StringIntMap ToProtoMap(std::map<std::string,int> stdmap);
 const std::map<int, int> ToStdMap(const IntIntMap& gmap);
 const std::map<std::string, int> ToStdMap(const StringIntMap& gmap);
-const std::string FormatPerformance(int src, const Performance& perf);
 void ReadProtoFromTextFile(const char *filename, Message *proto);
 void WriteProtoToTextFile(const Message &proto, const char *filename);
 void ReadProtoFromBinaryFile(const char *filename, Message *proto);
 void WriteProtoToBinaryFile(const Message &proto, const char *filename);
+const std::string FormatPerformance(int src, const Performance& perf);
+const std::string FormatTime(int step, double tcomp, double tcomm, double tsync);
 }  // namespace lapis
 
 #endif  // INCLUDE_UTILS_PROTO_HELPER_H_

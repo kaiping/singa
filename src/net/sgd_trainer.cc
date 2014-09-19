@@ -23,17 +23,15 @@ void SGDTrainer::TrainOneBatch(Net* net, Performance* perf) {
   perf->set_prefix("train");
   std::vector<Layer *> layers = net->layers();
   std::vector<Edge *> edges = net->edges();
-  std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
-  VLOG(3)<<"before get params from distributed mem";
-  model_controller_->Get(params);
-  VLOG(3)<<"after get params from distributed mem";
   for (auto* layer : layers){
     if(layer->HasInput()){
       // TODO(wangwei) Error has not implemented mc.GetData.
       auto dlayer=dynamic_cast<DataLayer*>(layer);
       Blob& blob=dlayer->feature(nullptr);
       VLOG(1)<<"getting data..";
+      // TODO(wangwei) remove this outside to worker run();
+      // worker passes map: data source name->Blob
       model_controller_->GetData(dlayer->store_id(), &blob);
     }
     layer->Forward();
@@ -47,10 +45,23 @@ void SGDTrainer::TrainOneBatch(Net* net, Performance* perf) {
   for (auto layer : layers)
     layer->ComputeParamUpdates(this);
 
-  VLOG(3)<<"before update params from distributed mem";
-  model_controller_->Update(params);
-  VLOG(3)<<"after update params from distributed mem";
+  LOG(INFO)<<FormatTime(edges);
   IncStep();
+}
+
+std::string SGDTrainer::FormatTime(const std::vector<Edge *> &edges) {
+  char buf[1024];
+  sprintf(buf, "step:%4d ", step_);
+  int count=step_+1;
+  int strl=0;
+  for(auto edge:edges) {
+    char prefix=edge->PrefixAbbrev();
+    sprintf(buf+strl, "%cf:%4.2f, %cb:%4.2f, ", prefix, edge->forward_time()/count,
+        prefix,edge->backward_time()/count);
+    strl=strlen(buf);
+  }
+  std::string s(buf);
+  return s;
 }
 
 void SGDTrainer::Validate(Net *net, Performance* perf, int nbatches) {

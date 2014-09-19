@@ -24,7 +24,7 @@ class SGDTrainer : public Trainer {
   virtual void Test(Net *net, Performance* perf, int nbatches);
   virtual void ToProto(TrainerProto *proto);
   virtual bool HasFinished();
-
+  std::string FormatTime(const std::vector<Edge*> &edges);
   void BackPropagation(const int step, Net* net) ;
   float learning_rate() const {
     return learning_rate_;

@@ -51,6 +51,7 @@ class ConvEdge : public Edge {
    */
   virtual void SetupTopBlob(const bool alloc, Blob *blob);
 
+  virtual char PrefixAbbrev(){ return 'c'; }
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int channels_, height_, width_;

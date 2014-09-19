@@ -22,6 +22,7 @@ class PoolingEdge : public Edge {
                         bool overwrite);
 
   virtual void SetupTopBlob(const bool alloc, Blob *blob);
+  virtual char PrefixAbbrev() {return 'p';}
  private:
   //! pooling kernel shape
   int kernel_size_, stride_;

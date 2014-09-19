@@ -25,14 +25,14 @@ class Worker {
 
  private:
   bool ShouldIDoValidation(int worker_id);
-
   const DistributedStorageConfig InitDistributedStorage();
 
+  void Barrier(int step);
   void Shutdown();
  private:
   std::shared_ptr<NetworkThread> mpi_;
   TableServer *table_server_;
-  ModelController mc_;
+  ModelController model_controller_;
 };
 }  // namespace lapis
 

@@ -101,6 +101,7 @@ void ModelController::Update(const std::vector<Param*> &params)
           curoffset++;
         }
         int mykey = paramid*2048+j;
+	VLOG(2) << "update key ... " << mykey << " at process " << NetworkThread::Get()->id(); 
         param_table_->update(mykey,mymessage);
       }
     }
@@ -137,6 +138,7 @@ void ModelController::Put(const std::vector<Param*> &params)
         curoffset++;
       }
       int mykey = paramid*2048+j;
+	VLOG(2) << "put key ... " << mykey << " at process " << NetworkThread::Get()->id(); 
       param_table_->put(mykey,mymessage);
     }
   }
@@ -163,6 +165,7 @@ void ModelController::Get(const std::vector<Param*> &params)
     for(int j = 0; j < splitsize; j++)
     {
       int mykey = paramid*2048+j;
+	VLOG(2) << "get key ... " << mykey << " at process " << NetworkThread::Get()->id(); 
       FloatVector mymessage = param_table_->get(mykey);
       for(int k = 0; k < splitoffset; k++)
       {

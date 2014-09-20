@@ -52,15 +52,15 @@ TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 MEMORY_TEST_SRCS := src/test/test_core.cc
 MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
 
-run_load:
+run_load: lapis.bin
 	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
-		--table_buffer=3 --block_size=1
-run_run:
+		--table_buffer=20 --block_size=10
+run_run: lapis.bin
 	mpirun --prefix /users/dinhtta/local  -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=0 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=3 --block_size=1
+	--v=2 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

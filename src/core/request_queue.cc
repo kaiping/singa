@@ -1,11 +1,12 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 
-// modified from piccolo/rpc.cc
-
+/*
+ *  Implementation of the request queue
+ */
 #include <signal.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include "core/rpc.h"
+#include "core/request_queue.h"
 #include "proto/common.pb.h"
 #include "proto/worker.pb.h"
 #include "utils/global_context.h"
@@ -13,24 +14,6 @@
 
 DECLARE_double(sleep_time);
 namespace lapis {
-
-RPCRequest::~RPCRequest() {}
-
-// Send the given message type and data to this peer.
-RPCRequest::RPCRequest(int tgt, int method, const Message &ureq) {
-  failures = 0;
-  target = tgt;
-  rpc_type = method;
-  ureq.AppendToString(&payload);
-}
-
-TaggedMessage::~TaggedMessage() {}
-
-TaggedMessage::TaggedMessage(int t, const string &dat) {
-  tag = t;
-  data = dat;
-}
-
 
 void RequestQueue::ExtractKey(int tag, string data, string *key) {
   if (tag == MTYPE_GET_REQUEST) {
@@ -42,11 +25,12 @@ void RequestQueue::ExtractKey(int tag, string data, string *key) {
     message.ParseFromArray(data.data(), data.size());
     *key = message.key();
   }
+
 }
 
 //  put the TaggedMessage into the synchronous queues, one queue
 //  per key
-void SyncRequestQueue::Enqueue(int tag, string &data) {
+void ASyncRequestQueue::Enqueue(int tag, string &data) {
   // extract the key
   string key;
   ExtractKey(tag, data, &key);
@@ -72,7 +56,7 @@ void SyncRequestQueue::Enqueue(int tag, string &data) {
 
 //  get the next request, by going through the request queue,
 //  key by key
-void SyncRequestQueue::NextRequest(TaggedMessage *message) {
+void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
@@ -97,7 +81,7 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   }
 }
 
-void AsyncRequestQueue::Enqueue(int tag, string &data) {
+void SyncRequestQueue::Enqueue(int tag, string &data) {
   // extract the key
   string key;
   ExtractKey(tag, data, &key);
@@ -121,12 +105,14 @@ void AsyncRequestQueue::Enqueue(int tag, string &data) {
   //  now insert to the queue
   {
     boost::recursive_mutex::scoped_lock sl(key_lock);
+
     if (tag == MTYPE_PUT_REQUEST)
       CHECK_LT(put_queues_[idx].size(),
-               num_mem_servers_) << "failed at key index " << idx;
+               num_mem_servers_) << "failed at key index " << idx << " for key " << *reinterpret_cast<const int*>(key.c_str());
     else if (tag == MTYPE_GET_REQUEST)
       CHECK_LT(get_queues_[idx].size(),
-               num_mem_servers_) << "failed at key index " << idx;
+               num_mem_servers_) << "failed at key index " << idx;// << " for key " << key;
+
     if (tag == MTYPE_GET_REQUEST) {
       get_queues_[idx].push_back(new TaggedMessage(tag, data));
     } else {
@@ -136,10 +122,86 @@ void AsyncRequestQueue::Enqueue(int tag, string &data) {
   }
 }
 
+bool SyncRequestQueue::sync_local_get(string &key){
+	int idx = key_map_[key];
+	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
+	boost::recursive_mutex::scoped_lock sl(key_lock);
+	return is_in_put_queue_[idx]==0;
+	/*
+		int &counter = access_counters_[idx];
+		int &is_put = is_in_put_queue_[idx];
+		if (!is_put){
+			counter++;
+			if (counter==num_mem_servers_){
+				counter=0;
+				is_put = 1;
+			}
+			return true;
+		}
+		else
+			return false;
+	*/
+}
+
+bool SyncRequestQueue::sync_local_put(string &key){
+
+	int idx = key_map_[key];
+	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
+	boost::recursive_mutex::scoped_lock sl(key_lock);
+	return is_in_put_queue_[idx]==1;
+	/*
+	int &counter = access_counters_[idx];
+	int &is_put = is_in_put_queue_[idx];
+
+	if (is_put) {
+		counter++;
+		if (is_first_update_[key_index_]) {
+			is_put = 0;
+			counter = 0;
+			is_first_update_[key_index_] = 0;
+		}
+		if (counter == num_mem_servers_) {
+			is_put = 0;
+			counter = 0;
+		}
+		return true;
+	}
+	else return false;
+	*/
+}
+
+void SyncRequestQueue::event_complete(string &key){
+	int idx = key_map_[key];
+	boost::recursive_mutex &key_lock = *(key_locks_[idx]);
+	boost::recursive_mutex::scoped_lock sl(key_lock);
+	int &counter = access_counters_[idx];
+	//int &is_put = is_in_put_queue_[idx];
+
+	if (is_in_put_queue_[idx]) {
+		access_counters_[idx]++;
+		if (is_first_update_[idx]) {
+			is_in_put_queue_[idx] = 0;
+			access_counters_[idx] = 0;
+			is_first_update_[idx] = 0;
+		}
+		if (access_counters_[idx] == num_mem_servers_) {
+			is_in_put_queue_[idx] = 0;
+			access_counters_[idx] = 0;
+		}
+	}
+	else {
+		access_counters_[idx]++;
+		if (access_counters_[idx] == num_mem_servers_) {
+			access_counters_[idx] = 0;
+			is_in_put_queue_[idx] = 1;
+		}
+	}
+}
+
 //  switching between put and get message queue.
 //  guarantee: at queue X, return num_mem_servers_ messages before
 //  switching to queue Y
-void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
+void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
@@ -149,7 +211,8 @@ void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
     {
       boost::recursive_mutex &key_lock = *(key_locks_[key_index_]);
       boost::recursive_mutex::scoped_lock sl(key_lock);
-      int &counter = access_counters_[key_index_];
+      //int &counter = access_counters_[key_index_];
+
       int &is_put = is_in_put_queue_[key_index_];
       //are we in put queue or in get queue?
       if (is_put) {
@@ -158,7 +221,8 @@ void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
           message->tag = q_msg->tag;
           message->data = q_msg->data;
           put_queues_[key_index_].pop_front();
-          counter++;
+
+      /*    counter++;
           if (is_first_update_[key_index_]) {
             is_put = 0;
             counter = 0;
@@ -168,6 +232,7 @@ void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
             is_put = 0;
             counter = 0;
           }
+       */
           delete q_msg;
           success = true;
         }
@@ -177,11 +242,13 @@ void AsyncRequestQueue::NextRequest(TaggedMessage *message) {
           message->tag = q_msg->tag;
           message->data = q_msg->data;
           get_queues_[key_index_].pop_front();
+          /*
           counter++;
           if (counter == num_mem_servers_) {
             is_put = 1;
             counter = 0;
           }
+          */
           delete q_msg;
           success = true;
         }

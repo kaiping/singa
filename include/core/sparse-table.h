@@ -182,10 +182,12 @@ void SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
   K k;
   V v;
   string kt, vt;
+  int count=0;
   while (in->ReadEntry(&kt, &vt)) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
     update(k, v);
+    count++;
   }
 }
 

@@ -19,10 +19,10 @@ DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration fil
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(load_data, false, "Load data to distributed tables");
 DEFINE_bool(run, true,  "run training algorithm");
-// for debugging use
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
+// for debugging use
 int main(int argc, char **argv) {
   FLAGS_logtostderr=1;
   google::InitGoogleLogging(argv[0]);

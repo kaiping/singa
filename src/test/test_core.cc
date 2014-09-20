@@ -1,111 +1,189 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
-//  main class for testing distributed memory layer
-//
-//  the command to run this should be:
-//		mpirun -hostfile <host> -bycore -nooversubscribe
-//				-n <num_servers> test -sync_update
 
 
-#include "core/common.h"
-#include "core/table-registry.h"
+
 #include "core/global-table.h"
+#include "core/common.h"
+#include "core/disk-table.h"
 #include "core/table.h"
-#include "core/distributed-memory.h"
-#include "core/memory-server.h"
+#include "core/table_server.h"
+#include "utils/global_context.h"
+#include <gflags/gflags.h>
+#include "proto/model.pb.h"
+#include "worker.h"
+#include "coordinator.h"
+#include <cmath>
 
 using namespace lapis;
 
 DEFINE_bool(sync_update, false, "Synchronous put/update queue");
-DEFINE_int32(num_server, 1, "default number of server");
+DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
+DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
+DEFINE_int32(num_keys,10,"");
 
-<<<<<<< HEAD
-int main(int argc, char** argv){
+typedef map<int, GlobalTable*> Map;
+Map tables;
+shared_ptr<NetworkThread> network;
+shared_ptr<GlobalContext> context;
+std::vector<ServerState*> server_states;
+TableServer *table_server;
 
-void get(Table* table){
-	LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
-	    for (int i = 0; i < 10; i++)
-	    	LOG(INFO) << StringPrintf("(%d,%d)", i, table->get(i));
-	LOG(INFO) << StringPrintf("Process %d: Done get", NetworkThread::Get()->id());
+void create_mem_table(int id, int num_shards){
+
+	TableDescriptor *info = new TableDescriptor(id, num_shards);
+	  info->key_marshal = new Marshal<int>();
+	  info->value_marshal = new Marshal<int>();
+	  info->sharder = new Sharding::Mod;
+	  info->accum = new Accumulators<int>::Sum;
+	  info->partition_factory = new typename SparseTable<int, int>::Factory;
+	  auto table=new TypedGlobalTable<int, int>();
+	  table->Init(info);
+	  tables[id] = table;
 }
 
-void async_get(Table* table){
-	LOG(INFO) << StringPrintf("Process %d: async get...", NetworkThread::Get()->id());
-	int count = 0;
-	    for (int i = 0; i < 10; i++){
-	    	int v;
-	    	if (table->async_get(i, &v))
-	    		LOG(INFO) << StringPrintf("(%d,%d)", i, v);
-	    	else{
-	    		LOG(INFO) << StringPrintf("(%d,NULL)",i);
-	    		count++;
-	    	}
+void coordinator_assign_tables(int id){
+	for (int i = 0; i < context->num_processes()-1; ++i) {
+	    RegisterWorkerRequest req;
+	    int src = 0;
+	    network->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
+	    //  adding memory server.
+	    if (context->IsTableServer(i)) {
+	      server_states.push_back(new ServerState(i));
 	    }
-	    LOG(INFO) << "Collecting asynchronously ...";
-	    while (count>0){
-	    	int k,v;
-	    	if (table->async_get_collect(&k,&v)){
-	    		LOG(INFO) << StringPrintf("(%d,%d)", k, v);
-	    		count--;
-	    	}
-	    	else
-	    		sleep(1);
+	  }
+	  LOG(INFO) << " All servers registered and started up. Ready to go";
+	  //  set itself as the current worker for the table
+	  tables[id]->worker_id_ = network->id();
+
+	  // memory servers are specified in global context. Round-robin assignment
+
+	    VLOG(3)<<"num of shards"<<tables[id]->num_shards()<<" for table"<< id;
+
+	    int server_idx = 0;
+	    for (int shard = 0; shard < tables[id]->num_shards(); ++shard) {
+	      ServerState &server = *server_states[server_idx];
+	      LOG(INFO) << "Assigning table ("<<id<<","<<shard<<") to server "
+	                <<server_states[server_idx]->server_id;
+
+	      // TODO(Anh) may overwrite this field if #shards>#table_servers
+	      server.shard_id = shard;
+	      server.local_shards.insert(new TaskId(id, shard));
+	      server_idx = (server_idx + 1) % server_states.size();
 	    }
 
-
-	LOG(INFO) << StringPrintf("Process %d: Done async get", NetworkThread::Get()->id());
+	  VLOG(3)<<"table assignment";
+	  //  then send table assignment
+	  ShardAssignmentRequest req;
+	  for (size_t i = 0; i < server_states.size(); ++i) {
+	    ServerState &server = *server_states[i];
+	    for (auto * task: server.local_shards) {
+	      ShardAssignment *s  = req.add_assign();
+	      s->set_new_worker(server.server_id);
+	      s->set_table(task->table);
+	      s->set_shard(task->shard);
+	      //  update local tables
+	      CHECK(tables.find(task->table)!=tables.end());
+	      GlobalTable *t = tables.at(task->table);
+	      t->get_partition_info(task->shard)->owner = server.server_id;
+	      delete task;
+	    }
+	  }
+	  VLOG(3)<<"finish table assignment, req size "<<req.assign_size();
+	  network->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
+	  VLOG(3)<<"finish table server init";
 }
 
-void update(Table* table){
-	 LOG(INFO) << StringPrintf("Process %d: update...", NetworkThread::Get()->id());
-	    for (int i = 0; i < 10; i++)
-	      table->update(i, 3);
-	 LOG(INFO) << StringPrintf("Process %d: Done update", NetworkThread::Get()->id());
+void worker_table_init(){
+	table_server = new TableServer();
+	table_server->StartTableServer(tables);
+	VLOG(3) << "done starting table server";
 }
+
+
+void coordinator_load_data(){
+	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
+	for (int i = 1; i<=FLAGS_num_keys; i++){
+		table->put(i,i);
+	}
+	VLOG(3) << "Loaded data successfully ...";
+}
+
+void worker_test_data(){
+	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
+	for (int i=1; i<=FLAGS_num_keys; i++)
+		VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
+
+
+	for (int j = 0; j < 2; j++) {
+		for (int i = 1; i <= FLAGS_num_keys; i++)
+			table->update(i, i);
+
+		for (int i = 1; i <= FLAGS_num_keys; i++)
+			VLOG(3)
+					<< StringPrintf("Worker %d got (%d,%d)",
+							NetworkThread::Get()->id(), i, table->get(i));
+	}
+
+	for (int i = 1; i <= FLAGS_num_keys; i++)
+				VLOG(3)
+						<< StringPrintf("Worker %d got (%d,%d)",
+								NetworkThread::Get()->id(), i, table->get(i));
+}
+
+void shutdown(){
+	if (context->AmICoordinator()){
+		VLOG(3) << "Coordinator is shutting down ...";
+		EmptyMessage msg;
+		for (int i=0; i<context->num_processes()-1; i++)
+			network->Read(MPI::ANY_SOURCE, MTYPE_WORKER_END, &msg);
+		 EmptyMessage shutdown_msg;
+		  for (int i = 0; i < network->size() - 1; i++) {
+		    network->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
+		  }
+		  network->Flush();
+		  network->Shutdown();
+	}
+	else{
+		VLOG(3) << "Worker " << network->id() << " is shutting down ...";
+	  network->Flush();
+	  VLOG(3) << "Done flushing the network thread";
+	  network->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
+	  EmptyMessage msg;
+	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
+	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
+	  table_server->ShutdownTableServer();
+	  VLOG(3) << "Flushing node " << network->id();
+	  network->Shutdown();
+	}
+}
+
 
 int main(int argc, char **argv) {
-  Table *table = init(argc, argv);
-  if (IsDistributedMemoryManager()) {
-    put(table);
-    async_get(table);
-    update(table);
-    get(table);
-  } else { // worker, sleep while the network thread is processing put/get
-    Sleep(7);
-  }
-  finish();
-=======
-int main(int argc, char **argv) {
-  TypedGlobalTable<int, int> *test_table =
-    CreateTable(0, 2, new Sharding::Mod, new Accumulators<int>::Sum,
-                new Marshal<int>, new Marshal<int>);
-  InitServers(argc, argv);
-  if (IsDistributedMemoryManager()) {
-    DistributedMemoryManager::Get()->AssignTables();
-    LOG(INFO) << StringPrintf("Process %d: put...", NetworkThread::Get()->id());
-    //put, update then get
-    for (int i = 0; i < 10; i++)
-      test_table->put(i, i);
-    LOG(INFO) << StringPrintf("Process %d: Done put", NetworkThread::Get()->id());
-    LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
-    for (int i = 0; i < 10; i++)
-      std::cout << "(" << i << ", " << test_table->get(i) << ")" << std::endl;
-    LOG(INFO) << StringPrintf("Process %d: Done get", NetworkThread::Get()->id());
-    LOG(INFO) << StringPrintf("Process %d: update...", NetworkThread::Get()->id());
-    for (int i = 0; i < 10; i++)
-      test_table->update(i, 3);
-    LOG(INFO) << StringPrintf("Process %d: Done update",
-                              NetworkThread::Get()->id());
-    LOG(INFO) << StringPrintf("Process %d: get...", NetworkThread::Get()->id());
-    for (int i = 0; i < 10; i++)
-      std::cout << "(" << i << ", " << test_table->get(i) << ")" << std::endl;
-    LOG(INFO) << StringPrintf("Process %d: Done get ...",
-                              NetworkThread::Get()->id());
-  } else { // worker, sleep while the network thread is processing put/get
-    Sleep(7);
-  }
-  Finish();
-  //LOG(INFO) << "Done ...";
->>>>>>> feature-tensor
+	FLAGS_logtostderr = 1;
+	google::InitGoogleLogging(argv[0]);
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+	context = GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
+	network = NetworkThread::Get();
+	VLOG(3) << "*** testing memory servers, with "
+			<< context->num_table_servers() << " servers";
+	create_mem_table(0,context->num_table_servers());
+
+	if (context->AmICoordinator()){
+		coordinator_assign_tables(0);
+		coordinator_load_data();
+		network->barrier();
+	}
+	else{
+		worker_table_init();
+		network->barrier();
+		VLOG(3) << "passed the barrier";
+		//Sleep(1);
+		worker_test_data();
+	}
+
+	shutdown();
+	return 0;
 }
 
 

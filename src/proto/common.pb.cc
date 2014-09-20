@@ -378,7 +378,7 @@ void protobuf_AddDesc_common_2eproto() {
     "apis.Arg\">\n\nFileParams\022\030\n\004attr\030\001 \003(\0132\n.l"
     "apis.Arg\022\026\n\013compression\030\002 \001(\005:\0010\"G\n\nConf"
     "igData\022\023\n\013num_workers\030\001 \002(\005\022\021\n\tworker_id"
-    "\030\002 \002(\005\022\021\n\tmaster_id\030\003 \002(\005*\260\004\n\014MessageTyp"
+    "\030\002 \002(\005\022\021\n\tmaster_id\030\003 \002(\005*\375\004\n\014MessageTyp"
     "es\022\025\n\021MTYPE_PUT_REQUEST\020\001\022\025\n\021MTYPE_GET_R"
     "EQUEST\020\002\022\026\n\022MTYPE_GET_RESPONSE\020\003\022\031\n\025MTYP"
     "E_WORKER_SHUTDOWN\020\004\022\031\n\025MTYPE_REGISTER_WO"
@@ -392,8 +392,10 @@ void protobuf_AddDesc_common_2eproto() {
     "UEST_DONE\020\020\022\026\n\022MTYPE_MODEL_CONFIG\020\021\022\024\n\020M"
     "TYPE_VALIDATION\020\022\022\025\n\021MTYPE_INSTRUCTION\020\023"
     "\022\025\n\021MTYPE_PERFORMANCE\020\024\022\030\n\024MTYPE_STORAGE"
-    "_CONFIG\020\025\022\021\n\rMTYPE_BARRIER\020\026*0\n\021Compress"
-    "ionFormat\022\010\n\004NONE\020\000\022\007\n\003LZO\020\001\022\010\n\004ZLIB\020\002", 1478);
+    "_CONFIG\020\025\022\021\n\rMTYPE_BARRIER\020\026\022\031\n\025MTYPE_BA"
+    "RRIER_REQUEST\020\027\022\027\n\023MTYPE_BARRIER_REPLY\020\030"
+    "\022\027\n\023MTYPE_BARRIER_READY\020\031*0\n\021Compression"
+    "Format\022\010\n\004NONE\020\000\022\007\n\003LZO\020\001\022\010\n\004ZLIB\020\002", 1555);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "common.proto", &protobuf_RegisterTypes);
   StringIntPair::default_instance_ = new StringIntPair();
@@ -458,6 +460,9 @@ bool MessageTypes_IsValid(int value) {
     case 20:
     case 21:
     case 22:
+    case 23:
+    case 24:
+    case 25:
       return true;
     default:
       return false;

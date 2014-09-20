@@ -5,7 +5,7 @@
 #include "core/table.h"
 #include "core/local-table.h"
 #include "core/file.h"
-#include "core/rpc.h"
+#include "core/request_dispatcher.h"
 
 namespace lapis {
 
@@ -157,7 +157,15 @@ template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   int shard = this->get_shard(k);
   //  boost::recursive_mutex::scoped_lock sl(mutex());
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->sync_local_put(key);
+
   partition(shard)->put(k, v);
+
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->event_complete(key);
+
   //  always send
   if (!is_local_shard(shard)) {
     SendUpdates();
@@ -167,24 +175,36 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::update(const K &k, const V &v) {
   int shard = this->get_shard(k);
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
   //  boost::recursive_mutex::scoped_lock sl(mutex());
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->sync_local_put(key);
+
   partition(shard)->update(k, v);
+
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->event_complete(key);
+
   //  always send
-  if (!is_local_shard(shard))
+  if (!is_local_shard(shard)){
     SendUpdates();
+  }
 }
 
 // Return the value associated with 'k', possibly blocking for a remote fetch.
 template<class K, class V>
 V TypedGlobalTable<K, V>::get(const K &k) {
   int shard = this->get_shard(k);
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
+
   if (is_local_shard(shard)) {
-    return get_local(k);
+	RequestDispatcher::Get()->sync_local_get(key);
+    V val =  get_local(k);
+    RequestDispatcher::Get()->event_complete(key);
+    return val;
   }
   string v_str;
-  get_remote(shard,
-             marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k),
-             &v_str);
+  get_remote(shard,key, &v_str);
   return unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
 }
 

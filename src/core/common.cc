@@ -1,5 +1,4 @@
 #include "core/common.h"
-#include "core/rpc.h"
 #include "core/table_server.h"
 
 #include <stdio.h>

@@ -63,6 +63,10 @@ const DistributedStorageConfig Worker::InitDistributedStorage(){
     VLOG(3)<<"table server tarted";
   }
   VLOG(3)<<"finish init storage";
+
+  // Added by Anh, making sure all data is there
+  mpi_->barrier();
+
   return config;
 }
 void Worker::Shutdown() {
@@ -141,15 +145,19 @@ void Worker::Run(bool load_data, bool do_train) {
       reset_net_for_training=false;
     }
     clock.reset();
+    /*
     if(GlobalContext::Get()->synchronous())
       Barrier(trainer.step());
+      */
     sync_time+=clock.elapsed();
     clock.reset();
     trainer.TrainOneBatch(&net, &perf);
     comp_time+=clock.elapsed();
     clock.reset();
     mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
+    VLOG(0)<<"before update";
     model_controller_.Update(params);
+    VLOG(0)<<"after update";
     comm_time+=clock.elapsed();
     LOG(INFO)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
   }

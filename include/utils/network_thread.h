@@ -1,4 +1,3 @@
-// From Piccolo ??
 #ifndef INCLUDE_UTILS_NETWORK_THREAD_H_
 #define INCLUDE_UTILS_NETWORK_THREAD_H_
 #include <mpi.h>
@@ -8,12 +7,40 @@
 #include <unordered_set>
 #include <gflags/gflags.h>
 #include "proto/common.pb.h"
-#include "core/rpc.h"
 #include "core/common.h"
 
 
 using google::protobuf::Message;
 namespace lapis {
+
+struct TaggedMessage : private boost::noncopyable {
+  int tag;
+  string data;
+  TaggedMessage() {}
+  TaggedMessage(int t, const string &dat);
+  ~TaggedMessage();
+};
+
+
+// Represents an active RPC to a remote peer.
+struct RPCRequest : private boost::noncopyable {
+  int target;
+  int rpc_type;
+  int failures;
+
+  string payload;
+  MPI::Request mpi_req;
+  MPI::Status status;
+  double start_time;
+
+  RPCRequest(int target, int method, const Message &msg);
+  ~RPCRequest();
+
+  //  if message has been sent successfully
+  bool finished() {
+    return mpi_req.Test(status);
+  }
+};
 
 void Sleep(double t) ;
 // sleep duration between reading messages off the network.
@@ -51,18 +78,8 @@ class NetworkThread {
   // such as shard assignment, etc.
   typedef boost::function<void ()> Callback;
 
-  //  callback to handle put/get requests
-  typedef boost::function<void (const Message *)> Handle;
-
-  void RegisterCallback(int message_type, Callback cb) {
+   void RegisterCallback(int message_type, Callback cb) {
     callbacks_[message_type] = cb;
-  }
-  void RegisterRequestHandler(int message_type, Handle cb) {
-    handles_[message_type] = cb;
-  }
-
-  void RegisterDiskHandler(Handle cb){
-	  disk_write_handle_ = cb;
   }
 
   bool active() const;
@@ -70,6 +87,9 @@ class NetworkThread {
   bool is_empty_queue(int src, int type);
 
   void PrintStats();
+
+  // set the barrier
+  void barrier();
 
  private:
   static const int kMaxHosts = 512;
@@ -84,7 +104,6 @@ class NetworkThread {
   volatile bool running_;
 
   Callback callbacks_[kMaxMethods];
-  Handle handles_[kMaxMethods], disk_write_handle_;
 
   //queues of sent messages
   deque<RPCRequest *> pending_sends_;
@@ -94,16 +113,12 @@ class NetworkThread {
   MPI::Comm *world_;
 
   //send lock
-  mutable boost::recursive_mutex send_lock, disk_lock_;
+  mutable boost::recursive_mutex send_lock;
   //received locks, one for each kMaxHosts
   boost::recursive_mutex response_queue_locks_[kMaxMethods];
 
   mutable boost::thread *sender_and_reciever_thread_;
-  mutable boost::thread *processing_thread_, *disk_thread_;
 
-
-  //request (put/get) queue
-  RequestQueue *request_queue_;
 
   //response queue (read)
   Queue response_queue_[kMaxMethods][kMaxHosts];
@@ -122,19 +137,12 @@ class NetworkThread {
   //  loop that receives and sends messages
   void NetworkLoop();
 
-  //  loop that processes received messages
-  void ProcessLoop();
-
-  //  for writing to disk. Put both DATA_PUT and DATA_PUT_FINISH to this queue,
-  //  the latter being the last message to process
-  void WriteToDiskLoop();
-
-  //  helper for ProcessLoop();
-  void ProcessRequest(const TaggedMessage &t_msg);
-
   void WaitForSync(int method, int count);
 
+
   NetworkThread();
+
+
 };
 }  // namespace lapis
 #endif  // INCLUDE_UTILS_NETWORK_THREAD_H_

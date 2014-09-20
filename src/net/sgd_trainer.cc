@@ -69,9 +69,6 @@ void SGDTrainer::Validate(Net *net, Performance* perf, int nbatches) {
   std::vector<Layer *> layers = net->layers();
   std::vector<Param *> params = net->params();
   // get newest parameters for layers and edges
-  VLOG(3)<<"before get params from distributed mem";
-  model_controller_->Get(params);
-  VLOG(3)<<"after get params from distributed mem";
   float loss=0.0f, precision=0.0f;
   for(int k=0;k<nbatches;k++){
     for (auto* layer : layers){

@@ -8,7 +8,6 @@
 #define INCLUDE_CORE_MEMORY_SERVER_H_
 
 #include "core/common.h"
-#include "core/rpc.h"
 #include "core/table.h"
 #include "core/global-table.h"
 #include "core/local-table.h"

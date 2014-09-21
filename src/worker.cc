@@ -104,15 +104,17 @@ void Worker::Run(bool load_data, bool do_train) {
     test_stores=ToStdMap(config.dsconfig().test_stores());
   ModelProto model;
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
+
+  SGDTrainer trainer;
+  trainer.Init(model.trainer(), &model_controller_);
+  const SGDProto sgd=model.trainer().sgd();
+
   Net net(model.net());
   SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
           model.data().train_data(), train_stores);
   bool reset_net_for_training=false;
   std::vector<Param *> params = net.params();
 
-  SGDTrainer trainer;
-  trainer.Init(model.trainer(), &model_controller_);
-  const SGDProto sgd=model.trainer().sgd();
   Performance perf;
   double comp_time=0.0, comm_time=0.0, sync_time=0.0;
   Timer clock;
@@ -160,7 +162,7 @@ void Worker::Run(bool load_data, bool do_train) {
     mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
     model_controller_.Update(params);
     comm_time+=clock.elapsed();
-    LOG(INFO)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
+    VLOG(1)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
   }
 }
 }  // namespace lapis

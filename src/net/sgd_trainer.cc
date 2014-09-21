@@ -45,7 +45,7 @@ void SGDTrainer::TrainOneBatch(Net* net, Performance* perf) {
   for (auto layer : layers)
     layer->ComputeParamUpdates(this);
 
-  LOG(INFO)<<FormatTime(edges);
+  VLOG(1)<<FormatTime(edges);
   IncStep();
 }
 

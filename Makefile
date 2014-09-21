@@ -60,7 +60,7 @@ run_load: lapis.bin
 run_run: lapis.bin
 	mpirun --prefix /users/dinhtta/local  -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=2 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
+	--v=0 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

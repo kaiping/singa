@@ -52,10 +52,8 @@ void Blob::Resize(int num, int channels, int height,
     width_ = width;
 
     record_length_ = channels_ * height_ * width_;
-    if(length_!=num_*record_length_||alloc) {
-      count_-=length_;
-      length_ = num_ * record_length_;
-      count_+=length_;
+    length_ = num_ * record_length_;
+    if(alloc) {
       if (dptr != nullptr) {
         LOG(INFO)<<"DELETE BLOB DPTR!!";
         delete dptr;

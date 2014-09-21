@@ -105,25 +105,31 @@ void Worker::Run(bool load_data, bool do_train) {
   ModelProto model;
   mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
   Net net(model.net());
+  SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
+          model.data().train_data(), train_stores);
+  bool reset_net_for_training=false;
+  std::vector<Param *> params = net.params();
+
   SGDTrainer trainer;
   trainer.Init(model.trainer(), &model_controller_);
   const SGDProto sgd=model.trainer().sgd();
-  bool reset_net_for_training=true;
   Performance perf;
-  std::vector<Param *> params = net.params();
   double comp_time=0.0, comm_time=0.0, sync_time=0.0;
   Timer clock;
   while (!trainer.HasFinished()) {
     perf.set_step(trainer.step());
     clock.reset();
-    model_controller_.Get(params);
     comm_time+=clock.elapsed();
+    model_controller_.Get(params);
     if(trainer.ValidateNow()){
       if(ShouldIDoValidation(trainer.step())){
         VLOG(1)<<"start validation";
         // do validation
-        SetupNet(sgd.validation_batchsize(), kAllocData, &net,
-            model.data().validation_data(), val_stores);
+        if(sgd.validation_batchsize()!=sgd.train_batchsize()){
+          SetupNet(sgd.validation_batchsize(), kAllocData, &net,
+              model.data().validation_data(), val_stores);
+          reset_net_for_training=true;
+        }
         int nvalimgs=model.data().validation_data(0).shape().num();
         trainer.Validate(&net, &perf, nvalimgs/sgd.validation_batchsize());
         mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
@@ -133,7 +139,6 @@ void Worker::Run(bool load_data, bool do_train) {
            model.data().test_data(), test_stores);
            trainer.Test(&net);
            */
-        reset_net_for_training=true;
       }
     }
     if(reset_net_for_training) {
@@ -145,19 +150,15 @@ void Worker::Run(bool load_data, bool do_train) {
       reset_net_for_training=false;
     }
     clock.reset();
-    /*
     if(GlobalContext::Get()->synchronous())
       Barrier(trainer.step());
-      */
     sync_time+=clock.elapsed();
     clock.reset();
     trainer.TrainOneBatch(&net, &perf);
     comp_time+=clock.elapsed();
     clock.reset();
     mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
-    VLOG(0)<<"before update";
     model_controller_.Update(params);
-    VLOG(0)<<"after update";
     comm_time+=clock.elapsed();
     LOG(INFO)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
   }

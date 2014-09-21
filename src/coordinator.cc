@@ -194,7 +194,7 @@ void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     Net net(model.net());
     // setup the net, init parameters
     auto shapes=DataSource::ShapesOf(model.data().train_data());
-    net.Setup(1, kAllocParam|kInitParam, shapes);
+    net.Setup(kAllocParam|kInitParam,1,shapes);
     mc_.Put(net.params());
   }
   VLOG(3)<<"finish init dist storage";

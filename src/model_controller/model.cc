@@ -122,6 +122,7 @@ void ModelController::Put(const std::vector<Param*> &params)
     {
       splitoffset = 1000000;
       splitsize = largestoffset/splitoffset + 1;
+      VLOG(1)<<"large param "<<splitsize;
     }
     if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
     int curoffset = 0;
@@ -156,8 +157,9 @@ void ModelController::Get(const std::vector<Param*> &params)
     {
       splitoffset = 1000000;
       splitsize = largestoffset/splitoffset + 1;
+      LOG(WARNING)<<"large param id: "<<paramid<<" splits "<<splitsize;
     }
-    if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+    if (splitsize > 2048) LOG(ERROR)<<"Error:split size too much!!!";
     int curoffset = 0;
     float * content_addr = param->mutable_content().dptr;
     for(int j = 0; j < splitsize; j++)

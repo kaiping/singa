@@ -33,9 +33,9 @@ void DataLayer::SetInputStore(int store_id) {
 }
 
 void DataLayer::Setup(const char flag) {
-  VLOG(2)<<"DataLayer: "<<name_<<" cropsize "<<cropsize_;
+  VLOG(3)<<"DataLayer: "<<name_<<" cropsize "<<cropsize_;
   if(cropsize_){
-    VLOG(3)<<"crop size "<<cropsize_<<" alloc data "<<AllocData(flag);
+    VLOG(2)<<"crop size "<<cropsize_<<" alloc data "<<AllocData(flag);
     data_.Resize(batchsize_, channels_,cropsize_, cropsize_, AllocData(flag));
     tmp_.Resize(batchsize_,channels_,width_, height_, AllocData(flag));
     VLOG(2)<<" shape before crop "<<tmp_.tostring()
@@ -49,7 +49,7 @@ void DataLayer::Setup(const char flag) {
 
 
 void DataLayer::Forward() {
-  VLOG(1)<<"forward data layer "<<name_;
+  VLOG(3)<<"forward data layer "<<name_;
   if (cropsize_) {
     float* data_dptr=data_.dptr;
     float* tmp_dptr=tmp_.dptr;

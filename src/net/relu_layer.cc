@@ -22,7 +22,7 @@ void ReLULayer::Setup(const char flag){
 void ReLULayer::Forward() {
   Edge *edge = in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge), &act_, true);
-  VLOG(1)<<"forward relu";
+  VLOG(3)<<"forward relu";
   float *act = act_.dptr;
   if(drop_prob_>0) {
     float *drop_fea = drop_fea_.dptr;
@@ -41,7 +41,7 @@ void ReLULayer::Backward() {
   Layer *layer = edge->OtherSide(this);
   edge->Backward(layer->feature(edge), layer->gradient(edge), fea_, &fea_grad_,
                  true);
-  VLOG(1)<<"backward relu";
+  VLOG(3)<<"backward relu";
   float *act_grad=act_grad_.dptr;
   // don't do dropout for test/validation
   if(drop_prob_>0){
@@ -56,6 +56,5 @@ void ReLULayer::Backward() {
     for (int i = 0; i < act_grad_.length(); i++)
       act_grad[i] = fea_grad[i] * (fea[i] > 0);
   }
-  VLOG(1)<<act_grad_.Norm();
 }
 }  // namespace lapis

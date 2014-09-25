@@ -121,8 +121,8 @@ void Worker::Run(bool load_data, bool do_train) {
   while (!trainer.HasFinished()) {
     perf.set_step(trainer.step());
     clock.reset();
-    comm_time+=clock.elapsed();
     model_controller_.Get(params);
+    comm_time+=clock.elapsed();
     if(trainer.ValidateNow()){
       if(ShouldIDoValidation(trainer.step())){
         VLOG(1)<<"start validation";
@@ -152,17 +152,13 @@ void Worker::Run(bool load_data, bool do_train) {
       reset_net_for_training=false;
     }
     clock.reset();
-    if(GlobalContext::Get()->synchronous())
-      Barrier(trainer.step());
-    sync_time+=clock.elapsed();
-    clock.reset();
     trainer.TrainOneBatch(&net, &perf);
     comp_time+=clock.elapsed();
     clock.reset();
-    mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
+    //mpi_->Send(GlobalContext::kCoordinatorRank, MTYPE_PERFORMANCE, perf);
     model_controller_.Update(params);
     comm_time+=clock.elapsed();
-    VLOG(1)<<FormatTime(trainer.step(),comp_time, comm_time, sync_time);
+    VLOG(0)<<FormatTime(trainer.step(),comp_time, comm_time);
   }
 }
 }  // namespace lapis

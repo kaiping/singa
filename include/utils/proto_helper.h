@@ -22,7 +22,7 @@ void WriteProtoToTextFile(const Message &proto, const char *filename);
 void ReadProtoFromBinaryFile(const char *filename, Message *proto);
 void WriteProtoToBinaryFile(const Message &proto, const char *filename);
 const std::string FormatPerformance(int src, const Performance& perf);
-const std::string FormatTime(int step, double tcomp, double tcomm, double tsync);
+const std::string FormatTime(int step, double tcomp, double tcomm);
 }  // namespace lapis
 
 #endif  // INCLUDE_UTILS_PROTO_HELPER_H_

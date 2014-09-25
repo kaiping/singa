@@ -35,11 +35,11 @@ void Layer::Setup(const char flag){
   }
 }
 void Layer::Forward() {
-  VLOG(1)<<"forward layer "<<name_;
+  VLOG(3)<<"forward layer "<<name_;
 }
 
 void Layer::Backward() {
-  VLOG(1)<<"backward layer "<<name_;
+  VLOG(3)<<"backward layer "<<name_;
 }
 
 void Layer::Dropout(float drop_prob, const Blob &src, Blob *dest, Blob *mask) {
@@ -69,7 +69,7 @@ void Layer::ComputeDropoutGradient(float drop_prob, const Blob &src ,
 }
 // Currently layers do not have parameters
 void Layer::ComputeParamUpdates(const Trainer *trainer) {
-  VLOG(1) << "Layer " << name_ << " has no parameters to update\n";
+  VLOG(2) << "Layer " << name_ << " has no parameters to update\n";
 }
 
 /*****************************************************************************

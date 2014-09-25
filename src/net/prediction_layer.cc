@@ -16,7 +16,7 @@ void SoftmaxPredictionLayer::Setup(const char flag) {
 void SoftmaxPredictionLayer::Forward() {
   Edge* edge=in_edges_[0];
   edge->Forward(edge->OtherSide(this)->feature(edge),&prediction_, true);
-  VLOG(1)<<"softmax prediction forward";
+  VLOG(3)<<"softmax prediction forward";
 }
 
 Performance SoftmaxPredictionLayer::CalcPerf(bool loss, bool accuracy) {

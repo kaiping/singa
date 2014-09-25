@@ -49,27 +49,25 @@ void InnerProductEdge::ToProto(EdgeProto *edge_proto) {
 }
 
 void InnerProductEdge::Forward(const Blob &src, Blob *dest, bool overwrite) {
-  timer.reset();
-  VLOG(1)<<"forward inner product "<<name_;
+  //timer.reset();
+  VLOG(3)<<"forward inner product "<<name_;
   const Tensor2 src2(src.dptr, Shape2(num_, num_input_));
   Tensor2 dest2(dest->dptr, Shape2(num_, num_output_));
   Tensor2 weight(weight_.content().dptr, Shape2(num_input_, num_output_));
   Tensor1 bias(bias_.content().dptr, Shape1(num_output_));
   // Note, can not join the dot and repmat operations! the resulted expr is not
   // defined in mshadow
-  VLOG(1)<<">10000 "<<src.Gt(10000.0);
-  VLOG(1)<<"<-10000 "<<src.Lt(-10000.0);
   dest2 = dot(src2, weight);
   dest2+= mshadow::expr::repmat(bias, num_);
 
-  VLOG(1)<<dest->Norm();
-  forward_time_+=timer.elapsed();
+  //VLOG(2)<<dest->Norm();
+  //forward_time_+=timer.elapsed();
 }
 
 void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
                                 const Blob &dest_fea, Blob *dest_grad, bool overwrite) {
   timer.reset();
-  VLOG(1)<<"backward inner product "<<name_;
+  VLOG(3)<<"backward inner product "<<name_;
   Tensor2 dest_fea2(dest_fea.dptr, Shape2(num_,num_input_));
   Tensor2 src_grad2(src_grad.dptr, Shape2(num_,num_output_));
   Tensor2 weight_grad(weight_.mutable_gradient().dptr, Shape2(num_input_,num_output_));
@@ -83,7 +81,7 @@ void InnerProductEdge::Backward(const Blob &src_fea, const Blob &src_grad,
     const Tensor2 weight (weight_.content().dptr, Shape2(num_input_, num_output_));;
     Tensor2 dest_grad2(dest_grad->dptr, Shape2(num_,num_input_));
     dest_grad2 = dot(src_grad2, weight.T());
-    VLOG(1)<<dest_grad->Norm();
+    //VLOG(2)<<dest_grad->Norm();
   }
   backward_time_+=timer.elapsed();
 }

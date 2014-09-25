@@ -146,10 +146,9 @@ const std::string FormatPerformance(int src, const Performance &perf) {
   return s;
 }
 
-const std::string FormatTime(int step, double tcomp, double tcomm, double tsync){
+const std::string FormatTime(int step, double tcomp, double tcomm){
   char buf[kBufLen];
-  sprintf(buf, "%4d, comp:%4.2f, comm:%4.2f, syn:%4.2f", step, tcomp/step,
-      tcomm/step, tsync/step);
+  sprintf(buf, "%4d, comp:%4.2f, comm:%4.2f", step, tcomp/step, tcomm/step);
   std::string s(buf);
   return s;
 }

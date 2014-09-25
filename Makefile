@@ -9,7 +9,7 @@ CXX := g++
 # Header folder for system and external libs. You may need to change it.
 INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
 
-CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -O2 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
 	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
@@ -53,14 +53,14 @@ MEMORY_TEST_SRCS := src/test/test_core.cc
 MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun --prefix /users/dinhtta/local -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun --prefix /users/dinhtta/local -np 9 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=0 --data_dir=/data/tmp \
 		--table_buffer=20 --block_size=10
 run_run: lapis.bin
-	mpirun --prefix /users/dinhtta/local  -np 5 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
+	mpirun --prefix /users/dinhtta/local  -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=0 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
+	--v=1 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

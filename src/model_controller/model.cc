@@ -86,7 +86,7 @@ void ModelController::Update(const std::vector<Param*> &params)
         splitoffset = 1000000;
         splitsize = largestoffset/splitoffset + 1;
       }
-      if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+      if (splitsize > 2048) VLOG(3)<<"Error:split size too much!!!";
       int curoffset = 0;
 
       const float * grad_addr = param->history().dptr;
@@ -123,9 +123,8 @@ void ModelController::Put(const std::vector<Param*> &params)
     {
       splitoffset = 1000000;
       splitsize = largestoffset/splitoffset + 1;
-      VLOG(1)<<"large param "<<splitsize;
     }
-    if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+    if (splitsize > 2048) VLOG(3)<<"Error:split size too much!!!";
     int curoffset = 0;
     const float * content_addr = param->content().dptr;
     for(int j = 0; j < splitsize; j++)
@@ -159,7 +158,6 @@ void ModelController::Get(const std::vector<Param*> &params)
     {
       splitoffset = 1000000;
       splitsize = largestoffset/splitoffset + 1;
-      LOG(WARNING)<<"large param id: "<<paramid<<" splits "<<splitsize;
     }
     if (splitsize > 2048) LOG(ERROR)<<"Error:split size too much!!!";
     int curoffset = 0;
@@ -182,15 +180,12 @@ void ModelController::Get(const std::vector<Param*> &params)
 }
 
 const std::map<int,GlobalTable*> ModelController::GetTables() {
-  VLOG(3)<<"get tables";
   std::map<int,GlobalTable*> tables;
-  VLOG(2)<<"disk table size "<<disk_tables_.size();
   for(auto& entry: disk_tables_){
     tables[entry.second->id()]=entry.second;
   }
   if(param_table_!=nullptr)
     tables[param_table_->id()]=dynamic_cast<GlobalTable*>(param_table_);
-  VLOG(3)<<"finish get tables";
   return tables;
 }
 

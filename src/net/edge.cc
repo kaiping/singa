@@ -37,11 +37,11 @@ void Edge::ToProto(EdgeProto *proto) {
 }
 
 void Edge::Setup(const char flag) {
-  VLOG(1) << name_<<" does not implemente Setup func";
+  VLOG(3) << name_<<" does not implemente Setup func";
 }
 
 void Edge::SetupTopBlob(const bool alloc, Blob* blob) {
-  VLOG(1)<<"Edge "<<name_<<" does not implement SetupTopBlob";
+  VLOG(3)<<"Edge "<<name_<<" does not implement SetupTopBlob";
 }
 
 void Edge::ComputeParamUpdates(const Trainer *trainer) {
@@ -58,8 +58,8 @@ void Edge::ComputeParamUpdates(const Trainer *trainer) {
     float w= wdecay* param->weight_decay();
     float lr = lrate*param->learning_rate();
     history = history * m - (gradient + w* data) * lr;
-    VLOG(1)<<m<<" "<<w<<" "<<lr;
-    VLOG(1)<<param->name()<<", gradient:"<<param->gradient().Norm()<<" data:"<<param->content().Norm()<<" history:"<<param->history().Norm();
+    VLOG(2)<<m<<" "<<w<<" "<<lr;
+    VLOG(2)<<param->name()<<", gradient:"<<param->gradient().Norm()<<" data:"<<param->content().Norm()<<" history:"<<param->history().Norm();
   }
 }
 

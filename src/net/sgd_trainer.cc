@@ -23,29 +23,38 @@ void SGDTrainer::TrainOneBatch(Net* net, Performance* perf) {
   perf->set_prefix("train");
   std::vector<Layer *> layers = net->layers();
   std::vector<Edge *> edges = net->edges();
-  // get newest parameters for layers and edges
+
+  Timer timer;
+  char buf[1024];
+  int len=0;
   for (auto* layer : layers){
+    timer.reset();
     if(layer->HasInput()){
       // TODO(wangwei) Error has not implemented mc.GetData.
       auto dlayer=dynamic_cast<DataLayer*>(layer);
       Blob& blob=dlayer->feature(nullptr);
-      VLOG(1)<<"getting data..";
       // TODO(wangwei) remove this outside to worker run();
       // worker passes map: data source name->Blob
       model_controller_->GetData(dlayer->store_id(), &blob);
     }
     layer->Forward();
+    sprintf(buf+len, "%4.2f ", timer.elapsed());
+    len=strlen(buf);
   }
   perf->MergeFrom(dynamic_cast<SoftmaxPredictionLayer*>(layers.back())->CalcPerf(true, false));
-  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+    timer.reset();
     (*layer)->Backward();
+    sprintf(buf+len, "%4.2f ", timer.elapsed());
+    len=strlen(buf);
+  }
   UpdateHyperParams(step_);
   for (auto edge : edges)
     edge->ComputeParamUpdates(this);
   for (auto layer : layers)
     layer->ComputeParamUpdates(this);
-
-  VLOG(1)<<FormatTime(edges);
+  std::string timestr(buf);
+  VLOG(1)<<timestr;
   IncStep();
 }
 
@@ -151,6 +160,7 @@ void SGDTrainer::UpdateHyperParams(int step) {
       sgd_proto_.learning_rate_change_steps(),
       sgd_proto_.base_learning_rate(),
       sgd_proto_.learning_rate_x());
+  learning_rate_/=GlobalContext::Get()->num_processes()-1;
   momentum_ = UpdateHyperParam(step, sgd_proto_.momentum_change(),
       sgd_proto_.momentum_change_steps(),
       sgd_proto_.base_momentum(),

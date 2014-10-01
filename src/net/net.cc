@@ -87,25 +87,17 @@ Net::Net(const NetProto &net_proto) {
   topology_sort(&layers_);
   LOG(INFO)<<"Neural Net constructed";
 }
-void Net::Setup(const char flag,const int batchsize,
-                const std::map<std::string, Shape> &shapes){
-  VLOG(3)<<"Setup net allocate data: "<<AllocData(flag);
+void Net::InitDAryShape(const int batchsize, const vecot<vector<int>>& shapes){
   for (auto *layer : layers()){
     if (layer->HasInput()){
       VLOG(3)<<layer->name();
       DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      std::string source=dlayer->data_source();
-      CHECK(shapes.find(source)!=shapes.end());
-      dlayer->SetInputShape(batchsize, shapes.at(source));
+      dlayer->InitDAryShape(shapes);
     }
   }
   for(auto *layer : layers()) {
     VLOG(3)<<layer->name();
-    layer->Setup(flag);
-    for (auto *edge : layer->out_edges()){
-      VLOG(3)<<edge->name();
-      edge->Setup(flag);
-    }
+    layer->InitDAryShape();
   }
 }
 

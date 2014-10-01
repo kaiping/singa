@@ -113,7 +113,65 @@ class DataSource {
   //! data source type
   // DataSourceProto_DataType type_;
 };
+/**
+ * DataSource whose local source is rgb images under a directory.
+ */
+class ImageNetSource : public DataSource {
+ public:
+  virtual void Init(const DataSourceProto &proto);
+  virtual void NextRecord(ImageNetRecord* record);
 
+  /**
+   * Load rgb images.
+   * Do nothing except setting the suffix paths for images, if load to single
+   * machine memory; Otherwise, read images and put them into distributed disk.
+   * @param keys pointer to a vector of suffix paths for image files, can be
+   * nullptr
+   * @return pointer to a vector of suffix paths for image files found by this
+   * function
+   */
+  virtual int channels() {
+    return 3;
+  }
+  virtual int height() {
+    return height_;
+  }
+  virtual int width() {
+    return width_;
+  }
+  virtual bool has_channels() {
+    return true;
+  }
+  virtual bool has_height() {
+    return true;
+  }
+  virtual bool has_width() {
+    return true;
+  }
+
+  //! the identifier, i.e., "RGBSource"
+  static const std::string type;
+
+ private:
+  /**
+   * common prefix of all images, join(directory_,path_suffix) is full image
+   * path.
+   */
+  std::string image_folder_;
+  /**
+   * expected height of the image, assume all images are of the same shape; if
+   * the real shape is not the same as the expected, then resize it. The
+   */
+  int height_;
+  //! width of the image, assume all images are of the same shape
+  int width_;
+  // should be fixed to 3, because this is rgb feature.
+  int channels_;
+  std::string mean_file_;
+  MeanProto *data_mean_;
+  //! names of images under the directory_
+  vector<std::pair<string, int>> lines_;
+};
 /*****************************************************************************
  * DataSourceFactory
  *****************************************************************************/

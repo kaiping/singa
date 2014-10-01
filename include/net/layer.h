@@ -61,30 +61,13 @@ class Layer {
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
    * activation function
+    virtual void Forward();
    */
-  virtual void Forward();
   /**
    * Backward propagate gradients through the Net
    * It aggregates gradients from all outgoing edges, and then computes
    * the gradient w.r.t the aggregated activation.
-   */
-  virtual void Backward();
-  /**
-   * Apply dropout to src blob and write to dest blob, record the mask
-   * @param drop_prob probability for drop out a neuron
-   * @param scale a scale factor to be applied to every neuron after dropout
-   * @param src the blob whoes data is going to be dropped
-   * @param dest the blob to write the data after dropout
-   * @param mask record which neuron is dropped for back propagating gradients,
-   * if mask[i]=0, then the i-th neuron is dropped.
-   */
-  /**
-   * Back propagate the gradient for dropout operation
-   * @param scale a scale factor multiplied to the gradient
-   * @param src gradient from top blob
-   * @param dest blob to store the gradient after dropout operation
-   * @param mask it records which neuron was dropped in ::Dropout(), and
-   * directs how to pass the gradient from src to dest.
+      virtual void Backward();
    */
   /**
    * Marshal layer properties and parameters into google protobuf object
@@ -112,28 +95,32 @@ class Layer {
    * @param edge which connectes to the gradient
    */
   virtual DAry &grad(Edge *edge)=0;
+
   /**
    * Return name of this layer
    */
   const std::string &name() {
     return name_;
   }
+
   void add_in_edge(Edge *edge) {
     in_edges_.push_back(edge);
   }
+
   void add_out_edge(Edge *edge) {
     out_edges_.push_back(edge);
   }
+
   /**
    * Return outgoing edges
    */
-  std::vector<Edge *> &out_edges() {
+  const std::vector<Edge *> &out_edges() {
     return out_edges_;
   }
   /**
    * Return incoming edges
    */
-  std::vector<Edge *> &in_edges() {
+  const std::vector<Edge *> &in_edges() {
     return in_edges_;
   }
 
@@ -191,6 +178,82 @@ class LayerFactory {
   std::map<std::string, std::function<Layer*(void)>> layer_map_;
   static std::shared_ptr<LayerFactory> instance_;
 };
+
+/**
+ * Layer for fetching raw input features
+ * It setups DataSource firstlyn ::Setup() and then fetch the data batch in
+ * ::Forward().
+ */
+class DataLayer : public Layer {
+ public:
+  /**
+   * Identifier of this layer, the value is "Data".
+   */
+  static const std::string kType;
+  /**
+   * Set data source identifier, i.e. name.
+   */
+  virtual void Init(const LayerProto &proto);
+  /**
+   * Set the input batch shape, including batchsize, channels, height, width.
+   * @param shape
+   */
+  void SetInputShape(int batchsize, const Shape &data_shape);
+  void SetInputStore(int store_id);
+  void LoadData(const DAry &input, Phase phase);
+  /**
+   * allocate memory
+   */
+  virtual void Setup(const char flag);
+  /**
+   * fetch data from data source
+   */
+  virtual void Forward();
+  /*
+   * Just call Backward function of out going edges.
+  virtual void Backward();
+   */
+  /**
+   * Write the data source name
+   */
+  virtual void ToProto(LayerProto *layer_proto);
+  virtual bool HasInput() {
+    return true;
+  }
+  /**
+   * @param edge if edge is nullptr it means this function is called to fill
+   * new records for the layer. hence return the tmp blob if the image should
+   * be croped; otherwise return the data blob
+   */
+  virtual const Blob &data(Edge *edge) {
+      return data_;
+  }
+  /**
+   * Because DataLayer is usually connected from loss edges, hence this
+   * function returns the data provided by DataSource to the loss edge to
+   * compute the gradients.
+   * @param edge not used currently.
+   */
+  virtual const Blob &grad(Edge *edge) {
+    return data_;
+  }
+
+  inline int store_id() {
+    return  store_id_;
+  }
+
+  inline std::string& data_source() {
+    return data_source_;
+  }
+
+ private:
+  bool mirror_;
+  int cropsize_;
+  int batchsize_, channels_,height_,width_;
+  std::string data_source_;
+  int store_id_;
+};
+
 
 }  // namespace lapis
 

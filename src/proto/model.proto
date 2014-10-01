@@ -3,14 +3,22 @@ package lapis;
 
 message Shape {
     // num of instance/records
-  optional int64 num = 4 [default =0];
+  //optional int64 num = 4 [default =0];
   // following three fields will be used for rgb image feature
-  optional int32 channels = 6 [default = 1];
+  //optional int32 channels = 6 [default = 1];
   // expected input height, if not the same, resize the image
-  optional int32 height = 7 [default = 1];
+  //optional int32 height = 7 [default = 1];
   // expected input image width, if not the same, resize the image
   // it can also be the length of one dimension feature
-  optional int32 width = 8 [default = 1];
+  //optional int32 width = 8 [default = 1];
+  // the layer will parse the semantics of the shape
+  repeated int32 s =0;
+}
+
+
+message Partition {
+  repeated int32 start = 1; // included
+  repeated int32 end = 2; // not included
 }
 
 message DataSourceProto {
@@ -18,8 +26,9 @@ message DataSourceProto {
   // e.g., RGBDirSource and LabelSource
   required string type = 2;
   // directory for RGBDirSource and file for LabelSource
-  required string path = 3;
-  optional Shape shape = 4;
+  optional string image_folder = 3;
+  optional string label_path = 4;
+  repeated Shape shape = 5;
   // offset of record to be read.
   optional int64 offset =9 [default=0];
   // MeanProto file, has the mean of images, used by RGBDirSource
@@ -67,10 +76,11 @@ message ParamProto {
   optional float momentum_multiplier =9 [default=1];
   optional float learning_rate_multiplier =10 [default=1];
   optional float weight_decay_multiplier =11 [default=1];
+
   // data of the parameter
-  repeated float content = 13 [packed = true];
+  optional Datum data = 13;
   // history gradient of the parameter
-  repeated float history = 14 [packed = true];
+  optional Datum grad = 14;
 }
 
 // Only edge have params
@@ -100,6 +110,7 @@ message EdgeProto {
     kAvgPooling=2;
   }
   optional PoolingMethod pooling_method = 16;
+  optional float drop_prob = 17 [default=0.0]; // droput probability
 }
 
 // used to load image mean provided by caffe, in RGBDirSource
@@ -116,15 +127,20 @@ message LayerProto {
   required string name = 1;
   // required int32 num_output = 2;
   required string type = 3;
-  // repeated ParamProto param  = 4;
-  // repeated string out_edge = 5;
-  // repeated string in_edge = 6;
-  optional string data_source = 7;
-  optional float drop_prob = 8 [default=0.0];
 
   // for DataLayer to process image data
+  optional string data_source = 7;
   optional int32 cropsize =9;
   optional bool mirror = 10;
+
+  optional Datum data = 11;
+  optional Datum grad = 12;
+}
+
+message Datum {
+  repeated float value = 1 [packed=true];
+  optional Shape = 2;
+  optional Partition = 3;
 }
 
 message NetProto {
@@ -217,9 +233,9 @@ message TrainerProto {
 }
 
 message DataProto {
-  repeated DataSourceProto train_data = 1;
-  repeated DataSourceProto validation_data = 2;
-  repeated DataSourceProto test_data = 3;
+  optional DataSourceProto train_data = 1;
+  optional DataSourceProto validation_data = 2;
+  optional DataSourceProto test_data = 3;
 }
 message ModelProto {
   // model name
@@ -228,7 +244,14 @@ message ModelProto {
   optional TrainerProto trainer = 3;
   optional DataProto data =4;
 }
-
-message FloatVector {
-  repeated float data = 1;
+message Record {
+  optional Datum image=1;
+  optional int label=1;
+}
+message TupleValue {
+  optional int32 n_update = 1;
+  optional int32 version = 2;
+  optional int32 threshold = 3;
+  optional Datum data = 4;
+  optional Datum grad = 5;
 }

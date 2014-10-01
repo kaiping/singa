@@ -119,7 +119,8 @@ void Worker::Run(bool load_data, bool do_train) {
                 model.data().train_data(), train_stores);
       reset_net_for_training=false;
     }
-    trainer.TrainOneBatch(&net);
+    vector<Record*> batch=mc_.GetOneBatch(batchsize);
+    trainer.TrainOneBatch(&net, batch);
   }
 }
 }  // namespace lapis

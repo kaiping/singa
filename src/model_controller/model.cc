@@ -211,9 +211,9 @@ const std::map<int,int> ModelController::GetParamStoreTable() {
   return store_table_map;
 }
 
-int ModelController::CreateDataStore(std::string name, int fixed_server_id) {
+int ModelController::CreateDataTable(std::string name, int fixed_server_id) {
   VLOG(2)<<"create store for "<<name;
-  int sid=2*num_data_store_+kDataStore;
+  sid=disk_tables_.size()+1;
   if(fixed_server_id>=0) {
     disk_tables_[sid]=CreateDiskTable(num_tables_, fixed_server_id, 256*10, name,
         new Marshal<int>, new Marshal<FloatVector>);
@@ -222,12 +222,10 @@ int ModelController::CreateDataStore(std::string name, int fixed_server_id) {
     disk_tables_[sid]=CreateDiskTable(num_tables_, 256*10, name,
         new Marshal<int>, new Marshal<FloatVector>);
   }
-  num_tables_++;
-  num_data_store_++;
   return sid;
 }
 
-int ModelController::CreateParamStore() {
+int ModelController::CreateParamTable() {
   if(GlobalContext::Get()->standalone()) return -1;
   param_table_= CreateTable(num_tables_, GlobalContext::Get()->num_table_servers(),
       new Sharding::Mod, new MyAcc, new Marshal<int>, new Marshal<FloatVector>);

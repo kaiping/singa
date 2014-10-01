@@ -103,29 +103,23 @@ void Coordinator::Shutdown() {
 
 // load all data sources (e.g., image and label) for either training data,
 // vlidation data or test data.
-void Coordinator::LoadData(const DataSourceProtos& sources,
-                           const map<string, int>& stores) {
+void Coordinator::LoadData(const DataSourceProto& source,
+    const map<string, int>& tables) {
   // image file names, may from label source
-  std::shared_ptr<std::vector<string>> filenames;
-  for(auto source: sources){
-    DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
-    filenames=ds->Init(source, filenames);
-    int rid=0;
-    const Shape &s=source.shape();
-    FloatVector record;
-    for(int i=0;i<s.width()*s.height()*s.channels();i++)
-      record.add_data(0);
-    VLOG(3)<<"start loading data "<<ds->name()<<" record size "<<record.data_size();
-    while(!ds->eof()){
-      VLOG(3)<<"read record";
-      ds->NextRecord(&record);
-      VLOG(3)<<"put record";
-      mc_.PutData(stores.at(ds->name()), rid++, record);
-    }
-    mc_.FlushData(stores.at(ds->name()));
-    VLOG(3)<<"finish loading data";
-    delete ds;
+  DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
+  LOG(INFO)<<"Loading DataSource : "<<ds->name();
+  ds->Init(source);
+  int rid=0;
+  int tid=tables.at(ds->name());
+  ImageNetRecord record;
+  while(!ds->eof()){
+    ds->NextRecord(&record);
+    mc_.PutData(tid, rid++, record);
+    if(rid%10000==0)
+      LOG(INFO)<<rid<<" records have been loaded";
   }
+  mc_.FlushData(tid);
+  delete ds;
 }
 
 
@@ -140,55 +134,36 @@ const StringIntMap Coordinator::CreateDataStores(
   return ToProtoMap(stores);
 }
 
-const DataStorageConfig Coordinator::CreateDataStorage(
+const void Coordinator::CreateDataStorage(DistributedStorageConfig *conf,
     const DataProto& data){
   // create stores for train/validate/test data
-  VLOG(3)<<"create data storages";
-  DataStorageConfig conf;
-  if(data.train_data_size()>0)
-    conf.mutable_train_stores()->CopyFrom(CreateDataStores(data.train_data()));
-  VLOG(3)<<"finish train stores";
-  if(data.validation_data_size()>0)
-    conf.mutable_val_stores()->CopyFrom(CreateDataStores(data.validation_data()));
-  VLOG(3)<<"finish val stores";
-  if(data.test_data_size()>0)
-    conf.mutable_test_stores()->CopyFrom(CreateDataStores(data.test_data()));
-  VLOG(3)<<"finish test stores";
-  conf.mutable_tables()->CopyFrom(ToProtoMap(mc_.GetDataStoreTable()));
+  if(data.has_train_data)
+    conf->set_train_tableid(mc_.CreateDataTable(data.train_data().name()));
+  if(data.has_validation_data)
+    conf->set_val_tableid(mc_.CreateDataTable(data.validat_data().name()),0);
+  if(data.has_test_data)
+    conf->set_test_tableid(mc_.CreateDataTable(data.test_data().name()));
   VLOG(3)<<"data storage finish";
   return conf;
 }
 
-const ParamStorageConfig Coordinator::CreateParamStorage() {
-  VLOG(3)<<"create param storage";
-  ParamStorageConfig config;
-  int sid=mc_.CreateParamStore();
-  StringIntMap *map=config.mutable_param_stores();
-  StringIntPair *p=map->add_pair();;
-  p->set_key("param");
-  p->set_val(sid);
-  config.mutable_tables()->CopyFrom(ToProtoMap(mc_.GetParamStoreTable()));
-  return config;
-}
 void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
     const ModelProto& model){
-  VLOG(3)<<"setup storage";
+  DLOG(INFO)<<"setup storage";
   DistributedStorageConfig config;
-    config.mutable_dsconfig()->CopyFrom(CreateDataStorage(model.data()));
+  CreateDataStorage(&config, model.data());
   if(do_train)
-    config.mutable_psconfig()->CopyFrom(CreateParamStorage());
-  CHECK(config.has_dsconfig()||config.has_psconfig());
-  VLOG(3)<<"send storage config";
+    config.set_param_tableid(mc_.CreateParamTable());
   mpi_->Broadcast(MTYPE_STORAGE_CONFIG, config);
-  VLOG(3)<<"after send storage config";
   // init table servers, must be after creating stores which creating tables
-  InitTableServers(mc_.GetTables());
+  const std::map<int, GlobalTable*> tables=mc_.GetTables();
+  InitTableServers(tables);
   VLOG(3)<<"tableserver assigned";
 
   if(load_data){
-    LoadData(model.data().train_data(), ToStdMap(config.dsconfig().train_stores()));
-    LoadData(model.data().validation_data(), ToStdMap(config.dsconfig().val_stores()));
-    LoadData(model.data().test_data(), ToStdMap(config.dsconfig().test_stores()));
+    LoadData(model.data().train_data(), tables);
+    LoadData(model.data().validation_data(), tables);
+    LoadData(model.data().test_data(), tables);
   }
   if(do_train){
     // TODO(Jingyang, Wei) model partition

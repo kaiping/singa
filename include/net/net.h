@@ -24,13 +24,34 @@ class Layer;
  */
 class Net {
  public:
+  /**
+   * construct the net structure, i.e., how edges and layers are connected
+   */
   explicit Net(const NetProto &net_proto);
+  /**
+   * setup the net by init dary shapes,
+   * then allocate memory and init parameters
+   */
   void Setup(const char flag,int batchsize,
              const std::map<std::string, Shape> &shapes,
              const std::map<std::string, int> & stores);
   void Setup(const char flag,int batchsize,
              const std::map<std::string, Shape> &shapes);
 
+  /**
+   * set shapes of DArys
+   */
+  void InitDAryShape(const int batchsize, const Record &record);
+  /**
+   * allocate memory for DArys
+   */
+  void AllocDAryMemory();
+  /**
+   * init parameters, must be called after InitDAryShape
+   * if memory of parameters are not allocated, do memory allocation before
+   * init parameters
+   */
+  void InitParameters();
   void ToProto(NetProto *net_proto);
   std::vector<Layer *> &layers() {
     return layers_;

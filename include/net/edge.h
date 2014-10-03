@@ -19,56 +19,7 @@ using std::vector;
 namespace lapis {
 //! forward declaration for Layer.
 class Layer;
-class Edge;
-/****************************************************************************
- * Edge Register & Factory
- ****************************************************************************/
-/**
- * Register Edge with type TYPE
- * @param TYPE identifier of the edge e.g., InnerProduct, i.e., the type field
- * in EdgeProto
- * @param EDGE the child edge class
- */
-#define REGISTER_EDGE(TYPE, EDGE) EdgeFactory::Instance()->\
-  RegisterCreateFunction(TYPE, [](void)-> Edge* {return new EDGE();});
 
-/**
- * Factory for creating edge based on user provided edge type.
- * Users are required to register user-defined edges before creating instances
- * of them during runtime. For example, if you define a new Edge FooEdge with
- * type "Foo", then you can use it in your net by 1) configure your
- * edge proto with the type field to be "Foo". 2) register it (e.g., at the
- * start of the program). Then your FooEdge will be created by calling
- * EdgeFactory::Instance()->Create("Foo");
- */
-class EdgeFactory {
- public:
-  /**
-   * static method to get instance of this factory
-   */
-  static std::shared_ptr<EdgeFactory> Instance();
-  /**
-   * Register user defined edge, i.e., add the edge type and a
-   * function which creats an instance of the edge. This function is called by
-   * the REGISTER_EDGE macro.
-   * @param type type of the edge, every edge has a type to identify it
-   * @param create_function a function that creates a edge instance
-   */
-  void RegisterCreateFunction(const std::string type,
-                              std::function<Edge*(void)> create_function);
-  /**
-   * create a layer  instance by providing its type
-   * @param type the type of the layer to be created
-   */
-  Edge *Create(const std::string type);
-
- private:
-  //! To avoid creating multiple instances of this factory in the program
-  EdgeFactory();
-  //! Map that stores the registered Layers
-  std::map<std::string, std::function<Edge*(void)>> edge_map_;
-  static std::shared_ptr<EdgeFactory> instance_;
-};
 
 /***************************************************************************
  * Edge Classes
@@ -93,7 +44,7 @@ class Edge {
    * select the corresponding connecting layers
    */
   virtual void Init(const EdgeProto &proto,
-                    const std::map<string, Layer *> &layer_map);
+                    const std::map<string, Layer *> &layers);
   /**
    * Setup properties of this edge based on src layer, e.g, parameter shape.
    * Allocate memory for parameters and initialize them according to user
@@ -101,8 +52,8 @@ class Edge {
    * layer is setup ready. May also allocate memory to store intermediate
    * results.
    * @param set_param set parameters; true for network init; false otherwise.
-   */
   virtual void Setup(const char flag);
+   */
   /**
    * Marshal edge properties into google protobuf object
    */
@@ -112,8 +63,8 @@ class Edge {
    * @param src source feature
    * @param dest destination feature/activation to be set
    * #param overwrite if true overwrite the dest otherwise add to it
-   */
   virtual void ComputeFeature(const DAry &src, DAry *dest)=0;
+   */
   /**
    * Backward propagate gradient, read gradient/feature from src and
    * feature from src, then compute the gradient for parameters of this
@@ -126,8 +77,8 @@ class Edge {
    * If no need to compute that gradient, then set gdst=nullptr, e.g., if
    * the src layer is DataLayer, the no need to compute for the gradient.
    * @param overwrite if true overwrite dest_grad otherwise add to it
-   */
   virtual void ComputeGradient(DAry *grad)=0;
+   */
   /**
    * Combine hyper-paramters, e.g., momentum, learning rate, to compute
    * gradients of parameters associated with this edge, which will be
@@ -146,14 +97,14 @@ class Edge {
    * the src  is generated (although owned by the src layer) by this edge,
    * this edge will decide the shape of the  and is responsible to setup it
    * @param  the src  to set setup.
-   */
   virtual void SetupDestLayer(const bool alloc, DAry *dst);
+   */
   /**
    * Return parameters associated this edge
-   */
   std::vector<DAry *> &params() {
     return params_;
   }
+   */
   /**
    * return the other side of this edge w.r.t, layer
    * @param layer one side of the edge
@@ -174,16 +125,26 @@ class Edge {
     dst_ = dst;
   }
   Layer *src() {
-    return src_;
+    return node1_;
   }
   Layer *dst() {
-    return dst_;
+    return node2_;
   }
   const std::string &name() {
     return name_;
   }
-  DAry* GetData(Layer* tolayer);
-  DAry* GetGrad(Layer* tolayer);
+  DAry* GetData(Layer* tolayer){
+    if(tolayer==n1)
+      return n2->GetData(this);
+    else
+      return n1->GetData(this);
+  }
+  DAry* GetGrad(Layer* tolayer){
+    if(tolayer==n1)
+      return n2->GetGrad(this);
+    else
+      return n1->GetGrad(this);
+  }
   /*
   DAry* GetPos(Layer* tolayer);
   DAry* GetNeg(Layer* tolayer);
@@ -196,10 +157,13 @@ class Edge {
    * src to src. But for undirected edge, then src and src contains no
    * position information.
    */
-  Layer *src_, *dst_;
+  Layer *n1, *n2;
+  bool is_directed_;
 };
 
-
+/*****************************************************
+ * to be deleted
+ ***************************************************/
 class ConvEdge : public Edge{
   /**
    * Do convolution follow Caffe's img2col, i.e., reshape the image into a

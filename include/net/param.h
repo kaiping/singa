@@ -23,54 +23,45 @@ class Param {
    * corresponding memory and initialize the parameter. Copy content and
    * history from ParamProto if available.
    */
-  virtual void Init(const ParamProto &proto, const char flag);
+  void Init(const ParamProto &proto);
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto
    */
-  virtual void ToProto(ParamProto *proto);
+  void ToProto(ParamProto *proto);
   /**
    * Return const mem address for the content of this parameter
    */
-  const Blob &content() {
-    return content_;
+  const DAry &data() {
+    return data_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  Blob &mutable_content() {
-    return content_;
+  DAry *mutable_data() {
+    return &data_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const Blob &gradient() {
+  const DAry &grad() {
     return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  Blob &mutable_gradient() {
+  DAry *mutable_grad() {
     return grad_;
   }
-  /**
-   * Return const mem address for the history gradient of this parameter
+
+  void SetShape(int h, int w);
+  void SetShape(int l);
+  void AllocMemory();
+  /*
+   * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */
-  const Blob &history() {
-    return history_grad_;
-  }
-  /**
-   * Return mem address for the history gradient of this parameter
-   */
-  Blob &mutable_history() {
-    return history_grad_;
-  }
-  /**
-   * Return num of floats for this (vector) parameter
-   */
-  const int length() {
-    return content_.length();
-  }
+  void Fill();
+
   int id() {
     return id_;
   }
@@ -116,7 +107,7 @@ class Param {
   //! scale factor for learning rate and weight decay for this parameter
   float momentum_, learning_rate_, weight_decay_;
   //! content, gradient and history gradient of this parameter
-  Blob content_, grad_, history_grad_;
+  DAry data_, grad_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

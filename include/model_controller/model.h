@@ -20,11 +20,7 @@
 
 using google::protobuf::Message;
 namespace lapis {
-enum {
-  kParamStore=0,
-  kDataStore=1
-};
-using TDiskTable=TypedDiskTable<int, FloatVector>;
+using TDiskTable=TypedDiskTable<int, Record>;
 class ModelController {
  public:
   ModelController();
@@ -32,22 +28,12 @@ class ModelController {
   void Update(const std::vector<Param *> &params);
   void Get(const std::vector<Param *> &params);
   void Put(const std::vector<Param *> &params);
+  void Put(const Param &param);
 
-
-  int CreateParamStore();
-  int CreateDataStore(std::string name, int fixed_server_id=-1);
-
-  void PutData(int sid, int rid, const FloatVector &record);
-  void GetData(int sid, Blob *blob);
-  void FlushData(int sid);
-
-  const std::map<int,int> GetDataStoreTable();
-  const std::map<int,int> GetParamStoreTable();
-
-  // tableid->table
-  const std::map<int,GlobalTable*> GetTables();
-  // storeid -> table id
-  void CreateTables(const std::map<int, int>& tables);
+  std::map<int, GlobalTable*> CreateTables();
+  void set_param_table(TypedGlobalTable<int,TupleValue>* t){
+    param_table_=t;
+  }
 
  private:
   template<class K, class V>
@@ -63,10 +49,7 @@ class ModelController {
 
  private:
   int split_tpye_,split_size_;
-  TypedGlobalTable<int, FloatVector>* param_table_;
-  // store id ->table
-  std::map<int,TypedDiskTable<int, FloatVector>*> disk_tables_;
-  int num_data_store_, num_param_store_, num_tables_;
+  TypedGlobalTable<int, TupleValue>* param_table_;
 };
 }  // namespace lapis
 #endif  // INCLUDE_MODEL_CONTROLLER_MODEL_H_

@@ -30,7 +30,7 @@ class Net {
   explicit Net(const NetProto &net_proto);
   /**
    * setup the net by init dary shapes,
-   * then allocate memory and init parameters
+   * then allocate memory(optional) and init parameters (optional)
    */
   void Setup(const char flag,int batchsize,
              const std::map<std::string, Shape> &shapes,
@@ -41,11 +41,11 @@ class Net {
   /**
    * set shapes of DArys
    */
-  void InitDAryShape(const int batchsize, const Record &record);
+  void SetShape(const int batchsize, const Record &record);
   /**
    * allocate memory for DArys
    */
-  void AllocDAryMemory();
+  void AllocateMemory();
   /**
    * init parameters, must be called after InitDAryShape
    * if memory of parameters are not allocated, do memory allocation before
@@ -53,18 +53,20 @@ class Net {
    */
   void InitParameters();
   void ToProto(NetProto *net_proto);
-  std::vector<Layer *> &layers() {
-    return layers_;
+  std::vector<InputLayer *> &input_layers() {
+    return input_layers_;
   }
-  std::vector<Edge *> &edges() {
-    return edges_;
+  OutputLayer* output_layer() {
+    return output_layer_;
   }
   const std::vector<Param *> &params() {
     return params_;
   }
   ~Net();
  private:
+  OutputLayer * output_layer_;
   std::vector<Layer *> layers_;
+  std::vector<Layer *> input_layers_;
   std::vector<Edge *> edges_;
   std::vector<Param *> params_;
 };

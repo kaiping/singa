@@ -1,5 +1,12 @@
 package lapis;
 
+message GroupConfig {
+  message Group{
+    optional int32 leader=1;
+    repeated int32 member=2;
+  }
+  repeated Group group=1;
+}
 
 message SystemProto{
   //start rank for distributed memory table

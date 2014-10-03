@@ -24,7 +24,8 @@ class Worker {
   void Run(bool load_data, bool do_run);
 
  private:
-  bool ShouldIDoValidation(int worker_id);
+  bool ShouldIDoValidation(int step);
+  bool AmIGroupLeader() {return leader_==id_;}
 
   const DistributedStorageConfig InitDistributedStorage();
 
@@ -33,6 +34,9 @@ class Worker {
   std::shared_ptr<NetworkThread> mpi_;
   TableServer *table_server_;
   ModelController mc_;
+  vector<int> member_list_;
+  int leader_;
+  int id_;
 };
 }  // namespace lapis
 

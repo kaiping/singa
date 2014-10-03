@@ -53,22 +53,23 @@ class Layer {
    * @param edge_map a map from edge name to the edge object.
    */
   virtual void Init(const LayerProto &proto);
+  virtual void SetShapes(vector<vector<int>>* shapes=NULL);
   /**
    * allocate memory for storing activations/features/gradients, etc.
    */
-  virtual void Setup(const char flag);
+  virtual void AllocMemory();
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
    * activation function
-    virtual void Forward();
    */
+    virtual void ComputeFeature();
   /**
    * Backward propagate gradients through the Net
    * It aggregates gradients from all outgoing edges, and then computes
    * the gradient w.r.t the aggregated activation.
-      virtual void Backward();
    */
+    virtual void ComputeGradient();
   /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -85,7 +86,9 @@ class Layer {
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual DAry &data(Edge *edge)=0;
+  virtual DAry &GetData(Edge *edge){
+    return data_;
+  }
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -94,7 +97,9 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual DAry &grad(Edge *edge)=0;
+  virtual DAry &GetGrad(Edge *edge){
+    return grad_;
+  }
 
   /**
    * Return name of this layer
@@ -130,6 +135,187 @@ class Layer {
   std::vector<Edge *> in_edges_;
   DAry data_, grad_;
 };
+class ConvLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+
+ private:
+  //! the feature (e.g., input image) shape for the bottom layer
+  int num_, channels_, height_, width_;
+  //! shape for conv image
+  int conv_height_, conv_width_;
+  //! group weight height, width (col height), and col width
+  int M_, K_, N_;
+  //! num of groups, from caffe
+  int ngroups_;
+  //! height and width of the kernel/filter, assume the kernel is square
+  int ksize_;
+  //! length/width between to successive kernels/filters
+  int stride_;
+  //! padding size for boundary rows and cols
+  int pad_;
+  //! number of kernels
+  int nkernels_;
+  //! one row per kernel; shape is num_kernels_*(channels_*kernel_size^2)
+  Param weight_ ;
+  //! the length is nkernels_
+  Param bias_;
+  //! store result of image to column, TODO create ColLayer
+  DAry col_data_, col_grad_;
+};
+
+class ReLULayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+};
+
+class DroputLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+ private:
+  float drop_prob_;
+  /* record which neuron is dropped, required for back propagating gradients,
+   * if mask[i]=0, then the i-th neuron is dropped.
+   */
+  DAry mask_;
+};
+
+class PoolingLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+ private:
+  //! pooling window size and stride
+  int wsize_, stride_;
+  //! shape for bottom layer feature
+  int channels_, height_, width_;
+  //! shape after pooling
+  int pheight_, pwidth_;
+  //! batchsize
+  int num_;
+};
+
+class LRNLayer: public Layer {
+/**
+ * Local Response Normalization edge
+ * b_i=a_i/x_i^beta
+ * x_i=knorm+alpha*\sum_{j=max(0,i-n/2}^{min(N,i+n/2}(a_j)^2
+ * n is size of local response area.
+ * a_i, the activation (after ReLU) of a neuron convolved with the i-th kernel.
+ * b_i, the neuron after normalization, N is the total num of kernels
+ */
+
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+
+ private:
+  //! shape of the bottom layer feature
+  int num_, channels_, height_, width_;
+  //! size local response (neighbor) area and padding size
+  int wsize_, lpad_, rpad_;
+  //! hyper-parameter
+  float alpha_, beta_, knorm_;
+  DAry norm_;
+};
+class FCLayer: public Layer {
+  /*
+   * fully connected layer
+   */
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+ private:
+  //! dimension of the hidden layer
+  int hdim_;
+  //! dimension of the visible layer
+  int vdim_;
+  int num_;
+  Param weight_, bias_;
+};
+
+class OutputLayer: public Layer{
+ public:
+  virtual Performance CalcPerf(bool loss, bool accuracy)=0;
+}
+class SoftmaxLossLayer: public OutputLayer {
+  /*
+   * connected from the label layer and the last fc layer
+   */
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto);
+  virtual Performance CalcPerf(bool loss, bool accuracy);
+};
+
+class InputLayer: public Layer {
+ public:
+  virtual bool HasInput() { return true; }
+  virtual SetShapes(vector<vector<int>>* shapes);
+  virtual AddInputRecord(const Record& record);
+  virtual void SetInputData(DAry *data);
+  virtual DAry* data() {return &tmp_data_;}
+ private:
+  DAry prefetch_data_;
+  int offset_;
+}
+class ImageLayer: public InputLayer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ToProto(LayerProto *layer_proto);
+  virtual SetShapes(vector<vector<int>>* shapes);
+  virtual AddInputRecord(const Record& record);
+
+ private:
+  bool mirror_;
+  int cropsize_;
+  int batchsize_, channels_, height_, width_;
+};
+
+class LabelLayer: public InputLayer {
+ public:
+  virtual void Init(const LayerProto &proto);
+  virtual void AllocMemory();
+  virtual void ComputeFeature();
+  virtual void ToProto(LayerProto *layer_proto);
+  virtual SetShapes(vector<vector<int>>* shapes);
+  virtual AddInputRecord(const Record& record);
+};
+
+
 
 /****************************************************************************/
 /**
@@ -179,6 +365,11 @@ class LayerFactory {
   static std::shared_ptr<LayerFactory> instance_;
 };
 
+
+/******************************************
+ * to be deleted
+ * **************************************/
+
 /**
  * Layer for fetching raw input features
  * It setups DataSource firstlyn ::Setup() and then fetch the data batch in
@@ -218,7 +409,7 @@ class DataLayer : public Layer {
    */
   virtual void ToProto(LayerProto *layer_proto);
   virtual bool HasInput() {
-    return true;
+    return false;
   }
   /**
    * @param edge if edge is nullptr it means this function is called to fill

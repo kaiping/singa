@@ -103,77 +103,71 @@ void Coordinator::Shutdown() {
 
 // load all data sources (e.g., image and label) for either training data,
 // vlidation data or test data.
-void Coordinator::LoadData(const DataSourceProto& source,
-    const map<string, int>& tables) {
+void Coordinator::LoadData(const DataSourceProto& source, int tid){
   // image file names, may from label source
   DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
   LOG(INFO)<<"Loading DataSource : "<<ds->name();
   ds->Init(source);
   int rid=0;
-  int tid=tables.at(ds->name());
   ImageNetRecord record;
   while(!ds->eof()){
     ds->NextRecord(&record);
-    mc_.PutData(tid, rid++, record);
+    delegate_->Put(tid, rid++, record);
     if(rid%10000==0)
       LOG(INFO)<<rid<<" records have been loaded";
   }
-  mc_.FlushData(tid);
+  delegate_->Flush(tid);
   delete ds;
 }
 
-
-const StringIntMap Coordinator::CreateDataStores(
-    const DataSourceProtos& sources) {
-  std::map<string, int> stores;
-  for(auto& ds: sources){
-    CHECK(stores.find(ds.name())==stores.end());
-    stores[ds.name()]= mc_.CreateDataStore(ds.name());
-    VLOG(3) << "Created disk table with name " << ds.name();
-  }
-  return ToProtoMap(stores);
-}
-
-const void Coordinator::CreateDataStorage(DistributedStorageConfig *conf,
-    const DataProto& data){
-  // create stores for train/validate/test data
-  if(data.has_train_data)
-    conf->set_train_tableid(mc_.CreateDataTable(data.train_data().name()));
-  if(data.has_validation_data)
-    conf->set_val_tableid(mc_.CreateDataTable(data.validat_data().name()),0);
-  if(data.has_test_data)
-    conf->set_test_tableid(mc_.CreateDataTable(data.test_data().name()));
-  VLOG(3)<<"data storage finish";
-  return conf;
-}
-
-void Coordinator::InitDistributedStorage(bool load_data, bool do_train,
-    const ModelProto& model){
-  DLOG(INFO)<<"setup storage";
-  DistributedStorageConfig config;
-  CreateDataStorage(&config, model.data());
-  if(do_train)
-    config.set_param_tableid(mc_.CreateParamTable());
-  mpi_->Broadcast(MTYPE_STORAGE_CONFIG, config);
+void Coordinator::InitDistributedStorage(bool load_data, const DataProto& data){
   // init table servers, must be after creating stores which creating tables
-  const std::map<int, GlobalTable*> tables=mc_.GetTables();
+  const std::map<int, GlobalTable*> tables=delegate_.CreateTables();
   InitTableServers(tables);
-  VLOG(3)<<"tableserver assigned";
 
   if(load_data){
-    LoadData(model.data().train_data(), tables);
-    LoadData(model.data().validation_data(), tables);
-    LoadData(model.data().test_data(), tables);
-  }
-  if(do_train){
-    // TODO(Jingyang, Wei) model partition
-    Net net(model.net());
-    // setup the net, init parameters
-    auto shapes=DataSource::ShapesOf(model.data().train_data());
-    net.Setup(1, kAllocParam|kInitParam, shapes);
-    mc_.Put(net.params());
+    if(data.has_train_data())
+      LoadData(data.train_data(), tables[kTrain]);
+    if(data.has_validation_data())
+      LoadData(data.validation_data(), tables[kVal]);
+    if(data.has_test_data())
+      LoadData(data.test_data(), tables[kTest]);
   }
   VLOG(3)<<"finish init dist storage";
+}
+
+Net* Coordinator::SetupNetShape(const ModelProto& model) {
+  Net net(model.net());
+  // setup the net, init parameters
+  int batchsize=model.solver().train_batchsize();
+  vector<vector<int>> shapes;
+  for(auto& shape: model.data().train_data().shape()){
+    vector<int> s{batchsize};
+    for(int k:shape.s())
+      s.push_back(k);
+    shapes.push_back(s);
+  }
+  net->InitDAryShape(shapes);
+  return net;
+}
+
+void Coordinator::FillParameterTable(int threshold,Solver* solver,  Net* net){
+  if(solver->method()==SolverProto::kSGD){
+    if(GlobalContext::Get()->synchronous())
+      solver->sgd().set_threshold(threshold);
+    delegate_->set_example(solver->sgd());
+  }
+  else{
+    if(GlobalContext::Get()->synchronous())
+      solver.adagrad().set_threshold(threshold);
+    delegate_->set_example(solver.adagrad());
+  }
+
+  for(auto* param:net->params()){
+    param->Fill();
+    delegate_.Put(param);
+    param->Free();
+  }
 }
 
 bool Coordinator::DoValidationOn(int worker_id) {
@@ -186,20 +180,46 @@ void Coordinator::RunStandalone(const ModelProto& model) {
   //trainer.Run(kAllocData|kAllocParam|kInitParam, &net);
 }
 
+// TODO model partitioning
+const vector<ModelProto*> Coordinator::PartitionModel(const ModelProto& model, Net* net){
+  ModelProto *proto=new ModelProto();
+  proto->CopyFrom(model);
+  proto->clear_net();
+  NetProto *netproto=proto->mutable_net();
+  net->ToProto(netproto);
+  int batchsize=model.solver().train_batchsize();
+  CHECK_EQ(batchsize%ngroups,0);
+  vector<ModelProto*> ret{proto};
+  return ret;
+}
+
+void Coordinator::DistributePartition(const GroupConfig& conf,
+    const vectro<ModelProto*> & protos) {
+  for(auto& group:conf.group()){
+    CHECK_EQ(group.member().size(), protos.size());
+    mpi_->Send(group.leader(), MTYPE_MODEL_CONFIG, *protos[0]);
+    for (i = 1; i < protos.size(); i++) {
+      mpi_->Send(group.member(i), MTYPE_MODEL_PARTITION, *protos[i]);
+    }
+  }
+}
+
 void Coordinator::RunOnCluster(const ModelProto& model) {
   VLOG(3)<<"start worker";
-  mpi_->Broadcast(MTYPE_MODEL_CONFIG, model);
-  bool *alive_workers=new bool[mpi_->size()];
-  for(int i=0;i<mpi_->size();i++)
-    alive_workers[i]=true;
-  int num_alives=mpi_->size();
-  while(alive_workers>0) {
+  int group_size=8;
+  int ngroups=1;
+  const GroupConfig conf=CreateGroups(group_size);
+  mpi_->Broadcast(MTYPE_GROUP_CONFIG, config);
+  Net* net=SetupNetShape(model);
+  FillParameterTable(group_size, model.mutable_solver(), net);
+  vector<ModelProto*> partitions=PartitionModel(model, net);
+  DistributePartition(conf, parititions);
+  StateQueue groups(ngroups);
+  while(groups.HasValid()) {
     int src = 0;
-
     EmptyMessage end_msg;
-    if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {
-      alive_workers[src]=false;
-      num_alives--;
+    if(mpi_->TryRead(groups.Next(), end_msg, &src)) {
+      groups.Invalide();
     }
 
     ShortMsg msg;
@@ -218,14 +238,35 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
     Sleep(FLAGS_sleep_time);
   }
 }
+const GroupConfig Coordinator::CreateGroups(int group_size) {
+  int nworkers=GlobalContext::Get()->num_workers();
+  CHECK_EQ(nworkers%group_size, 0);
+  GroupConfig config;
+  // worker stats at rank 0
+  int wrank=0;
+  for (i = 0; i < nworkers/group_size; i++) {
+    Group *group=config->add_group();
+    group->set_leader(wrank++);
+    for (k = 0; k < group_size; k++) {
+      group->add_member(wrank++);
+    }
+  }
+  return config;
+}
 
+void Coordinator::InitTableDelegate(const SolverProto& solver){
+  if(solver().method()==SolverProto::kSGD){
+    delegate_=new TypedTableDelegate<int, SGDValue>();
+  }
+  else{
+    delegate_=new TypedTableDelegate<int, AdaGradValue>();
+  }
+}
 void Coordinator::Run(bool load_data, bool do_train) {
   ModelProto model;
   ReadProtoFromTextFile(context_->model_conf(), &model);
-  if(do_train&&context_->standalone())
-    RunStandalone(model);
-
-  InitDistributedStorage(load_data, do_train, model);
+  InitTableDelegate(model.solver(),8);
+  InitDistributedStorage(load_data, model);
   if(do_train&&!context_->standalone())
     RunOnCluster(model);
 }

@@ -37,25 +37,35 @@ class Coordinator {
  public:
   Coordinator();
   void Run(bool load_data, bool do_run);
+  /**
+   * setup net, shape of darys are set, but not allocate mem
+   */
+  Net* SetupNetShape(const ModelProto& model);
   ~Coordinator();
  private:
-  void InitDistributedStorage(bool load_data, bool do_run, const ModelProto& model);
+  void InitDistributedStorage(bool load_data, const DataProto& proto);
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
   void RunStandalone(const ModelProto& model);
   void RunOnCluster(const ModelProto& model);
-  void LoadData(const DataSourceProtos& sources,
-                const std::map<std::string, int>& stores);
-  const StringIntMap CreateDataStores(const DataSourceProtos& sources);
-  const ParamStorageConfig CreateParamStorage();
-  const DataStorageConfig CreateDataStorage(const DataProto& data);
   bool DoValidationOn(int worker_id);
   void Shutdown();
+
+  const GroupConfig CreateGroups(int group_size);
+  /**
+   * insert parameters into table; the tuple is prepared with
+   * parameter vector and sgd/adagrad meta info from solver
+   * @threshold if sync mode, it is the group size; for async ,0
+   */
+  void FillParameterTable(int threshold,Solver* solver,  Net* net);
+  void DistributePartition(const GroupConfig& conf, const vectro<ModelProto*> & protos);
+  const vector<ModelProto*> PartitionModel(const ModelProto& model, Net* net);
+  void InitTableDelegate(const SolverProto& solver);
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;
   shared_ptr<GlobalContext> context_;
   std::shared_ptr<NetworkThread> mpi_;
-  ModelController mc_;
+  TableDelegate* delegate_;
 };
 }  // namespace lapis
 #endif  // COORDINATOR_H_

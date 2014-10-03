@@ -9,7 +9,7 @@
 namespace lapis {
 
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
-int GlobalContext::kCoordinatorRank;
+int GlobalContext::kCoordinator;
 GlobalContext::GlobalContext(const std::string &system_conf,
     const std::string &model_conf): model_conf_(model_conf) {
   SystemProto proto;
@@ -43,7 +43,7 @@ shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf,
     auto net=NetworkThread::Get();
     instance_->set_rank(net->id());
     instance_->set_num_processes(net->size());
-    kCoordinatorRank=net->size()-1;
+    kCoordinator=net->size()-1;
     VLOG(3)<<"init network thread";
   }
   return instance_;

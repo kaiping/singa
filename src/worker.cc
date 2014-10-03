@@ -11,27 +11,20 @@
 #include "net/net.h"
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
-#include "net/sgd_trainer.h"
+#include "net/sgd_solver.h"
 
 namespace lapis {
 Worker::Worker(){
   LOG(INFO) << "starting Worker...";
   mpi_=NetworkThread::Get();
   table_server_=nullptr;
+  id_=mpi_->id();
 }
+
 Worker::~Worker() {
   Shutdown();
   if(table_server_!=nullptr)
     delete table_server_;
-}
-
-void SetupNet(const int batchsize,
-              const char flag,
-              Net *net,
-              const DataSourceProtos& sources,
-              const std::map<std::string, int> &store_map){
-  auto shapes=DataSource::ShapesOf(sources);
-  net->Setup(flag, batchsize, shapes, store_map);
 }
 
 bool Worker::ShouldIDoValidation(int step) {
@@ -42,28 +35,18 @@ bool Worker::ShouldIDoValidation(int step) {
   return msg.answer();
 }
 
-const DistributedStorageConfig Worker::InitDistributedStorage(){
-  DistributedStorageConfig config;
-  VLOG(3)<<"read storage config";
-  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_STORAGE_CONFIG, &config);
-  VLOG(3)<<"recv storage config";
-  IntIntMap tables;
-  CHECK(config.has_dsconfig()||config.has_psconfig());
-  if(config.has_dsconfig())
-    tables.MergeFrom(config.dsconfig().tables());
-  VLOG(3)<<"merge data tables";
-  if(config.has_psconfig())
-    tables.MergeFrom(config.psconfig().tables());
-  VLOG(3)<<"merge param tables";
-  std::map<int, int> stdtables=ToStdMap(tables);
-  mc_.CreateTables(stdtables);
+std::map<int, GlobalTable*> Worker::InitDistributedStorage(){
+  ModelProto model;
+  ReadProtoFromTextFile(GlobalContext::Get()->model_conf(), &model);
+  delegate_=CreateTableDelegate(model.solver().method());
+  std::map<int, GlobalTable*> tables= delegate_.CreateTables();
   if(GlobalContext::Get()->AmITableServer()){
     table_server_=new TableServer();
-    table_server_->StartTableServer(mc_.GetTables());
+    table_server_->StartTableServer(tables);
     VLOG(3)<<"table server tarted";
   }
   VLOG(3)<<"finish init storage";
-  return config;
+  return tables;
 }
 void Worker::Shutdown() {
 	VLOG(3) << "Worker is shutting down ...";
@@ -77,50 +60,103 @@ void Worker::Shutdown() {
   mpi_->Shutdown();
 }
 
-void Worker::Run(bool load_data, bool do_train) {
-  const DistributedStorageConfig config=InitDistributedStorage();
-  if(!do_train){
-      return;
+void Worker::PrefetchData(Phase phase, Net *net) {
+  Record record;
+  int k;
+  // local batchsize
+  int num=net->input_layers(0)->data().local_shape(0);
+  if(!table->has_loaded())
+    table->Load();
+  for(int n=0;n<num;++n){
+    if(table->done())
+      table->Load();
+    table->get(&k, &record);
+    for(auto* layer:net->input_layers())
+      layer->AddInputRecord(record);
+    table->Next();
   }
-  std::map<std::string, int> train_stores, val_stores, test_stores;
-  if(config.dsconfig().has_train_stores())
-    train_stores=ToStdMap(config.dsconfig().train_stores());
-  if(config.dsconfig().has_val_stores())
-    val_stores=ToStdMap(config.dsconfig().val_stores());
-  if(config.dsconfig().has_test_stores())
-    test_stores=ToStdMap(config.dsconfig().test_stores());
-  ModelProto model;
-  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_CONFIG, &model);
-  Net net(model.net());
-  SGDTrainer trainer;
-  trainer.Init(model.trainer(), &mc_);
-  const SGDProto sgd=model.trainer().sgd();
-  bool reset_net_for_training=true;
-  while (!trainer.HasFinished()) {
-    LOG(INFO)<<trainer.step();
-    if(trainer.ValidateNow()){
-      if(ShouldIDoValidation(trainer.step())){
-        // do validation
-        SetupNet(sgd.validation_batchsize(), kAllocData, &net,
-            model.data().validation_data(), val_stores);
-        trainer.Validate(&net);
-        // do test
-        SetupNet(sgd.test_batchsize(), kAllocData, &net,
-            model.data().test_data(), test_stores);
-        trainer.Test(&net);
-        reset_net_for_training=true;
+}
+
+Performance Woker::Validate(solver* solver, Net* net){
+  PrefetchData(kVal, net);
+  Performance perf;
+  for(int b=0;b<solver->num_valbatches();b++){
+    // TODO join prefetch thread
+    for(auto* layer:net->input_layers())
+      layer->SetInputData(nullptr);
+    // TODO start prefetch thread
+    PrefetchData(kVal, net);
+    perf.Aggregate(solver->ValidateOneBatch(net));
+  }
+  return perf;
+}
+
+void ReportPerformance(Performance perf) {
+  if(AmIGroupLeader()){
+    StateQueue q(member_list_);
+    while(q.HasValid()){
+      Performance p;
+      if(mpi_->TryRead(q.Next(), MTYPE_PERFORMANCE, &p)){
+        perf.Aggregate(p);
+        q.Invalide();
       }
     }
-    if(reset_net_for_training) {
-      // workers should allocate memory for data and parameters. No need to
-      // Init parameters, because they Get parameters from distributed table
-      VLOG(3)<<"worker reset net for training"<<AllocData(kAllocData|kAllocParam);
-      SetupNet(sgd.train_batchsize(), kAllocData|kAllocParam, &net,
-                model.data().train_data(), train_stores);
-      reset_net_for_training=false;
+    mpi_->Send(kCoordinatorRank, MTYPE_PERFORMANCE, perf);
+  }else{
+    mpi_->Send(leader_, MTYPE_PERFORMANCE, perf);
+  }
+}
+void Worker::InitGroupInfo() {
+  GroupConfig conf;
+  mpi_->Read(GlobalContext::Get()->kCoordinatorRank, MTYPE_GROUP_CONFIG,&conf);
+  bool find=false;
+  for(auto& group: conf.group()){
+    leader_=group.leader();
+    bool find=leader_==rank_;
+    if(!find)
+      for(auto member: group.member())
+        find|=member==rank_;
+    if(find){
+      for(auto member: group.member())
+        member_list_.push_back(member);
+      break;
     }
-    vector<Record*> batch=mc_.GetOneBatch(batchsize);
-    trainer.TrainOneBatch(&net, batch);
+  }
+  CHECK(find);
+}
+void Worker::Run(bool load_data, bool do_train) {
+  InitDistributedStorage();
+  if(!do_train)
+      return;
+  InitGroupInfo();
+  ModelProto model;
+  mpi_->Read(GlobalContext::kCoordinatorRank, MTYPE_MODEL_PARTITION, &model);
+  Net net(model.net());
+  net->Setup()
+  Solver solver;
+  solver.Init(model.solver());
+  const SGDProto sgd=model.solver().sgd();
+  PrefetchData( kTrain, net);
+  Performance train_perf;
+  while (!solver.HasFinished()) {
+    LOG(INFO)<<solver.step();
+    mc_.Get(net->params());
+    if(solver.ValidateNow()){
+      if(ShouldIDoValidation(solver.step())){
+        Performance perf=Validate(&solver,net,tables[kVal]);
+        Report(perf);
+      }
+    }
+    for(auto* layer:net->input_layers())
+      layer->SetInputData(nullptr);
+    // TODO start prefetch thread
+    PrefetchData( kTrain, net);
+    train_perf.Aggregate(solver.TrainOneBatch(&net, batch));
+    if(solver.DisplayerNow()){
+      Report(train_perf.Avg());
+      train_perf.Reset();
+    }
+    mc_.Update(net->params());
   }
 }
 }  // namespace lapis

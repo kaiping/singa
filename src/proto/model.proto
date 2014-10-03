@@ -1,26 +1,6 @@
 package lapis;
 
 
-message Shape {
-    // num of instance/records
-  //optional int64 num = 4 [default =0];
-  // following three fields will be used for rgb image feature
-  //optional int32 channels = 6 [default = 1];
-  // expected input height, if not the same, resize the image
-  //optional int32 height = 7 [default = 1];
-  // expected input image width, if not the same, resize the image
-  // it can also be the length of one dimension feature
-  //optional int32 width = 8 [default = 1];
-  // the layer will parse the semantics of the shape
-  repeated int32 s =0;
-}
-
-
-message Partition {
-  repeated int32 start = 1; // included
-  repeated int32 end = 2; // not included
-}
-
 message DataSourceProto {
   required string name = 1;
   // e.g., RGBDirSource and LabelSource
@@ -28,6 +8,10 @@ message DataSourceProto {
   // directory for RGBDirSource and file for LabelSource
   optional string image_folder = 3;
   optional string label_path = 4;
+  message Shape {
+    // the layer will parse the semantics of the shape
+    repeated int32 s =0;
+  }
   repeated Shape shape = 5;
   // offset of record to be read.
   optional int64 offset =9 [default=0];
@@ -78,20 +62,18 @@ message ParamProto {
   optional float weight_decay_multiplier =11 [default=1];
 
   // data of the parameter
-  optional Datum data = 13;
+  optional DAryProto data = 13;
   // history gradient of the parameter
-  optional Datum grad = 14;
+  optional DAryProto grad = 14;
 }
 
 // Only edge have params
-message EdgeProto {
+message LayerProto {
   required string name = 1;
   required string type = 2;
+
   optional int32 num_output = 3;
   repeated ParamProto param = 4;
-  optional bool directed = 5 [default = true];
-  optional string top = 6;
-  optional string bottom =7;
   // for convolutional and pooling edge.
   optional int32 kernel_size = 8;
   optional int32 stride = 9 [default=1];
@@ -110,6 +92,14 @@ message EdgeProto {
     kAvgPooling=2;
   }
   optional PoolingMethod pooling_method = 16;
+
+  // for DataLayer to process image data
+  optional int32 cropsize =9;
+  optional bool mirror = 10;
+
+  optional DAryProto data = 11;
+  optional DAryProto grad = 12;
+
   optional float drop_prob = 17 [default=0.0]; // droput probability
 }
 
@@ -123,62 +113,25 @@ message MeanProto{
   repeated float diff=6 [packed=true];
 }
 
-message LayerProto {
+message EdgeProto {
   required string name = 1;
   // required int32 num_output = 2;
   required string type = 3;
 
-  // for DataLayer to process image data
-  optional string data_source = 7;
-  optional int32 cropsize =9;
-  optional bool mirror = 10;
-
-  optional Datum data = 11;
-  optional Datum grad = 12;
+  required string node1=4;
+  required string node2=5;
+  optional bool directed = 5 [default = true];
 }
 
-message Datum {
-  repeated float value = 1 [packed=true];
-  optional Shape = 2;
-  optional Partition = 3;
+message DAryProto {
+  repeated int32 shape = 2;
+  repeated int32 partition =3
+  repeated float value = 4 [packed=true];
 }
 
 message NetProto {
   repeated LayerProto layer = 3;
   repeated EdgeProto edge  = 4;
-}
-
-// stochastic gradient
-message SGDProto {
-  required float base_learning_rate = 1;
-  optional float base_momentum = 2 [default = 0];
-  optional float base_weight_decay = 3 [default = 0];
-  // the *_x field can be used for multiple purposes, e.g., final_*
-  optional float momentum_x = 4;
-  // for SGDProto::kStep, this field is the gamma used in caffe
-  optional float learning_rate_x = 5;
-  optional float weight_decay_x = 6;
-  optional int32 learning_rate_change_steps = 7;
-  optional int32 momentum_change_steps = 8;
-  optional int32 weight_decay_change_steps = 9;
-
-  enum ChangeProto {
-    kFixed = 0;
-    kInverse_t= 1;
-    kExponential = 2;
-    kLinear = 3;
-    kStep = 4;
-  }
-
-  optional ChangeProto learning_rate_change = 10 [default = kInverse_t];
-  optional ChangeProto weight_decay_change = 11 [default = kFixed];
-  optional ChangeProto momentum_change = 12 [default = kFixed];
-
-  optional int32 total_steps = 13;
-  // batchsize is the num of instances processed per step
-  optional int32 train_batchsize = 14;
-  optional int32 validation_batchsize = 15;
-  optional int32 test_batchsize = 16;
 }
 
 
@@ -190,19 +143,22 @@ message PerformanceProto {
   optional int32 step = 5;
 }
 
-message TrainerProto {
-  // optimizer, may support lbfgs later
-  optional SGDProto sgd = 1;
-
+message SolverProto {
+  // we test kSGD with synchronous mode and AdaGrad in asynchronous mode
+  enum Method{
+    kSGD=1;
+    kAdaGrad=2;
+  }
+  optional Method method=1 [default=kSGD];
   // start the checkpoint operation after this num steps
   optional int32 checkpoint_after_steps = 2 [default = 0];
   // frequency of checkpoint
   optional int32 checkpoint_every_steps = 3 [default = 0];
   // path prefix for the checkpoint file
   optional string checkpoint_prefix  = 4 [default = "tmp/checkpoint"];
-
   // the time of checkpoint
   optional int32 checkpoint_step = 5 [default = 0];
+
   // start display after this num steps
   optional int32 display_after_steps = 6 [default = 0];
   // frequency of display
@@ -210,26 +166,30 @@ message TrainerProto {
   // path prefix for the display file
   optional string display_prefix = 8 [default = "tmp/display"];
 
-// the time of validation
-  optional int32 validate_step = 9 [default = 0];
+  // the time of validation
+  optional int32 validation_step = 9 [default = 0];
   // start validation after this num steps
-  optional int32 validate_after_steps = 10 [default = 0];
+  optional int32 validation_after_steps = 10 [default = 0];
   // frequency of validation
-  optional int32 validate_every_steps = 11 [default = 0];
+  optional int32 validation_every_steps = 11 [default = 0];
 
 
-  //optional PerformanceProto train_perf = 11;
-  //optional PerformanceProto validation_perf = 12;
-  //optional PerformanceProto test_perf = 13;
   optional string perf_prefix = 15 [default = "tmp/performance"];
 
-  enum Algorithm {
+  enum GradAlg{
     kBackPropagation = 1;
     kContrastiveDivergence = 2;
   }
-  optional Algorithm alg= 16 [default = kBackPropagation];
-  optional bool do_train= 17 [default = true];
-  optional bool do_test= 18 [default = false];
+  optional GradAlg alg= 16 [default = kBackPropagation];
+
+  // batchsize is the num of instances processed per step
+  optional int32 train_batchsize = 19;
+  optional int32 train_steps = 20;
+  optional int32 validation_batchsize = 21;
+  optional int32 validation_steps = 22;
+
+  optional SGDValue sgd=23 ;
+  optional AdaGradValue adagrad=24;
 }
 
 message DataProto {
@@ -241,17 +201,44 @@ message ModelProto {
   // model name
   optional string name = 1;
   optional NetProto net = 2;
-  optional TrainerProto trainer = 3;
+  optional SolverProto trainer = 3;
   optional DataProto data =4;
 }
 message Record {
-  optional Datum image=1;
+  optional DAryProto image=1;
   optional int label=1;
 }
-message TupleValue {
-  optional int32 n_update = 1;
-  optional int32 version = 2;
-  optional int32 threshold = 3;
-  optional Datum data = 4;
-  optional Datum grad = 5;
+// value field of the tuple for AdaGrad SGD
+message AdaGradValue {
+  optional int32 n_update = 1 [default=0];
+  optional int32 version = 2 [default=0];
+  optional DAryProto data = 4;
+  optional DAryProto grad = 5;
+  optional float base_learning_rate = 1;
 }
+
+// value field of the tuple for normal SGD
+message SGDValue {
+  required float base_learning_rate = 1;
+  optional float momentum = 2 [default = 0];
+  optional float weight_decay = 3 [default = 0];
+  // for SGDProto::kStep, this field is the gamma used in caffe
+  optional float learning_rate_x = 4;
+  optional int32 learning_rate_change_steps = 5;
+
+  enum ChangeProto {
+    kFixed = 0;
+    kInverse_t= 1;
+    kExponential = 2;
+    kLinear = 3;
+    kStep = 4;
+  }
+  optional ChangeProto learning_rate_change = 6 [default = kInverse_t];
+  optional DAryProto data=7;
+  optional DAryProto grad=8;
+  optional int32 n_update = 9 [default=0];
+  optional int32 version = 10 [default=0];
+  optional float factor = 12;
+}
+
+

@@ -66,61 +66,77 @@ void topology_sort(std::vector<Layer *> *layers) {
 }
 
 Net::Net(const NetProto &net_proto) {
-  LOG(INFO)<<"Init Neural Net";
+  LOG(INFO)<<"Construct Neural Net...";
   std::map<std::string, Layer *> layer_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
     layer->Init(layer_proto);
     layers_.push_back(layer);
     layer_map[layer->name()] = layer;
+    if(layer->HasInput())
+      input_layers_.push_back(layer);
   }
-  int param_id = 0;
   for (auto &edge_proto : net_proto.edge()) {
     Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
     edge->Init(edge_proto, layer_map);
     edges_.push_back(edge);
-    for (auto *param : edge->params()) {
-      param->set_id(param_id++);
-      params_.push_back(param);
-    }
   }
   topology_sort(&layers_);
+  for(auto* layer: layers_)
+    layer->CollectParams(&params_);
+  // the softmax loss layer
+  output_layer_=layers_.back();
   LOG(INFO)<<"Neural Net constructed";
 }
-void Net::InitDAryShape(const int batchsize, const vecot<vector<int>>& shapes){
-  for (auto *layer : layers()){
-    if (layer->HasInput()){
-      VLOG(3)<<layer->name();
-      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      dlayer->InitDAryShape(shapes);
-    }
-  }
+
+void Net::InitDAryShape()
   for(auto *layer : layers()) {
     VLOG(3)<<layer->name();
     layer->InitDAryShape();
   }
 }
 
-void Net::Setup(const char flag,const int batchsize,
-                const std::map<std::string, Shape> &shapes,
-                const std::map<std::string, int>& stores){
-  Setup(flag, batchsize, shapes);
-  for (auto *layer : layers()){
-    if (layer->HasInput()){
-      DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
-      std::string source=dlayer->data_source();
-      CHECK(shapes.find(source)!=shapes.end());
-      dlayer->SetInputStore(stores.at(source));
-    }
+void Net::InitDAryShape(const vecot<vector<int>>& shapes){
+  for (auto *layer : input_layers_){
+    DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+    dlayer->InitDAryShape(shapes);
+  }
+  InitDAryShape();
+}
+
+void Net::AllocateMemory() {
+  for(auto* layer: layers_)
+    layer->AllocateMemory();
+}
+
+void Net::InitParameters() {
+  for(auto* param: params_){
+    param->Fill();
   }
 }
-void Net::ToProto(NetProto *net_proto) {
+/**
+ * called by worker
+ */
+void Net::Setup() {
+  InitDAryShape(input_shapes);
+  AllocateMemory();
+}
+/**
+ * called by coordiator
+ */
+void Net::Setup(const vector<vector<int>>& input_shapes) {
+  InitDAryShape(input_shapes);
+  if(fill_parameter)
+    InitParameters();
+}
+
+void Net::ToProto(NetProto *proto) {
   for (Layer *layer : layers_) {
-    LayerProto *layer_proto = net_proto->add_layer();
+    LayerProto *layer_proto = proto->add_layer();
     layer->ToProto(layer_proto);
   }
   for (Edge *edge : edges_) {
-    EdgeProto *edge_proto = net_proto->add_edge();
+    EdgeProto *edge_proto = proto->add_edge();
     edge->ToProto(edge_proto);
   }
 }

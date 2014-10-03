@@ -10,24 +10,47 @@ using std::string;
 using std::unordered_map;
 
 namespace lapis {
+const int kCoordinatorRank=0;
+enum Phase{
+  kTrain=1,
+  kVal=2,
+  kTest=3
+};
+template<typename T>
+class StateQueue {
+ public:
+   StateQueue(vector<T> members){
+     for(auto& x:members)
+      state[x]=true;
+     iter_=states.begin();
+     nvalide_=members.size();
+   }
 
-// flag to init parameter content
-constexpr char  kInitParam=1;
-// flag to allocate memory for parameter
-constexpr char kAllocParam=2;
-// flag to allocate memory for features/data
-constexpr char kAllocData=4;
+   T Next() {
+     CHECK(nvalide_);
+     iter_++;
+     while(iter_!=states_.end()&&iter_->second==false)
+       iter_++;
+     if(iter_==states_.end()){
+       iter_=states_.begin();
+       while(iter_!=states_.end()&&iter_->second==false)
+        iter_++;
+     }
+     return iter_->first;
+   }
+   void Invalide() {
+     CHECK(iter_->second);
+     iter_->second=false;
+     nvalide_--;
+   }
 
-inline bool InitParam(const char x) {
-  return (x&kInitParam)!=0;
-}
-
-inline bool AllocParam(const char x) {
-  return (x&kAllocParam)!=0;
-}
-
-inline bool AllocData(const char x) {
-  return (x&kAllocData)!=0;
+   void HasValid() {
+      return nvalide_>0;
+   }
+ private:
+  std::map<T,bool> states_;
+  int nvalide_;
+  std::map<T,bool>::iterator iter_;
 }
 
 }  // namespace lapis

@@ -13,15 +13,6 @@
 
 namespace lapis {
 /**
-  * there are three phases, i.e., training, validation, and test
-  */
-enum class Phase {
-  kInit = 0,
-  kTrain = 1,
-  kValidation = 2,
-  kTest = 3
-};
-/**
  * Forward declaration of Net class
  */
 class Net;
@@ -32,36 +23,28 @@ class Net;
  * Currently only one child trainer is implemented, i.e., SGDTrainer.
  * May support Newton-method based trainer later.
  */
-class Trainer {
+class Solver {
  public:
   /**
    * init fields of the trainer
    * @param trainer_proto user configuration for the trainer
    */
-  virtual void Init(const TrainerProto &proto, ModelController *mc);
-  virtual ~Trainer();
-  /**
-   * Init a DataSource object based on DataSourceProto
-  static void InitDataSource(
-    const ::google::protobuf::RepeatedPtrField<DataSourceProto> &protos,
-    std::vector<DataSource *> *sources);
-   */
-
+  Solver(const SolverProto &proto);
   /**
    * train the model for one-minibatch by either backpropagation or contrastive divergence
    * @param net the Net object to be trained
    */
-  virtual void TrainOneBatch(Net* net)=0;
+  virtual Performance TrainOneBatch(Net* net);
   /**
    * test performance on validation dataset
    * @param net the Net object
    */
-  virtual void Validate(Net *net) = 0;
+  virtual Performance ValidateOneBatch(Net *net);
   /**
    * test performance on test dataset
    * @param net the current Net object
+  virtual Performance TestOneBatch(Net *net);
    */
-  virtual void Test(Net *net) = 0;
   /**
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()
@@ -112,7 +95,6 @@ class Trainer {
     return step_;
   }
 
-  static Phase phase;
  protected:
   //! current phase, need this field to change the data sources for input layer
   //! current training step, e.g., such num of mini-batches have been processed
@@ -154,9 +136,6 @@ class Trainer {
   bool do_train_;
   //! Call Test if true
   bool do_test_;
-
-  //! ModelController to provide parameters and input features
-  ModelController *model_controller_;
 };
 
 }  // namespace lapis

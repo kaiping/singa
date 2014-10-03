@@ -3,8 +3,7 @@
 
 /**
  * This file is the main entrance of the program.
- * It registers user defined classes, e.g., data source, edge and layer
- * classes and start either the worker or coordinator.
+ * User can register their own defined  classes, e.g., layers
  */
 
 #include <gflags/gflags.h>
@@ -17,8 +16,8 @@
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_bool(load_data, false, "Load data to distributed tables");
-DEFINE_bool(run, true,  "run training algorithm");
+DEFINE_bool(load, false, "Load data to distributed tables");
+DEFINE_bool(run, true,  "Run training algorithm");
 // for debugging use
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
@@ -37,10 +36,10 @@ int main(int argc, char **argv) {
   VLOG(3)<<"after global context";
   if(gc->AmICoordinator()) {
     lapis::Coordinator coordinator;
-    coordinator.Run(FLAGS_load_data, FLAGS_run);
+    coordinator.Run(FLAGS_load, FLAGS_run);
   }else {
     lapis::Worker worker;
-    worker.Run(FLAGS_load_data, FLAGS_run);
+    worker.Run(FLAGS_load, FLAGS_run);
   }
   return 0;
 }

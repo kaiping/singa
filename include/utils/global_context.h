@@ -24,6 +24,7 @@ class GlobalContext {
   // num of memory servers, default is the num of processes
   int num_table_servers() { return table_server_end_-table_server_start_; }
   int num_processes() { return num_processes_; }
+  int num_workers() {return num_processes_-1;}
   void set_num_processes(int num) ;
   bool IsTableServer(int rank) {
     return rank>=table_server_start_&&rank<table_server_end_;
@@ -36,7 +37,7 @@ class GlobalContext {
   bool AmIWorker() {return rank_!=kCoordinatorRank;}
   void set_rank(int rank) {rank_=rank;}
   // assume the rank of coordinator is 0
-  static int kCoordinatorRank;
+  static int kCoordinator;
  private:
   GlobalContext(const string &sys_conf, const string &model_conf);
 
@@ -53,6 +54,8 @@ class GlobalContext {
   bool synchronous_;
   // path of model config
   std::string model_conf_;
+  // number of workers per group
+  int group_size_;
   static shared_ptr<GlobalContext> instance_;
 };
 }  // namespace lapis

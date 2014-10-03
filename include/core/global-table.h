@@ -43,6 +43,8 @@ class GlobalTable :
   void ApplyUpdates(const TableData &req);
   void UpdatePartitions(const ShardInfo &sinfo);
 
+  Stats stats();
+
   int pending_write_bytes();
 
   // Clear any local data for which this table has ownership.

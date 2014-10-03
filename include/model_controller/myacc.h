@@ -18,5 +18,16 @@ struct MyAcc : public Accumulator<FloatVector> {
     return;
   }
 };
+
+struct TestUpdater : public Accumulator<int>{
+	int factor;
+
+	TestUpdater():factor(0){}
+
+	void Accumulate(int *a, const int &b){
+		*a = (*a)*factor + b;
+		factor++;
+	}
+};
 }  // namespace lapis
 #endif  // INCLUDE_MC_MYACC_H_

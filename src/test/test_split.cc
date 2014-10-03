@@ -1,6 +1,7 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
 
 
+//  Testing the unbalance in spliting parameter vectors.
 
 #include "core/global-table.h"
 #include "core/common.h"
@@ -14,13 +15,19 @@
 #include "coordinator.h"
 #include "model_controller/myacc.h"
 #include <cmath>
+#include <stdlib.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
 
 using namespace lapis;
+using std::vector;
 
 DEFINE_bool(sync_update, false, "Synchronous put/update queue");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_int32(num_keys,10,"");
+DEFINE_double(threshold,100000000, "max # of parameters in a vector");
+DEFINE_int32(iterations,5,"numer of get/put iterations");
 
 typedef map<int, GlobalTable*> Map;
 Map tables;
@@ -29,15 +36,41 @@ shared_ptr<GlobalContext> context;
 std::vector<ServerState*> server_states;
 TableServer *table_server;
 
+FloatVector large_msg, small_msg;
+const int SIZE=16;
+
+long sizes[] = { 37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,
+		14112, 4096, 4096, 1000, 384, 384, 256, 256, 96 };
+
+vector<FloatVector*> value_msg;
+
+int num_keys;
+
+// create large and small messages
+void init_messages(){
+	num_keys = 0;
+	for (int i=0; i<SIZE; i++){
+		int total=0;
+		while (total<sizes[i]){
+			FloatVector* fv = new FloatVector();
+			for (int j=0; j+total<sizes[i] && j<FLAGS_threshold; j++)
+				fv->add_data(static_cast<float>(rand())/static_cast<float>(RAND_MAX));
+			value_msg.push_back(fv);
+			total+=FLAGS_threshold;
+			num_keys++;
+		}
+	}
+}
+
 void create_mem_table(int id, int num_shards){
 
 	TableDescriptor *info = new TableDescriptor(id, num_shards);
 	  info->key_marshal = new Marshal<int>();
-	  info->value_marshal = new Marshal<int>();
+	  info->value_marshal = new Marshal<FloatVector>();
 	  info->sharder = new Sharding::Mod;
-	  info->accum = new TestUpdater();
-	  info->partition_factory = new typename SparseTable<int, int>::Factory;
-	  auto table=new TypedGlobalTable<int, int>();
+	  info->accum = new MyAcc();
+	  info->partition_factory = new typename SparseTable<int, FloatVector>::Factory;
+	  auto table=new TypedGlobalTable<int, FloatVector>();
 	  table->Init(info);
 	  tables[id] = table;
 }
@@ -100,37 +133,77 @@ void worker_table_init(){
 	VLOG(3) << "done starting table server";
 }
 
+double random_double(){
+	return static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+}
 
+// popular table with random large or small messages.
+// the message distribution specified in FLAGS_large_precentage
 void coordinator_load_data(){
-	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
-	for (int i = 1; i<=FLAGS_num_keys; i++){
-		table->put(i,i);
+	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
+
+	num_keys = 0;
+	for (int i = 0; i < SIZE; i++) {
+		int total = 0;
+		while (total < sizes[i]) {
+			FloatVector* fv = new FloatVector();
+			for (int j = 0; j + total < sizes[i] && j < FLAGS_threshold; j++)
+				fv->add_data(
+						static_cast<float>(rand())
+								/ static_cast<float>(RAND_MAX));
+			table->put(num_keys,*fv);
+			total += FLAGS_threshold;
+			num_keys++;
+		}
 	}
-	VLOG(3) << "Loaded data successfully ...";
+
+
+	VLOG(3) << "Loaded data successfully ... " << num_keys << " messages";
+}
+
+void get(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
+	long start;
+	for (int i=0; i<num_keys; i++){
+		start = Now();
+		table->get(i);
+		latency << "get: " << (Now() - start) << endl;
+	}
+}
+
+void update(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
+	long start;
+	for (int i=0; i<num_keys; i++){
+		start = Now();
+		table->update(i,*value_msg[i]);
+		latency << "update: " << (Now() - start) << endl;
+	}
 }
 
 void worker_test_data(){
-	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
-	for (int i=1; i<=FLAGS_num_keys; i++)
-		VLOG(3) << StringPrintf("Worker %d got (%d,%d)", NetworkThread::Get()->id(), i, table->get(i));
+	init_messages();
+	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
 
-
-	for (int j = 0; j < 2; j++) {
-		for (int i = 1; i <= FLAGS_num_keys; i++)
-			table->update(i, i);
-
-		for (int i = 1; i <= FLAGS_num_keys; i++)
-			VLOG(3)
-					<< StringPrintf("Worker %d got (%d,%d)",
-							NetworkThread::Get()->id(), i, table->get(i));
+	ofstream latency(StringPrintf("latency_%d",NetworkThread::Get()->id()));
+	ofstream throughput(StringPrintf("throughput_%d", NetworkThread::Get()->id()));
+	long start;
+	for (int i=0; i<FLAGS_iterations; i++){
+		start = Now();
+		get(table, latency);
+		throughput << "get: " << (Now() - start) << " over " << num_keys << " ops " << endl;
+		start = Now();
+		update(table, latency);
+		throughput << "update: " << (Now() - start) << " over " << num_keys << " ops " << endl;
 	}
-/*
-	for (int i = 1; i <= FLAGS_num_keys; i++)
-				VLOG(3)
-						<< StringPrintf("Worker %d got (%d,%d)",
+	latency.close();
+	throughput.close();
 
-							NetworkThread::Get()->id(), i, table->get(i));
-*/
+}
+
+void print_table_stats(){
+	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
+	ofstream log_file(StringPrintf("log_variance_%d", NetworkThread::Get()->id()));
+	log_file << "table size at process = " << table->stats()["TABLE_SIZE"] << endl;
+	log_file.close();
 }
 
 void shutdown(){
@@ -154,6 +227,9 @@ void shutdown(){
 	  EmptyMessage msg;
 	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
 	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
+
+	  print_table_stats();
+
 	  table_server->ShutdownTableServer();
 	  VLOG(3) << "Flushing node " << network->id();
 	  network->Shutdown();
@@ -170,7 +246,10 @@ int main(int argc, char **argv) {
 	network = NetworkThread::Get();
 	VLOG(3) << "*** testing memory servers, with "
 			<< context->num_table_servers() << " servers";
+
+
 	create_mem_table(0,context->num_table_servers());
+
 
 	if (context->AmICoordinator()){
 		coordinator_assign_tables(0);
@@ -181,6 +260,7 @@ int main(int argc, char **argv) {
 		worker_table_init();
 		network->barrier();
 		VLOG(3) << "passed the barrier";
+
 		//Sleep(1);
 		worker_test_data();
 	}

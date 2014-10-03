@@ -139,6 +139,14 @@ void GlobalTable::SendUpdates() {
   pending_writes_ = 0;
 }
 
+Stats GlobalTable::stats(){
+	Stats stats;
+	for (size_t i = 0; i < partitions_.size(); ++i) {
+		stats.Merge(partitions_[i]->stats());
+	}
+	return stats;
+}
+
 int GlobalTable::pending_write_bytes() {
   int64_t s = 0;
   for (size_t i = 0; i < partitions_.size(); ++i) {

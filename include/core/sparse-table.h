@@ -228,6 +228,10 @@ void SparseTable<K, V>::update(const K &k, const V &v) {
     ((Accumulator<V> *)info_->accum)->Accumulate(&buckets_[b].v, v);
   } else {
     put(k, v);
+    string xk,xv;
+    ((Marshal<K>*)info_->key_marshal)->marshal(k,&xk);
+    ((Marshal<V>*)info_->value_marshal)->marshal(v,&xv);
+    stats_["TABLE_SIZE"]+=xk.size()+xv.size();
   }
 }
 

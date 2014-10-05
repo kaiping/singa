@@ -64,8 +64,8 @@ private:
 };
 
 template <class V>
-struct Accumulator {
-  virtual void Accumulate(V *a, const V &b) = 0;
+struct BaseUpdateHandler {
+  virtual bool Update(V *a, const V &b) = 0;
 };
 
 template <class K>

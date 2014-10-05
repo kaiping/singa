@@ -1,5 +1,11 @@
 package lapis;
-
+message GroupConfig {
+  message Group{
+    optional int32 leader=1;
+    repeated int32 member=2;
+  }
+  repeated Group group=1;
+}
 enum MessageTypes {
   MTYPE_PUT_REQUEST = 1;
   MTYPE_GET_REQUEST = 2;
@@ -24,16 +30,12 @@ enum MessageTypes {
   MTYPE_DATA_PUT_REQUEST_FINISH = 15;
   MTYPE_DATA_PUT_REQUEST_DONE = 16;
 
-  MTYPE_MODEL_PARTITION = 17;
+  MTYPE_NET_PARTITION = 17;
   MTYPE_VALIDATION = 18;
   MTYPE_INSTRUCTION = 19;
   MTYPE_PERFORMANCE = 20;
   MTYPE_GROUP_CONFIG = 21;
 };
-message DistributedStorageConfig{
-  optional DataStorageConfig dsconfig=1;
-  optional ParamStorageConfig psconfig=2;
-}
 message EmptyMessage {}
 message ShortMsg {
   optional int32 step = 1;

@@ -1,15 +1,14 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 13:32
 
-#ifndef INCLUDE_MODEL_TRAINER_H_
-#define INCLUDE_MODEL_TRAINER_H_
+#ifndef INCLUDE_NET_SOLVER_H_
+#define INCLUDE_NET_SOLVER_H_
 #include <string>
 #include <vector>
 #include "proto/model.pb.h"
 #include "net/net.h"
-#include "datasource/data_source.h"
-#include "model_controller/model.h"
 #include "utils/common.h"
+
 
 namespace lapis {
 /**
@@ -49,12 +48,12 @@ class Solver {
    * marshal the state of the trainer to google protobuf object, which will
    * later be dumped onto disk by ::Checkpoint()
    */
-  virtual void ToProto(TrainerProto *proto);
+  virtual void ToProto(SolverProto *proto);
   /**
    * return true if the stop condition is satisfied, e.g., the maximum number
    * of steps have been reached.
    */
-  virtual bool HasFinished()=0;
+  virtual bool HasFinished();
   /**
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
@@ -66,20 +65,33 @@ class Solver {
     }
     return false;
   }
-
+  const bool DisplayNow(const int step) {
+    if (display_after_steps_ > 0 && step >= display_after_steps_) {
+      if ((step - display_after_steps_) % display_every_steps_ == 0)
+        return true;
+    }
+    return false;
+  }
+  const bool DisplayNow() {
+    DisplayNow(step_);
+  }
   const bool CheckpointNow() {return CheckpointNow(step_);}
   /**
    * return true if it is time to do checkpoint
    * @param step the ::Train() has been called step times.
    */
   const bool ValidateNow(const int step) {
-    if (validate_after_steps_ > 0 && step >= validate_after_steps_) {
-      if ((step - validate_after_steps_) % validate_every_steps_ == 0)
+    if (validation_after_steps_ > 0 && step >= validation_after_steps_) {
+      if ((step - validation_after_steps_) % validation_every_steps_ == 0)
         return true;
     }
     return false;
   }
   const bool ValidateNow() {return ValidateNow(step_);}
+
+  int validation_steps() {
+    return validation_steps_;
+  }
   /**
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().
@@ -94,7 +106,7 @@ class Solver {
   const int step() {
     return step_;
   }
-
+  static int phase;
  protected:
   //! current phase, need this field to change the data sources for input layer
   //! current training step, e.g., such num of mini-batches have been processed
@@ -117,27 +129,15 @@ class Solver {
   std::string display_prefix_;
 
   //! start validation after this num of steps
-  int validate_after_steps_;
+  int validation_after_steps_;
   //! display frequency
-  int validate_every_steps_;
-/*
-  //! data providers for training, see DataSource
-  std::vector<DataSource *> train_data_;
-  //! data providers for validation, see DataSource
-  std::vector<DataSource *> validation_data_;
-  //! data providers for test, see DataSource
-  std::vector<DataSource *> test_data_;
-  */
-
+  int validation_every_steps_;
   //! path prefix for Performance
   std::string perf_prefix_;
-
-  //! Call Train and Validate() if true
-  bool do_train_;
-  //! Call Test if true
-  bool do_test_;
+  int train_steps_;
+  int validation_steps_;
 };
 
 }  // namespace lapis
-#endif  // INCLUDE_MODEL_TRAINER_H_
+#endif  // INCLUDE_NET_SOLVER_H_
 

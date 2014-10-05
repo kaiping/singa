@@ -2,29 +2,23 @@
 // 2014-07-16 22:01
 #include <glog/logging.h>
 #include <memory>
+#include <fstream>
+#include <chrono>
+#include <random>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "datasource/data_source.h"
+#include "utils/proto_helper.h"
+
 
 namespace lapis {
 /*****************************************************************************
  * Implementation for DataSource
  ****************************************************************************/
-std::map<string, Shape> DataSource::ShapesOf(const DataSourceProtos &sources) {
-  std::map<string, Shape> shape_map;
-  for(auto& source: sources) {
-    shape_map[source.name()]=source.shape();
-  }
-  return shape_map;
-}
-
-const DataSource::Init(const DataSourceProto &ds_proto){
-  if(proto.shape().has_num())
-    size_ = proto.shape().num();
-  else
-    size_=0;
+void DataSource::Init(const DataSourceProto &proto){
+  size_=0;
   name_ = proto.name();
   offset_ = proto.offset();
 }
@@ -33,18 +27,19 @@ void DataSource::ToProto(DataSourceProto *proto) {
   proto->set_offset(offset_);
 }
 
-const void ImageNetSource::Init(const DataSourceProto &proto){
+void ImageNetSource::Init(const DataSourceProto &proto){
   DataSource::Init(proto);
   image_folder_ = proto.image_folder();
   label_path_=proto.label_path();
-  if(ds_proto.has_mean_file())
-    mean_file_=ds_proto.mean_file();
+  if(proto.has_mean_file())
+    mean_file_=proto.mean_file();
   else
     mean_file_="";
-  Shape s=proto.shape();
-  width_ = s.width();
-  height_ = s.height();
-  channels_=s.channels();
+  do_shuffle_=proto.shuffle();
+  DataSourceProto::Shape shape=proto.shape(0);
+  width_ = shape.s(0);
+  height_ = shape.s(1);
+  channels_=shape.s(2);
   record_size_=width_*height_*channels_;
   CHECK_EQ(channels_,3);
   LOG(INFO)<<"Loading labels...";
@@ -52,7 +47,7 @@ const void ImageNetSource::Init(const DataSourceProto &proto){
   CHECK(is.is_open()) << "Error open the label file " << label_path_;
   int v;
   std::string k;
-  image_names_ = std::make_shared<StringVec>();
+  lines_.clear();
   if(size_>0){
     for (int i = 0; i < size_; i++) {
       is >> k >> v;
@@ -63,7 +58,7 @@ const void ImageNetSource::Init(const DataSourceProto &proto){
       lines_.push_back(std::make_pair(k,v));
   }
   is.close();
-  LOG(INFO)<<"Load "<<labels_.size();
+  LOG(INFO)<<"Load "<<lines_.size();
   if(do_shuffle_){
     DLOG(INFO)<<"Do Shuffling...";
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -80,7 +75,7 @@ const void ImageNetSource::Init(const DataSourceProto &proto){
 }
 
 void ImageNetSource::ReadImage(const std::string &path, int height, int width,
-    const float *mean, Datum* datum) {
+    const float *mean, DAryProto* image) {
   cv::Mat cv_img;
   if (height > 0 && width > 0) {
     VLOG(3)<<"resize image";
@@ -91,16 +86,15 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
     cv_img = cv::imread(path, CV_LOAD_IMAGE_COLOR);
   }
   CHECK(cv_img.data != NULL) << "Could not open or find file " << path;
-  datum->set_channels(3);
-  datum->set_height(cv_img.rows);
-  datum->set_width(cv_img.cols);
-  float* dptr=datum->mutable_value();
+  image->add_shape(3);
+  image->add_shape(cv_img.rows);
+  image->add_shape(cv_img.cols);
+  int idx=0;
   if(mean==nullptr){
     for (int c = 0; c < 3; ++c) {
       for (int h = 0; h < cv_img.rows; ++h) {
         for (int w = 0; w < cv_img.cols; ++w) {
-          *dptr=static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c]);
-          dptr++;
+          image->set_value(idx++,static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c]));
         }
       }
     }
@@ -108,8 +102,7 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
     for (int c = 0; c < 3; ++c) {
       for (int h = 0; h < cv_img.rows; ++h) {
         for (int w = 0; w < cv_img.cols; ++w) {
-          *dptr=static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c])-(*mean);
-          dptr++;
+          image->set_value(idx++,static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c])-(*mean));
           mean++;
         }
       }
@@ -117,15 +110,15 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
   }
 }
 
-void RGBDirSource::NextRecord(ImageNetRecord *record) {
-  Datum *datum=record->mutable_image();
-  if(datum->value().size()<record_size_){
-    for(int i=0;i<ds->channels()*ds->with()*ds->height();i++)
-      datum->add_value(0);
+void ImageNetSource::NextRecord(Record *record) {
+  DAryProto *image=record->mutable_image();
+  if(image->value().size()<record_size_){
+    for(int i=0;i<record_size_;i++)
+      image->add_value(0);
   }
-  ReadImage(img_folder_ + "/" + lines_.at(offset_).first, height_,
-            width_, data_mean_->data().data(),datum);
-  record->set_label(lines_.at(offset_).second;
+  ReadImage(image_folder_ + "/" + lines_.at(offset_).first, height_,
+            width_, data_mean_->data().data(),image);
+  record->set_label(lines_.at(offset_).second);
   offset_++;
 }
 /*****************************************************************************

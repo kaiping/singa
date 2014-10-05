@@ -3,23 +3,24 @@
 #include "coordinator.h"
 #include "proto/model.pb.h"
 #include "net/net.h"
-#include "net/sgd_trainer.h"
-#include "model_controller/model.h"
 #include "utils/network_thread.h"
 #include "utils/proto_helper.h"
 #include "datasource/data_source.h"
 #include "utils/proto_helper.h"
+#include "utils/common.h"
 #include "proto/common.pb.h"
 
 
 using std::string;
+using std::vector;
 DECLARE_double(sleep_time);
 
 namespace lapis {
-Coordinator::Coordinator() {
+Coordinator::Coordinator(TableDelegate* delegate) {
   LOG(INFO)<<"Start coordinator...";
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
+  delegate_=delegate;
 }
 
 Coordinator::~Coordinator() {
@@ -103,41 +104,39 @@ void Coordinator::Shutdown() {
 
 // load all data sources (e.g., image and label) for either training data,
 // vlidation data or test data.
-void Coordinator::LoadData(const DataSourceProto& source, int tid){
+void Coordinator::LoadData(const DataSourceProto& source, int phase){
   // image file names, may from label source
   DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
   LOG(INFO)<<"Loading DataSource : "<<ds->name();
   ds->Init(source);
   int rid=0;
-  ImageNetRecord record;
+  Record record;
   while(!ds->eof()){
     ds->NextRecord(&record);
-    delegate_->Put(tid, rid++, record);
+    delegate_->Insert(phase, rid++, record);
     if(rid%10000==0)
       LOG(INFO)<<rid<<" records have been loaded";
   }
-  delegate_->Flush(tid);
+  delegate_->Flush(phase);
   delete ds;
 }
 
 void Coordinator::InitDistributedStorage(bool load_data, const DataProto& data){
   // init table servers, must be after creating stores which creating tables
-  const std::map<int, GlobalTable*> tables=delegate_.CreateTables();
-  InitTableServers(tables);
-
+  InitTableServers(delegate_->tables());
   if(load_data){
     if(data.has_train_data())
-      LoadData(data.train_data(), tables[kTrain]);
+      LoadData(data.train_data(), kTrain);
     if(data.has_validation_data())
-      LoadData(data.validation_data(), tables[kVal]);
+      LoadData(data.validation_data(), kVal);
     if(data.has_test_data())
-      LoadData(data.test_data(), tables[kTest]);
+      LoadData(data.test_data(), kTest);
   }
   VLOG(3)<<"finish init dist storage";
 }
 
 Net* Coordinator::SetupNetShape(const ModelProto& model) {
-  Net net(model.net());
+  Net *net=new Net(model.net());
   // setup the net, init parameters
   int batchsize=model.solver().train_batchsize();
   vector<vector<int>> shapes;
@@ -151,22 +150,24 @@ Net* Coordinator::SetupNetShape(const ModelProto& model) {
   return net;
 }
 
-void Coordinator::FillParameterTable(int threshold,Solver* solver,  Net* net){
-  if(solver->method()==SolverProto::kSGD){
+void Coordinator::FillParameterTable(int threshold, const SolverProto& solver,  Net* net){
+  if(solver.method()==SolverProto::kSGD){
+    SGDValue sgd(solver.sgd());
     if(GlobalContext::Get()->synchronous())
-      solver->sgd().set_threshold(threshold);
-    delegate_->set_example(solver->sgd());
+      sgd.set_threshold(threshold);
+    dynamic_cast<TypedTableDelegate<int, SGDValue>*>(delegate_)->set_example(sgd);
   }
   else{
+    AdaGradValue adagrad(solver.adagrad());
     if(GlobalContext::Get()->synchronous())
-      solver.adagrad().set_threshold(threshold);
-    delegate_->set_example(solver.adagrad());
+      adagrad.set_threshold(threshold);
+    dynamic_cast<TypedTableDelegate<int, AdaGradValue>*>(delegate_)->set_example(adagrad);
   }
 
   for(auto* param:net->params()){
     param->Fill();
-    delegate_.Put(param);
-    param->Free();
+    delegate_->Put(param);
+    param->FreeMemory();
   }
 }
 
@@ -181,25 +182,20 @@ void Coordinator::RunStandalone(const ModelProto& model) {
 }
 
 // TODO model partitioning
-const vector<ModelProto*> Coordinator::PartitionModel(const ModelProto& model, Net* net){
-  ModelProto *proto=new ModelProto();
-  proto->CopyFrom(model);
-  proto->clear_net();
-  NetProto *netproto=proto->mutable_net();
-  net->ToProto(netproto);
-  int batchsize=model.solver().train_batchsize();
-  CHECK_EQ(batchsize%ngroups,0);
-  vector<ModelProto*> ret{proto};
+const vector<NetProto> Coordinator::PartitionNet(Net* net){
+  NetProto netproto;
+  net->ToProto(&netproto);
+  vector<NetProto> ret{netproto};
   return ret;
 }
 
 void Coordinator::DistributePartition(const GroupConfig& conf,
-    const vectro<ModelProto*> & protos) {
+    const vector<NetProto> & protos) {
   for(auto& group:conf.group()){
     CHECK_EQ(group.member().size(), protos.size());
-    mpi_->Send(group.leader(), MTYPE_MODEL_CONFIG, *protos[0]);
-    for (i = 1; i < protos.size(); i++) {
-      mpi_->Send(group.member(i), MTYPE_MODEL_PARTITION, *protos[i]);
+    mpi_->Send(group.leader(), MTYPE_NET_PARTITION, protos[0]);
+    for (unsigned int i = 1; i < protos.size(); i++) {
+      mpi_->Send(group.member(i), MTYPE_NET_PARTITION, protos[i]);
     }
   }
 }
@@ -208,17 +204,17 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
   VLOG(3)<<"start worker";
   int group_size=8;
   int ngroups=1;
-  const GroupConfig conf=CreateGroups(group_size);
+  const GroupConfig config=CreateGroups(group_size);
   mpi_->Broadcast(MTYPE_GROUP_CONFIG, config);
   Net* net=SetupNetShape(model);
-  FillParameterTable(group_size, model.mutable_solver(), net);
-  vector<ModelProto*> partitions=PartitionModel(model, net);
-  DistributePartition(conf, parititions);
-  StateQueue groups(ngroups);
+  FillParameterTable(group_size, model.solver(), net);
+  vector<NetProto> partitions=PartitionNet(net);
+  DistributePartition(config,partitions);
+  StateQueue<int> groups(ngroups);
   while(groups.HasValid()) {
     int src = 0;
     EmptyMessage end_msg;
-    if(mpi_->TryRead(groups.Next(), end_msg, &src)) {
+    if(mpi_->TryRead(groups.Next(),MTYPE_WORKER_END, &end_msg, &src)) {
       groups.Invalide();
     }
 
@@ -237,6 +233,7 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
     }
     Sleep(FLAGS_sleep_time);
   }
+  delete net;
 }
 const GroupConfig Coordinator::CreateGroups(int group_size) {
   int nworkers=GlobalContext::Get()->num_workers();
@@ -244,29 +241,17 @@ const GroupConfig Coordinator::CreateGroups(int group_size) {
   GroupConfig config;
   // worker stats at rank 0
   int wrank=0;
-  for (i = 0; i < nworkers/group_size; i++) {
-    Group *group=config->add_group();
+  for (int i = 0; i < nworkers/group_size; i++) {
+    GroupConfig::Group *group=config.add_group();
     group->set_leader(wrank++);
-    for (k = 0; k < group_size; k++) {
+    for (int k = 0; k < group_size; k++) {
       group->add_member(wrank++);
     }
   }
   return config;
 }
-
-void Coordinator::InitTableDelegate(const SolverProto& solver){
-  if(solver().method()==SolverProto::kSGD){
-    delegate_=new TypedTableDelegate<int, SGDValue>();
-  }
-  else{
-    delegate_=new TypedTableDelegate<int, AdaGradValue>();
-  }
-}
-void Coordinator::Run(bool load_data, bool do_train) {
-  ModelProto model;
-  ReadProtoFromTextFile(context_->model_conf(), &model);
-  InitTableDelegate(model.solver(),8);
-  InitDistributedStorage(load_data, model);
+void Coordinator::Run(bool load_data, bool do_train, const ModelProto& model) {
+  InitDistributedStorage(load_data, model.data());
   if(do_train&&!context_->standalone())
     RunOnCluster(model);
 }

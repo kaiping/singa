@@ -223,7 +223,7 @@ template <class K, class V>
 void SparseTable<K, V>::update(const K &k, const V &v) {
   int b = bucket_for_key(k);
   if (b != -1) {
-    ((Accumulator<V> *)info_->accum)->Accumulate(&buckets_[b].v, v);
+    ((BaseUpdateHandler<V> *)info_->accum)->Update(&buckets_[b].v, v);
   } else {
     put(k, v);
   }

@@ -6,11 +6,11 @@
 #include <vector>
 
 #include "proto/model.pb.h"
-#include "net/trainer.h"
+#include "net/solver.h"
 
 namespace lapis {
-
-void Solver(const TrainerProto &proto) {
+int Solver::phase=kTrain;
+Solver::Solver(const SolverProto &proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.checkpoint_step();
   checkpoint_after_steps_ = proto.checkpoint_after_steps();
@@ -21,15 +21,15 @@ void Solver(const TrainerProto &proto) {
   display_after_steps_ = proto.display_after_steps();
   display_every_steps_ = proto.display_every_steps();
   display_prefix_ = proto.display_prefix();
-  validate_after_steps_ = proto.validate_after_steps();
-  validate_every_steps_ = proto.validate_every_steps();
+  validation_after_steps_ = proto.validation_after_steps();
+  validation_every_steps_ = proto.validation_every_steps();
 
   perf_prefix_ = proto.perf_prefix();
-  do_train_ = proto.do_train();
-  do_test_ = proto.do_test();
+  train_steps_=proto.train_steps();
+  validation_steps_=proto.validation_steps();
 }
 
-void Solver::ToProto(TrainerProto *proto) {
+void Solver::ToProto(SolverProto *proto) {
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
   proto->set_checkpoint_every_steps(checkpoint_every_steps_);
   proto->set_checkpoint_step(checkpoint_step_);
@@ -39,40 +39,26 @@ void Solver::ToProto(TrainerProto *proto) {
   proto->set_display_prefix(display_prefix_);
 }
 
-void Solver::Forward(Net* net) {
-  for (auto* layer : net->layers()){
-    layer->Forward();
-  }
-}
-
-void Solver::Backward(Net* net) {
-  std::vector<Layer *> layers = net->layers();
-  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
-    (*layer)->Backward();
-}
-
 Performance Solver::TrainOneBatch(Net *net){
-  Forward(net);
-  Performance perf=net->output_layer()->CalcPerf(true, false);
-  Backward(net);
+  net->Forward();
+  Performance perf=net->output_layer(0)->CalcPerf(true, false);
+  net->Backward();
   IncStep();
   return perf;
 }
 
 Performance Solver::ValidateOneBatch(Net *net){
-  Forward(net);
-  return net->output_layer()->CalcPerf(true, true);
+  net->Forward();
+  return net->output_layer(0)->CalcPerf(true, true);
 }
 
 //Performance Solver::Test(Net *net) { }
 
-bool Solver::HasFinished() {
-  if (step_ >= total_steps_)
+bool Solver::HasFinished(){
+  if (step_ >= train_steps_)
     return true;
   else
     return false;
 }
 
-Trainer::~Trainer() {
-}
 }  // namespace lapis

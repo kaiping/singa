@@ -30,11 +30,11 @@ class GlobalContext {
     return rank>=table_server_start_&&rank<table_server_end_;
   }
   // There is only one coordinator with rank 0
-  bool AmICoordinator() { return rank_==kCoordinatorRank;}
+  bool AmICoordinator() { return rank_==kCoordinator;}
   // Memory server should have rank [start, end)
   bool AmITableServer() { return IsTableServer(rank_); }
   // All processes are workers except the coordinator
-  bool AmIWorker() {return rank_!=kCoordinatorRank;}
+  bool AmIWorker() {return rank_!=kCoordinator;}
   void set_rank(int rank) {rank_=rank;}
   // assume the rank of coordinator is 0
   static int kCoordinator;

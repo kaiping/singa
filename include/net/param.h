@@ -1,17 +1,16 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-03 17:35
 
-#ifndef INCLUDE_MODEL_PARAM_H_
-#define INCLUDE_MODEL_PARAM_H_
+#ifndef INCLUDE_NET_PARAM_H_
+#define INCLUDE_NET_PARAM_H_
 
 #include <vector>
 #include <string>
 #include <map>
 #include <functional>
 #include <random>
-
+#include "darray/dary.h"
 #include "proto/model.pb.h"
-#include "net/lapis.h"
 
 // Base paramter class.
 // TODO(Jingyang) define split/partition function.
@@ -24,11 +23,12 @@ class Param {
    * history from ParamProto if available.
    */
   void Init(const ParamProto &proto);
+  void InitFromProto(const ParamProto& proto);
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto
    */
-  void ToProto(ParamProto *proto);
+  void ToProto(ParamProto *proto, bool copyData);
   /**
    * Return const mem address for the content of this parameter
    */
@@ -51,12 +51,14 @@ class Param {
    * Return mem address for the gradient of this parameter
    */
   DAry *mutable_grad() {
-    return grad_;
+    return &grad_;
   }
 
+  int length();
   void SetShape(int h, int w);
   void SetShape(int l);
-  void AllocMemory();
+  void AllocateMemory();
+  void FreeMemory() ;
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */
@@ -77,6 +79,9 @@ class Param {
   }
   float weight_decay() {
     return weight_decay_;
+  }
+  float factor() {
+    return factor_;
   }
 
  protected:
@@ -105,46 +110,17 @@ class Param {
    */
   int id_;
   //! scale factor for learning rate and weight decay for this parameter
-  float momentum_, learning_rate_, weight_decay_;
+  float momentum_, learning_rate_, weight_decay_, factor_;
+  float low_, high_, mean_, std_, value_;
   //! content, gradient and history gradient of this parameter
   DAry data_, grad_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.
    */
-  ParamProto::InitMethod init_method;
+  ParamProto::InitMethod init_method_;
 };
 
-
-/**
- * macro for register parameter init functions
- * @param TYPE the identifier of this init function
- * @param FUNC  the init function
- */
-#define REGISTER_PARAM_INIT_FUNC(ID, FUNC) \
-  ParamInitFactory::Instance()->RegisterInitFunc(ID, FUNC)
-/**
- * Parameter initialization function factory.
- * It registers the user defined parameter initialization functions at runtime.
- * It also return this function when the function identifier is provided
- */
-class ParamInitFactory {
- public:
-  static ParamInitFactory *Instance();
-  /**
-   * Register the init function.
-   * This method is called by the register macro REGISTER_PARAM_INIT_FUNC
-   * @param id identifier the function, e.g, "Gaussian", i.e., the initializer
-   * field in ParamProto
-   * @param func std::function object
-   */
-  void RegisterInitFunc(std::string id,
-                        const std::function<void(Param *)> &func);
-  std::function<void(Param *)> &Get(std::string id);
- private:
-  ParamInitFactory() {}
-  std::map<std::string, std::function<void(Param *)>> map_;
-};
 }  // namespace lapis
 
-#endif  // INCLUDE_MODEL_PARAM_H_
+#endif  // INCLUDE_NET_PARAM_H_

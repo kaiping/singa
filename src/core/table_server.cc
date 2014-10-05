@@ -22,7 +22,7 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   //  register to the manager
   RegisterWorkerRequest req;
   req.set_id(server_id_);
-  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_REGISTER_WORKER, req);
+  net_->Send(GlobalContext::kCoordinator, MTYPE_REGISTER_WORKER, req);
 
   // register callbacks
   net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
@@ -40,7 +40,7 @@ void TableServer::HandleShardAssignment() {
   CHECK(GlobalContext::Get()->IsTableServer(id()))
     << "Assign table to wrong server " << id();
   ShardAssignmentRequest shard_req;
-  net_->Read(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT, &shard_req);
+  net_->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
   //  request read from coordinator
   for (int i = 0; i < shard_req.assign_size(); i++) {
     const ShardAssignment &a = shard_req.assign(i);
@@ -50,7 +50,7 @@ void TableServer::HandleShardAssignment() {
                               NetworkThread::Get()->id(), a.table(), a.shard());
   }
   EmptyMessage empty;
-  net_->Send(GlobalContext::kCoordinatorRank, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+  net_->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
   VLOG(3)<<"finish handle shard assignment";
 }
 
@@ -75,7 +75,7 @@ void TableServer::FinishDataPut(const DiskData* data) {
 			(dynamic_cast<DiskTable*>(t.second))->finalize_data();
 		}
 	}
-	net_->Send(GlobalContext::kCoordinatorRank, MTYPE_DATA_PUT_REQUEST_DONE,
+	net_->Send(GlobalContext::kCoordinator, MTYPE_DATA_PUT_REQUEST_DONE,
 			EmptyMessage());
 }
 

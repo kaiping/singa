@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-05 19:49
 
-#ifndef INCLUDE_MODEL_LAYER_H_
-#define INCLUDE_MODEL_LAYER_H_
+#ifndef INCLUDE_NET_LAYER_H_
+#define INCLUDE_NET_LAYER_H_
 
 #include <vector>
 #include <string>
@@ -12,19 +12,16 @@
 
 #include "proto/model.pb.h"
 #include "net/edge.h"
-#include "net/trainer.h"
 #include "net/param.h"
-#include "datasource/data_source.h"
+#include "darray/dary.h"
+#include "utils/common.h"
 
 /**
  * \file this file includes the declarations of both Layer and LayerFactory
  */
 
 namespace lapis {
-/**
- * forward declaration of Trainer.
- */
-class Trainer;
+using std::vector;
 /**
  * forward declaration of Edge.
  */
@@ -41,6 +38,7 @@ class Edge;
  */
 class Layer {
  public:
+   Layer(){}
    virtual ~Layer(){}
   /**
    * Set layer properties, e.g., name and num_outputs(feature dimension for
@@ -53,11 +51,15 @@ class Layer {
    * @param edge_map a map from edge name to the edge object.
    */
   virtual void Init(const LayerProto &proto);
-  virtual void SetShapes(vector<vector<int>>* shapes=NULL);
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void InitDAryShape();
+  virtual void CollectParams(vector<Param*> *params);
+
   /**
+   *
    * allocate memory for storing activations/features/gradients, etc.
    */
-  virtual void AllocMemory();
+  virtual void AllocateMemory();
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
@@ -74,7 +76,7 @@ class Layer {
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
    */
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
   /**
    * Return true for layers accept input data, e.g., DataLayer,
    * false for all other layer; default is false;
@@ -82,13 +84,21 @@ class Layer {
   virtual bool HasInput() {
     return false;
   }
+  virtual bool HasOutput() {
+    return false;
+  }
+
   /**
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual DAry &GetData(Edge *edge){
+  virtual const DAry &GetData(Edge *edge){
     return data_;
   }
+  virtual DAry *GetMutableData(Edge *edge){
+    return &data_;
+  }
+
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -97,10 +107,12 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual DAry &GetGrad(Edge *edge){
+  virtual DAry * GetMutableGrad(Edge *edge){
+    return &grad_;
+  }
+  virtual const DAry& GetGrad(Edge *edge){
     return grad_;
   }
-
   /**
    * Return name of this layer
    */
@@ -138,23 +150,25 @@ class Layer {
 class ConvLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
-
+  virtual void CollectParams(vector<Param*> *params);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  void Img2Col(DAry* dst, const DAry& src);
+  void Col2Img(DAry* dst, const DAry& src);
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int num_, channels_, height_, width_;
   //! shape for conv image
-  int conv_height_, conv_width_;
+  int cheight_, cwidth_;
   //! group weight height, width (col height), and col width
   int M_, K_, N_;
   //! num of groups, from caffe
   int ngroups_;
   //! height and width of the kernel/filter, assume the kernel is square
-  int ksize_;
+  int wsize_;
   //! length/width between to successive kernels/filters
   int stride_;
   //! padding size for boundary rows and cols
@@ -172,21 +186,21 @@ class ConvLayer: public Layer {
 class ReLULayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
 };
 
-class DroputLayer: public Layer {
+class DropoutLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   float drop_prob_;
   /* record which neuron is dropped, required for back propagating gradients,
@@ -198,11 +212,11 @@ class DroputLayer: public Layer {
 class PoolingLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   //! pooling window size and stride
   int wsize_, stride_;
@@ -212,6 +226,7 @@ class PoolingLayer: public Layer {
   int pheight_, pwidth_;
   //! batchsize
   int num_;
+  LayerProto::PoolingMethod pooling_method_;
 };
 
 class LRNLayer: public Layer {
@@ -226,11 +241,11 @@ class LRNLayer: public Layer {
 
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
 
  private:
   //! shape of the bottom layer feature
@@ -247,11 +262,12 @@ class FCLayer: public Layer {
    */
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void CollectParams(vector<Param*> *params);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   //! dimension of the hidden layer
   int hdim_;
@@ -263,41 +279,46 @@ class FCLayer: public Layer {
 
 class OutputLayer: public Layer{
  public:
-  virtual Performance CalcPerf(bool loss, bool accuracy)=0;
-}
+  virtual Performance CalcPerf(bool loss, bool accuracy);
+};
 class SoftmaxLossLayer: public OutputLayer {
   /*
    * connected from the label layer and the last fc layer
    */
  public:
   virtual void Init(const LayerProto &proto);
-  virtual SetShapes(vector<vector<int>>* shapes=NULL);
-  virtual void AllocMemory();
+  virtual bool HasOutput() {return true;}
+  virtual void InitDAryShape();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual Performance CalcPerf(bool loss, bool accuracy);
+ private:
+  int num_;
+  int dim_;
+  int topk_;
 };
 
 class InputLayer: public Layer {
  public:
+  virtual void Init(const LayerProto& proto);
   virtual bool HasInput() { return true; }
-  virtual SetShapes(vector<vector<int>>* shapes);
-  virtual AddInputRecord(const Record& record);
+  virtual void AddInputRecord(const Record& record)=0;
   virtual void SetInputData(DAry *data);
-  virtual DAry* data() {return &tmp_data_;}
- private:
+  virtual const DAry& data() {return prefetch_data_;}
+ protected:
   DAry prefetch_data_;
   int offset_;
-}
+};
 class ImageLayer: public InputLayer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual void AllocMemory();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
-  virtual void ToProto(LayerProto *layer_proto);
-  virtual SetShapes(vector<vector<int>>* shapes);
-  virtual AddInputRecord(const Record& record);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void AddInputRecord(const Record& record);
 
  private:
   bool mirror_;
@@ -308,11 +329,11 @@ class ImageLayer: public InputLayer {
 class LabelLayer: public InputLayer {
  public:
   virtual void Init(const LayerProto &proto);
-  virtual void AllocMemory();
+  virtual void AllocateMemory();
   virtual void ComputeFeature();
-  virtual void ToProto(LayerProto *layer_proto);
-  virtual SetShapes(vector<vector<int>>* shapes);
-  virtual AddInputRecord(const Record& record);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void AddInputRecord(const Record& record);
 };
 
 
@@ -391,7 +412,7 @@ class DataLayer : public Layer {
    */
   void SetInputShape(int batchsize, const Shape &data_shape);
   void SetInputStore(int store_id);
-  void LoadData(const DAry &input, Phase phase);
+  void LoadData(const DAry &input, int phase);
   /**
    * allocate memory
    */
@@ -407,7 +428,7 @@ class DataLayer : public Layer {
   /**
    * Write the data source name
    */
-  virtual void ToProto(LayerProto *layer_proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual bool HasInput() {
     return false;
   }
@@ -416,7 +437,7 @@ class DataLayer : public Layer {
    * new records for the layer. hence return the tmp blob if the image should
    * be croped; otherwise return the data blob
    */
-  virtual const Blob &data(Edge *edge) {
+  virtual const DAry &data(Edge *edge) {
       return data_;
   }
   /**
@@ -425,7 +446,7 @@ class DataLayer : public Layer {
    * compute the gradients.
    * @param edge not used currently.
    */
-  virtual const Blob &grad(Edge *edge) {
+  virtual const DAry &grad(Edge *edge) {
     return data_;
   }
 
@@ -448,4 +469,4 @@ class DataLayer : public Layer {
 
 }  // namespace lapis
 
-#endif  // INCLUDE_MODEL_LAYER_H_
+#endif  // INCLUDE_NET_LAYER_H_

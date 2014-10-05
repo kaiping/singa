@@ -13,6 +13,7 @@ struct TableBase;
 
 template <class V>
 struct Accumulators {
+  /*
   struct Min : public Accumulator<V> {
     void Accumulate(V *a, const V &b) {
       *a = std::min(*a, b);
@@ -36,6 +37,7 @@ struct Accumulators {
       *a = b;
     }
   };
+  */
 };
 
 struct Sharding {

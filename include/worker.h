@@ -7,8 +7,11 @@
 #include <memory>
 
 #include "core/table_server.h"
+#include "core/table_delegate.h"
 #include "net/net.h"
+#include "net/solver.h"
 #include "proto/model.pb.h"
+#include "utils/common.h"
 
 namespace lapis {
 /**
@@ -19,21 +22,24 @@ namespace lapis {
 
 class Worker {
  public:
-  Worker();
+  Worker(TableDelegate* delegate);
   ~Worker();
-  void Run(bool load_data, bool do_run);
+  void Run(bool do_run, const SolverProto& solver_proto);
 
  private:
   bool ShouldIDoValidation(int step);
   bool AmIGroupLeader() {return leader_==id_;}
+  void InitDistributedStorage();
 
-  const DistributedStorageConfig InitDistributedStorage();
-
+  Performance Validate(Solver* solver, Net* net);
+  void PrefetchData(int phase, Net *net);
   void Shutdown();
+  void ReportPerformance(Performance perf);
+  void InitGroupInfo();
  private:
   std::shared_ptr<NetworkThread> mpi_;
   TableServer *table_server_;
-  ModelController mc_;
+  TableDelegate* delegate_;
   vector<int> member_list_;
   int leader_;
   int id_;

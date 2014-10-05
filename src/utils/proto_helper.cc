@@ -93,46 +93,8 @@ std::string FormatPerformance(const PerformanceProto& perf) {
   std::stringstream ss;
   if (perf.has_precision())
     ss<<StringPrintf("Precision %.3f, ", perf.precision());
-  if (perf.has_recall())
-    ss<<StringPrintf("Recall %.3f, ", perf.recall());
-  if (perf.has_recall())
-    ss<<StringPrintf("MAP %.3f ", perf.map());
-  if (perf.has_recall())
-    ss<<StringPrintf("Precision@50 %.3f ", perf.precision50());
+  if (perf.has_loss())
+    ss<<StringPrintf("loss %.3f, ", perf.loss());
   return ss.str();
-}
-const std::map<std::string, int> ToStdMap(const StringIntMap& gmap) {
-  std::map<std::string, int> stdmap;
-  for(auto& pair: gmap.pair())
-    stdmap[pair.key()]=pair.val();
-  return stdmap;
-}
-
-
-const std::map<int, int> ToStdMap(const IntIntMap& gmap) {
-  std::map<int, int> stdmap;
-  for(auto& pair: gmap.pair())
-    stdmap[pair.key()]=pair.val();
-  return stdmap;
-}
-
-const StringIntMap ToProtoMap(std::map<std::string,int> stdmap){
-  StringIntMap gmap;
-  for(auto& entry: stdmap) {
-    StringIntPair *pair=gmap.add_pair();
-    pair->set_key(entry.first);
-    pair->set_val(entry.second);
-  }
-  return gmap;
-}
-
-const IntIntMap ToProtoMap(std::map<int, int> stdmap){
-  IntIntMap gmap;
-  for(auto& entry: stdmap) {
-    IntIntPair *pair=gmap.add_pair();
-    pair->set_key(entry.first);
-    pair->set_val(entry.second);
-  }
-  return gmap;
 }
 }  // namespace lapis

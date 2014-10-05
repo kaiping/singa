@@ -1,14 +1,10 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 13:18
-
-#include <map>
-#include <stack>
-#include "net/data_layer.h"
 #include "net/net.h"
 
 namespace lapis {
 // visited all out going layers and then push current layer into the stack
-void topology_sort_inner(Layer *layer,
+void Net::topology_sort_inner(Layer *layer,
                          const std::map<Layer *,
                          std::vector<Layer *>> &adjacent_list,
                          std::map<Layer *, bool> *visited,
@@ -24,7 +20,7 @@ void topology_sort_inner(Layer *layer,
 
 // sort to make `bottom' layers be placed in the front positions
 // forward propagation will be processed based on this order
-void topology_sort(std::vector<Layer *> *layers) {
+void Net::topology_sort(std::vector<Layer *> *layers) {
   // adjacent list from upper layers to lower layers
   std::map<Layer *, std::vector<Layer *>> adjacent_list;
   std::map<Layer *, bool> visited;
@@ -74,10 +70,12 @@ Net::Net(const NetProto &net_proto) {
     layers_.push_back(layer);
     layer_map[layer->name()] = layer;
     if(layer->HasInput())
-      input_layers_.push_back(layer);
+      input_layer_.push_back(dynamic_cast<InputLayer*>(layer));
+    if(layer->HasOutput())
+      output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
   }
   for (auto &edge_proto : net_proto.edge()) {
-    Edge *edge = EdgeFactory::Instance()->Create(edge_proto.type());
+    Edge *edge = new Edge();
     edge->Init(edge_proto, layer_map);
     edges_.push_back(edge);
   }
@@ -85,20 +83,30 @@ Net::Net(const NetProto &net_proto) {
   for(auto* layer: layers_)
     layer->CollectParams(&params_);
   // the softmax loss layer
-  output_layer_=layers_.back();
   LOG(INFO)<<"Neural Net constructed";
 }
 
-void Net::InitDAryShape()
-  for(auto *layer : layers()) {
+void Net::Forward() {
+  for (auto* layer : layers_)
+    layer->ComputeFeature();
+}
+
+void Net::Backward() {
+  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++)
+    (*layer)->ComputeGradient();
+}
+
+
+void Net::InitDAryShape(){
+  for(auto *layer : layers_) {
     VLOG(3)<<layer->name();
     layer->InitDAryShape();
   }
 }
 
-void Net::InitDAryShape(const vecot<vector<int>>& shapes){
-  for (auto *layer : input_layers_){
-    DataLayer* dlayer=dynamic_cast<DataLayer*>(layer);
+void Net::InitDAryShape(const vector<vector<int>>& shapes){
+  for (auto *layer : input_layer_){
+    InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
     dlayer->InitDAryShape(shapes);
   }
   InitDAryShape();
@@ -118,7 +126,7 @@ void Net::InitParameters() {
  * called by worker
  */
 void Net::Setup() {
-  InitDAryShape(input_shapes);
+  InitDAryShape();
   AllocateMemory();
 }
 /**
@@ -126,14 +134,13 @@ void Net::Setup() {
  */
 void Net::Setup(const vector<vector<int>>& input_shapes) {
   InitDAryShape(input_shapes);
-  if(fill_parameter)
-    InitParameters();
+  InitParameters();
 }
 
-void Net::ToProto(NetProto *proto) {
+void Net::ToProto(NetProto *proto, bool copyData) {
   for (Layer *layer : layers_) {
     LayerProto *layer_proto = proto->add_layer();
-    layer->ToProto(layer_proto);
+    layer->ToProto(layer_proto,copyData);
   }
   for (Edge *edge : edges_) {
     EdgeProto *edge_proto = proto->add_edge();

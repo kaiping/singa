@@ -10,7 +10,6 @@
 #include <vector>
 #include <functional>
 
-#include "net/lapis.h"
 #include "proto/model.pb.h"
 
 using std::shared_ptr;
@@ -18,7 +17,6 @@ using std::vector;
 using std::string;
 namespace lapis {
 typedef vector<string> StringVec;
-using DataSourceProtos=google::protobuf::RepeatedPtrField<DataSourceProto>;
 /**
  * Base class of data source which provides training records for applications.
  * It has 2 tasks. One is to fill the blob for DataLayer either from local disk
@@ -27,12 +25,10 @@ using DataSourceProtos=google::protobuf::RepeatedPtrField<DataSourceProto>;
  */
 class DataSource {
  public:
-  static std::map<string, Shape> ShapesOf(const DataSourceProtos &sources);
   virtual ~DataSource(){}
-  virtual const shared_ptr<StringVec> Init(const DataSourceProto &ds_proto,
-      shared_ptr<StringVec>& filenames);
+  virtual void  Init(const DataSourceProto &ds_proto);
   virtual void ToProto(DataSourceProto *ds_proto);
-  virtual void NextRecord(FloatVector* record)=0;
+  virtual void NextRecord(Record* record)=0;
   /**
    * Put one batch data into blob, the blob will specify the num of instances
    * to read (the blob is setup by layer Setup(), which has the batchsize as
@@ -41,7 +37,6 @@ class DataSource {
    * or distributed disk.
    * @param blob where the next batch of data will be put
    */
-  virtual void GetData(Blob *blob) = 0;
   /**
    * TODO(wnagwei) Load data and return the keys of all records.
    * if the distributed disk is not available, it will be loaded into single
@@ -51,9 +46,9 @@ class DataSource {
    * onto distributed disk.
    * @param keys it specifies the order of records to read.
    * @return the keys of records which specifies the order records read.
-   */
   virtual const shared_ptr<StringVec> LoadData(
     const shared_ptr<StringVec>  &keys) = 0;
+   */
 
   /**
    * Return the identifier of the DataSource
@@ -62,16 +57,16 @@ class DataSource {
 
   /**
    * Return the number of channels, e.g., 3 for rgb data
-   */
   virtual int channels() = 0;
+   */
   /**
    * Return the height of the record, e.g., the height of an image
-   */
   virtual int height() = 0;
+   */
   /**
    * Return the width of the record, e.g., the width of an image
-   */
   virtual int width() = 0;
+   */
   /*
   virtual bool has_channels()=0;
   virtual bool has_height()=0;
@@ -119,7 +114,8 @@ class DataSource {
 class ImageNetSource : public DataSource {
  public:
   virtual void Init(const DataSourceProto &proto);
-  virtual void NextRecord(ImageNetRecord* record);
+  virtual void NextRecord(Record* record);
+  void ReadImage(const std::string &path, int height, int width, const float *mean, DAryProto* datum);
 
   /**
    * Load rgb images.
@@ -129,7 +125,6 @@ class ImageNetSource : public DataSource {
    * nullptr
    * @return pointer to a vector of suffix paths for image files found by this
    * function
-   */
   virtual int channels() {
     return 3;
   }
@@ -148,6 +143,7 @@ class ImageNetSource : public DataSource {
   virtual bool has_width() {
     return true;
   }
+   */
 
   //! the identifier, i.e., "RGBSource"
   static const std::string type;
@@ -158,6 +154,8 @@ class ImageNetSource : public DataSource {
    * path.
    */
   std::string image_folder_;
+  std::string label_path_;
+  std::string mean_file_;
   /**
    * expected height of the image, assume all images are of the same shape; if
    * the real shape is not the same as the expected, then resize it. The
@@ -167,7 +165,8 @@ class ImageNetSource : public DataSource {
   int width_;
   // should be fixed to 3, because this is rgb feature.
   int channels_;
-  std::string mean_file_;
+  int record_size_;
+  bool do_shuffle_;
   MeanProto *data_mean_;
   //! names of images under the directory_
   vector<std::pair<string, int>> lines_;

@@ -1,7 +1,7 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-09-10 16:43
 namespace lapis {
-
+/*
 void CropImages(DAry* dst, const LAry &src, bool rand, bool mirror) {
   CHECK(dst->shape().dim()==4);
   int cropsize=dst->shape(3);
@@ -44,4 +44,5 @@ void CropImages(DAry* dst, const LAry &src, bool rand, bool mirror) {
 void Slide2D(DAry*dst, const DAry& src, int wsize, ){
 
 }
+*/
 }  // namespace lapis

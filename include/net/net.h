@@ -1,24 +1,25 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 13:12
 
-#ifndef INCLUDE_MODEL_NET_H_
-#define INCLUDE_MODEL_NET_H_
+#ifndef INCLUDE_NET_NET_H_
+#define INCLUDE_NET_NET_H_
 
-#include <google/protobuf/repeated_field.h>
+#include <glog/logging.h>
 #include <vector>
+#include <map>
+#include <stack>
+#include "net/param.h"
+#include "proto/model.pb.h"
+#include "net/net.h"
 #include "net/layer.h"
 #include "net/edge.h"
-#include "net/param.h"
-#include "datasource/data_source.h"
-#include "proto/model.pb.h"
+
 
 
 namespace lapis {
 /**
  * Forward declaration of Edge and Layer
  */
-class Edge;
-class Layer;
 /**
  * The neural network consists of Layers and Edges.
  */
@@ -28,16 +29,23 @@ class Net {
    * construct the net structure, i.e., how edges and layers are connected
    */
   explicit Net(const NetProto &net_proto);
+  void Forward();
+  void Backward();
+  void topology_sort(std::vector<Layer *> *layers) ;
+  void topology_sort_inner(Layer *layer,
+                         const std::map<Layer *,
+                         std::vector<Layer *>> &adjacent_list,
+                         std::map<Layer *, bool> *visited,
+                         std::stack<Layer *> *stack) ;
+
   /**
    * setup the net by init dary shapes,
    * then allocate memory(optional) and init parameters (optional)
    */
-  void Setup(const char flag,int batchsize,
-             const std::map<std::string, Shape> &shapes,
-             const std::map<std::string, int> & stores);
-  void Setup(const char flag,int batchsize,
-             const std::map<std::string, Shape> &shapes);
-
+  void InitDAryShape();
+  void InitDAryShape(const vector<vector<int>>& shapes);
+  void Setup() ;
+  void Setup(const vector<vector<int>>& input_shapes) ;
   /**
    * set shapes of DArys
    */
@@ -52,24 +60,29 @@ class Net {
    * init parameters
    */
   void InitParameters();
-  void ToProto(NetProto *net_proto);
-  std::vector<InputLayer *> &input_layers() {
-    return input_layers_;
+  void ToProto(NetProto *net_proto, bool copyData=false);
+  const std::vector<InputLayer *> &input_layer() {
+    return input_layer_;
   }
-  OutputLayer* output_layer() {
-    return output_layer_;
+  InputLayer * input_layer(int k) {
+    CHECK_LT(k, input_layer_.size());
+    return input_layer_[k];
+  }
+  OutputLayer* output_layer(int k) {
+    CHECK_LT(k, output_layer_.size());
+    return output_layer_[k];
   }
   const std::vector<Param *> &params() {
     return params_;
   }
   ~Net();
  private:
-  OutputLayer * output_layer_;
   std::vector<Layer *> layers_;
-  std::vector<Layer *> input_layers_;
+  std::vector<OutputLayer *> output_layer_;
+  std::vector<InputLayer *> input_layer_;
   std::vector<Edge *> edges_;
   std::vector<Param *> params_;
 };
 
 }  // namespace lapis
-#endif  // INCLUDE_MODEL_NET_H_
+#endif  // INCLUDE_NET_NET_H_

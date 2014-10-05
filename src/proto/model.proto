@@ -10,13 +10,14 @@ message DataSourceProto {
   optional string label_path = 4;
   message Shape {
     // the layer will parse the semantics of the shape
-    repeated int32 s =0;
+    repeated int32 s =1;
   }
   repeated Shape shape = 5;
   // offset of record to be read.
   optional int64 offset =9 [default=0];
   // MeanProto file, has the mean of images, used by RGBDirSource
   optional string mean_file=10;
+  optional bool shuffle=11 [default = true];
 }
 
 message ParamProto {
@@ -49,6 +50,7 @@ message ParamProto {
     kUniformSqrtFanInOut = 6;
   }
   optional InitMethod init_method = 3 [default = kConstant];
+
   optional float value = 4 [default = 1.0];
   // for uniform sampling
   optional float low = 5 [default = -1];
@@ -75,7 +77,7 @@ message LayerProto {
   optional int32 num_output = 3;
   repeated ParamProto param = 4;
   // for convolutional and pooling edge.
-  optional int32 kernel_size = 8;
+  optional int32 window_size = 8;
   optional int32 stride = 9 [default=1];
   optional int32 pad = 10 [default=0];
   optional int32 num_groups =11 [default=1];
@@ -84,7 +86,6 @@ message LayerProto {
   optional float alpha = 12;
   optional float beta = 13;
   optional float knorm = 14 [default =1.0];
-  optional int32 local_size = 15;
 
   // for pooling edge
   enum PoolingMethod {
@@ -94,13 +95,13 @@ message LayerProto {
   optional PoolingMethod pooling_method = 16;
 
   // for DataLayer to process image data
-  optional int32 cropsize =9;
-  optional bool mirror = 10;
+  optional int32 cropsize =17;
+  optional bool mirror = 18;
 
-  optional DAryProto data = 11;
-  optional DAryProto grad = 12;
-
-  optional float drop_prob = 17 [default=0.0]; // droput probability
+  optional float drop_prob = 19 [default=0.0]; // droput probability
+  optional DAryProto data = 20;
+  optional DAryProto grad = 21;
+  optional int32 topk=23;
 }
 
 // used to load image mean provided by caffe, in RGBDirSource
@@ -116,31 +117,30 @@ message MeanProto{
 message EdgeProto {
   required string name = 1;
   // required int32 num_output = 2;
-  required string type = 3;
+  required string type = 2;
 
-  required string node1=4;
-  required string node2=5;
-  optional bool directed = 5 [default = true];
+  required string node1=3;
+  required string node2=4;
+  optional bool is_directed = 5 [default = true];
 }
 
 message DAryProto {
-  repeated int32 shape = 2;
-  repeated int32 partition =3
-  repeated float value = 4 [packed=true];
+  repeated int32 shape = 1;
+  repeated int32 partition =2;
+  repeated float value = 3 [packed=true];
 }
 
 message NetProto {
-  repeated LayerProto layer = 3;
-  repeated EdgeProto edge  = 4;
+  repeated LayerProto layer = 1;
+  repeated EdgeProto edge  = 2;
 }
 
 
 message PerformanceProto {
   optional float precision = 1;
-  optional float recall = 2;
-  optional float map = 3;
-  optional float precision50 = 4;
-  optional int32 step = 5;
+  optional float loss = 2;
+  optional int32 count =3;
+  optional int32 step = 4;
 }
 
 message SolverProto {
@@ -174,19 +174,19 @@ message SolverProto {
   optional int32 validation_every_steps = 11 [default = 0];
 
 
-  optional string perf_prefix = 15 [default = "tmp/performance"];
+  optional string perf_prefix = 12 [default = "tmp/performance"];
 
   enum GradAlg{
     kBackPropagation = 1;
     kContrastiveDivergence = 2;
   }
-  optional GradAlg alg= 16 [default = kBackPropagation];
+  optional GradAlg alg= 13 [default = kBackPropagation];
 
   // batchsize is the num of instances processed per step
   optional int32 train_batchsize = 19;
   optional int32 train_steps = 20;
   optional int32 validation_batchsize = 21;
-  optional int32 validation_steps = 22;
+  optional int32 validation_steps=22;
 
   optional SGDValue sgd=23 ;
   optional AdaGradValue adagrad=24;
@@ -201,12 +201,12 @@ message ModelProto {
   // model name
   optional string name = 1;
   optional NetProto net = 2;
-  optional SolverProto trainer = 3;
+  optional SolverProto solver = 3;
   optional DataProto data =4;
 }
 message Record {
   optional DAryProto image=1;
-  optional int label=1;
+  optional int32 label=2;
 }
 // value field of the tuple for AdaGrad SGD
 message AdaGradValue {
@@ -214,7 +214,8 @@ message AdaGradValue {
   optional int32 version = 2 [default=0];
   optional DAryProto data = 4;
   optional DAryProto grad = 5;
-  optional float base_learning_rate = 1;
+  optional float base_learning_rate = 6;
+  optional int32 threshold=7;
 }
 
 // value field of the tuple for normal SGD
@@ -239,6 +240,7 @@ message SGDValue {
   optional int32 n_update = 9 [default=0];
   optional int32 version = 10 [default=0];
   optional float factor = 12;
+  optional int32 threshold=13;
 }
 
 

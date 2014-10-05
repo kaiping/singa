@@ -10,10 +10,12 @@
 #include "core/global-table.h"
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
+#include "utils/common.h"
 #include "proto/model.pb.h"
-#include "model_controller/model.h"
+#include "core/table_delegate.h"
+#include "net/solver.h"
 
-
+using std::vector;
 namespace lapis {
 // represent the (table, shard) tuple
 struct TaskId {
@@ -35,8 +37,8 @@ struct ServerState {
 
 class Coordinator {
  public:
-  Coordinator();
-  void Run(bool load_data, bool do_run);
+  Coordinator(TableDelegate* delegate);
+  void Run(bool load_data, bool do_run, const ModelProto& model);
   /**
    * setup net, shape of darys are set, but not allocate mem
    */
@@ -50,16 +52,17 @@ class Coordinator {
   bool DoValidationOn(int worker_id);
   void Shutdown();
 
+  void LoadData(const DataSourceProto& source, int phase);
   const GroupConfig CreateGroups(int group_size);
   /**
    * insert parameters into table; the tuple is prepared with
    * parameter vector and sgd/adagrad meta info from solver
    * @threshold if sync mode, it is the group size; for async ,0
    */
-  void FillParameterTable(int threshold,Solver* solver,  Net* net);
-  void DistributePartition(const GroupConfig& conf, const vectro<ModelProto*> & protos);
-  const vector<ModelProto*> PartitionModel(const ModelProto& model, Net* net);
+  void FillParameterTable(int threshold,const SolverProto& solver,  Net* net);
+  void DistributePartition(const GroupConfig& conf, const vector<NetProto> & protos);
   void InitTableDelegate(const SolverProto& solver);
+  const vector<NetProto> PartitionNet(Net* net);
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;

@@ -34,6 +34,14 @@ class GetHandler{
   */
   bool Get(const V& from, V* to);
 };
+template<>
+bool GetHandler<SGDValue>::Get(const SGDValue& from, SGDValue* to){
+  return true;
+}
+template<>
+bool GetHandler<AdaGradValue>::Get(const AdaGradValue& from, AdaGradValue* to){
+  return true;
+}
 
 template<typename V>
 class UpdateHandler: public BaseUpdateHandler<V>{
@@ -41,23 +49,20 @@ class UpdateHandler: public BaseUpdateHandler<V>{
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(V* data, const V& update);
 };
+
+template<>
+class UpdateHandler<AdaGradValue>{
+ public:
+  explicit UpdateHandler(const SolverProto& solver);
+  virtual bool Update(AdaGradValue* data, const AdaGradValue& update);
+};
+
 template<>
 class UpdateHandler<SGDValue>{
  public:
-   explicit UpdateHandler(const SolverProto& solver){
-     step_=0;
-     base_learning_rate_=solver.sgd().base_learning_rate();
-     learning_rate_x_=solver.sgd().learning_rate_x();
-     learning_rate_change_=solver.sgd().learning_rate_change();
-     learning_rate_change_steps_=solver.sgd().learning_rate_change_steps();
-     momentum_=solver.sgd().momentum();
-     weight_decay_=solver.sgd().weight_decay();
-   }
-
-  virtual bool Update(SGDValue* data, const SGDValue& update){
-    return true;
-  }
-  void UpdateHyperParams(const int step) {}
+  explicit UpdateHandler(const SolverProto& solver);
+  virtual bool Update(SGDValue* data, const SGDValue& update);
+  void UpdateHyperParams(const int step);
  private:
   int step_;
   float learning_rate_,  base_learning_rate_, learning_rate_x_;
@@ -66,14 +71,18 @@ class UpdateHandler<SGDValue>{
   SGDValue::ChangeProto learning_rate_change_;
 };
 
+
+/***************************************************************************
+ * Table Delegate
+ **************************************************************************/
 class TableDelegate {
  public:
-
+  virtual ~TableDelegate();
   /**
    * create disk tables for train, val, test;
    * create parameter table
    */
-  virtual void CreateTables(const SolverProto& solver)=0;
+  virtual void CreateTables(const SolverProto& solver);
   virtual void Update(Param *param)=0;
   virtual void Get(Param * param)=0;
   virtual void Put(Param * param)=0;
@@ -124,9 +133,6 @@ void TypedTableDelegate<K,V>::CreateTables(const SolverProto& solver){
   auto update_handler=new UpdateHandler<V>(solver);
   param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
       update_handler,new Sharding::Mod, new Marshal<K>, new Marshal<V>);
-  tables_[kTrain]=CreateDiskTable(static_cast<const int>(kTrain), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
-  tables_[kVal]=CreateDiskTable(static_cast<const int>(kVal), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
-  tables_[kTest]=CreateDiskTable(static_cast<const int>(kTest), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
   tables_[0]=param_table_;
 }
 
@@ -145,21 +151,196 @@ TypedGlobalTable<K, V>* TypedTableDelegate<K,V>::CreateParamTable( const int id,
   VLOG(3)<<"table shards num "<<table->num_shards();
   return table;
 }
-TypedDiskTable<int,Record>* TableDelegate::CreateDiskTable(const int id, int max_size, string name, Marshal<int>* mkey, Marshal<Record>* mval){
-  DiskTableDescriptor *info = new DiskTableDescriptor(id, name, max_size);
-  info->key_marshal = mkey;
-  info->value_marshal = mval;
-  TypedDiskTable<int,Record> *t = new TypedDiskTable<int,Record>(info);
-  return t;
+template<>
+void TypedTableDelegate<int ,SGDValue>::Update(Param *param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+
+  const float * grad_addr = param->mutable_grad()->dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+
+    SGDValue v(example_);
+    DAryProto* dary=v.mutable_grad();
+    dary->clear_value();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      dary->add_value(grad_addr[curoffset]);
+      curoffset++;
+    }
+    int mykey = paramid*2048+j;
+    param_table_->update(mykey,v);
+  }
 }
-//  one desginated server stores the data
-TypedDiskTable<int,Record>* TableDelegate::CreateDiskTable(const int id, int fixed_server_id, int max_size, string name, Marshal<int>* mkey, Marshal<Record>* mval){
-	TDiskTable* t = CreateDiskTable(id, max_size, name, mkey, mval);
-	t->disk_info()->fixed_server_id = fixed_server_id;
-  VLOG(3)<<"after create disk table "<<name;
-  VLOG(3)<<"table shards num "<<t->num_shards();
-	return t;
+
+
+template<>
+void TypedTableDelegate<int, AdaGradValue>::Update(Param *param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+
+  const float * grad_addr = param->grad().dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+    AdaGradValue v(example_);
+    DAryProto* dary=v.mutable_grad();
+    dary->clear_value();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      dary->add_value(grad_addr[curoffset]);
+      curoffset++;
+    }
+    int mykey = paramid*2048+j;
+    param_table_->update(mykey,v);
+  }
 }
+
+template<>
+void TypedTableDelegate<int, SGDValue>::Put(Param * param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+  const float * data_addr = param->data().dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+    SGDValue v(example_);
+    // sgd related hyper-parameters
+    v.set_factor(param->factor());
+    DAryProto* dary=v.mutable_data();
+    dary->clear_value();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      dary->add_value(data_addr[curoffset]);
+      curoffset++;
+    }
+    int mykey = paramid*2048+j;
+    param_table_->put(mykey,v);
+  }
+}
+template<>
+void TypedTableDelegate<int ,AdaGradValue>::Put(Param * param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+  const float * data_addr = param->data().dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+    AdaGradValue v(example_);
+    DAryProto* dary=v.mutable_data();
+    dary->clear_value();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      dary->add_value(data_addr[curoffset]);
+      curoffset++;
+    }
+    int mykey = paramid*2048+j;
+    param_table_->put(mykey,v);
+  }
+}
+template<>
+void TypedTableDelegate<int ,SGDValue>::Get(Param * param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+  float * data_addr = param->mutable_data()->mutable_dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+    int mykey = paramid*2048+j;
+    SGDValue v = param_table_->get(mykey);
+    const DAryProto& data=v.data();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      //to pass new float to the params
+      data_addr[curoffset] = data.value(k);
+      curoffset++;
+    }
+  }
+}
+template<>
+void TypedTableDelegate<int, AdaGradValue>::Get(Param * param){
+  int paramid = param->id();
+  int largestoffset = param->length();
+  int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if (splitoffset > 1000000)
+  {
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+  float * data_addr = param->mutable_data()->mutable_dptr();
+  for(int j = 0; j < splitsize; j++)
+  {
+    int mykey = paramid*2048+j;
+    AdaGradValue v = param_table_->get(mykey);
+    const DAryProto& data=v.data();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      //to pass new float to the params
+      data_addr[curoffset] = data.value(k);
+      curoffset++;
+    }
+  }
+}
+
+
+
+
 }  // namespace lapis
 #endif  // INCLUDE_CORE_TABLE_DELEGATE_H_
 

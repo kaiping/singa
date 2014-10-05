@@ -73,7 +73,7 @@ class Solver {
     return false;
   }
   const bool DisplayNow() {
-    DisplayNow(step_);
+    return DisplayNow(step_);
   }
   const bool CheckpointNow() {return CheckpointNow(step_);}
   /**

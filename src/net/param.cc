@@ -30,6 +30,10 @@ void Param::SetShape(int h, int w){
   data_.SetShape({h,w});
   grad_.SetShape({h,w});
 }
+void Param::AllocateMemory() {
+  data_.AllocateMemory();
+  grad_.AllocateMemory();
+}
 
 void Param::FreeMemory() {
   data_.FreeMemory();
@@ -42,7 +46,7 @@ void Param::Fill(){
     data_.AllocateMemory();
   switch (init_method_) {
   case ParamProto::kConstant:
-    data_.set(value_);
+    data_.Set(value_);
     break;
   case ParamProto::kUniform:
     FillUniformData(low_, high_, value_);

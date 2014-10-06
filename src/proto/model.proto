@@ -13,8 +13,9 @@ message DataSourceProto {
     repeated int32 s =1;
   }
   repeated Shape shape = 5;
+  optional int32 size=6;
   // offset of record to be read.
-  optional int64 offset =9 [default=0];
+  optional int32 offset =9 [default=0];
   // MeanProto file, has the mean of images, used by RGBDirSource
   optional string mean_file=10;
   optional bool shuffle=11 [default = true];
@@ -102,6 +103,8 @@ message LayerProto {
   optional DAryProto data = 20;
   optional DAryProto grad = 21;
   optional int32 topk=23;
+  repeated string top=24;
+  repeated string bottom=25;
 }
 
 // used to load image mean provided by caffe, in RGBDirSource
@@ -114,16 +117,6 @@ message MeanProto{
   repeated float diff=6 [packed=true];
 }
 
-message EdgeProto {
-  required string name = 1;
-  // required int32 num_output = 2;
-  required string type = 2;
-
-  required string node1=3;
-  required string node2=4;
-  optional bool is_directed = 5 [default = true];
-}
-
 message DAryProto {
   repeated int32 shape = 1;
   repeated int32 range_start =2;
@@ -133,9 +126,7 @@ message DAryProto {
 
 message NetProto {
   repeated LayerProto layer = 1;
-  repeated EdgeProto edge  = 2;
 }
-
 
 message PerformanceProto {
   optional float precision = 1;
@@ -240,7 +231,7 @@ message SGDValue {
   optional DAryProto grad=8;
   optional int32 n_update = 9 [default=0];
   optional int32 version = 10 [default=0];
-  optional float factor = 12;
+  optional float factor = 12; //gamma for kStep
   optional int32 threshold=13;
 }
 

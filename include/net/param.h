@@ -23,7 +23,6 @@ class Param {
    * history from ParamProto if available.
    */
   void Init(const ParamProto &proto);
-  void InitFromProto(const ParamProto& proto);
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto

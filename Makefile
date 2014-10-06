@@ -7,7 +7,7 @@ HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := $(HOME_DIR)/bin/g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
+INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
 #$(HOME_DIR)/atlas/include
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
@@ -18,9 +18,10 @@ MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core cblas atlas arrarymath
+							opencv_core openblas arraymath
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib
+#$(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
@@ -34,16 +35,6 @@ DARY_HDRS: = $(shell find include/darray -name "*.h" -type f)
 DARY_SRCS: = $(shell find src/darray -name "*.cc" -type f)
 DARY_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(DARY_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(DARY_OBJS:%.o=%.P)
-
-dary.test: init $(DARY_OBJS)
-	$(CXX) $(DARY_OBJS) -o dary.test $(CXXFLAGS) $(LDFLAGS)
-
-$(DARY_OBJS):$(BUILD_DIR)/%.o : %.cc
-	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@
-	cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P; \
-	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-		-e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P; \
-	rm -f $*.d
 
 ###############################################################################
 # Build Lapis into .a and .so library
@@ -69,7 +60,7 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun --prefix=/home/wangwei/install -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3
 run_run: lapis.bin

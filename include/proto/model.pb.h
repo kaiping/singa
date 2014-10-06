@@ -39,7 +39,6 @@ class DataSourceProto_Shape;
 class ParamProto;
 class LayerProto;
 class MeanProto;
-class EdgeProto;
 class DAryProto;
 class NetProto;
 class PerformanceProto;
@@ -352,12 +351,19 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape >*
       mutable_shape();
 
-  // optional int64 offset = 9 [default = 0];
+  // optional int32 size = 6;
+  inline bool has_size() const;
+  inline void clear_size();
+  static const int kSizeFieldNumber = 6;
+  inline ::google::protobuf::int32 size() const;
+  inline void set_size(::google::protobuf::int32 value);
+
+  // optional int32 offset = 9 [default = 0];
   inline bool has_offset() const;
   inline void clear_offset();
   static const int kOffsetFieldNumber = 9;
-  inline ::google::protobuf::int64 offset() const;
-  inline void set_offset(::google::protobuf::int64 value);
+  inline ::google::protobuf::int32 offset() const;
+  inline void set_offset(::google::protobuf::int32 value);
 
   // optional string mean_file = 10;
   inline bool has_mean_file() const;
@@ -388,6 +394,8 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_image_folder();
   inline void set_has_label_path();
   inline void clear_has_label_path();
+  inline void set_has_size();
+  inline void clear_has_size();
   inline void set_has_offset();
   inline void clear_has_offset();
   inline void set_has_mean_file();
@@ -404,7 +412,8 @@ class DataSourceProto : public ::google::protobuf::Message {
   ::std::string* image_folder_;
   ::std::string* label_path_;
   ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape > shape_;
-  ::google::protobuf::int64 offset_;
+  ::google::protobuf::int32 size_;
+  ::google::protobuf::int32 offset_;
   ::std::string* mean_file_;
   bool shuffle_;
   friend void  protobuf_AddDesc_model_2eproto();
@@ -878,6 +887,38 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 topk() const;
   inline void set_topk(::google::protobuf::int32 value);
 
+  // repeated string top = 24;
+  inline int top_size() const;
+  inline void clear_top();
+  static const int kTopFieldNumber = 24;
+  inline const ::std::string& top(int index) const;
+  inline ::std::string* mutable_top(int index);
+  inline void set_top(int index, const ::std::string& value);
+  inline void set_top(int index, const char* value);
+  inline void set_top(int index, const char* value, size_t size);
+  inline ::std::string* add_top();
+  inline void add_top(const ::std::string& value);
+  inline void add_top(const char* value);
+  inline void add_top(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& top() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_top();
+
+  // repeated string bottom = 25;
+  inline int bottom_size() const;
+  inline void clear_bottom();
+  static const int kBottomFieldNumber = 25;
+  inline const ::std::string& bottom(int index) const;
+  inline ::std::string* mutable_bottom(int index);
+  inline void set_bottom(int index, const ::std::string& value);
+  inline void set_bottom(int index, const char* value);
+  inline void set_bottom(int index, const char* value, size_t size);
+  inline ::std::string* add_bottom();
+  inline void add_bottom(const ::std::string& value);
+  inline void add_bottom(const char* value);
+  inline void add_bottom(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& bottom() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_bottom();
+
   // @@protoc_insertion_point(class_scope:lapis.LayerProto)
  private:
   inline void set_has_name();
@@ -936,6 +977,8 @@ class LayerProto : public ::google::protobuf::Message {
   float drop_prob_;
   ::lapis::DAryProto* data_;
   ::lapis::DAryProto* grad_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> top_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> bottom_;
   ::google::protobuf::int32 topk_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1080,145 +1123,6 @@ class MeanProto : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static MeanProto* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class EdgeProto : public ::google::protobuf::Message {
- public:
-  EdgeProto();
-  virtual ~EdgeProto();
-
-  EdgeProto(const EdgeProto& from);
-
-  inline EdgeProto& operator=(const EdgeProto& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const EdgeProto& default_instance();
-
-  void Swap(EdgeProto* other);
-
-  // implements Message ----------------------------------------------
-
-  EdgeProto* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const EdgeProto& from);
-  void MergeFrom(const EdgeProto& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // required string name = 1;
-  inline bool has_name() const;
-  inline void clear_name();
-  static const int kNameFieldNumber = 1;
-  inline const ::std::string& name() const;
-  inline void set_name(const ::std::string& value);
-  inline void set_name(const char* value);
-  inline void set_name(const char* value, size_t size);
-  inline ::std::string* mutable_name();
-  inline ::std::string* release_name();
-  inline void set_allocated_name(::std::string* name);
-
-  // required string type = 2;
-  inline bool has_type() const;
-  inline void clear_type();
-  static const int kTypeFieldNumber = 2;
-  inline const ::std::string& type() const;
-  inline void set_type(const ::std::string& value);
-  inline void set_type(const char* value);
-  inline void set_type(const char* value, size_t size);
-  inline ::std::string* mutable_type();
-  inline ::std::string* release_type();
-  inline void set_allocated_type(::std::string* type);
-
-  // required string node1 = 3;
-  inline bool has_node1() const;
-  inline void clear_node1();
-  static const int kNode1FieldNumber = 3;
-  inline const ::std::string& node1() const;
-  inline void set_node1(const ::std::string& value);
-  inline void set_node1(const char* value);
-  inline void set_node1(const char* value, size_t size);
-  inline ::std::string* mutable_node1();
-  inline ::std::string* release_node1();
-  inline void set_allocated_node1(::std::string* node1);
-
-  // required string node2 = 4;
-  inline bool has_node2() const;
-  inline void clear_node2();
-  static const int kNode2FieldNumber = 4;
-  inline const ::std::string& node2() const;
-  inline void set_node2(const ::std::string& value);
-  inline void set_node2(const char* value);
-  inline void set_node2(const char* value, size_t size);
-  inline ::std::string* mutable_node2();
-  inline ::std::string* release_node2();
-  inline void set_allocated_node2(::std::string* node2);
-
-  // optional bool is_directed = 5 [default = true];
-  inline bool has_is_directed() const;
-  inline void clear_is_directed();
-  static const int kIsDirectedFieldNumber = 5;
-  inline bool is_directed() const;
-  inline void set_is_directed(bool value);
-
-  // @@protoc_insertion_point(class_scope:lapis.EdgeProto)
- private:
-  inline void set_has_name();
-  inline void clear_has_name();
-  inline void set_has_type();
-  inline void clear_has_type();
-  inline void set_has_node1();
-  inline void clear_has_node1();
-  inline void set_has_node2();
-  inline void clear_has_node2();
-  inline void set_has_is_directed();
-  inline void clear_has_is_directed();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::std::string* name_;
-  ::std::string* type_;
-  ::std::string* node1_;
-  ::std::string* node2_;
-  bool is_directed_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static EdgeProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1409,18 +1313,6 @@ class NetProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >*
       mutable_layer();
 
-  // repeated .lapis.EdgeProto edge = 2;
-  inline int edge_size() const;
-  inline void clear_edge();
-  static const int kEdgeFieldNumber = 2;
-  inline const ::lapis::EdgeProto& edge(int index) const;
-  inline ::lapis::EdgeProto* mutable_edge(int index);
-  inline ::lapis::EdgeProto* add_edge();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
-      edge() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
-      mutable_edge();
-
   // @@protoc_insertion_point(class_scope:lapis.NetProto)
  private:
 
@@ -1429,7 +1321,6 @@ class NetProto : public ::google::protobuf::Message {
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto > layer_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto > edge_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -2919,25 +2810,49 @@ DataSourceProto::mutable_shape() {
   return &shape_;
 }
 
-// optional int64 offset = 9 [default = 0];
-inline bool DataSourceProto::has_offset() const {
+// optional int32 size = 6;
+inline bool DataSourceProto::has_size() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void DataSourceProto::set_has_offset() {
+inline void DataSourceProto::set_has_size() {
   _has_bits_[0] |= 0x00000020u;
 }
-inline void DataSourceProto::clear_has_offset() {
+inline void DataSourceProto::clear_has_size() {
   _has_bits_[0] &= ~0x00000020u;
 }
+inline void DataSourceProto::clear_size() {
+  size_ = 0;
+  clear_has_size();
+}
+inline ::google::protobuf::int32 DataSourceProto::size() const {
+  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.size)
+  return size_;
+}
+inline void DataSourceProto::set_size(::google::protobuf::int32 value) {
+  set_has_size();
+  size_ = value;
+  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.size)
+}
+
+// optional int32 offset = 9 [default = 0];
+inline bool DataSourceProto::has_offset() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void DataSourceProto::set_has_offset() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void DataSourceProto::clear_has_offset() {
+  _has_bits_[0] &= ~0x00000040u;
+}
 inline void DataSourceProto::clear_offset() {
-  offset_ = GOOGLE_LONGLONG(0);
+  offset_ = 0;
   clear_has_offset();
 }
-inline ::google::protobuf::int64 DataSourceProto::offset() const {
+inline ::google::protobuf::int32 DataSourceProto::offset() const {
   // @@protoc_insertion_point(field_get:lapis.DataSourceProto.offset)
   return offset_;
 }
-inline void DataSourceProto::set_offset(::google::protobuf::int64 value) {
+inline void DataSourceProto::set_offset(::google::protobuf::int32 value) {
   set_has_offset();
   offset_ = value;
   // @@protoc_insertion_point(field_set:lapis.DataSourceProto.offset)
@@ -2945,13 +2860,13 @@ inline void DataSourceProto::set_offset(::google::protobuf::int64 value) {
 
 // optional string mean_file = 10;
 inline bool DataSourceProto::has_mean_file() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void DataSourceProto::set_has_mean_file() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void DataSourceProto::clear_has_mean_file() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void DataSourceProto::clear_mean_file() {
   if (mean_file_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
@@ -3021,13 +2936,13 @@ inline void DataSourceProto::set_allocated_mean_file(::std::string* mean_file) {
 
 // optional bool shuffle = 11 [default = true];
 inline bool DataSourceProto::has_shuffle() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void DataSourceProto::set_has_shuffle() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void DataSourceProto::clear_has_shuffle() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void DataSourceProto::clear_shuffle() {
   shuffle_ = true;
@@ -4033,6 +3948,114 @@ inline void LayerProto::set_topk(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.LayerProto.topk)
 }
 
+// repeated string top = 24;
+inline int LayerProto::top_size() const {
+  return top_.size();
+}
+inline void LayerProto::clear_top() {
+  top_.Clear();
+}
+inline const ::std::string& LayerProto::top(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.top)
+  return top_.Get(index);
+}
+inline ::std::string* LayerProto::mutable_top(int index) {
+  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.top)
+  return top_.Mutable(index);
+}
+inline void LayerProto::set_top(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:lapis.LayerProto.top)
+  top_.Mutable(index)->assign(value);
+}
+inline void LayerProto::set_top(int index, const char* value) {
+  top_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.LayerProto.top)
+}
+inline void LayerProto::set_top(int index, const char* value, size_t size) {
+  top_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.LayerProto.top)
+}
+inline ::std::string* LayerProto::add_top() {
+  return top_.Add();
+}
+inline void LayerProto::add_top(const ::std::string& value) {
+  top_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:lapis.LayerProto.top)
+}
+inline void LayerProto::add_top(const char* value) {
+  top_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:lapis.LayerProto.top)
+}
+inline void LayerProto::add_top(const char* value, size_t size) {
+  top_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:lapis.LayerProto.top)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+LayerProto::top() const {
+  // @@protoc_insertion_point(field_list:lapis.LayerProto.top)
+  return top_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+LayerProto::mutable_top() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.LayerProto.top)
+  return &top_;
+}
+
+// repeated string bottom = 25;
+inline int LayerProto::bottom_size() const {
+  return bottom_.size();
+}
+inline void LayerProto::clear_bottom() {
+  bottom_.Clear();
+}
+inline const ::std::string& LayerProto::bottom(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.bottom)
+  return bottom_.Get(index);
+}
+inline ::std::string* LayerProto::mutable_bottom(int index) {
+  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.bottom)
+  return bottom_.Mutable(index);
+}
+inline void LayerProto::set_bottom(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:lapis.LayerProto.bottom)
+  bottom_.Mutable(index)->assign(value);
+}
+inline void LayerProto::set_bottom(int index, const char* value) {
+  bottom_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.LayerProto.bottom)
+}
+inline void LayerProto::set_bottom(int index, const char* value, size_t size) {
+  bottom_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.LayerProto.bottom)
+}
+inline ::std::string* LayerProto::add_bottom() {
+  return bottom_.Add();
+}
+inline void LayerProto::add_bottom(const ::std::string& value) {
+  bottom_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:lapis.LayerProto.bottom)
+}
+inline void LayerProto::add_bottom(const char* value) {
+  bottom_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:lapis.LayerProto.bottom)
+}
+inline void LayerProto::add_bottom(const char* value, size_t size) {
+  bottom_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:lapis.LayerProto.bottom)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+LayerProto::bottom() const {
+  // @@protoc_insertion_point(field_list:lapis.LayerProto.bottom)
+  return bottom_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+LayerProto::mutable_bottom() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.LayerProto.bottom)
+  return &bottom_;
+}
+
 // -------------------------------------------------------------------
 
 // MeanProto
@@ -4195,338 +4218,6 @@ MeanProto::mutable_diff() {
 
 // -------------------------------------------------------------------
 
-// EdgeProto
-
-// required string name = 1;
-inline bool EdgeProto::has_name() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void EdgeProto::set_has_name() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void EdgeProto::clear_has_name() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void EdgeProto::clear_name() {
-  if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_->clear();
-  }
-  clear_has_name();
-}
-inline const ::std::string& EdgeProto::name() const {
-  // @@protoc_insertion_point(field_get:lapis.EdgeProto.name)
-  return *name_;
-}
-inline void EdgeProto::set_name(const ::std::string& value) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.EdgeProto.name)
-}
-inline void EdgeProto::set_name(const char* value) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.name)
-}
-inline void EdgeProto::set_name(const char* value, size_t size) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.name)
-}
-inline ::std::string* EdgeProto::mutable_name() {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.name)
-  return name_;
-}
-inline ::std::string* EdgeProto::release_name() {
-  clear_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void EdgeProto::set_allocated_name(::std::string* name) {
-  if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete name_;
-  }
-  if (name) {
-    set_has_name();
-    name_ = name;
-  } else {
-    clear_has_name();
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.name)
-}
-
-// required string type = 2;
-inline bool EdgeProto::has_type() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void EdgeProto::set_has_type() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void EdgeProto::clear_has_type() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void EdgeProto::clear_type() {
-  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_->clear();
-  }
-  clear_has_type();
-}
-inline const ::std::string& EdgeProto::type() const {
-  // @@protoc_insertion_point(field_get:lapis.EdgeProto.type)
-  return *type_;
-}
-inline void EdgeProto::set_type(const ::std::string& value) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.EdgeProto.type)
-}
-inline void EdgeProto::set_type(const char* value) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.type)
-}
-inline void EdgeProto::set_type(const char* value, size_t size) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.type)
-}
-inline ::std::string* EdgeProto::mutable_type() {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.type)
-  return type_;
-}
-inline ::std::string* EdgeProto::release_type() {
-  clear_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = type_;
-    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void EdgeProto::set_allocated_type(::std::string* type) {
-  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete type_;
-  }
-  if (type) {
-    set_has_type();
-    type_ = type;
-  } else {
-    clear_has_type();
-    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.type)
-}
-
-// required string node1 = 3;
-inline bool EdgeProto::has_node1() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void EdgeProto::set_has_node1() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void EdgeProto::clear_has_node1() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void EdgeProto::clear_node1() {
-  if (node1_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node1_->clear();
-  }
-  clear_has_node1();
-}
-inline const ::std::string& EdgeProto::node1() const {
-  // @@protoc_insertion_point(field_get:lapis.EdgeProto.node1)
-  return *node1_;
-}
-inline void EdgeProto::set_node1(const ::std::string& value) {
-  set_has_node1();
-  if (node1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node1_ = new ::std::string;
-  }
-  node1_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.EdgeProto.node1)
-}
-inline void EdgeProto::set_node1(const char* value) {
-  set_has_node1();
-  if (node1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node1_ = new ::std::string;
-  }
-  node1_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.node1)
-}
-inline void EdgeProto::set_node1(const char* value, size_t size) {
-  set_has_node1();
-  if (node1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node1_ = new ::std::string;
-  }
-  node1_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.node1)
-}
-inline ::std::string* EdgeProto::mutable_node1() {
-  set_has_node1();
-  if (node1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node1_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.node1)
-  return node1_;
-}
-inline ::std::string* EdgeProto::release_node1() {
-  clear_has_node1();
-  if (node1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = node1_;
-    node1_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void EdgeProto::set_allocated_node1(::std::string* node1) {
-  if (node1_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete node1_;
-  }
-  if (node1) {
-    set_has_node1();
-    node1_ = node1;
-  } else {
-    clear_has_node1();
-    node1_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.node1)
-}
-
-// required string node2 = 4;
-inline bool EdgeProto::has_node2() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void EdgeProto::set_has_node2() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void EdgeProto::clear_has_node2() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void EdgeProto::clear_node2() {
-  if (node2_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node2_->clear();
-  }
-  clear_has_node2();
-}
-inline const ::std::string& EdgeProto::node2() const {
-  // @@protoc_insertion_point(field_get:lapis.EdgeProto.node2)
-  return *node2_;
-}
-inline void EdgeProto::set_node2(const ::std::string& value) {
-  set_has_node2();
-  if (node2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node2_ = new ::std::string;
-  }
-  node2_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.EdgeProto.node2)
-}
-inline void EdgeProto::set_node2(const char* value) {
-  set_has_node2();
-  if (node2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node2_ = new ::std::string;
-  }
-  node2_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.node2)
-}
-inline void EdgeProto::set_node2(const char* value, size_t size) {
-  set_has_node2();
-  if (node2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node2_ = new ::std::string;
-  }
-  node2_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.node2)
-}
-inline ::std::string* EdgeProto::mutable_node2() {
-  set_has_node2();
-  if (node2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    node2_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.node2)
-  return node2_;
-}
-inline ::std::string* EdgeProto::release_node2() {
-  clear_has_node2();
-  if (node2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = node2_;
-    node2_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void EdgeProto::set_allocated_node2(::std::string* node2) {
-  if (node2_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete node2_;
-  }
-  if (node2) {
-    set_has_node2();
-    node2_ = node2;
-  } else {
-    clear_has_node2();
-    node2_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.node2)
-}
-
-// optional bool is_directed = 5 [default = true];
-inline bool EdgeProto::has_is_directed() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void EdgeProto::set_has_is_directed() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void EdgeProto::clear_has_is_directed() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void EdgeProto::clear_is_directed() {
-  is_directed_ = true;
-  clear_has_is_directed();
-}
-inline bool EdgeProto::is_directed() const {
-  // @@protoc_insertion_point(field_get:lapis.EdgeProto.is_directed)
-  return is_directed_;
-}
-inline void EdgeProto::set_is_directed(bool value) {
-  set_has_is_directed();
-  is_directed_ = value;
-  // @@protoc_insertion_point(field_set:lapis.EdgeProto.is_directed)
-}
-
-// -------------------------------------------------------------------
-
 // DAryProto
 
 // repeated int32 shape = 1;
@@ -4681,36 +4372,6 @@ inline ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >*
 NetProto::mutable_layer() {
   // @@protoc_insertion_point(field_mutable_list:lapis.NetProto.layer)
   return &layer_;
-}
-
-// repeated .lapis.EdgeProto edge = 2;
-inline int NetProto::edge_size() const {
-  return edge_.size();
-}
-inline void NetProto::clear_edge() {
-  edge_.Clear();
-}
-inline const ::lapis::EdgeProto& NetProto::edge(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.NetProto.edge)
-  return edge_.Get(index);
-}
-inline ::lapis::EdgeProto* NetProto::mutable_edge(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.NetProto.edge)
-  return edge_.Mutable(index);
-}
-inline ::lapis::EdgeProto* NetProto::add_edge() {
-  // @@protoc_insertion_point(field_add:lapis.NetProto.edge)
-  return edge_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
-NetProto::edge() const {
-  // @@protoc_insertion_point(field_list:lapis.NetProto.edge)
-  return edge_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
-NetProto::mutable_edge() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.NetProto.edge)
-  return &edge_;
 }
 
 // -------------------------------------------------------------------

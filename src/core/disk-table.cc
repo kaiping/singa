@@ -6,7 +6,7 @@
 #include "proto/model.pb.h"
 #include "proto/worker.pb.h"
 
-DEFINE_string(data_dir,"tmp", "path to data store");
+DEFINE_string(data_dir,"/data1/wangwei/lapis", "path to data store");
 DEFINE_int32(table_buffer, 1,0);
 DEFINE_int32(io_buffer_size,5,0);
 DECLARE_double(sleep_time);

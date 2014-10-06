@@ -11,12 +11,42 @@ namespace lapis {
 /*****************************************************************************
  * Implementation for Layer
  *****************************************************************************/
-void Layer::Init(const LayerProto &proto) {
+void Layer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   name_ = proto.name();
   type_=proto.type();
   if(proto.has_data()){
     data_.InitFromProto(proto.data());
     grad_.InitFromProto(proto.data());
+  }
+  for(auto& top: proto.top()){
+    auto p=std::make_pair(name_, top);
+    if(edge_map->find(p)!=edge_map->end()){
+      Edge* e=edge_map->at(p);
+      if(e->src()!=nullptr)
+        CHECK(e->src()==this);
+      else
+        e->set_src(this);
+    }else{
+      Edge *e=new Edge();
+      e->set_src(this);
+      (*edge_map)[p]=e;
+      out_edges_.push_back(e);
+    }
+  }
+  for(auto& bottom: proto.bottom()){
+    auto p=std::make_pair(bottom, name_);
+    if(edge_map->find(p)!=edge_map->end()){
+      Edge* e=edge_map->at(p);
+      if(e->dst()!=nullptr)
+        CHECK(e->dst()==this);
+      else
+        e->set_dst(this);
+    }else{
+      Edge *e=new Edge();
+      e->set_dst(this);
+      (*edge_map)[p]=e;
+      in_edges_.push_back(e);
+    }
   }
 }
 
@@ -53,8 +83,8 @@ const DAry& Layer::GetGrad(Edge *edge){
 /*****************************************************************************
  * Implementation for ConvLayer
  *****************************************************************************/
-void ConvLayer::Init(const LayerProto &proto) {
-  Layer::Init(proto);
+void ConvLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
   CHECK(proto.has_window_size());
   wsize_ = proto.window_size();
   stride_ = proto.stride();
@@ -62,8 +92,8 @@ void ConvLayer::Init(const LayerProto &proto) {
   nkernels_ = proto.num_output();
   ngroups_ = proto.num_groups();
   if(proto.param().size()==2){
-    weight_.InitFromProto(proto.param(0));
-    bias_.InitFromProto(proto.param(1));
+    weight_.Init(proto.param(0));
+    bias_.Init(proto.param(1));
   }
 }
 void ConvLayer::CollectParams(vector<Param*> *params){
@@ -134,10 +164,9 @@ void ConvLayer::ComputeFeature() {
     for (int g = 0; g < ngroups_; g++){
       data3[g].Dot(weight3[g], bottom3[g]);
     }
+    DAry mat_data(data3, {nkernels_, N_});
+    mat_data.AddCol(bias_.data());
   }
-  DAry data3(data_,{num_, nkernels_,N_});
-  // add bias to data3 along the 1-th dim (start at 0-th dim)
-  data3.AddVec(bias_.data(), 1);
 }
 
 void ConvLayer::ComputeGradient() {
@@ -146,7 +175,10 @@ void ConvLayer::ComputeGradient() {
     DAry *gbias=bias_.mutable_grad();
     DAry grad3(grad_, {num_, nkernels_, N_});
     // sum along 1-th dim, i.e., the result aray has length as the 1-th dim
-    gbias->SumExcept(grad3, 1);
+    gbias->Set(0.0f);
+    for (int i = 0; i < num_; i++) {
+      gbias->SumCol(grad3[i]);
+    }
   }
 
   const DAry weight3(weight_.data(), {ngroups_, M_, K_});
@@ -210,7 +242,7 @@ void ConvLayer::Col2Img(DAry* dst, const DAry& src){
   std::vector<Range> slice{nrng, {0, channels_*wsize_*wsize_},
     {0, cheight_}, {0, cwidth_}};
   DAry lsrc=src.FetchData(slice);
-  lsrc.set(0.0f);
+  lsrc.Set(0.0f);
   for(int n=nrng.first;n<nrng.second;n++){
     for (int c = 0; c < channels_*wsize_*wsize_; ++c) {
       int w_offset = c % wsize_;
@@ -255,8 +287,8 @@ void ReLULayer::ComputeGradient() {
 /*****************************************************************************
  * Implementation for DropoutLayer
  *****************************************************************************/
-void DropoutLayer::Init(const LayerProto &proto) {
-  Layer::Init(proto);
+void DropoutLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
   drop_prob_=proto.drop_prob();
   if(proto.has_data());
     mask_.InitLike(data_);
@@ -297,7 +329,7 @@ void DropoutLayer::ComputeGradient() {
 /*****************************************************************************
  * Implementation for PoolingLayer
  *****************************************************************************/
-void PoolingLayer::Init(const LayerProto &proto) {
+void PoolingLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   wsize_ = proto.window_size();
   stride_ = proto.stride();
   pooling_method_ = proto.pooling_method();
@@ -334,7 +366,7 @@ void PoolingLayer::ComputeFeature() {
   DAry lary=bottom.FetchData(slice);
   switch (pooling_method_) {
     case LayerProto::kMaxPooling:
-      data_.set(-FLT_MAX);
+      data_.Set(-FLT_MAX);
       for (int n = nrng.first; n < nrng.second; n++) {
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
@@ -354,7 +386,7 @@ void PoolingLayer::ComputeFeature() {
       }
       break;
     case LayerProto::kAvgPooling:
-      data_.set(0.f);
+      data_.Set(0.0f);
       for (int n = nrng.first; n < nrng.second; n++) {
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
@@ -393,7 +425,7 @@ void PoolingLayer::ComputeGradient() {
   DAry lgrad=grad_.FetchData(slice);
   switch (pooling_method_) {
     case LayerProto::kMaxPooling:
-      gbottom->set(0.f);
+      gbottom->Set(0.0f);
       for (int n = nrng.first; n < nrng.second; n++) {
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
@@ -443,8 +475,8 @@ void PoolingLayer::ComputeGradient() {
 /*****************************************************************************
  * Implementation for LRNLayer
  *****************************************************************************/
-void LRNLayer::Init(const LayerProto &proto) {
-  Layer::Init(proto);
+void LRNLayer::Init(const LayerProto &proto, StrStrEdge *edge_map)  {
+  Layer::Init(proto, edge_map);
   wsize_ = proto.window_size();
   lpad_ = (wsize_ - 1) / 2;
   rpad_= wsize_-lpad_;
@@ -543,11 +575,11 @@ void LRNLayer::ComputeGradient() {
 /*****************************************************************************
  * Implementation for FCLayer
  *****************************************************************************/
-void FCLayer::Init(const LayerProto &proto) {
+void FCLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   hdim_=proto.num_output();
   if(proto.param().size()==2){
-    weight_.InitFromProto(proto.param(0));
-    bias_.InitFromProto(proto.param(1));
+    weight_.Init(proto.param(0));
+    bias_.Init(proto.param(1));
   }
 }
 
@@ -585,6 +617,7 @@ void FCLayer::ComputeFeature() {
   DAry data2(data_, {num_, hdim_});
   DAry bottom2(bottom, {num_, vdim_});
   data2.Dot(bottom2, weight_.data());
+  data2.AddRow(bias_.data());
 }
 
 void FCLayer::ComputeGradient() {
@@ -595,7 +628,8 @@ void FCLayer::ComputeGradient() {
   DAry grad2(grad_, {num_, hdim_});
 
   weight_.mutable_grad()->Dot(bottom2, grad2, true, false);
-  bias_.mutable_grad()->SumRows(grad2);
+  bias_.mutable_grad()->Set(0.0f);
+  bias_.mutable_grad()->SumRow(grad2);
 
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
@@ -605,11 +639,13 @@ void FCLayer::ComputeGradient() {
   }
 }
 
-Performance OutputLayer::CalcPerf(bool loss, bool accuracy){}
+Performance OutputLayer::CalcPerf(bool loss, bool accuracy){
+  return Performance();
+}
 /*****************************************************************************
  * Implementation for SoftmaxLossLayer
  *****************************************************************************/
-void SoftmaxLossLayer::Init(const LayerProto &proto) {
+void SoftmaxLossLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   dim_=proto.num_output();
   topk_=proto.topk();
 }
@@ -634,13 +670,15 @@ void SoftmaxLossLayer::AllocateMemory(){
 }
 void SoftmaxLossLayer::ComputeFeature() {
   VLOG(3)<<name_;
+  if(!data_.allocated())
+    return;
   Range nrng=data_.IndexRange(0);
   const DAry& bottom=in_edges_[0]->GetData(this);
   vector<Range> slice{nrng, {0,data_.shape().SubShape().Size()}};
   DAry lbottom=bottom.FetchData(slice);
   for (int n = nrng.first; n < nrng.second; ++n) {
-    DAry data=data_[n];
     float mmax = lbottom[n].Max();
+    DAry data=data_[n];
     data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom[n]);
     float sum=data.Sum();
     data.Div(data, sum);
@@ -668,31 +706,33 @@ void SoftmaxLossLayer::ComputeGradient() {
 // assume only partition along 0-th dim, add perfs from all partition
 Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
   int ncorrect=0;
-  // DAry:SubShape returns the shape without the 0-th dimension
-  int record_len=data_.shape().SubShape().Size();
-  VLOG(3)<<"calc perf, record len "<<record_len;
   float logprob=0.0f;
-  const DAry& label=in_edges_[1]->GetData(this);
-  Range nrng=data_.IndexRange(0);
-  vector<Range> slice{nrng};
-  DAry llabel=label.FetchData(slice);
-  for(int n=nrng.first;n<nrng.second;n++) {
-    int label=static_cast<int>(llabel.get(n));
-    CHECK(label>=0&&label<1000)<<"label "<<label;
-    float prob_of_truth=data_.get(n,label);
-    if(accuracy){
-      int nlarger=0;
-      // count num of probs larger than the prob of the ground truth label
-      for(int i=0;i<record_len;i++) {
-        if (data_.get(n,i)>prob_of_truth)
-          nlarger++;
+  if(data_.allocated()){
+    // DAry:SubShape returns the shape without the 0-th dimension
+    int record_len=data_.shape().SubShape().Size();
+    VLOG(3)<<"calc perf, record len "<<record_len;
+    const DAry& label=in_edges_[1]->GetData(this);
+    Range nrng=data_.IndexRange(0);
+    vector<Range> slice{nrng};
+    DAry llabel=label.FetchData(slice);
+    for(int n=nrng.first;n<nrng.second;n++) {
+      int label=static_cast<int>(llabel.get(n));
+      CHECK(label>=0&&label<1000)<<"label "<<label;
+      float prob_of_truth=data_.get(n,label);
+      if(accuracy){
+        int nlarger=0;
+        // count num of probs larger than the prob of the ground truth label
+        for(int i=0;i<record_len;i++) {
+          if (data_.get(n,i)>prob_of_truth)
+            nlarger++;
+        }
+        // if the ground truth is within the topk largest, this precdition is correct
+        if(nlarger<=topk_)
+          ncorrect++;
       }
-      // if the ground truth is within the topk largest, this precdition is correct
-      if(nlarger<=topk_)
-        ncorrect++;
-    }
-    if(loss) {
-      logprob-=log(std::max(prob_of_truth, FLT_MIN));
+      if(loss) {
+        logprob-=log(std::max(prob_of_truth, FLT_MIN));
+      }
     }
   }
   VLOG(3)<<"end calc perf";
@@ -705,8 +745,8 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
 /****************************************************************************
  * Implementation for InputLayer
  ***************************************************************************/
-void InputLayer::Init(const LayerProto& proto) {
-  Layer::Init(proto);
+void InputLayer::Init(const LayerProto& proto,StrStrEdge *edge_map){
+  Layer::Init(proto, edge_map);
   if(proto.has_data()){
     prefetch_data_.InitFromProto(proto.data());
   }
@@ -722,8 +762,8 @@ void InputLayer::SetInputData(DAry *data){
 /*****************************************************************************
  * Implementation for ImageLayer
  *****************************************************************************/
-void ImageLayer::Init(const LayerProto &proto) {
-  InputLayer::Init(proto);
+void ImageLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  InputLayer::Init(proto, edge_map);
   cropsize_=proto.cropsize();
 }
 

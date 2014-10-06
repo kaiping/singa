@@ -18,7 +18,10 @@ namespace lapis {
  * Implementation for DataSource
  ****************************************************************************/
 void DataSource::Init(const DataSourceProto &proto){
-  size_=0;
+  if(proto.has_size())
+    size_=proto.size();
+  else
+    size_=0;
   name_ = proto.name();
   offset_ = proto.offset();
 }
@@ -27,6 +30,7 @@ void DataSource::ToProto(DataSourceProto *proto) {
   proto->set_offset(offset_);
 }
 
+const std::string ImageNetSource::type="ImageNetSource";
 void ImageNetSource::Init(const DataSourceProto &proto){
   DataSource::Init(proto);
   image_folder_ = proto.image_folder();

@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <utility>
 #include <memory>
 
 #include "proto/model.pb.h"
@@ -20,12 +21,14 @@
  * \file this file includes the declarations of both Layer and LayerFactory
  */
 
-namespace lapis {
 using std::vector;
+using std::string;
+namespace lapis {
 /**
  * forward declaration of Edge.
  */
 class Edge;
+using StrStrEdge=std::map<std::pair<string, string>, Edge*>;
 /**
  * Base layer class.
  * Child layers should implement the ::Forward(), ::Backward() functions for
@@ -50,7 +53,7 @@ class Layer {
    * added to the layer. see LayerProto
    * @param edge_map a map from edge name to the edge object.
    */
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
   virtual void InitDAryShape();
   virtual void CollectParams(vector<Param*> *params);
@@ -149,7 +152,7 @@ class Layer {
 };
 class ConvLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
@@ -185,17 +188,15 @@ class ConvLayer: public Layer {
 
 class ReLULayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
 };
 
 class DropoutLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
@@ -211,7 +212,7 @@ class DropoutLayer: public Layer {
 
 class PoolingLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
@@ -240,7 +241,7 @@ class LRNLayer: public Layer {
  */
 
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
@@ -261,7 +262,7 @@ class FCLayer: public Layer {
    * fully connected layer
    */
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
   virtual void AllocateMemory();
   virtual void ComputeFeature();
@@ -286,7 +287,7 @@ class SoftmaxLossLayer: public OutputLayer {
    * connected from the label layer and the last fc layer
    */
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasOutput() {return true;}
   virtual void InitDAryShape();
   virtual void AllocateMemory();
@@ -302,7 +303,7 @@ class SoftmaxLossLayer: public OutputLayer {
 
 class InputLayer: public Layer {
  public:
-  virtual void Init(const LayerProto& proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record)=0;
   virtual void SetInputData(DAry *data);
@@ -313,9 +314,8 @@ class InputLayer: public Layer {
 };
 class ImageLayer: public InputLayer {
  public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void AllocateMemory();
-  virtual void ComputeFeature();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
   virtual void AddInputRecord(const Record& record);
@@ -328,10 +328,7 @@ class ImageLayer: public InputLayer {
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void Init(const LayerProto &proto);
   virtual void AllocateMemory();
-  virtual void ComputeFeature();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
   virtual void AddInputRecord(const Record& record);
 };
@@ -384,86 +381,6 @@ class LayerFactory {
   //! Map that stores the registered Layers
   std::map<std::string, std::function<Layer*(void)>> layer_map_;
   static std::shared_ptr<LayerFactory> instance_;
-};
-
-
-/******************************************
- * to be deleted
- * **************************************/
-
-/**
- * Layer for fetching raw input features
- * It setups DataSource firstlyn ::Setup() and then fetch the data batch in
- * ::Forward().
- */
-class DataLayer : public Layer {
- public:
-  /**
-   * Identifier of this layer, the value is "Data".
-   */
-  static const std::string kType;
-  /**
-   * Set data source identifier, i.e. name.
-   */
-  virtual void Init(const LayerProto &proto);
-  /**
-   * Set the input batch shape, including batchsize, channels, height, width.
-   * @param shape
-   */
-  void SetInputShape(int batchsize, const Shape &data_shape);
-  void SetInputStore(int store_id);
-  void LoadData(const DAry &input, int phase);
-  /**
-   * allocate memory
-   */
-  virtual void Setup(const char flag);
-  /**
-   * fetch data from data source
-   */
-  virtual void Forward();
-  /*
-   * Just call Backward function of out going edges.
-  virtual void Backward();
-   */
-  /**
-   * Write the data source name
-   */
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual bool HasInput() {
-    return false;
-  }
-  /**
-   * @param edge if edge is nullptr it means this function is called to fill
-   * new records for the layer. hence return the tmp blob if the image should
-   * be croped; otherwise return the data blob
-   */
-  virtual const DAry &data(Edge *edge) {
-      return data_;
-  }
-  /**
-   * Because DataLayer is usually connected from loss edges, hence this
-   * function returns the data provided by DataSource to the loss edge to
-   * compute the gradients.
-   * @param edge not used currently.
-   */
-  virtual const DAry &grad(Edge *edge) {
-    return data_;
-  }
-
-  inline int store_id() {
-    return  store_id_;
-  }
-
-  inline std::string& data_source() {
-    return data_source_;
-  }
-
- private:
-  bool mirror_;
-  int cropsize_;
-  int batchsize_, channels_,height_,width_;
-  std::string data_source_;
-  int store_id_;
 };
 
 

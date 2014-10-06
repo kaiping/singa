@@ -63,25 +63,23 @@ void Net::topology_sort(std::vector<Layer *> *layers) {
 
 Net::Net(const NetProto &net_proto) {
   LOG(INFO)<<"Construct Neural Net...";
-  std::map<std::string, Layer *> layer_map;
+  std::map<std::pair<string, string>, Edge *> edge_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
-    layer->Init(layer_proto);
+    layer->Init(layer_proto, &edge_map);
     layers_.push_back(layer);
-    layer_map[layer->name()] = layer;
     if(layer->HasInput())
       input_layer_.push_back(dynamic_cast<InputLayer*>(layer));
     if(layer->HasOutput())
       output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
   }
-  for (auto &edge_proto : net_proto.edge()) {
-    Edge *edge = new Edge();
-    edge->Init(edge_proto, layer_map);
-    edges_.push_back(edge);
-  }
   topology_sort(&layers_);
-  for(auto* layer: layers_)
+  for(auto* layer: layers_){
+    VLOG(2)<<layer->name();
     layer->CollectParams(&params_);
+  }
+  for(auto& entry: edge_map)
+    edges_.push_back(entry.second);
   // the softmax loss layer
   LOG(INFO)<<"Neural Net constructed";
 }
@@ -142,10 +140,12 @@ void Net::ToProto(NetProto *proto, bool copyData) {
     LayerProto *layer_proto = proto->add_layer();
     layer->ToProto(layer_proto,copyData);
   }
+  /*
   for (Edge *edge : edges_) {
     EdgeProto *edge_proto = proto->add_edge();
     edge->ToProto(edge_proto);
   }
+  */
 }
 Net::~Net() {
   for(auto* layer: layers_)

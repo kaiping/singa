@@ -39,9 +39,9 @@ class Edge {
    * parameters, type
    * @param layer_map map from layer name to layer pointer, the edge will
    * select the corresponding connecting layers
-   */
   virtual void Init(const EdgeProto &proto,
                     const std::map<string, Layer *> &layers);
+   */
   /**
    * Setup properties of this edge based on src layer, e.g, parameter shape.
    * Allocate memory for parameters and initialize them according to user
@@ -53,8 +53,8 @@ class Edge {
    */
   /**
    * Marshal edge properties into google protobuf object
-   */
   virtual void ToProto(EdgeProto *proto);
+   */
   /**
    * Forward-propagate feature, read from src and write to dest
    * @param src source feature
@@ -120,6 +120,18 @@ class Edge {
 
   DAry* GetMutableGrad(Layer* tolayer);
 
+  Layer* src() {
+    return node1_;
+  }
+  Layer* dst() {
+    return node2_;
+  }
+  void set_src(Layer* src) {
+    node1_=src;
+  }
+  void set_dst(Layer* dst) {
+    node2_=dst;
+  }
   /*
   DAry* GetPos(Layer* tolayer);
   DAry* GetNeg(Layer* tolayer);

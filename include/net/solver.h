@@ -14,7 +14,6 @@ namespace lapis {
 /**
  * Forward declaration of Net class
  */
-class Net;
 /**
  * The base trainer class.
  * Child class has to implement the ::Init(), ::Train(), ::Validation(),

@@ -24,49 +24,36 @@ using Range=std::pair<int, int>;
 
 class Shape {
  public:
-  Shape():s(nullptr), dim(0){}
+  Shape():s(), dim(0){}
   Shape(const Shape& other){
     dim=other.dim;
-    s=new int[dim];
-    for (int i = 0; i < dim; i++) {
-      s[i]=other.s[i];
-    }
+    s[0]=other.s[0]; s[1]=other.s[1]; s[2]=other.s[2]; s[3]=other.s[3];
   }
   Shape(const Shape&& other){
     dim=other.dim;
-    s=other.s;
+    s[0]=other.s[0]; s[1]=other.s[1]; s[2]=other.s[2]; s[3]=other.s[3];
   }
   Shape& operator=(const Shape&& other) {
-    if(s!=nullptr)
-      delete s;
     dim=other.dim;
-    s=other.s;
+    s[0]=other.s[0]; s[1]=other.s[1]; s[2]=other.s[2]; s[3]=other.s[3];
     return *this;
   }
   Shape& operator=(const Shape& other) {
-    if(s!=nullptr)
-      delete s;
     dim=other.dim;
-    s=new int[dim];
-    for (int i = 0; i < dim; i++) {
-      s[i]=other.s[i];
-    }
+    s[0]=other.s[0]; s[1]=other.s[1]; s[2]=other.s[2]; s[3]=other.s[3];
     return *this;
   }
   Shape(const vector<int>& other){
     Reset(other);
   }
   void Reset(const vector<int>& other) {
-    if(s!=nullptr)
-      delete s;
     dim=other.size();
-    s=new int[dim];
-    for (int i = 0; i < dim; i++) {
+    for (unsigned int i = 0; i < other.size(); i++) {
       s[i]=other[i];
     }
   }
   const int Size() const{
-    int count=1;
+    int count=dim>0;
     for (int i = 0; i < dim; i++) {
       count *=s[i];
     }
@@ -80,16 +67,14 @@ class Shape {
     CHECK(dim>1);
     Shape ret;
     ret.dim=dim-1;
-    ret.s=new int[dim-1];
     for (int i = 0; i < dim-1; i++) {
       ret.s[i]=s[i+1];
     }
     return ret;
   }
 
-  ~Shape() {delete s;}
  public:
-  int* s;
+  int s[4];
   int dim;
 };
 class DAry {
@@ -114,7 +99,9 @@ class DAry {
     */
   DAry(const DAry& other, const vector<int>& shape) {
     dptr_=other.dptr_;
+    int size=size_;
     SetShape(shape);
+    CHECK_EQ(size, size_);
     alloc_size_=other.alloc_size_;
   }
 
@@ -200,6 +187,7 @@ class DAry {
     * Add the src to dst as a vector along dim-th dimension
     * i.e., the dim-th dimension should have the same length as src
     */
+  void AddVec(const DAry& src, int dimidx);
   void AddRow(const DAry& src);
   void AddCol(const DAry& src);
 

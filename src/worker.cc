@@ -60,8 +60,8 @@ void Worker::PrefetchData(int phase, Net *net) {
   Record record;
   int k;
   // local batchsize
-  int num=net->input_layer(0)->data().local_shape(0);
-  for(int n=0;n<num;++n){
+  Range nrng=net->input_layer(0)->data().IndexRange(0);
+  for(int n=0;n<nrng.second-nrng.first;++n){
     delegate_->Next(phase, &k, &record);
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);

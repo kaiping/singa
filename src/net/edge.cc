@@ -5,6 +5,7 @@
 #include "net/edge.h"
 
 namespace lapis {
+  /*
 void Edge::Init(const EdgeProto &proto,
     const std::map<std::string, Layer *> &layers) {
   name_ = proto.name();
@@ -22,6 +23,7 @@ void Edge::Init(const EdgeProto &proto,
     node2_->add_in_edge(this);
   }
 }
+*/
 const DAry& Edge::GetData(Layer* tolayer){
   if(tolayer==node1_)
     return node2_->GetData(this);
@@ -46,11 +48,12 @@ DAry* Edge::GetMutableGrad(Layer* tolayer){
   else
     return node1_->GetMutableGrad(this);
 }
-
+/*
 void Edge::ToProto(EdgeProto* proto) {
   proto->set_node1(node1_->name());
   proto->set_node2(node2_->name());
 }
+*/
 /*
 void Edge::ComputeParamUpdates(const Trainer *trainer) {
   const SGDTrainer *sgd = reinterpret_cast<const SGDTrainer *> (trainer);

@@ -211,7 +211,6 @@ void DAry::SumRow(const DAry& src) {
   CHECK_EQ(dim_,1);
   CHECK_EQ(src.dim_,2);
   CHECK_EQ(size_, src.shape_.s[1]);
-  Set(0.0f);
   for (int i = 0; i < src.shape_.s[0]; i++) {
     arymath().add(dptr_,src.dptr_+size_*i, dptr_, size_);
   }
@@ -221,6 +220,8 @@ void DAry::SumRow(const DAry& src) {
   * Add the src to dst as a vector along dim-th dimension
   * i.e., the dim-th dimension should have the same length as src
   */
+void DAry::AddVec(const DAry&src, int dimidx) {
+}
 void DAry::AddRow( const DAry& src) {
   // only support dim being the last dimension
   CHECK_EQ(dim_, 2);
@@ -243,7 +244,7 @@ void DAry::SumCol(const DAry& src) {
   CHECK_EQ(dim_,1);
   CHECK_EQ(src.dim_,2);
   for (int i = 0; i < size_; i++) {
-    dptr_[i]=arymath().sum(src.dptr_+i*src.shape_.s[1], src.shape_.s[1]);
+    dptr_[i]+=arymath().sum(src.dptr_+i*src.shape_.s[1], src.shape_.s[1]);
   }
 }
 

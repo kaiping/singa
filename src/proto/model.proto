@@ -126,8 +126,9 @@ message EdgeProto {
 
 message DAryProto {
   repeated int32 shape = 1;
-  repeated int32 partition =2;
-  repeated float value = 3 [packed=true];
+  repeated int32 range_start =2;
+  repeated int32 range_end =3;
+  repeated float value = 4 [packed=true];
 }
 
 message NetProto {

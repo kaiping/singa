@@ -1287,22 +1287,34 @@ class DAryProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
       mutable_shape();
 
-  // repeated int32 partition = 2;
-  inline int partition_size() const;
-  inline void clear_partition();
-  static const int kPartitionFieldNumber = 2;
-  inline ::google::protobuf::int32 partition(int index) const;
-  inline void set_partition(int index, ::google::protobuf::int32 value);
-  inline void add_partition(::google::protobuf::int32 value);
+  // repeated int32 range_start = 2;
+  inline int range_start_size() const;
+  inline void clear_range_start();
+  static const int kRangeStartFieldNumber = 2;
+  inline ::google::protobuf::int32 range_start(int index) const;
+  inline void set_range_start(int index, ::google::protobuf::int32 value);
+  inline void add_range_start(::google::protobuf::int32 value);
   inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-      partition() const;
+      range_start() const;
   inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-      mutable_partition();
+      mutable_range_start();
 
-  // repeated float value = 3 [packed = true];
+  // repeated int32 range_end = 3;
+  inline int range_end_size() const;
+  inline void clear_range_end();
+  static const int kRangeEndFieldNumber = 3;
+  inline ::google::protobuf::int32 range_end(int index) const;
+  inline void set_range_end(int index, ::google::protobuf::int32 value);
+  inline void add_range_end(::google::protobuf::int32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+      range_end() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+      mutable_range_end();
+
+  // repeated float value = 4 [packed = true];
   inline int value_size() const;
   inline void clear_value();
-  static const int kValueFieldNumber = 3;
+  static const int kValueFieldNumber = 4;
   inline float value(int index) const;
   inline void set_value(int index, float value);
   inline void add_value(float value);
@@ -1319,7 +1331,8 @@ class DAryProto : public ::google::protobuf::Message {
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shape_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > partition_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > range_start_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > range_end_;
   ::google::protobuf::RepeatedField< float > value_;
   mutable int _value_cached_byte_size_;
   friend void  protobuf_AddDesc_model_2eproto();
@@ -4546,37 +4559,67 @@ DAryProto::mutable_shape() {
   return &shape_;
 }
 
-// repeated int32 partition = 2;
-inline int DAryProto::partition_size() const {
-  return partition_.size();
+// repeated int32 range_start = 2;
+inline int DAryProto::range_start_size() const {
+  return range_start_.size();
 }
-inline void DAryProto::clear_partition() {
-  partition_.Clear();
+inline void DAryProto::clear_range_start() {
+  range_start_.Clear();
 }
-inline ::google::protobuf::int32 DAryProto::partition(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.DAryProto.partition)
-  return partition_.Get(index);
+inline ::google::protobuf::int32 DAryProto::range_start(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.DAryProto.range_start)
+  return range_start_.Get(index);
 }
-inline void DAryProto::set_partition(int index, ::google::protobuf::int32 value) {
-  partition_.Set(index, value);
-  // @@protoc_insertion_point(field_set:lapis.DAryProto.partition)
+inline void DAryProto::set_range_start(int index, ::google::protobuf::int32 value) {
+  range_start_.Set(index, value);
+  // @@protoc_insertion_point(field_set:lapis.DAryProto.range_start)
 }
-inline void DAryProto::add_partition(::google::protobuf::int32 value) {
-  partition_.Add(value);
-  // @@protoc_insertion_point(field_add:lapis.DAryProto.partition)
+inline void DAryProto::add_range_start(::google::protobuf::int32 value) {
+  range_start_.Add(value);
+  // @@protoc_insertion_point(field_add:lapis.DAryProto.range_start)
 }
 inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-DAryProto::partition() const {
-  // @@protoc_insertion_point(field_list:lapis.DAryProto.partition)
-  return partition_;
+DAryProto::range_start() const {
+  // @@protoc_insertion_point(field_list:lapis.DAryProto.range_start)
+  return range_start_;
 }
 inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-DAryProto::mutable_partition() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.DAryProto.partition)
-  return &partition_;
+DAryProto::mutable_range_start() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.DAryProto.range_start)
+  return &range_start_;
 }
 
-// repeated float value = 3 [packed = true];
+// repeated int32 range_end = 3;
+inline int DAryProto::range_end_size() const {
+  return range_end_.size();
+}
+inline void DAryProto::clear_range_end() {
+  range_end_.Clear();
+}
+inline ::google::protobuf::int32 DAryProto::range_end(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.DAryProto.range_end)
+  return range_end_.Get(index);
+}
+inline void DAryProto::set_range_end(int index, ::google::protobuf::int32 value) {
+  range_end_.Set(index, value);
+  // @@protoc_insertion_point(field_set:lapis.DAryProto.range_end)
+}
+inline void DAryProto::add_range_end(::google::protobuf::int32 value) {
+  range_end_.Add(value);
+  // @@protoc_insertion_point(field_add:lapis.DAryProto.range_end)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+DAryProto::range_end() const {
+  // @@protoc_insertion_point(field_list:lapis.DAryProto.range_end)
+  return range_end_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+DAryProto::mutable_range_end() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.DAryProto.range_end)
+  return &range_end_;
+}
+
+// repeated float value = 4 [packed = true];
 inline int DAryProto::value_size() const {
   return value_.size();
 }

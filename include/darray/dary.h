@@ -4,23 +4,107 @@
 #ifndef INCLUDE_DARRAY_DARY_H_
 #define INCLUDE_DARRAY_DARY_H_
 
+#include <glog/logging.h>
+
 #include <vector>
 #include <utility>
 #include <functional>
+#include <sstream>
+#include <string>
+#include "darray/arraymath.h"
+
+
 #include "proto/model.pb.h"
 
+using std::string;
 using std::vector;
+
 namespace lapis {
 using Range=std::pair<int, int>;
-typdef float* FPtr;
-class Shape;
+
+class Shape {
+ public:
+  Shape():s(nullptr), dim(0){}
+  Shape(const Shape& other){
+    dim=other.dim;
+    s=new int[dim];
+    for (int i = 0; i < dim; i++) {
+      s[i]=other.s[i];
+    }
+  }
+  Shape(const Shape&& other){
+    dim=other.dim;
+    s=other.s;
+  }
+  Shape& operator=(const Shape&& other) {
+    if(s!=nullptr)
+      delete s;
+    dim=other.dim;
+    s=other.s;
+    return *this;
+  }
+  Shape& operator=(const Shape& other) {
+    if(s!=nullptr)
+      delete s;
+    dim=other.dim;
+    s=new int[dim];
+    for (int i = 0; i < dim; i++) {
+      s[i]=other.s[i];
+    }
+    return *this;
+  }
+  Shape(const vector<int>& other){
+    Reset(other);
+  }
+  void Reset(const vector<int>& other) {
+    if(s!=nullptr)
+      delete s;
+    dim=other.size();
+    s=new int[dim];
+    for (int i = 0; i < dim; i++) {
+      s[i]=other[i];
+    }
+  }
+  const int Size() const{
+    int count=1;
+    for (int i = 0; i < dim; i++) {
+      count *=s[i];
+    }
+    return count;
+  }
+  /**
+    * without the 0-th dimension
+    */
+
+  const Shape SubShape() const {
+    CHECK(dim>1);
+    Shape ret;
+    ret.dim=dim-1;
+    ret.s=new int[dim-1];
+    for (int i = 0; i < dim-1; i++) {
+      ret.s[i]=s[i+1];
+    }
+    return ret;
+  }
+
+  ~Shape() {delete s;}
+ public:
+  int* s;
+  int dim;
+};
 class DAry {
  public:
-  DAry():local_size_(0){}
+  ~DAry();
+  DAry():dim_(0), size_(0),alloc_size_(0),dptr_(nullptr){}
   /**
-    * init with the same shape and partition as other, may copy data
-    */
-  DAry(const DAry& other, bool copy);
+   * init with the same shape and partition as other, alloc memory
+   * may copy data
+   */
+  DAry(const DAry& other, bool copy=false);
+  /**
+   * init based on the shape, alloc memory
+   */
+  DAry(const vector<int>& shape);
 
   /**
     * create a new dary with data and partition from other dary,
@@ -28,9 +112,21 @@ class DAry {
     * the first or last few dimension, total size should the same;
     * like Reshape();
     */
-  DAry(const DAry& other, const vector<int>& shape);
+  DAry(const DAry& other, const vector<int>& shape) {
+    dptr_=other.dptr_;
+    SetShape(shape);
+    alloc_size_=other.alloc_size_;
+  }
+
+  DAry(const DAry& other, const vector<Range>& slice) {
+    dptr_=other.dptr_;
+    SetShape(other.shape_);
+    range_=slice;
+    alloc_size_=size_;
+  }
+
   /**
-    * set shape and partition as other dary
+    * set shape and partition as other dary, allocate memory
     */
   void InitLike(const DAry& other);
   /**
@@ -42,8 +138,13 @@ class DAry {
   /**
     * subdary on the 0-th dim
     */
-  DAry operator[](int k) const;
-  DAry operator[](int k);
+  DAry operator[](int k) const {
+    DAry ret;
+    ret.SetShape(shape_.SubShape());
+    ret.dptr_=dptr_+k*ret.size_;
+    ret.alloc_size_=ret.size_;
+    return ret;
+  }
 
   /**
     * Dot production
@@ -57,6 +158,7 @@ class DAry {
     * dst=src1-src2
     */
   void Minus( const DAry& src1, const DAry& src2);
+  void Minus( const DAry& src, const float x) ;
   /**
     * minus this=this-src
     */
@@ -69,17 +171,12 @@ class DAry {
     * this=this+src
     */
   void Add( const DAry& src);
+  void Add(const float x);
   /**
     * dst=src1+x
     */
   void Add( const DAry& src1, const float x);
-  /**
-    * apply the func for every element in src, put result to dst
-    */
-  void Map( std::function<float(float)> func, const DAry& src);
-  void Map( std::function<float(float, float)> func, const DAry& src1, const DAry& src2);
-  void Map( std::function<float(float, float, float)> func, const DAry& src1, const DAry& src2,const DAry& src3);
-  /**
+ /**
     * set to 1.f if src element < t otherwise set to 0
     * Map(&mask_, [t](float v){return v<=t?1.0f:0.0f;}, mask_);
     */
@@ -103,7 +200,8 @@ class DAry {
     * Add the src to dst as a vector along dim-th dimension
     * i.e., the dim-th dimension should have the same length as src
     */
-  void AddVec( const DAry& src, int dim);
+  void AddRow(const DAry& src);
+  void AddCol(const DAry& src);
 
   /**
     * sum along dim-th dimension, with range r
@@ -115,7 +213,8 @@ class DAry {
     * src must be a matrix
     * this is a vector
     */
-  void SumRows(const DAry& src);
+  void SumRow(const DAry& src);
+  void SumCol(const DAry& src);
 
   /**
     * sum the src except the dim-th dimension
@@ -140,10 +239,17 @@ class DAry {
 
   void Set(float x);
   /**
+    * apply the func for every element in src, put result to dst
+    */
+  void Map(std::function<float(float)> func, const DAry& src);
+  void Map(std::function<float(float, float)> func, const DAry& src1, const DAry& src2);
+  void Map(std::function<float(float, float, float)> func, const DAry& src1, const DAry& src2,const DAry& src3);
+
+  /**
     * check whether the element at index is local
     */
   bool isLocal(vector<int> index){
-    for (i = 0; i < dim_; i++) {
+    for (int i = 0; i < dim_; i++) {
       if(index[i]>=range_[i].second||index[i]<range_[i].first)
         return false;
     }
@@ -154,7 +260,7 @@ class DAry {
     * return the local index range for dim-th dimension
     */
   Range IndexRange(int k) const{
-    CHECK_LT(k, dim_];
+    CHECK(k< dim_);
     return range_[k];
   }
 
@@ -171,41 +277,41 @@ class DAry {
     * return the ref for the ary at this index
     * check shape
     */
-float& at(int idx0,int idx1, int idx2, int idx3) const {
-  return dptr_[locate(idx0,idx1,idx2,idx3)];
-}
-float& at(int idx0,int idx1, int idx2) const{
-  return dptr_[locate(idx0,idx1,idx2)];
-}
-float& at(int idx0,int idx1) const {
-  return dptr_[locate(idx0,idx1)];
-}
-float& at(int idx0) const {
-  return dptr_[locate(idx0)];
-}
-int locate(int idx0,int idx1, int idx2, int idx3) const {
-  CHECK_EQ(dim_,4);
-  int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
-  CHECK_LT(pos, alloc_size_);
-  return pos;
-}
-int locate(int idx0,int idx1, int idx2) const{
-  CHECK_EQ(dim_,3);
-  int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
-  CHECK_LT(pos, alloc_size_);
-  return pos;
-}
-float& locate(int idx0,int idx1) const {
-  CHECK_EQ(dim_,2);
-  int pos=idx0*shape_.s[1]+idx1;
-  CHECK_LT(pos, alloc_size_);
-  return pos;
-}
-float& locate(int idx0) const {
-  CHECK_EQ(dim_,1);
-  CHECK_LT(idx0, alloc_size_);
-  return idx0;
-}
+  float& at(int idx0,int idx1, int idx2, int idx3) const {
+    return dptr_[locate(idx0,idx1,idx2,idx3)];
+  }
+  float& at(int idx0,int idx1, int idx2) const{
+    return dptr_[locate(idx0,idx1,idx2)];
+  }
+  float& at(int idx0,int idx1) const {
+    return dptr_[locate(idx0,idx1)];
+  }
+  float& at(int idx0) const {
+    return dptr_[locate(idx0)];
+  }
+  int locate(int idx0,int idx1, int idx2, int idx3) const {
+    CHECK_EQ(dim_,4);
+    int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
+    CHECK(pos< alloc_size_);
+    return pos;
+  }
+  int locate(int idx0,int idx1, int idx2) const{
+    CHECK_EQ(dim_,3);
+    int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
+    CHECK(pos< alloc_size_);
+    return pos;
+  }
+  int locate(int idx0,int idx1) const {
+    CHECK_EQ(dim_,2);
+    int pos=idx0*shape_.s[1]+idx1;
+    CHECK(pos< alloc_size_);
+    return pos;
+  }
+  int locate(int idx0) const {
+    CHECK_EQ(dim_,1);
+    CHECK(idx0< alloc_size_);
+    return idx0;
+  }
   /**
     * return the value for the ary at this index
     * check shape
@@ -232,13 +338,24 @@ float& locate(int idx0) const {
     * set shape if no set before; otherwise check with old shape
     */
   void SetShape(const vector<int>& shape) {
+    dim_=shape.size();
     shape_.Reset(shape);
+    size_=shape_.Size();
+    // range is the whole dimension for no partition
+    for (int i = 0; i < dim_; i++) {
+      range_.push_back(std::make_pair(0, shape_.s[i]));
+    }
   }
   void SetShape(const Shape& shape) {
+    dim_=shape.dim;
     shape_=shape;
+    size_=shape.Size();
+    for (int i = 0; i < dim_; i++) {
+      range_.push_back(std::make_pair(0, shape_.s[i]));
+    }
   }
   int shape(int k) const {
-    CHECK_LT(k, dim_);
+    CHECK(k< dim_);
     return shape_.s[k];
   }
   const Shape& shape() const {
@@ -248,54 +365,31 @@ float& locate(int idx0) const {
     * swap dptr
     */
   void SwapDptr(DAry* other) {
-    std::swap(dptr_, other->mutable_dptr());
+    std::swap(dptr_, other->dptr_);
   }
-  const FPtr& dptr() const {return dptr_;}
-  FPtr& mutable_dptr() const {return dptr_;}
+  float* dptr() const {return dptr_;}
   /**
     * true if memory has allocated or false
     */
   bool allocated() {return alloc_size_>0;}
+  string ToString() {
+    std::stringstream ss;
+    for (int i = 0; i < size_; i++) {
+      ss<<dptr_[i]<<" ";
+    }
+    return ss.str();
+  }
  protected:
   int dim_;
-  Shape shape_;
-  vector<Range> range_; // local index range for every dimension
+  int size_;
   int alloc_size_; // allocated memory size interms of # of floats
   float* dptr_;
+  Shape shape_;
+  vector<Range> range_; // local index range for every dimension
+
+  static arraymath::ArrayMath& arymath();
 };
 
-class Shape {
- public:
-  Shape() {s=nullptr;dim=0;}
-  explicit Shape(const Shape& other){
-    dim=other.dim;
-    s=new int[dim];
-    for (i = 0; i < dim; i++) {
-      s[i]=other.s[i];
-    }
-  }
-  explicit Shape(const vector<int>& other){
-    Reset(other);
-  }
-  void Reset(const vector<int>& other) {
-    if(s!=nullptr)
-      delete s;
-    dim=other.size();
-    s=new int[dim];
-    for (i = 0; i < dim; i++) {
-      s[i]=other[i];
-    }
-  }
-  const int Size() const;
-  /**
-   * without the 0-th dimension
-   */
-  const Shape SubShape() const;
-  ~Shape() {delete s;}
- public:
-  int* s;
-  int dim;
-};
 }  // namespace lapis
 
 #endif  // INCLUDE_DARRAY_DARY_H_

@@ -7,7 +7,8 @@ HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := $(HOME_DIR)/bin/g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/atlas/include $(HOME_DIR)/include/openmpi
+INCLUDE_DIRS := ./include/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
+#$(HOME_DIR)/atlas/include
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
@@ -17,7 +18,7 @@ MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core cblas atlas
+							opencv_core cblas atlas arrarymath
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/atlas/lib
 
@@ -25,6 +26,24 @@ LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
 
 BUILD_DIR := build
+
+##############################################################################
+# build test with dary
+#############################################################################
+DARY_HDRS: = $(shell find include/darray -name "*.h" -type f)
+DARY_SRCS: = $(shell find src/darray -name "*.cc" -type f)
+DARY_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(DARY_SRCS:.cc=.o)) $(PROTO_OBJS) )
+-include $(DARY_OBJS:%.o=%.P)
+
+dary.test: init $(DARY_OBJS)
+	$(CXX) $(DARY_OBJS) -o dary.test $(CXXFLAGS) $(LDFLAGS)
+
+$(DARY_OBJS):$(BUILD_DIR)/%.o : %.cc
+	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@
+	cp $(BUILD_DIR)/$*.d $(BUILD_DIR)/$*.P; \
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+		-e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P; \
+	rm -f $*.d
 
 ###############################################################################
 # Build Lapis into .a and .so library

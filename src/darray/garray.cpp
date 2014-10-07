@@ -1,12 +1,4 @@
-/*
-to do list
-4 : garray related function
-5 : linking
-6 : debuging
-*/
 
-
-//
 #include "garray.h"
 
 GArray::GArray(const Shape& shape, int mode):

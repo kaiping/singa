@@ -228,8 +228,6 @@ void shutdown(){
 	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
 	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
 
-	  print_table_stats();
-
 	  table_server->ShutdownTableServer();
 	  VLOG(3) << "Flushing node " << network->id();
 	  network->Shutdown();
@@ -260,8 +258,10 @@ int main(int argc, char **argv) {
 		worker_table_init();
 		network->barrier();
 		VLOG(3) << "passed the barrier";
+		print_table_stats();
 
 		//Sleep(1);
+		if (NetworkThread::Get()->id()==0)
 		worker_test_data();
 	}
 

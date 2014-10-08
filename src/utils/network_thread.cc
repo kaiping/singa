@@ -2,6 +2,8 @@
 // modified from piccolo/rpc.cc
 #include <glog/logging.h>
 #include <unordered_set>
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <google/protobuf/io/coded_stream.h>
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
 #include "core/request_dispatcher.h"
@@ -176,7 +178,18 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     const string &s = q.front();
     if (data) {
       data->ParseFromArray(s.data(), s.size());
+      /*
+      // due to size limit of deault protobuf, need to use  codeinputstream
+      auto* instream=new google::protobuf::io::ArrayInputStream(s.data(), s.size());
+      auto* codein=new google::protobuf::io::CodedInputStream(instream);
+      // 256MB, warning for 64MB
+      codein->SetTotalBytesLimit(268435456,134217728);//67108864);
+      data->ParseFromCodedStream(codein);
+      delete instream;
+      delete codein;
+      */
     }
+
     q.pop_front();
     return true;
   }

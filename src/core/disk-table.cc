@@ -6,7 +6,7 @@
 #include "proto/model.pb.h"
 #include "proto/worker.pb.h"
 
-DEFINE_string(data_dir,"/data0/wangwei/tmp", "path to data store");
+DEFINE_string(data_dir,"/data1/wangwei/lapis", "path to data store");
 DEFINE_int32(table_buffer, 20,0);
 DEFINE_int32(io_buffer_size,5,0);
 DEFINE_int32(block_size,10,0);
@@ -142,7 +142,7 @@ void DiskTable::put_str(const string& k, const string& v){
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
-		delete current_write_record_; 
+		delete current_write_record_;
 		current_write_record_ = new DiskData();
 		if (total_buffer_count_ >= FLAGS_block_size){ //table_info_->max_size) {
 			current_block_++;
@@ -246,7 +246,7 @@ void DiskTable::write_loop(){
 		}
 		if (data!=NULL){
 			SendDataBuffer(*data);
-			delete data; 
+			delete data;
 		}
 	}
 }

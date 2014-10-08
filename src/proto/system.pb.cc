@@ -111,6 +111,7 @@ const int SystemProto::kSynchronousFieldNumber;
 SystemProto::SystemProto()
   : ::google::protobuf::Message() {
   SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.SystemProto)
 }
 
 void SystemProto::InitAsDefaultInstance() {
@@ -120,6 +121,7 @@ SystemProto::SystemProto(const SystemProto& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.SystemProto)
 }
 
 void SystemProto::SharedCtor() {
@@ -132,6 +134,7 @@ void SystemProto::SharedCtor() {
 }
 
 SystemProto::~SystemProto() {
+  // @@protoc_insertion_point(destructor:lapis.SystemProto)
   SharedDtor();
 }
 
@@ -162,32 +165,48 @@ SystemProto* SystemProto::New() const {
 }
 
 void SystemProto::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    table_server_start_ = 0;
-    table_server_end_ = 0;
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<SystemProto*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  if (_has_bits_[0 / 32] & 15) {
+    ZR_(table_server_start_, table_server_end_);
     standalone_ = true;
     synchronous_ = true;
   }
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool SystemProto::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
+  // @@protoc_insertion_point(parse_start:lapis.SystemProto)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // optional int32 table_server_start = 1;
       case 1: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 8) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &table_server_start_)));
           set_has_table_server_start();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(16)) goto parse_table_server_end;
         break;
@@ -195,15 +214,14 @@ bool SystemProto::MergePartialFromCodedStream(
 
       // optional int32 table_server_end = 2;
       case 2: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 16) {
          parse_table_server_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &table_server_end_)));
           set_has_table_server_end();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(24)) goto parse_standalone;
         break;
@@ -211,15 +229,14 @@ bool SystemProto::MergePartialFromCodedStream(
 
       // optional bool standalone = 3 [default = true];
       case 3: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 24) {
          parse_standalone:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &standalone_)));
           set_has_standalone();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(32)) goto parse_synchronous;
         break;
@@ -227,25 +244,25 @@ bool SystemProto::MergePartialFromCodedStream(
 
       // optional bool synchronous = 4 [default = true];
       case 4: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 32) {
          parse_synchronous:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &synchronous_)));
           set_has_synchronous();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
-        if (input->ExpectAtEnd()) return true;
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
       default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
+          goto success;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -253,12 +270,18 @@ bool SystemProto::MergePartialFromCodedStream(
       }
     }
   }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.SystemProto)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.SystemProto)
+  return false;
 #undef DO_
 }
 
 void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.SystemProto)
   // optional int32 table_server_start = 1;
   if (has_table_server_start()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->table_server_start(), output);
@@ -283,10 +306,12 @@ void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
+  // @@protoc_insertion_point(serialize_end:lapis.SystemProto)
 }
 
 ::google::protobuf::uint8* SystemProto::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.SystemProto)
   // optional int32 table_server_start = 1;
   if (has_table_server_start()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->table_server_start(), target);
@@ -311,6 +336,7 @@ void SystemProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.SystemProto)
   return target;
 }
 

@@ -23,11 +23,15 @@
 using namespace lapis;
 using std::vector;
 
-DEFINE_bool(sync_update, false, "Synchronous put/update queue");
+//DEFINE_bool(sync_update, false, "Synchronous put/update queue");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_double(threshold,100000000, "max # of parameters in a vector");
+DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
+DEFINE_int32(workers,2,"numer of workers doing get/put");
+#ifndef FLAGS_v
+  DEFINE_int32(v, 3, "vlog controller");
+#endif
 
 typedef map<int, GlobalTable*> Map;
 Map tables;
@@ -49,17 +53,21 @@ int num_keys;
 // create large and small messages
 void init_messages(){
 	num_keys = 0;
+  long nservers=context->num_table_servers();
 	for (int i=0; i<SIZE; i++){
 		int total=0;
+    int threshold=std::max(FLAGS_threshold, 0l);//, sizes[i]/nservers);
+    LOG(INFO)<<"worker: "<<threshold;
 		while (total<sizes[i]){
 			FloatVector* fv = new FloatVector();
-			for (int j=0; j+total<sizes[i] && j<FLAGS_threshold; j++)
+			for (int j=0; j+total<sizes[i] && j<threshold; j++)
 				fv->add_data(static_cast<float>(rand())/static_cast<float>(RAND_MAX));
 			value_msg.push_back(fv);
-			total+=FLAGS_threshold;
+			total+=threshold;
 			num_keys++;
 		}
 	}
+  LOG(INFO)<<"op num_keys= "<<num_keys;
 }
 
 void create_mem_table(int id, int num_shards){
@@ -143,21 +151,23 @@ void coordinator_load_data(){
 	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
 
 	num_keys = 0;
+  int nservers=context->num_table_servers();
 	for (int i = 0; i < SIZE; i++) {
 		int total = 0;
-		while (total < sizes[i]) {
-			FloatVector* fv = new FloatVector();
-			for (int j = 0; j + total < sizes[i] && j < FLAGS_threshold; j++)
-				fv->add_data(
-						static_cast<float>(rand())
-								/ static_cast<float>(RAND_MAX));
-			table->put(num_keys,*fv);
-			total += FLAGS_threshold;
-			num_keys++;
-		}
+    int threshold=std::max(FLAGS_threshold, 0l); // sizes[i]/nservers);
+    LOG(INFO)<<"coordinator: "<<threshold;
+    while (total < sizes[i]) {
+      FloatVector* fv = new FloatVector();
+      for (int j = 0; j + total < sizes[i] && j < threshold; j++)
+        fv->add_data(
+            static_cast<float>(rand())
+            / static_cast<float>(RAND_MAX));
+      table->put(num_keys,*fv);
+      LOG(INFO)<<"coordinator: key: "<<num_keys<<" size: "<<fv->data_size();
+      total += threshold;
+      num_keys++;
+    }
 	}
-
-
 	VLOG(3) << "Loaded data successfully ... " << num_keys << " messages";
 }
 
@@ -202,7 +212,7 @@ void worker_test_data(){
 void print_table_stats(){
 	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
 	ofstream log_file(StringPrintf("log_variance_%d", NetworkThread::Get()->id()));
-	log_file << "table size at process = " << table->stats()["TABLE_SIZE"] << endl;
+	log_file << "table size at process "<< NetworkThread::Get()->id()<<" = " << table->stats()["TABLE_SIZE"] << endl;
 	log_file.close();
 }
 
@@ -262,7 +272,8 @@ int main(int argc, char **argv) {
 		VLOG(3) << "passed the barrier";
 
 		//Sleep(1);
-		worker_test_data();
+    if(network->id()<FLAGS_workers)
+      worker_test_data();
 	}
 
 	shutdown();

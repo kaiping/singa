@@ -3,7 +3,7 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /usr
+HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
@@ -69,13 +69,13 @@ run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
-		--table_buffer=20 --block_size=10
+		--table_buffer=20 --block_size=10 -workers=1
 
 run_test_split: lapis.test.split
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
-		--table_buffer=20 --block_size=10 --threshold=100000 --iterations=5
+		--table_buffer=20 --block_size=10 --workers=1 --threshold=10000000 --iterations=5
 
 
 run_test_disk_load: lapis.test.disk

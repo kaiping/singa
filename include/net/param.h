@@ -53,7 +53,6 @@ class Param {
     return &grad_;
   }
 
-  int length();
   void SetShape(int h, int w);
   void SetShape(int l);
   void AllocateMemory();
@@ -69,20 +68,12 @@ class Param {
   void set_id(int id) {
     id_ = id;
   }
-
-  float momentum() {
-    return momentum_;
+  float learning_rate_multiplier() {
+    return learning_rate_multiplier_;
   }
-  float learning_rate() {
-    return learning_rate_;
+  float weight_decay_multiplier() {
+    return weight_decay_multiplier_;
   }
-  float weight_decay() {
-    return weight_decay_;
-  }
-  float factor() {
-    return factor_;
-  }
-
  protected:
   /**
    * Fill in the val with data generated from a uniform distribution
@@ -109,7 +100,7 @@ class Param {
    */
   int id_;
   //! scale factor for learning rate and weight decay for this parameter
-  float momentum_, learning_rate_, weight_decay_, factor_;
+  float momentum_, learning_rate_multiplier_, weight_decay_multiplier_;
   float low_, high_, mean_, std_, value_;
   //! content, gradient and history gradient of this parameter
   DAry data_, grad_;

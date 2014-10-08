@@ -114,10 +114,14 @@ void Coordinator::LoadData(const DataSourceProto& source, int phase){
   while(!ds->eof()){
     ds->NextRecord(&record);
     delegate_->Insert(phase, rid++, record);
+    VLOG(3)<<"insert record "<<rid;
+
     if(rid%10000==0)
       LOG(INFO)<<rid<<" records have been loaded";
   }
+  VLOG(3)<<"finish insert";
   delegate_->Flush(phase);
+  VLOG(3)<<"finish flush";
   delete ds;
 }
 
@@ -192,7 +196,7 @@ const vector<NetProto> Coordinator::PartitionNet(Net* net){
 void Coordinator::DistributePartition(const GroupConfig& conf,
     const vector<NetProto> & protos) {
   for(auto& group:conf.group()){
-    CHECK_EQ(group.member().size(), protos.size());
+    CHECK_EQ(group.member().size()+1, protos.size());
     mpi_->Send(group.leader(), MTYPE_NET_PARTITION, protos[0]);
     for (unsigned int i = 1; i < protos.size(); i++) {
       mpi_->Send(group.member(i), MTYPE_NET_PARTITION, protos[i]);
@@ -202,7 +206,7 @@ void Coordinator::DistributePartition(const GroupConfig& conf,
 
 void Coordinator::RunOnCluster(const ModelProto& model) {
   VLOG(3)<<"start worker";
-  int group_size=8;
+  int group_size=1;
   int ngroups=1;
   const GroupConfig config=CreateGroups(group_size);
   mpi_->Broadcast(MTYPE_GROUP_CONFIG, config);
@@ -227,9 +231,9 @@ void Coordinator::RunOnCluster(const ModelProto& model) {
       mpi_->Send(src, MTYPE_INSTRUCTION,msg);
     }
 
-    PerformanceProto perf;
+    Performance perf;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
-      LOG(INFO)<<FormatPerformance(perf);
+      LOG(INFO)<<perf.ToString();
     }
     Sleep(FLAGS_sleep_time);
   }
@@ -244,7 +248,7 @@ const GroupConfig Coordinator::CreateGroups(int group_size) {
   for (int i = 0; i < nworkers/group_size; i++) {
     GroupConfig::Group *group=config.add_group();
     group->set_leader(wrank++);
-    for (int k = 0; k < group_size; k++) {
+    for (int k = 0; k < group_size-1; k++) {
       group->add_member(wrank++);
     }
   }

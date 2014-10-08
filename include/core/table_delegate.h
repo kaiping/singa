@@ -84,12 +84,12 @@ class TableDelegate {
    * create parameter table
    */
   virtual void CreateTables(const SolverProto& solver);
-  virtual void Update(Param *param)=0;
-  virtual void Get(Param * param)=0;
+  virtual void Update(Param *param, int step)=0;
+  virtual void Get(Param * param, int step)=0;
   virtual void Put(Param * param)=0;
 
-  void Update(const std::vector<Param *> &params);
-  void Get(const std::vector<Param *> &params);
+  void Update(const std::vector<Param *> &params, int step);
+  void Get(const std::vector<Param *> &params, int step);
   void Put(const std::vector<Param *> &params);
 
   void Insert(const int id, int record_id, const Record& record);
@@ -109,8 +109,8 @@ class TypedTableDelegate:public TableDelegate {
  public:
   TypedTableDelegate();
   virtual void CreateTables(const SolverProto& solver);
-  virtual void Update(Param *param);
-  virtual void Get(Param * param);
+  virtual void Update(Param *param, int step);
+  virtual void Get(Param * param , int step);
   virtual void Put(Param * param);
 
   void set_example(const V& example){ example_=example; }
@@ -131,6 +131,7 @@ TypedTableDelegate<K,V>::TypedTableDelegate(){
 
 template<typename K, typename V>
 void TypedTableDelegate<K,V>::CreateTables(const SolverProto& solver){
+  TableDelegate::CreateTables(solver);
   auto update_handler=new UpdateHandler<V>(solver);
   param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
       update_handler,new Sharding::Mod, new Marshal<K>, new Marshal<V>);
@@ -153,17 +154,17 @@ TypedGlobalTable<K, V>* TypedTableDelegate<K,V>::CreateParamTable( const int id,
   return table;
 }
 template<>
-void TypedTableDelegate<int ,SGDValue>::Update(Param *param);
+void TypedTableDelegate<int ,SGDValue>::Update(Param *param,int step);
 template<>
-void TypedTableDelegate<int, AdaGradValue>::Update(Param *param);
+void TypedTableDelegate<int, AdaGradValue>::Update(Param *param, int step);
 template<>
 void TypedTableDelegate<int, SGDValue>::Put(Param * param);
 template<>
 void TypedTableDelegate<int ,AdaGradValue>::Put(Param * param);
 template<>
-void TypedTableDelegate<int ,SGDValue>::Get(Param * param);
+void TypedTableDelegate<int ,SGDValue>::Get(Param * param, int step);
 template<>
-void TypedTableDelegate<int, AdaGradValue>::Get(Param * param);
+void TypedTableDelegate<int, AdaGradValue>::Get(Param * param, int step);
 
 }  // namespace lapis
 #endif  // INCLUDE_CORE_TABLE_DELEGATE_H_

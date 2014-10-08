@@ -89,12 +89,4 @@ void WriteProtoToBinaryFile(const Message &proto, const char *filename) {
   CHECK(proto.SerializeToOstream(&output));
 }
 */
-std::string FormatPerformance(const PerformanceProto& perf) {
-  std::stringstream ss;
-  if (perf.has_precision())
-    ss<<StringPrintf("Precision %.3f, ", perf.precision());
-  if (perf.has_loss())
-    ss<<StringPrintf("loss %.3f, ", perf.loss());
-  return ss.str();
-}
 }  // namespace lapis

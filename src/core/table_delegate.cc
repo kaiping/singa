@@ -8,6 +8,7 @@
 #include "core/table.h"
 #include "proto/model.pb.h"
 
+#include "darray/dary.h"
 
 namespace lapis {
 UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
@@ -24,13 +25,37 @@ bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data, const AdaGradValue&
 UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
   step_=0;
   base_learning_rate_=solver.sgd().base_learning_rate();
-  gamma_=solver.sgd().factor();
+  gamma_=solver.sgd().gamma();
   learning_rate_change_=solver.sgd().learning_rate_change();
   learning_rate_change_steps_=solver.sgd().learning_rate_change_steps();
   momentum_=solver.sgd().momentum();
   weight_decay_=solver.sgd().weight_decay();
 }
 bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
+  if(update.version()!=data->version()){
+    CHECK_EQ(data->version()+1, update.version());
+    data->set_version(update.version());
+    UpdateHyperParams(data->version());
+  }
+  int len=data->data().value_size();
+  float* history=data->mutable_grad()->mutable_value()->mutable_data();
+  float lr=learning_rate_*data->learning_rate_multiplier();
+  float w=weight_decay_*data->weight_decay_multiplier();
+  const float* grad=update.grad().value().data();
+  float* dptr=data->mutable_data()->mutable_value()->mutable_data();
+  // hist=hist-lr*grad
+  DAry::arymath().madd(history, -lr, grad, history, len);
+  // hist=hist-lr*weight*param
+  DAry::arymath().madd(history, -lr*w, dptr, history, len);
+  data->set_n_update(data->n_update()+1);
+
+  if(data->n_update()==data->threshold()){
+    // param+=history/n
+    DAry::arymath().madd(dptr, 1.0f/data->n_update(), history, dptr, len);
+    // hist=hist*mom
+    DAry::arymath().mul(history, momentum_, history, len);
+    data->set_n_update(0);
+  }
   return true;
 }
 float UpdateHyperParam(int step, SGDValue::ChangeProto change, int change_steps, float a, float b) {
@@ -122,9 +147,9 @@ void TableDelegate::Next(const int id, int *record_id, Record* record){
    table->get(&k, record);
    table->Next();
 }
-void TableDelegate::Update(const std::vector<Param*> &params) {
+void TableDelegate::Update(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
-    Update(param);
+    Update(param,step);
   return;
 }
 
@@ -135,15 +160,15 @@ void TableDelegate::Put(const std::vector<Param*> &params) {
     Put(param);
 }
 
-void TableDelegate::Get(const std::vector<Param*> &params){
+void TableDelegate::Get(const std::vector<Param*> &params, int step){
   if(GlobalContext::Get()->standalone())return;
   for(auto* param : params)
-    Get(param);
+    Get(param, step);
   return;
 }
 
 template<>
-void TypedTableDelegate<int ,SGDValue>::Update(Param *param){
+void TypedTableDelegate<int ,SGDValue>::Update(Param *param, int step){
   int paramid = param->id();
   int largestoffset = param->data().shape().Size();
   int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
@@ -161,7 +186,8 @@ void TypedTableDelegate<int ,SGDValue>::Update(Param *param){
   for(int j = 0; j < splitsize; j++)
   {
 
-    SGDValue v(example_);
+    SGDValue v;
+    v.set_version(step);
     DAryProto* dary=v.mutable_grad();
     dary->clear_value();
     for(int k = 0; k < splitoffset; k++)
@@ -176,7 +202,7 @@ void TypedTableDelegate<int ,SGDValue>::Update(Param *param){
 }
 
 template<>
-void TypedTableDelegate<int, AdaGradValue>::Update(Param *param){
+void TypedTableDelegate<int, AdaGradValue>::Update(Param *param, int step){
   int paramid = param->id();
   int largestoffset = param->data().shape().Size();
   int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
@@ -193,7 +219,8 @@ void TypedTableDelegate<int, AdaGradValue>::Update(Param *param){
   const float * grad_addr = param->grad().dptr();
   for(int j = 0; j < splitsize; j++)
   {
-    AdaGradValue v(example_);
+    AdaGradValue v;
+    v.set_version(step);
     DAryProto* dary=v.mutable_grad();
     dary->clear_value();
     for(int k = 0; k < splitoffset; k++)
@@ -226,13 +253,18 @@ void TypedTableDelegate<int, SGDValue>::Put(Param * param){
   {
     SGDValue v(example_);
     // sgd related hyper-parameters
-    v.set_factor(param->factor());
+    v.set_learning_rate_multiplier(param->learning_rate_multiplier());
+    v.set_weight_decay_multiplier(param->weight_decay_multiplier());
+    v.set_version(0);
+    v.set_n_update(0);
     DAryProto* dary=v.mutable_data();
+    DAryProto* grad=v.mutable_grad();
     dary->clear_value();
     for(int k = 0; k < splitoffset; k++)
     {
       if(curoffset >= largestoffset) break;
       dary->add_value(data_addr[curoffset]);
+      grad->add_value(0.0f);
       curoffset++;
     }
     int mykey = paramid*2048+j;
@@ -258,12 +290,16 @@ void TypedTableDelegate<int, AdaGradValue>::Put(Param * param){
   for(int j = 0; j < splitsize; j++)
   {
     AdaGradValue v(example_);
+    v.set_version(0);
+    v.set_n_update(0);
     DAryProto* dary=v.mutable_data();
+    DAryProto* grad=v.mutable_grad();
     dary->clear_value();
     for(int k = 0; k < splitoffset; k++)
     {
       if(curoffset >= largestoffset) break;
       dary->add_value(data_addr[curoffset]);
+      grad->add_value(0.0f);
       curoffset++;
     }
     int mykey = paramid*2048+j;
@@ -272,7 +308,7 @@ void TypedTableDelegate<int, AdaGradValue>::Put(Param * param){
 }
 
 template<>
-void TypedTableDelegate<int, AdaGradValue>::Get(Param * param){
+void TypedTableDelegate<int, AdaGradValue>::Get(Param * param, int step){
   int paramid = param->id();
   int largestoffset = param->data().shape().Size();
   int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;
@@ -302,7 +338,7 @@ void TypedTableDelegate<int, AdaGradValue>::Get(Param * param){
 }
 
 template<>
-void TypedTableDelegate<int, SGDValue>::Get(Param * param){
+void TypedTableDelegate<int, SGDValue>::Get(Param * param, int step){
   int paramid = param->id();
   int largestoffset = param->data().shape().Size();
   int splitsize = GlobalContext::Get()->num_table_servers()*split_size_;

@@ -1301,10 +1301,10 @@ class NetProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // repeated .lapis.LayerProto layer = 1;
+  // repeated .lapis.LayerProto layer = 2;
   inline int layer_size() const;
   inline void clear_layer();
-  static const int kLayerFieldNumber = 1;
+  static const int kLayerFieldNumber = 2;
   inline const ::lapis::LayerProto& layer(int index) const;
   inline ::lapis::LayerProto* mutable_layer(int index);
   inline ::lapis::LayerProto* add_layer();
@@ -2318,12 +2318,12 @@ class SGDValue : public ::google::protobuf::Message {
   inline float weight_decay() const;
   inline void set_weight_decay(float value);
 
-  // optional float learning_rate_x = 4;
-  inline bool has_learning_rate_x() const;
-  inline void clear_learning_rate_x();
-  static const int kLearningRateXFieldNumber = 4;
-  inline float learning_rate_x() const;
-  inline void set_learning_rate_x(float value);
+  // optional float gamma = 4;
+  inline bool has_gamma() const;
+  inline void clear_gamma();
+  static const int kGammaFieldNumber = 4;
+  inline float gamma() const;
+  inline void set_gamma(float value);
 
   // optional int32 learning_rate_change_steps = 5;
   inline bool has_learning_rate_change_steps() const;
@@ -2339,23 +2339,19 @@ class SGDValue : public ::google::protobuf::Message {
   inline ::lapis::SGDValue_ChangeProto learning_rate_change() const;
   inline void set_learning_rate_change(::lapis::SGDValue_ChangeProto value);
 
-  // optional .lapis.DAryProto data = 7;
-  inline bool has_data() const;
-  inline void clear_data();
-  static const int kDataFieldNumber = 7;
-  inline const ::lapis::DAryProto& data() const;
-  inline ::lapis::DAryProto* mutable_data();
-  inline ::lapis::DAryProto* release_data();
-  inline void set_allocated_data(::lapis::DAryProto* data);
+  // optional float learning_rate_multiplier = 7 [default = 1];
+  inline bool has_learning_rate_multiplier() const;
+  inline void clear_learning_rate_multiplier();
+  static const int kLearningRateMultiplierFieldNumber = 7;
+  inline float learning_rate_multiplier() const;
+  inline void set_learning_rate_multiplier(float value);
 
-  // optional .lapis.DAryProto grad = 8;
-  inline bool has_grad() const;
-  inline void clear_grad();
-  static const int kGradFieldNumber = 8;
-  inline const ::lapis::DAryProto& grad() const;
-  inline ::lapis::DAryProto* mutable_grad();
-  inline ::lapis::DAryProto* release_grad();
-  inline void set_allocated_grad(::lapis::DAryProto* grad);
+  // optional float weight_decay_multiplier = 8 [default = 1];
+  inline bool has_weight_decay_multiplier() const;
+  inline void clear_weight_decay_multiplier();
+  static const int kWeightDecayMultiplierFieldNumber = 8;
+  inline float weight_decay_multiplier() const;
+  inline void set_weight_decay_multiplier(float value);
 
   // optional int32 n_update = 9 [default = 0];
   inline bool has_n_update() const;
@@ -2371,19 +2367,30 @@ class SGDValue : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 version() const;
   inline void set_version(::google::protobuf::int32 value);
 
-  // optional float factor = 12;
-  inline bool has_factor() const;
-  inline void clear_factor();
-  static const int kFactorFieldNumber = 12;
-  inline float factor() const;
-  inline void set_factor(float value);
-
-  // optional int32 threshold = 13;
+  // optional int32 threshold = 11;
   inline bool has_threshold() const;
   inline void clear_threshold();
-  static const int kThresholdFieldNumber = 13;
+  static const int kThresholdFieldNumber = 11;
   inline ::google::protobuf::int32 threshold() const;
   inline void set_threshold(::google::protobuf::int32 value);
+
+  // optional .lapis.DAryProto data = 12;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 12;
+  inline const ::lapis::DAryProto& data() const;
+  inline ::lapis::DAryProto* mutable_data();
+  inline ::lapis::DAryProto* release_data();
+  inline void set_allocated_data(::lapis::DAryProto* data);
+
+  // optional .lapis.DAryProto grad = 13;
+  inline bool has_grad() const;
+  inline void clear_grad();
+  static const int kGradFieldNumber = 13;
+  inline const ::lapis::DAryProto& grad() const;
+  inline ::lapis::DAryProto* mutable_grad();
+  inline ::lapis::DAryProto* release_grad();
+  inline void set_allocated_grad(::lapis::DAryProto* grad);
 
   // @@protoc_insertion_point(class_scope:lapis.SGDValue)
  private:
@@ -2393,24 +2400,26 @@ class SGDValue : public ::google::protobuf::Message {
   inline void clear_has_momentum();
   inline void set_has_weight_decay();
   inline void clear_has_weight_decay();
-  inline void set_has_learning_rate_x();
-  inline void clear_has_learning_rate_x();
+  inline void set_has_gamma();
+  inline void clear_has_gamma();
   inline void set_has_learning_rate_change_steps();
   inline void clear_has_learning_rate_change_steps();
   inline void set_has_learning_rate_change();
   inline void clear_has_learning_rate_change();
-  inline void set_has_data();
-  inline void clear_has_data();
-  inline void set_has_grad();
-  inline void clear_has_grad();
+  inline void set_has_learning_rate_multiplier();
+  inline void clear_has_learning_rate_multiplier();
+  inline void set_has_weight_decay_multiplier();
+  inline void clear_has_weight_decay_multiplier();
   inline void set_has_n_update();
   inline void clear_has_n_update();
   inline void set_has_version();
   inline void clear_has_version();
-  inline void set_has_factor();
-  inline void clear_has_factor();
   inline void set_has_threshold();
   inline void clear_has_threshold();
+  inline void set_has_data();
+  inline void clear_has_data();
+  inline void set_has_grad();
+  inline void clear_has_grad();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -2419,14 +2428,15 @@ class SGDValue : public ::google::protobuf::Message {
   float base_learning_rate_;
   float momentum_;
   float weight_decay_;
-  float learning_rate_x_;
+  float gamma_;
   ::google::protobuf::int32 learning_rate_change_steps_;
   int learning_rate_change_;
-  ::lapis::DAryProto* data_;
-  ::lapis::DAryProto* grad_;
+  float learning_rate_multiplier_;
+  float weight_decay_multiplier_;
   ::google::protobuf::int32 n_update_;
   ::google::protobuf::int32 version_;
-  float factor_;
+  ::lapis::DAryProto* data_;
+  ::lapis::DAryProto* grad_;
   ::google::protobuf::int32 threshold_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -4344,7 +4354,7 @@ DAryProto::mutable_value() {
 
 // NetProto
 
-// repeated .lapis.LayerProto layer = 1;
+// repeated .lapis.LayerProto layer = 2;
 inline int NetProto::layer_size() const {
   return layer_.size();
 }
@@ -5783,28 +5793,28 @@ inline void SGDValue::set_weight_decay(float value) {
   // @@protoc_insertion_point(field_set:lapis.SGDValue.weight_decay)
 }
 
-// optional float learning_rate_x = 4;
-inline bool SGDValue::has_learning_rate_x() const {
+// optional float gamma = 4;
+inline bool SGDValue::has_gamma() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void SGDValue::set_has_learning_rate_x() {
+inline void SGDValue::set_has_gamma() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void SGDValue::clear_has_learning_rate_x() {
+inline void SGDValue::clear_has_gamma() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void SGDValue::clear_learning_rate_x() {
-  learning_rate_x_ = 0;
-  clear_has_learning_rate_x();
+inline void SGDValue::clear_gamma() {
+  gamma_ = 0;
+  clear_has_gamma();
 }
-inline float SGDValue::learning_rate_x() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.learning_rate_x)
-  return learning_rate_x_;
+inline float SGDValue::gamma() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.gamma)
+  return gamma_;
 }
-inline void SGDValue::set_learning_rate_x(float value) {
-  set_has_learning_rate_x();
-  learning_rate_x_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_x)
+inline void SGDValue::set_gamma(float value) {
+  set_has_gamma();
+  gamma_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDValue.gamma)
 }
 
 // optional int32 learning_rate_change_steps = 5;
@@ -5856,86 +5866,52 @@ inline void SGDValue::set_learning_rate_change(::lapis::SGDValue_ChangeProto val
   // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_change)
 }
 
-// optional .lapis.DAryProto data = 7;
-inline bool SGDValue::has_data() const {
+// optional float learning_rate_multiplier = 7 [default = 1];
+inline bool SGDValue::has_learning_rate_multiplier() const {
   return (_has_bits_[0] & 0x00000040u) != 0;
 }
-inline void SGDValue::set_has_data() {
+inline void SGDValue::set_has_learning_rate_multiplier() {
   _has_bits_[0] |= 0x00000040u;
 }
-inline void SGDValue::clear_has_data() {
+inline void SGDValue::clear_has_learning_rate_multiplier() {
   _has_bits_[0] &= ~0x00000040u;
 }
-inline void SGDValue::clear_data() {
-  if (data_ != NULL) data_->::lapis::DAryProto::Clear();
-  clear_has_data();
+inline void SGDValue::clear_learning_rate_multiplier() {
+  learning_rate_multiplier_ = 1;
+  clear_has_learning_rate_multiplier();
 }
-inline const ::lapis::DAryProto& SGDValue::data() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.data)
-  return data_ != NULL ? *data_ : *default_instance_->data_;
+inline float SGDValue::learning_rate_multiplier() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.learning_rate_multiplier)
+  return learning_rate_multiplier_;
 }
-inline ::lapis::DAryProto* SGDValue::mutable_data() {
-  set_has_data();
-  if (data_ == NULL) data_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.data)
-  return data_;
-}
-inline ::lapis::DAryProto* SGDValue::release_data() {
-  clear_has_data();
-  ::lapis::DAryProto* temp = data_;
-  data_ = NULL;
-  return temp;
-}
-inline void SGDValue::set_allocated_data(::lapis::DAryProto* data) {
-  delete data_;
-  data_ = data;
-  if (data) {
-    set_has_data();
-  } else {
-    clear_has_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.data)
+inline void SGDValue::set_learning_rate_multiplier(float value) {
+  set_has_learning_rate_multiplier();
+  learning_rate_multiplier_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_multiplier)
 }
 
-// optional .lapis.DAryProto grad = 8;
-inline bool SGDValue::has_grad() const {
+// optional float weight_decay_multiplier = 8 [default = 1];
+inline bool SGDValue::has_weight_decay_multiplier() const {
   return (_has_bits_[0] & 0x00000080u) != 0;
 }
-inline void SGDValue::set_has_grad() {
+inline void SGDValue::set_has_weight_decay_multiplier() {
   _has_bits_[0] |= 0x00000080u;
 }
-inline void SGDValue::clear_has_grad() {
+inline void SGDValue::clear_has_weight_decay_multiplier() {
   _has_bits_[0] &= ~0x00000080u;
 }
-inline void SGDValue::clear_grad() {
-  if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
-  clear_has_grad();
+inline void SGDValue::clear_weight_decay_multiplier() {
+  weight_decay_multiplier_ = 1;
+  clear_has_weight_decay_multiplier();
 }
-inline const ::lapis::DAryProto& SGDValue::grad() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.grad)
-  return grad_ != NULL ? *grad_ : *default_instance_->grad_;
+inline float SGDValue::weight_decay_multiplier() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.weight_decay_multiplier)
+  return weight_decay_multiplier_;
 }
-inline ::lapis::DAryProto* SGDValue::mutable_grad() {
-  set_has_grad();
-  if (grad_ == NULL) grad_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.grad)
-  return grad_;
-}
-inline ::lapis::DAryProto* SGDValue::release_grad() {
-  clear_has_grad();
-  ::lapis::DAryProto* temp = grad_;
-  grad_ = NULL;
-  return temp;
-}
-inline void SGDValue::set_allocated_grad(::lapis::DAryProto* grad) {
-  delete grad_;
-  grad_ = grad;
-  if (grad) {
-    set_has_grad();
-  } else {
-    clear_has_grad();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.grad)
+inline void SGDValue::set_weight_decay_multiplier(float value) {
+  set_has_weight_decay_multiplier();
+  weight_decay_multiplier_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDValue.weight_decay_multiplier)
 }
 
 // optional int32 n_update = 9 [default = 0];
@@ -5986,39 +5962,15 @@ inline void SGDValue::set_version(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SGDValue.version)
 }
 
-// optional float factor = 12;
-inline bool SGDValue::has_factor() const {
+// optional int32 threshold = 11;
+inline bool SGDValue::has_threshold() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void SGDValue::set_has_factor() {
+inline void SGDValue::set_has_threshold() {
   _has_bits_[0] |= 0x00000400u;
 }
-inline void SGDValue::clear_has_factor() {
-  _has_bits_[0] &= ~0x00000400u;
-}
-inline void SGDValue::clear_factor() {
-  factor_ = 0;
-  clear_has_factor();
-}
-inline float SGDValue::factor() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.factor)
-  return factor_;
-}
-inline void SGDValue::set_factor(float value) {
-  set_has_factor();
-  factor_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.factor)
-}
-
-// optional int32 threshold = 13;
-inline bool SGDValue::has_threshold() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
-}
-inline void SGDValue::set_has_threshold() {
-  _has_bits_[0] |= 0x00000800u;
-}
 inline void SGDValue::clear_has_threshold() {
-  _has_bits_[0] &= ~0x00000800u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void SGDValue::clear_threshold() {
   threshold_ = 0;
@@ -6032,6 +5984,88 @@ inline void SGDValue::set_threshold(::google::protobuf::int32 value) {
   set_has_threshold();
   threshold_ = value;
   // @@protoc_insertion_point(field_set:lapis.SGDValue.threshold)
+}
+
+// optional .lapis.DAryProto data = 12;
+inline bool SGDValue::has_data() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
+}
+inline void SGDValue::set_has_data() {
+  _has_bits_[0] |= 0x00000800u;
+}
+inline void SGDValue::clear_has_data() {
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline void SGDValue::clear_data() {
+  if (data_ != NULL) data_->::lapis::DAryProto::Clear();
+  clear_has_data();
+}
+inline const ::lapis::DAryProto& SGDValue::data() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.data)
+  return data_ != NULL ? *data_ : *default_instance_->data_;
+}
+inline ::lapis::DAryProto* SGDValue::mutable_data() {
+  set_has_data();
+  if (data_ == NULL) data_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.data)
+  return data_;
+}
+inline ::lapis::DAryProto* SGDValue::release_data() {
+  clear_has_data();
+  ::lapis::DAryProto* temp = data_;
+  data_ = NULL;
+  return temp;
+}
+inline void SGDValue::set_allocated_data(::lapis::DAryProto* data) {
+  delete data_;
+  data_ = data;
+  if (data) {
+    set_has_data();
+  } else {
+    clear_has_data();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.data)
+}
+
+// optional .lapis.DAryProto grad = 13;
+inline bool SGDValue::has_grad() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void SGDValue::set_has_grad() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void SGDValue::clear_has_grad() {
+  _has_bits_[0] &= ~0x00001000u;
+}
+inline void SGDValue::clear_grad() {
+  if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
+  clear_has_grad();
+}
+inline const ::lapis::DAryProto& SGDValue::grad() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.grad)
+  return grad_ != NULL ? *grad_ : *default_instance_->grad_;
+}
+inline ::lapis::DAryProto* SGDValue::mutable_grad() {
+  set_has_grad();
+  if (grad_ == NULL) grad_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.grad)
+  return grad_;
+}
+inline ::lapis::DAryProto* SGDValue::release_grad() {
+  clear_has_grad();
+  ::lapis::DAryProto* temp = grad_;
+  grad_ = NULL;
+  return temp;
+}
+inline void SGDValue::set_allocated_grad(::lapis::DAryProto* grad) {
+  delete grad_;
+  grad_ = grad;
+  if (grad) {
+    set_has_grad();
+  } else {
+    clear_has_grad();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.grad)
 }
 
 

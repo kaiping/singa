@@ -13,7 +13,6 @@ using google::protobuf::Message;
 
 namespace lapis {
 
-std::string FormatPerformance(const PerformanceProto& perf);
 void ReadProtoFromTextFile(const char *filename, Message *proto);
 void WriteProtoToTextFile(const Message &proto, const char *filename);
 void ReadProtoFromBinaryFile(const char *filename, Message *proto);

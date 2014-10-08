@@ -16,6 +16,7 @@
 #include "net/param.h"
 #include "darray/dary.h"
 #include "utils/common.h"
+#include "utils/timer.h"
 
 /**
  * \file this file includes the declarations of both Layer and LayerFactory
@@ -184,6 +185,10 @@ class ConvLayer: public Layer {
   Param bias_;
   //! store result of image to column, TODO create ColLayer
   DAry col_data_, col_grad_;
+
+  Timer t;
+ public:
+  float img2col, col2img, tdot, tadd;
 };
 
 class ReLULayer: public Layer {
@@ -255,7 +260,7 @@ class LRNLayer: public Layer {
   int wsize_, lpad_, rpad_;
   //! hyper-parameter
   float alpha_, beta_, knorm_;
-  DAry norm_;
+  DAry norm_, ratio_; //ratio : grad/(data*norm)
 };
 class FCLayer: public Layer {
   /*
@@ -307,7 +312,13 @@ class InputLayer: public Layer {
   virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record)=0;
   virtual void SetInputData(DAry *data);
-  virtual const DAry& data() {return prefetch_data_;}
+  virtual const DAry& GetGrad(Edge* edge) {
+    LOG(ERROR)<<"input layer has no grad";
+    return grad_;
+  }
+  virtual DAry* GetMutableGrad(Edge* edge) {
+    return nullptr;
+  }
  protected:
   DAry prefetch_data_;
   int offset_;

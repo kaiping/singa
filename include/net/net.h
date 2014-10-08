@@ -29,6 +29,7 @@ class Net {
    * construct the net structure, i.e., how edges and layers are connected
    */
   explicit Net(const NetProto &net_proto);
+  void TimeOneBatch(int runs=50);
   void Forward();
   void Backward();
   void topology_sort(std::vector<Layer *> *layers) ;

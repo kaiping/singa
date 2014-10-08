@@ -125,7 +125,7 @@ message DAryProto {
 }
 
 message NetProto {
-  repeated LayerProto layer = 1;
+  repeated LayerProto layer = 2;
 }
 
 message PerformanceProto {
@@ -216,7 +216,7 @@ message SGDValue {
   optional float momentum = 2 [default = 0];
   optional float weight_decay = 3 [default = 0];
   // for SGDProto::kStep, this field is the gamma used in caffe
-  optional float learning_rate_x = 4;
+  optional float gamma = 4;
   optional int32 learning_rate_change_steps = 5;
 
   enum ChangeProto {
@@ -227,12 +227,13 @@ message SGDValue {
     kStep = 4;
   }
   optional ChangeProto learning_rate_change = 6 [default = kInverse_t];
-  optional DAryProto data=7;
-  optional DAryProto grad=8;
+  optional float learning_rate_multiplier=7 [default=1.0];
+  optional float weight_decay_multiplier=8 [default=1.0];
   optional int32 n_update = 9 [default=0];
   optional int32 version = 10 [default=0];
-  optional float factor = 12; //gamma for kStep
-  optional int32 threshold=13;
+  optional int32 threshold=11;
+  optional DAryProto data=12;
+  optional DAryProto grad=13;
 }
 
 

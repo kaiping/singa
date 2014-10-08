@@ -4,10 +4,14 @@
 #define INCLUDE_UTILS_COMMON_H_
 #include <glog/logging.h>
 #include <string>
-#include <unordered_map>
+#include <vector>
+#include <map>
 #include "utils/stringpiece.h"
+#include "proto/model.pb.h"
+
+using std::vector;
 using std::string;
-using std::unordered_map;
+using std::map;
 
 namespace lapis {
 const int kTrain=1;
@@ -82,6 +86,17 @@ class Performance: public PerformanceProto{
       perf.set_precision(perf.precision()/perf.count());
     return perf;
   }
+
+  string ToString(){
+    char buf[1024];
+    if (has_precision())
+      sprintf(buf,"Precision %.3f, ", precision());
+    if (has_loss())
+      sprintf(buf+strlen(buf),"loss %.3f, ", loss());
+    return string(buf);
+  }
 };
+
+void Debug();
 }  // namespace lapis
 #endif  // INCLUDE_UTILS_COMMON_H_

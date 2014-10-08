@@ -41,9 +41,9 @@ void ImageNetSource::Init(const DataSourceProto &proto){
     mean_file_="";
   do_shuffle_=proto.shuffle();
   DataSourceProto::Shape shape=proto.shape(0);
-  width_ = shape.s(0);
+  width_ = shape.s(2);
   height_ = shape.s(1);
-  channels_=shape.s(2);
+  channels_=shape.s(0);
   record_size_=width_*height_*channels_;
   CHECK_EQ(channels_,3);
   LOG(INFO)<<"Loading labels...";
@@ -82,9 +82,10 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
     const float *mean, DAryProto* image) {
   cv::Mat cv_img;
   if (height > 0 && width > 0) {
-    VLOG(3)<<"resize image";
+    VLOG(3)<<"resize image "<<path;
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
     cv::resize(cv_img_origin, cv_img, cv::Size(height, width));
+    VLOG(3)<<"after resize";
   } else {
     VLOG(3)<<"no image resize";
     cv_img = cv::imread(path, CV_LOAD_IMAGE_COLOR);
@@ -103,6 +104,7 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
       }
     }
   }else{
+    VLOG(3)<<"minus mean";
     for (int c = 0; c < 3; ++c) {
       for (int h = 0; h < cv_img.rows; ++h) {
         for (int w = 0; w < cv_img.cols; ++w) {
@@ -111,12 +113,14 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
         }
       }
     }
+    VLOG(3)<<"after minus mean";
   }
 }
 
 void ImageNetSource::NextRecord(Record *record) {
   DAryProto *image=record->mutable_image();
   if(image->value().size()<record_size_){
+    VLOG(3)<<"record size "<<record_size_;
     for(int i=0;i<record_size_;i++)
       image->add_value(0);
   }

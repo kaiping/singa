@@ -10,16 +10,21 @@ using google::protobuf::RepeatedField;
 namespace lapis {
 void Param::Init(const ParamProto &proto){
   name_=proto.name();
-  momentum_ = proto.momentum_multiplier();
-  learning_rate_ = proto.learning_rate_multiplier();
-  weight_decay_ = proto.weight_decay_multiplier();
+  //momentum_multiplier_ = proto.momentum_multiplier();
+  learning_rate_multiplier_ = proto.learning_rate_multiplier();
+  weight_decay_multiplier_ = proto.weight_decay_multiplier();
   init_method_=proto.init_method();
+
 
   low_=proto.low();
   high_=proto.high();
   mean_=proto.mean();
   std_=proto.std();
   value_=proto.value();
+  if(proto.has_data())
+    data_.InitFromProto(proto.data());
+  if(proto.has_grad())
+    grad_.InitFromProto(proto.grad());
 }
 
 void Param::SetShape(int len){
@@ -34,7 +39,6 @@ void Param::AllocateMemory() {
   data_.AllocateMemory();
   grad_.AllocateMemory();
 }
-
 void Param::FreeMemory() {
   data_.FreeMemory();
   grad_.FreeMemory();
@@ -79,11 +83,13 @@ void Param::Fill(){
 void Param::ToProto(ParamProto *proto, bool copyData) {
   // TODO(wangwei) store the proto as a member for easy ToProto.
   proto->set_name(name_);
-  proto->set_momentum_multiplier(momentum_);
-  proto->set_learning_rate_multiplier(learning_rate_);
-  proto->set_weight_decay_multiplier(weight_decay_);
+  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
+  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
+  proto->set_init_method(init_method_);
   DAryProto* data=proto->mutable_data();
   data_.ToProto(data, copyData);
+  DAryProto* grad=proto->mutable_grad();
+  grad_.ToProto(grad, copyData);
 }
 
 void Param::FillGaussainData(float mean, float std, float factor) {

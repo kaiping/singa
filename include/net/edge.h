@@ -33,6 +33,7 @@ class Layer;
 class Edge {
  public:
    virtual ~Edge(){}
+   Edge():node1_(nullptr), node2_(nullptr){}
   /**
    * Set edge properties,
    * @param edge_proto user defined edge properties, e.g., edge name,
@@ -109,9 +110,11 @@ class Edge {
   Layer *OtherSide(const Layer *layer) {
     return node1_ == layer ? node2_ : node1_;
   }
+  /*
   const std::string &name() {
     return name_;
   }
+  */
   const DAry& GetData(Layer* tolayer);
 
   DAry* GetMutableData(Layer* tolayer);
@@ -137,7 +140,7 @@ class Edge {
   DAry* GetNeg(Layer* tolayer);
   */
  protected:
-  std::string name_,type_;
+  //std::string name_,type_;
   /**
    * Sides/endpoints of the edge.
    * Normally for feed forward neural network, the edge direction is from

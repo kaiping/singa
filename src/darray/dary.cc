@@ -12,12 +12,12 @@ arraymath::ArrayMath& DAry::arymath(){
   static arraymath::ArrayMath am=arraymath::ArrayMath();
   return am;
 }
-DAry::DAry(const DAry& other, bool copy) {
-  SetShape(other.shape_);
+int DAry::allocated_floats_=0;
+DAry::DAry(const Shape& shape) {
+  dptr_=nullptr;
+  alloc_size_=0;
+  SetShape(shape);
   AllocateMemory();
-  range_=other.range_;
-  if(copy)
-    Copy(other);
 }
 DAry::DAry(const vector<int>& shape) {
   dptr_=nullptr;
@@ -37,7 +37,14 @@ void DAry::InitFromProto(const DAryProto& proto) {
   for(auto x: proto.shape())
     s.push_back(x);
   SetShape(s);
-  AllocateMemory();
+  //AllocateMemory();
+  if(proto.value_size()>0){
+    AllocateMemory();
+    CHECK_EQ(alloc_size_, proto.value_size());
+    for (int i = 0; i < proto.value_size(); i++) {
+      dptr_[i]=proto.value(i);
+    }
+  }
 }
 
 void DAry::ToProto(DAryProto* proto, bool copyData) {
@@ -56,14 +63,17 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
   CHECK_EQ(src1.dim_,2);
   CHECK_EQ(src2.dim_,2);
   CHECK_EQ(dim_,2);
-  int M=src1.shape(0), N=src2.shape(1), K=src1.shape(1);
-  CHECK_EQ(src2.shape(0),K);
-  int lda=trans1==false?K:M;
-  int ldb=trans2==false?N:K;
+  int M=trans1==false?src1.shape_.s[0]:src1.shape_.s[1];
+  int K=trans2==false?src2.shape_.s[0]:src2.shape_.s[1];
+  int N=trans2==false?src2.shape_.s[1]:src2.shape_.s[0];
+  CHECK_EQ(shape_.s[0],M);
+  CHECK_EQ(shape_.s[1],N);
+  CHECK_EQ(K, trans1==false?src1.shape_.s[1]:src1.shape_.s[0]);
   CBLAS_TRANSPOSE TransA =trans1?CblasTrans:CblasNoTrans;
   CBLAS_TRANSPOSE TransB =trans2?CblasTrans:CblasNoTrans;
   cblas_sgemm(CblasRowMajor,  TransA, TransB, M, N, K,
-      1.0f, src1.dptr_, lda, src2.dptr_, ldb, 0.0f, dptr_, N);
+      1.0f, src1.dptr_, src1.shape(1), src2.dptr_, src2.shape(1), 0.0f,
+      dptr_, shape_.s[1]);
 }
 void DAry::Mult( const DAry& src1, const DAry& src2) {
   int len=shape_.Size();
@@ -207,10 +217,12 @@ void DAry::Sum( const DAry& src, int dim, Range r) {
   * src must be a matrix
   * this is a vector
   */
-void DAry::SumRow(const DAry& src) {
+void DAry::SumRow(const DAry& src, bool reset) {
   CHECK_EQ(dim_,1);
   CHECK_EQ(src.dim_,2);
   CHECK_EQ(size_, src.shape_.s[1]);
+  if(reset)
+    Set(0.0f);
   for (int i = 0; i < src.shape_.s[0]; i++) {
     arymath().add(dptr_,src.dptr_+size_*i, dptr_, size_);
   }
@@ -240,9 +252,11 @@ void DAry::AddCol(const DAry& src) {
     arymath().add(dptr_+shape_.s[1]*i, src.dptr_[i],dptr_+shape_.s[1]*i, shape_.s[1]);
   }
 }
-void DAry::SumCol(const DAry& src) {
+void DAry::SumCol(const DAry& src, bool reset) {
   CHECK_EQ(dim_,1);
   CHECK_EQ(src.dim_,2);
+  if(reset)
+    Set(0.0f);
   for (int i = 0; i < size_; i++) {
     dptr_[i]+=arymath().sum(src.dptr_+i*src.shape_.s[1], src.shape_.s[1]);
   }
@@ -283,15 +297,21 @@ void DAry::Set(float x){
 }
 
 void DAry::AllocateMemory() {
+  int size_to_allocate=dim_>0;
+  // it is possible the range is empry on some dimension
+  CHECK_EQ(dim_, range_.size());
+  for (auto& r: range_)
+    size_to_allocate*=r.second-r.first>0?r.second-r.first:1;
+
   if(dptr_!=nullptr){
-    LOG(WARNING)<<"the dary has been allocated before, size: "<<alloc_size_;
+    if(alloc_size_==size_to_allocate)
+      return;
+    LOG(WARNING)<<"old size "<<alloc_size_<<" new size "<<size_to_allocate;
     delete dptr_;
   }
-  alloc_size_=1;
-  // it is possible the range is empry on some dimension
-  for (auto& r: range_)
-    alloc_size_*=r.second-r.first>0?r.second-r.first:1;
+  alloc_size_=size_to_allocate;
   dptr_=new float[alloc_size_];
+  allocated_floats_+=alloc_size_;
 }
 
 void DAry::FreeMemory() {
@@ -299,10 +319,11 @@ void DAry::FreeMemory() {
     delete dptr_;
   else
     CHECK(alloc_size_==0)<<"dptr_ is null but alloc_size is "<<alloc_size_;
+  allocated_floats_-=alloc_size_;
   alloc_size_=0;
 }
 
 DAry::~DAry() {
-  FreeMemory();
+  //FreeMemory();
 }
 }  // namespace lapis

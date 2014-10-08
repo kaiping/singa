@@ -84,12 +84,13 @@ class DAry {
   /**
    * init with the same shape and partition as other, alloc memory
    * may copy data
+    DAry(const DAry& other);
    */
-  DAry(const DAry& other, bool copy=false);
   /**
    * init based on the shape, alloc memory
    */
   DAry(const vector<int>& shape);
+  DAry(const Shape& shape);
 
   /**
     * create a new dary with data and partition from other dary,
@@ -99,12 +100,12 @@ class DAry {
     */
   DAry(const DAry& other, const vector<int>& shape) {
     dptr_=other.dptr_;
-    int size=size_;
     SetShape(shape);
-    CHECK_EQ(size, size_);
+    CHECK_EQ(other.size_, size_);
     alloc_size_=other.alloc_size_;
   }
 
+  // TODO fetch remote data alloc memory
   DAry(const DAry& other, const vector<Range>& slice) {
     dptr_=other.dptr_;
     SetShape(other.shape_);
@@ -201,8 +202,8 @@ class DAry {
     * src must be a matrix
     * this is a vector
     */
-  void SumRow(const DAry& src);
-  void SumCol(const DAry& src);
+  void SumRow(const DAry& src, bool reset=true);
+  void SumCol(const DAry& src, bool reset=true);
 
   /**
     * sum the src except the dim-th dimension
@@ -278,9 +279,9 @@ class DAry {
     return dptr_[locate(idx0)];
   }
   int locate(int idx0,int idx1, int idx2, int idx3) const {
-    CHECK_EQ(dim_,4);
+    //CHECK_EQ(dim_,4);
     int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
-    CHECK(pos< alloc_size_);
+    //CHECK(pos< alloc_size_);
     return pos;
   }
   int locate(int idx0,int idx1, int idx2) const{
@@ -330,6 +331,7 @@ class DAry {
     shape_.Reset(shape);
     size_=shape_.Size();
     // range is the whole dimension for no partition
+    range_.clear();
     for (int i = 0; i < dim_; i++) {
       range_.push_back(std::make_pair(0, shape_.s[i]));
     }
@@ -338,6 +340,7 @@ class DAry {
     dim_=shape.dim;
     shape_=shape;
     size_=shape.Size();
+    range_.clear();
     for (int i = 0; i < dim_; i++) {
       range_.push_back(std::make_pair(0, shape_.s[i]));
     }
@@ -367,6 +370,9 @@ class DAry {
     }
     return ss.str();
   }
+  int size() {return size_;}
+  static int allocated_floats() {return allocated_floats_;}
+  static arraymath::ArrayMath& arymath();
  protected:
   int dim_;
   int size_;
@@ -375,7 +381,7 @@ class DAry {
   Shape shape_;
   vector<Range> range_; // local index range for every dimension
 
-  static arraymath::ArrayMath& arymath();
+  static int allocated_floats_;
 };
 
 }  // namespace lapis

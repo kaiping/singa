@@ -10,7 +10,7 @@ CXX := $(HOME_DIR)/bin/g++
 INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
 #$(HOME_DIR)/atlas/include
 
-CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -O3 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
 	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
@@ -60,13 +60,13 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun --prefix=/home/wangwei/install -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=true --run=false --v=3
+		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
 run_run: lapis.bin
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load_data=false --run=true --v=3
+		-model_conf=examples/imagenet12/model.conf --load=false --run=true --v=3
 
 run_test_load: lapis.test
 	rm -rf tmp/*

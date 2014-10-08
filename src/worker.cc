@@ -6,6 +6,7 @@
 #include "proto/model.pb.h"
 #include "proto/common.pb.h"
 #include "utils/proto_helper.h"
+#include "utils/common.h"
 
 #include "net/net.h"
 #include "net/layer.h"
@@ -60,7 +61,7 @@ void Worker::PrefetchData(int phase, Net *net) {
   Record record;
   int k;
   // local batchsize
-  Range nrng=net->input_layer(0)->data().IndexRange(0);
+  Range nrng=net->input_layer(0)->GetData(nullptr).IndexRange(0);
   for(int n=0;n<nrng.second-nrng.first;++n){
     delegate_->Next(phase, &k, &record);
     for(auto* layer:net->input_layer())
@@ -93,7 +94,8 @@ void Worker::ReportPerformance(Performance perf) {
         q.Invalide();
       }
     }
-    mpi_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
+    //mpi_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
+    LOG(INFO)<<perf.ToString();
   }else{
     mpi_->Send(leader_, MTYPE_PERFORMANCE, perf);
   }
@@ -104,7 +106,7 @@ void Worker::InitGroupInfo() {
   bool find=false;
   for(auto& group: conf.group()){
     leader_=group.leader();
-    bool find=leader_==id_;
+    find=leader_==id_;
     if(!find)
       for(auto member: group.member())
         find|=member==id_;
@@ -116,7 +118,7 @@ void Worker::InitGroupInfo() {
   }
   CHECK(find);
 }
-void Worker::Run(bool do_train, const SolverProto& solver_proto) {
+void Worker::Run(bool do_train, bool time, const SolverProto& solver_proto) {
   InitDistributedStorage();
   if(!do_train)
       return;
@@ -125,12 +127,19 @@ void Worker::Run(bool do_train, const SolverProto& solver_proto) {
   mpi_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &net_proto);
   Net net(net_proto);
   net.Setup();
-  Solver solver(solver_proto);
   PrefetchData(kTrain, &net);
+  if(time){
+    delegate_->Get(net.params(), 0);
+    // time get and put
+    net.TimeOneBatch();
+    return;
+  }
+  Solver solver(solver_proto);
   Performance train_perf;
+  //Debug();
   while (!solver.HasFinished()) {
     LOG(INFO)<<solver.step();
-    delegate_->Get(net.params());
+    delegate_->Get(net.params(), solver.step());
     /*
     if(solver.ValidateNow()){
       if(ShouldIDoValidation(solver.step())){
@@ -148,7 +157,7 @@ void Worker::Run(bool do_train, const SolverProto& solver_proto) {
       ReportPerformance(train_perf.Avg());
       train_perf.Reset();
     }
-    delegate_->Update(net.params());
+    delegate_->Update(net.params(), solver.step());
   }
 }
 }  // namespace lapis

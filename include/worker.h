@@ -24,7 +24,7 @@ class Worker {
  public:
   Worker(TableDelegate* delegate);
   ~Worker();
-  void Run(bool do_run, const SolverProto& solver_proto);
+  void Run(bool do_run, bool time,  const SolverProto& solver_proto);
 
  private:
   bool ShouldIDoValidation(int step);

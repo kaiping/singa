@@ -20,33 +20,35 @@ void Layer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   }
   for(auto& top: proto.top()){
     auto p=std::make_pair(name_, top);
+    Edge *e=nullptr;
     if(edge_map->find(p)!=edge_map->end()){
-      Edge* e=edge_map->at(p);
+      e=edge_map->at(p);
       if(e->src()!=nullptr)
         CHECK(e->src()==this);
       else
         e->set_src(this);
     }else{
-      Edge *e=new Edge();
+      e=new Edge();
       e->set_src(this);
       (*edge_map)[p]=e;
-      out_edges_.push_back(e);
     }
+    out_edges_.push_back(e);
   }
   for(auto& bottom: proto.bottom()){
     auto p=std::make_pair(bottom, name_);
+    Edge* e=nullptr;
     if(edge_map->find(p)!=edge_map->end()){
-      Edge* e=edge_map->at(p);
+      e=edge_map->at(p);
       if(e->dst()!=nullptr)
         CHECK(e->dst()==this);
       else
         e->set_dst(this);
     }else{
-      Edge *e=new Edge();
+      e=new Edge();
       e->set_dst(this);
       (*edge_map)[p]=e;
-      in_edges_.push_back(e);
     }
+    in_edges_.push_back(e);
   }
 }
 
@@ -57,6 +59,16 @@ void Layer::ToProto(LayerProto *proto, bool copyData) {
   data_.ToProto(data, copyData);
   DAryProto *grad=proto->mutable_grad();
   grad_.ToProto(grad, copyData);
+  proto->clear_bottom();
+  for(auto* edge: in_edges_) {
+    CHECK_EQ(edge->dst(), this);
+    proto->add_bottom(edge->src()->name());
+  }
+  proto->clear_top();
+  for(auto* edge: out_edges_) {
+    CHECK_EQ(edge->src(), this);
+    proto->add_top(edge->dst()->name());
+  }
 }
 
 void Layer::InitDAryShape(const vector<vector<int>>& shapes){ }
@@ -65,21 +77,7 @@ void Layer::AllocateMemory(){}
 void Layer::ComputeFeature(){}
 void Layer::ComputeGradient(){}
 void Layer::CollectParams(vector<Param*> *params){}
-/*
-const DAry &Layer::GetData(Edge *edge){
-    return data_;
-}
-DAry *Layer::GetMutableData(Edge *edge){
-  return &data_;
-}
 
-DAry * Layer::GetMutableGrad(Edge *edge){
-  return &grad_;
-}
-const DAry& Layer::GetGrad(Edge *edge){
-  return grad_;
-}
-*/
 /*****************************************************************************
  * Implementation for ConvLayer
  *****************************************************************************/
@@ -129,7 +127,7 @@ void ConvLayer::InitDAryShape(){
   vector<int> shape{num_, nkernels_, cheight_, cwidth_};
   data_.SetShape(shape);
   grad_.SetShape(shape);
-  weight_.SetShape(nkernels_, wsize_*wsize_*channels_);
+  weight_.SetShape(nkernels_, wsize_*wsize_*channels_/ngroups_);
   bias_.SetShape(nkernels_);
   // weight matrix is of size nkernels_* K_, col_fea is of size
   // num_groups*K_*N_, image after conv is of shape (num_kernels_*N_)
@@ -138,8 +136,9 @@ void ConvLayer::InitDAryShape(){
   M_ = nkernels_ / ngroups_;
   K_ = wsize_ * wsize_ * channels_ / ngroups_;
   N_ = cheight_ * cwidth_;
-  col_data_.SetShape({num_, ngroups_, K_, N_});
-  col_grad_.SetShape({num_, ngroups_, K_, N_});
+  col_data_.SetShape({num_, K_*ngroups_, cheight_, cwidth_});
+  col_grad_.SetShape({num_, K_*ngroups_, cheight_, cwidth_});
+  img2col=col2img=tdot=tadd=0;
 }
 
 void ConvLayer::AllocateMemory(){
@@ -147,38 +146,46 @@ void ConvLayer::AllocateMemory(){
   grad_.AllocateMemory();
   weight_.AllocateMemory();
   bias_.AllocateMemory();
+  col_data_.AllocateMemory();
+  col_grad_.AllocateMemory();
 }
 
 void ConvLayer::ComputeFeature() {
-  VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
+  t.Reset();
   Img2Col(&col_data_, bottom);
+  img2col+=t.elapsed();
   // copy constructor with rvalue ref DAry(DAry&& other)
-  DAry data4(data_,{num_, ngroups_, K_, N_});
-  DAry bottom4(bottom,{num_, ngroups_, M_, N_});
+  DAry data4(data_,{num_, ngroups_, M_, N_});
+  DAry bottom4(col_data_,{num_, ngroups_, K_, N_});
   DAry weight3(weight_.data(),{ngroups_, M_, K_});
   for (int n = 0; n < num_; n++) {
     // copy constructor with rvalue ref
     DAry data3=data4[n];
-    DAry bottom3=bottom[n];
+    DAry bottom3=bottom4[n];
+    t.Reset();
     for (int g = 0; g < ngroups_; g++){
       data3[g].Dot(weight3[g], bottom3[g]);
     }
+    tdot+=t.elapsed();
+    t.Reset();
     DAry mat_data(data3, {nkernels_, N_});
     mat_data.AddCol(bias_.data());
+    tadd+=t.elapsed();
   }
 }
 
 void ConvLayer::ComputeGradient() {
-  VLOG(3)<<name_;
   {
+    t.Reset();
     DAry *gbias=bias_.mutable_grad();
     DAry grad3(grad_, {num_, nkernels_, N_});
     // sum along 1-th dim, i.e., the result aray has length as the 1-th dim
     gbias->Set(0.0f);
     for (int i = 0; i < num_; i++) {
-      gbias->SumCol(grad3[i]);
+      gbias->SumCol(grad3[i], false);
     }
+    tadd+=t.elapsed();
   }
 
   const DAry weight3(weight_.data(), {ngroups_, M_, K_});
@@ -187,6 +194,7 @@ void ConvLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   DAry gcol4(col_grad_, {num_, ngroups_,K_, N_});
   if(gbottom!=nullptr){
+    t.Reset();
     for (int n = 0; n < num_; n++) {
       DAry grad3(grad_[n], {ngroups_,M_,N_});
       DAry col3=col4[n];
@@ -196,8 +204,12 @@ void ConvLayer::ComputeGradient() {
         gcol3[g].Dot(weight3[g], grad3[g], true, false);
       }
     }
+    tdot+=t.elapsed();
+    t.Reset();
     Col2Img(gbottom, col_grad_);
+    col2img+=t.elapsed();
   } else {
+    t.Reset();
     for (int n = 0; n < num_; n++) {
       DAry grad3(grad_[n], {ngroups_,M_,N_});
       DAry col3=col4[n];
@@ -205,6 +217,7 @@ void ConvLayer::ComputeGradient() {
         gweight3[g].Dot(grad3[g], col3[g], false, true);
       }
     }
+    tdot+=t.elapsed();
   }
 }
 
@@ -216,6 +229,7 @@ void ConvLayer::Img2Col(DAry* dst, const DAry& src){
   std::vector<Range> slice{nrng, {0, channels_},
     {0, height_}, {0, width_}};
   const DAry lsrc=src.FetchData(slice);
+  float* dstptr=dst->dptr();
   for(int n=nrng.first; n<nrng.second;n++){
     for (int c = 0; c < channels_*wsize_*wsize_; ++c) {
       int w_offset = c % wsize_;
@@ -226,9 +240,12 @@ void ConvLayer::Img2Col(DAry* dst, const DAry& src){
           int h_pad = h * stride_ - pad_ + h_offset;
           int w_pad = w * stride_ - pad_ + w_offset;
           if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            dst->at(n,c,h,w)=lsrc.get(n,c_im,h_pad, w_pad);
+            //dst->at(n,c,h,w)
+            *dstptr=lsrc.get(n,c_im,h_pad, w_pad);
           else
-            dst->at(n,c,h,w)= 0;
+            //dst->at(n,c,h,w)= 0;
+            *dstptr=0;
+          dstptr++;
         }
       }
     }
@@ -243,6 +260,7 @@ void ConvLayer::Col2Img(DAry* dst, const DAry& src){
     {0, cheight_}, {0, cwidth_}};
   DAry lsrc=src.FetchData(slice);
   lsrc.Set(0.0f);
+  float *srcptr=lsrc.dptr();
   for(int n=nrng.first;n<nrng.second;n++){
     for (int c = 0; c < channels_*wsize_*wsize_; ++c) {
       int w_offset = c % wsize_;
@@ -253,7 +271,8 @@ void ConvLayer::Col2Img(DAry* dst, const DAry& src){
           int h_pad = h * stride_ - pad_ + h_offset;
           int w_pad = w * stride_ - pad_ + w_offset;
           if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            dst->at(n,c_im,h_pad, w_pad) += lsrc.get(n,c,h,w);
+            dst->at(n,c_im,h_pad, w_pad) += *srcptr;//lsrc.get(n,c,h,w);
+          srcptr++;
         }
       }
     }
@@ -330,6 +349,7 @@ void DropoutLayer::ComputeGradient() {
  * Implementation for PoolingLayer
  *****************************************************************************/
 void PoolingLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
   wsize_ = proto.window_size();
   stride_ = proto.stride();
   pooling_method_ = proto.pooling_method();
@@ -488,6 +508,7 @@ void LRNLayer::Init(const LayerProto &proto, StrStrEdge *edge_map)  {
 }
 
 void LRNLayer::ToProto(LayerProto* proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
   proto->set_window_size(wsize_);
   proto->set_alpha(alpha_);
   proto->set_beta(beta_);
@@ -496,26 +517,31 @@ void LRNLayer::ToProto(LayerProto* proto, bool copyData) {
 
 void LRNLayer::InitDAryShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
+  num_=bottom.shape(0);
+  channels_=bottom.shape(1);
+  height_=bottom.shape(2);
+  width_=bottom.shape(3);
   CHECK_GE(bottom.shape().Size(),3);
   data_.SetShape(bottom.shape());
   grad_.SetShape(bottom.shape());
   norm_.SetShape(bottom.shape());
+  ratio_.SetShape(bottom.shape());
 }
 
 void LRNLayer::AllocateMemory(){
   data_.AllocateMemory();
   grad_.AllocateMemory();
   norm_.AllocateMemory();
+  ratio_.AllocateMemory();
 }
 void LRNLayer::ComputeFeature() {
-  VLOG(3)<<name_;
   Range nrng=data_.IndexRange(0);
   Range crng{0, data_.shape(1)};
   std::vector<Range>slice{nrng, crng, {0, data_.shape(2)}, {0, data_.shape(3)}};
   const DAry& bottom=in_edges_[0]->GetData(this);
   const DAry& lbottom=bottom.FetchData(slice);
   // only share shape and partition not share data, allocate data here
-  DAry squared3(lbottom[0], false);
+  DAry squared3(lbottom[0].shape());
   float alpha= alpha_ / wsize_;
   for(int n=nrng.first;n<nrng.second;++n) {
     DAry norm3=norm_[n];
@@ -540,7 +566,6 @@ void LRNLayer::ComputeFeature() {
 }
 
 void LRNLayer::ComputeGradient() {
-  VLOG(3)<<name_;
   float factor = -2.*alpha_ * beta_ / wsize_;
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -552,14 +577,13 @@ void LRNLayer::ComputeGradient() {
   DAry lnorm=norm_.FetchData(slice);
   gbottom->Pow(lnorm, -beta_);
   gbottom->Mult(*gbottom, lgrad);
-  DAry ratio(bottom, false);
-  ratio.Mult(lgrad, ldata);
-  ratio.Div(ratio, lnorm);
-  DAry accum_ratio(ratio[nrng.first][crng.first], false);
+  ratio_.Mult(lgrad, ldata);
+  ratio_.Div(ratio_, lnorm);
+  DAry accum_ratio(ratio_.shape().SubShape().SubShape());
   for(int n=nrng.first;n<nrng.second;++n) {
     DAry gbottom3=(*gbottom)[n];
     DAry bottom3=bottom[n];
-    DAry ratio3=ratio[n];
+    DAry ratio3=ratio_[n];
     accum_ratio.Sum(ratio3,0, {0, lpad_});
     for(int c=crng.first;c<crng.second;++c) {
       if(c+lpad_<crng.second)
@@ -567,7 +591,7 @@ void LRNLayer::ComputeGradient() {
       gbottom3[c].Map([factor](float g, float a, float b)
           {return g+factor*a*b;}, gbottom3[c], accum_ratio, bottom3[c]);
       if(c-rpad_+1>=0)
-        accum_ratio.Minus(ratio[c-rpad_+1]);
+        accum_ratio.Minus(ratio3[c-rpad_+1]);
     }
   }
 }
@@ -576,7 +600,9 @@ void LRNLayer::ComputeGradient() {
  * Implementation for FCLayer
  *****************************************************************************/
 void FCLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
   hdim_=proto.num_output();
+  CHECK(hdim_);
   if(proto.param().size()==2){
     weight_.Init(proto.param(0));
     bias_.Init(proto.param(1));
@@ -584,10 +610,12 @@ void FCLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
 }
 
 void FCLayer::ToProto(LayerProto* proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
   ParamProto* weight=proto->add_param();
   weight_.ToProto(weight, copyData);
   ParamProto* bias=proto->add_param();
   bias_.ToProto(bias, copyData);
+  proto->set_num_output(hdim_);
 }
 void FCLayer::CollectParams(vector<Param*> *params){
   weight_.set_id(params->size());
@@ -610,9 +638,10 @@ void FCLayer::InitDAryShape(){
 void FCLayer::AllocateMemory(){
   data_.AllocateMemory();
   grad_.AllocateMemory();
+  weight_.AllocateMemory();
+  bias_.AllocateMemory();
 }
 void FCLayer::ComputeFeature() {
-  VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry data2(data_, {num_, hdim_});
   DAry bottom2(bottom, {num_, vdim_});
@@ -621,14 +650,12 @@ void FCLayer::ComputeFeature() {
 }
 
 void FCLayer::ComputeGradient() {
-  VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   DAry bottom2(bottom, {num_, vdim_});
   DAry grad2(grad_, {num_, hdim_});
 
   weight_.mutable_grad()->Dot(bottom2, grad2, true, false);
-  bias_.mutable_grad()->Set(0.0f);
   bias_.mutable_grad()->SumRow(grad2);
 
   // if dest_grad is nullptr, then we only compute gradients for parameters
@@ -646,7 +673,8 @@ Performance OutputLayer::CalcPerf(bool loss, bool accuracy){
  * Implementation for SoftmaxLossLayer
  *****************************************************************************/
 void SoftmaxLossLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
-  dim_=proto.num_output();
+  OutputLayer::Init(proto, edge_map);
+  //dim_=proto.num_output();
   topk_=proto.topk();
 }
 
@@ -658,7 +686,8 @@ void SoftmaxLossLayer::ToProto(LayerProto* proto, bool copyData) {
 void SoftmaxLossLayer::InitDAryShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_=bottom.shape(0);
-  CHECK_EQ(dim_,bottom.shape().Size()/num_);
+  CHECK_EQ(bottom.shape().Size()%num_,0);
+  dim_=bottom.shape().Size()/num_;
   vector<int> shape{num_, dim_};
   data_.SetShape(shape);
   grad_.SetShape(shape);
@@ -669,7 +698,6 @@ void SoftmaxLossLayer::AllocateMemory(){
   grad_.AllocateMemory();
 }
 void SoftmaxLossLayer::ComputeFeature() {
-  VLOG(3)<<name_;
   if(!data_.allocated())
     return;
   Range nrng=data_.IndexRange(0);
@@ -686,7 +714,6 @@ void SoftmaxLossLayer::ComputeFeature() {
 }
 
 void SoftmaxLossLayer::ComputeGradient() {
-  VLOG(3)<<name_;
   const DAry& label=in_edges_[1]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   gbottom->Copy(data_);
@@ -695,7 +722,7 @@ void SoftmaxLossLayer::ComputeGradient() {
   DAry llabel=label.FetchData(slice);
   DAry gbottom2(*gbottom, {num_, gbottom->shape().Size()/num_});
   for (int n = nrng.first; n < nrng.second; n++) {
-    int k = static_cast<int>(llabel.get(n));
+    int k = static_cast<int>(llabel.get(n,0));
     // check gobottom2[n,k] on this node, 1 for 1-th dim
     if(gbottom2.isLocal({n,k}))
       gbottom2.at(n, k) -= 1.f;
@@ -710,13 +737,12 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
   if(data_.allocated()){
     // DAry:SubShape returns the shape without the 0-th dimension
     int record_len=data_.shape().SubShape().Size();
-    VLOG(3)<<"calc perf, record len "<<record_len;
     const DAry& label=in_edges_[1]->GetData(this);
     Range nrng=data_.IndexRange(0);
     vector<Range> slice{nrng};
     DAry llabel=label.FetchData(slice);
     for(int n=nrng.first;n<nrng.second;n++) {
-      int label=static_cast<int>(llabel.get(n));
+      int label=static_cast<int>(llabel.get(n,0));
       CHECK(label>=0&&label<1000)<<"label "<<label;
       float prob_of_truth=data_.get(n,label);
       if(accuracy){
@@ -735,7 +761,6 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
       }
     }
   }
-  VLOG(3)<<"end calc perf";
   Performance perf;
   perf.set_precision(ncorrect*1.0/num_);
   perf.set_loss(logprob/num_);
@@ -765,11 +790,13 @@ void InputLayer::SetInputData(DAry *data){
 void ImageLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   InputLayer::Init(proto, edge_map);
   cropsize_=proto.cropsize();
+  mirror_=proto.mirror();
 }
 
 void ImageLayer::ToProto(LayerProto* proto, bool copyData) {
   InputLayer::ToProto(proto, copyData);
   proto->set_cropsize(cropsize_);
+  proto->set_mirror(mirror_);
 }
 void ImageLayer::InitDAryShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes[0].size(),4);
@@ -852,7 +879,7 @@ void LabelLayer::AddInputRecord(const Record &record){
   Range nrng=prefetch_data_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
-  prefetch_data_.at(n)=static_cast<int>(record.label());
+  prefetch_data_.at(n,0)=static_cast<int>(record.label());
   offset_++;
 }
 
@@ -876,6 +903,7 @@ LayerFactory::LayerFactory() {
   RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));
   RegisterCreateFunction("LRNLayer", CreateLayer(LRNLayer));
   RegisterCreateFunction("FCLayer", CreateLayer(FCLayer));
+  RegisterCreateFunction("DropoutLayer", CreateLayer(DropoutLayer));
   RegisterCreateFunction("SoftmaxLossLayer", CreateLayer(SoftmaxLossLayer));
 }
 

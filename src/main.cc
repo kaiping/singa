@@ -20,6 +20,7 @@ DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration fil
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(load, false, "Load data to distributed tables");
 DEFINE_bool(run, true,  "Run training algorithm");
+DEFINE_bool(time, true,  "time training algorithm");
 // for debugging use
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
@@ -38,6 +39,7 @@ lapis::TableDelegate* CreateTableDelegate(const lapis::SolverProto& solver){
   delegate->CreateTables(solver);
   return delegate;
 }
+
 int main(int argc, char **argv) {
   FLAGS_logtostderr=1;
   google::InitGoogleLogging(argv[0]);
@@ -58,7 +60,7 @@ int main(int argc, char **argv) {
     coordinator.Run(FLAGS_load, FLAGS_run, model);
   }else {
     lapis::Worker worker(delegate);
-    worker.Run(FLAGS_run, model.solver());
+    worker.Run(FLAGS_run, FLAGS_time, model.solver());
   }
   delete delegate;
   return 0;

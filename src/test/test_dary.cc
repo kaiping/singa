@@ -1,7 +1,31 @@
 #include <iostream>
 #include "darray/dary.h"
+#include "utils/timer.h"
+
 
 int main() {
+  lapis::DAry x({1000000});
+  lapis::DAry y({1000000});
+  x.Random();
+  y.Random();
+  lapis::Timer t;
+  for(int i=0;i<100;i++){
+    float *dptrx=x.dptr();
+    float *dptry=y.dptr();
+    for(int k=0;k<10000;k++)
+      dptrx[k]*=dptry[k];
+  }
+  std::cout<<"arymath: "<<t.elapsed()/10<<std::endl;
+  lapis::DAry m({1000000});
+  lapis::DAry n({1000000});
+  m.Random();
+  n.Random();
+  t.Reset();
+  for(int i=0;i<100;i++)
+    m.Mult(m,n);
+  std::cout<<"arymath: "<<t.elapsed()/10<<std::endl;
+
+
   lapis::DAry a({2,2});
   lapis::DAry b,c;
   b.InitLike(a);

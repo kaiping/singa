@@ -75,8 +75,11 @@ void TableServer::FinishDataPut(const DiskData* data) {
 			(dynamic_cast<DiskTable*>(t.second))->finalize_data();
 		}
 	}
+  VLOG(3)<<"tb server finish";
 	net_->Send(GlobalContext::kCoordinator, MTYPE_DATA_PUT_REQUEST_DONE,
 			EmptyMessage());
+
+  VLOG(3)<<"tb server finish send";
 }
 
 //  respond to request

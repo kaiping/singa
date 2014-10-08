@@ -503,6 +503,55 @@ void DArray::addVec(const std::vector<float> src,int dimindex)
     }
 }
 
+void DArray::matrixMult(const DArray& src1,const DArray& src2)
+{
+    if(dadebugmode && dim() != 2)
+        errorReport(_CFUNC,"dst not two dims");
+    if(dadebugmode && src1.dim() != 2)
+        errorReport(_CFUNC,"src1 not two dims");
+    if(dadebugmode && src2.dim() != 2)
+        errorReport(_CFUNC,"src2 not two dims");
+    Area aproj = DAArea_.proj(LocalArea());
+    Area aprojsrc1 = src1.DAArea_.resize(aproj[0],0);
+    Area aprojsrc2 = src2.DAArea_.resize(aproj[1],1);
+    DArray projdst = (*this)[aproj];
+    DArray projarray1 = src1[aprojsrc1];
+    DArray projarray2 = src2[aprojsrc1];
+
+    DArray* ddst = NULL;
+    const DArray* dsrc1 = NULL;
+    const DArray* dsrc2 = NULL;
+    if(projdst.lgtype()||!projdst.isorigin())
+    {
+        ddst = &projdst.Rebuild();
+    }
+    else ddst = &projdst;
+    if(projdst.lgtype())DArray::sync();
+    if(projarray1.lgtype()||!projarray1.isorigin())
+    {
+        dsrc1 = &projarray1.Rebuild();
+    }
+    else dsrc1 = &projarray1;
+    if(projarray1.lgtype())DArray::sync();
+    if(projarray2.lgtype()||!projarray2.isorigin())
+    {
+        dsrc2 = &projarray2.Rebuild();
+    }
+    else dsrc2 = &projarray2;
+    if(projarray2.lgtype())DArray::sync();
+    ddst->LAData_->matrixMult(*(dsrc1->LAData_),*(dsrc2->LAData_));
+    if(projdst.lgtype()||!projdst.isorigin())
+    {
+        projdst.Copy(*ddst);
+        DArray::sync();
+        ddst->DeleteStore();
+    }
+    if(projarray1.lgtype()||!projarray1.isorigin())
+        dsrc1->DeleteStore();
+    if(projarray2.lgtype()||!projarray2.isorigin())
+        dsrc2->DeleteStore();
+}
+
 
 DArray DArray::Reshape(const Shape& shape)
 {
@@ -667,7 +716,6 @@ void DArray::PutComm(const DArray& src)const
     Area actual(tmp);
     (*this)[GArray::Mid].Put(src,actual);
 }
-
 
 
 void DArray::test()

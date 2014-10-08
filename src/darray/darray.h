@@ -111,7 +111,7 @@ class DArray{
     //adv aggragation
     void sumExcept(DArray&,int)const;//done
     void addVec(const std::vector<float>,int);//done
-    void matrixMult(const DArray&,const DArray&);//tbd
+    void matrixMult(const DArray&,const DArray&);//done
 
     static void sync();
     static void init();

@@ -297,14 +297,46 @@ void LArray::Reshape(const Shape& shape)
 }
 
 
-//tbd
-/*void LArray::matrixMult(DArray& src1,DArray& src2, Area& areadst,Area& areasrc1,Area& areasrc2)
+//this function need all the three arrays to be two dims
+//dst[x][z] = src1[x][y]*src2[y][z]
+void LArray::matrixMult(LArray& src1,LArray& src2)
 {
-
+    if(dadebugmode && dim() != 2)
+        errorReport(_CFUNC,"dst not two dims");
+    if(dadebugmode && src1.dim() != 2)
+        errorReport(_CFUNC,"src1 not two dims");
+    if(dadebugmode && src2.dim() != 2)
+        errorReport(_CFUNC,"src2 not two dims");
+    int x = myshape()[0];
+    int z = myshape()[0];
+    int y = src2.myshape()[0];
+    if(dadebugmode && src1.myshape()[0] != x)
+        errorReport(_CFUNC,"x is not equal");
+    if(dadebugmode && src1.myshape()[1] != y)
+        errorReport(_CFUNC,"y is not equal");
+    if(dadebugmode && src2.myshape()[1] != y)
+        errorReport(_CFUNC,"z is not equal");
+    float* ldst = loc();
+    float* lsrc1 = src1.loc();
+    float* lsrc2 = src2.loc();
+    //doing matrix mult for dst = src1*src2
+    //can be further optimized
+    for(int i = 0; i < x; i++)
+    {
+        for(int j = 0; j < z; j++)
+        {
+            ldst[i*z+j] = 0;
+            for(int k = 0; k < y; k++)
+            {
+                ldst[i*z+j] += lsrc1[i*y+k]*lsrc2[j*z+k];
+            }
+        }
+    }
+    //matrix mult finished
 }
 
 //tbd
-static void LArray::test()
+/*static void LArray::test()
 {
 
 }*/

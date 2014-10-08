@@ -62,8 +62,8 @@ class LArray{
     void sumExcept(LArray&,int,const Area&,const Area&)const;
     void addVec(const std::vector<float>& ,int, const Area&,int offset = 0);
 
-    //tbd
-    //void matrixMult(DArray&,DArray&,Area&,Area&,Area&);
+    //can be optimized
+    void matrixMult(LArray&,LArray&);
 
     //static void test();
 };

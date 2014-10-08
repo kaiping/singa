@@ -100,22 +100,7 @@ class Area{
         return !operator==(area);
     }
 
-    Area resize(int k)const
-    {
-        if(dadebugmode && k >= ranges_[0].length())
-            errorReport(_CFUNC,"arg too large");
-        if(dadebugmode && k < 0)
-            errorReport(_CFUNC,"arg too small");
-        std::vector<Range> newranges;
-        for(int i = 1; i < dim_;i++)
-        {
-            newranges.push_back(ranges_[i]);
-        }
-        Area tmp(newranges);
-        return tmp;
-    }
-
-    Area resize(int k, int dimindex)const
+    Area resize(int k, int dimindex = 0)const
     {
         if(dadebugmode && k >= ranges_[dimindex].length())
             errorReport(_CFUNC,"arg too large");
@@ -131,22 +116,27 @@ class Area{
         return tmp;
     }
 
-    Area resize(const Range &range)const
+    Area resize(const Range &range, int dimindex = 0)const
     {
-        if(dadebugmode && range.end() > ranges_[0].length())
+        if(dadebugmode && range.end() > ranges_[dimindex].length())
             errorReport(_CFUNC,"arg too large");
         if(dadebugmode && range.start() < 0)
             errorReport(_CFUNC,"arg too small");
         std::vector<Range> newranges;
-        int tmp = ranges_[0].start();
-        newranges.push_back(Range(tmp+range.start(),tmp+range.end()));
-        for(int i = 1; i < dim_;i++)
+        for(int i = 0; i < dim_;i++)
         {
-            newranges.push_back(ranges_[i]);
+            if(i!=dimindex)
+                newranges.push_back(ranges_[i]);
+            else
+            {
+                int tmp = ranges_[dimindex].start();
+                newranges.push_back(Range(tmp+range.start(),tmp+range.end()));
+            }
         }
         Area res(newranges);
         return res;
     }
+
     Area resize(const Area &slice)const
     {
         if(dadebugmode)

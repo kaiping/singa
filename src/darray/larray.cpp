@@ -332,6 +332,8 @@ void LArray::matrixMult(LArray& src1,LArray& src2)
             }
         }
     }
+    //cblas version
+    //cblas_sgemm(CblasRowMajor,CblasNoTrans,CblasNoTrans,x,z,y,1.0,lsrc1,y,lsrc2,z,0.0,ldst,z);
     //matrix mult finished
 }
 

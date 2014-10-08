@@ -515,11 +515,14 @@ DArray DArray::Reshape(const Shape& shape)
         //only one machine need to fetch the data back
         DArray mynew = DArray::Global(shape);
         DArray::sync();
-        warningReport(_CFUNC,"jy:only one machine need to fetch the data back");
-        DArray tmp = Fetch();
-        tmp.Reshape(shape);
-        mynew.Put(tmp);
-        tmp.DeleteStore();
+        //warningReport(_CFUNC,"jy:only one machine need to fetch the data back");
+        if(GArray::Mid == 1)
+        {
+            DArray tmp = Fetch();
+            tmp.Reshape(shape);
+            mynew.Put(tmp);
+            tmp.DeleteStore();
+        }
         DArray::sync();
         DeleteStore();
         *this = mynew;

@@ -23,6 +23,7 @@ class LArray{
     inline Shape myshape()const{return myshape_;};
     float& v(const std::vector<int>&);
     const float& v(const std::vector<int>&) const;
+    inline float* loc(){return &data_[0];}
     inline int dim()const{return dim_;};
     inline bool isvalid()const{return isvalid_;};
     void DeleteStore();

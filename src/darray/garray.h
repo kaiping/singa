@@ -18,13 +18,17 @@ class GArray{
     bool isvalid_;
 
     public:
+    static void init();
     GArray(const Shape&,int);
     inline int dim(){return dim_;};
     Area local(){return local_;};
     void DeleteStore();
     bool isvalid()const{return isvalid_;};
-    LArray* Fetch(const Area&)const{};
-    void Put(const LArray&,const Area&){};
+    LArray* Fetch(const Area&)const;
+    void Put(LArray&,const Area&);
+
+    static int Nmachine;
+    static int Mid;
 };
 
 

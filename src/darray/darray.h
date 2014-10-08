@@ -19,7 +19,8 @@ class DArray{
 
     public:
     DArray(LArray *LA, GArray *GA, bool lg, bool ori, const Area& area, const std::vector<int>& prefix)
-        : LAData_(LA), GAData_(GA), lgtype_(lg), isorigin_(ori), DAArea_(area), DAPrefix_(prefix) {}
+        : LAData_(LA), GAData_(GA), lgtype_(lg), isorigin_(ori), DAArea_(area), DAPrefix_(prefix)
+    {}
 
     DArray& operator=(const DArray& darray)
     {
@@ -37,7 +38,7 @@ class DArray{
     //create a GArray/LArray
     //using new shape or an existing shape
     //currently the example array type must have the same type
-    static DArray Global(const Shape&,int mode = 0);//tbd
+    static DArray Global(const Shape&,int mode = 0);//done
     static DArray Global(const DArray&);//done
     static DArray Local(const Shape&);//done
     static DArray Local(const DArray&);//done
@@ -112,6 +113,8 @@ class DArray{
     void addVec(const std::vector<float>,int);//done
     void matrixMult(const DArray&,const DArray&);//tbd
 
+    static void sync();
+    static void init();
     //global function
     static void test();
 };

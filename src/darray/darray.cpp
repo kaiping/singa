@@ -2,6 +2,15 @@
 #include "darray.h"
 #include <stdarg.h>
 
+void DArray::sync()
+{
+    errorReport(_CFUNC,"need to be replaced by comments");//void NGA_Sync();
+}
+
+inline void DArray::init()
+{
+    GArray::init();
+}
 
 Area DArray::LocalArea()const
 {
@@ -108,6 +117,7 @@ inline DArray DArray::operator[](const Area& area)const
 //element-wise operations
 void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
 {
+    DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape");
     Area dstlocal = LocalArea();
@@ -159,10 +169,12 @@ void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
         srcp->DeleteStore();
         delete srcp;
     }
+    DArray::sync();
 }
 
 void DArray::Map(const DArray& src ,float value ,float(*mapfunc)(float,float))const
 {
+    DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape");
     Area dstlocal = LocalArea();
@@ -209,11 +221,13 @@ void DArray::Map(const DArray& src ,float value ,float(*mapfunc)(float,float))co
         srcp->DeleteStore();
         delete srcp;
     }
+    DArray::sync();
 }
 
 
 void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,float))const
 {
+    DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src1.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape src1");
     if(dadebugmode && DAArea_.Areashape()!= src2.DAArea_.Areashape() )
@@ -281,6 +295,7 @@ void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,flo
         src2p->DeleteStore();
         delete src2p;
     }
+    DArray::sync();
 }
 
 inline void DArray::Max(const DArray& src1,const DArray& src2)const
@@ -373,6 +388,7 @@ float DArray::MapAgg(float(*mapfunc)(float,float), float value)const
 {
     if(lgtype())
     {
+        DArray::sync();
         if(dadebugmode && !isorigin())
             errorReport(_CFUNC,"operating on non-original array!");
         //not sure if this works need to echo on every machine
@@ -382,6 +398,7 @@ float DArray::MapAgg(float(*mapfunc)(float,float), float value)const
         DArray tmp = DArray::Local(Shape(std::vector<int>(1,1)));
         tmp.v(1) = locres;
         foragg.PutComm(tmp);
+        DArray::sync();
         DArray gloagg = foragg.Fetch();
         float res = gloagg.MapAgg(mapfunc,value);
         foragg.DeleteStore();
@@ -433,6 +450,7 @@ void DArray::sumExcept(DArray& dst,int dimindex)const
     {
         //similiar to MapAgg  the function shoule be exec on every machine
         //need to build an agg array if we need to reduce the data transform
+        DArray::sync();
         if(dadebugmode && !isorigin())
             errorReport(_CFUNC,"operating on non-original array src!");
         DArray foragg = DArray::GloComm(heresize);
@@ -444,6 +462,7 @@ void DArray::sumExcept(DArray& dst,int dimindex)const
             tmp.v(i) = localagg.LAData_->Sum(temparea);
         }
         foragg.PutComm(tmp);
+        DArray::sync();
         DArray gloagg = foragg.Fetch();
         gloagg.LAData_->sumExcept(*(curdst->LAData_),1,curdst->LocalArea(),gloagg.LocalArea());
         gloagg.DeleteStore();
@@ -469,12 +488,14 @@ void DArray::addVec(const std::vector<float> src,int dimindex)
     int offset = localbegin-globalbegin;
     if(lgtype())
     {
+        DArray::sync();
         if(dadebugmode && !isorigin())
             errorReport(_CFUNC,"operating on non-original array src!");
         DArray daglo = FetchLocal();
         daglo.LAData_->addVec(src,dimindex, daglo.LocalArea(),offset);
         PutLocal(daglo);
         daglo.DeleteStore();
+        DArray::sync();
     }
     else
     {
@@ -492,13 +513,15 @@ DArray DArray::Reshape(const Shape& shape)
     if(lgtype())
     {
         //only one machine need to fetch the data back
+        DArray mynew = DArray::Global(shape);
+        DArray::sync();
         warningReport(_CFUNC,"jy:only one machine need to fetch the data back");
         DArray tmp = Fetch();
         tmp.Reshape(shape);
-        DArray mynew = DArray::Global(shape);
         mynew.Put(tmp);
-        DeleteStore();
         tmp.DeleteStore();
+        DArray::sync();
+        DeleteStore();
         *this = mynew;
     }
     else
@@ -513,7 +536,9 @@ void DArray::DeleteStore()const
 {
     if(lgtype())
     {
+        DArray::sync();
         GAData_->DeleteStore();
+        DArray::sync();
     }
     else
     {
@@ -542,6 +567,7 @@ DArray DArray::Global(const Shape& shape,int mode)
 {
     LArray *LA = NULL;
     GArray *GA = new GArray(shape,mode);
+    DArray::sync();
     DArray res(LA, GA, 1, 1, Area(shape), std::vector<int>(0));
     return res;
 }
@@ -557,7 +583,7 @@ DArray DArray::Global(const DArray& darray)
 DArray DArray::GloComm(int size)
 {
     std::vector<int> x;
-    x.push_back(Nmachine());
+    x.push_back(GArray::Nmachine);
     x.push_back(size);
     Shape shape(x);
     //using mode 1 : fully partition the first dimension and no partition at other dims
@@ -636,8 +662,10 @@ void DArray::PutComm(const DArray& src)const
     std::vector<Range> tmp;
     tmp.push_back(DAArea_[1]);
     Area actual(tmp);
-    (*this)[Mid()].Put(src,actual);
+    (*this)[GArray::Mid].Put(src,actual);
 }
+
+
 
 void DArray::test()
 {

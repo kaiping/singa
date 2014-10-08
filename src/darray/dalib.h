@@ -13,17 +13,6 @@ const int dadebugmode = 1;
 
 const float INF = 1e+038;
 
-
-inline int Nmachine()
-{
-    return 1;
-}
-
-inline int Mid()
-{
-    return 0;
-}
-
 inline int PM()
 {
     return 0;

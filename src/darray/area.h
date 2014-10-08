@@ -274,6 +274,16 @@ class Area{
         return tmp;
     }
 
+    void copytoarray(int* lo, int* hi, int* ld)const
+    {
+        for(int i = 0; i < dim();i++)
+        {
+            if(i>0)ld[i-1] = ranges_[i].length();
+            lo[i] = ranges_[i].start();
+            hi[i] = ranges_[i].end()-1;
+        }
+    }
+
     inline void daout(const char* name = "")const
     {
         std::cout<<"Area"<<name<<"("<<dim()<<"):";

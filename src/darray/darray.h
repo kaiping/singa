@@ -62,16 +62,22 @@ class DArray{
     DArray cp(const Area&,const std::vector<int>&)const;//done
 
     //generate a LArray from a GArray
-    DArray Fetch()const{};
-    DArray FetchLocal()const{};
-    void Put(const DArray&)const{};
-    void PutLocal(const DArray&)const{};
-    void PutComm(const DArray&)const{};
+    DArray Fetch(const Area&)const;//done
+    DArray Fetch()const;//done
+    DArray FetchLocal()const;//done
+    void Put(const DArray&,const Area&)const;//done
+    void Put(const DArray&)const;//done
+    void PutLocal(const DArray&)const;//done
+    void PutComm(const DArray&)const;//done
 
     //this operation will repartition the array
     //will new GArray and delete the original one
     //only work for the whole array, not part of it
     DArray Reshape(const Shape&);//done
+
+    //Rebuild() if global then fetch a local array
+    // if local then generate a new array with the actual shape
+    DArray Rebuild()const;//done
 
     //element-wise operations
     void Map(const DArray&,float(*)(float))const;//done

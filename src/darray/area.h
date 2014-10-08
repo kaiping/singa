@@ -225,6 +225,21 @@ class Area{
         return tmp;
     }
 
+    Area operator+(const std::vector<int>& prefix)const
+    {
+        std::vector<Range> res;
+        for(int i = 0; i < prefix.size(); i++)
+        {
+            res.push_back(Range(prefix[i],prefix[i]+1));
+        }
+        for(int i = 0; i < dim(); i++)
+        {
+            res.push_back(ranges_[i]);
+        }
+        Area tmp(res);
+        return tmp;
+    }
+
     Area operator*(const Offset & offset)const
     {
         if(dim() != offset.dim())

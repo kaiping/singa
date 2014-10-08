@@ -21,14 +21,10 @@ class GArray{
     GArray(const Shape&,int);
     inline int dim(){return dim_;};
     Area local(){return local_;};
-    void DeleteStore(){};
+    void DeleteStore();
     bool isvalid()const{return isvalid_;};
-    LArray Fetch(LArray&,const Area&)const;
-    LArray FetchLocal(const Area&)const;
-    LArray FetchLocal()const;
-    void Put(const LArray&,const Area&, const Area&);
-    void PutLocal(const LArray&,const Area&, const Area&);
-    void PutLocal(const LArray&,const Area&);
+    LArray* Fetch(const Area&)const{};
+    void Put(const LArray&,const Area&){};
 };
 
 

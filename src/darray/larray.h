@@ -20,12 +20,14 @@ class LArray{
 
     public:
     LArray(const Shape&);
+    inline Shape myshape()const{return myshape_;};
     float& v(const std::vector<int>&);
     const float& v(const std::vector<int>&) const;
     inline int dim()const{return dim_;};
     inline bool isvalid()const{return isvalid_;};
     void DeleteStore();
     void Reshape(const Shape&);
+
 
     void Map(const LArray&,float(*)(float),const Area&,const Area&);
     void Map(const LArray&,float,float(*)(float,float),const Area&,const Area&);

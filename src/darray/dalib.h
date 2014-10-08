@@ -19,6 +19,16 @@ inline int Nmachine()
     return 1;
 }
 
+inline int Mid()
+{
+    return 0;
+}
+
+inline int PM()
+{
+    return 0;
+}
+
 
 inline void errorReport(const char* name, const char* mode = "")
 {

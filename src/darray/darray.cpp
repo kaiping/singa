@@ -485,10 +485,12 @@ void DArray::addVec(const std::vector<float> src,int dimindex)
 
 DArray DArray::Reshape(const Shape& shape)
 {
+    if(dadebugmode && !isorigin())
+        errorReport(_CFUNC,"operating on non-original array src!");
+    if(dadebugmode && shape.size()!= DAArea_.size())
+        errorReport(_CFUNC,"reshaping to different size!");
     if(lgtype())
     {
-        if(dadebugmode && !isorigin())
-            errorReport(_CFUNC,"operating on non-original array src!");
         //only one machine need to fetch the data back
         warningReport(_CFUNC,"jy:only one machine need to fetch the data back");
         DArray tmp = Fetch();
@@ -503,6 +505,7 @@ DArray DArray::Reshape(const Shape& shape)
     {
         LAData_->Reshape(shape);
     }
+    DAArea_ = Area(shape);
     return *this;
 }
 
@@ -561,8 +564,80 @@ DArray DArray::GloComm(int size)
     return DArray::Global(shape,1);
 }
 
+DArray DArray::Rebuild()const
+{
+    if(lgtype())return Fetch();
+    else
+    {
+        Shape newshape = DAArea_.Areashape();
+        LArray* newstore = new LArray(newshape);
+        DArray res(newstore,NULL,0,1,Area(newshape),std::vector<int>(0));
+        res.Copy(*this);
+        return res;
+    }
+}
+
+inline DArray DArray::Fetch()const
+{
+    Area actual = DAArea_+DAPrefix_;
+    return Fetch(actual);
+}
 
 
+DArray DArray::Fetch(const Area& actual)const
+{
+    Shape newshape = actual.Areashape();
+    LArray* LA = GAData_->Fetch(actual);
+    DArray res(LA,NULL,0,1,Area(newshape),std::vector<int>(0));
+    res.Reshape(DAArea_.Areashape());
+    return res;
+}
+
+inline DArray DArray::FetchLocal()const
+{
+    Area actual = LocalArea();
+    return Fetch(actual);
+}
+
+void DArray::Put(const DArray& src,const Area& actual)const
+{
+    DArray tmp = src.Rebuild();
+    Shape newshape = actual.Areashape();
+    tmp.Reshape(newshape);
+    if(dadebugmode && tmp.lgtype())
+        errorReport(_CFUNC,"put using global array as dst");
+    if(dadebugmode && !tmp.isorigin())
+        errorReport(_CFUNC,"put using un-origin array as dst");
+    if(dadebugmode && actual.Areashape()!=tmp.LAData_->myshape())
+        errorReport(_CFUNC,"put using two different shape");
+    GAData_->Put(*(tmp.LAData_),actual);
+    tmp.DeleteStore();
+}
+
+
+void DArray::Put(const DArray& src)const
+{
+    Area actual = DAArea_+DAPrefix_;
+    Put(src,actual);
+}
+
+void DArray::PutLocal(const DArray& src)const
+{
+    Area actual = LocalArea();
+    Put(src,actual);
+}
+
+void DArray::PutComm(const DArray& src)const
+{
+    if(dadebugmode && src.dim()!=1)
+        errorReport(_CFUNC,"not using 1dim array to comm");
+    if(dadebugmode && dim()!=2)
+        errorReport(_CFUNC,"not using 2dim array to receive comm");
+    std::vector<Range> tmp;
+    tmp.push_back(DAArea_[1]);
+    Area actual(tmp);
+    (*this)[Mid()].Put(src,actual);
+}
 
 void DArray::test()
 {

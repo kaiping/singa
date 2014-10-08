@@ -296,6 +296,7 @@ void LArray::Reshape(const Shape& shape)
     dim_ = shape.dim();
 }
 
+
 //tbd
 /*void LArray::matrixMult(DArray& src1,DArray& src2, Area& areadst,Area& areasrc1,Area& areasrc2)
 {

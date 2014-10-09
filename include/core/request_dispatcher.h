@@ -56,6 +56,7 @@ class RequestDispatcher {
 
 	void event_complete(string &key);
 
+	RequestQueue* table_queue(){return table_queue_;}
  private:
 	RequestDispatcher();
 	void table_dispatch_loop();

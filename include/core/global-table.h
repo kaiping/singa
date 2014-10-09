@@ -210,22 +210,47 @@ V TypedGlobalTable<K, V>::get(const K &k) {
   return unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
 }
 
+/*
+ * asynchronous get, returns right away. use async_get_collect to wait on the
+ * content.
+ *
+ * if the key is local, return
+ * else send send (get_remote without waiting).
+ */
 template<class K, class V>
 bool TypedGlobalTable<K,V>::async_get(const K &k, V* v){
   int shard = this->get_shard(k);
-  if (is_local_shard(shard)) {
-	*v = get_local(k);
-	return true;
-  }
+
+  if (is_local_shard(shard)) return false;
   else{
 		async_get_remote(shard,
 				marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 		return false;
   }
+
 }
 
+/*
+ * wait on the content. The upper layer repeatedly invokes this function until
+ * it returns true, then the value can be used.
+ *
+ * K k;
+ * V v;
+ * if (async_get_collect(&k,&v))
+ *     do_some_thing(k,v);
+ */
 template<class K, class V>
 bool TypedGlobalTable<K,V>::async_get_collect(K* k, V* v){
+	if (is_local_shard(this->get_shard(*k))){
+		  string key_str= marshal(static_cast<Marshal<K>*>(this->info().key_marshal), *k);
+		if (RequestDispatcher::Get()->table_queue()->sync_local_get(key_str)){
+			*v = get_local(*k);
+			RequestDispatcher::Get()->event_complete(key_str);
+			return true;
+		}
+		else
+			return false;
+	}
 	string tk, tv;
 	bool succeed = async_get_remote_collect(&tk, &tv);
 	if (succeed){
@@ -234,6 +259,7 @@ bool TypedGlobalTable<K,V>::async_get_collect(K* k, V* v){
 	}
 	return succeed;
 }
+
 
 template<class K, class V>
 bool TypedGlobalTable<K, V>::contains(const K &k) {

@@ -95,6 +95,27 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
   return true;
 }
 
+void GlobalTable::async_get_remote(int shard, const StringPiece &k){
+	HashGet req;
+	req.set_key(k.AsString());
+	req.set_table(info().table_id);
+	req.set_shard(shard);
+	req.set_source(worker_id_);
+	int peer = w_->peer_for_partition(info().table_id, shard);
+	//VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
+	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
+}
+
+bool GlobalTable::async_get_remote_collect(string *k, string *v) {
+  TableData resp;
+
+  if (NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE, &resp)){
+	  *v = resp.kv_data(0).value();
+	   return true;
+  }
+  else return false;
+}
+
 void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
   boost::recursive_mutex::scoped_lock sl(mutex());
   int shard = get_req.shard();

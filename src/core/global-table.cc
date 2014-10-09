@@ -110,6 +110,7 @@ bool GlobalTable::async_get_remote_collect(string *k, string *v) {
   TableData resp;
 
   if (NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE, &resp)){
+	  *k = resp.kv_data(0).key();
 	  *v = resp.kv_data(0).value();
 	   return true;
   }

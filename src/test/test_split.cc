@@ -14,6 +14,8 @@
 #include "worker.h"
 #include "coordinator.h"
 #include "model_controller/myacc.h"
+#include "utils/common.h"
+
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
@@ -56,8 +58,8 @@ void init_messages(){
   long nservers=context->num_table_servers();
 	for (int i=0; i<SIZE; i++){
 		int total=0;
-    int threshold=std::max(FLAGS_threshold, 0l);//, sizes[i]/nservers);
-    LOG(INFO)<<"worker: "<<threshold;
+    int threshold=std::max(FLAGS_threshold, sizes[i]/nservers);
+    VLOG(3)<<"worker: "<<threshold;
 		while (total<sizes[i]){
 			FloatVector* fv = new FloatVector();
 			for (int j=0; j+total<sizes[i] && j<threshold; j++)
@@ -67,7 +69,6 @@ void init_messages(){
 			num_keys++;
 		}
 	}
-  LOG(INFO)<<"op num_keys= "<<num_keys;
 }
 
 void create_mem_table(int id, int num_shards){
@@ -154,8 +155,7 @@ void coordinator_load_data(){
   int nservers=context->num_table_servers();
 	for (int i = 0; i < SIZE; i++) {
 		int total = 0;
-    int threshold=std::max(FLAGS_threshold, 0l); // sizes[i]/nservers);
-    LOG(INFO)<<"coordinator: "<<threshold;
+    int threshold=std::max(FLAGS_threshold,  sizes[i]/nservers);
     while (total < sizes[i]) {
       FloatVector* fv = new FloatVector();
       for (int j = 0; j + total < sizes[i] && j < threshold; j++)
@@ -163,7 +163,6 @@ void coordinator_load_data(){
             static_cast<float>(rand())
             / static_cast<float>(RAND_MAX));
       table->put(num_keys,*fv);
-      LOG(INFO)<<"coordinator: key: "<<num_keys<<" size: "<<fv->data_size();
       total += threshold;
       num_keys++;
     }
@@ -172,20 +171,38 @@ void coordinator_load_data(){
 }
 
 void get(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
-	long start;
+	double start , end;
+  StateQueue<int> state(num_keys);
+  FloatVector v;
 	for (int i=0; i<num_keys; i++){
-		start = Now();
-		table->get(i);
-		latency << "get: " << (Now() - start) << endl;
+    start = Now();
+    table->get(i);
+    end=Now();
+    latency << "get: " << (end - start) << endl;
+  }
+  /*
+	for (int i=0; i<num_keys; i++){
+    if(table->async_get(i, &v))
+      state.Invalid(i);
 	}
+  latency << "send get: " << (Now() - start) << endl;
+  start=Now();
+  while(state.HasValid()){
+    int key=state.Next();
+    if(table->async_get_collect(&key, &v))
+      state.Invalid();
+  }
+  latency << "collect get: " << (Now() - start) << endl;
+  */
 }
 
 void update(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
-	long start;
+	double start, end;
 	for (int i=0; i<num_keys; i++){
 		start = Now();
 		table->update(i,*value_msg[i]);
-		latency << "update: " << (Now() - start) << endl;
+    end=Now();
+		latency << "update: " << (end - start) << endl;
 	}
 }
 
@@ -195,14 +212,16 @@ void worker_test_data(){
 
 	ofstream latency(StringPrintf("latency_%d",NetworkThread::Get()->id()));
 	ofstream throughput(StringPrintf("throughput_%d", NetworkThread::Get()->id()));
-	long start;
+	double start, end;
 	for (int i=0; i<FLAGS_iterations; i++){
 		start = Now();
 		get(table, latency);
-		throughput << "get: " << (Now() - start) << " over " << num_keys << " ops " << endl;
+    end=Now();
+		throughput << "get: " << (end - start) << " over " << num_keys << " ops " << endl;
 		start = Now();
 		update(table, latency);
-		throughput << "update: " << (Now() - start) << " over " << num_keys << " ops " << endl;
+    end=Now();
+		throughput << "update: " << (end - start) << " over " << num_keys << " ops " << endl;
 	}
 	latency.close();
 	throughput.close();
@@ -238,8 +257,6 @@ void shutdown(){
 	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
 	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
 
-	  print_table_stats();
-
 	  table_server->ShutdownTableServer();
 	  VLOG(3) << "Flushing node " << network->id();
 	  network->Shutdown();
@@ -270,6 +287,7 @@ int main(int argc, char **argv) {
 		worker_table_init();
 		network->barrier();
 		VLOG(3) << "passed the barrier";
+		print_table_stats();
 
 		//Sleep(1);
     if(network->id()<FLAGS_workers)

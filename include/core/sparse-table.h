@@ -231,7 +231,7 @@ void SparseTable<K, V>::update(const K &k, const V &v) {
     string xk,xv;
     ((Marshal<K>*)info_->key_marshal)->marshal(k,&xk);
     ((Marshal<V>*)info_->value_marshal)->marshal(v,&xv);
-    VLOG(3)<< "Table " << NetworkThread::Get()->id() << " put " << (xk.size()+xv.size());
+    //VLOG(3)<< "Table " << NetworkThread::Get()->id() << " put " << (xk.size()+xv.size());
     stats_["TABLE_SIZE"]+=xk.size()+xv.size();
   }
 }

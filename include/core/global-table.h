@@ -158,7 +158,7 @@ V TypedGlobalTable<K, V>::get_local(const K &k) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   int shard = this->get_shard(k);
-  VLOG(3)<<"sent to shard: "<<shard;
+  //VLOG(3)<<"sent to shard: "<<shard;
   //  boost::recursive_mutex::scoped_lock sl(mutex());
   string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
   if (is_local_shard(shard))

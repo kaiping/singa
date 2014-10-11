@@ -58,7 +58,7 @@ void init_messages(){
   long nservers=context->num_table_servers();
 	for (int i=0; i<SIZE; i++){
 		int total=0;
-    int threshold=std::max(FLAGS_threshold, sizes[i]/nservers);
+    int threshold=std::max(FLAGS_threshold,0l);//, sizes[i]/nservers);
     VLOG(3)<<"worker: "<<threshold;
 		while (total<sizes[i]){
 			FloatVector* fv = new FloatVector();
@@ -155,7 +155,7 @@ void coordinator_load_data(){
   int nservers=context->num_table_servers();
 	for (int i = 0; i < SIZE; i++) {
 		int total = 0;
-    int threshold=std::max(FLAGS_threshold,  sizes[i]/nservers);
+    int threshold=std::max(FLAGS_threshold,0l);//  sizes[i]/nservers);
     while (total < sizes[i]) {
       FloatVector* fv = new FloatVector();
       for (int j = 0; j + total < sizes[i] && j < threshold; j++)
@@ -174,13 +174,15 @@ void get(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
 	double start , end;
   StateQueue<int> state(num_keys);
   FloatVector v;
+  /*
 	for (int i=0; i<num_keys; i++){
     start = Now();
     table->get(i);
     end=Now();
     latency << "get: " << (end - start) << endl;
   }
-  /*
+  */
+  start=Now();
 	for (int i=0; i<num_keys; i++){
     if(table->async_get(i, &v))
       state.Invalid(i);
@@ -190,10 +192,10 @@ void get(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
   while(state.HasValid()){
     int key=state.Next();
     if(table->async_get_collect(&key, &v))
-      state.Invalid();
+      state.Invalid(key);
+    sleep(0.001);
   }
   latency << "collect get: " << (Now() - start) << endl;
-  */
 }
 
 void update(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
@@ -222,6 +224,7 @@ void worker_test_data(){
 		update(table, latency);
     end=Now();
 		throughput << "update: " << (end - start) << " over " << num_keys << " ops " << endl;
+    sleep(10);
 	}
 	latency.close();
 	throughput.close();
@@ -277,7 +280,7 @@ int main(int argc, char **argv) {
 
 	create_mem_table(0,context->num_table_servers());
 
-
+  LOG(INFO)<<"threshold: "<<FLAGS_threshold<<" nworkers: "<<FLAGS_workers;
 	if (context->AmICoordinator()){
 		coordinator_assign_tables(0);
 		coordinator_load_data();

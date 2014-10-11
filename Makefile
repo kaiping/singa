@@ -72,10 +72,10 @@ run_test_memory: lapis.test.memory
 		--table_buffer=20 --block_size=10 -workers=1
 
 run_test_split: lapis.test.split
-	mpirun -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun -np 9 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
-		--table_buffer=20 --block_size=10 --workers=1 --threshold=10000000 --iterations=5
+		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 
 run_test_disk_load: lapis.test.disk
@@ -100,13 +100,13 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
-	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
-	@echo
+#lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
+#	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+#	@echo
 
-lapis.test.memory: lapis.bin $(MEMORY_TEST_OBJS)
-	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(MEMORY_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
-	@echo
+#lapis.test.memory: lapis.bin $(MEMORY_TEST_OBJS)
+#	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(MEMORY_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+#	@echo
 
 lapis.test.split: lapis.bin $(SPLIT_TEST_OBJS)
 	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(SPLIT_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)

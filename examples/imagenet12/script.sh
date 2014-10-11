@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 folder="/data1/wangwei/lapis"
 if [ $# -eq 0 ]
   then

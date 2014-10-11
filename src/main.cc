@@ -14,6 +14,7 @@
 #include "proto/model.pb.h"
 #include "core/table_delegate.h"
 #include "coordinator.h"
+#include "datasource/data_loader.h"
 #include "worker.h"
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
@@ -52,16 +53,32 @@ int main(int argc, char **argv) {
   VLOG(3)<<"before global context";
   auto gc=lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
   lapis::ModelProto model;
-  lapis::ReadProtoFromTextFile(gc->model_conf(), &model);
-  lapis::TableDelegate* delegate=CreateTableDelegate(model.solver());
+  lapis::ReadProtoFromTextFile(FLAGS_model_conf(), &model);
+  //lapis::TableDelegate* delegate=CreateTableDelegate(model.solver());
   VLOG(3)<<"after global context";
-  if(gc->AmICoordinator()) {
-    lapis::Coordinator coordinator(delegate);
-    coordinator.Run(FLAGS_load, FLAGS_run, model);
-  }else {
-    lapis::Worker worker(delegate);
-    worker.Run(FLAGS_run, FLAGS_time, model.solver());
+
+  SystemProto system;
+  lapis::ReadProtoFromTextFile(FLAGS_system_conf, &system);
+  if(FLAGS_load) {
+    LOG(INFO)<<"Loading Data...";
+    DataLoader loader(gc->rank(), system.cluster());
+    if(gc->AmICoordinator())
+      loader.LoadLocalDataToCluster(model.data());
+    else
+      loader.RecieveShards();
+    LOG(INFO)<<"Finish Load Data";
+  }
+  /*
+  if(FLAGS_run){
+    if(gc->AmICoordinator()) {
+      lapis::Coordinator coordinator(delegate);
+      coordinator.Run(FLAGS_load, FLAGS_run, model);
+    }else {
+      lapis::Worker worker(delegate);
+      worker.Run(FLAGS_run, FLAGS_time, model.solver());
+    }
   }
   delete delegate;
+  */
   return 0;
 }

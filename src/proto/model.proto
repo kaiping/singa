@@ -199,6 +199,7 @@ message ModelProto {
 message Record {
   optional DAryProto image=1;
   optional int32 label=2;
+  optional string path=3;
 }
 // value field of the tuple for AdaGrad SGD
 message AdaGradValue {

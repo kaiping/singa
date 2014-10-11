@@ -3,6 +3,7 @@
 
 #ifndef INCLUDE_CORE_TIMER_H_
 #define INCLUDE_CORE_TIMER_H_
+#include <time.h>
 
 namespace lapis {
 static uint64_t rdtsc() {
@@ -15,6 +16,15 @@ inline double Now() {
   timespec tp;
   clock_gettime(CLOCK_MONOTONIC, &tp);
   return tp.tv_sec + 1e-9 * tp.tv_nsec;
+}
+
+inline std::string LocalTime() {
+  time_t rawtime;
+  struct tm * timeinfo;
+
+  time (&rawtime);
+  timeinfo = localtime (&rawtime);
+  return string(asctime(timeinfo));
 }
 
 class Timer {

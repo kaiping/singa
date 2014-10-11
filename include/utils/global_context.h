@@ -36,6 +36,7 @@ class GlobalContext {
   // All processes are workers except the coordinator
   bool AmIWorker() {return rank_!=kCoordinator;}
   void set_rank(int rank) {rank_=rank;}
+  int rank() {return rank_;}
   // assume the rank of coordinator is 0
   static int kCoordinator;
  private:

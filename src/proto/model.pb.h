@@ -2062,18 +2062,33 @@ class Record : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 label() const;
   inline void set_label(::google::protobuf::int32 value);
 
+  // optional string path = 3;
+  inline bool has_path() const;
+  inline void clear_path();
+  static const int kPathFieldNumber = 3;
+  inline const ::std::string& path() const;
+  inline void set_path(const ::std::string& value);
+  inline void set_path(const char* value);
+  inline void set_path(const char* value, size_t size);
+  inline ::std::string* mutable_path();
+  inline ::std::string* release_path();
+  inline void set_allocated_path(::std::string* path);
+
   // @@protoc_insertion_point(class_scope:lapis.Record)
  private:
   inline void set_has_image();
   inline void clear_has_image();
   inline void set_has_label();
   inline void clear_has_label();
+  inline void set_has_path();
+  inline void clear_has_path();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::lapis::DAryProto* image_;
+  ::std::string* path_;
   ::google::protobuf::int32 label_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -5533,6 +5548,82 @@ inline void Record::set_label(::google::protobuf::int32 value) {
   set_has_label();
   label_ = value;
   // @@protoc_insertion_point(field_set:lapis.Record.label)
+}
+
+// optional string path = 3;
+inline bool Record::has_path() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Record::set_has_path() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Record::clear_has_path() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Record::clear_path() {
+  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    path_->clear();
+  }
+  clear_has_path();
+}
+inline const ::std::string& Record::path() const {
+  // @@protoc_insertion_point(field_get:lapis.Record.path)
+  return *path_;
+}
+inline void Record::set_path(const ::std::string& value) {
+  set_has_path();
+  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    path_ = new ::std::string;
+  }
+  path_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.Record.path)
+}
+inline void Record::set_path(const char* value) {
+  set_has_path();
+  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    path_ = new ::std::string;
+  }
+  path_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.Record.path)
+}
+inline void Record::set_path(const char* value, size_t size) {
+  set_has_path();
+  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    path_ = new ::std::string;
+  }
+  path_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.Record.path)
+}
+inline ::std::string* Record::mutable_path() {
+  set_has_path();
+  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    path_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.Record.path)
+  return path_;
+}
+inline ::std::string* Record::release_path() {
+  clear_has_path();
+  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = path_;
+    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void Record::set_allocated_path(::std::string* path) {
+  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete path_;
+  }
+  if (path) {
+    set_has_path();
+    path_ = path;
+  } else {
+    clear_has_path();
+    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.Record.path)
 }
 
 // -------------------------------------------------------------------

@@ -20,6 +20,12 @@ namespace lapis {
 
 namespace {
 
+const ::google::protobuf::Descriptor* GroupConfig_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  GroupConfig_reflection_ = NULL;
+const ::google::protobuf::Descriptor* ClusterConfig_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  ClusterConfig_reflection_ = NULL;
 const ::google::protobuf::Descriptor* SystemProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   SystemProto_reflection_ = NULL;
@@ -33,10 +39,43 @@ void protobuf_AssignDesc_system_2eproto() {
     ::google::protobuf::DescriptorPool::generated_pool()->FindFileByName(
       "system.proto");
   GOOGLE_CHECK(file != NULL);
-  SystemProto_descriptor_ = file->message_type(0);
-  static const int SystemProto_offsets_[4] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, table_server_start_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, table_server_end_),
+  GroupConfig_descriptor_ = file->message_type(0);
+  static const int GroupConfig_offsets_[3] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GroupConfig, start_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GroupConfig, end_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GroupConfig, leader_),
+  };
+  GroupConfig_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      GroupConfig_descriptor_,
+      GroupConfig::default_instance_,
+      GroupConfig_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GroupConfig, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GroupConfig, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(GroupConfig));
+  ClusterConfig_descriptor_ = file->message_type(1);
+  static const int ClusterConfig_offsets_[3] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, server_start_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, server_end_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, group_),
+  };
+  ClusterConfig_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      ClusterConfig_descriptor_,
+      ClusterConfig::default_instance_,
+      ClusterConfig_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(ClusterConfig));
+  SystemProto_descriptor_ = file->message_type(2);
+  static const int SystemProto_offsets_[3] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, cluster_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, standalone_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SystemProto, synchronous_),
   };
@@ -64,12 +103,20 @@ inline void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    GroupConfig_descriptor_, &GroupConfig::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    ClusterConfig_descriptor_, &ClusterConfig::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     SystemProto_descriptor_, &SystemProto::default_instance());
 }
 
 }  // namespace
 
 void protobuf_ShutdownFile_system_2eproto() {
+  delete GroupConfig::default_instance_;
+  delete GroupConfig_reflection_;
+  delete ClusterConfig::default_instance_;
+  delete ClusterConfig_reflection_;
   delete SystemProto::default_instance_;
   delete SystemProto_reflection_;
 }
@@ -81,13 +128,21 @@ void protobuf_AddDesc_system_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\014system.proto\022\005lapis\"x\n\013SystemProto\022\032\n\022"
-    "table_server_start\030\001 \001(\005\022\030\n\020table_server"
-    "_end\030\002 \001(\005\022\030\n\nstandalone\030\003 \001(\010:\004true\022\031\n\013"
-    "synchronous\030\004 \001(\010:\004true", 143);
+    "\n\014system.proto\022\005lapis\"9\n\013GroupConfig\022\r\n\005"
+    "start\030\001 \001(\005\022\013\n\003end\030\002 \001(\005\022\016\n\006leader\030\003 \001(\005"
+    "\"\\\n\rClusterConfig\022\024\n\014server_start\030\001 \001(\005\022"
+    "\022\n\nserver_end\030\002 \001(\005\022!\n\005group\030\003 \003(\0132\022.lap"
+    "is.GroupConfig\"i\n\013SystemProto\022%\n\007cluster"
+    "\030\001 \001(\0132\024.lapis.ClusterConfig\022\030\n\nstandalo"
+    "ne\030\003 \001(\010:\004true\022\031\n\013synchronous\030\004 \001(\010:\004tru"
+    "e", 281);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "system.proto", &protobuf_RegisterTypes);
+  GroupConfig::default_instance_ = new GroupConfig();
+  ClusterConfig::default_instance_ = new ClusterConfig();
   SystemProto::default_instance_ = new SystemProto();
+  GroupConfig::default_instance_->InitAsDefaultInstance();
+  ClusterConfig::default_instance_->InitAsDefaultInstance();
   SystemProto::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_system_2eproto);
 }
@@ -102,8 +157,632 @@ struct StaticDescriptorInitializer_system_2eproto {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int SystemProto::kTableServerStartFieldNumber;
-const int SystemProto::kTableServerEndFieldNumber;
+const int GroupConfig::kStartFieldNumber;
+const int GroupConfig::kEndFieldNumber;
+const int GroupConfig::kLeaderFieldNumber;
+#endif  // !_MSC_VER
+
+GroupConfig::GroupConfig()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.GroupConfig)
+}
+
+void GroupConfig::InitAsDefaultInstance() {
+}
+
+GroupConfig::GroupConfig(const GroupConfig& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.GroupConfig)
+}
+
+void GroupConfig::SharedCtor() {
+  _cached_size_ = 0;
+  start_ = 0;
+  end_ = 0;
+  leader_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+GroupConfig::~GroupConfig() {
+  // @@protoc_insertion_point(destructor:lapis.GroupConfig)
+  SharedDtor();
+}
+
+void GroupConfig::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void GroupConfig::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* GroupConfig::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return GroupConfig_descriptor_;
+}
+
+const GroupConfig& GroupConfig::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_system_2eproto();
+  return *default_instance_;
+}
+
+GroupConfig* GroupConfig::default_instance_ = NULL;
+
+GroupConfig* GroupConfig::New() const {
+  return new GroupConfig;
+}
+
+void GroupConfig::Clear() {
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<GroupConfig*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  ZR_(start_, leader_);
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool GroupConfig::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:lapis.GroupConfig)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 start = 1;
+      case 1: {
+        if (tag == 8) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &start_)));
+          set_has_start();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(16)) goto parse_end;
+        break;
+      }
+
+      // optional int32 end = 2;
+      case 2: {
+        if (tag == 16) {
+         parse_end:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &end_)));
+          set_has_end();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(24)) goto parse_leader;
+        break;
+      }
+
+      // optional int32 leader = 3;
+      case 3: {
+        if (tag == 24) {
+         parse_leader:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &leader_)));
+          set_has_leader();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.GroupConfig)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.GroupConfig)
+  return false;
+#undef DO_
+}
+
+void GroupConfig::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.GroupConfig)
+  // optional int32 start = 1;
+  if (has_start()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->start(), output);
+  }
+
+  // optional int32 end = 2;
+  if (has_end()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->end(), output);
+  }
+
+  // optional int32 leader = 3;
+  if (has_leader()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->leader(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:lapis.GroupConfig)
+}
+
+::google::protobuf::uint8* GroupConfig::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.GroupConfig)
+  // optional int32 start = 1;
+  if (has_start()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->start(), target);
+  }
+
+  // optional int32 end = 2;
+  if (has_end()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->end(), target);
+  }
+
+  // optional int32 leader = 3;
+  if (has_leader()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->leader(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.GroupConfig)
+  return target;
+}
+
+int GroupConfig::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional int32 start = 1;
+    if (has_start()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->start());
+    }
+
+    // optional int32 end = 2;
+    if (has_end()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->end());
+    }
+
+    // optional int32 leader = 3;
+    if (has_leader()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->leader());
+    }
+
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void GroupConfig::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const GroupConfig* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const GroupConfig*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void GroupConfig::MergeFrom(const GroupConfig& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_start()) {
+      set_start(from.start());
+    }
+    if (from.has_end()) {
+      set_end(from.end());
+    }
+    if (from.has_leader()) {
+      set_leader(from.leader());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void GroupConfig::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void GroupConfig::CopyFrom(const GroupConfig& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GroupConfig::IsInitialized() const {
+
+  return true;
+}
+
+void GroupConfig::Swap(GroupConfig* other) {
+  if (other != this) {
+    std::swap(start_, other->start_);
+    std::swap(end_, other->end_);
+    std::swap(leader_, other->leader_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata GroupConfig::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = GroupConfig_descriptor_;
+  metadata.reflection = GroupConfig_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int ClusterConfig::kServerStartFieldNumber;
+const int ClusterConfig::kServerEndFieldNumber;
+const int ClusterConfig::kGroupFieldNumber;
+#endif  // !_MSC_VER
+
+ClusterConfig::ClusterConfig()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.ClusterConfig)
+}
+
+void ClusterConfig::InitAsDefaultInstance() {
+}
+
+ClusterConfig::ClusterConfig(const ClusterConfig& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.ClusterConfig)
+}
+
+void ClusterConfig::SharedCtor() {
+  _cached_size_ = 0;
+  server_start_ = 0;
+  server_end_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+ClusterConfig::~ClusterConfig() {
+  // @@protoc_insertion_point(destructor:lapis.ClusterConfig)
+  SharedDtor();
+}
+
+void ClusterConfig::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void ClusterConfig::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* ClusterConfig::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return ClusterConfig_descriptor_;
+}
+
+const ClusterConfig& ClusterConfig::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_system_2eproto();
+  return *default_instance_;
+}
+
+ClusterConfig* ClusterConfig::default_instance_ = NULL;
+
+ClusterConfig* ClusterConfig::New() const {
+  return new ClusterConfig;
+}
+
+void ClusterConfig::Clear() {
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<ClusterConfig*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  ZR_(server_start_, server_end_);
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
+  group_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool ClusterConfig::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:lapis.ClusterConfig)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 server_start = 1;
+      case 1: {
+        if (tag == 8) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &server_start_)));
+          set_has_server_start();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(16)) goto parse_server_end;
+        break;
+      }
+
+      // optional int32 server_end = 2;
+      case 2: {
+        if (tag == 16) {
+         parse_server_end:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &server_end_)));
+          set_has_server_end();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_group;
+        break;
+      }
+
+      // repeated .lapis.GroupConfig group = 3;
+      case 3: {
+        if (tag == 26) {
+         parse_group:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_group()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_group;
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.ClusterConfig)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.ClusterConfig)
+  return false;
+#undef DO_
+}
+
+void ClusterConfig::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.ClusterConfig)
+  // optional int32 server_start = 1;
+  if (has_server_start()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->server_start(), output);
+  }
+
+  // optional int32 server_end = 2;
+  if (has_server_end()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->server_end(), output);
+  }
+
+  // repeated .lapis.GroupConfig group = 3;
+  for (int i = 0; i < this->group_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->group(i), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:lapis.ClusterConfig)
+}
+
+::google::protobuf::uint8* ClusterConfig::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.ClusterConfig)
+  // optional int32 server_start = 1;
+  if (has_server_start()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->server_start(), target);
+  }
+
+  // optional int32 server_end = 2;
+  if (has_server_end()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->server_end(), target);
+  }
+
+  // repeated .lapis.GroupConfig group = 3;
+  for (int i = 0; i < this->group_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        3, this->group(i), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.ClusterConfig)
+  return target;
+}
+
+int ClusterConfig::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional int32 server_start = 1;
+    if (has_server_start()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->server_start());
+    }
+
+    // optional int32 server_end = 2;
+    if (has_server_end()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->server_end());
+    }
+
+  }
+  // repeated .lapis.GroupConfig group = 3;
+  total_size += 1 * this->group_size();
+  for (int i = 0; i < this->group_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->group(i));
+  }
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void ClusterConfig::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const ClusterConfig* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const ClusterConfig*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void ClusterConfig::MergeFrom(const ClusterConfig& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  group_.MergeFrom(from.group_);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_server_start()) {
+      set_server_start(from.server_start());
+    }
+    if (from.has_server_end()) {
+      set_server_end(from.server_end());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void ClusterConfig::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void ClusterConfig::CopyFrom(const ClusterConfig& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ClusterConfig::IsInitialized() const {
+
+  return true;
+}
+
+void ClusterConfig::Swap(ClusterConfig* other) {
+  if (other != this) {
+    std::swap(server_start_, other->server_start_);
+    std::swap(server_end_, other->server_end_);
+    group_.Swap(&other->group_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata ClusterConfig::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = ClusterConfig_descriptor_;
+  metadata.reflection = ClusterConfig_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int SystemProto::kClusterFieldNumber;
 const int SystemProto::kStandaloneFieldNumber;
 const int SystemProto::kSynchronousFieldNumber;
 #endif  // !_MSC_VER
@@ -115,6 +794,7 @@ SystemProto::SystemProto()
 }
 
 void SystemProto::InitAsDefaultInstance() {
+  cluster_ = const_cast< ::lapis::ClusterConfig*>(&::lapis::ClusterConfig::default_instance());
 }
 
 SystemProto::SystemProto(const SystemProto& from)
@@ -126,8 +806,7 @@ SystemProto::SystemProto(const SystemProto& from)
 
 void SystemProto::SharedCtor() {
   _cached_size_ = 0;
-  table_server_start_ = 0;
-  table_server_end_ = 0;
+  cluster_ = NULL;
   standalone_ = true;
   synchronous_ = true;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -140,6 +819,7 @@ SystemProto::~SystemProto() {
 
 void SystemProto::SharedDtor() {
   if (this != default_instance_) {
+    delete cluster_;
   }
 }
 
@@ -165,25 +845,13 @@ SystemProto* SystemProto::New() const {
 }
 
 void SystemProto::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<SystemProto*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 15) {
-    ZR_(table_server_start_, table_server_end_);
+  if (_has_bits_[0 / 32] & 7) {
+    if (has_cluster()) {
+      if (cluster_ != NULL) cluster_->::lapis::ClusterConfig::Clear();
+    }
     standalone_ = true;
     synchronous_ = true;
   }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -198,28 +866,11 @@ bool SystemProto::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional int32 table_server_start = 1;
+      // optional .lapis.ClusterConfig cluster = 1;
       case 1: {
-        if (tag == 8) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &table_server_start_)));
-          set_has_table_server_start();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(16)) goto parse_table_server_end;
-        break;
-      }
-
-      // optional int32 table_server_end = 2;
-      case 2: {
-        if (tag == 16) {
-         parse_table_server_end:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &table_server_end_)));
-          set_has_table_server_end();
+        if (tag == 10) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_cluster()));
         } else {
           goto handle_unusual;
         }
@@ -282,14 +933,10 @@ failure:
 void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:lapis.SystemProto)
-  // optional int32 table_server_start = 1;
-  if (has_table_server_start()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->table_server_start(), output);
-  }
-
-  // optional int32 table_server_end = 2;
-  if (has_table_server_end()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->table_server_end(), output);
+  // optional .lapis.ClusterConfig cluster = 1;
+  if (has_cluster()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->cluster(), output);
   }
 
   // optional bool standalone = 3 [default = true];
@@ -312,14 +959,11 @@ void SystemProto::SerializeWithCachedSizes(
 ::google::protobuf::uint8* SystemProto::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:lapis.SystemProto)
-  // optional int32 table_server_start = 1;
-  if (has_table_server_start()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->table_server_start(), target);
-  }
-
-  // optional int32 table_server_end = 2;
-  if (has_table_server_end()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->table_server_end(), target);
+  // optional .lapis.ClusterConfig cluster = 1;
+  if (has_cluster()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        1, this->cluster(), target);
   }
 
   // optional bool standalone = 3 [default = true];
@@ -344,18 +988,11 @@ int SystemProto::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional int32 table_server_start = 1;
-    if (has_table_server_start()) {
+    // optional .lapis.ClusterConfig cluster = 1;
+    if (has_cluster()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->table_server_start());
-    }
-
-    // optional int32 table_server_end = 2;
-    if (has_table_server_end()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->table_server_end());
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->cluster());
     }
 
     // optional bool standalone = 3 [default = true];
@@ -395,11 +1032,8 @@ void SystemProto::MergeFrom(const ::google::protobuf::Message& from) {
 void SystemProto::MergeFrom(const SystemProto& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_table_server_start()) {
-      set_table_server_start(from.table_server_start());
-    }
-    if (from.has_table_server_end()) {
-      set_table_server_end(from.table_server_end());
+    if (from.has_cluster()) {
+      mutable_cluster()->::lapis::ClusterConfig::MergeFrom(from.cluster());
     }
     if (from.has_standalone()) {
       set_standalone(from.standalone());
@@ -430,8 +1064,7 @@ bool SystemProto::IsInitialized() const {
 
 void SystemProto::Swap(SystemProto* other) {
   if (other != this) {
-    std::swap(table_server_start_, other->table_server_start_);
-    std::swap(table_server_end_, other->table_server_end_);
+    std::swap(cluster_, other->cluster_);
     std::swap(standalone_, other->standalone_);
     std::swap(synchronous_, other->synchronous_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);

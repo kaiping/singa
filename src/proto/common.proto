@@ -1,11 +1,4 @@
 package lapis;
-message GroupConfig {
-  message Group{
-    optional int32 leader=1;
-    repeated int32 member=2;
-  }
-  repeated Group group=1;
-}
 enum MessageTypes {
   MTYPE_PUT_REQUEST = 1;
   MTYPE_GET_REQUEST = 2;
@@ -35,6 +28,15 @@ enum MessageTypes {
   MTYPE_INSTRUCTION = 19;
   MTYPE_PERFORMANCE = 20;
   MTYPE_GROUP_CONFIG = 21;
+
+  MTYPE_PUT_TRAIN_DATA_END=23;
+  MTYPE_PUT_TRAIN_DATA_DONE=24;
+  MTYPE_PUT_VALIDATION_DATA_END=26;
+  MTYPE_PUT_VALIDATION_DATA_DONE=27;
+  MTYPE_PUT_TEST_DATA_END=29;
+  MTYPE_PUT_TEST_DATA_DONE=30;
+  MTYPE_PUT_DATA=31;
+  MTYPE_PUT_DATA_FINISH=32;
 };
 message EmptyMessage {}
 message ShortMsg {

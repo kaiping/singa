@@ -1,12 +1,19 @@
 package lapis;
 
-
-
+message GroupConfig {
+  optional int32 start=1;
+  optional int32 end=2;
+  optional int32 leader=3;
+}
+message ClusterConfig{
+  optional int32 server_start=1;
+  optional int32 server_end=2;
+  repeated GroupConfig group=3;
+}
 message SystemProto{
+  optional ClusterConfig cluster=1;
   //start rank for distributed memory table
-  optional int32 table_server_start = 1 ;
   //end rank for distributed memory table
-  optional int32 table_server_end = 2 ;
   // one node mode, no coordinator/memory servers
   optional bool standalone = 3 [default =true];
   // synschronous update if true

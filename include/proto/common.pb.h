@@ -34,8 +34,6 @@ void  protobuf_AddDesc_common_2eproto();
 void protobuf_AssignDesc_common_2eproto();
 void protobuf_ShutdownFile_common_2eproto();
 
-class GroupConfig;
-class GroupConfig_Group;
 class EmptyMessage;
 class ShortMsg;
 class Arg;
@@ -63,11 +61,19 @@ enum MessageTypes {
   MTYPE_VALIDATION = 18,
   MTYPE_INSTRUCTION = 19,
   MTYPE_PERFORMANCE = 20,
-  MTYPE_GROUP_CONFIG = 21
+  MTYPE_GROUP_CONFIG = 21,
+  MTYPE_PUT_TRAIN_DATA_END = 23,
+  MTYPE_PUT_TRAIN_DATA_DONE = 24,
+  MTYPE_PUT_VALIDATION_DATA_END = 26,
+  MTYPE_PUT_VALIDATION_DATA_DONE = 27,
+  MTYPE_PUT_TEST_DATA_END = 29,
+  MTYPE_PUT_TEST_DATA_DONE = 30,
+  MTYPE_PUT_DATA = 31,
+  MTYPE_PUT_DATA_FINISH = 32
 };
 bool MessageTypes_IsValid(int value);
 const MessageTypes MessageTypes_MIN = MTYPE_PUT_REQUEST;
-const MessageTypes MessageTypes_MAX = MTYPE_GROUP_CONFIG;
+const MessageTypes MessageTypes_MAX = MTYPE_PUT_DATA_FINISH;
 const int MessageTypes_ARRAYSIZE = MessageTypes_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageTypes_descriptor();
@@ -101,182 +107,6 @@ inline bool CompressionFormat_Parse(
     CompressionFormat_descriptor(), name, value);
 }
 // ===================================================================
-
-class GroupConfig_Group : public ::google::protobuf::Message {
- public:
-  GroupConfig_Group();
-  virtual ~GroupConfig_Group();
-
-  GroupConfig_Group(const GroupConfig_Group& from);
-
-  inline GroupConfig_Group& operator=(const GroupConfig_Group& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const GroupConfig_Group& default_instance();
-
-  void Swap(GroupConfig_Group* other);
-
-  // implements Message ----------------------------------------------
-
-  GroupConfig_Group* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const GroupConfig_Group& from);
-  void MergeFrom(const GroupConfig_Group& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional int32 leader = 1;
-  inline bool has_leader() const;
-  inline void clear_leader();
-  static const int kLeaderFieldNumber = 1;
-  inline ::google::protobuf::int32 leader() const;
-  inline void set_leader(::google::protobuf::int32 value);
-
-  // repeated int32 member = 2;
-  inline int member_size() const;
-  inline void clear_member();
-  static const int kMemberFieldNumber = 2;
-  inline ::google::protobuf::int32 member(int index) const;
-  inline void set_member(int index, ::google::protobuf::int32 value);
-  inline void add_member(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-      member() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-      mutable_member();
-
-  // @@protoc_insertion_point(class_scope:lapis.GroupConfig.Group)
- private:
-  inline void set_has_leader();
-  inline void clear_has_leader();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > member_;
-  ::google::protobuf::int32 leader_;
-  friend void  protobuf_AddDesc_common_2eproto();
-  friend void protobuf_AssignDesc_common_2eproto();
-  friend void protobuf_ShutdownFile_common_2eproto();
-
-  void InitAsDefaultInstance();
-  static GroupConfig_Group* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class GroupConfig : public ::google::protobuf::Message {
- public:
-  GroupConfig();
-  virtual ~GroupConfig();
-
-  GroupConfig(const GroupConfig& from);
-
-  inline GroupConfig& operator=(const GroupConfig& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const GroupConfig& default_instance();
-
-  void Swap(GroupConfig* other);
-
-  // implements Message ----------------------------------------------
-
-  GroupConfig* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const GroupConfig& from);
-  void MergeFrom(const GroupConfig& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  typedef GroupConfig_Group Group;
-
-  // accessors -------------------------------------------------------
-
-  // repeated .lapis.GroupConfig.Group group = 1;
-  inline int group_size() const;
-  inline void clear_group();
-  static const int kGroupFieldNumber = 1;
-  inline const ::lapis::GroupConfig_Group& group(int index) const;
-  inline ::lapis::GroupConfig_Group* mutable_group(int index);
-  inline ::lapis::GroupConfig_Group* add_group();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig_Group >&
-      group() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig_Group >*
-      mutable_group();
-
-  // @@protoc_insertion_point(class_scope:lapis.GroupConfig)
- private:
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig_Group > group_;
-  friend void  protobuf_AddDesc_common_2eproto();
-  friend void protobuf_AssignDesc_common_2eproto();
-  friend void protobuf_ShutdownFile_common_2eproto();
-
-  void InitAsDefaultInstance();
-  static GroupConfig* default_instance_;
-};
-// -------------------------------------------------------------------
 
 class EmptyMessage : public ::google::protobuf::Message {
  public:
@@ -810,98 +640,6 @@ class ConfigData : public ::google::protobuf::Message {
 
 
 // ===================================================================
-
-// GroupConfig_Group
-
-// optional int32 leader = 1;
-inline bool GroupConfig_Group::has_leader() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void GroupConfig_Group::set_has_leader() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void GroupConfig_Group::clear_has_leader() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void GroupConfig_Group::clear_leader() {
-  leader_ = 0;
-  clear_has_leader();
-}
-inline ::google::protobuf::int32 GroupConfig_Group::leader() const {
-  // @@protoc_insertion_point(field_get:lapis.GroupConfig.Group.leader)
-  return leader_;
-}
-inline void GroupConfig_Group::set_leader(::google::protobuf::int32 value) {
-  set_has_leader();
-  leader_ = value;
-  // @@protoc_insertion_point(field_set:lapis.GroupConfig.Group.leader)
-}
-
-// repeated int32 member = 2;
-inline int GroupConfig_Group::member_size() const {
-  return member_.size();
-}
-inline void GroupConfig_Group::clear_member() {
-  member_.Clear();
-}
-inline ::google::protobuf::int32 GroupConfig_Group::member(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.GroupConfig.Group.member)
-  return member_.Get(index);
-}
-inline void GroupConfig_Group::set_member(int index, ::google::protobuf::int32 value) {
-  member_.Set(index, value);
-  // @@protoc_insertion_point(field_set:lapis.GroupConfig.Group.member)
-}
-inline void GroupConfig_Group::add_member(::google::protobuf::int32 value) {
-  member_.Add(value);
-  // @@protoc_insertion_point(field_add:lapis.GroupConfig.Group.member)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-GroupConfig_Group::member() const {
-  // @@protoc_insertion_point(field_list:lapis.GroupConfig.Group.member)
-  return member_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-GroupConfig_Group::mutable_member() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.GroupConfig.Group.member)
-  return &member_;
-}
-
-// -------------------------------------------------------------------
-
-// GroupConfig
-
-// repeated .lapis.GroupConfig.Group group = 1;
-inline int GroupConfig::group_size() const {
-  return group_.size();
-}
-inline void GroupConfig::clear_group() {
-  group_.Clear();
-}
-inline const ::lapis::GroupConfig_Group& GroupConfig::group(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.GroupConfig.group)
-  return group_.Get(index);
-}
-inline ::lapis::GroupConfig_Group* GroupConfig::mutable_group(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.GroupConfig.group)
-  return group_.Mutable(index);
-}
-inline ::lapis::GroupConfig_Group* GroupConfig::add_group() {
-  // @@protoc_insertion_point(field_add:lapis.GroupConfig.group)
-  return group_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig_Group >&
-GroupConfig::group() const {
-  // @@protoc_insertion_point(field_list:lapis.GroupConfig.group)
-  return group_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig_Group >*
-GroupConfig::mutable_group() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.GroupConfig.group)
-  return &group_;
-}
-
-// -------------------------------------------------------------------
 
 // EmptyMessage
 

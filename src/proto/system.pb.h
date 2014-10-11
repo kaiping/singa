@@ -33,9 +33,212 @@ void  protobuf_AddDesc_system_2eproto();
 void protobuf_AssignDesc_system_2eproto();
 void protobuf_ShutdownFile_system_2eproto();
 
+class GroupConfig;
+class ClusterConfig;
 class SystemProto;
 
 // ===================================================================
+
+class GroupConfig : public ::google::protobuf::Message {
+ public:
+  GroupConfig();
+  virtual ~GroupConfig();
+
+  GroupConfig(const GroupConfig& from);
+
+  inline GroupConfig& operator=(const GroupConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GroupConfig& default_instance();
+
+  void Swap(GroupConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  GroupConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const GroupConfig& from);
+  void MergeFrom(const GroupConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 start = 1;
+  inline bool has_start() const;
+  inline void clear_start();
+  static const int kStartFieldNumber = 1;
+  inline ::google::protobuf::int32 start() const;
+  inline void set_start(::google::protobuf::int32 value);
+
+  // optional int32 end = 2;
+  inline bool has_end() const;
+  inline void clear_end();
+  static const int kEndFieldNumber = 2;
+  inline ::google::protobuf::int32 end() const;
+  inline void set_end(::google::protobuf::int32 value);
+
+  // optional int32 leader = 3;
+  inline bool has_leader() const;
+  inline void clear_leader();
+  static const int kLeaderFieldNumber = 3;
+  inline ::google::protobuf::int32 leader() const;
+  inline void set_leader(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:lapis.GroupConfig)
+ private:
+  inline void set_has_start();
+  inline void clear_has_start();
+  inline void set_has_end();
+  inline void clear_has_end();
+  inline void set_has_leader();
+  inline void clear_has_leader();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::google::protobuf::int32 start_;
+  ::google::protobuf::int32 end_;
+  ::google::protobuf::int32 leader_;
+  friend void  protobuf_AddDesc_system_2eproto();
+  friend void protobuf_AssignDesc_system_2eproto();
+  friend void protobuf_ShutdownFile_system_2eproto();
+
+  void InitAsDefaultInstance();
+  static GroupConfig* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ClusterConfig : public ::google::protobuf::Message {
+ public:
+  ClusterConfig();
+  virtual ~ClusterConfig();
+
+  ClusterConfig(const ClusterConfig& from);
+
+  inline ClusterConfig& operator=(const ClusterConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ClusterConfig& default_instance();
+
+  void Swap(ClusterConfig* other);
+
+  // implements Message ----------------------------------------------
+
+  ClusterConfig* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ClusterConfig& from);
+  void MergeFrom(const ClusterConfig& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 server_start = 1;
+  inline bool has_server_start() const;
+  inline void clear_server_start();
+  static const int kServerStartFieldNumber = 1;
+  inline ::google::protobuf::int32 server_start() const;
+  inline void set_server_start(::google::protobuf::int32 value);
+
+  // optional int32 server_end = 2;
+  inline bool has_server_end() const;
+  inline void clear_server_end();
+  static const int kServerEndFieldNumber = 2;
+  inline ::google::protobuf::int32 server_end() const;
+  inline void set_server_end(::google::protobuf::int32 value);
+
+  // repeated .lapis.GroupConfig group = 3;
+  inline int group_size() const;
+  inline void clear_group();
+  static const int kGroupFieldNumber = 3;
+  inline const ::lapis::GroupConfig& group(int index) const;
+  inline ::lapis::GroupConfig* mutable_group(int index);
+  inline ::lapis::GroupConfig* add_group();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >&
+      group() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >*
+      mutable_group();
+
+  // @@protoc_insertion_point(class_scope:lapis.ClusterConfig)
+ private:
+  inline void set_has_server_start();
+  inline void clear_has_server_start();
+  inline void set_has_server_end();
+  inline void clear_has_server_end();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::google::protobuf::int32 server_start_;
+  ::google::protobuf::int32 server_end_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig > group_;
+  friend void  protobuf_AddDesc_system_2eproto();
+  friend void protobuf_AssignDesc_system_2eproto();
+  friend void protobuf_ShutdownFile_system_2eproto();
+
+  void InitAsDefaultInstance();
+  static ClusterConfig* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class SystemProto : public ::google::protobuf::Message {
  public:
@@ -90,19 +293,14 @@ class SystemProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional int32 table_server_start = 1;
-  inline bool has_table_server_start() const;
-  inline void clear_table_server_start();
-  static const int kTableServerStartFieldNumber = 1;
-  inline ::google::protobuf::int32 table_server_start() const;
-  inline void set_table_server_start(::google::protobuf::int32 value);
-
-  // optional int32 table_server_end = 2;
-  inline bool has_table_server_end() const;
-  inline void clear_table_server_end();
-  static const int kTableServerEndFieldNumber = 2;
-  inline ::google::protobuf::int32 table_server_end() const;
-  inline void set_table_server_end(::google::protobuf::int32 value);
+  // optional .lapis.ClusterConfig cluster = 1;
+  inline bool has_cluster() const;
+  inline void clear_cluster();
+  static const int kClusterFieldNumber = 1;
+  inline const ::lapis::ClusterConfig& cluster() const;
+  inline ::lapis::ClusterConfig* mutable_cluster();
+  inline ::lapis::ClusterConfig* release_cluster();
+  inline void set_allocated_cluster(::lapis::ClusterConfig* cluster);
 
   // optional bool standalone = 3 [default = true];
   inline bool has_standalone() const;
@@ -120,10 +318,8 @@ class SystemProto : public ::google::protobuf::Message {
 
   // @@protoc_insertion_point(class_scope:lapis.SystemProto)
  private:
-  inline void set_has_table_server_start();
-  inline void clear_has_table_server_start();
-  inline void set_has_table_server_end();
-  inline void clear_has_table_server_end();
+  inline void set_has_cluster();
+  inline void clear_has_cluster();
   inline void set_has_standalone();
   inline void clear_has_standalone();
   inline void set_has_synchronous();
@@ -133,8 +329,7 @@ class SystemProto : public ::google::protobuf::Message {
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  ::google::protobuf::int32 table_server_start_;
-  ::google::protobuf::int32 table_server_end_;
+  ::lapis::ClusterConfig* cluster_;
   bool standalone_;
   bool synchronous_;
   friend void  protobuf_AddDesc_system_2eproto();
@@ -149,65 +344,216 @@ class SystemProto : public ::google::protobuf::Message {
 
 // ===================================================================
 
-// SystemProto
+// GroupConfig
 
-// optional int32 table_server_start = 1;
-inline bool SystemProto::has_table_server_start() const {
+// optional int32 start = 1;
+inline bool GroupConfig::has_start() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void SystemProto::set_has_table_server_start() {
+inline void GroupConfig::set_has_start() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void SystemProto::clear_has_table_server_start() {
+inline void GroupConfig::clear_has_start() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void SystemProto::clear_table_server_start() {
-  table_server_start_ = 0;
-  clear_has_table_server_start();
+inline void GroupConfig::clear_start() {
+  start_ = 0;
+  clear_has_start();
 }
-inline ::google::protobuf::int32 SystemProto::table_server_start() const {
-  // @@protoc_insertion_point(field_get:lapis.SystemProto.table_server_start)
-  return table_server_start_;
+inline ::google::protobuf::int32 GroupConfig::start() const {
+  // @@protoc_insertion_point(field_get:lapis.GroupConfig.start)
+  return start_;
 }
-inline void SystemProto::set_table_server_start(::google::protobuf::int32 value) {
-  set_has_table_server_start();
-  table_server_start_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SystemProto.table_server_start)
+inline void GroupConfig::set_start(::google::protobuf::int32 value) {
+  set_has_start();
+  start_ = value;
+  // @@protoc_insertion_point(field_set:lapis.GroupConfig.start)
 }
 
-// optional int32 table_server_end = 2;
-inline bool SystemProto::has_table_server_end() const {
+// optional int32 end = 2;
+inline bool GroupConfig::has_end() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void SystemProto::set_has_table_server_end() {
+inline void GroupConfig::set_has_end() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void SystemProto::clear_has_table_server_end() {
+inline void GroupConfig::clear_has_end() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void SystemProto::clear_table_server_end() {
-  table_server_end_ = 0;
-  clear_has_table_server_end();
+inline void GroupConfig::clear_end() {
+  end_ = 0;
+  clear_has_end();
 }
-inline ::google::protobuf::int32 SystemProto::table_server_end() const {
-  // @@protoc_insertion_point(field_get:lapis.SystemProto.table_server_end)
-  return table_server_end_;
+inline ::google::protobuf::int32 GroupConfig::end() const {
+  // @@protoc_insertion_point(field_get:lapis.GroupConfig.end)
+  return end_;
 }
-inline void SystemProto::set_table_server_end(::google::protobuf::int32 value) {
-  set_has_table_server_end();
-  table_server_end_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SystemProto.table_server_end)
+inline void GroupConfig::set_end(::google::protobuf::int32 value) {
+  set_has_end();
+  end_ = value;
+  // @@protoc_insertion_point(field_set:lapis.GroupConfig.end)
+}
+
+// optional int32 leader = 3;
+inline bool GroupConfig::has_leader() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void GroupConfig::set_has_leader() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void GroupConfig::clear_has_leader() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void GroupConfig::clear_leader() {
+  leader_ = 0;
+  clear_has_leader();
+}
+inline ::google::protobuf::int32 GroupConfig::leader() const {
+  // @@protoc_insertion_point(field_get:lapis.GroupConfig.leader)
+  return leader_;
+}
+inline void GroupConfig::set_leader(::google::protobuf::int32 value) {
+  set_has_leader();
+  leader_ = value;
+  // @@protoc_insertion_point(field_set:lapis.GroupConfig.leader)
+}
+
+// -------------------------------------------------------------------
+
+// ClusterConfig
+
+// optional int32 server_start = 1;
+inline bool ClusterConfig::has_server_start() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ClusterConfig::set_has_server_start() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ClusterConfig::clear_has_server_start() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ClusterConfig::clear_server_start() {
+  server_start_ = 0;
+  clear_has_server_start();
+}
+inline ::google::protobuf::int32 ClusterConfig::server_start() const {
+  // @@protoc_insertion_point(field_get:lapis.ClusterConfig.server_start)
+  return server_start_;
+}
+inline void ClusterConfig::set_server_start(::google::protobuf::int32 value) {
+  set_has_server_start();
+  server_start_ = value;
+  // @@protoc_insertion_point(field_set:lapis.ClusterConfig.server_start)
+}
+
+// optional int32 server_end = 2;
+inline bool ClusterConfig::has_server_end() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ClusterConfig::set_has_server_end() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ClusterConfig::clear_has_server_end() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ClusterConfig::clear_server_end() {
+  server_end_ = 0;
+  clear_has_server_end();
+}
+inline ::google::protobuf::int32 ClusterConfig::server_end() const {
+  // @@protoc_insertion_point(field_get:lapis.ClusterConfig.server_end)
+  return server_end_;
+}
+inline void ClusterConfig::set_server_end(::google::protobuf::int32 value) {
+  set_has_server_end();
+  server_end_ = value;
+  // @@protoc_insertion_point(field_set:lapis.ClusterConfig.server_end)
+}
+
+// repeated .lapis.GroupConfig group = 3;
+inline int ClusterConfig::group_size() const {
+  return group_.size();
+}
+inline void ClusterConfig::clear_group() {
+  group_.Clear();
+}
+inline const ::lapis::GroupConfig& ClusterConfig::group(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.ClusterConfig.group)
+  return group_.Get(index);
+}
+inline ::lapis::GroupConfig* ClusterConfig::mutable_group(int index) {
+  // @@protoc_insertion_point(field_mutable:lapis.ClusterConfig.group)
+  return group_.Mutable(index);
+}
+inline ::lapis::GroupConfig* ClusterConfig::add_group() {
+  // @@protoc_insertion_point(field_add:lapis.ClusterConfig.group)
+  return group_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >&
+ClusterConfig::group() const {
+  // @@protoc_insertion_point(field_list:lapis.ClusterConfig.group)
+  return group_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >*
+ClusterConfig::mutable_group() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.ClusterConfig.group)
+  return &group_;
+}
+
+// -------------------------------------------------------------------
+
+// SystemProto
+
+// optional .lapis.ClusterConfig cluster = 1;
+inline bool SystemProto::has_cluster() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void SystemProto::set_has_cluster() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void SystemProto::clear_has_cluster() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void SystemProto::clear_cluster() {
+  if (cluster_ != NULL) cluster_->::lapis::ClusterConfig::Clear();
+  clear_has_cluster();
+}
+inline const ::lapis::ClusterConfig& SystemProto::cluster() const {
+  // @@protoc_insertion_point(field_get:lapis.SystemProto.cluster)
+  return cluster_ != NULL ? *cluster_ : *default_instance_->cluster_;
+}
+inline ::lapis::ClusterConfig* SystemProto::mutable_cluster() {
+  set_has_cluster();
+  if (cluster_ == NULL) cluster_ = new ::lapis::ClusterConfig;
+  // @@protoc_insertion_point(field_mutable:lapis.SystemProto.cluster)
+  return cluster_;
+}
+inline ::lapis::ClusterConfig* SystemProto::release_cluster() {
+  clear_has_cluster();
+  ::lapis::ClusterConfig* temp = cluster_;
+  cluster_ = NULL;
+  return temp;
+}
+inline void SystemProto::set_allocated_cluster(::lapis::ClusterConfig* cluster) {
+  delete cluster_;
+  cluster_ = cluster;
+  if (cluster) {
+    set_has_cluster();
+  } else {
+    clear_has_cluster();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.SystemProto.cluster)
 }
 
 // optional bool standalone = 3 [default = true];
 inline bool SystemProto::has_standalone() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void SystemProto::set_has_standalone() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void SystemProto::clear_has_standalone() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void SystemProto::clear_standalone() {
   standalone_ = true;
@@ -225,13 +571,13 @@ inline void SystemProto::set_standalone(bool value) {
 
 // optional bool synchronous = 4 [default = true];
 inline bool SystemProto::has_synchronous() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void SystemProto::set_has_synchronous() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void SystemProto::clear_has_synchronous() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void SystemProto::clear_synchronous() {
   synchronous_ = true;

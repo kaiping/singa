@@ -320,9 +320,10 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelProto));
   Record_descriptor_ = file->message_type(10);
-  static const int Record_offsets_[2] = {
+  static const int Record_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, image_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, label_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, path_),
   };
   Record_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -533,25 +534,26 @@ void protobuf_AddDesc_model_2eproto() {
     " \001(\0132\026.lapis.DataSourceProto\"|\n\nModelPro"
     "to\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.Ne"
     "tProto\022\"\n\006solver\030\003 \001(\0132\022.lapis.SolverPro"
-    "to\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"8\n\006Re"
+    "to\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"F\n\006Re"
     "cord\022\037\n\005image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n"
-    "\005label\030\002 \001(\005\"\246\001\n\014AdaGradValue\022\023\n\010n_updat"
-    "e\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004data\030\004"
-    " \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\0132\020.l"
-    "apis.DAryProto\022\032\n\022base_learning_rate\030\006 \001"
-    "(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010SGDValue\022\032\n\022ba"
-    "se_learning_rate\030\001 \002(\002\022\023\n\010momentum\030\002 \001(\002"
-    ":\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030\004 "
-    "\001(\002\022\"\n\032learning_rate_change_steps\030\005 \001(\005\022"
-    "E\n\024learning_rate_change\030\006 \001(\0162\033.lapis.SG"
-    "DValue.ChangeProto:\nkInverse_t\022#\n\030learni"
-    "ng_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027weight_de"
-    "cay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_update\030\t \001("
-    "\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthreshold\030\013 "
-    "\001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis.DAryProto\022\036\n\004g"
-    "rad\030\r \001(\0132\020.lapis.DAryProto\"S\n\013ChangePro"
-    "to\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExpon"
-    "ential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004", 3352);
+    "\005label\030\002 \001(\005\022\014\n\004path\030\003 \001(\t\"\246\001\n\014AdaGradVa"
+    "lue\022\023\n\010n_update\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001("
+    "\005:\0010\022\036\n\004data\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004"
+    "grad\030\005 \001(\0132\020.lapis.DAryProto\022\032\n\022base_lea"
+    "rning_rate\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010"
+    "SGDValue\022\032\n\022base_learning_rate\030\001 \002(\002\022\023\n\010"
+    "momentum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:"
+    "\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learning_rate_chang"
+    "e_steps\030\005 \001(\005\022E\n\024learning_rate_change\030\006 "
+    "\001(\0162\033.lapis.SGDValue.ChangeProto:\nkInver"
+    "se_t\022#\n\030learning_rate_multiplier\030\007 \001(\002:\001"
+    "1\022\"\n\027weight_decay_multiplier\030\010 \001(\002:\0011\022\023\n"
+    "\010n_update\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021"
+    "\n\tthreshold\030\013 \001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis."
+    "DAryProto\022\036\n\004grad\030\r \001(\0132\020.lapis.DAryProt"
+    "o\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse"
+    "_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005k"
+    "Step\020\004", 3366);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -6517,6 +6519,7 @@ void ModelProto::Swap(ModelProto* other) {
 #ifndef _MSC_VER
 const int Record::kImageFieldNumber;
 const int Record::kLabelFieldNumber;
+const int Record::kPathFieldNumber;
 #endif  // !_MSC_VER
 
 Record::Record()
@@ -6537,9 +6540,11 @@ Record::Record(const Record& from)
 }
 
 void Record::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   image_ = NULL;
   label_ = 0;
+  path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -6549,6 +6554,9 @@ Record::~Record() {
 }
 
 void Record::SharedDtor() {
+  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete path_;
+  }
   if (this != default_instance_) {
     delete image_;
   }
@@ -6576,11 +6584,16 @@ Record* Record::New() const {
 }
 
 void Record::Clear() {
-  if (_has_bits_[0 / 32] & 3) {
+  if (_has_bits_[0 / 32] & 7) {
     if (has_image()) {
       if (image_ != NULL) image_->::lapis::DAryProto::Clear();
     }
     label_ = 0;
+    if (has_path()) {
+      if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        path_->clear();
+      }
+    }
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -6616,6 +6629,23 @@ bool Record::MergePartialFromCodedStream(
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &label_)));
           set_has_label();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_path;
+        break;
+      }
+
+      // optional string path = 3;
+      case 3: {
+        if (tag == 26) {
+         parse_path:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_path()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+            this->path().data(), this->path().length(),
+            ::google::protobuf::internal::WireFormat::PARSE,
+            "path");
         } else {
           goto handle_unusual;
         }
@@ -6659,6 +6689,16 @@ void Record::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->label(), output);
   }
 
+  // optional string path = 3;
+  if (has_path()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->path().data(), this->path().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "path");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->path(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -6679,6 +6719,17 @@ void Record::SerializeWithCachedSizes(
   // optional int32 label = 2;
   if (has_label()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->label(), target);
+  }
+
+  // optional string path = 3;
+  if (has_path()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->path().data(), this->path().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "path");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->path(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -6705,6 +6756,13 @@ int Record::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->label());
+    }
+
+    // optional string path = 3;
+    if (has_path()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->path());
     }
 
   }
@@ -6740,6 +6798,9 @@ void Record::MergeFrom(const Record& from) {
     if (from.has_label()) {
       set_label(from.label());
     }
+    if (from.has_path()) {
+      set_path(from.path());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -6765,6 +6826,7 @@ void Record::Swap(Record* other) {
   if (other != this) {
     std::swap(image_, other->image_);
     std::swap(label_, other->label_);
+    std::swap(path_, other->path_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

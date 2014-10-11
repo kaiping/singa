@@ -117,7 +117,7 @@ inline DArray DArray::operator[](const Area& area)const
 //element-wise operations
 void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
 {
-    DArray::sync();
+    if(lgtype())DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape");
     Area dstlocal = LocalArea();
@@ -137,11 +137,11 @@ void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
     }
     areadst = new Area(dstp->LocalArea());
     //for src
-    DAArea_.daout();
+    //DAArea_.daout();
     //LocalArea().daout();
-    dstlocal.daout("dstlocal");
+    //dstlocal.daout("dstlocal");
     Area aproj = DAArea_.proj(dstlocal);
-    aproj.daout("aproj");
+    //aproj.daout("aproj");
     DArray projarray = src[aproj];
     if(projarray.lgtype())
     {
@@ -169,12 +169,12 @@ void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
         srcp->DeleteStore();
         delete srcp;
     }
-    DArray::sync();
+    if(lgtype())DArray::sync();
 }
 
 void DArray::Map(const DArray& src ,float value ,float(*mapfunc)(float,float))const
 {
-    DArray::sync();
+    if(lgtype())DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape");
     Area dstlocal = LocalArea();
@@ -221,13 +221,13 @@ void DArray::Map(const DArray& src ,float value ,float(*mapfunc)(float,float))co
         srcp->DeleteStore();
         delete srcp;
     }
-    DArray::sync();
+    if(lgtype())DArray::sync();
 }
 
 
 void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,float))const
 {
-    DArray::sync();
+    if(lgtype())DArray::sync();
     if(dadebugmode && DAArea_.Areashape()!= src1.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape src1");
     if(dadebugmode && DAArea_.Areashape()!= src2.DAArea_.Areashape() )
@@ -295,7 +295,7 @@ void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,flo
         src2p->DeleteStore();
         delete src2p;
     }
-    DArray::sync();
+    if(lgtype())DArray::sync();
 }
 
 inline void DArray::Max(const DArray& src1,const DArray& src2)const
@@ -505,6 +505,7 @@ void DArray::addVec(const std::vector<float> src,int dimindex)
 
 void DArray::matrixMult(const DArray& src1,const DArray& src2)
 {
+    if(lgtype())DArray::sync();
     if(dadebugmode && dim() != 2)
         errorReport(_CFUNC,"dst not two dims");
     if(dadebugmode && src1.dim() != 2)
@@ -512,38 +513,59 @@ void DArray::matrixMult(const DArray& src1,const DArray& src2)
     if(dadebugmode && src2.dim() != 2)
         errorReport(_CFUNC,"src2 not two dims");
     Area aproj = DAArea_.proj(LocalArea());
+    //aproj.daout("aproj");
     Area aprojsrc1 = src1.DAArea_.resize(aproj[0],0);
+    //aprojsrc1.daout("aprojsrc1");
     Area aprojsrc2 = src2.DAArea_.resize(aproj[1],1);
+    //aprojsrc2.daout("aprojsrc2");
     DArray projdst = (*this)[aproj];
     DArray projarray1 = src1[aprojsrc1];
     DArray projarray2 = src2[aprojsrc1];
-
     DArray* ddst = NULL;
     const DArray* dsrc1 = NULL;
     const DArray* dsrc2 = NULL;
+    //projdst.DAArea_.daout("projdst");
+    //projarray1.DAArea_.daout("projarray1");
+    //projarray2.DAArea_.daout("projarray2");
+    DArray tmp,tmp1,tmp2;
     if(projdst.lgtype()||!projdst.isorigin())
     {
-        ddst = &projdst.Rebuild();
+        //errorReport(_CFUNC,"debug 120");
+        tmp = projdst.Rebuild();
+        ddst = &tmp;
+        //ddst = &projdst.Rebuild();
+        //ddst->DAArea_.daout("ddst");
     }
     else ddst = &projdst;
-    if(projdst.lgtype())DArray::sync();
     if(projarray1.lgtype()||!projarray1.isorigin())
     {
-        dsrc1 = &projarray1.Rebuild();
+        //errorReport(_CFUNC,"debug 121");
+        tmp1 = projarray1.Rebuild();
+        dsrc1 = &tmp1;
+        //dsrc1->DAArea_.daout("dsrc1");
     }
     else dsrc1 = &projarray1;
-    if(projarray1.lgtype())DArray::sync();
     if(projarray2.lgtype()||!projarray2.isorigin())
     {
-        dsrc2 = &projarray2.Rebuild();
+        //errorReport(_CFUNC,"debug 122");
+        tmp2 = projarray2.Rebuild();
+        dsrc2 = &tmp2;
+        //dsrc2->DAArea_.daout("dsrc2");
     }
     else dsrc2 = &projarray2;
-    if(projarray2.lgtype())DArray::sync();
+    //errorReport(_CFUNC,"debug 110");
+    //ddst->DAArea_.daout("ddst->DAarea_");
     ddst->LAData_->matrixMult(*(dsrc1->LAData_),*(dsrc2->LAData_));
-    if(projdst.lgtype()||!projdst.isorigin())
+    //ddst->DAArea_.daout("ddst->DAarea_");
+    //errorReport(_CFUNC,"debug 111");
+    if(lgtype()||!projdst.isorigin())
     {
+        //errorReport(_CFUNC,"debug 115");
+        //ddst->DAArea_.daout("ddst->DAarea_");
+        //projdst.DAArea_.daout("projdst");
         projdst.Copy(*ddst);
-        DArray::sync();
+        //errorReport(_CFUNC,"debug 116");
+        if(lgtype())DArray::sync();
         ddst->DeleteStore();
     }
     if(projarray1.lgtype()||!projarray1.isorigin())
@@ -647,10 +669,14 @@ DArray DArray::Rebuild()const
     if(lgtype())return Fetch();
     else
     {
+        //errorReport(_CFUNC,"Rebuild");
+        //DAArea_.daout("DAArea_");
         Shape newshape = DAArea_.Areashape();
+        //newshape.daout("newshape");
         LArray* newstore = new LArray(newshape);
         DArray res(newstore,NULL,0,1,Area(newshape),std::vector<int>(0));
         res.Copy(*this);
+        //res.DAArea_.daout("res.DAArea_");
         return res;
     }
 }

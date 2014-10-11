@@ -328,7 +328,7 @@ void LArray::matrixMult(LArray& src1,LArray& src2)
             ldst[i*z+j] = 0;
             for(int k = 0; k < y; k++)
             {
-                ldst[i*z+j] += lsrc1[i*y+k]*lsrc2[j*z+k];
+                ldst[i*z+j] += lsrc1[i*y+k]*lsrc2[k*z+j];
             }
         }
     }

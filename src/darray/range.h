@@ -9,7 +9,8 @@ class Range{
     int start_;
     int end_;
     public:
-    inline Range(int i,int j) : start_(i),end_(j)
+    Range(): start_(0),end_(0){}
+    Range(int i,int j) : start_(i),end_(j)
     {
         //for test
         if(dadebugmode && length() < 0 )

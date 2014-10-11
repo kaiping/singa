@@ -21,7 +21,9 @@ class DArray{
     DArray(LArray *LA, GArray *GA, bool lg, bool ori, const Area& area, const std::vector<int>& prefix)
         : LAData_(LA), GAData_(GA), lgtype_(lg), isorigin_(ori), DAArea_(area), DAPrefix_(prefix)
     {}
-
+    DArray()
+        : LAData_(NULL), GAData_(NULL), lgtype_(false), isorigin_(1)
+    {}
     DArray& operator=(const DArray& darray)
     {
         LAData_ = darray.LAData_;

@@ -42,9 +42,9 @@ class Shape{
         for(int i = 0; i < dim_; i++)prod*=dims_[i];
         return prod;
     }
-    inline void daout()const
+    inline void daout(const char* name = "")const
     {
-        std::cout<<"Shape("<<dim()<<"):";
+        std::cout<<"Shape"<<name<<"("<<dim()<<"):";
         for(int i = 0; i < dim(); i++){std::cout<<dims_[i]<<",";}
         std::cout<<"]]EndShape"<<std::endl;
     }

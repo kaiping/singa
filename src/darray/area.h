@@ -14,6 +14,7 @@ class Area{
     std::vector<Range> ranges_;
 
     public:
+    Area(): ranges_(std::vector<Range>(0)), dim_(0){}
     Area(const std::vector<Range> & area): ranges_(area), dim_(area.size()){}
     Area(const Shape& shape,const Offset& offset)
     {
@@ -100,7 +101,7 @@ class Area{
         return !operator==(area);
     }
 
-    Area resize(int k, int dimindex = 0)const
+    Area resize(int k, int dimindex)const
     {
         if(dadebugmode && k >= ranges_[dimindex].length())
             errorReport(_CFUNC,"arg too large");
@@ -111,6 +112,21 @@ class Area{
         {
             if(i == dimindex)newranges.push_back(Range(k,k+1));
             else newranges.push_back(ranges_[i]);
+        }
+        Area tmp(newranges);
+        return tmp;
+    }
+
+    Area resize(int k)const
+    {
+        if(dadebugmode && k >= ranges_[0].length())
+            errorReport(_CFUNC,"arg too large");
+        if(dadebugmode && k < 0)
+            errorReport(_CFUNC,"arg too small");
+        std::vector<Range> newranges;
+        for(int i = 1; i < dim_;i++)
+        {
+            newranges.push_back(ranges_[i]);
         }
         Area tmp(newranges);
         return tmp;

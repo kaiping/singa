@@ -196,10 +196,14 @@ message ModelProto {
   optional SolverProto solver = 3;
   optional DataProto data =4;
 }
+
+message ShardProto {
+  repeated int32 record=1;
+}
 message Record {
   optional DAryProto image=1;
   optional int32 label=2;
-  optional string path=3;
+  optional string id=3;
 }
 // value field of the tuple for AdaGrad SGD
 message AdaGradValue {

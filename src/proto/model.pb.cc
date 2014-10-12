@@ -57,6 +57,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* ModelProto_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   ModelProto_reflection_ = NULL;
+const ::google::protobuf::Descriptor* ShardProto_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  ShardProto_reflection_ = NULL;
 const ::google::protobuf::Descriptor* Record_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   Record_reflection_ = NULL;
@@ -319,11 +322,26 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelProto));
-  Record_descriptor_ = file->message_type(10);
+  ShardProto_descriptor_ = file->message_type(10);
+  static const int ShardProto_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ShardProto, record_),
+  };
+  ShardProto_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      ShardProto_descriptor_,
+      ShardProto::default_instance_,
+      ShardProto_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ShardProto, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ShardProto, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(ShardProto));
+  Record_descriptor_ = file->message_type(11);
   static const int Record_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, image_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, label_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, path_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Record, id_),
   };
   Record_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -336,7 +354,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Record));
-  AdaGradValue_descriptor_ = file->message_type(11);
+  AdaGradValue_descriptor_ = file->message_type(12);
   static const int AdaGradValue_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdaGradValue, n_update_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdaGradValue, version_),
@@ -356,7 +374,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(AdaGradValue));
-  SGDValue_descriptor_ = file->message_type(12);
+  SGDValue_descriptor_ = file->message_type(13);
   static const int SGDValue_offsets_[13] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, base_learning_rate_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, momentum_),
@@ -419,6 +437,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     ModelProto_descriptor_, &ModelProto::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    ShardProto_descriptor_, &ShardProto::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     Record_descriptor_, &Record::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     AdaGradValue_descriptor_, &AdaGradValue::default_instance());
@@ -454,6 +474,8 @@ void protobuf_ShutdownFile_model_2eproto() {
   delete DataProto_reflection_;
   delete ModelProto::default_instance_;
   delete ModelProto_reflection_;
+  delete ShardProto::default_instance_;
+  delete ShardProto_reflection_;
   delete Record::default_instance_;
   delete Record_reflection_;
   delete AdaGradValue::default_instance_;
@@ -534,26 +556,26 @@ void protobuf_AddDesc_model_2eproto() {
     " \001(\0132\026.lapis.DataSourceProto\"|\n\nModelPro"
     "to\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.Ne"
     "tProto\022\"\n\006solver\030\003 \001(\0132\022.lapis.SolverPro"
-    "to\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"F\n\006Re"
-    "cord\022\037\n\005image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n"
-    "\005label\030\002 \001(\005\022\014\n\004path\030\003 \001(\t\"\246\001\n\014AdaGradVa"
-    "lue\022\023\n\010n_update\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001("
-    "\005:\0010\022\036\n\004data\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004"
-    "grad\030\005 \001(\0132\020.lapis.DAryProto\022\032\n\022base_lea"
-    "rning_rate\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010"
-    "SGDValue\022\032\n\022base_learning_rate\030\001 \002(\002\022\023\n\010"
-    "momentum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:"
-    "\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learning_rate_chang"
-    "e_steps\030\005 \001(\005\022E\n\024learning_rate_change\030\006 "
-    "\001(\0162\033.lapis.SGDValue.ChangeProto:\nkInver"
-    "se_t\022#\n\030learning_rate_multiplier\030\007 \001(\002:\001"
-    "1\022\"\n\027weight_decay_multiplier\030\010 \001(\002:\0011\022\023\n"
-    "\010n_update\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021"
-    "\n\tthreshold\030\013 \001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis."
-    "DAryProto\022\036\n\004grad\030\r \001(\0132\020.lapis.DAryProt"
-    "o\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse"
-    "_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005k"
-    "Step\020\004", 3366);
+    "to\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"\034\n\nSh"
+    "ardProto\022\016\n\006record\030\001 \003(\005\"D\n\006Record\022\037\n\005im"
+    "age\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002 \001"
+    "(\005\022\n\n\002id\030\003 \001(\t\"\246\001\n\014AdaGradValue\022\023\n\010n_upd"
+    "ate\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004data"
+    "\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\0132\020"
+    ".lapis.DAryProto\022\032\n\022base_learning_rate\030\006"
+    " \001(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010SGDValue\022\032\n\022"
+    "base_learning_rate\030\001 \002(\002\022\023\n\010momentum\030\002 \001"
+    "(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030"
+    "\004 \001(\002\022\"\n\032learning_rate_change_steps\030\005 \001("
+    "\005\022E\n\024learning_rate_change\030\006 \001(\0162\033.lapis."
+    "SGDValue.ChangeProto:\nkInverse_t\022#\n\030lear"
+    "ning_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027weight_"
+    "decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_update\030\t "
+    "\001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthreshold\030"
+    "\013 \001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis.DAryProto\022\036\n"
+    "\004grad\030\r \001(\0132\020.lapis.DAryProto\"S\n\013ChangeP"
+    "roto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExp"
+    "onential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004", 3394);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -573,6 +595,7 @@ void protobuf_AddDesc_model_2eproto() {
   SolverProto::default_instance_ = new SolverProto();
   DataProto::default_instance_ = new DataProto();
   ModelProto::default_instance_ = new ModelProto();
+  ShardProto::default_instance_ = new ShardProto();
   Record::default_instance_ = new Record();
   AdaGradValue::default_instance_ = new AdaGradValue();
   SGDValue::default_instance_ = new SGDValue();
@@ -587,6 +610,7 @@ void protobuf_AddDesc_model_2eproto() {
   SolverProto::default_instance_->InitAsDefaultInstance();
   DataProto::default_instance_->InitAsDefaultInstance();
   ModelProto::default_instance_->InitAsDefaultInstance();
+  ShardProto::default_instance_->InitAsDefaultInstance();
   Record::default_instance_->InitAsDefaultInstance();
   AdaGradValue::default_instance_->InitAsDefaultInstance();
   SGDValue::default_instance_->InitAsDefaultInstance();
@@ -6517,9 +6541,234 @@ void ModelProto::Swap(ModelProto* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
+const int ShardProto::kRecordFieldNumber;
+#endif  // !_MSC_VER
+
+ShardProto::ShardProto()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.ShardProto)
+}
+
+void ShardProto::InitAsDefaultInstance() {
+}
+
+ShardProto::ShardProto(const ShardProto& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.ShardProto)
+}
+
+void ShardProto::SharedCtor() {
+  _cached_size_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+ShardProto::~ShardProto() {
+  // @@protoc_insertion_point(destructor:lapis.ShardProto)
+  SharedDtor();
+}
+
+void ShardProto::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void ShardProto::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* ShardProto::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return ShardProto_descriptor_;
+}
+
+const ShardProto& ShardProto::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_model_2eproto();
+  return *default_instance_;
+}
+
+ShardProto* ShardProto::default_instance_ = NULL;
+
+ShardProto* ShardProto::New() const {
+  return new ShardProto;
+}
+
+void ShardProto::Clear() {
+  record_.Clear();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool ShardProto::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:lapis.ShardProto)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // repeated int32 record = 1;
+      case 1: {
+        if (tag == 8) {
+         parse_record:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 1, 8, input, this->mutable_record())));
+        } else if (tag == 10) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, this->mutable_record())));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(8)) goto parse_record;
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.ShardProto)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.ShardProto)
+  return false;
+#undef DO_
+}
+
+void ShardProto::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.ShardProto)
+  // repeated int32 record = 1;
+  for (int i = 0; i < this->record_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(
+      1, this->record(i), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:lapis.ShardProto)
+}
+
+::google::protobuf::uint8* ShardProto::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.ShardProto)
+  // repeated int32 record = 1;
+  for (int i = 0; i < this->record_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteInt32ToArray(1, this->record(i), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.ShardProto)
+  return target;
+}
+
+int ShardProto::ByteSize() const {
+  int total_size = 0;
+
+  // repeated int32 record = 1;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->record_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        Int32Size(this->record(i));
+    }
+    total_size += 1 * this->record_size() + data_size;
+  }
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void ShardProto::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const ShardProto* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const ShardProto*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void ShardProto::MergeFrom(const ShardProto& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  record_.MergeFrom(from.record_);
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void ShardProto::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void ShardProto::CopyFrom(const ShardProto& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ShardProto::IsInitialized() const {
+
+  return true;
+}
+
+void ShardProto::Swap(ShardProto* other) {
+  if (other != this) {
+    record_.Swap(&other->record_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata ShardProto::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = ShardProto_descriptor_;
+  metadata.reflection = ShardProto_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
 const int Record::kImageFieldNumber;
 const int Record::kLabelFieldNumber;
-const int Record::kPathFieldNumber;
+const int Record::kIdFieldNumber;
 #endif  // !_MSC_VER
 
 Record::Record()
@@ -6544,7 +6793,7 @@ void Record::SharedCtor() {
   _cached_size_ = 0;
   image_ = NULL;
   label_ = 0;
-  path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  id_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -6554,8 +6803,8 @@ Record::~Record() {
 }
 
 void Record::SharedDtor() {
-  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete path_;
+  if (id_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete id_;
   }
   if (this != default_instance_) {
     delete image_;
@@ -6589,9 +6838,9 @@ void Record::Clear() {
       if (image_ != NULL) image_->::lapis::DAryProto::Clear();
     }
     label_ = 0;
-    if (has_path()) {
-      if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        path_->clear();
+    if (has_id()) {
+      if (id_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+        id_->clear();
       }
     }
   }
@@ -6632,20 +6881,20 @@ bool Record::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(26)) goto parse_path;
+        if (input->ExpectTag(26)) goto parse_id;
         break;
       }
 
-      // optional string path = 3;
+      // optional string id = 3;
       case 3: {
         if (tag == 26) {
-         parse_path:
+         parse_id:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_path()));
+                input, this->mutable_id()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-            this->path().data(), this->path().length(),
+            this->id().data(), this->id().length(),
             ::google::protobuf::internal::WireFormat::PARSE,
-            "path");
+            "id");
         } else {
           goto handle_unusual;
         }
@@ -6689,14 +6938,14 @@ void Record::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->label(), output);
   }
 
-  // optional string path = 3;
-  if (has_path()) {
+  // optional string id = 3;
+  if (has_id()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->path().data(), this->path().length(),
+      this->id().data(), this->id().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "path");
+      "id");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      3, this->path(), output);
+      3, this->id(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -6721,15 +6970,15 @@ void Record::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->label(), target);
   }
 
-  // optional string path = 3;
-  if (has_path()) {
+  // optional string id = 3;
+  if (has_id()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->path().data(), this->path().length(),
+      this->id().data(), this->id().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "path");
+      "id");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->path(), target);
+        3, this->id(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -6758,11 +7007,11 @@ int Record::ByteSize() const {
           this->label());
     }
 
-    // optional string path = 3;
-    if (has_path()) {
+    // optional string id = 3;
+    if (has_id()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->path());
+          this->id());
     }
 
   }
@@ -6798,8 +7047,8 @@ void Record::MergeFrom(const Record& from) {
     if (from.has_label()) {
       set_label(from.label());
     }
-    if (from.has_path()) {
-      set_path(from.path());
+    if (from.has_id()) {
+      set_id(from.id());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -6826,7 +7075,7 @@ void Record::Swap(Record* other) {
   if (other != this) {
     std::swap(image_, other->image_);
     std::swap(label_, other->label_);
-    std::swap(path_, other->path_);
+    std::swap(id_, other->id_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

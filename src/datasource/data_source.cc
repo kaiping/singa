@@ -3,8 +3,6 @@
 #include <glog/logging.h>
 #include <memory>
 #include <fstream>
-#include <chrono>
-#include <random>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -60,14 +58,10 @@ void ImageNetSource::Init(const DataSourceProto &proto){
   }else{
     while(is >> k >> v)
       lines_.push_back(std::make_pair(k,v));
+    size_=lines_.size();
   }
   is.close();
   LOG(INFO)<<"Load "<<lines_.size();
-  if(do_shuffle_){
-    DLOG(INFO)<<"Do Shuffling...";
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(lines_.begin(), lines_.end(), std::default_random_engine(seed));
-  }
   // read mean of the images
   if(mean_file_.length()) {
     data_mean_=new MeanProto();
@@ -77,7 +71,19 @@ void ImageNetSource::Init(const DataSourceProto &proto){
       <<" "<<data_mean_->height() <<" "<<data_mean_->width();
   }
 }
+void ImageNetSource::Reset(const ShardProto& sp, bool copy_from_hdfs) {
+  CHECK_GE(size_, sp.record_size());
+  vector<std::pair<string, int>> tmp=lines_;
+  lines_.clear();
+  for(auto rid: sp.record())
+    lines_.push_back(tmp[rid]);
+  if(copy_from_hdfs)
+    CopyImageFromHDFS();
+}
+void ImageNetSource::CopyImageFromHDFS() {
 
+
+}
 void ImageNetSource::ReadImage(const std::string &path, int height, int width,
     const float *mean, DAryProto* image) {
   cv::Mat cv_img;
@@ -115,6 +121,21 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
     }
     VLOG(3)<<"after minus mean";
   }
+}
+
+bool ImageNetSource::GetRecord(const int key, Record* record) {
+  if(key<0 || key>=size_)
+    return false;
+  DAryProto *image=record->mutable_image();
+  if(image->value().size()<record_size_){
+    VLOG(3)<<"record size "<<record_size_;
+    for(int i=0;i<record_size_;i++)
+      image->add_value(0);
+  }
+  ReadImage(image_folder_ + "/" + lines_.at(key).first, height_,
+            width_, data_mean_->data().data(),image);
+  record->set_label(lines_.at(key).second);
+  return true;
 }
 
 void ImageNetSource::NextRecord(Record *record) {

@@ -217,12 +217,26 @@ class ClusterConfig : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >*
       mutable_group();
 
+  // optional string shard_folder = 4 [default = "/data1/wangwei/lapis"];
+  inline bool has_shard_folder() const;
+  inline void clear_shard_folder();
+  static const int kShardFolderFieldNumber = 4;
+  inline const ::std::string& shard_folder() const;
+  inline void set_shard_folder(const ::std::string& value);
+  inline void set_shard_folder(const char* value);
+  inline void set_shard_folder(const char* value, size_t size);
+  inline ::std::string* mutable_shard_folder();
+  inline ::std::string* release_shard_folder();
+  inline void set_allocated_shard_folder(::std::string* shard_folder);
+
   // @@protoc_insertion_point(class_scope:lapis.ClusterConfig)
  private:
   inline void set_has_server_start();
   inline void clear_has_server_start();
   inline void set_has_server_end();
   inline void clear_has_server_end();
+  inline void set_has_shard_folder();
+  inline void clear_has_shard_folder();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -231,6 +245,8 @@ class ClusterConfig : public ::google::protobuf::Message {
   ::google::protobuf::int32 server_start_;
   ::google::protobuf::int32 server_end_;
   ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig > group_;
+  static ::std::string* _default_shard_folder_;
+  ::std::string* shard_folder_;
   friend void  protobuf_AddDesc_system_2eproto();
   friend void protobuf_AssignDesc_system_2eproto();
   friend void protobuf_ShutdownFile_system_2eproto();
@@ -498,6 +514,82 @@ inline ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig >*
 ClusterConfig::mutable_group() {
   // @@protoc_insertion_point(field_mutable_list:lapis.ClusterConfig.group)
   return &group_;
+}
+
+// optional string shard_folder = 4 [default = "/data1/wangwei/lapis"];
+inline bool ClusterConfig::has_shard_folder() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ClusterConfig::set_has_shard_folder() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ClusterConfig::clear_has_shard_folder() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ClusterConfig::clear_shard_folder() {
+  if (shard_folder_ != _default_shard_folder_) {
+    shard_folder_->assign(*_default_shard_folder_);
+  }
+  clear_has_shard_folder();
+}
+inline const ::std::string& ClusterConfig::shard_folder() const {
+  // @@protoc_insertion_point(field_get:lapis.ClusterConfig.shard_folder)
+  return *shard_folder_;
+}
+inline void ClusterConfig::set_shard_folder(const ::std::string& value) {
+  set_has_shard_folder();
+  if (shard_folder_ == _default_shard_folder_) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.ClusterConfig.shard_folder)
+}
+inline void ClusterConfig::set_shard_folder(const char* value) {
+  set_has_shard_folder();
+  if (shard_folder_ == _default_shard_folder_) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.ClusterConfig.shard_folder)
+}
+inline void ClusterConfig::set_shard_folder(const char* value, size_t size) {
+  set_has_shard_folder();
+  if (shard_folder_ == _default_shard_folder_) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.ClusterConfig.shard_folder)
+}
+inline ::std::string* ClusterConfig::mutable_shard_folder() {
+  set_has_shard_folder();
+  if (shard_folder_ == _default_shard_folder_) {
+    shard_folder_ = new ::std::string(*_default_shard_folder_);
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.ClusterConfig.shard_folder)
+  return shard_folder_;
+}
+inline ::std::string* ClusterConfig::release_shard_folder() {
+  clear_has_shard_folder();
+  if (shard_folder_ == _default_shard_folder_) {
+    return NULL;
+  } else {
+    ::std::string* temp = shard_folder_;
+    shard_folder_ = const_cast< ::std::string*>(_default_shard_folder_);
+    return temp;
+  }
+}
+inline void ClusterConfig::set_allocated_shard_folder(::std::string* shard_folder) {
+  if (shard_folder_ != _default_shard_folder_) {
+    delete shard_folder_;
+  }
+  if (shard_folder) {
+    set_has_shard_folder();
+    shard_folder_ = shard_folder;
+  } else {
+    clear_has_shard_folder();
+    shard_folder_ = const_cast< ::std::string*>(_default_shard_folder_);
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.ClusterConfig.shard_folder)
 }
 
 // -------------------------------------------------------------------

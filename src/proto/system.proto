@@ -9,6 +9,7 @@ message ClusterConfig{
   optional int32 server_start=1;
   optional int32 server_end=2;
   repeated GroupConfig group=3;
+  optional string shard_folder=4 [default="/data1/wangwei/lapis"];
 }
 message SystemProto{
   optional ClusterConfig cluster=1;

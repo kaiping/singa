@@ -45,6 +45,7 @@ class PerformanceProto;
 class SolverProto;
 class DataProto;
 class ModelProto;
+class ShardProto;
 class Record;
 class AdaGradValue;
 class SGDValue;
@@ -1993,6 +1994,88 @@ class ModelProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
+class ShardProto : public ::google::protobuf::Message {
+ public:
+  ShardProto();
+  virtual ~ShardProto();
+
+  ShardProto(const ShardProto& from);
+
+  inline ShardProto& operator=(const ShardProto& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ShardProto& default_instance();
+
+  void Swap(ShardProto* other);
+
+  // implements Message ----------------------------------------------
+
+  ShardProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ShardProto& from);
+  void MergeFrom(const ShardProto& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated int32 record = 1;
+  inline int record_size() const;
+  inline void clear_record();
+  static const int kRecordFieldNumber = 1;
+  inline ::google::protobuf::int32 record(int index) const;
+  inline void set_record(int index, ::google::protobuf::int32 value);
+  inline void add_record(::google::protobuf::int32 value);
+  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+      record() const;
+  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+      mutable_record();
+
+  // @@protoc_insertion_point(class_scope:lapis.ShardProto)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > record_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static ShardProto* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class Record : public ::google::protobuf::Message {
  public:
   Record();
@@ -2062,17 +2145,17 @@ class Record : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 label() const;
   inline void set_label(::google::protobuf::int32 value);
 
-  // optional string path = 3;
-  inline bool has_path() const;
-  inline void clear_path();
-  static const int kPathFieldNumber = 3;
-  inline const ::std::string& path() const;
-  inline void set_path(const ::std::string& value);
-  inline void set_path(const char* value);
-  inline void set_path(const char* value, size_t size);
-  inline ::std::string* mutable_path();
-  inline ::std::string* release_path();
-  inline void set_allocated_path(::std::string* path);
+  // optional string id = 3;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 3;
+  inline const ::std::string& id() const;
+  inline void set_id(const ::std::string& value);
+  inline void set_id(const char* value);
+  inline void set_id(const char* value, size_t size);
+  inline ::std::string* mutable_id();
+  inline ::std::string* release_id();
+  inline void set_allocated_id(::std::string* id);
 
   // @@protoc_insertion_point(class_scope:lapis.Record)
  private:
@@ -2080,15 +2163,15 @@ class Record : public ::google::protobuf::Message {
   inline void clear_has_image();
   inline void set_has_label();
   inline void clear_has_label();
-  inline void set_has_path();
-  inline void clear_has_path();
+  inline void set_has_id();
+  inline void clear_has_id();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::lapis::DAryProto* image_;
-  ::std::string* path_;
+  ::std::string* id_;
   ::google::protobuf::int32 label_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -5483,6 +5566,40 @@ inline void ModelProto::set_allocated_data(::lapis::DataProto* data) {
 
 // -------------------------------------------------------------------
 
+// ShardProto
+
+// repeated int32 record = 1;
+inline int ShardProto::record_size() const {
+  return record_.size();
+}
+inline void ShardProto::clear_record() {
+  record_.Clear();
+}
+inline ::google::protobuf::int32 ShardProto::record(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.ShardProto.record)
+  return record_.Get(index);
+}
+inline void ShardProto::set_record(int index, ::google::protobuf::int32 value) {
+  record_.Set(index, value);
+  // @@protoc_insertion_point(field_set:lapis.ShardProto.record)
+}
+inline void ShardProto::add_record(::google::protobuf::int32 value) {
+  record_.Add(value);
+  // @@protoc_insertion_point(field_add:lapis.ShardProto.record)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+ShardProto::record() const {
+  // @@protoc_insertion_point(field_list:lapis.ShardProto.record)
+  return record_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+ShardProto::mutable_record() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.ShardProto.record)
+  return &record_;
+}
+
+// -------------------------------------------------------------------
+
 // Record
 
 // optional .lapis.DAryProto image = 1;
@@ -5550,80 +5667,80 @@ inline void Record::set_label(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.Record.label)
 }
 
-// optional string path = 3;
-inline bool Record::has_path() const {
+// optional string id = 3;
+inline bool Record::has_id() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void Record::set_has_path() {
+inline void Record::set_has_id() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void Record::clear_has_path() {
+inline void Record::clear_has_id() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void Record::clear_path() {
-  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    path_->clear();
+inline void Record::clear_id() {
+  if (id_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    id_->clear();
   }
-  clear_has_path();
+  clear_has_id();
 }
-inline const ::std::string& Record::path() const {
-  // @@protoc_insertion_point(field_get:lapis.Record.path)
-  return *path_;
+inline const ::std::string& Record::id() const {
+  // @@protoc_insertion_point(field_get:lapis.Record.id)
+  return *id_;
 }
-inline void Record::set_path(const ::std::string& value) {
-  set_has_path();
-  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    path_ = new ::std::string;
+inline void Record::set_id(const ::std::string& value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    id_ = new ::std::string;
   }
-  path_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.Record.path)
+  id_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.Record.id)
 }
-inline void Record::set_path(const char* value) {
-  set_has_path();
-  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    path_ = new ::std::string;
+inline void Record::set_id(const char* value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    id_ = new ::std::string;
   }
-  path_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.Record.path)
+  id_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.Record.id)
 }
-inline void Record::set_path(const char* value, size_t size) {
-  set_has_path();
-  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    path_ = new ::std::string;
+inline void Record::set_id(const char* value, size_t size) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    id_ = new ::std::string;
   }
-  path_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.Record.path)
+  id_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.Record.id)
 }
-inline ::std::string* Record::mutable_path() {
-  set_has_path();
-  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    path_ = new ::std::string;
+inline ::std::string* Record::mutable_id() {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    id_ = new ::std::string;
   }
-  // @@protoc_insertion_point(field_mutable:lapis.Record.path)
-  return path_;
+  // @@protoc_insertion_point(field_mutable:lapis.Record.id)
+  return id_;
 }
-inline ::std::string* Record::release_path() {
-  clear_has_path();
-  if (path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+inline ::std::string* Record::release_id() {
+  clear_has_id();
+  if (id_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     return NULL;
   } else {
-    ::std::string* temp = path_;
-    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    ::std::string* temp = id_;
+    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
     return temp;
   }
 }
-inline void Record::set_allocated_path(::std::string* path) {
-  if (path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete path_;
+inline void Record::set_allocated_id(::std::string* id) {
+  if (id_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete id_;
   }
-  if (path) {
-    set_has_path();
-    path_ = path;
+  if (id) {
+    set_has_id();
+    id_ = id;
   } else {
-    clear_has_path();
-    path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    clear_has_id();
+    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.Record.path)
+  // @@protoc_insertion_point(field_set_allocated:lapis.Record.id)
 }
 
 // -------------------------------------------------------------------

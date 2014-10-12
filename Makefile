@@ -10,7 +10,7 @@ CXX := $(HOME_DIR)/bin/g++
 INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
 #$(HOME_DIR)/atlas/include
 
-CXXFLAGS := -O3 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
 	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
@@ -18,7 +18,7 @@ MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath
+							opencv_core openblas arraymath leveldb
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib
 #$(HOME_DIR)/atlas/lib
@@ -53,6 +53,7 @@ PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
 LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 								-o \( -name "*.cc" -type f \) -print )
+LAPIS_SRCS :=$(filter-out src/coordinator.cc src/worker.cc, $(LAPIS_SRCS))
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 

@@ -12,10 +12,11 @@
 #include "utils/network_thread.h"
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
+#include "proto/system.pb.h"
 #include "core/table_delegate.h"
-#include "coordinator.h"
+//#include "coordinator.h"
 #include "datasource/data_loader.h"
-#include "worker.h"
+//#include "worker.h"
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
@@ -53,19 +54,19 @@ int main(int argc, char **argv) {
   VLOG(3)<<"before global context";
   auto gc=lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
   lapis::ModelProto model;
-  lapis::ReadProtoFromTextFile(FLAGS_model_conf(), &model);
+  lapis::ReadProtoFromTextFile(gc->model_conf(), &model);
   //lapis::TableDelegate* delegate=CreateTableDelegate(model.solver());
   VLOG(3)<<"after global context";
 
-  SystemProto system;
-  lapis::ReadProtoFromTextFile(FLAGS_system_conf, &system);
+  lapis::SystemProto system;
+  lapis::ReadProtoFromTextFile(gc->system_conf(), &system);
   if(FLAGS_load) {
     LOG(INFO)<<"Loading Data...";
-    DataLoader loader(gc->rank(), system.cluster());
+    lapis::DataLoader loader(gc->rank(), system.cluster());
     if(gc->AmICoordinator())
-      loader.LoadLocalDataToCluster(model.data());
+      loader.ShardData(model.data());
     else
-      loader.RecieveShards();
+      loader.CreateLocalShards(model.data());
     LOG(INFO)<<"Finish Load Data";
   }
   /*

@@ -29,6 +29,8 @@ class DataSource {
   virtual void  Init(const DataSourceProto &ds_proto);
   virtual void ToProto(DataSourceProto *ds_proto);
   virtual void NextRecord(Record* record)=0;
+  virtual void Reset(const ShardProto& sp, bool copy_from_hdfs)=0;
+  virtual bool GetRecord(const int key, Record* record)=0;
   /**
    * Put one batch data into blob, the blob will specify the num of instances
    * to read (the blob is setup by layer Setup(), which has the batchsize as
@@ -116,6 +118,9 @@ class ImageNetSource : public DataSource {
   virtual void Init(const DataSourceProto &proto);
   virtual void NextRecord(Record* record);
   void ReadImage(const std::string &path, int height, int width, const float *mean, DAryProto* datum);
+  virtual void Reset(const ShardProto& sp, bool copy_from_hdfs);
+  virtual bool GetRecord(const int key, Record* record);
+  void CopyImageFromHDFS();
 
   /**
    * Load rgb images.

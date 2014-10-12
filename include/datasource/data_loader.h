@@ -3,7 +3,7 @@
 
 #ifndef INCLUDE_DATASOURCE_DATA_LOADER_H_
 #define INCLUDE_DATASOURCE_DATA_LOADER_H_
-#include <map>
+#include <vector>
 #include <utility>
 #include <string>
 #include "utils/network_thread.h"
@@ -24,26 +24,22 @@
  */
 namespace lapis {
 using std::string;
+
+const static string train_shard="train";
+const static string validation_shard="validation";
+const static string test_shard="test";
+
 class DataLoader {
- public:
-  explicit DataLoader(const ClusterConfig& conf);
-  void LoadLocalDataToCluster(const DataSourceProto& ds);
-  void LoadDataForPhase(const Phase& phase, const DataSourceProto& ds);
-  void RecieveShards();
-  void RecieveShardForPhase(const Phase& phase);
-  void CopyShardTo(int sid, int dst);
-  void DeleteShard(int sid);
-
-
-  const static string train_shard="train";
-  const static string validation_shard="validation";
-  const static string test_shard="test";
-  const static string shard_log="shard.log";
-
- private:
-  int gid_, rank_;
-  std::map<int, std::pair<int, int>> group_range_;
-  string folder_;
+  public:
+    explicit DataLoader(int rank, const ClusterConfig& conf);
+    void ShardData(const DataProto& proto) ;
+    void ShardData(const DataSourceProto& source, int ngroups);
+    void CreateLocalShard(const DataSourceProto& source, const ShardProto& shard);
+    void CreateLocalShards(const DataProto& dp) ;
+  private:
+    string shard_folder_;
+    int gid_, rank_, nprocs_;
+    ClusterConfig cluster_;
 };
 #endif  // INCLUDE_DATASOURCE_DATA_LOADER_H_
 }  // namespace lapis

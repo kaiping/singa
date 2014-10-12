@@ -11,21 +11,13 @@ namespace lapis {
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
 int GlobalContext::kCoordinator;
 GlobalContext::GlobalContext(const std::string &system_conf,
-    const std::string &model_conf): model_conf_(model_conf) {
+    const std::string &model_conf): model_conf_(model_conf), system_conf_(system_conf) {
   SystemProto proto;
   ReadProtoFromTextFile(system_conf.c_str(), &proto);
   standalone_=proto.standalone();
   synchronous_= proto.synchronous();
-  if (proto.has_table_server_start() && proto.has_table_server_end()) {
-    table_server_start_=proto.table_server_start();
-    table_server_end_=proto.table_server_end();
-    CHECK(table_server_start_>=0);
-    CHECK(table_server_start_<table_server_end_);
-  }
-  else {
-    table_server_start_=0;
-    table_server_end_=0;
-  }
+  table_server_start_=proto.cluster().server_start();
+  table_server_end_=proto.cluster().server_end();;
 }
 void GlobalContext::set_num_processes(int num){
   num_processes_=num;

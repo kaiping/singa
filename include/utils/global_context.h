@@ -17,6 +17,7 @@ class GlobalContext {
   static shared_ptr<GlobalContext> Get(const string &sys_conf,
                                        const string &model_conf);
   const char *model_conf() { return model_conf_.c_str(); }
+  const char *system_conf() { return system_conf_.c_str(); }
   // True if running in standalone mode
   bool standalone() { return standalone_; }
   // True if running in synchronous update mode
@@ -54,7 +55,7 @@ class GlobalContext {
   // update in synchronous or asynchronous mode
   bool synchronous_;
   // path of model config
-  std::string model_conf_;
+  std::string model_conf_, system_conf_;
   // number of workers per group
   int group_size_;
   static shared_ptr<GlobalContext> instance_;

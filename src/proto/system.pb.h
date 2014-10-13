@@ -229,6 +229,18 @@ class ClusterConfig : public ::google::protobuf::Message {
   inline ::std::string* release_shard_folder();
   inline void set_allocated_shard_folder(::std::string* shard_folder);
 
+  // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+  inline bool has_hdfs_folder() const;
+  inline void clear_hdfs_folder();
+  static const int kHdfsFolderFieldNumber = 5;
+  inline const ::std::string& hdfs_folder() const;
+  inline void set_hdfs_folder(const ::std::string& value);
+  inline void set_hdfs_folder(const char* value);
+  inline void set_hdfs_folder(const char* value, size_t size);
+  inline ::std::string* mutable_hdfs_folder();
+  inline ::std::string* release_hdfs_folder();
+  inline void set_allocated_hdfs_folder(::std::string* hdfs_folder);
+
   // @@protoc_insertion_point(class_scope:lapis.ClusterConfig)
  private:
   inline void set_has_server_start();
@@ -237,6 +249,8 @@ class ClusterConfig : public ::google::protobuf::Message {
   inline void clear_has_server_end();
   inline void set_has_shard_folder();
   inline void clear_has_shard_folder();
+  inline void set_has_hdfs_folder();
+  inline void clear_has_hdfs_folder();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -247,6 +261,8 @@ class ClusterConfig : public ::google::protobuf::Message {
   ::google::protobuf::RepeatedPtrField< ::lapis::GroupConfig > group_;
   static ::std::string* _default_shard_folder_;
   ::std::string* shard_folder_;
+  static ::std::string* _default_hdfs_folder_;
+  ::std::string* hdfs_folder_;
   friend void  protobuf_AddDesc_system_2eproto();
   friend void protobuf_AssignDesc_system_2eproto();
   friend void protobuf_ShutdownFile_system_2eproto();
@@ -590,6 +606,82 @@ inline void ClusterConfig::set_allocated_shard_folder(::std::string* shard_folde
     shard_folder_ = const_cast< ::std::string*>(_default_shard_folder_);
   }
   // @@protoc_insertion_point(field_set_allocated:lapis.ClusterConfig.shard_folder)
+}
+
+// optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+inline bool ClusterConfig::has_hdfs_folder() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void ClusterConfig::set_has_hdfs_folder() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void ClusterConfig::clear_has_hdfs_folder() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void ClusterConfig::clear_hdfs_folder() {
+  if (hdfs_folder_ != _default_hdfs_folder_) {
+    hdfs_folder_->assign(*_default_hdfs_folder_);
+  }
+  clear_has_hdfs_folder();
+}
+inline const ::std::string& ClusterConfig::hdfs_folder() const {
+  // @@protoc_insertion_point(field_get:lapis.ClusterConfig.hdfs_folder)
+  return *hdfs_folder_;
+}
+inline void ClusterConfig::set_hdfs_folder(const ::std::string& value) {
+  set_has_hdfs_folder();
+  if (hdfs_folder_ == _default_hdfs_folder_) {
+    hdfs_folder_ = new ::std::string;
+  }
+  hdfs_folder_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.ClusterConfig.hdfs_folder)
+}
+inline void ClusterConfig::set_hdfs_folder(const char* value) {
+  set_has_hdfs_folder();
+  if (hdfs_folder_ == _default_hdfs_folder_) {
+    hdfs_folder_ = new ::std::string;
+  }
+  hdfs_folder_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.ClusterConfig.hdfs_folder)
+}
+inline void ClusterConfig::set_hdfs_folder(const char* value, size_t size) {
+  set_has_hdfs_folder();
+  if (hdfs_folder_ == _default_hdfs_folder_) {
+    hdfs_folder_ = new ::std::string;
+  }
+  hdfs_folder_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.ClusterConfig.hdfs_folder)
+}
+inline ::std::string* ClusterConfig::mutable_hdfs_folder() {
+  set_has_hdfs_folder();
+  if (hdfs_folder_ == _default_hdfs_folder_) {
+    hdfs_folder_ = new ::std::string(*_default_hdfs_folder_);
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.ClusterConfig.hdfs_folder)
+  return hdfs_folder_;
+}
+inline ::std::string* ClusterConfig::release_hdfs_folder() {
+  clear_has_hdfs_folder();
+  if (hdfs_folder_ == _default_hdfs_folder_) {
+    return NULL;
+  } else {
+    ::std::string* temp = hdfs_folder_;
+    hdfs_folder_ = const_cast< ::std::string*>(_default_hdfs_folder_);
+    return temp;
+  }
+}
+inline void ClusterConfig::set_allocated_hdfs_folder(::std::string* hdfs_folder) {
+  if (hdfs_folder_ != _default_hdfs_folder_) {
+    delete hdfs_folder_;
+  }
+  if (hdfs_folder) {
+    set_has_hdfs_folder();
+    hdfs_folder_ = hdfs_folder;
+  } else {
+    clear_has_hdfs_folder();
+    hdfs_folder_ = const_cast< ::std::string*>(_default_hdfs_folder_);
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.ClusterConfig.hdfs_folder)
 }
 
 // -------------------------------------------------------------------

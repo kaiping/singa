@@ -385,6 +385,13 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline bool shuffle() const;
   inline void set_shuffle(bool value);
 
+  // optional bool hdfs = 12 [default = true];
+  inline bool has_hdfs() const;
+  inline void clear_hdfs();
+  static const int kHdfsFieldNumber = 12;
+  inline bool hdfs() const;
+  inline void set_hdfs(bool value);
+
   // @@protoc_insertion_point(class_scope:lapis.DataSourceProto)
  private:
   inline void set_has_name();
@@ -403,6 +410,8 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline void clear_has_mean_file();
   inline void set_has_shuffle();
   inline void clear_has_shuffle();
+  inline void set_has_hdfs();
+  inline void clear_has_hdfs();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -417,6 +426,7 @@ class DataSourceProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 offset_;
   ::std::string* mean_file_;
   bool shuffle_;
+  bool hdfs_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -2059,14 +2069,29 @@ class ShardProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
       mutable_record();
 
+  // optional string shard_folder = 2;
+  inline bool has_shard_folder() const;
+  inline void clear_shard_folder();
+  static const int kShardFolderFieldNumber = 2;
+  inline const ::std::string& shard_folder() const;
+  inline void set_shard_folder(const ::std::string& value);
+  inline void set_shard_folder(const char* value);
+  inline void set_shard_folder(const char* value, size_t size);
+  inline ::std::string* mutable_shard_folder();
+  inline ::std::string* release_shard_folder();
+  inline void set_allocated_shard_folder(::std::string* shard_folder);
+
   // @@protoc_insertion_point(class_scope:lapis.ShardProto)
  private:
+  inline void set_has_shard_folder();
+  inline void clear_has_shard_folder();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > record_;
+  ::std::string* shard_folder_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -3064,6 +3089,30 @@ inline void DataSourceProto::set_shuffle(bool value) {
   set_has_shuffle();
   shuffle_ = value;
   // @@protoc_insertion_point(field_set:lapis.DataSourceProto.shuffle)
+}
+
+// optional bool hdfs = 12 [default = true];
+inline bool DataSourceProto::has_hdfs() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void DataSourceProto::set_has_hdfs() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void DataSourceProto::clear_has_hdfs() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void DataSourceProto::clear_hdfs() {
+  hdfs_ = true;
+  clear_has_hdfs();
+}
+inline bool DataSourceProto::hdfs() const {
+  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.hdfs)
+  return hdfs_;
+}
+inline void DataSourceProto::set_hdfs(bool value) {
+  set_has_hdfs();
+  hdfs_ = value;
+  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.hdfs)
 }
 
 // -------------------------------------------------------------------
@@ -5596,6 +5645,82 @@ inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
 ShardProto::mutable_record() {
   // @@protoc_insertion_point(field_mutable_list:lapis.ShardProto.record)
   return &record_;
+}
+
+// optional string shard_folder = 2;
+inline bool ShardProto::has_shard_folder() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ShardProto::set_has_shard_folder() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ShardProto::clear_has_shard_folder() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ShardProto::clear_shard_folder() {
+  if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shard_folder_->clear();
+  }
+  clear_has_shard_folder();
+}
+inline const ::std::string& ShardProto::shard_folder() const {
+  // @@protoc_insertion_point(field_get:lapis.ShardProto.shard_folder)
+  return *shard_folder_;
+}
+inline void ShardProto::set_shard_folder(const ::std::string& value) {
+  set_has_shard_folder();
+  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.ShardProto.shard_folder)
+}
+inline void ShardProto::set_shard_folder(const char* value) {
+  set_has_shard_folder();
+  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.ShardProto.shard_folder)
+}
+inline void ShardProto::set_shard_folder(const char* value, size_t size) {
+  set_has_shard_folder();
+  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shard_folder_ = new ::std::string;
+  }
+  shard_folder_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.ShardProto.shard_folder)
+}
+inline ::std::string* ShardProto::mutable_shard_folder() {
+  set_has_shard_folder();
+  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shard_folder_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.ShardProto.shard_folder)
+  return shard_folder_;
+}
+inline ::std::string* ShardProto::release_shard_folder() {
+  clear_has_shard_folder();
+  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = shard_folder_;
+    shard_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void ShardProto::set_allocated_shard_folder(::std::string* shard_folder) {
+  if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete shard_folder_;
+  }
+  if (shard_folder) {
+    set_has_shard_folder();
+    shard_folder_ = shard_folder;
+  } else {
+    clear_has_shard_folder();
+    shard_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.ShardProto.shard_folder)
 }
 
 // -------------------------------------------------------------------

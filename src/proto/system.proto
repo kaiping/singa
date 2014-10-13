@@ -10,6 +10,7 @@ message ClusterConfig{
   optional int32 server_end=2;
   repeated GroupConfig group=3;
   optional string shard_folder=4 [default="/data1/wangwei/lapis"];
+  optional string hdfs_folder=5 [default="/users/wangwei/"];
 }
 message SystemProto{
   optional ClusterConfig cluster=1;

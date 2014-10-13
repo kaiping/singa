@@ -7,7 +7,10 @@ HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := $(HOME_DIR)/bin/g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include $(HOME_DIR)/include/openmpi
+INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include \
+	$(HOME_DIR)/include/openmpi /home/wangwei/install/jdk1.7.0_67/include\
+	/home/wangwei/install/jdk1.7.0_67/include/linux
+
 #$(HOME_DIR)/atlas/include
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
@@ -18,9 +21,11 @@ MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath leveldb
+							opencv_core openblas arraymath leveldb hdfs jvm
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib \
+	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
+	/home/wangwei/install/jdk1.7.0_67/jre/lib/amd64/server
 #$(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
@@ -61,7 +66,7 @@ TABLE_TEST_SRCS := src/test/test_disk_table.cc
 TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun -np 9 -hostfile examples/imagenet12/hostfile -nooversubscribe \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
 run_run: lapis.bin

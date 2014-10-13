@@ -19,62 +19,17 @@ namespace lapis {
 typedef vector<string> StringVec;
 /**
  * Base class of data source which provides training records for applications.
- * It has 2 tasks. One is to fill the blob for DataLayer either from local disk
- * or distributed disk; Another one is for the Coordinator to load data from
- * local disk to distributed disk.
+ * Every worker will call it to parse raw data and insert records into leveldb
  */
 class DataSource {
  public:
   virtual ~DataSource(){}
-  virtual void  Init(const DataSourceProto &ds_proto);
+  virtual void Init(const DataSourceProto &ds_proto);
+  virtual void Init(const DataSourceProto &proto, const ShardProto& shard)=0;
   virtual void ToProto(DataSourceProto *ds_proto);
-  virtual void NextRecord(Record* record)=0;
-  virtual void Reset(const ShardProto& sp, bool copy_from_hdfs)=0;
-  virtual bool GetRecord(const int key, Record* record)=0;
-  /**
-   * Put one batch data into blob, the blob will specify the num of instances
-   * to read (the blob is setup by layer Setup(), which has the batchsize as
-   * one parameter).The datasource itself know the size of each record
-   * (from DataSourceProto). This function will either read data from disk file
-   * or distributed disk.
-   * @param blob where the next batch of data will be put
-   */
-  /**
-   * TODO(wnagwei) Load data and return the keys of all records.
-   * if the distributed disk is not available, it will be loaded into single
-   * machine (i.e., memory), e.g., labels. It is also possible the this
-   * function does nothing except do some settings for reading records from
-   * disk by GetData(). If the distributed disk is available, it will load data
-   * onto distributed disk.
-   * @param keys it specifies the order of records to read.
-   * @return the keys of records which specifies the order records read.
-  virtual const shared_ptr<StringVec> LoadData(
-    const shared_ptr<StringVec>  &keys) = 0;
-   */
-
-  /**
-   * Return the identifier of the DataSource
-  virtual const string &type() = 0;
-   */
-
-  /**
-   * Return the number of channels, e.g., 3 for rgb data
-  virtual int channels() = 0;
-   */
-  /**
-   * Return the height of the record, e.g., the height of an image
-  virtual int height() = 0;
-   */
-  /**
-   * Return the width of the record, e.g., the width of an image
-  virtual int width() = 0;
-   */
-  /*
-  virtual bool has_channels()=0;
-  virtual bool has_height()=0;
-  virtual bool has_width()=0;
-  */
-
+  virtual void NextRecord(string* key, Record *record)=0;
+  //virtual bool GetRecord(const int key, Record* record)=0;
+  //virtual void Reset(const ShardProto& sp)=0;
   /**
    * Return name of this data source
    */
@@ -115,48 +70,26 @@ class DataSource {
  */
 class ImageNetSource : public DataSource {
  public:
+  virtual void Init(const DataSourceProto &proto, const ShardProto& shard);
   virtual void Init(const DataSourceProto &proto);
-  virtual void NextRecord(Record* record);
-  void ReadImage(const std::string &path, int height, int width, const float *mean, DAryProto* datum);
-  virtual void Reset(const ShardProto& sp, bool copy_from_hdfs);
-  virtual bool GetRecord(const int key, Record* record);
-  void CopyImageFromHDFS();
+  virtual void NextRecord(string* key, Record *record);
 
-  /**
-   * Load rgb images.
-   * Do nothing except setting the suffix paths for images, if load to single
-   * machine memory; Otherwise, read images and put them into distributed disk.
-   * @param keys pointer to a vector of suffix paths for image files, can be
-   * nullptr
-   * @return pointer to a vector of suffix paths for image files found by this
-   * function
-  virtual int channels() {
-    return 3;
-  }
-  virtual int height() {
-    return height_;
-  }
-  virtual int width() {
-    return width_;
-  }
-  virtual bool has_channels() {
-    return true;
-  }
-  virtual bool has_height() {
-    return true;
-  }
-  virtual bool has_width() {
-    return true;
-  }
-   */
-
+  void Reset(const ShardProto& sp);
+  bool GetRecord(const int key, Record* record);
+  void ReadImage(const std::string &path, int height, int width,
+      const float *mean, DAryProto* datum);
+  void LoadLabel(string path);
+  void LoadMeanFile(string path);
+  int CopyFileFromHDFS(string hdfs_path, string local_path) ;
+  int CopyFilesFromHDFS(string hdfs_folder, string local_folder,
+    std::vector<string> files) ;
   //! the identifier, i.e., "RGBSource"
   static const std::string type;
 
  private:
+  bool hdfs_; // if true, all following paths are hdfs path
   /**
-   * common prefix of all images, join(directory_,path_suffix) is full image
-   * path.
+   * image folder + lines[i].first is the full path of one image
    */
   std::string image_folder_;
   std::string label_path_;
@@ -173,7 +106,7 @@ class ImageNetSource : public DataSource {
   int record_size_;
   bool do_shuffle_;
   MeanProto *data_mean_;
-  //! names of images under the directory_
+  //! pairs of image file name and label
   vector<std::pair<string, int>> lines_;
 };
 /*****************************************************************************

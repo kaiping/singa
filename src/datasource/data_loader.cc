@@ -11,18 +11,21 @@
 #include "datasource/data_source.h"
 #include "datasource/data_loader.h"
 #include "utils/timer.h"
+#include "utils/global_context.h"
 #include "proto/model.pb.h"
 
 namespace lapis {
 
 DataLoader::DataLoader(int rank, const ClusterConfig& conf):rank_(rank) {
   shard_folder_=conf.shard_folder();
+  cluster_=conf;
   boost::filesystem::path dir_path(shard_folder_);
   if(boost::filesystem::create_directories(dir_path)) {
     LOG(INFO)<<"create shard folder "<<shard_folder_<<" on process "<<rank;
   }
   gid_=-1;
   int gid=0;
+  nprocs_=0;
   for(auto& group: conf.group()){
     nprocs_+=group.end()-group.start();
     if(rank_>=group.start()&&rank_<group.end()){
@@ -32,9 +35,8 @@ DataLoader::DataLoader(int rank, const ClusterConfig& conf):rank_(rank) {
     gid++;
   }
   nprocs_+=1;
-  if(gid_==-1) {
-    LOG(INFO)<<"The cooridinator rank is "<<rank;
-  }
+  LOG(INFO)<<"my rank is "<<rank << ", there are "<<nprocs_<<" processes"
+      <<" my group id is "<<gid_;
 }
 
 void DataLoader::ShardData(const DataProto& dp) {
@@ -51,13 +53,16 @@ void DataLoader::ShardData(const DataProto& dp) {
     ShardData(dp.test_data(),1);
     LOG(INFO)<<"worker finish load test data";
   }
+
+  NetworkThread::Get()->barrier();
 }
 
 void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
-  DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
-  LOG(INFO)<<"Loading DataSource : "<<ds->name();
-  ds->Init(source);
-  vector<int> records(ds->size());
+  int nrecords=source.size();
+  vector<int> records;
+  for (int i = 0; i < nrecords; i++) {
+    records.push_back(i);
+  }
   if(source.shuffle()){
     DLOG(INFO)<<"Do Shuffling...";
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -65,26 +70,27 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   }
   auto mpi=NetworkThread::Get();
   auto riter=records.begin();
-  int rid=0;
+  LOG(ERROR)<<"Sharding "<<records.size() <<" records to "<<ngroups<<" groups";
   for (int g= 0; g < ngroups; g++) {
     ShardProto sp;
-    int shardsize=g==0?ds->size()/ngroups+ds->size()%ngroups:ds->size()/ngroups;
+    sp.set_shard_folder(shard_folder_);
+    int shardsize=g==0?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
     for(int k=0;k<shardsize;k++){
       sp.add_record(*riter);
     }
     for (int rank = cluster_.group(g).start();rank < cluster_.group(g).end(); rank++) {
-      mpi->Send(rank, MTYPE_PUT_DATA, sp);
+      mpi->Send(rank, MTYPE_PUT_SHARD, sp);
     }
   }
-  LOG(INFO)<<"Load total records: "<<rid;
-  delete ds;
+  CHECK(riter== records.end());
+  LOG(ERROR)<<"Finish Sharding for "<<source.name();
 }
 
 
 void DataLoader::CreateLocalShard(const DataSourceProto& source, const ShardProto& shard){
+  LOG(ERROR)<<"Create Shard for DataSource : "<<source.name();
   DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
-  LOG(INFO)<<"Loading DataSource : "<<ds->name();
-  ds->Init(source);
+  ds->Init(source, shard);
 
   leveldb::DB* db;
   leveldb::Options options;
@@ -92,18 +98,19 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source, const ShardProt
   options.create_if_missing = true;
   options.write_buffer_size = 268435456;
   leveldb::WriteBatch* batch =new leveldb::WriteBatch();
-  string dbname=shard_folder_+"/"+source.name();
+  string dbname=shard_folder_+"/"+source.name()+"-leveldb";
   leveldb::Status status = leveldb::DB::Open(options, dbname, &db);
   CHECK(status.ok()) << "Failed to open leveldb " << dbname;
+
   Record record;
   int num=0;
-  for(auto rid: shard.record()){
-    ds->GetRecord(rid, &record);
-    string value;
+  while(!ds->eof()){
+    string value, key;
+    ds->NextRecord(&key, &record);
     record.SerializeToString(&value);
-    string keystr=std::to_string(rid);
-    batch->Put(keystr, value);
-    if (++num % 1000 == 0) {
+    batch->Put(key, value);
+    if (++num % 100 == 0) {
+      LOG(INFO)<<"Have insered "<<num<<" messages into leveldb";
       // Commit txn
       db->Write(leveldb::WriteOptions(), batch);
       delete batch;
@@ -115,11 +122,16 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source, const ShardProt
     delete batch;
     delete db;
   }
+  delete ds;
+  LOG(ERROR)<<"Finish Create Shard "<<dbname<<" for DataSource : "<<ds->name()
+    <<", it has "<<num<<" records";
 }
 void DataLoader::CreateLocalShards(const DataProto& dp) {
+  LOG(INFO)<<"Create data shards on local disk";
   auto mpi=NetworkThread::Get();
   ShardProto sp;
   if(dp.has_train_data()){
+    // nprocs_-1 is the rank of cooordinator
     mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
     CreateLocalShard(dp.train_data(), sp);
   }
@@ -131,6 +143,8 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
     mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
     CreateLocalShard(dp.test_data(), sp);
   }
+  NetworkThread::Get()->barrier();
+  LOG(INFO)<<"Data shards created";
 }
 /*
 void DataLoader::CopyShardTo(int sid, int dst) {

@@ -57,11 +57,12 @@ void protobuf_AssignDesc_system_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(GroupConfig));
   ClusterConfig_descriptor_ = file->message_type(1);
-  static const int ClusterConfig_offsets_[4] = {
+  static const int ClusterConfig_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, server_start_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, server_end_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, group_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, shard_folder_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ClusterConfig, hdfs_folder_),
   };
   ClusterConfig_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -119,6 +120,7 @@ void protobuf_ShutdownFile_system_2eproto() {
   delete ClusterConfig::default_instance_;
   delete ClusterConfig_reflection_;
   delete ClusterConfig::_default_shard_folder_;
+  delete ClusterConfig::_default_hdfs_folder_;
   delete SystemProto::default_instance_;
   delete SystemProto_reflection_;
 }
@@ -132,18 +134,21 @@ void protobuf_AddDesc_system_2eproto() {
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\014system.proto\022\005lapis\"9\n\013GroupConfig\022\r\n\005"
     "start\030\001 \001(\005\022\013\n\003end\030\002 \001(\005\022\016\n\006leader\030\003 \001(\005"
-    "\"\210\001\n\rClusterConfig\022\024\n\014server_start\030\001 \001(\005"
+    "\"\256\001\n\rClusterConfig\022\024\n\014server_start\030\001 \001(\005"
     "\022\022\n\nserver_end\030\002 \001(\005\022!\n\005group\030\003 \003(\0132\022.la"
     "pis.GroupConfig\022*\n\014shard_folder\030\004 \001(\t:\024/"
-    "data1/wangwei/lapis\"i\n\013SystemProto\022%\n\007cl"
-    "uster\030\001 \001(\0132\024.lapis.ClusterConfig\022\030\n\nsta"
-    "ndalone\030\003 \001(\010:\004true\022\031\n\013synchronous\030\004 \001(\010"
-    ":\004true", 326);
+    "data1/wangwei/lapis\022$\n\013hdfs_folder\030\005 \001(\t"
+    ":\017/users/wangwei/\"i\n\013SystemProto\022%\n\007clus"
+    "ter\030\001 \001(\0132\024.lapis.ClusterConfig\022\030\n\nstand"
+    "alone\030\003 \001(\010:\004true\022\031\n\013synchronous\030\004 \001(\010:\004"
+    "true", 364);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "system.proto", &protobuf_RegisterTypes);
   GroupConfig::default_instance_ = new GroupConfig();
   ClusterConfig::_default_shard_folder_ =
       new ::std::string("/data1/wangwei/lapis", 20);
+  ClusterConfig::_default_hdfs_folder_ =
+      new ::std::string("/users/wangwei/", 15);
   ClusterConfig::default_instance_ = new ClusterConfig();
   SystemProto::default_instance_ = new SystemProto();
   GroupConfig::default_instance_->InitAsDefaultInstance();
@@ -474,11 +479,13 @@ void GroupConfig::Swap(GroupConfig* other) {
 // ===================================================================
 
 ::std::string* ClusterConfig::_default_shard_folder_ = NULL;
+::std::string* ClusterConfig::_default_hdfs_folder_ = NULL;
 #ifndef _MSC_VER
 const int ClusterConfig::kServerStartFieldNumber;
 const int ClusterConfig::kServerEndFieldNumber;
 const int ClusterConfig::kGroupFieldNumber;
 const int ClusterConfig::kShardFolderFieldNumber;
+const int ClusterConfig::kHdfsFolderFieldNumber;
 #endif  // !_MSC_VER
 
 ClusterConfig::ClusterConfig()
@@ -503,6 +510,7 @@ void ClusterConfig::SharedCtor() {
   server_start_ = 0;
   server_end_ = 0;
   shard_folder_ = const_cast< ::std::string*>(_default_shard_folder_);
+  hdfs_folder_ = const_cast< ::std::string*>(_default_hdfs_folder_);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -514,6 +522,9 @@ ClusterConfig::~ClusterConfig() {
 void ClusterConfig::SharedDtor() {
   if (shard_folder_ != _default_shard_folder_) {
     delete shard_folder_;
+  }
+  if (hdfs_folder_ != _default_hdfs_folder_) {
+    delete hdfs_folder_;
   }
   if (this != default_instance_) {
   }
@@ -551,11 +562,16 @@ void ClusterConfig::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  if (_has_bits_[0 / 32] & 11) {
+  if (_has_bits_[0 / 32] & 27) {
     ZR_(server_start_, server_end_);
     if (has_shard_folder()) {
       if (shard_folder_ != _default_shard_folder_) {
         shard_folder_->assign(*_default_shard_folder_);
+      }
+    }
+    if (has_hdfs_folder()) {
+      if (hdfs_folder_ != _default_hdfs_folder_) {
+        hdfs_folder_->assign(*_default_hdfs_folder_);
       }
     }
   }
@@ -634,6 +650,23 @@ bool ClusterConfig::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(42)) goto parse_hdfs_folder;
+        break;
+      }
+
+      // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+      case 5: {
+        if (tag == 42) {
+         parse_hdfs_folder:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_hdfs_folder()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+            this->hdfs_folder().data(), this->hdfs_folder().length(),
+            ::google::protobuf::internal::WireFormat::PARSE,
+            "hdfs_folder");
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -689,6 +722,16 @@ void ClusterConfig::SerializeWithCachedSizes(
       4, this->shard_folder(), output);
   }
 
+  // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+  if (has_hdfs_folder()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->hdfs_folder().data(), this->hdfs_folder().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "hdfs_folder");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      5, this->hdfs_folder(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -727,6 +770,17 @@ void ClusterConfig::SerializeWithCachedSizes(
         4, this->shard_folder(), target);
   }
 
+  // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+  if (has_hdfs_folder()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->hdfs_folder().data(), this->hdfs_folder().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "hdfs_folder");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        5, this->hdfs_folder(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -758,6 +812,13 @@ int ClusterConfig::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->shard_folder());
+    }
+
+    // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
+    if (has_hdfs_folder()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->hdfs_folder());
     }
 
   }
@@ -805,6 +866,9 @@ void ClusterConfig::MergeFrom(const ClusterConfig& from) {
     if (from.has_shard_folder()) {
       set_shard_folder(from.shard_folder());
     }
+    if (from.has_hdfs_folder()) {
+      set_hdfs_folder(from.hdfs_folder());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -832,6 +896,7 @@ void ClusterConfig::Swap(ClusterConfig* other) {
     std::swap(server_end_, other->server_end_);
     group_.Swap(&other->group_);
     std::swap(shard_folder_, other->shard_folder_);
+    std::swap(hdfs_folder_, other->hdfs_folder_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

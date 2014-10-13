@@ -70,6 +70,8 @@ class NetworkThread {
   bool is_empty_queue(int src, int type);
 
   void PrintStats();
+  // set the barrier
+  void barrier();
 
  private:
   static const int kMaxHosts = 512;

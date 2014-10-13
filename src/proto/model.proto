@@ -19,6 +19,7 @@ message DataSourceProto {
   // MeanProto file, has the mean of images, used by RGBDirSource
   optional string mean_file=10;
   optional bool shuffle=11 [default = true];
+  optional bool hdfs=12 [default =true];
 }
 
 message ParamProto {
@@ -199,6 +200,7 @@ message ModelProto {
 
 message ShardProto {
   repeated int32 record=1;
+  optional string shard_folder=2;
 }
 message Record {
   optional DAryProto image=1;

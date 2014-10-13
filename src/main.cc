@@ -43,7 +43,7 @@ lapis::TableDelegate* CreateTableDelegate(const lapis::SolverProto& solver){
 }
 
 int main(int argc, char **argv) {
-  FLAGS_logtostderr=1;
+  //FLAGS_stderrthreshold=0;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   VLOG(3)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
       loader.CreateLocalShards(model.data());
     LOG(INFO)<<"Finish Load Data";
   }
+  lapis::NetworkThread::Get()->Shutdown();
   /*
   if(FLAGS_run){
     if(gc->AmICoordinator()) {

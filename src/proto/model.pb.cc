@@ -81,7 +81,7 @@ void protobuf_AssignDesc_model_2eproto() {
       "model.proto");
   GOOGLE_CHECK(file != NULL);
   DataSourceProto_descriptor_ = file->message_type(0);
-  static const int DataSourceProto_offsets_[9] = {
+  static const int DataSourceProto_offsets_[10] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, image_folder_),
@@ -91,6 +91,7 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, offset_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, mean_file_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, shuffle_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DataSourceProto, hdfs_),
   };
   DataSourceProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -323,8 +324,9 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(ModelProto));
   ShardProto_descriptor_ = file->message_type(10);
-  static const int ShardProto_offsets_[1] = {
+  static const int ShardProto_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ShardProto, record_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ShardProto, shard_folder_),
   };
   ShardProto_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -491,91 +493,92 @@ void protobuf_AddDesc_model_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\013model.proto\022\005lapis\"\343\001\n\017DataSourceProto"
+    "\n\013model.proto\022\005lapis\"\367\001\n\017DataSourceProto"
     "\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002(\t\022\024\n\014image_fo"
     "lder\030\003 \001(\t\022\022\n\nlabel_path\030\004 \001(\t\022+\n\005shape\030"
     "\005 \003(\0132\034.lapis.DataSourceProto.Shape\022\014\n\004s"
     "ize\030\006 \001(\005\022\021\n\006offset\030\t \001(\005:\0010\022\021\n\tmean_fil"
-    "e\030\n \001(\t\022\025\n\007shuffle\030\013 \001(\010:\004true\032\022\n\005Shape\022"
-    "\t\n\001s\030\001 \003(\005\"\372\003\n\nParamProto\022\014\n\004name\030\001 \002(\t\022"
-    "\r\n\005shape\030\002 \003(\005\022<\n\013init_method\030\003 \001(\0162\034.la"
-    "pis.ParamProto.InitMethod:\tkConstant\022\020\n\005"
-    "value\030\004 \001(\002:\0011\022\017\n\003low\030\005 \001(\002:\002-1\022\017\n\004high\030"
-    "\006 \001(\002:\0011\022\017\n\004mean\030\007 \001(\002:\0010\022\016\n\003std\030\010 \001(\002:\001"
-    "1\022\036\n\023momentum_multiplier\030\t \001(\002:\0011\022#\n\030lea"
-    "rning_rate_multiplier\030\n \001(\002:\0011\022\"\n\027weight"
-    "_decay_multiplier\030\013 \001(\002:\0011\022\036\n\004data\030\r \001(\013"
-    "2\020.lapis.DAryProto\022\036\n\004grad\030\016 \001(\0132\020.lapis"
-    ".DAryProto\"\222\001\n\nInitMethod\022\r\n\tkConstant\020\000"
-    "\022\r\n\tkGaussain\020\001\022\014\n\010kUniform\020\002\022\017\n\013kPretra"
-    "ined\020\003\022\026\n\022kGaussainSqrtFanIn\020\004\022\025\n\021kUnifo"
-    "rmSqrtFanIn\020\005\022\030\n\024kUniformSqrtFanInOut\020\006\""
-    "\353\003\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002"
-    "(\t\022\022\n\nnum_output\030\003 \001(\005\022 \n\005param\030\004 \003(\0132\021."
-    "lapis.ParamProto\022\023\n\013window_size\030\010 \001(\005\022\021\n"
-    "\006stride\030\t \001(\005:\0011\022\016\n\003pad\030\n \001(\005:\0010\022\025\n\nnum_"
-    "groups\030\013 \001(\005:\0011\022\r\n\005alpha\030\014 \001(\002\022\014\n\004beta\030\r"
-    " \001(\002\022\020\n\005knorm\030\016 \001(\002:\0011\0227\n\016pooling_method"
-    "\030\020 \001(\0162\037.lapis.LayerProto.PoolingMethod\022"
-    "\020\n\010cropsize\030\021 \001(\005\022\016\n\006mirror\030\022 \001(\010\022\024\n\tdro"
-    "p_prob\030\023 \001(\002:\0010\022\036\n\004data\030\024 \001(\0132\020.lapis.DA"
-    "ryProto\022\036\n\004grad\030\025 \001(\0132\020.lapis.DAryProto\022"
-    "\014\n\004topk\030\027 \001(\005\022\013\n\003top\030\030 \003(\t\022\016\n\006bottom\030\031 \003"
-    "(\t\"1\n\rPoolingMethod\022\017\n\013kMaxPooling\020\001\022\017\n\013"
-    "kAvgPooling\020\002\"y\n\tMeanProto\022\016\n\003num\030\001 \001(\005:"
-    "\0010\022\023\n\010channels\030\002 \001(\005:\0010\022\021\n\006height\030\003 \001(\005:"
-    "\0010\022\020\n\005width\030\004 \001(\005:\0010\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020"
-    "\n\004diff\030\006 \003(\002B\002\020\001\"U\n\tDAryProto\022\r\n\005shape\030\001"
-    " \003(\005\022\023\n\013range_start\030\002 \003(\005\022\021\n\trange_end\030\003"
-    " \003(\005\022\021\n\005value\030\004 \003(\002B\002\020\001\",\n\010NetProto\022 \n\005l"
-    "ayer\030\002 \003(\0132\021.lapis.LayerProto\"P\n\020Perform"
-    "anceProto\022\021\n\tprecision\030\001 \001(\002\022\014\n\004loss\030\002 \001"
-    "(\002\022\r\n\005count\030\003 \001(\005\022\014\n\004step\030\004 \001(\005\"\374\005\n\013Solv"
-    "erProto\022/\n\006method\030\001 \001(\0162\031.lapis.SolverPr"
-    "oto.Method:\004kSGD\022!\n\026checkpoint_after_ste"
-    "ps\030\002 \001(\005:\0010\022!\n\026checkpoint_every_steps\030\003 "
-    "\001(\005:\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016tmp/c"
-    "heckpoint\022\032\n\017checkpoint_step\030\005 \001(\005:\0010\022\036\n"
-    "\023display_after_steps\030\006 \001(\005:\0010\022\036\n\023display"
-    "_every_steps\030\007 \001(\005:\0010\022#\n\016display_prefix\030"
-    "\010 \001(\t:\013tmp/display\022\032\n\017validation_step\030\t "
-    "\001(\005:\0010\022!\n\026validation_after_steps\030\n \001(\005:\001"
-    "0\022!\n\026validation_every_steps\030\013 \001(\005:\0010\022$\n\013"
-    "perf_prefix\030\014 \001(\t:\017tmp/performance\0229\n\003al"
-    "g\030\r \001(\0162\032.lapis.SolverProto.GradAlg:\020kBa"
-    "ckPropagation\022\027\n\017train_batchsize\030\023 \001(\005\022\023"
-    "\n\013train_steps\030\024 \001(\005\022\034\n\024validation_batchs"
-    "ize\030\025 \001(\005\022\030\n\020validation_steps\030\026 \001(\005\022\034\n\003s"
-    "gd\030\027 \001(\0132\017.lapis.SGDValue\022$\n\007adagrad\030\030 \001"
-    "(\0132\023.lapis.AdaGradValue\" \n\006Method\022\010\n\004kSG"
-    "D\020\001\022\014\n\010kAdaGrad\020\002\";\n\007GradAlg\022\024\n\020kBackPro"
-    "pagation\020\001\022\032\n\026kContrastiveDivergence\020\002\"\223"
-    "\001\n\tDataProto\022*\n\ntrain_data\030\001 \001(\0132\026.lapis"
-    ".DataSourceProto\022/\n\017validation_data\030\002 \001("
-    "\0132\026.lapis.DataSourceProto\022)\n\ttest_data\030\003"
-    " \001(\0132\026.lapis.DataSourceProto\"|\n\nModelPro"
-    "to\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.Ne"
-    "tProto\022\"\n\006solver\030\003 \001(\0132\022.lapis.SolverPro"
-    "to\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"\034\n\nSh"
-    "ardProto\022\016\n\006record\030\001 \003(\005\"D\n\006Record\022\037\n\005im"
-    "age\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002 \001"
-    "(\005\022\n\n\002id\030\003 \001(\t\"\246\001\n\014AdaGradValue\022\023\n\010n_upd"
-    "ate\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004data"
-    "\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\0132\020"
-    ".lapis.DAryProto\022\032\n\022base_learning_rate\030\006"
-    " \001(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010SGDValue\022\032\n\022"
-    "base_learning_rate\030\001 \002(\002\022\023\n\010momentum\030\002 \001"
-    "(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030"
-    "\004 \001(\002\022\"\n\032learning_rate_change_steps\030\005 \001("
-    "\005\022E\n\024learning_rate_change\030\006 \001(\0162\033.lapis."
-    "SGDValue.ChangeProto:\nkInverse_t\022#\n\030lear"
-    "ning_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027weight_"
-    "decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_update\030\t "
-    "\001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthreshold\030"
-    "\013 \001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis.DAryProto\022\036\n"
-    "\004grad\030\r \001(\0132\020.lapis.DAryProto\"S\n\013ChangeP"
-    "roto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExp"
-    "onential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004", 3394);
+    "e\030\n \001(\t\022\025\n\007shuffle\030\013 \001(\010:\004true\022\022\n\004hdfs\030\014"
+    " \001(\010:\004true\032\022\n\005Shape\022\t\n\001s\030\001 \003(\005\"\372\003\n\nParam"
+    "Proto\022\014\n\004name\030\001 \002(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013in"
+    "it_method\030\003 \001(\0162\034.lapis.ParamProto.InitM"
+    "ethod:\tkConstant\022\020\n\005value\030\004 \001(\002:\0011\022\017\n\003lo"
+    "w\030\005 \001(\002:\002-1\022\017\n\004high\030\006 \001(\002:\0011\022\017\n\004mean\030\007 \001"
+    "(\002:\0010\022\016\n\003std\030\010 \001(\002:\0011\022\036\n\023momentum_multip"
+    "lier\030\t \001(\002:\0011\022#\n\030learning_rate_multiplie"
+    "r\030\n \001(\002:\0011\022\"\n\027weight_decay_multiplier\030\013 "
+    "\001(\002:\0011\022\036\n\004data\030\r \001(\0132\020.lapis.DAryProto\022\036"
+    "\n\004grad\030\016 \001(\0132\020.lapis.DAryProto\"\222\001\n\nInitM"
+    "ethod\022\r\n\tkConstant\020\000\022\r\n\tkGaussain\020\001\022\014\n\010k"
+    "Uniform\020\002\022\017\n\013kPretrained\020\003\022\026\n\022kGaussainS"
+    "qrtFanIn\020\004\022\025\n\021kUniformSqrtFanIn\020\005\022\030\n\024kUn"
+    "iformSqrtFanInOut\020\006\"\353\003\n\nLayerProto\022\014\n\004na"
+    "me\030\001 \002(\t\022\014\n\004type\030\002 \002(\t\022\022\n\nnum_output\030\003 \001"
+    "(\005\022 \n\005param\030\004 \003(\0132\021.lapis.ParamProto\022\023\n\013"
+    "window_size\030\010 \001(\005\022\021\n\006stride\030\t \001(\005:\0011\022\016\n\003"
+    "pad\030\n \001(\005:\0010\022\025\n\nnum_groups\030\013 \001(\005:\0011\022\r\n\005a"
+    "lpha\030\014 \001(\002\022\014\n\004beta\030\r \001(\002\022\020\n\005knorm\030\016 \001(\002:"
+    "\0011\0227\n\016pooling_method\030\020 \001(\0162\037.lapis.Layer"
+    "Proto.PoolingMethod\022\020\n\010cropsize\030\021 \001(\005\022\016\n"
+    "\006mirror\030\022 \001(\010\022\024\n\tdrop_prob\030\023 \001(\002:\0010\022\036\n\004d"
+    "ata\030\024 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\025 \001("
+    "\0132\020.lapis.DAryProto\022\014\n\004topk\030\027 \001(\005\022\013\n\003top"
+    "\030\030 \003(\t\022\016\n\006bottom\030\031 \003(\t\"1\n\rPoolingMethod\022"
+    "\017\n\013kMaxPooling\020\001\022\017\n\013kAvgPooling\020\002\"y\n\tMea"
+    "nProto\022\016\n\003num\030\001 \001(\005:\0010\022\023\n\010channels\030\002 \001(\005"
+    ":\0010\022\021\n\006height\030\003 \001(\005:\0010\022\020\n\005width\030\004 \001(\005:\0010"
+    "\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020\n\004diff\030\006 \003(\002B\002\020\001\"U\n\t"
+    "DAryProto\022\r\n\005shape\030\001 \003(\005\022\023\n\013range_start\030"
+    "\002 \003(\005\022\021\n\trange_end\030\003 \003(\005\022\021\n\005value\030\004 \003(\002B"
+    "\002\020\001\",\n\010NetProto\022 \n\005layer\030\002 \003(\0132\021.lapis.L"
+    "ayerProto\"P\n\020PerformanceProto\022\021\n\tprecisi"
+    "on\030\001 \001(\002\022\014\n\004loss\030\002 \001(\002\022\r\n\005count\030\003 \001(\005\022\014\n"
+    "\004step\030\004 \001(\005\"\374\005\n\013SolverProto\022/\n\006method\030\001 "
+    "\001(\0162\031.lapis.SolverProto.Method:\004kSGD\022!\n\026"
+    "checkpoint_after_steps\030\002 \001(\005:\0010\022!\n\026check"
+    "point_every_steps\030\003 \001(\005:\0010\022)\n\021checkpoint"
+    "_prefix\030\004 \001(\t:\016tmp/checkpoint\022\032\n\017checkpo"
+    "int_step\030\005 \001(\005:\0010\022\036\n\023display_after_steps"
+    "\030\006 \001(\005:\0010\022\036\n\023display_every_steps\030\007 \001(\005:\001"
+    "0\022#\n\016display_prefix\030\010 \001(\t:\013tmp/display\022\032"
+    "\n\017validation_step\030\t \001(\005:\0010\022!\n\026validation"
+    "_after_steps\030\n \001(\005:\0010\022!\n\026validation_ever"
+    "y_steps\030\013 \001(\005:\0010\022$\n\013perf_prefix\030\014 \001(\t:\017t"
+    "mp/performance\0229\n\003alg\030\r \001(\0162\032.lapis.Solv"
+    "erProto.GradAlg:\020kBackPropagation\022\027\n\017tra"
+    "in_batchsize\030\023 \001(\005\022\023\n\013train_steps\030\024 \001(\005\022"
+    "\034\n\024validation_batchsize\030\025 \001(\005\022\030\n\020validat"
+    "ion_steps\030\026 \001(\005\022\034\n\003sgd\030\027 \001(\0132\017.lapis.SGD"
+    "Value\022$\n\007adagrad\030\030 \001(\0132\023.lapis.AdaGradVa"
+    "lue\" \n\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGrad\020\002\";\n"
+    "\007GradAlg\022\024\n\020kBackPropagation\020\001\022\032\n\026kContr"
+    "astiveDivergence\020\002\"\223\001\n\tDataProto\022*\n\ntrai"
+    "n_data\030\001 \001(\0132\026.lapis.DataSourceProto\022/\n\017"
+    "validation_data\030\002 \001(\0132\026.lapis.DataSource"
+    "Proto\022)\n\ttest_data\030\003 \001(\0132\026.lapis.DataSou"
+    "rceProto\"|\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003"
+    "net\030\002 \001(\0132\017.lapis.NetProto\022\"\n\006solver\030\003 \001"
+    "(\0132\022.lapis.SolverProto\022\036\n\004data\030\004 \001(\0132\020.l"
+    "apis.DataProto\"2\n\nShardProto\022\016\n\006record\030\001"
+    " \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Record\022\037\n\005"
+    "image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002"
+    " \001(\005\022\n\n\002id\030\003 \001(\t\"\246\001\n\014AdaGradValue\022\023\n\010n_u"
+    "pdate\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004da"
+    "ta\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\013"
+    "2\020.lapis.DAryProto\022\032\n\022base_learning_rate"
+    "\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\"\350\003\n\010SGDValue\022\032"
+    "\n\022base_learning_rate\030\001 \002(\002\022\023\n\010momentum\030\002"
+    " \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n\005gamm"
+    "a\030\004 \001(\002\022\"\n\032learning_rate_change_steps\030\005 "
+    "\001(\005\022E\n\024learning_rate_change\030\006 \001(\0162\033.lapi"
+    "s.SGDValue.ChangeProto:\nkInverse_t\022#\n\030le"
+    "arning_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027weigh"
+    "t_decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_update\030"
+    "\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthreshol"
+    "d\030\013 \001(\005\022\036\n\004data\030\014 \001(\0132\020.lapis.DAryProto\022"
+    "\036\n\004grad\030\r \001(\0132\020.lapis.DAryProto\"S\n\013Chang"
+    "eProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kE"
+    "xponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004", 3436);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -861,6 +864,7 @@ const int DataSourceProto::kSizeFieldNumber;
 const int DataSourceProto::kOffsetFieldNumber;
 const int DataSourceProto::kMeanFileFieldNumber;
 const int DataSourceProto::kShuffleFieldNumber;
+const int DataSourceProto::kHdfsFieldNumber;
 #endif  // !_MSC_VER
 
 DataSourceProto::DataSourceProto()
@@ -890,6 +894,7 @@ void DataSourceProto::SharedCtor() {
   offset_ = 0;
   mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   shuffle_ = true;
+  hdfs_ = true;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -978,7 +983,10 @@ void DataSourceProto::Clear() {
       }
     }
   }
-  shuffle_ = true;
+  if (_has_bits_[8 / 32] & 768) {
+    shuffle_ = true;
+    hdfs_ = true;
+  }
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
@@ -1137,6 +1145,21 @@ bool DataSourceProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(96)) goto parse_hdfs;
+        break;
+      }
+
+      // optional bool hdfs = 12 [default = true];
+      case 12: {
+        if (tag == 96) {
+         parse_hdfs:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &hdfs_)));
+          set_has_hdfs();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -1237,6 +1260,11 @@ void DataSourceProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(11, this->shuffle(), output);
   }
 
+  // optional bool hdfs = 12 [default = true];
+  if (has_hdfs()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(12, this->hdfs(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1324,6 +1352,11 @@ void DataSourceProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(11, this->shuffle(), target);
   }
 
+  // optional bool hdfs = 12 [default = true];
+  if (has_hdfs()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(12, this->hdfs(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1392,6 +1425,11 @@ int DataSourceProto::ByteSize() const {
       total_size += 1 + 1;
     }
 
+    // optional bool hdfs = 12 [default = true];
+    if (has_hdfs()) {
+      total_size += 1 + 1;
+    }
+
   }
   // repeated .lapis.DataSourceProto.Shape shape = 5;
   total_size += 1 * this->shape_size();
@@ -1454,6 +1492,9 @@ void DataSourceProto::MergeFrom(const DataSourceProto& from) {
     if (from.has_shuffle()) {
       set_shuffle(from.shuffle());
     }
+    if (from.has_hdfs()) {
+      set_hdfs(from.hdfs());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1487,6 +1528,7 @@ void DataSourceProto::Swap(DataSourceProto* other) {
     std::swap(offset_, other->offset_);
     std::swap(mean_file_, other->mean_file_);
     std::swap(shuffle_, other->shuffle_);
+    std::swap(hdfs_, other->hdfs_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -6542,6 +6584,7 @@ void ModelProto::Swap(ModelProto* other) {
 
 #ifndef _MSC_VER
 const int ShardProto::kRecordFieldNumber;
+const int ShardProto::kShardFolderFieldNumber;
 #endif  // !_MSC_VER
 
 ShardProto::ShardProto()
@@ -6561,7 +6604,9 @@ ShardProto::ShardProto(const ShardProto& from)
 }
 
 void ShardProto::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
+  shard_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -6571,6 +6616,9 @@ ShardProto::~ShardProto() {
 }
 
 void ShardProto::SharedDtor() {
+  if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete shard_folder_;
+  }
   if (this != default_instance_) {
   }
 }
@@ -6597,6 +6645,11 @@ ShardProto* ShardProto::New() const {
 }
 
 void ShardProto::Clear() {
+  if (has_shard_folder()) {
+    if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+      shard_folder_->clear();
+    }
+  }
   record_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -6627,6 +6680,23 @@ bool ShardProto::MergePartialFromCodedStream(
           goto handle_unusual;
         }
         if (input->ExpectTag(8)) goto parse_record;
+        if (input->ExpectTag(18)) goto parse_shard_folder;
+        break;
+      }
+
+      // optional string shard_folder = 2;
+      case 2: {
+        if (tag == 18) {
+         parse_shard_folder:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_shard_folder()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+            this->shard_folder().data(), this->shard_folder().length(),
+            ::google::protobuf::internal::WireFormat::PARSE,
+            "shard_folder");
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -6662,6 +6732,16 @@ void ShardProto::SerializeWithCachedSizes(
       1, this->record(i), output);
   }
 
+  // optional string shard_folder = 2;
+  if (has_shard_folder()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->shard_folder().data(), this->shard_folder().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "shard_folder");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->shard_folder(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -6678,6 +6758,17 @@ void ShardProto::SerializeWithCachedSizes(
       WriteInt32ToArray(1, this->record(i), target);
   }
 
+  // optional string shard_folder = 2;
+  if (has_shard_folder()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+      this->shard_folder().data(), this->shard_folder().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "shard_folder");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->shard_folder(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -6689,6 +6780,15 @@ void ShardProto::SerializeWithCachedSizes(
 int ShardProto::ByteSize() const {
   int total_size = 0;
 
+  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+    // optional string shard_folder = 2;
+    if (has_shard_folder()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->shard_folder());
+    }
+
+  }
   // repeated int32 record = 1;
   {
     int data_size = 0;
@@ -6725,6 +6825,11 @@ void ShardProto::MergeFrom(const ::google::protobuf::Message& from) {
 void ShardProto::MergeFrom(const ShardProto& from) {
   GOOGLE_CHECK_NE(&from, this);
   record_.MergeFrom(from.record_);
+  if (from._has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+    if (from.has_shard_folder()) {
+      set_shard_folder(from.shard_folder());
+    }
+  }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
@@ -6748,6 +6853,7 @@ bool ShardProto::IsInitialized() const {
 void ShardProto::Swap(ShardProto* other) {
   if (other != this) {
     record_.Swap(&other->record_);
+    std::swap(shard_folder_, other->shard_folder_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

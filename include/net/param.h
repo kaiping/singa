@@ -74,6 +74,9 @@ class Param {
   float weight_decay_multiplier() {
     return weight_decay_multiplier_;
   }
+  const int split_threshold(){
+    return split_threshold_;
+  }
  protected:
   /**
    * Fill in the val with data generated from a uniform distribution

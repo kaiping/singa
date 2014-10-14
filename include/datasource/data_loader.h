@@ -31,7 +31,7 @@ const static string test_shard="test";
 
 class DataLoader {
   public:
-    DataLoader(std::shared_ptr<GlobalContext> gc);
+    DataLoader(const std::shared_ptr<GlobalContext>& gc);
     void ShardData(const DataProto& proto) ;
     void ShardData(const DataSourceProto& source, int ngroups);
     void CreateLocalShard(const DataSourceProto& source, const ShardProto& shard);

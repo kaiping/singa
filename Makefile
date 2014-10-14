@@ -58,7 +58,7 @@ PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 LAPIS_HDRS := $(shell find include/ -name "*.h" -type f)
 LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 								-o \( -name "*.cc" -type f \) -print )
-LAPIS_SRCS :=$(filter-out src/coordinator.cc src/worker.cc, $(LAPIS_SRCS))
+#LAPIS_SRCS :=$(filter-out src/coordinator.cc src/worker.cc, $(LAPIS_SRCS))
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 

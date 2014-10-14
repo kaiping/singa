@@ -362,7 +362,7 @@ class DAry {
   /**
     * true if memory has allocated or false
     */
-  bool allocated() {return alloc_size_>0;}
+  const int allocated() const {return alloc_size_;}
   string ToString() {
     std::stringstream ss;
     for (int i = 0; i < size_; i++) {

@@ -180,9 +180,11 @@ message SolverProto {
   optional int32 train_steps = 20;
   optional int32 validation_batchsize = 21;
   optional int32 validation_steps=22;
+  // max number of tuples; 3571 is the 500-th prime number
+  optional int32 max_splits=23 [default = 3571];
 
-  optional SGDValue sgd=23 ;
-  optional AdaGradValue adagrad=24;
+  optional SGDValue sgd=24 ;
+  optional AdaGradValue adagrad=25;
 }
 
 message DataProto {

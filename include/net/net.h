@@ -73,6 +73,9 @@ class Net {
     CHECK_LT(k, output_layer_.size());
     return output_layer_[k];
   }
+  const std::vector<Layer *>& layers() {
+    return layers_;
+  }
   const std::vector<Param *> &params() {
     return params_;
   }

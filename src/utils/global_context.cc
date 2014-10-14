@@ -4,13 +4,12 @@
 #include "utils/global_context.h"
 #include "proto/system.pb.h"
 #include "utils/proto_helper.h"
-#include "utils/network_thread.h"
 
 namespace lapis {
 
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
 int GlobalContext::kCoordinator;
-GlobalContext::GlobalContext(const std::string &system_conf,)system_conf_(system_conf) {
+GlobalContext::GlobalContext(const std::string &system_conf):system_conf_(system_conf) {
   SystemProto proto;
   ReadProtoFromTextFile(system_conf.c_str(), &proto);
   standalone_=proto.standalone();
@@ -19,32 +18,40 @@ GlobalContext::GlobalContext(const std::string &system_conf,)system_conf_(system
   table_server_end_=proto.cluster().server_end();;
   for(auto& group: proto.cluster().group()){
     vector<int> workers;
-    for(int i=group.start();i<group.end();i++)
+    for(int i=group.start();i<group.end();i++){
       workers.push_back(i);
+    }
     groups_.push_back(workers);
   }
   shard_folder_=proto.cluster().shard_folder();
 }
 
+void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
+  rank_=nt->id();
+  num_procs_=nt->size();
+  kCoordinator=nt->size()-1;
+  int gid=0, gid_=-1;
+  for(auto& group: groups_){
+    worker_id_=0;
+    for(auto& worker: group){
+      if(worker==rank_){
+        gid_=gid;
+        break;
+      }else
+        worker_id_++;
+    }
+    if(gid_!=-1)
+      break;
+    gid++;
+  }
+  CHECK(gid_==-1||rank_==kCoordinator);
+  VLOG(3)<<"init network thread";
+}
 shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf){
   if(!instance_) {
     instance_.reset(new GlobalContext(sys_conf));
     auto nt=NetworkThread::Get();
-    rank_=nt->id();
-    num_procs_=nt->size();
-    kCoordinator=net->size()-1;
-    int gid=0, gid_=-1;
-    for(auto& group: groups_){
-      for(auto& worker: group)
-        if(worker==rank_){
-          gid_=gid;
-          break;
-        }
-      gid++;
-    }
-    if(gid==-1)
-      CHECK(rank_==kCoordinator);
-    VLOG(3)<<"init network thread";
+    instance_->Setup(nt);
   }
   return instance_;
 }

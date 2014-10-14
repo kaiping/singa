@@ -6,17 +6,20 @@
 #include <string>
 #include <utility>
 #include <memory>
+#include <vector>
+#include "utils/network_thread.h"
+
 
 using std::shared_ptr;
 using std::string;
+using std::vector;
 
 namespace lapis {
 
 class GlobalContext {
  public:
   static shared_ptr<GlobalContext> Get();
-  static shared_ptr<GlobalContext> Get(const string &sys_conf,
-                                       const string &model_conf);
+  static shared_ptr<GlobalContext> Get(const string &sys_conf);
   const char *system_conf() { return system_conf_.c_str(); }
   // True if running in standalone mode
   bool standalone() { return standalone_; }
@@ -36,21 +39,25 @@ class GlobalContext {
   // All processes are workers except the coordinator
   bool AmIWorker() {return gid_!=-1;}
   bool AmIGroupLeader() {return  rank_==groups_[gid_][0];}
+  int worker_id() {return worker_id_;}
   int group_id() {return gid_;}
   int num_groups() {return num_groups_;}
   int group_size() {return group_size_;}
   int rank() {return rank_;}
-
+  int leader() {return MembersOfGroup(gid_)[0];}
+  const string shard_folder() {return shard_folder_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   // assume the rank of coordinator is 0
   static int kCoordinator;
   void Finish();
  private:
-  GlobalContext(const string &sys_conf, const string &model_conf);
+  GlobalContext(const std::string &sys_conf);
+  void Setup(const std::shared_ptr<NetworkThread>& nt);
 
  private:
   // mpi rank of current process
   int rank_;
+  int worker_id_; // order in this group, starts from 0
   int num_workers_;
   // total number of processes started by mpi
   int num_procs_;

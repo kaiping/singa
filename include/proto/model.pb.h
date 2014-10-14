@@ -49,6 +49,7 @@ class ShardProto;
 class Record;
 class AdaGradValue;
 class SGDValue;
+class VKey;
 
 enum ParamProto_InitMethod {
   ParamProto_InitMethod_kConstant = 0,
@@ -605,6 +606,13 @@ class ParamProto : public ::google::protobuf::Message {
   inline float weight_decay_multiplier() const;
   inline void set_weight_decay_multiplier(float value);
 
+  // optional int32 split_threshold = 12 [default = 1000000];
+  inline bool has_split_threshold() const;
+  inline void clear_split_threshold();
+  static const int kSplitThresholdFieldNumber = 12;
+  inline ::google::protobuf::int32 split_threshold() const;
+  inline void set_split_threshold(::google::protobuf::int32 value);
+
   // optional .lapis.DAryProto data = 13;
   inline bool has_data() const;
   inline void clear_data();
@@ -645,6 +653,8 @@ class ParamProto : public ::google::protobuf::Message {
   inline void clear_has_learning_rate_multiplier();
   inline void set_has_weight_decay_multiplier();
   inline void clear_has_weight_decay_multiplier();
+  inline void set_has_split_threshold();
+  inline void clear_has_split_threshold();
   inline void set_has_data();
   inline void clear_has_data();
   inline void set_has_grad();
@@ -664,9 +674,10 @@ class ParamProto : public ::google::protobuf::Message {
   float std_;
   float momentum_multiplier_;
   float learning_rate_multiplier_;
+  float weight_decay_multiplier_;
+  ::google::protobuf::int32 split_threshold_;
   ::lapis::DAryProto* data_;
   ::lapis::DAryProto* grad_;
-  float weight_decay_multiplier_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -1685,19 +1696,26 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 validation_steps() const;
   inline void set_validation_steps(::google::protobuf::int32 value);
 
-  // optional .lapis.SGDValue sgd = 23;
+  // optional int32 max_splits = 23 [default = 3571];
+  inline bool has_max_splits() const;
+  inline void clear_max_splits();
+  static const int kMaxSplitsFieldNumber = 23;
+  inline ::google::protobuf::int32 max_splits() const;
+  inline void set_max_splits(::google::protobuf::int32 value);
+
+  // optional .lapis.SGDValue sgd = 24;
   inline bool has_sgd() const;
   inline void clear_sgd();
-  static const int kSgdFieldNumber = 23;
+  static const int kSgdFieldNumber = 24;
   inline const ::lapis::SGDValue& sgd() const;
   inline ::lapis::SGDValue* mutable_sgd();
   inline ::lapis::SGDValue* release_sgd();
   inline void set_allocated_sgd(::lapis::SGDValue* sgd);
 
-  // optional .lapis.AdaGradValue adagrad = 24;
+  // optional .lapis.AdaGradValue adagrad = 25;
   inline bool has_adagrad() const;
   inline void clear_adagrad();
-  static const int kAdagradFieldNumber = 24;
+  static const int kAdagradFieldNumber = 25;
   inline const ::lapis::AdaGradValue& adagrad() const;
   inline ::lapis::AdaGradValue* mutable_adagrad();
   inline ::lapis::AdaGradValue* release_adagrad();
@@ -1739,6 +1757,8 @@ class SolverProto : public ::google::protobuf::Message {
   inline void clear_has_validation_batchsize();
   inline void set_has_validation_steps();
   inline void clear_has_validation_steps();
+  inline void set_has_max_splits();
+  inline void clear_has_max_splits();
   inline void set_has_sgd();
   inline void clear_has_sgd();
   inline void set_has_adagrad();
@@ -1770,6 +1790,7 @@ class SolverProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 validation_steps_;
   ::lapis::SGDValue* sgd_;
   ::lapis::AdaGradValue* adagrad_;
+  ::google::protobuf::int32 max_splits_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -2567,6 +2588,95 @@ class SGDValue : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static SGDValue* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class VKey : public ::google::protobuf::Message {
+ public:
+  VKey();
+  virtual ~VKey();
+
+  VKey(const VKey& from);
+
+  inline VKey& operator=(const VKey& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const VKey& default_instance();
+
+  void Swap(VKey* other);
+
+  // implements Message ----------------------------------------------
+
+  VKey* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const VKey& from);
+  void MergeFrom(const VKey& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 key = 1;
+  inline bool has_key() const;
+  inline void clear_key();
+  static const int kKeyFieldNumber = 1;
+  inline ::google::protobuf::int32 key() const;
+  inline void set_key(::google::protobuf::int32 value);
+
+  // optional int32 version = 2;
+  inline bool has_version() const;
+  inline void clear_version();
+  static const int kVersionFieldNumber = 2;
+  inline ::google::protobuf::int32 version() const;
+  inline void set_version(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:lapis.VKey)
+ private:
+  inline void set_has_key();
+  inline void clear_has_key();
+  inline void set_has_version();
+  inline void clear_has_version();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::google::protobuf::int32 key_;
+  ::google::protobuf::int32 version_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static VKey* default_instance_;
 };
 // ===================================================================
 
@@ -3442,15 +3552,39 @@ inline void ParamProto::set_weight_decay_multiplier(float value) {
   // @@protoc_insertion_point(field_set:lapis.ParamProto.weight_decay_multiplier)
 }
 
-// optional .lapis.DAryProto data = 13;
-inline bool ParamProto::has_data() const {
+// optional int32 split_threshold = 12 [default = 1000000];
+inline bool ParamProto::has_split_threshold() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
-inline void ParamProto::set_has_data() {
+inline void ParamProto::set_has_split_threshold() {
   _has_bits_[0] |= 0x00000800u;
 }
-inline void ParamProto::clear_has_data() {
+inline void ParamProto::clear_has_split_threshold() {
   _has_bits_[0] &= ~0x00000800u;
+}
+inline void ParamProto::clear_split_threshold() {
+  split_threshold_ = 1000000;
+  clear_has_split_threshold();
+}
+inline ::google::protobuf::int32 ParamProto::split_threshold() const {
+  // @@protoc_insertion_point(field_get:lapis.ParamProto.split_threshold)
+  return split_threshold_;
+}
+inline void ParamProto::set_split_threshold(::google::protobuf::int32 value) {
+  set_has_split_threshold();
+  split_threshold_ = value;
+  // @@protoc_insertion_point(field_set:lapis.ParamProto.split_threshold)
+}
+
+// optional .lapis.DAryProto data = 13;
+inline bool ParamProto::has_data() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void ParamProto::set_has_data() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void ParamProto::clear_has_data() {
+  _has_bits_[0] &= ~0x00001000u;
 }
 inline void ParamProto::clear_data() {
   if (data_ != NULL) data_->::lapis::DAryProto::Clear();
@@ -3485,13 +3619,13 @@ inline void ParamProto::set_allocated_data(::lapis::DAryProto* data) {
 
 // optional .lapis.DAryProto grad = 14;
 inline bool ParamProto::has_grad() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00002000u) != 0;
 }
 inline void ParamProto::set_has_grad() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00002000u;
 }
 inline void ParamProto::clear_has_grad() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00002000u;
 }
 inline void ParamProto::clear_grad() {
   if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
@@ -5201,15 +5335,39 @@ inline void SolverProto::set_validation_steps(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_steps)
 }
 
-// optional .lapis.SGDValue sgd = 23;
-inline bool SolverProto::has_sgd() const {
+// optional int32 max_splits = 23 [default = 3571];
+inline bool SolverProto::has_max_splits() const {
   return (_has_bits_[0] & 0x00020000u) != 0;
 }
-inline void SolverProto::set_has_sgd() {
+inline void SolverProto::set_has_max_splits() {
   _has_bits_[0] |= 0x00020000u;
 }
-inline void SolverProto::clear_has_sgd() {
+inline void SolverProto::clear_has_max_splits() {
   _has_bits_[0] &= ~0x00020000u;
+}
+inline void SolverProto::clear_max_splits() {
+  max_splits_ = 3571;
+  clear_has_max_splits();
+}
+inline ::google::protobuf::int32 SolverProto::max_splits() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.max_splits)
+  return max_splits_;
+}
+inline void SolverProto::set_max_splits(::google::protobuf::int32 value) {
+  set_has_max_splits();
+  max_splits_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.max_splits)
+}
+
+// optional .lapis.SGDValue sgd = 24;
+inline bool SolverProto::has_sgd() const {
+  return (_has_bits_[0] & 0x00040000u) != 0;
+}
+inline void SolverProto::set_has_sgd() {
+  _has_bits_[0] |= 0x00040000u;
+}
+inline void SolverProto::clear_has_sgd() {
+  _has_bits_[0] &= ~0x00040000u;
 }
 inline void SolverProto::clear_sgd() {
   if (sgd_ != NULL) sgd_->::lapis::SGDValue::Clear();
@@ -5242,15 +5400,15 @@ inline void SolverProto::set_allocated_sgd(::lapis::SGDValue* sgd) {
   // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.sgd)
 }
 
-// optional .lapis.AdaGradValue adagrad = 24;
+// optional .lapis.AdaGradValue adagrad = 25;
 inline bool SolverProto::has_adagrad() const {
-  return (_has_bits_[0] & 0x00040000u) != 0;
+  return (_has_bits_[0] & 0x00080000u) != 0;
 }
 inline void SolverProto::set_has_adagrad() {
-  _has_bits_[0] |= 0x00040000u;
+  _has_bits_[0] |= 0x00080000u;
 }
 inline void SolverProto::clear_has_adagrad() {
-  _has_bits_[0] &= ~0x00040000u;
+  _has_bits_[0] &= ~0x00080000u;
 }
 inline void SolverProto::clear_adagrad() {
   if (adagrad_ != NULL) adagrad_->::lapis::AdaGradValue::Clear();
@@ -6399,6 +6557,58 @@ inline void SGDValue::set_allocated_grad(::lapis::DAryProto* grad) {
     clear_has_grad();
   }
   // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.grad)
+}
+
+// -------------------------------------------------------------------
+
+// VKey
+
+// optional int32 key = 1;
+inline bool VKey::has_key() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void VKey::set_has_key() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void VKey::clear_has_key() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void VKey::clear_key() {
+  key_ = 0;
+  clear_has_key();
+}
+inline ::google::protobuf::int32 VKey::key() const {
+  // @@protoc_insertion_point(field_get:lapis.VKey.key)
+  return key_;
+}
+inline void VKey::set_key(::google::protobuf::int32 value) {
+  set_has_key();
+  key_ = value;
+  // @@protoc_insertion_point(field_set:lapis.VKey.key)
+}
+
+// optional int32 version = 2;
+inline bool VKey::has_version() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void VKey::set_has_version() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void VKey::clear_has_version() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void VKey::clear_version() {
+  version_ = 0;
+  clear_has_version();
+}
+inline ::google::protobuf::int32 VKey::version() const {
+  // @@protoc_insertion_point(field_get:lapis.VKey.version)
+  return version_;
+}
+inline void VKey::set_version(::google::protobuf::int32 value) {
+  set_has_version();
+  version_ = value;
+  // @@protoc_insertion_point(field_set:lapis.VKey.version)
 }
 
 

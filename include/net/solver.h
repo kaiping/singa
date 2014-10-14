@@ -4,9 +4,12 @@
 #ifndef INCLUDE_NET_SOLVER_H_
 #define INCLUDE_NET_SOLVER_H_
 #include <pthread.h>
+#include <leveldb/db.h>
+#include <atomic>
 #include <string>
 #include <vector>
-#include "core/global_table.h"
+#include <memory>
+
 #include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "net/net.h"
@@ -14,6 +17,10 @@
 
 
 namespace lapis {
+typedef struct _PrefetchArg {
+  leveldb::Iterator *iter;
+  Net* net;
+}PrefetchArg;
 /**
  * Forward declaration of Net class
  */
@@ -31,11 +38,11 @@ class Solver {
    * @param trainer_proto user configuration for the trainer
    */
   Solver(const SolverProto &proto);
+  ~Solver();
   void Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np);
   void Train();
   void Validate();
-  void PrefetchData(void* context);
-  shard_ptr<level::DB> OpenShard(string path) ;
+  leveldb::DB* OpenShard(string path) ;
 
   /**
    * train the model for one-minibatch by either backpropagation or contrastive divergence
@@ -98,8 +105,15 @@ class Solver {
   const bool ValidateNow() {return ValidateNow(step_);}
   void Pause() {pause_=true;}
   bool PauseNow() {return pause_;}
-  void Continue() {pause_=false;}
+  void Continue() {pause_=false; phase=Phase::kTrain;}
 
+  Performance& train_perf() {
+    return train_perf_;
+
+  }
+Performance& val_perf() {
+    return val_perf_;
+  }
   int validation_steps() {
     return validation_steps_;
   }
@@ -123,7 +137,7 @@ class Solver {
   //! current training step, e.g., such num of mini-batches have been processed
   int step_;
   //! pause training for validation/checkpoint or...
-  bool pause_;
+  std::atomic<bool> pause_;
 
   //! start checkpoint after this num of steps
   int checkpoint_after_steps_;
@@ -145,8 +159,9 @@ class Solver {
   int train_steps_;
   int validation_steps_;
 
+  Performance train_perf_, val_perf_;
   string train_shard_, val_shard_;
-  Net* net;
+  Net* net_;
   pthread_t prefetch_thread_;
   TableDelegate* delegate_;
 };

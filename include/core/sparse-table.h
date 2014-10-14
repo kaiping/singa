@@ -4,9 +4,22 @@
 #include "core/common.h"
 #include "proto/worker.pb.h"
 #include "core/table.h"
+#include "proto/model.pb.h"
+
 #include "utils/tuple.h"
 #include "local-table.h"
 #include <boost/noncopyable.hpp>
+
+namespace std {
+
+template<>
+struct hash<lapis::VKey> {
+  size_t operator()(const lapis::VKey& k) const {
+    hash<int> hashint;
+    return hashint(k.key());
+  }
+};
+}  // namespace std
 
 namespace lapis {
 
@@ -155,7 +168,6 @@ class SparseTable :
 
   std::hash<K> hashobj_;
 };
-
 template <class K, class V>
 SparseTable<K, V>::SparseTable(int size)
   : buckets_(0), entries_(0), size_(0) {
@@ -215,7 +227,7 @@ bool SparseTable<K, V>::contains(const K &k) {
 template <class K, class V>
 V SparseTable<K, V>::get(const K &k) {
   int b = bucket_for_key(k);
-  CHECK_NE(b, -1) << "No entry for requested key: " << k;
+  CHECK_NE(b, -1) << "No entry for requested key: " << k.key();
   return buckets_[b].v;
 }
 

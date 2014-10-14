@@ -1,16 +1,15 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 14:28
 
-#include <google/protobuf/repeated_field.h>
 #include <glog/logging.h>
 #include <leveldb/db.h>
-
 #include <vector>
 
 #include "proto/model.pb.h"
 #include "net/solver.h"
 
 namespace lapis {
+Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
   pause_=false;
   //! if step_>0, then the trainer is restored from a checkpoint
@@ -30,11 +29,15 @@ Solver::Solver(const SolverProto &proto) {
 
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
   net_=new Net(np);
-  net_.Setup();
-  delegate_.SplitParams(net_->params());
+  net_->Setup();
+  delegate_->SplitParams(net_->params(), GlobalContext::Get()->worker_id());
   string shard_folder=GlobalContext::Get()->shard_folder();
   train_shard_=shard_folder+"/"+dp.train_data().name()+"-leveldb";
   val_shard_=shard_folder+"/"+dp.validation_data().name()+"-leveldb";
+}
+
+Solver::~Solver() {
+  delete net_;
 }
 void Solver::ToProto(SolverProto *proto) {
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
@@ -43,7 +46,7 @@ void Solver::ToProto(SolverProto *proto) {
   proto->set_display_after_steps(display_after_steps_);
   proto->set_display_every_steps(display_every_steps_);
 }
-shard_ptr<level::DB> Solver::OpenShard(string path) {
+leveldb::DB* Solver::OpenShard(string path) {
   leveldb::DB* db_temp;
   leveldb::Options options;
   options.create_if_missing = false;
@@ -52,11 +55,13 @@ shard_ptr<level::DB> Solver::OpenShard(string path) {
   leveldb::Status status = leveldb::DB::Open(options, path, &db_temp);
   CHECK(status.ok()) << "Failed to open leveldb " << path << std::endl
     << status.ToString();
-  return std::make_shared<level::DB>(db_temp);
+  return db_temp;
 }
-void Solver::PrefetchData(void* context){
-  leveldb::Iterator* iter=context;
-  const DAry& input= net_->input_layer(0)->GetData(nullptr);
+void* PrefetchData(void* context){
+  PrefetchArg *parg=static_cast<PrefetchArg*>(context);
+  leveldb::Iterator* iter=parg->iter;
+  Net* net=parg->net;
+  const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
   for(int n=0;n<nrng.first;n++){
     if(!iter->Valid())
@@ -68,7 +73,7 @@ void Solver::PrefetchData(void* context){
     CHECK(iter);
     CHECK(iter->Valid());
     record.ParseFromString(iter->value().ToString());
-    for(auto* layer:net_->input_layer())
+    for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
   }
   for(int n=0;n<input.shape(0)-nrng.second;n++){
@@ -77,25 +82,26 @@ void Solver::PrefetchData(void* context){
     iter->Next();
   }
 }
-Performance Worker::Validate(){
+void Solver::Validate(){
+  val_perf_.Reset();
   leveldb::DB* db=OpenShard(val_shard_);
   leveldb::Iterator* iter(db->NewIterator(leveldb::ReadOptions()));
   iter->SeekToFirst();
+  PrefetchArg arg{iter, net_};
 
-  pthread_create(&prefetch_thread_, NULL, PrefetchData, iter);
-  Solver::phase=kVal;
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+  Solver::phase=kValidation;
   Performance perf;
   for(int b=0;b<validation_steps_;b++){
-    pthread_join(prefetch_thread, NULL);
+    pthread_join(prefetch_thread_, NULL);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    pthread_create(&prefetch_thread_, NULL, PrefetchData, iter);
-    perf.Aggregate(ValidateOneBatch(net_));
+    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    val_perf_.Aggregate(ValidateOneBatch(net_));
   }
   pthread_join(prefetch_thread_, NULL);
   delete iter;
   delete db;
-  return perf;
 }
 
 
@@ -103,57 +109,60 @@ void Solver::Train(){
   leveldb::DB* db=OpenShard(train_shard_);
   leveldb::Iterator* iter(db->NewIterator(leveldb::ReadOptions()));
   iter->SeekToFirst();
+  PrefetchArg arg{iter, net_};
 
-  Performance train_perf;
-  pthread_create(&prefetch_thread_, NULL, PrefetchData, iter);
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
   //Debug();
   while (!HasFinished()) {
-    LOG(INFO)<<solver.step();
+    LOG(INFO)<<step();
     pthread_join(prefetch_thread_, NULL);
-    for(auto* layer:net_.input_layer())
+    for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    train_perf.Aggregate(solver.TrainOneBatch(net_));
-    pthread_create(&prefetch_thread_, NULL, PrefetchData, iter);
+    train_perf_.Aggregate(TrainOneBatch(net_));
+    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
     if(DisplayNow()){
       Pause();
-      while(DisplayNow()&&Pause())
-        sleep(FLAGS_sleep);
+      while(DisplayNow()&&PauseNow())
+        sleep(0.001);
     }
     if(ValidateNow()){
       Pause();
       while(ValidateNow()&&PauseNow())
-        sleep(FLAGS_sleep);
+        sleep(0.1);
     }else{
       IncStep();
     }
   }
+  delete db;
+  delete iter;
   pthread_join(prefetch_thread_, NULL);
 }
 Performance Solver::TrainOneBatch(Net *net){
-  delegate_->AsyncGet(net->params());
-  for(auto* layer: net->layers()){
+  delegate_->AsyncGet(net->params(),step());
+  auto layers=net->layers();
+  for(auto* layer: layers){
     VLOG(3)<<layer->name();
-    for(auto* param: layer->params())
-      delegate_->AsyncCollect(param);
+    for(auto* param: layer->GetParams())
+      delegate_->AsyncCollect(param, step());
     layer->ComputeFeature();
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
-  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++){
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     VLOG(3)<<(*layer)->name();
     (*layer)->ComputeGradient();
-    for(auto* param: (*layer)->params())
-      delegate_->Update(param);
+    for(auto* param: (*layer)->GetParams())
+      delegate_->Update(param, step());
   }
   IncStep();
   return perf;
 }
 
 Performance Solver::ValidateOneBatch(Net *net){
-  delegate_->AsyncGet(net->params());
+  delegate_->AsyncGet(net->params(), step());
   for(auto* layer: net->layers()){
     VLOG(3)<<layer->name();
-    for(auto* param: layer->params())
-      delegate_->AsyncCollect(param);
+    for(auto* param: layer->GetParams())
+      delegate_->AsyncCollect(param, step());
     layer->ComputeFeature();
   }
   return net->output_layer(0)->CalcPerf(true, true);

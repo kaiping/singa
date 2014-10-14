@@ -32,7 +32,7 @@ class Worker {
   void Run(const ModelProto& proto);
   void ReportPerformance(Performance perf);
   // must provide globalcontext with Worker
-  Worker();
+  Worker(){};
 
   shared_ptr<GlobalContext> context_;
   std::shared_ptr<NetworkThread> mpi_;

@@ -20,7 +20,7 @@ DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
   shard_folder_=gc->shard_folder();
   boost::filesystem::path dir_path(shard_folder_);
   if(boost::filesystem::create_directories(dir_path)) {
-    LOG(INFO)<<"create shard folder "<<shard_folder_<<" on process "<<rank;
+    LOG(INFO)<<"create shard folder "<<shard_folder_<<" on process "<<gc->rank();
   }
   gid_=gc->group_id();
   nprocs_=gc->num_procs();

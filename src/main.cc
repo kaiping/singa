@@ -12,9 +12,9 @@
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "proto/system.pb.h"
-//#include "coordinator.h"
+#include "coordinator.h"
 #include "datasource/data_loader.h"
-//#include "worker.h"
+#include "worker.h"
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");

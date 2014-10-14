@@ -29,7 +29,7 @@ Coordinator::~Coordinator() {
 }
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
-  for (int i = 0; i < context_->num_processes()-1; ++i) {
+  for (int i = 0; i < context_->num_procs()-1; ++i) {
     VLOG(3)<<"in table server "<<i;
     RegisterWorkerRequest req;
     int src = 0;
@@ -124,15 +124,14 @@ void Coordinator::DistributePartition(const vector<NetProto> & protos) {
   for(int i=0;i<context_->num_groups();i++){
     auto workers=context_->MembersOfGroup(i);
     CHECK_EQ(workers.size(), protos.size());
-    mpi_->Send(group[0], MTYPE_NET_PARTITION, protos[0]);
-    for (unsigned int i = 1; i < protos.size(); i++) {
+    for (unsigned int i = 0; i < protos.size(); i++) {
       mpi_->Send(workers[i], MTYPE_NET_PARTITION, protos[i]);
     }
   }
 }
 
 
-void Coordinatot::Start(const ModelProto& model) {
+void Coordinator::Start(const ModelProto& model) {
   SolverProto sp(model.solver());
   sp.mutable_sgd()->set_threshold(context_->num_groups());
   sp.mutable_adagrad()->set_threshold(0);
@@ -167,7 +166,7 @@ void Coordinator::Resume() {
 }
 
 void Coordinator::Run(){
-  StateQueue<int> groups(ngroups);
+  StateQueue<int> groups(context_->num_groups());
   while(groups.HasValid()) {
     int src = 0;
     EmptyMessage end_msg;

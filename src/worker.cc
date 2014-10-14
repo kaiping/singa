@@ -1,7 +1,7 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-06-28 16:01
 #include <glog/logging.h>
-
+#include <memory>
 #include "worker.h"
 #include "proto/model.pb.h"
 #include "proto/common.pb.h"
@@ -12,7 +12,7 @@
 #include "net/net.h"
 
 namespace lapis {
-Worker::Worker(const shared_proto<GlobalContext>& gc){
+Worker::Worker(const std::shared_ptr<GlobalContext>& gc){
   LOG(INFO) << "starting Worker...";
   mpi_=NetworkThread::Get();
   context_=gc;
@@ -38,7 +38,7 @@ void Worker::Shutdown() {
 
 
 void Worker::ReportPerformance(Performance perf) {
-  if(mpi_->AmIGroupLeader()){
+  if(context_->AmIGroupLeader()){
     StateQueue<int> q(context_->MembersOfGroup(context_->group_id()));
     while(q.HasValid()){
       Performance p;
@@ -60,15 +60,21 @@ void Worker::Resume() {
 }
 void Worker::Start(const DataProto& dp, const SolverProto& sp){
   NetProto np;
-  context_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &np);
+  mpi_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &np);
   ModelProto model;
   model.mutable_data()->CopyFrom(dp);
   model.mutable_solver()->CopyFrom(sp);
   model.mutable_net()->CopyFrom(np);
   Run(model);
 }
+
+void* SolverThread(void *context) {
+  Solver* solver=static_cast<Solver*>(context);
+  solver->Train();
+}
+
 void Worker::Run(const ModelProto& model){
-  TableDelegate* delegate=CreateTableDelegate(model.sovler);
+  TableDelegate* delegate=CreateTableDelegate(model.solver());
   if(context_->AmITableServer()){
     table_server_=new TableServer();
     table_server_->StartTableServer(delegate->tables());
@@ -76,23 +82,25 @@ void Worker::Run(const ModelProto& model){
   }
 
   Solver solver(model.solver());
-  solver.Setup(delegate_, model.data(), model.net());
+  solver.Setup(delegate, model.data(), model.net());
 
   pthread_t solver_thread;
-  pthread_create(&solver_thread, NULL, solver.Train, NULL);
+  pthread_create(&solver_thread, NULL, &SolverThread, &solver);
+  auto val_perf=solver.val_perf();
+  auto train_perf=solver.train_perf();
   while(true) {
     //    if(NetworkThread::Get()->TryRead())
     //    send and recv msgs
 
     if(solver.ValidateNow()){
-      Performance perf=solver.Validate();
-      ReportPerformance(perf);
-      solver.ContinueTrain();
+      solver.Validate();
+      ReportPerformance(val_perf.Avg());
+      solver.Continue();
     }
     if(solver.DisplayNow()){
       ReportPerformance(train_perf.Avg());
       train_perf.Reset();
-      solver.ContinueTrain();
+      solver.Continue();
     }
   }
   pthread_join(solver_thread, NULL);

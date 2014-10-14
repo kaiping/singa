@@ -3,8 +3,11 @@
 
 #ifndef INCLUDE_NET_SOLVER_H_
 #define INCLUDE_NET_SOLVER_H_
+#include <pthread.h>
 #include <string>
 #include <vector>
+#include "core/global_table.h"
+#include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "net/net.h"
 #include "utils/common.h"
@@ -28,6 +31,12 @@ class Solver {
    * @param trainer_proto user configuration for the trainer
    */
   Solver(const SolverProto &proto);
+  void Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np);
+  void Train();
+  void Validate();
+  void PrefetchData(void* context);
+  shard_ptr<level::DB> OpenShard(string path) ;
+
   /**
    * train the model for one-minibatch by either backpropagation or contrastive divergence
    * @param net the Net object to be trained
@@ -87,6 +96,9 @@ class Solver {
     return false;
   }
   const bool ValidateNow() {return ValidateNow(step_);}
+  void Pause() {pause_=true;}
+  bool PauseNow() {return pause_;}
+  void Continue() {pause_=false;}
 
   int validation_steps() {
     return validation_steps_;
@@ -105,11 +117,13 @@ class Solver {
   const int step() {
     return step_;
   }
-  static int phase;
+  static Phase phase;
  protected:
   //! current phase, need this field to change the data sources for input layer
   //! current training step, e.g., such num of mini-batches have been processed
   int step_;
+  //! pause training for validation/checkpoint or...
+  bool pause_;
 
   //! start checkpoint after this num of steps
   int checkpoint_after_steps_;
@@ -117,24 +131,24 @@ class Solver {
   int checkpoint_every_steps_;
   //! when recovered from the checkpoint, the step_ will be set to this value;
   int checkpoint_step_;
-  //! path prefix (i.e., directory) for the checkpoint files
-  std::string checkpoint_prefix_;
 
   //! start display after this num of steps
   int display_after_steps_;
   //! display frequency
   int display_every_steps_;
-  //! path prefix (i.e., directory) for the displayed images
-  std::string display_prefix_;
 
   //! start validation after this num of steps
   int validation_after_steps_;
   //! display frequency
   int validation_every_steps_;
   //! path prefix for Performance
-  std::string perf_prefix_;
   int train_steps_;
   int validation_steps_;
+
+  string train_shard_, val_shard_;
+  Net* net;
+  pthread_t prefetch_thread_;
+  TableDelegate* delegate_;
 };
 
 }  // namespace lapis

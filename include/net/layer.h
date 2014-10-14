@@ -58,6 +58,7 @@ class Layer {
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
   virtual void InitDAryShape();
   virtual void CollectParams(vector<Param*> *params);
+  virtual vector<Param*> GetParams();
 
   /**
    *
@@ -159,6 +160,7 @@ class ConvLayer: public Layer {
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void CollectParams(vector<Param*> *params);
+  virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   void Img2Col(DAry* dst, const DAry& src);
   void Col2Img(DAry* dst, const DAry& src);
@@ -273,6 +275,7 @@ class FCLayer: public Layer {
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void CollectParams(vector<Param*> *params);
+  virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   //! dimension of the hidden layer

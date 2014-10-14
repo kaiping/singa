@@ -64,7 +64,7 @@ message ParamProto {
   optional float momentum_multiplier =9 [default=1];
   optional float learning_rate_multiplier =10 [default=1];
   optional float weight_decay_multiplier =11 [default=1];
-
+  optional int32 split_threshold=12 [default=1000000];
   // data of the parameter
   optional DAryProto data = 13;
   // history gradient of the parameter
@@ -243,4 +243,8 @@ message SGDValue {
   optional DAryProto grad=13;
 }
 
+message VKey {
+  optional int32 key=1;
+  optional int32 version=2;
+}
 

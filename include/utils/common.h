@@ -14,9 +14,11 @@ using std::string;
 using std::map;
 
 namespace lapis {
-const int kTrain=1;
-const int kVal=2;
-const int kTest=3;
+enum Phase{
+  kTrain=1,
+  kValidation,
+  kTest
+};
 
 template<typename T>
 class StateQueue {

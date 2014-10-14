@@ -9,11 +9,9 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include "utils/global_context.h"
-#include "utils/network_thread.h"
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "proto/system.pb.h"
-#include "core/table_delegate.h"
 //#include "coordinator.h"
 #include "datasource/data_loader.h"
 //#include "worker.h"
@@ -27,21 +25,6 @@ DEFINE_bool(time, true,  "time training algorithm");
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
-/**
- * need to know the tuple type to create parameter table
- */
-lapis::TableDelegate* CreateTableDelegate(const lapis::SolverProto& solver){
-  lapis::TableDelegate* delegate;
-  if(solver.method()==lapis::SolverProto::kSGD){
-     delegate=new lapis::TypedTableDelegate<int, lapis::SGDValue>();
-  }
-  else{
-    delegate= new lapis::TypedTableDelegate<int, lapis::AdaGradValue>();
-  }
-  delegate->CreateTables(solver);
-  return delegate;
-}
-
 int main(int argc, char **argv) {
   //FLAGS_stderrthreshold=0;
   google::InitGoogleLogging(argv[0]);
@@ -49,38 +32,40 @@ int main(int argc, char **argv) {
   VLOG(3)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
 
   // Note you can register you own layer/edge/datasource here
-  //
-  // Init GlobalContext
-  VLOG(3)<<"before global context";
-  auto gc=lapis::GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
-  lapis::ModelProto model;
-  lapis::ReadProtoFromTextFile(gc->model_conf(), &model);
-  //lapis::TableDelegate* delegate=CreateTableDelegate(model.solver());
-  VLOG(3)<<"after global context";
 
-  lapis::SystemProto system;
-  lapis::ReadProtoFromTextFile(gc->system_conf(), &system);
+  // Init GlobalContext
+  auto gc=lapis::GlobalContext::Get(FLAGS_system_conf);
+  lapis::ModelProto model;
+  lapis::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
   if(FLAGS_load) {
     LOG(INFO)<<"Loading Data...";
-    lapis::DataLoader loader(gc->rank(), system.cluster());
+    lapis::DataLoader loader(gc);
     if(gc->AmICoordinator())
       loader.ShardData(model.data());
     else
       loader.CreateLocalShards(model.data());
     LOG(INFO)<<"Finish Load Data";
   }
-  lapis::NetworkThread::Get()->Shutdown();
-  /*
   if(FLAGS_run){
     if(gc->AmICoordinator()) {
-      lapis::Coordinator coordinator(delegate);
-      coordinator.Run(FLAGS_load, FLAGS_run, model);
+      lapis::Coordinator coordinator(gc);
+      coordinator.Start(model);
     }else {
-      lapis::Worker worker(delegate);
-      worker.Run(FLAGS_run, FLAGS_time, model.solver());
+      lapis::Worker worker(gc);
+      worker.Start(model.data(), model.solver());
     }
   }
-  delete delegate;
+  /*
+  if(FLAGS_resume){
+     if(gc->AmICoordinator()) {
+      lapis::Coordinator coordinator(gc);
+      coordinator.Resume();
+    }else {
+      lapis::Worker worker(gc);
+      worker.Resume(model.data());
+    }
+  }
   */
+  gc->Finish();
   return 0;
 }

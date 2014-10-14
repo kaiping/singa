@@ -77,6 +77,9 @@ void Layer::AllocateMemory(){}
 void Layer::ComputeFeature(){}
 void Layer::ComputeGradient(){}
 void Layer::CollectParams(vector<Param*> *params){}
+vector<Param*> Layer::GetParams(){
+  return vector<Param*>();
+};
 
 /*****************************************************************************
  * Implementation for ConvLayer
@@ -99,6 +102,10 @@ void ConvLayer::CollectParams(vector<Param*> *params){
   params->push_back(&weight_);
   bias_.set_id(params->size());
   params->push_back(&bias_);
+}
+vector<Param*> ConvLayer::GetParams() {
+  vector<Param*> ret{&weight_, &bias_};
+  return ret;
 }
 void ConvLayer::ToProto(LayerProto *proto, bool copyData) {
   Layer::ToProto(proto, copyData);
@@ -622,6 +629,10 @@ void FCLayer::CollectParams(vector<Param*> *params){
   params->push_back(&weight_);
   bias_.set_id(params->size());
   params->push_back(&bias_);
+}
+vector<Param*> FCLayer::GetParams() {
+  vector<Param*> ret{&weight_, &bias_};
+  return ret;
 }
 
 void FCLayer::InitDAryShape(){

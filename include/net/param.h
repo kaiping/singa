@@ -102,6 +102,7 @@ class Param {
   //! scale factor for learning rate and weight decay for this parameter
   float momentum_, learning_rate_multiplier_, weight_decay_multiplier_;
   float low_, high_, mean_, std_, value_;
+  int split_threshold_;
   //! content, gradient and history gradient of this parameter
   DAry data_, grad_;
   /**

@@ -5,22 +5,17 @@
 #include "worker.h"
 #include "proto/model.pb.h"
 #include "proto/common.pb.h"
-#include "utils/proto_helper.h"
 #include "utils/common.h"
-
-#include "net/net.h"
-#include "net/layer.h"
-
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
 #include "net/solver.h"
+#include "net/net.h"
 
 namespace lapis {
-Worker::Worker(TableDelegate* delegate){
+Worker::Worker(const shared_proto<GlobalContext>& gc){
   LOG(INFO) << "starting Worker...";
   mpi_=NetworkThread::Get();
-  id_=mpi_->id();
-  delegate_=delegate;
+  context_=gc;
 }
 
 Worker::~Worker() {
@@ -29,22 +24,6 @@ Worker::~Worker() {
     delete table_server_;
 }
 
-bool Worker::ShouldIDoValidation(int step) {
-  ShortMsg msg;
-  msg.set_step(step);
-  mpi_->Send(GlobalContext::kCoordinator, MTYPE_VALIDATION, msg);
-  mpi_->Read(GlobalContext::kCoordinator, MTYPE_INSTRUCTION, &msg);
-  return msg.answer();
-}
-
-void Worker::InitDistributedStorage(){
-  if(GlobalContext::Get()->AmITableServer()){
-    table_server_=new TableServer();
-    table_server_->StartTableServer(delegate_->tables());
-    VLOG(3)<<"table server tarted";
-  }
-  VLOG(3)<<"finish init storage";
-}
 void Worker::Shutdown() {
 	VLOG(3) << "Worker is shutting down ...";
   mpi_->Flush();
@@ -54,39 +33,13 @@ void Worker::Shutdown() {
   mpi_->Read(GlobalContext::kCoordinator, MTYPE_WORKER_SHUTDOWN, &msg, &src);
   VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
   table_server_->ShutdownTableServer();
-  mpi_->Shutdown();
+  context_->Finish();
 }
 
-void Worker::PrefetchData(int phase, Net *net) {
-  Record record;
-  int k;
-  // local batchsize
-  Range nrng=net->input_layer(0)->GetData(nullptr).IndexRange(0);
-  for(int n=0;n<nrng.second-nrng.first;++n){
-    delegate_->Next(phase, &k, &record);
-    for(auto* layer:net->input_layer())
-      layer->AddInputRecord(record);
-  }
-}
-
-Performance Worker::Validate(Solver* solver, Net* net){
-  Solver::phase=kVal;
-  PrefetchData(kVal, net);
-  Performance perf;
-  for(int b=0;b<solver->validation_steps();b++){
-    // TODO join prefetch thread
-    for(auto* layer:net->input_layer())
-      layer->SetInputData(nullptr);
-    // TODO start prefetch thread
-    PrefetchData(kVal, net);
-    perf.Aggregate(solver->ValidateOneBatch(net));
-  }
-  return perf;
-}
 
 void Worker::ReportPerformance(Performance perf) {
-  if(AmIGroupLeader()){
-    StateQueue<int> q(member_list_);
+  if(mpi_->AmIGroupLeader()){
+    StateQueue<int> q(context_->MembersOfGroup(context_->group_id()));
     while(q.HasValid()){
       Performance p;
       if(mpi_->TryRead(q.Next(), MTYPE_PERFORMANCE, &p)){
@@ -94,70 +47,55 @@ void Worker::ReportPerformance(Performance perf) {
         q.Invalide();
       }
     }
-    //mpi_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
+    //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
     LOG(INFO)<<perf.ToString();
   }else{
-    mpi_->Send(leader_, MTYPE_PERFORMANCE, perf);
+    mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
   }
 }
-void Worker::InitGroupInfo() {
-  GroupConfig conf;
-  mpi_->Read(GlobalContext::kCoordinator, MTYPE_GROUP_CONFIG,&conf);
-  bool find=false;
-  for(auto& group: conf.group()){
-    leader_=group.leader();
-    find=leader_==id_;
-    if(!find)
-      for(auto member: group.member())
-        find|=member==id_;
-    if(find){
-      for(auto member: group.member())
-        member_list_.push_back(member);
-      break;
-    }
-  }
-  CHECK(find);
+
+void Worker::Resume() {
+  // TODO get solverproto from hdfs or local disk
+  /* std::shared_ptr<Solver>   */
 }
-void Worker::Run(bool do_train, bool time, const SolverProto& solver_proto) {
-  InitDistributedStorage();
-  if(!do_train)
-      return;
-  InitGroupInfo();
-  NetProto net_proto;
-  mpi_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &net_proto);
-  Net net(net_proto);
-  net.Setup();
-  PrefetchData(kTrain, &net);
-  if(time){
-    delegate_->Get(net.params(), 0);
-    // time get and put
-    net.TimeOneBatch();
-    return;
+void Worker::Start(const DataProto& dp, const SolverProto& sp){
+  NetProto np;
+  context_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &np);
+  ModelProto model;
+  model.mutable_data()->CopyFrom(dp);
+  model.mutable_solver()->CopyFrom(sp);
+  model.mutable_net()->CopyFrom(np);
+  Run(model);
+}
+void Worker::Run(const ModelProto& model){
+  TableDelegate* delegate=CreateTableDelegate(model.sovler);
+  if(context_->AmITableServer()){
+    table_server_=new TableServer();
+    table_server_->StartTableServer(delegate->tables());
+    VLOG(3)<<"table server tarted";
   }
-  Solver solver(solver_proto);
-  Performance train_perf;
-  //Debug();
-  while (!solver.HasFinished()) {
-    LOG(INFO)<<solver.step();
-    delegate_->Get(net.params(), solver.step());
-    /*
+
+  Solver solver(model.solver());
+  solver.Setup(delegate_, model.data(), model.net());
+
+  pthread_t solver_thread;
+  pthread_create(&solver_thread, NULL, solver.Train, NULL);
+  while(true) {
+    //    if(NetworkThread::Get()->TryRead())
+    //    send and recv msgs
+
     if(solver.ValidateNow()){
-      if(ShouldIDoValidation(solver.step())){
-        Performance perf=Validate(&solver,net,tables[kVal]);
-        ReportPerformance(perf);
-      }
+      Performance perf=solver.Validate();
+      ReportPerformance(perf);
+      solver.ContinueTrain();
     }
-    */
-    for(auto* layer:net.input_layer())
-      layer->SetInputData(nullptr);
-    // TODO start prefetch thread
-    PrefetchData( kTrain, &net);
-    train_perf.Aggregate(solver.TrainOneBatch(&net));
     if(solver.DisplayNow()){
       ReportPerformance(train_perf.Avg());
       train_perf.Reset();
+      solver.ContinueTrain();
     }
-    delegate_->Update(net.params(), solver.step());
   }
+  pthread_join(solver_thread, NULL);
+  delete delegate;
 }
 }  // namespace lapis

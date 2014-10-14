@@ -21,6 +21,7 @@ void Param::Init(const ParamProto &proto){
   mean_=proto.mean();
   std_=proto.std();
   value_=proto.value();
+  split_threshold_=proto.split_threshold();
   if(proto.has_data())
     data_.InitFromProto(proto.data());
   if(proto.has_grad())
@@ -86,6 +87,7 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
   proto->set_learning_rate_multiplier(learning_rate_multiplier_);
   proto->set_weight_decay_multiplier(weight_decay_multiplier_);
   proto->set_init_method(init_method_);
+  proto->set_split_threshold(split_threshold_);
   DAryProto* data=proto->mutable_data();
   data_.ToProto(data, copyData);
   DAryProto* grad=proto->mutable_grad();

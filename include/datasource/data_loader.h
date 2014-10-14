@@ -6,10 +6,10 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include "utils/network_thread.h"
+#include <memory>
+#include "utils/global_context.h"
 #include "utils/common.h"
 #include "proto/model.pb.h"
-#include "proto/system.pb.h"
 
 /**
  * Load data from local disk to worker groups.
@@ -31,15 +31,14 @@ const static string test_shard="test";
 
 class DataLoader {
   public:
-    explicit DataLoader(int rank, const ClusterConfig& conf);
+    DataLoader(std::shared_ptr<GlobalContext> gc);
     void ShardData(const DataProto& proto) ;
     void ShardData(const DataSourceProto& source, int ngroups);
     void CreateLocalShard(const DataSourceProto& source, const ShardProto& shard);
     void CreateLocalShards(const DataProto& dp) ;
   private:
     string shard_folder_;
-    int gid_, rank_, nprocs_;
-    ClusterConfig cluster_;
+    int gid_, ngroups_, rank_, nprocs_;
 };
 #endif  // INCLUDE_DATASOURCE_DATA_LOADER_H_
 }  // namespace lapis

@@ -105,48 +105,10 @@ void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
       */
 }
 
-
-void TableDelegate::CreateTables(const SolverProto& solver) {
-  tables_[kTrain]=CreateDiskTable(static_cast<const int>(kTrain), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
-  tables_[kVal]=CreateDiskTable(static_cast<const int>(kVal), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
-  tables_[kTest]=CreateDiskTable(static_cast<const int>(kTest), 256*10, std::to_string(kTrain), new Marshal<int>, new Marshal<Record>);
-}
-TDiskTable* TableDelegate::CreateDiskTable(const int id, int max_size, string name, Marshal<int>* mkey, Marshal<Record>* mval){
-  DiskTableDescriptor *info = new DiskTableDescriptor(id, name, max_size);
-  info->key_marshal = mkey;
-  info->value_marshal = mval;
-  TypedDiskTable<int,Record> *t = new TypedDiskTable<int,Record>(info);
-  return t;
-}
-//  one desginated server stores the data
-TDiskTable* TableDelegate::CreateDiskTable(const int id, int fixed_server_id, int max_size, string name, Marshal<int>* mkey, Marshal<Record>* mval){
-	TDiskTable* t = CreateDiskTable(id, max_size, name, mkey, mval);
-	t->disk_info()->fixed_server_id = fixed_server_id;
-  VLOG(3)<<"after create disk table "<<name;
-  VLOG(3)<<"table shards num "<<t->num_shards();
-	return t;
+TypedTableDelegate::~TypedTableDelegate(){
+  delete param_table_;
 }
 
-TableDelegate::~TableDelegate() {
-  for(auto& entry: tables_)
-    delete entry.second;
-}
-void TableDelegate::Insert(const int id, int record_id, const Record& record){
-  dynamic_cast<TDiskTable*>(tables_[id])->put(record_id, record);
-}
-void TableDelegate::Flush(const int id){
-  dynamic_cast<TDiskTable*>(tables_[id])->finish_put();
-}
-void TableDelegate::Next(const int id, int *record_id, Record* record){
-  int k;
-  TDiskTable* table=dynamic_cast<TDiskTable*>(tables_[id]);
-  if(!table->has_loaded())
-    table->Load();
-  if(table->done())
-    table->Load();
-   table->get(&k, record);
-   table->Next();
-}
 void TableDelegate::Update(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
     Update(param,step);
@@ -165,6 +127,21 @@ void TableDelegate::Get(const std::vector<Param*> &params, int step){
   for(auto* param : params)
     Get(param, step);
   return;
+}
+void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
+  if(GlobalContext::Get()->standalone())return;
+  for(auto* param : params)
+    AsyncGet(param, step);
+  return;
+}
+
+template<>
+void TypedTableDelegate<VKey, SGDValue>::SplitParams(const std::vector<Param *> &params, int wid) {
+
+}
+template<>
+void TypedTableDelegate<VKey, AdaGrad>::SplitParams(const std::vector<Param *> &params, int wid) {
+
 }
 
 template<>
@@ -306,6 +283,40 @@ void TypedTableDelegate<int, AdaGradValue>::Put(Param * param){
     param_table_->put(mykey,v);
   }
 }
+template<>
+void TypedTableDelegate<VKey, AdaGradValue>::AsyncCollect(Param * param, int step){
+  int paramid = param->id();
+  int len = param->data().size();
+  int splitsize = std::max(param->split_threshold(), len/GlobalContext::Get()->num_table_servers());
+  int splitoffset = largestoffset/splitsize;
+  if (largestoffset%splitsize) splitoffset++;
+  if(splitsize<16777216)
+    LOG(WARNING)<<"split of size "<<splitsize
+    <<"  exceeds the size of max google protobuf message"
+    <<" param length is "<<len <<" reset the splitsize to smaller one";
+    splitoffset = 1000000;
+    splitsize = largestoffset/splitoffset + 1;
+  }
+  if (splitsize > 2048)VLOG(3)<<"Error:split size too much!!!";
+  int curoffset = 0;
+  float * data_addr = param->mutable_data()->dptr();
+  VKey key;
+  key.set_version(step);
+  for(int j = 0; j < splitsize; j++)
+  {
+    key.set_key(paramid*2048+j)
+    AdaGradValue v = param_table_->async_get_collect(key, v);
+    const DAryProto& data=v.data();
+    for(int k = 0; k < splitoffset; k++)
+    {
+      if(curoffset >= largestoffset) break;
+      //to pass new float to the params
+      data_addr[curoffset] = data.value(k);
+      curoffset++;
+    }
+  }
+}
+
 
 template<>
 void TypedTableDelegate<int, AdaGradValue>::Get(Param * param, int step){
@@ -336,6 +347,7 @@ void TypedTableDelegate<int, AdaGradValue>::Get(Param * param, int step){
     }
   }
 }
+
 
 template<>
 void TypedTableDelegate<int, SGDValue>::Get(Param * param, int step){

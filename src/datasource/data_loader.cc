@@ -16,33 +16,23 @@
 
 namespace lapis {
 
-DataLoader::DataLoader(int rank, const ClusterConfig& conf):rank_(rank) {
-  shard_folder_=conf.shard_folder();
-  cluster_=conf;
+DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
+  shard_folder_=gc->shard_folder();
   boost::filesystem::path dir_path(shard_folder_);
   if(boost::filesystem::create_directories(dir_path)) {
     LOG(INFO)<<"create shard folder "<<shard_folder_<<" on process "<<rank;
   }
-  gid_=-1;
-  int gid=0;
-  nprocs_=0;
-  for(auto& group: conf.group()){
-    nprocs_+=group.end()-group.start();
-    if(rank_>=group.start()&&rank_<group.end()){
-      CHECK_EQ(gid_, -1);
-      gid_=gid;
-    }
-    gid++;
-  }
-  nprocs_+=1;
-  LOG(INFO)<<"my rank is "<<rank << ", there are "<<nprocs_<<" processes"
+  gid_=gc->group_id();
+  nprocs_=gc->num_procs();
+  ngroups_=gc->num_groups();
+  LOG(INFO)<<"my rank is "<<gc->rank() << ", there are "<<nprocs_<<" processes"
       <<" my group id is "<<gid_;
 }
 
 void DataLoader::ShardData(const DataProto& dp) {
   if(dp.has_train_data()){
     LOG(INFO)<<"shard train data...";
-    ShardData(dp.train_data(),cluster_.group_size());
+    ShardData(dp.train_data(),ngroups_);
   }
   if(dp.has_validation_data()){
     LOG(INFO)<<"load validation data...";
@@ -78,9 +68,8 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
     for(int k=0;k<shardsize;k++){
       sp.add_record(*riter);
     }
-    for (int rank = cluster_.group(g).start();rank < cluster_.group(g).end(); rank++) {
-      mpi->Send(rank, MTYPE_PUT_SHARD, sp);
-    }
+    for(auto worker: GlobalContext::Get()->MembersOfGroup(g))
+      mpi->Send(worker, MTYPE_PUT_SHARD, sp);
   }
   CHECK(riter== records.end());
   LOG(ERROR)<<"Finish Sharding for "<<source.name();

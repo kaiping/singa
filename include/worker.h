@@ -5,9 +5,9 @@
 #define INCLUDE_WORKER_H_
 #include <map>
 #include <memory>
+#include <pthread.h>
 
 #include "core/table_server.h"
-#include "core/table_delegate.h"
 #include "net/net.h"
 #include "net/solver.h"
 #include "proto/model.pb.h"
@@ -22,27 +22,21 @@ namespace lapis {
 
 class Worker {
  public:
-  Worker(TableDelegate* delegate);
-  ~Worker();
-  void Run(bool do_run, bool time,  const SolverProto& solver_proto);
-
- private:
-  bool ShouldIDoValidation(int step);
-  bool AmIGroupLeader() {return leader_==id_;}
-  void InitDistributedStorage();
-
-  Performance Validate(Solver* solver, Net* net);
-  void PrefetchData(int phase, Net *net);
+  Worker(const shared_ptr<GlobalContext>& gc);
+  void Start(const DataProto& proto, const SolverProto& sp);
+  void Resume();
   void Shutdown();
-  void ReportPerformance(Performance perf);
-  void InitGroupInfo();
+  ~Worker();
+
  private:
+  void Run(const ModelProto& proto);
+  void ReportPerformance(Performance perf);
+  // must provide globalcontext with Worker
+  Worker();
+
+  shared_ptr<GlobalContext> context_;
   std::shared_ptr<NetworkThread> mpi_;
   TableServer *table_server_;
-  TableDelegate* delegate_;
-  vector<int> member_list_;
-  int leader_;
-  int id_;
 };
 }  // namespace lapis
 

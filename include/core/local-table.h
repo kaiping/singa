@@ -6,7 +6,6 @@
 
 #include "core/table.h"
 #include "core/file.h"
-#include "core/rpc.h"
 
 namespace lapis {
 
@@ -24,10 +23,13 @@ class LocalTable :
   virtual int64_t size() = 0;
   virtual void clear() = 0;
   virtual void resize(int64_t size) = 0;
+  Stats& stats(){ return stats_;}
+
   virtual ~LocalTable() {}
  protected:
   friend class GlobalTable;
   TableCoder *delta_file_;
+  Stats stats_;
 };
 
 }  // namespace lapis

@@ -83,16 +83,38 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
   req.set_shard(shard);
   req.set_source(worker_id_);
   int peer = w_->peer_for_partition(info().table_id, shard);
-  VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
-  VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Read(peer, MTYPE_GET_RESPONSE, &resp);
-  VLOG(3)<<"get remote ater read"<<peer<<" from "<<worker_id_;
+  //VLOG(3)<<"get remote ater read"<<peer<<" from "<<worker_id_;
   if (resp.missing_key()) {
     return false;
   }
   *v = resp.kv_data(0).value();
   return true;
+}
+
+void GlobalTable::async_get_remote(int shard, const StringPiece &k){
+	HashGet req;
+	req.set_key(k.AsString());
+	req.set_table(info().table_id);
+	req.set_shard(shard);
+	req.set_source(worker_id_);
+	int peer = w_->peer_for_partition(info().table_id, shard);
+	//VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
+	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
+}
+
+bool GlobalTable::async_get_remote_collect(string *k, string *v) {
+  TableData resp;
+
+  if (NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE, &resp)){
+	  *k = resp.kv_data(0).key();
+	  *v = resp.kv_data(0).value();
+	   return true;
+  }
+  else return false;
 }
 
 void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
@@ -109,7 +131,7 @@ void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
     kv->set_key(get_req.key());
     kv->set_value(t->get_str(get_req.key()));
   }
-  VLOG(3)<<"end of handle_get local";
+  //VLOG(3)<<"end of handle_get local";
 }
 
 
@@ -137,6 +159,14 @@ void GlobalTable::SendUpdates() {
     }
   }
   pending_writes_ = 0;
+}
+
+Stats GlobalTable::stats(){
+	Stats stats;
+	for (size_t i = 0; i < partitions_.size(); ++i) {
+		stats.Merge(partitions_[i]->stats());
+	}
+	return stats;
 }
 
 int GlobalTable::pending_write_bytes() {

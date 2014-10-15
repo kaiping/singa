@@ -44,31 +44,9 @@ const DAry& Edge::GetGrad(Layer* tolayer){
 }
 DAry* Edge::GetMutableGrad(Layer* tolayer){
   if(tolayer==node1_)
-    return node1_->GetMutableGrad(this);
+    return node2_->GetMutableGrad(this);
   else
     return node1_->GetMutableGrad(this);
 }
-/*
-void Edge::ToProto(EdgeProto* proto) {
-  proto->set_node1(node1_->name());
-  proto->set_node2(node2_->name());
-}
-*/
-/*
-void Edge::ComputeParamUpdates(const Trainer *trainer) {
-  const SGDTrainer *sgd = reinterpret_cast<const SGDTrainer *> (trainer);
-  float mom= sgd->momentum();
-  float wdecay = sgd->weight_decay();
-  float lr = sgd->learning_rate();
-  for (Param *param : params_) {
-    mom*= param->momentum();
-    wdecay *= param->weight_decay();
-    lr*= param->learning_rate();
-    DAry* history=param->mutable_history();
-    Mult(history, param->history, mom);
-    Axpb(history, -lr, param->gradient(), param->history());
-    Axpb(history, -lr*wdecay, param->data(), param->history());
-  }
-}
-*/
+
 }  // namespace lapis

@@ -6,19 +6,19 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "utils/stringpiece.h"
 #include "proto/model.pb.h"
 
 using std::vector;
 using std::string;
 using std::map;
-
 namespace lapis {
+const int kBufLen=1024;
 enum Phase{
   kTrain=1,
   kValidation,
   kTest
 };
+
 
 template<typename T>
 class StateQueue {

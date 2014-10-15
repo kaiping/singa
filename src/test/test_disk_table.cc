@@ -18,7 +18,7 @@
 #include <cmath>
 
 DEFINE_int32(record_size,100, "# elements per float vector");
-DEFINE_int32(block_size, 500, "# records per block, multiple blocks per table");
+DECLARE_int32(block_size);
 DEFINE_int32(table_size, 1000, "# records per table");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
@@ -173,9 +173,9 @@ int test_disk(int tid) {
 }
 
 // for debugging use
-#ifndef FLAGS_v
-  DEFINE_int32(v, 3, "vlog controller");
-#endif
+//#ifndef FLAGS_v
+//  DEFINE_int32(v, 3, "vlog controller");
+//#endif
 
 int main(int argc, char **argv) {
 	FLAGS_logtostderr = 1;

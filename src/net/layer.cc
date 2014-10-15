@@ -6,7 +6,6 @@
 #include <cfloat>
 #include "net/solver.h"
 #include "net/layer.h"
-
 namespace lapis {
 /*****************************************************************************
  * Implementation for Layer
@@ -159,7 +158,7 @@ void ConvLayer::AllocateMemory(){
 
 void ConvLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
-  t.Reset();
+  t.reset();
   Img2Col(&col_data_, bottom);
   img2col+=t.elapsed();
   // copy constructor with rvalue ref DAry(DAry&& other)
@@ -170,12 +169,12 @@ void ConvLayer::ComputeFeature() {
     // copy constructor with rvalue ref
     DAry data3=data4[n];
     DAry bottom3=bottom4[n];
-    t.Reset();
+    t.reset();
     for (int g = 0; g < ngroups_; g++){
       data3[g].Dot(weight3[g], bottom3[g]);
     }
     tdot+=t.elapsed();
-    t.Reset();
+    t.reset();
     DAry mat_data(data3, {nkernels_, N_});
     mat_data.AddCol(bias_.data());
     tadd+=t.elapsed();
@@ -184,7 +183,7 @@ void ConvLayer::ComputeFeature() {
 
 void ConvLayer::ComputeGradient() {
   {
-    t.Reset();
+    t.reset();
     DAry *gbias=bias_.mutable_grad();
     DAry grad3(grad_, {num_, nkernels_, N_});
     // sum along 1-th dim, i.e., the result aray has length as the 1-th dim
@@ -201,7 +200,7 @@ void ConvLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   DAry gcol4(col_grad_, {num_, ngroups_,K_, N_});
   if(gbottom!=nullptr){
-    t.Reset();
+    t.reset();
     for (int n = 0; n < num_; n++) {
       DAry grad3(grad_[n], {ngroups_,M_,N_});
       DAry col3=col4[n];
@@ -212,11 +211,11 @@ void ConvLayer::ComputeGradient() {
       }
     }
     tdot+=t.elapsed();
-    t.Reset();
+    t.reset();
     Col2Img(gbottom, col_grad_);
     col2img+=t.elapsed();
   } else {
-    t.Reset();
+    t.reset();
     for (int n = 0; n < num_; n++) {
       DAry grad3(grad_[n], {ngroups_,M_,N_});
       DAry col3=col4[n];

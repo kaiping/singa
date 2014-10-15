@@ -5,6 +5,7 @@
 #define INCLUDE_CORE_TIMER_H_
 #include <time.h>
 
+
 namespace lapis {
 static uint64_t rdtsc() {
   uint32_t hi, lo;
@@ -30,10 +31,10 @@ inline std::string LocalTime() {
 class Timer {
  public:
   Timer() {
-    Reset();
+    reset();
   }
 
-  void Reset() {
+  void reset() {
     start_time_ = Now();
     start_cycle_ = rdtsc();
   }

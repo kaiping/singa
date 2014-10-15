@@ -23,9 +23,8 @@ Worker::~Worker() {
   if(table_server_!=nullptr)
     delete table_server_;
 }
-
 void Worker::Shutdown() {
-	VLOG(3) << "Worker is shutting down ...";
+	LOG(INFO) << "Worker is shutting down ...";
   mpi_->Flush();
   mpi_->Send(GlobalContext::kCoordinator, MTYPE_WORKER_END, EmptyMessage());
   EmptyMessage msg;
@@ -51,7 +50,7 @@ void Worker::ReportPerformance(Performance perf) {
     LOG(INFO)<<perf.ToString();
   }else{
     mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
-  }
+ }
 }
 
 void Worker::Resume() {

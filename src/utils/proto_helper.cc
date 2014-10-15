@@ -9,6 +9,8 @@
 #include <glog/logging.h>
 
 #include <fstream> //NOLINT
+#include <string>
+
 
 #include "proto/common.pb.h"
 #include "utils/stringpiece.h"
@@ -26,6 +28,7 @@ using google::protobuf::io::ZeroCopyOutputStream;
 using google::protobuf::io::CodedOutputStream;
 
 namespace lapis {
+const int kBufLen=1024;
 void ReadProtoFromTextFile(const char* filename,
     ::google::protobuf::Message* proto) {
   int fd = open(filename, O_RDONLY);
@@ -89,4 +92,5 @@ void WriteProtoToBinaryFile(const Message &proto, const char *filename) {
   CHECK(proto.SerializeToOstream(&output));
 }
 */
+
 }  // namespace lapis

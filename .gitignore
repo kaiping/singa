@@ -12,7 +12,9 @@
 *.project
 *.cproject
 out
-log
+log*
+latency*
+throughput*
 cscope.*
 build/
 tmp/

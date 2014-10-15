@@ -52,8 +52,11 @@ class Solver {
   /**
    * test performance on validation dataset
    * @param net the Net object
+   * @param nbatches number of batches
    */
   virtual Performance ValidateOneBatch(Net *net);
+
+  void TimeOneBatch(int runs);
   /**
    * test performance on test dataset
    * @param net the current Net object

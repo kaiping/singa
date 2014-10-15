@@ -25,6 +25,7 @@ DEFINE_bool(time, true,  "time training algorithm");
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
+// for debugging use
 int main(int argc, char **argv) {
   //FLAGS_stderrthreshold=0;
   google::InitGoogleLogging(argv[0]);

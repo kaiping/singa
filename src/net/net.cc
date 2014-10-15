@@ -95,7 +95,7 @@ Net::Net(const NetProto &net_proto) {
  // the softmax loss layer
   LOG(INFO)<<"Neural Net constructed";
 }
-
+/*
 void Net::Forward() {
   for (auto* layer : layers_){
     VLOG(3)<<layer->name();
@@ -109,36 +109,7 @@ void Net::Backward() {
     (*layer)->ComputeGradient();
   }
 }
-void Net::TimeOneBatch(int runs) {
-  Timer t;
-  LOG(INFO)<<"Forwarding...";
-  for (auto* layer : layers_){
-    t.Reset();
-    for (int i = 0; i < runs; i++)
-      layer->ComputeFeature();
-    LOG(INFO)<<layer->name() <<": "<<t.elapsed()*1.0/runs;
-    if(layer->name().find("conv")!=std::string::npos){
-      VLOG(3)<<"xx";
-      ConvLayer* cl=dynamic_cast<ConvLayer*> (layer);
-      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
-        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
-    }
-
-  }
-  LOG(INFO)<<"Backwarding...";
-  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++){
-    t.Reset();
-    for(int i=0;i<runs;i++)
-      (*layer)->ComputeGradient();
-    LOG(INFO)<<(*layer)->name()<<": "<<t.elapsed()*1.0/runs;
-    if((*layer)->name().find("conv")!=std::string::npos){
-      ConvLayer* cl=dynamic_cast<ConvLayer*> (*layer);
-      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
-        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
-    }
-  }
-}
-
+*/
 
 
 

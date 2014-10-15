@@ -5,7 +5,7 @@
 #include "core/table.h"
 #include "core/local-table.h"
 #include "core/file.h"
-#include "core/rpc.h"
+#include "core/request_dispatcher.h"
 
 namespace lapis {
 
@@ -42,6 +42,8 @@ class GlobalTable :
   void SendUpdates();
   void ApplyUpdates(const TableData &req);
   void UpdatePartitions(const ShardInfo &sinfo);
+
+  Stats stats();
 
   int pending_write_bytes();
 
@@ -156,8 +158,17 @@ V TypedGlobalTable<K, V>::get_local(const K &k) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   int shard = this->get_shard(k);
+  //VLOG(3)<<"sent to shard: "<<shard;
   //  boost::recursive_mutex::scoped_lock sl(mutex());
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->sync_local_put(key);
+
   partition(shard)->put(k, v);
+
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->event_complete(key);
+
   //  always send
   if (!is_local_shard(shard)) {
     SendUpdates();
@@ -167,43 +178,80 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::update(const K &k, const V &v) {
   int shard = this->get_shard(k);
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
   //  boost::recursive_mutex::scoped_lock sl(mutex());
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->sync_local_put(key);
+
   partition(shard)->update(k, v);
+
+  if (is_local_shard(shard))
+	  RequestDispatcher::Get()->event_complete(key);
+
   //  always send
-  if (!is_local_shard(shard))
+  if (!is_local_shard(shard)){
     SendUpdates();
+  }
 }
 
 // Return the value associated with 'k', possibly blocking for a remote fetch.
 template<class K, class V>
 V TypedGlobalTable<K, V>::get(const K &k) {
   int shard = this->get_shard(k);
+  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
+
   if (is_local_shard(shard)) {
-    return get_local(k);
+	RequestDispatcher::Get()->sync_local_get(key);
+    V val =  get_local(k);
+    RequestDispatcher::Get()->event_complete(key);
+    return val;
   }
   string v_str;
-  get_remote(shard,
-             marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k),
-             &v_str);
+  get_remote(shard,key, &v_str);
   return unmarshal(static_cast<Marshal<V>*>(this->info().value_marshal), v_str);
 }
 
+/*
+ * asynchronous get, returns right away. use async_get_collect to wait on the
+ * content.
+ *
+ * if the key is local, return
+ * else send send (get_remote without waiting).
+ */
 template<class K, class V>
 bool TypedGlobalTable<K,V>::async_get(const K &k, V* v){
   int shard = this->get_shard(k);
-  if (is_local_shard(shard)) {
-	*v = get_local(k);
-	return true;
-  }
+
+  if (is_local_shard(shard)) return false;
   else{
 		async_get_remote(shard,
 				marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 		return false;
   }
+
 }
 
+/*
+ * wait on the content. The upper layer repeatedly invokes this function until
+ * it returns true, then the value can be used.
+ *
+ * K k;
+ * V v;
+ * if (async_get_collect(&k,&v))
+ *     do_some_thing(k,v);
+ */
 template<class K, class V>
 bool TypedGlobalTable<K,V>::async_get_collect(K* k, V* v){
+	if (is_local_shard(this->get_shard(*k))){
+		  string key_str= marshal(static_cast<Marshal<K>*>(this->info().key_marshal), *k);
+		if (RequestDispatcher::Get()->table_queue()->sync_local_get(key_str)){
+			*v = get_local(*k);
+			RequestDispatcher::Get()->event_complete(key_str);
+			return true;
+		}
+		else
+			return false;
+	}
 	string tk, tv;
 	bool succeed = async_get_remote_collect(&tk, &tv);
 	if (succeed){
@@ -212,6 +260,7 @@ bool TypedGlobalTable<K,V>::async_get_collect(K* k, V* v){
 	}
 	return succeed;
 }
+
 
 template<class K, class V>
 bool TypedGlobalTable<K, V>::contains(const K &k) {

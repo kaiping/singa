@@ -77,7 +77,7 @@ class Layer {
    * the gradient w.r.t the aggregated activation.
    */
     virtual void ComputeGradient();
-  /**
+ /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
    */

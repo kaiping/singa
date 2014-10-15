@@ -168,6 +168,38 @@ Performance Solver::ValidateOneBatch(Net *net){
   return net->output_layer(0)->CalcPerf(true, true);
 }
 
+void Solver::TimeOneBatch(int runs) {
+  delegate_->Get(net_->params(), 0);
+  Timer t;
+  LOG(INFO)<<"Forwarding...";
+
+  auto layers=net_->layers();
+  for (auto* layer : layers){
+    t.reset();
+    for (int i = 0; i < runs; i++)
+      layer->ComputeFeature();
+    LOG(INFO)<<layer->name() <<": "<<t.elapsed()*1.0/runs;
+    if(layer->name().find("conv")!=std::string::npos){
+      ConvLayer* cl=dynamic_cast<ConvLayer*> (layer);
+      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
+        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
+    }
+  }
+  LOG(INFO)<<"Backwarding...";
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+    t.reset();
+    for(int i=0;i<runs;i++)
+      (*layer)->ComputeGradient();
+    LOG(INFO)<<(*layer)->name()<<": "<<t.elapsed()*1.0/runs;
+    if((*layer)->name().find("conv")!=std::string::npos){
+      ConvLayer* cl=dynamic_cast<ConvLayer*> (*layer);
+      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
+        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
+    }
+  }
+}
+
+
 //Performance Solver::Test(Net *net) { }
 
 bool Solver::HasFinished(){

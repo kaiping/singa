@@ -7,8 +7,9 @@
 #include "proto/worker.pb.h"
 
 DEFINE_string(data_dir,"/data1/wangwei/lapis", "path to data store");
-DEFINE_int32(table_buffer, 1,0);
+DEFINE_int32(table_buffer, 20,0);
 DEFINE_int32(io_buffer_size,5,0);
+DEFINE_int32(block_size,10,0);
 DECLARE_double(sleep_time);
 DEFINE_int32(debug_index,0,0);
 namespace lapis{
@@ -64,12 +65,13 @@ DiskTable::DiskTable(DiskTableDescriptor *table) {
 void DiskTable::Load(){
 	//  get all files on the first load.
 	//  on re-load, simply reset the pointer
-  VLOG(3)<<"disktable loading ... ";
+	VLOG(3) << "disk table loading ...";
 	if (blocks_.empty()) {
 		vector<File::Info> files = File::MatchingFileinfo(
-				StringPrintf("%s/%s_*", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str()));
+				StringPrintf("%s/%s_%d_*", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id()));
 		for (size_t i = 0; i < files.size(); i++) {
+			VLOG(3) << "Loading file " << files[i].name;
 			FileBlock *block = new FileBlock();
 			block->info = files[i];
 			block->end_pos = files[i].stat.st_size;
@@ -95,16 +97,16 @@ void DiskTable::store(const DiskData* data){
 
 	if (!file_){
 		file_ = new RecordFile(
-				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str(), data->block_number()),
+				StringPrintf("%s/%s_%d_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id(), data->block_number()),
 				"w");
 	}
 
 	if ((int)(data->block_number())!=current_block_){
 		delete file_;
 		file_ = new RecordFile(
-				StringPrintf("%s/%s_%d", FLAGS_data_dir.c_str(),
-						table_info_->name_prefix.c_str(), data->block_number()),
+				StringPrintf("%s/%s_%d_%d", FLAGS_data_dir.c_str(),
+						table_info_->name_prefix.c_str(), NetworkThread::Get()->id(), data->block_number()),
 				"w");
 		current_block_ = data->block_number();
 	}
@@ -115,6 +117,7 @@ void DiskTable::store(const DiskData* data){
 	disk_table_stat_[TOTAL_BYTE_STORED]+=data->ByteSize();
 	disk_table_stat_[TOTAL_SUB_BLOCK_RECEIVED]++;
 	disk_table_stat_[TOTAL_RECORD_STORED]+=data->records_size();
+	delete data;
 }
 
 void DiskTable::put_str(const string& k, const string& v){
@@ -139,8 +142,9 @@ void DiskTable::put_str(const string& k, const string& v){
 	if (current_buffer_count_ >= FLAGS_table_buffer) {
 		while (!(buffer_->add_data_records(current_write_record_)))
 			Sleep (FLAGS_sleep_time);
+		delete current_write_record_;
 		current_write_record_ = new DiskData();
-		if (total_buffer_count_ >= table_info_->max_size) {
+		if (total_buffer_count_ >= FLAGS_block_size){ //table_info_->max_size) {
 			current_block_++;
 			total_buffer_count_ = 0;
 		}
@@ -163,16 +167,19 @@ void DiskTable::get_str(string *k, string *v){
 
 //  flush the current buffer
 void DiskTable::finish_put(){
+  VLOG(3)<<"disk table finish put";
 
 	//  done, flush the buffer
 	done_writing_ = true;
 	//  wait to send all the data first
 	network_write_thread_->join();
+  VLOG(3)<<"disk table finish put join";
 
 	while (!buffer_->empty()){
 		SendDataBuffer(*(buffer_->next_data_records()));
 	}
 
+  VLOG(3)<<"disk table finish put write left";
 	//  write the left over
 	if (current_buffer_count_>0)
 		SendDataBuffer(*current_write_record_);
@@ -182,8 +189,10 @@ void DiskTable::finish_put(){
 	message.set_table(id());
 	message.set_is_empty(true);
 	message.set_block_number(-1);
+  VLOG(3)<<"disk table finish put broadcast";
 	NetworkThread::Get()->SyncBroadcast(MTYPE_DATA_PUT_REQUEST_FINISH,
 							MTYPE_DATA_PUT_REQUEST_DONE, message);
+  VLOG(3)<<"disk table finish put end";
 }
 
 void DiskTable::finalize_data(){
@@ -237,6 +246,7 @@ void DiskTable::write_loop(){
 		}
 		if (data!=NULL){
 			SendDataBuffer(*data);
+			delete data;
 		}
 	}
 }
@@ -256,7 +266,6 @@ void DiskTable::Next(){
 }
 
 void DiskTable::SendDataBuffer(const DiskData& data){
-
 	int dest = table_info_->fixed_server_id;
 	if (dest==-1)
 		dest = data.block_number()%(GlobalContext::Get()->num_table_servers());

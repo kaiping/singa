@@ -194,10 +194,12 @@ void SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
   K k;
   V v;
   string kt, vt;
+  int count=0;
   while (in->ReadEntry(&kt, &vt)) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
     update(k, v);
+    count++;
   }
 }
 
@@ -238,6 +240,11 @@ void SparseTable<K, V>::update(const K &k, const V &v) {
     ((BaseUpdateHandler<V> *)info_->accum)->Update(&buckets_[b].v, v);
   } else {
     put(k, v);
+    string xk,xv;
+    ((Marshal<K>*)info_->key_marshal)->marshal(k,&xk);
+    ((Marshal<V>*)info_->value_marshal)->marshal(v,&xv);
+    //VLOG(3)<< "Table " << NetworkThread::Get()->id() << " put " << (xk.size()+xv.size());
+    stats_["TABLE_SIZE"]+=xk.size()+xv.size();
   }
 }
 

@@ -2,8 +2,12 @@
 // modified from piccolo/rpc.cc
 #include <glog/logging.h>
 #include <unordered_set>
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <google/protobuf/io/coded_stream.h>
 #include "utils/network_thread.h"
 #include "utils/global_context.h"
+#include "core/request_dispatcher.h"
+
 #include "utils/tuple.h"
 #include "utils/stringpiece.h"
 #include "utils/timer.h"
@@ -20,6 +24,23 @@ string LAST_BYTE_RECEIVED="last byte received";
 string TOTAL_BYTE_RECEIVED="total byte received";
 
 
+RPCRequest::~RPCRequest() {}
+
+// Send the given message type and data to this peer.
+RPCRequest::RPCRequest(int tgt, int method, const Message &ureq) {
+  failures = 0;
+  target = tgt;
+  rpc_type = method;
+  ureq.AppendToString(&payload);
+}
+
+TaggedMessage::~TaggedMessage() {}
+
+TaggedMessage::TaggedMessage(int t, const string &dat) {
+  tag = t;
+  data = dat;
+}
+
 std::shared_ptr<NetworkThread> NetworkThread::instance_;
 void Sleep(double t){
   timespec req;
@@ -30,6 +51,7 @@ void Sleep(double t){
 void ShutdownMPI() {
   NetworkThread::Get()->Shutdown();
 }
+
 std::shared_ptr<NetworkThread> NetworkThread::Get() {
   if(!instance_)
     instance_.reset(new NetworkThread());
@@ -50,21 +72,10 @@ NetworkThread::NetworkThread() {
     VLOG(3)<<"rank of this process "<<id_;
     for (int i = 0; i < kMaxMethods; ++i) {
       callbacks_[i] = NULL;
-      handles_[i] = NULL;
     }
-    disk_write_handle_ = NULL;
 
   sender_and_reciever_thread_ = new boost::thread(&NetworkThread::NetworkLoop,
       this);
-  processing_thread_ = new boost::thread(&NetworkThread::ProcessLoop, this);
-  disk_thread_ = new boost::thread(&NetworkThread::WriteToDiskLoop, this);
-
-//  initialize message queue
-  auto gc = GlobalContext::Get();
-  if (gc->synchronous())
-    request_queue_ = new SyncRequestQueue(gc->num_table_servers());
-  else
-    request_queue_ = new AsyncRequestQueue(gc->num_table_servers());
 
   //  init stats
 	network_thread_stats_[FIRST_BYTE_RECEIVED] =
@@ -73,7 +84,8 @@ NetworkThread::NetworkThread() {
 }
 
 bool NetworkThread::active() const {
-  return active_sends_.size() + pending_sends_.size() > 0;
+	return (active_sends_.size() + pending_sends_.size() > 0)
+			|| RequestDispatcher::Get()->active();
 }
 
 void NetworkThread::CollectActive() {
@@ -101,6 +113,7 @@ void NetworkThread::CollectActive() {
 //  are added to the queue. Other requests (shard assignment, etc.)
 //  are processed right away
 void NetworkThread::NetworkLoop() {
+	VLOG(3) << "In network loop of process " << id();
 	while (running_) {
 		MPI::Status st;
 		if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
@@ -120,17 +133,17 @@ void NetworkThread::NetworkLoop() {
 			}
 
 			//  put request to the queue
-			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST) {
-				request_queue_->Enqueue(tag, data);
-			} else if (tag == MTYPE_DATA_PUT_REQUEST
+			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST
+					|| tag == MTYPE_DATA_PUT_REQUEST
 					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
-				boost::recursive_mutex::scoped_lock sl(disk_lock_);
-				disk_queue_.push_back(data);
+				RequestDispatcher::Get()->Enqueue(tag, data);
 			}
 			else { //  put reponse, etc. to the response queue. This is read
 				//  actively by the client
 				boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
 				response_queue_[tag][source].push_back(data);
+				//if (tag==MTYPE_MODEL_CONFIG)
+        //		VLOG(3) << "Barrier message received for process " << id();
 			}
 			//  other messages that need to be processed right away, e.g. shard assignment
 			if (callbacks_[tag] != NULL) {
@@ -153,42 +166,6 @@ void NetworkThread::NetworkLoop() {
 	}
 }
 
-//  loop through the request queue and process messages
-//  get the next message, then invoke call back
-void NetworkThread::ProcessLoop() {
-  while (running_) {
-    TaggedMessage msg;
-    request_queue_->NextRequest(&msg);
-    ProcessRequest(msg);
-  }
-}
-
-void NetworkThread::WriteToDiskLoop() {
-	while (running_) {
-		DiskData *data = new DiskData();
-		boost::recursive_mutex::scoped_lock sl(disk_lock_);
-		if (disk_queue_.empty())
-			Sleep(FLAGS_sleep_time);
-		else{
-			const string &s = disk_queue_.front();
-			data->ParseFromArray(s.data(), s.size());
-			disk_queue_.pop_front();
-			disk_write_handle_(data);
-		}
-	}
-}
-
-void NetworkThread::ProcessRequest(const TaggedMessage &t_msg) {
-  boost::scoped_ptr<Message> message;
-  if (t_msg.tag == MTYPE_GET_REQUEST)
-    message.reset(new HashGet());
-  else {
-    CHECK_EQ(t_msg.tag, MTYPE_PUT_REQUEST);
-    message.reset(new TableData());
-  }
-  message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
-  handles_[t_msg.tag](message.get());
-}
 
 //  for now, only PUT_RESPONSE message are being pulled from this.
 //  besides top-priority messages: REGISTER_WORKER, SHARD_ASSIGNMENT, etc.
@@ -201,7 +178,18 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     const string &s = q.front();
     if (data) {
       data->ParseFromArray(s.data(), s.size());
+      /*
+      // due to size limit of deault protobuf, need to use  codeinputstream
+      auto* instream=new google::protobuf::io::ArrayInputStream(s.data(), s.size());
+      auto* codein=new google::protobuf::io::CodedInputStream(instream);
+      // 256MB, warning for 64MB
+      codein->SetTotalBytesLimit(268435456,134217728);//67108864);
+      data->ParseFromCodedStream(codein);
+      delete instream;
+      delete codein;
+      */
     }
+
     q.pop_front();
     return true;
   }
@@ -218,6 +206,8 @@ bool NetworkThread::is_empty_queue(int src, int type){
 void NetworkThread::Read(int desired_src, int type, Message *data,
                          int *source) {
   while (!TryRead(desired_src, type, data, source)) {
+	  //if (type==MTYPE_MODEL_CONFIG)
+		//  VLOG(3) << "Waiting for barrier to clear, at process "<<id();
     Sleep(FLAGS_sleep_time);
   }
 }
@@ -256,7 +246,6 @@ void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
     sender_and_reciever_thread_->join();
-    disk_thread_->join();
     //processing_thread_->join();
     MPI_Finalize();
   }
@@ -278,10 +267,12 @@ void NetworkThread::Broadcast(int method, const Message &msg) {
 
 void NetworkThread::SyncBroadcast(int method, int reply, const Message &msg) {
   Broadcast(method, msg);
+  VLOG(3)<<"wait for "<<size()-1<<" rplies";
   WaitForSync(reply, size() - 1);
 }
 
 void NetworkThread::WaitForSync(int reply, int count) {
+  VLOG(3)<<"wait for braodcast";
   EmptyMessage empty;
   while (count > 0) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);

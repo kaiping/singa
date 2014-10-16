@@ -149,13 +149,14 @@ void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
     if(lgtype())
     {
         dstp->DeleteStore();
-        delete dstp;
+        //delete dstp;
     }
     if(projarray.lgtype())
     {
         srcp->DeleteStore();
-        delete srcp;
+        //delete srcp;
     }
+    LOG(ERROR)<<"before map sync";
     if(lgtype())DArray::sync();
     LOG(ERROR)<<"map sync finish";
 }
@@ -204,12 +205,12 @@ DArray tmpsrc ;
     if(lgtype())
     {
         dstp->DeleteStore();
-        delete dstp;
+        //delete dstp;
     }
     if(projarray.lgtype())
     {
         srcp->DeleteStore();
-        delete srcp;
+        //delete srcp;
     }
     if(lgtype())DArray::sync();
 }
@@ -276,17 +277,17 @@ void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,flo
   if(lgtype())
   {
     dstp->DeleteStore();
-    delete dstp;
+    //delete dstp;
   }
   if(projarray1.lgtype())
   {
     src1p->DeleteStore();
-    delete src1p;
+    //delete src1p;
   }
   if(projarray2.lgtype())
   {
     src2p->DeleteStore();
-    delete src2p;
+    //delete src2p;
   }
   if(lgtype())DArray::sync();
 }
@@ -462,7 +463,8 @@ void DArray::matrixMult(const DArray& src1,const DArray& src2)
   LOG(ERROR)<<"before larray matrixMult";
   ddst->LAData_->matrixMult(*(dsrc1->LAData_),*(dsrc2->LAData_));
   LOG(ERROR)<<"after larray matrixMult";
-
+  DArray::sync();
+  LOG(ERROR)<<"after matrixMult sync";
   //ddst->DAArea_.daout("ddst->DAarea_");
   //errorReport(_CFUNC,"debug 111");
   if(lgtype()||!projdst.isorigin())
@@ -470,12 +472,14 @@ void DArray::matrixMult(const DArray& src1,const DArray& src2)
     //errorReport(_CFUNC,"debug 115");
     //ddst->DAArea_.daout("ddst->DAarea_");
     //projdst.DAArea_.daout("projdst");
+
+    LOG(ERROR)<<"before sync copy";
     projdst.Copy(*ddst);
     //errorReport(_CFUNC,"debug 116");
+    LOG(ERROR)<<"before sync";
     if(lgtype())DArray::sync();
     ddst->DeleteStore();
   }
-  LOG(ERROR)<<"end of matrixMult";
   if(projarray1.lgtype()||!projarray1.isorigin())
     dsrc1->DeleteStore();
   if(projarray2.lgtype()||!projarray2.isorigin())
@@ -496,7 +500,7 @@ DArray DArray::Reshape(const Shape& shape)
         DArray mynew = DArray::Global(shape);
         DArray::sync();
         //warningReport(_CFUNC,"jy:only one machine need to fetch the data back");
-        if(GArray::Mid == 1)
+        if(GArray::Mid == 0)
         {
             DArray tmp = Fetch();
             tmp.Reshape(shape);

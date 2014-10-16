@@ -1,3 +1,5 @@
+#include <glog/logging.h>
+
 #include "larray.h"
 
 LArray::LArray(const Shape& shape):
@@ -311,14 +313,17 @@ void LArray::matrixMult(LArray& src1,LArray& src2)
     if(dadebugmode && src2.dim() != 2)
         errorReport(_CFUNC,"src2 not two dims");
     int x = myshape()[0];
-    int z = myshape()[0];
+    int z = myshape()[1];
     int y = src2.myshape()[0];
-    if(dadebugmode && src1.myshape()[0] != x)
-        errorReport(_CFUNC,"x is not equal");
-    if(dadebugmode && src1.myshape()[1] != y)
-        errorReport(_CFUNC,"y is not equal");
-    if(dadebugmode && src2.myshape()[1] != y)
-        errorReport(_CFUNC,"z is not equal");
+    myshape().daout("myshape");
+    src1.myshape().daout("src1");
+    src2.myshape().daout("src2");
+    CHECK(dadebugmode && src1.myshape()[0] == x)<<"x is not equal "<<x
+      <<" "<<src1.myshape()[0];
+    CHECK(dadebugmode && src1.myshape()[1] == y)<<"y is not equal "<<y
+      <<" "<<src1.myshape()[1];
+    CHECK(dadebugmode && src2.myshape()[1] == z)<<"z is not equal "<<z
+      <<" "<<src2.myshape()[1];
     float* ldst = loc();
     float* lsrc1 = src1.loc();
     float* lsrc2 = src2.loc();

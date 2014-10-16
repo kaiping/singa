@@ -40,11 +40,8 @@ void MatrixTestG()
             larr2.v(i,j) = i+2*j;
         LOG(ERROR)<<"before Put";
         garr1.Put(larr1);
+        garr2.Put(larr2);
         LOG(ERROR)<<"after Put";
-        //another way:
-        LOG(ERROR)<<"before Coy";
-        garr2.Copy(larr2);
-        LOG(ERROR)<<"after Coy";
         larr1.DeleteStore();
         larr2.DeleteStore();
     }
@@ -134,7 +131,15 @@ void MatrixTestB()
         std::cout<<std::endl;
     }
 }
-
+void Debug() {
+  int i = 0;
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+  printf("PID %d on %s ready for attach\n", getpid(), hostname);
+  fflush(stdout);
+  while (0 == i)
+    sleep(5);
+}
 int main(int argc, char** argv)
 {
   //Range::test();
@@ -144,6 +149,7 @@ int main(int argc, char** argv)
   google::InitGoogleLogging(argv[0]);
   MPI_Init(&argc, &argv);
   GArray::init();
+ // Debug();
   MatrixTestG();
   LOG(ERROR)<<"after test g";
   MatrixTestL();

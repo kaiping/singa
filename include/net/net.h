@@ -43,20 +43,20 @@ class Net {
    * setup the net by init dary shapes,
    * then allocate memory(optional) and init parameters (optional)
    */
-  void InitDAryShape();
-  void InitDAryShape(const vector<vector<int>>& shapes);
+  void InitDArrayShape();
+  void InitDArrayShape(const vector<vector<int>>& shapes);
   void Setup() ;
   void Setup(const vector<vector<int>>& input_shapes) ;
   /**
-   * set shapes of DArys
+   * set shapes of DArrays
    */
   void SetShape(const int batchsize, const Record &record);
   /**
-   * allocate memory for DArys
+   * allocate memory for DArrays
    */
   void AllocateMemory();
   /**
-   * init parameters, must be called after InitDAryShape
+   * init parameters, must be called after InitDArrayShape
    * if memory of parameters are not allocated, do memory allocation before
    * init parameters
    */

@@ -8,8 +8,7 @@
 #include <string>
 #include <map>
 #include <functional>
-#include <random>
-#include "darray/dary.h"
+#include "darray/darray.h"
 #include "proto/model.pb.h"
 
 // Base paramter class.
@@ -31,25 +30,25 @@ class Param {
   /**
    * Return const mem address for the content of this parameter
    */
-  const DAry &data() {
+  const DArray &data() {
     return data_;
   }
   /**
    * Return mem address for the content of this parameter
    */
-  DAry *mutable_data() {
+  DArray *mutable_data() {
     return &data_;
   }
   /**
    * Return const mem address for the gradient of this parameter
    */
-  const DAry &grad() {
+  const DArray &grad() {
     return grad_;
   }
   /**
    * Return mem address for the gradient of this parameter
    */
-  DAry *mutable_grad() {
+  DArray *mutable_grad() {
     return &grad_;
   }
 
@@ -107,7 +106,7 @@ class Param {
   float low_, high_, mean_, std_, value_;
   int split_threshold_;
   //! content, gradient and history gradient of this parameter
-  DAry data_, grad_;
+  DArray data_, grad_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

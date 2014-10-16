@@ -37,6 +37,12 @@ class DArray{
     DArray(const DArray& darray):
       LAData_(darray.LAData_),GAData_(darray.GAData_),lgtype_(darray.lgtype_), isorigin_(darray.isorigin_), DAArea_(darray.DAArea_),DAPrefix_(darray.DAPrefix_)
   {}
+
+    // TODO add set operations
+    void set_mode(int k); // k=-1, darray is local; ??k=-2 random put all data onto one machine;
+    void Setup(); // allocate LAData and GAData...
+    void SetShape(const vector<int>&);
+
     //create a GArray/LArray
     //using new shape or an existing shape
     //currently the example array type must have the same type
@@ -57,7 +63,7 @@ class DArray{
     //return the value of a LArray
     float& v(int,...);//done
     const float& v(int,...)const;//done
-    inline Range IdxRng(int x)const{return DAArea_[x];};//done
+    inline const Range& IdxRng(int x)const{return DAArea_[x];};//done
     //for re-defining the area of an array
     DArray operator[](int)const;//done
     DArray operator[](const Range&)const;//done
@@ -82,10 +88,6 @@ class DArray{
     // if local then generate a new array with the actual shape
     DArray Rebuild()const;//done
 
-    //element-wise operations
-    void Map(const DArray&,float(*)(float))const;//done
-    void Map(const DArray&,float,float(*)(float,float))const;//done
-    void Map(const DArray&,const DArray&,float(*)(float,float))const;//done
     inline void Max(const DArray&,const DArray&)const;//done
     inline void Max(const DArray&,float)const;//done
     inline void Min(const DArray&,const DArray&)const;//done
@@ -98,8 +100,11 @@ class DArray{
     inline void Mult(const DArray&,float)const;//done
     inline void Div(const DArray&,const DArray&)const;//done
     inline void Div(const DArray&,float)const;//done
+
+    // TODO rename Exp to Pow
     inline void Exp(const DArray&,const DArray&)const;//done
     inline void Exp(const DArray&,float)const;//done
+
     inline void Copy(const DArray&)const;//done
     inline void Threshold(const DArray&,float)const;//done
     inline void Square(const DArray&)const;//done
@@ -112,8 +117,30 @@ class DArray{
 
     //adv aggragation
     void sumExcept(DArray&,int)const;//done
+    // TODO rename matrixMult to Dot
+    void Dot(const DArray&,const DArray&);//done
+
+    // TODO by Jingyang.
+    // change vector<float> to DArray
+    // I can change my implementation to use only AddRow and AddCol which
+    // assume the DArray is a matrix. Hence can replace addVec.
     void addVec(const std::vector<float>,int);//done
-    void matrixMult(const DArray&,const DArray&);//done
+    void AddRow();
+    void AddCol();
+    const Shape& shape();// return shape; shape.SubShape();
+
+
+    // TODO by wangwei
+    void Sum(const DArray&, const Range &);// sum along 0-th dim
+    void Pow(const DArray&, const float x);
+    // set every element to x
+    void Set(const float x);
+    void Random(); // random number within 0-1
+    //element-wise operations use lambda for inline
+    void Map(const DArray&,float(*)(float))const;//done
+    void Map(const DArray&,float,float(*)(float,float))const;//done
+    void Map(const DArray&,const DArray&,float(*)(float,float))const;//done
+    void OpAt(const vector<int>& index, std::function<(float)> func);
 
     static void sync();
     static void init();

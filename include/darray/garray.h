@@ -3,6 +3,10 @@
 
 #include<iostream>
 #include<vector>
+#include <ga.h>
+//#include <macdecls.h>
+
+
 #include "dalib.h"
 #include "shape.h"
 #include "area.h"

@@ -29,7 +29,7 @@ inline void errorReport(const char* name, const char* mode = "")
 inline void warningReport(const char* name, const char* mode = "")
 {
     std::cout<<"Warning: "<<name<<std::endl;
-    if(mode != "")std::cout<<"Mode: "<<mode<<std::endl;
+    if(mode != "") std::cout<<"Mode: "<<mode<<std::endl;
     return;
 }
 

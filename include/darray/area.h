@@ -10,8 +10,8 @@
 
 class Area{
     private:
-    int dim_;
     std::vector<Range> ranges_;
+    int dim_;
 
     public:
     Area(): ranges_(std::vector<Range>(0)), dim_(0){}
@@ -234,7 +234,7 @@ class Area{
     Area operator+(const std::vector<int>& prefix)const
     {
         std::vector<Range> res;
-        for(int i = 0; i < prefix.size(); i++)
+        for(unsigned i = 0; i < prefix.size(); i++)
         {
             res.push_back(Range(prefix[i],prefix[i]+1));
         }

@@ -79,6 +79,7 @@ class Range{
     {
         std::cout<<"<"<<start()<<","<<end()<<">";
     }
+    /*
     static void test()
     {
         teststart(_CFUNC);
@@ -96,6 +97,7 @@ class Range{
         Range g = a%7;
         testend(_CFUNC);
     }
+    */
 };
 
 #endif //RANGE_H_INCLUDED

@@ -1,6 +1,12 @@
 #include <iostream>
 
+#include <macdecls.h>
 #include <stdio.h>
+#include <mpi.h>
+#include <glog/logging.h>
+#include <ga.h>
+
+
 #include "dalib.h"
 //#include "range.h"
 //#include "shape.h"
@@ -18,8 +24,10 @@ void MatrixTestG()
     DArray garr1 = DArray::Global(b);
     DArray garr2 = DArray::Global(b2);
     DArray garr3 = DArray::Global(b2);
+    LOG(ERROR)<<"before sync";
     DArray::sync();
-    if(GArray::Mid == 1)
+    LOG(ERROR)<<"after sync";
+    if(GArray::Mid == 0)
     {
         DArray larr1 = DArray::Local(b);
         DArray larr2 = DArray::Local(b2);
@@ -30,19 +38,23 @@ void MatrixTestG()
         for(int i = 0; i < 10; i++)
         for(int j = 0; j < 10; j++)
             larr2.v(i,j) = i+2*j;
+        LOG(ERROR)<<"before Put";
         garr1.Put(larr1);
+        LOG(ERROR)<<"after Put";
         //another way:
+        LOG(ERROR)<<"before Coy";
         garr2.Copy(larr2);
+        LOG(ERROR)<<"after Coy";
         larr1.DeleteStore();
         larr2.DeleteStore();
     }
     DArray::sync();
     DArray garr4 = garr1[4];
+    LOG(ERROR)<<"before mult garr4 dim "<<garr4.dim();
     garr3.matrixMult(garr4,garr2);
+    LOG(ERROR)<<"after mult";
     DArray larr3 = garr3.Fetch();
-    garr1.DeleteStore();
-    garr2.DeleteStore();
-    garr3.DeleteStore();
+    LOG(ERROR)<<"after fetch";
     DArray::sync();
     for(int i = 0; i < 10; i++)
     {
@@ -50,6 +62,9 @@ void MatrixTestG()
             std::cout<<larr3.v(i,j)<<' ';
         std::cout<<std::endl;
     }
+    garr1.DeleteStore();
+    garr2.DeleteStore();
+    garr3.DeleteStore();
     larr3.DeleteStore();
 }
 
@@ -120,14 +135,25 @@ void MatrixTestB()
     }
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    //Range::test();
-    //Shape::test();
-    //Area::test();
-    //DArray::test();
-    //MatrixTestG();
-    MatrixTestL();
-    MatrixTestB();
-    return 0;
+  //Range::test();
+  //Shape::test();
+  //Area::test();
+  //DArray::test();
+  google::InitGoogleLogging(argv[0]);
+  MPI_Init(&argc, &argv);
+  GArray::init();
+  MatrixTestG();
+  LOG(ERROR)<<"after test g";
+  MatrixTestL();
+  LOG(ERROR)<<"after test l";
+  MatrixTestB();
+  LOG(ERROR)<<"after test b";
+  GA_Terminate();
+  LOG(ERROR)<<"after terminate ";
+  MPI_Finalize();
+  LOG(ERROR)<<"after mpi ";
+
+  return 0;
 }

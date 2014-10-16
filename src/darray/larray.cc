@@ -88,6 +88,9 @@ void LArray::DeleteStore()
 
 void LArray::Map(const LArray& src,float(*mapfunc)(float),const Area& areadst,const Area& areasrc)
 {
+    //LOG(ERROR)<<areadst.size()<<" "<<areasrc.size();
+    areadst.daout("a");
+    areasrc.daout("b");
     if(dadebugmode && areadst.size() !=  areasrc.size())
             errorReport(_CFUNC,"not equal size");
     std::vector<int> dstp = vfirst(areadst);

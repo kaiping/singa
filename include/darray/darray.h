@@ -8,7 +8,7 @@
 #include "garray.h"
 
 class DArray{
-    private:
+  private:
     LArray *LAData_;
     GArray *GAData_;
     bool lgtype_;// 0 for local array 1 for global array
@@ -17,26 +17,26 @@ class DArray{
     std::vector<int> DAPrefix_;
     Area LocalArea()const;//done
 
-    public:
+  public:
     DArray(LArray *LA, GArray *GA, bool lg, bool ori, const Area& area, const std::vector<int>& prefix)
-        : LAData_(LA), GAData_(GA), lgtype_(lg), isorigin_(ori), DAArea_(area), DAPrefix_(prefix)
+      : LAData_(LA), GAData_(GA), lgtype_(lg), isorigin_(ori), DAArea_(area), DAPrefix_(prefix)
     {}
     DArray()
-        : LAData_(NULL), GAData_(NULL), lgtype_(false), isorigin_(1)
+      : LAData_(NULL), GAData_(NULL), lgtype_(false), isorigin_(1)
     {}
     DArray& operator=(const DArray& darray)
     {
-        LAData_ = darray.LAData_;
-        GAData_ = darray.GAData_;
-        lgtype_ = darray.lgtype_;
-        isorigin_ = darray.isorigin_;
-        DAArea_ = darray.DAArea_;
-        DAPrefix_ = darray.DAPrefix_;
-        return *this;
+      LAData_ = darray.LAData_;
+      GAData_ = darray.GAData_;
+      lgtype_ = darray.lgtype_;
+      isorigin_ = darray.isorigin_;
+      DAArea_ = darray.DAArea_;
+      DAPrefix_ = darray.DAPrefix_;
+      return *this;
     }
     DArray(const DArray& darray):
-    LAData_(darray.LAData_),GAData_(darray.GAData_),lgtype_(darray.lgtype_), isorigin_(darray.isorigin_), DAArea_(darray.DAArea_),DAPrefix_(darray.DAPrefix_)
-    {}
+      LAData_(darray.LAData_),GAData_(darray.GAData_),lgtype_(darray.lgtype_), isorigin_(darray.isorigin_), DAArea_(darray.DAArea_),DAPrefix_(darray.DAPrefix_)
+  {}
     //create a GArray/LArray
     //using new shape or an existing shape
     //currently the example array type must have the same type
@@ -62,7 +62,7 @@ class DArray{
     DArray operator[](int)const;//done
     DArray operator[](const Range&)const;//done
     DArray operator[](const Area&)const;//done
-    DArray cp(const Area&,const std::vector<int>&)const;//done
+    DArray cp(const Area&,const std::vector<int>)const;//done
 
     //generate a LArray from a GArray
     DArray Fetch(const Area&)const;//done
@@ -120,6 +120,155 @@ class DArray{
     //global function
     static void test();
 };
+inline void DArray::init()
+{
+    GArray::init();
+}
+
+
+inline DArray DArray::Fetch()const
+{
+    DAArea_.daout("fetch o arg");
+    if(DAPrefix_.size())
+      LOG(ERROR)<<"prefix "<<DAPrefix_[0];
+    Area actual = DAArea_+DAPrefix_;
+    actual.daout("fetch o arg actual");
+    return Fetch(actual);
+}
+
+
+inline DArray DArray::FetchLocal()const
+{
+    Area actual = LocalArea();
+    return Fetch(actual);
+}
+
+
+inline float DArray::Max()const
+{
+    return MapAgg(damax,-INF);
+}
+
+inline float DArray::Sum()const
+{
+    return MapAgg(daadd,0);
+}
+inline DArray DArray::cp(const Area& newarea,const std::vector<int> newprefix)const
+{
+    DArray res(LAData_,GAData_,lgtype_,0,newarea,newprefix);
+    return res;
+}
+inline void DArray::Max(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,damax);
+}
+
+inline void DArray::Max(const DArray& src,float value)const
+{
+    Map(src,value,damax);
+}
+
+inline void DArray::Min(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,damin);
+}
+
+inline void DArray::Min(const DArray& src,float value)const
+{
+    Map(src,value,damin);
+}
+
+inline void DArray::Add(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,daadd);
+}
+
+inline void DArray::Add(const DArray& src,float value)const
+{
+    Map(src,value,daadd);
+}
+
+inline void DArray::Minus(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,daminus);
+}
+
+inline void DArray::Minus(const DArray& src,float value)const
+{
+    Map(src,value,daminus);
+}
+
+inline void DArray::Mult(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,damult);
+}
+
+inline void DArray::Mult(const DArray& src,float value)const
+{
+    Map(src,value,damult);
+}
+
+inline void DArray::Div(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,dadiv);
+}
+
+inline void DArray::Div(const DArray& src,float value)const
+{
+    Map(src,value,dadiv);
+}
+
+inline void DArray::Exp(const DArray& src1,const DArray& src2)const
+{
+    Map(src1,src2,daexp);
+}
+
+inline void DArray::Exp(const DArray& src,float value)const
+{
+    Map(src,value,daexp);
+}
+
+inline void DArray::Copy(const DArray& src)const
+{
+    Map(src,dacopy);
+    LOG(ERROR)<<"dary copy after map";
+}
+
+inline void DArray::Threshold(const DArray& src,float value)const
+{
+    Map(src,value,dath);
+}
+
+inline void DArray::Square(const DArray& src)const
+{
+    Map(src,src,damult);
+}
+
+
+//for re-defining the area of an array
+inline DArray DArray::operator[](int k)const
+{
+    std::vector<int> mylist = DAPrefix_;
+    if(dadebugmode && DAArea_.dim()<1)
+        errorReport(_CFUNC,"new array neg dims!");
+    if(dadebugmode && DAArea_.dim()==1)
+        warningReport(_CFUNC,"new array 0 dim");
+    mylist.push_back(DAArea_[0].start()+k);
+
+    DArray tmp = cp(DAArea_.resize(k),mylist);
+    return tmp;
+}
+
+inline DArray DArray::operator[](const Range& range)const
+{
+    DArray tmp = cp(DAArea_.resize(range),DAPrefix_);
+    return tmp;
+}
+inline DArray DArray::operator[](const Area& area)const
+{
+    return cp(DAArea_.resize(area),DAPrefix_);
+}
+
 
 #endif //DARRAY_H_INCLUDED
 

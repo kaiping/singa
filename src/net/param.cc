@@ -36,9 +36,13 @@ void Param::SetShape(int h, int w){
   data_.SetShape({h,w});
   grad_.SetShape({h,w});
 }
+void Param::Partition(int k) {
+  data_.set_mode(k);
+  grad_.set_mode(k);
+}
 void Param::AllocateMemory() {
-  data_.AllocateMemory();
-  grad_.AllocateMemory();
+  data_.Setup();
+  grad_.Setup();
 }
 void Param::FreeMemory() {
   data_.FreeMemory();

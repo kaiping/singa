@@ -13,13 +13,9 @@ void DArray::sync()
 DArray DArray::Fetch(const Area& actual)const
 {
     Shape newshape = actual.Areashape();
-    newshape.daout("shap");
-    actual.daout("shap");
     LArray* LA = GAData_->Fetch(actual);
-    LOG(ERROR)<<"after fetch";
     DArray res(LA,NULL,0,1,Area(newshape),std::vector<int>(0));
     res.Reshape(DAArea_.Areashape());
-    LOG(ERROR)<<"after reshape";
     return res;
 }
 
@@ -97,11 +93,9 @@ const float& DArray::v(int first,...)const
 }
 
 //element-wise operations
-void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
+void DArray::Map(const DArray& src,std::function<float(float)> mapfunc) const
 {
     if(lgtype())DArray::sync();
-    DAArea_.daout("a");
-    src.DAArea_.daout("b");
     if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
             errorReport(_CFUNC,"not equal shape");
     Area dstlocal = LocalArea();
@@ -161,62 +155,85 @@ void DArray::Map(const DArray& src,float(*mapfunc)(float)) const
     LOG(ERROR)<<"map sync finish";
 }
 
-void DArray::Map(const DArray& src ,float value ,float(*mapfunc)(float,float))const
+void DArray::Map(const DArray& src1,const DArray& src2,std::function<float(float, float)> mapfunc)const
 {
-    if(lgtype())DArray::sync();
-    if(dadebugmode && DAArea_.Areashape()!= src.DAArea_.Areashape() )
-            errorReport(_CFUNC,"not equal shape");
-    Area dstlocal = LocalArea();
-    const DArray* dstp = NULL;
-    const DArray* srcp = NULL;
-    Area* areadst = NULL;
-    Area* areasrc = NULL;
-    DArray daglo ;
-    //for dst
-    if(lgtype())
-    {
-        daglo = DArray::Local(dstlocal.Areashape());
-        dstp = &daglo;
-    }
-    else
-    {
-        dstp = this;
-    }
-    areadst = new Area(dstp->LocalArea());
-    //for src
-    Area aproj = DAArea_.proj(dstlocal);
-    DArray projarray = src[aproj];
-DArray tmpsrc ;
-    if(projarray.lgtype())
-    {
-        tmpsrc = projarray.Fetch();
-        srcp = &tmpsrc;
-    }
-    else
-    {
-        srcp = &projarray;
-    }
-    areasrc = new Area(srcp->LocalArea());
-    //for exec
-    dstp->LAData_->Map(*srcp->LAData_,value,mapfunc,*areadst,*areasrc);
-    //dst put back if global
-    if(lgtype())PutLocal(*dstp);
-    //cleaning
-    if(lgtype())
-    {
-        dstp->DeleteStore();
-        //delete dstp;
-    }
-    if(projarray.lgtype())
-    {
-        srcp->DeleteStore();
-        //delete srcp;
-    }
-    if(lgtype())DArray::sync();
+  if(lgtype())DArray::sync();
+  if(dadebugmode && DAArea_.Areashape()!= src1.DAArea_.Areashape() )
+    errorReport(_CFUNC,"not equal shape src1");
+  if(dadebugmode && DAArea_.Areashape()!= src2.DAArea_.Areashape() )
+    errorReport(_CFUNC,"not equal shape src2");
+  Area dstlocal = LocalArea();
+  const DArray* dstp = NULL;
+  const DArray* src1p = NULL;
+  const DArray* src2p = NULL;
+  Area* areadst = NULL;
+  Area* areasrc1 = NULL;
+  Area* areasrc2 = NULL;
+  DArray daglo ;
+  //for dst
+  if(lgtype())
+  {
+    daglo = DArray::Local(dstlocal.Areashape());
+    dstp = &daglo;
+  }
+  else
+  {
+    dstp = this;
+  }
+  areadst = new Area(dstp->LocalArea());
+  //for src
+  Area aproj = DAArea_.proj(dstlocal);
+  DArray projarray1 = src1[aproj];
+  DArray tmpsrc1 ;
+  if(projarray1.lgtype())
+  {
+    tmpsrc1 = projarray1.Fetch();
+    src1p = &tmpsrc1;
+  }
+  else
+  {
+    src1p = &projarray1;
+  }
+  areasrc1 = new Area(src1p->LocalArea());
+  //for src
+  DArray projarray2 = src2[aproj];
+  DArray tmpsrc2 ;
+  if(projarray2.lgtype())
+  {
+    tmpsrc2 = projarray2.Fetch();
+    src2p = &tmpsrc2;
+  }
+  else
+  {
+    src2p = &projarray2;
+  }
+  areasrc2 = new Area(src2p->LocalArea());
+  //for exec
+  dstp->LAData_->Map(*src1p->LAData_,*src1p->LAData_,mapfunc,*areadst,*areasrc1,*areasrc2);
+  //dst put back if global
+  if(lgtype())PutLocal(*dstp);
+  //cleaning
+  if(lgtype())
+  {
+    dstp->DeleteStore();
+    //delete dstp;
+  }
+  if(projarray1.lgtype())
+  {
+    src1p->DeleteStore();
+    //delete src1p;
+  }
+  if(projarray2.lgtype())
+  {
+    src2p->DeleteStore();
+    //delete src2p;
+  }
+  if(lgtype())DArray::sync();
 }
 
 
-void DArray::Map(const DArray& src1,const DArray& src2,float(*mapfunc)(float,float))const
+void DArray::Map(const DArray& src1,const DArray& src2, const DArray& src3,
+    std::function<float(float, float, float)> mapfunc)const
 {
   if(lgtype())DArray::sync();
   if(dadebugmode && DAArea_.Areashape()!= src1.DAArea_.Areashape() )
@@ -403,7 +420,7 @@ void DArray::addVec(const std::vector<float> src,int dimindex)
     }
 }
 
-void DArray::matrixMult(const DArray& src1,const DArray& src2)
+void DArray::Dot(const DArray& src1,const DArray& src2)
 {
   if(lgtype())DArray::sync();
   if(dadebugmode && dim() != 2)
@@ -461,7 +478,7 @@ void DArray::matrixMult(const DArray& src1,const DArray& src2)
   //errorReport(_CFUNC,"debug 110");
   //ddst->DAArea_.daout("ddst->DAarea_");
   LOG(ERROR)<<"before larray matrixMult";
-  ddst->LAData_->matrixMult(*(dsrc1->LAData_),*(dsrc2->LAData_));
+  ddst->LAData_->Dot(*(dsrc1->LAData_),*(dsrc2->LAData_));
   LOG(ERROR)<<"after larray matrixMult";
   DArray::sync();
   LOG(ERROR)<<"after matrixMult sync";

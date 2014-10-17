@@ -3,6 +3,8 @@
 #define DARRAY_H_INCLUDED
 
 #include<iostream>
+#include <functional>
+
 #include "dalib.h"
 #include "larray.h"
 #include "garray.h"
@@ -132,15 +134,14 @@ class DArray{
 
     // TODO by wangwei
     void Sum(const DArray&, const Range &);// sum along 0-th dim
-    void Pow(const DArray&, const float x);
     // set every element to x
-    void Set(const float x);
-    void Random(); // random number within 0-1
+    inline void Set(const float x);
+    inline void Random(); // random number within 0-1
     //element-wise operations use lambda for inline
-    void Map(const DArray&,float(*)(float))const;//done
-    void Map(const DArray&,float,float(*)(float,float))const;//done
-    void Map(const DArray&,const DArray&,float(*)(float,float))const;//done
-    void OpAt(const vector<int>& index, std::function<(float)> func);
+    void Map(const DArray&, std::function<float(float)> func )const;//done
+    void Map(const DArray&, const DArray&, std::function<float(float,float)> func)const;//done
+    void Map(const DArray&, const DArray&, const DArray&, const DArray&,std::function<float(float, float, float)> func)const;//done
+    void OpAt(const vector<int>& index, std::function<(float&, float)> func);
 
     static void sync();
     static void init();
@@ -170,7 +171,9 @@ inline DArray DArray::FetchLocal()const
     return Fetch(actual);
 }
 
+inline void DArray::Set(float v) {
 
+}
 inline float DArray::Max()const
 {
     return MapAgg(damax,-INF);
@@ -185,6 +188,7 @@ inline DArray DArray::cp(const Area& newarea,const std::vector<int> newprefix)co
     DArray res(LAData_,GAData_,lgtype_,0,newarea,newprefix);
     return res;
 }
+
 inline void DArray::Max(const DArray& src1,const DArray& src2)const
 {
     Map(src1,src2,damax);

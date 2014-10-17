@@ -165,10 +165,10 @@ void Partition(int k=-1) {
 void ConvLayer::AllocateMemory(){
   data_.Setup();
   grad_.Setup();
-  weight_.Setup();
-  bias_.Setup();
   col_data_.Setup();
   col_grad_.Setup();
+  weight_.AllocateMemory();
+  bias_.AllocateMemory();
 }
 
 void ConvLayer::ComputeFeature() {
@@ -676,8 +676,8 @@ void FCLayer::Partition(int k){
   }
 }
 void FCLayer::AllocateMemory(){
-  weight_.Setup();
-  bias_.Setup();
+  weight_.AllocateMemory();
+  bias_.AllocateMemory();
 }
 void FCLayer::ComputeFeature() {
   const DArray& bottom=in_edges_[0]->GetData(this);
@@ -844,8 +844,8 @@ void ImageLayer::InitDArrayShape(const vector<vector<int>>& shapes){
   prefetch_data_.SetShape(shapes[0]);
 }
 void ImageLayer::Partition(int k){
-  data_.partition(k);
-  prefetch_data_.partition(k);
+  data_.set_mode(k);
+  prefetch_data_.set_mode(k);
 }
 void ImageLayer::AllocateMemory(){
   data_.Setup();
@@ -912,8 +912,8 @@ void LabelLayer::InitDArrayShape(const vector<vector<int>>& shapes){
   prefetch_data_.SetShape(shapes[1]);
 }
 void LabelLayer::Partition(int k) {
-  data_.partition(k);
-  prefetch_data_.partition(k);
+  data_.set_mode(k);
+  prefetch_data_.set_mode(k);
 }
 void LabelLayer::AllocateMemory(){
   data_.Setup();

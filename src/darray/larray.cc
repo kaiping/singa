@@ -88,7 +88,7 @@ void LArray::DeleteStore()
     data_.resize(0);
 }
 
-void LArray::Map(const LArray& src,float(*mapfunc)(float),const Area& areadst,const Area& areasrc)
+void LArray::Map(const LArray& src,std::function<float(float)> mapfunc,const Area& areadst,const Area& areasrc)
 {
     //LOG(ERROR)<<areadst.size()<<" "<<areasrc.size();
     areadst.daout("a");
@@ -105,21 +105,9 @@ void LArray::Map(const LArray& src,float(*mapfunc)(float),const Area& areadst,co
     return;
 }
 
-void LArray::Map(const LArray& src,float value, float(*mapfunc)(float,float),const Area& areadst,const Area& areasrc)
-{
-    if(dadebugmode && areadst.size() !=  areasrc.size())
-            errorReport(_CFUNC,"not equal size");
-    std::vector<int> dstp = vfirst(areadst);
-    std::vector<int> srcp = src.vfirst(areasrc);
-    int mysize = areadst.size();
-    for(int i = 0; i < mysize; i++)
-    {
-        vnext(dstp,areadst) = mapfunc(src.vnext(srcp,areasrc), value);
-    }
-    return;
-}
-
-void LArray::Map(const LArray& src1 ,const LArray& src2,float(*mapfunc)(float,float),const Area& areadst,const Area& areasrc1,const Area& areasrc2)
+void LArray::Map(const LArray& src1 ,const LArray& src2,
+    std::function<float(float,float)> mapfunc,
+    const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
     if(dadebugmode && areadst.size() !=  areasrc1.size())
             errorReport(_CFUNC,"not equal size src1");
@@ -138,107 +126,128 @@ void LArray::Map(const LArray& src1 ,const LArray& src2,float(*mapfunc)(float,fl
     return;
 }
 
-
+void LArray::Map(const LArray& src1 ,const LArray& src2, const LArray& src3,
+    std::function<float(float,float, float)> mapfunc,
+    const Area& areadst,const Area& areasrc1,const Area& areasrc2,const Area& areasrc3)
+{
+    if(dadebugmode && areadst.size() !=  areasrc1.size())
+            errorReport(_CFUNC,"not equal size src1");
+    if(dadebugmode && areadst.size() !=  areasrc2.size())
+            errorReport(_CFUNC,"not equal size src2");
+    std::vector<int> dstp = vfirst(areadst);
+    std::vector<int> src1p = src1.vfirst(areasrc1);
+    std::vector<int> src2p = src2.vfirst(areasrc2);
+    std::vector<int> src3p = src3.vfirst(areasrc3);
+    int mysize = areadst.size();
+    for(int i = 0; i < mysize; i++)
+    {
+        float temp1 = src1.vnext(src1p,areasrc1);
+        float temp2 = src2.vnext(src2p,areasrc2);
+        float temp3 = src2.vnext(src3p,areasrc3);
+        vnext(dstp,areadst) = mapfunc(temp1, temp2, temp3);
+    }
+    return;
+}
 
 void LArray::Max(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,damax,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a>b?a:b;} ,areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Min(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,damin,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a<b?a:b;} ,areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Max(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,damax,areadst,areasrc);
+    Map(src,[value](float x) {return x>value?x:value;},areadst,areasrc);
     return;
 }
 
 void LArray::Min(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,damin,areadst,areasrc);
+    Map(src,[value](float x) {return x<value?x:value;},areadst,areasrc);
     return;
 }
 
 void LArray::Add(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,daadd,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a+b;},areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Add(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,daadd,areadst,areasrc);
+    Map(src,[value] (float x) {return x+value;},areadst,areasrc);
     return;
 }
 
 void LArray::Minus(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,daminus,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a-b;},areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Minus(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,daminus,areadst,areasrc);
+    Map(src,[value] (float x) {return x-value;},areadst,areasrc);
     return;
 }
 
 void LArray::Mult(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,damult,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a*b;},areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Mult(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,damult,areadst,areasrc);
+    Map(src,[value] (float x) {return x*value;},areadst,areasrc);
     return;
 }
 
 void LArray::Div(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,dadiv,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return a/b;},areadst,areasrc1,areasrc2);
     return;
 }
 
 void LArray::Div(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,dadiv,areadst,areasrc);
+    Map(src,[value] (float x) {return x/value;},areadst,areasrc);
     return;
 }
 
-void LArray::Exp(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
+void LArray::Pow(const LArray& src1 ,const LArray& src2,const Area& areadst,const Area& areasrc1,const Area& areasrc2)
 {
-    Map(src1,src2,daexp,areadst,areasrc1,areasrc2);
+    Map(src1,src2,[](float a, float b) {return std::pow(a,b);},areadst,areasrc1,areasrc2);
     return;
 }
 
-void LArray::Exp(const LArray& src,float value,const Area& areadst,const Area& areasrc)
+void LArray::Pow(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,daexp,areadst,areasrc);
+    Map(src,[value] (float x) {return std::pow(x,value);},areadst,areasrc);
     return;
 }
 
 void LArray::Copy(const LArray& src,const Area& areadst,const Area& areasrc)
 {
-    Map(src,dacopy,areadst,areasrc);
+    Map(src,[](float x) {return x;},areadst,areasrc);
     return;
 }
 
 void LArray::Threshold(const LArray& src,float value,const Area& areadst,const Area& areasrc)
 {
-    Map(src,value,dath,areadst,areasrc);
+    Map(src,[value] (float v) {return v<=value?1.0f:0.0f},areadst,areasrc);
     return;
 }
 
 void LArray::Square(const LArray& src,const Area& areadst,const Area& areasrc)
 {
-    Map(src,src,damult,areadst,areasrc,areasrc);
+    Map(src,[](float x) {return x*x;},areadst,areasrc,areasrc);
     return;
 }
 
@@ -304,7 +313,7 @@ void LArray::Reshape(const Shape& shape)
 
 //this function need all the three arrays to be two dims
 //dst[x][z] = src1[x][y]*src2[y][z]
-void LArray::matrixMult(LArray& src1,LArray& src2)
+void LArray::Dot(LArray& src1,LArray& src2)
 {
     if(dadebugmode && dim() != 2)
         errorReport(_CFUNC,"dst not two dims");

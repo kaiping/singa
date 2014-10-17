@@ -54,8 +54,9 @@ class Param {
 
   void SetShape(int h, int w);
   void SetShape(int l);
+  void Partition(int k);
   void AllocateMemory();
-  void FreeMemory() ;
+  void FreeMemory();
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */

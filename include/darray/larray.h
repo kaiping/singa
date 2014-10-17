@@ -3,6 +3,8 @@
 
 #include<iostream>
 #include<vector>
+#include <functional>
+
 #include "dalib.h"
 #include "shape.h"
 #include "area.h"
@@ -29,10 +31,10 @@ class LArray{
     void DeleteStore();
     void Reshape(const Shape&);
 
+    void Map(const LArray&, std::function<float(float)> func )const;//done
+    void Map(const LArray&, const DArray&, std::function<float(float,float)> func)const;//done
+    void Map(const LArray&, const DArray&, const DArray&, const DArray&,std::function<float(float, float, float)> func)const;//done
 
-    void Map(const LArray&,float(*)(float),const Area&,const Area&);
-    void Map(const LArray&,float,float(*)(float,float),const Area&,const Area&);
-    void Map(const LArray&,const LArray&,float(*)(float,float),const Area&,const Area&,const Area&);
     void Max(const LArray&,const LArray&,const Area&,const Area&,const Area&);
     void Max(const LArray&,float,const Area&,const Area&);
     void Min(const LArray&,const LArray&,const Area&,const Area&,const Area&);
@@ -45,8 +47,8 @@ class LArray{
     void Mult(const LArray&,float,const Area&,const Area&);
     void Div(const LArray&,const LArray&,const Area&,const Area&,const Area&);
     void Div(const LArray&,float,const Area&,const Area&);
-    void Exp(const LArray&,const LArray&,const Area&,const Area&,const Area&);
-    void Exp(const LArray&,float,const Area&,const Area&);
+    void Pow(const LArray&,const LArray&,const Area&,const Area&,const Area&);
+    void Pow(const LArray&,float,const Area&,const Area&);
     void Copy(const LArray&,const Area&,const Area&);
     void Threshold(const LArray&,float,const Area&,const Area&);
     void Square(const LArray&,const Area&,const Area&);
@@ -63,7 +65,7 @@ class LArray{
     void addVec(const std::vector<float>& ,int, const Area&,int offset = 0);
 
     //can be optimized
-    void matrixMult(LArray&,LArray&);
+    void Dot(LArray&,LArray&);
 
     //static void test();
 };

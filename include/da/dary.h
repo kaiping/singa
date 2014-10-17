@@ -80,7 +80,7 @@ class Shape {
 class DAry {
  public:
   ~DAry();
-  DAry():dim_(0), size_(0),alloc_size_(0),dptr_(nullptr){}
+  DAry():dim_(0), size_(0){}//,alloc_size_(0),dptr_(nullptr){}
   /**
    * init with the same shape and partition as other, alloc memory
    * may copy data

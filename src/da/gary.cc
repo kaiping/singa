@@ -2,142 +2,63 @@ GAry::GAry(){
   groupsize_=GlobalContext::Get()->groupsize();
   id_=GlobalContext::Get()->idInGroup();
 }
-shared_ptr<float> GAry::Get(int offset, const Partition& part){
-  int totaloffset=offset+part.start;
-  shared_ptr<float> dptr=make_shared(new float[part.size]);
-
-}
-shared_ptr<float> GAry::Setup(const Shape& shape, Partition *part){
-  shape_=shape;
-  int pdim=part->getpDim();
-  int rows=1;
-  for(int i=0;i<pdim;i++)
-    rows*=shape.s[i];
-  CHECK(shape.s[pdim]%groupsize==0);
-  stepsize_=shape.size/rows/groupsize;
-  stride_=shape.size/rows;
+float* GAry::Setup(const Shape& shape, int pdim){
+  lo_[0]=0;
+  hi_[0]=1;
+  for (int i = 0; i < pdim; i++) {
+    hi_[1]*=shape.s[i];
+  }
+  int w=shape.size/hi_[1];
+  CHECK(w%groupsize==0);
+  lo_[1]=w/groupsize*id_;
+  hi_[1]=w/groupsize*(id_+1);
   ARMIC_Malloc((void**)dptrs_, shape.size/groupsize);
-  part->stepsize=stepsize_;
-  part->stride=stride_;
-  part->start=stepsize_*id_;
-  part->end=shape.size-(groupsize_-id_-1)*stepsize_;
+  offset_=lo_[i];
   return dptrs_[id_];
 }
 
-const Range IndexRange(int k){
-  if(k==part_.getpDim()){
-    int rngpernode=shape_.s[k]/groupsize_;
-    return make_pair(rngpernode*id_, rngpernode*(id_+1));
-  }else{
-    return make_pair(0, shape_.s[k]);
-  }
+const Range GAry::IndexRange(int k){
+  if(k==pdim_)
+    return make_pair(shape_.s[k]/groupsize*id_, shape_.s[k]/groupsize*(id_+1));
+  else return make_pair(0 shape_.s[k]);
 }
 
-
-void GAry::UpdatePartition(Partition* part, int offset, int size){
-  int lo[4], hi[4], subsize[4];
-  subsize[dim_-1]=1;
-  for (int i = dim_-2; i >=0 ; i-- {
-    subsize[i]=subsize[i+1]*(shape_.s[i+1]-shape_.s[i+1]);
-  }
-  part->size=1;
-  for (int i = 0; i < dim_; i++) {
-    lo[i]=offset/subsize[i];
-    hi[i]=lo[i]+(offset%subsize[i]+size)/subsize[i]-1;
-    offset%=subsize[i];
-    part->lo[i]=std::max(part->lo[i], lo[i]);
-    part->hi[i]=std::max(part->hi[i], hi[i]);
-    part->size*=part->hi[i]-part->lo[i]+1;
-  }
-}
 void GAry::Destroy(){
-  GA_Destroy(handle_);
 }
 
-void GAry::Get(float* dptr, int* lo, int* hi, int* ld) {
-  NGA_Get(handle_, dptr, lo, hi,ld);
-}
-void GAry::Put(float* dptr) {
-  NGA_Put(handle_, part_.lo, part_.hi, ld_);
-}
-void GAry::Put(float* dptr, int*lo, int* hi, int* ld) {
-  NGA_Put(handle_, lo_, hi_, ld_);
-}
-// called only when all three GAry are the orignal GAry, no [] operation
-void GAry::Dot( const GAry& src1, const GAry& src2, bool trans1=false, bool trans2=false) {
-  char transa=trans1?'t':'n';
-  char transb=trans2?'t':'n';
-  GA_Dgemm(transa, transb, src1.shape(0), src1.shape(1), src2.shape(2), 1.0f,
-}
-
-void GAry::Div(const GAry& src1, const GAry& src2) {
-  GA_Elem_divide(handle_, src1.handle_, src2.handle_);
-}
-void GAry::Mult(const GAry& src1, const GAry& src2) {
-  GA_Elem_multiply(src1.handle_,src2.handle_, handle_);
-}
-
-void GAry::Add(const GAry& src1, const GAry& src2) {
-  float a=1.0f, b=1.0f;
-  GA_Elem_Add(&a, src1.handle_,&b, src2.handle_, handle_);
-}
-
-void GAry::Set(float x) {
-  GA_Fill(handle_, &x);
-}
-
-/*
-float* GAry::GetPartitionPtr(const Partition & part){
-  int offset1=part.lo[0];
-  int offset2=part_.lo[0];
-  for (int i = 1; i < dim_; i++) {
-    offset1=offset1*shape_s.[i]+part.lo[i];
-    offset2=offset2*shape_s.[i]+part_.lo[i];
+float* GAry::Fetch(const vector<Range>& slice) {
+  bool local=true;
+  int size=1;
+  CHECK(2==slice.size());
+  for(int i=0; i<2;i++){
+    size*=slice[i].second-slice[i].first;
+    local&=(slice[i].second==hi_[i]&&slice[i].first==lo_[i]);
   }
-  return dptr_+(offset2-offset1);
-}
+  if(local)
+    return dptr_;
 
-void GAry::Setup(const GAry& other, const vector<Range>& slice){
-  SetShape(other.shape_);
-  CHECK(slice.size()==dim_);
-  for (int i = 0; i < slice.size(); i++) {
-    if(i>0)
-      ld[i-1]=hi[i]-lo[i];
-    lo[i]=slice[i].first;
-    hi[i]=slice[i].second-1;
-  }
-}
-*/
-/*
-inline GAry GAry::Sub(int offset, int size) const {
-  GAry ret;
-  ret.SetShape(shape_);
-  int* lo=ret.lo_, *hi=ret.hi_, *ld=ret.ld_;
-  LocateIndex(lo, lo_, offset);
-  LocateIndex(hi, lo_, offset+size);
-  bool flag=false;
-  for (int i = 0; i < shape_.dim; i++) {
-    if(flag) {
-      CHECK(hi[i]==0&&lo[i]==0);
-      hi[i]=shape_.s[i]-1;
-    }else{
-      hi[i]=lo[i];
-    }
-    if(lo[i]!=hi[i]) {
-      flag=true;
-    }
-    if(i>0)
-      ld[i-1]=hi[i]-lo[i]+1;
+  float* ret=new float[size];
+  int lo0=slice[0].first, hi0=slice[0].second;
+  int lo1=slice[1].first, hi1=slice[1].second;
+  int w=hi_[1]-lo_[1];
+  int sgroup=lo1/w;
+  int egroup=hi1/w+hi1%w!=0;
+  float *srcaddr=ret;
+  int unit=sizeof(float);
+  int tgtstride=w*unit;
+  int srcstride=(hi1-lo1)*unit;
+  int count[2];
+  count[1]=hi0-lo0;
+  for(int g=sgroup; g<egroup;g++){
+    if(g==sgroup)
+      count[0]=std::min((w-lo1%w)*unit, srcstride);
+    else if(g>sgroup&&g<egroup-1)
+      count[0]=w*unit;
+    else
+      count[0]=(hi1%w)*unit;
+    float *tgtaddr=dptrs_[g]+w*lo0+g==sgroup?lo1%w:0;
+    ARMCI_GetS(srcaddr, srcstride, tgtaddr, tgtstride, count, sgroup);
+    srcaddr+=count[0]/unit;
   }
   return ret;
 }
-void GAry::LocateIndex(int* ret, int* orig, int offset) {
-  int size=shape_.SubShape.Size();
-  for (i = 0; i < shape_.dim-1; i++) {
-    ret[i]=orig+offset/size;
-    offset=offset%size;
-    size/=shape_.s[i+1];
-  }
-}*/
-
-

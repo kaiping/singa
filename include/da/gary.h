@@ -14,22 +14,16 @@ class GAry:public Ary{
   /**
     * init based on the shape, alloc memory
     */
-  const Partition Setup(const Shape& shape, const Partition part&);
-  /**
-    * Dot production
-    */
-  void Dot( const GAry& src1, const GAry& src2, bool trans1=false, bool trans2=false);
-  void Mult( const GAry& src1, const GAry& src2);
-  void Div( const GAry& src1, const GAry& x);
-  void Set(float x);
-  /**
-    * dst=src1+src2
-    */
-  void Add( const GAry& src1, const GAry& src2);
-  void Copy( const GAry& src);
+  float* Setup(const Shape& shape, int pdim);
+  const Range IndexRange(int k);
+  int local_size(){return shape_.size/groupsize;}
+  int offset() {return offset_;}
  private:
-  int handle_;
-  Partition part_;
+  Shape shape_;
+  int lo_[2], hi_[2];
+  float** dptrs_;
+  int id_, groupsize_;
+  int offset_;
 };
 }   namespace lapis
 #endif   INCLUDE_DA_LARY_H_

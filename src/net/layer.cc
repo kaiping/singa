@@ -202,11 +202,10 @@ void ConvLayer::ComputeGradient() {
  */
 void ConvLayer::Img2Col(DAry* dst, const DAry& src){
   Range nrng=dst->IndexRange(0);
-  std::vector<Range> slice{nrng, {0, channels_},
-    {0, height_}, {0, width_}};
-  DAry lsrc=src.Fetch(slice);
   for(int n=nrng.first; n<nrng.second;n++){
-    float* dptr=dst->addr(n,0,0,0);
+    DAry lsrc=src[n];
+    DAry ldst=(*dst)[n];
+    float* dptr=ldst.addr(0,0,0);
     for (int c = 0; c < channels_*wsize_*wsize_; ++c) {
       int w_offset = c % wsize_;
       int h_offset = (c / wsize_) % wsize_;
@@ -216,7 +215,7 @@ void ConvLayer::Img2Col(DAry* dst, const DAry& src){
           int h_pad = h * stride_ - pad_ + h_offset;
           int w_pad = w * stride_ - pad_ + w_offset;
           if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            *dptr=lsrc.at(n,c_im,h_pad, w_pad);
+            *dptr=lsrc.at(c_im,h_pad, w_pad);
           else
             *dptr= 0;
           dptr++;
@@ -230,12 +229,11 @@ void ConvLayer::Img2Col(DAry* dst, const DAry& src){
  */
 void ConvLayer::Col2Img(DAry* dst, const DAry& src){
   Range nrng=dst->IndexRange(0);
-  std::vector<Range> slice{nrng, {0, channels_*wsize_*wsize_},
-    {0, cheight_}, {0, cwidth_}};
-  DAry lsrc=src.Fetch(slice);
-  lsrc.Set(0.0f);
+  src.Set(0.0f);
   for(int n=nrng.first;n<nrng.second;n++){
-    float *dptr=lsrc.addr(n,0,0,0);
+    DAry lsrc=src[n];
+    DAry ldst=(*dst)[n];
+    float *dptr=lsrc.addr(0,0,0);
     for (int c = 0; c < channels_*wsize_*wsize_; ++c) {
       int w_offset = c % wsize_;
       int h_offset = (c / wsize_) % wsize_;
@@ -245,7 +243,7 @@ void ConvLayer::Col2Img(DAry* dst, const DAry& src){
           int h_pad = h * stride_ - pad_ + h_offset;
           int w_pad = w * stride_ - pad_ + w_offset;
           if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            dst->at(n,c_im,h_pad, w_pad) += *dptr;
+            ldst.at(c_im,h_pad, w_pad) += *dptr;
         }
       }
     }
@@ -353,14 +351,14 @@ void PoolingLayer::Setup(){
 }
 void PoolingLayer::ComputeFeature() {
   Range nrng=data_.IndexRange(0);
-  vector<Range> slice{nrng, {0, channels_},{0, pheight_},{0,pwidth_}};
   const DAry& bottom=in_edges_[0]->GetData(this);
-  DAry lbottom=bottom.Fetch(slice);
   switch (pooling_method_) {
     case LayerProto::kMaxPooling:
       data_.Set(-FLT_MAX);
       for (int n = nrng.first; n < nrng.second; n++) {
-        float* dptr=lbottom.addr(n,0,0,0);
+        DAry ldata=data_[n];
+        DAry lbottom=bottom[n];
+        float* dptr=lbottom.addr(0,0,0);
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
             for (int pw = 0; pw < pwidth_; pw++) {
@@ -370,7 +368,8 @@ void PoolingLayer::ComputeFeature() {
               int wend = std::min(wstart + wsize_, width_);
               for (int h = hstart; h < hend; h++) {
                 for (int w = wstart; w < wend; w++) {
-                  data_.at(n,c,ph,pw)= std::max(data_.at(n,c,ph,pw), *dptr);
+                  ldata.at(c,ph,pw)= std::max(ldata.at(c,ph,pw), *dptr);
+                  dptr++;
                 }
               }
             }
@@ -381,7 +380,9 @@ void PoolingLayer::ComputeFeature() {
     case LayerProto::kAvgPooling:
       data_.Set(0.0f);
       for (int n = nrng.first; n < nrng.second; n++) {
-        float* dptr=bottom.addr(n,0,0,0);
+        DAry ldata=data_[n];
+        DAry lbottom=bottom[n];
+        float* dptr=lbottom.addr(0,0,0);
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
             for (int pw = 0; pw < pwidth_; pw++) {
@@ -391,10 +392,11 @@ void PoolingLayer::ComputeFeature() {
               int wend = std::min(wstart + wsize_, width_);
               for (int h = hstart; h < hend; h++) {
                 for (int w = wstart; w < wend; w++) {
-                  data_.at(n,c,ph,pw) += *dptr;
+                  ldata.at(,c,ph,pw) += *dptr;
+                  dptr++;
                 }
               }
-              data_.at(n,c,ph,pw) /= (hend - hstart) * (wend - wstart);
+              ldata.at(c,ph,pw) /= (hend - hstart) * (wend - wstart);
             }
           }
         }
@@ -414,13 +416,16 @@ void PoolingLayer::ComputeGradient() {
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   Range nrng=bottom.IndexRange(0);
-  vector<Range> slice{nrng, {0, channels_},{0, pheight_},{0,pwidth_}};
-  DAry ldata=data_.Fetch(slice);
-  DAry lgrad=grad_.Fetch(slice);
-  switch (pooling_method_) {
+ switch (pooling_method_) {
     case LayerProto::kMaxPooling:
       gbottom->Set(0.0f);
       for (int n = nrng.first; n < nrng.second; n++) {
+        DAry ldata=data_[n];
+        DAry lgrad=grad_[n];
+        DAry lbottom=bottom[n];
+        DAry lgbottom=(*gbottom)[n];
+        float* gdptr=lgbottom.addr(0,0,0);
+        float* dptr=gbottom.addr(0,0,0);
         for (int c = 0; c < channels_; c++) {
           for (int ph = 0; ph < pheight_; ph++) {
             for (int pw = 0; pw < pwidth_; pw++) {
@@ -430,8 +435,10 @@ void PoolingLayer::ComputeGradient() {
               int wend = std::min(wstart + wsize_, width_);
               for (int h = hstart; h < hend; h++) {
                 for (int w = wstart; w < wend; w++) {
-                  gbottom->at(n,c,h,w) += lgrad.get(n,c,ph,pw)* (
-                      bottom.get(n,c,h,w)==ldata.get(n,c,ph,pw));
+                  (*gdptr) += lgrad.get(,c,ph,pw)* (
+                      *dptr==ldata.get(c,ph,pw));
+                  gdptr++;
+                  dptr++;
                 }
               }
             }
@@ -439,27 +446,7 @@ void PoolingLayer::ComputeGradient() {
         }
       }
       break;
-    case LayerProto::kAvgPooling:
-      for (int n = nrng.first; n < nrng.second; n++) {
-        for (int c = 0; c < channels_; c++) {
-          for (int ph = 0; ph < pheight_; ph++) {
-            for (int pw = 0; pw < pwidth_; pw++) {
-              int hstart = ph * stride_;
-              int wstart = pw * stride_;
-              int hend = std::min(hstart + wsize_, height_);
-              int wend = std::min(wstart + wsize_, width_);
-              int count = (hend - hstart) * (wend - wstart);
-              for (int h = hstart; h < hend; h++) {
-                for (int w = wstart; w < wend; w++) {
-                  gbottom->at(n,c,h,w) += grad.get(n,c,ph,pw) / count;
-                }
-              }
-            }
-          }
-        }
-      }
-      break;
-    default:
+   default:
       LOG(ERROR) << "Not supported pooling method ";
   }
 }
@@ -504,11 +491,9 @@ void LRNLayer::ComputeFeature() {
   VLOG(3)<<name_;
   Range nrng=data_.IndexRange(0);
   Range crng{0, data_.shape(1)};
-  std::vector<Range>slice{nrng, crng, {0, data_.shape(2)}, {0, data_.shape(3)}};
   const DAry& bottom=in_edges_[0]->GetData(this);
-  DAry lbottom=bottom.Fetch(slice);
   // only share shape and partition not share data, allocate data here
-  DAry squared3(lbottom[0], false);
+  DAry squared3(bottom[nrng.first], false);
   float alpha= alpha_ / wsize_;
   for(int n=nrng.first;n<nrng.second;++n) {
     DAry norm3=norm_[n];
@@ -529,7 +514,7 @@ void LRNLayer::ComputeFeature() {
   if(knorm_>0)
     norm_.Add(norm_, knorm_);
   data_.Pow(norm_, -beta_);
-  data_.Mult(data_, lbottom);
+  data_.Mult(data_, bottom);
 }
 
 void LRNLayer::ComputeGradient() {
@@ -539,16 +524,12 @@ void LRNLayer::ComputeGradient() {
   const DAry& bottom=in_edges_[0]->GetData(this);
   Range nrng=bottom.IndexRange(0);
   Range crng{0, bottom.shape(1)};
-  std::vector<Range>slice{nrng, crng, {0, bottom.shape(2)},{0, bottom.shape(3)}};
-  data_.Fetch(slice);
-  grad_.Fetch(slice);
-  norm_.Fetch(slice);
-  gbottom->Pow(lnorm, -beta_);
-  gbottom->Mult(*gbottom, lgrad);
+  gbottom->Pow(norm_, -beta_);
+  gbottom->Mult(*gbottom, grad_);
   DAry ratio(bottom, false);
-  ratio.Mult(lgrad, ldata);
-  ratio.Div(ratio, lnorm);
-  DAry accum_ratio(ratio[nrng.first][crng.first], false);
+  ratio.Mult(grad_, data_);
+  ratio.Div(ratio, norm_);
+  DAry accum_ratio(ratio[nrng.first][0], false);
   for(int n=nrng.first;n<nrng.second;++n) {
     DAry gbottom3=(*gbottom)[n];
     DAry bottom3=bottom[n];
@@ -607,18 +588,17 @@ void FCLayer::Setup(){
 void FCLayer::ComputeFeature() {
   VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
-  DAry data2(data_, {num_, hdim_});
-  DAry bottom2(bottom, {num_, vdim_});
-  data2.Dot(bottom2, weight_.data());
-  data2.AddRow(bias_.data());
+  DAry bottom2=bottom.Reshape({num_, vdim_});
+  data.Dot(bottom2, weight_.data());
+  data.AddRow(bias_.data());
 }
 
 void FCLayer::ComputeGradient() {
   VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  DAry bottom2(bottom, {num_, vdim_});
-  DAry grad2(grad_, {num_, hdim_});
+  DAry bottom2=bottom.Reshape({num_, vdim_});
+  DAry grad2=grad_.Reshape({num_, hdim_});
 
   weight_.mutable_grad()->Dot(bottom2, grad2, true, false);
   bias_.mutable_grad()->Set(0.0f);
@@ -627,7 +607,7 @@ void FCLayer::ComputeGradient() {
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   if (gbottom != nullptr) {
-    DAry gbottom2(*gbottom, {num_, vdim_});
+    DAry gbottom2=gbottom->Reshape({num_, vdim_});
     gbottom2.Dot(grad2, weight_.data(), false, true);
   }
 }
@@ -663,16 +643,13 @@ void SoftmaxLossLayer::Setup(){
 }
 void SoftmaxLossLayer::ComputeFeature() {
   VLOG(3)<<name_;
-  if(!data_.allocated())
-    return;
   Range nrng=data_.IndexRange(0);
   const DAry& bottom=in_edges_[0]->GetData(this);
-  vector<Range> slice{nrng, {0,data_.shape().SubShape().Size()}};
-  bottom.Fetch(slice);
   for (int n = nrng.first; n < nrng.second; ++n) {
-    float mmax = lbottom[n].Max();
+    DAry lbottom=bottom[n];
+    float mmax = lbottom.Max();
     DAry data=data_[n];
-    data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom[n]);
+    data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom);
     float sum=data.Sum();
     data.Div(data, sum);
   }
@@ -684,13 +661,10 @@ void SoftmaxLossLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   gbottom->Copy(data_);
   Range nrng=gbottom->IndexRange(0);
-  vector<Range> slice{nrng};
-  label.Fetch(slice);
-  DAry gbottom2(*gbottom, {num_, gbottom->shape().Size()/num_});
+  DAry gbottom2=gbottom->Reshape({num_, gbottom->shape().Size()/num_});
   for (int n = nrng.first; n < nrng.second; n++) {
-    int k = static_cast<int>(llabel.get(n));
+    int k = static_cast<int>(label.get(n));
     // check gobottom2[n,k] on this node, 1 for 1-th dim
-    if(gbottom2.isLocal({n,k}))
       gbottom2.at(n, k) -= 1.f;
   }
   gbottom->Div(*gbottom, num_);

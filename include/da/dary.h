@@ -202,25 +202,23 @@ class DAry {
   int locate(int idx0,int idx1, int idx2, int idx3) const {
     CHECK_EQ(dim_,4);
     int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
-    CHECK(pos> part_.start);
-    return pos-part_.start;
+    return pos-ga_==nullptr?0:ga_->offset();
   }
   int locate(int idx0,int idx1, int idx2) const{
     CHECK_EQ(dim_,3);
     int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
     CHECK(pos> part_.start);
-    return pos-part_.start;
+    return pos-ga_==nullptr?0:ga_->offset();
   }
   int locate(int idx0,int idx1) const {
     CHECK_EQ(dim_,2);
     int pos=idx0*shape_.s[1]+idx1;
     CHECK(pos> part_.start);
-    return pos-part_.start;
+    return pos-ga_==nullptr?0:ga_->offset();
   }
   int locate(int idx0) const {
     CHECK_EQ(dim_,1);
-    CHECK(idx0> part_.start);
-    return idx0-part_.start;
+    return idx0-ga_==nullptr?0:ga_->offset();
   }
   /**
     * return the value for the ary at this index

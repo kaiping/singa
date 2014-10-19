@@ -65,6 +65,15 @@ class Shape {
     return ret;
   }
 
+  int Offset(const Partition& part){
+    CHECK(dim==part.getDim());
+    int offset=part.lo[0];
+    for (int i = 1; i < dim; i++) {
+      offset=offset*s[i]+part.lo[i];
+    }
+    return offset;
+  }
+
  public:
   int s[4];
   int dim;
@@ -73,26 +82,70 @@ class Shape {
 class Partition{
 public:
   // >=0 put all data to idInGroup; -1 local ary; -2 partition on dim
-  char dim;
   // partition on this dimension
-  char pdim;
-  short mode;
-  int size;
-  // range of each dimension on local; depends on mode,
-  // if mode=-2, only dim is not full; range for other dim: lo=0, hi=shape(dim)
-  // if mode=-1, lo=0, hi=shape, replicate on all
-  // if mode>0, lo=hi=0 one all machine except idInGroup=mode
-  int lo[4];
-  int hi[4];
-  struct _Partition SubPartition(){
-    struct _Partition ret;
+  Partition():mode(0),size(0){
+    lo=dptr;
+    hi=lo+4;
+    ld=hi+4;
+  }
+  Partition(const Partition& other){
+    mempcy(dptr, other.dptr, 12*sizeof(int));
+    mode=other.mode;
+    size=other.size;
+    lo=dptr;
+    hi=lo+4;
+    ld=hi+4;
+  }
+  void Setup(const vector<Range>& slice) {
+    setDim(slice.size());
+    for (int i = 0; i < slice.size(); i++) {
+      lo[i]=slice[i].first;
+      hi[i]=slice[i].second;
+      if(i>0)
+        ld[i-1]=hi[i]-lo[i];
+    }
+  }
+  bool isLocal() {
+    return mode&1;
+  }
+  void setLocal(){
+    mode|=1;
+  }
+  bool isCache(){
+    return mode&2;
+  }
+  void setCache(){
+    mode|=2;
+  }
+  int getpDim() {
+    return (mode&63)>>2;
+  }
+
+  void setpDim(int k){
+    mode|=k<<2;
+  }
+  void setDim(int k){
+    mode|=k<<8;
+  }
+  int getDim(){
+    mode>>8;
+  }
+  int Size(){
+    size=1;
+    for (int i = 0; i < dim(); i++) {
+      size*=hi[i]-lo[i];
+    }
+    return size;
+  }
+  Partition SubPartition(){
+    Partition ret;
     ret.mode=mode;
     ret.pdim=pdim-1;
     lo[0]=lo[1]; lo[1]=lo[2]; lo[2]=lo[3];
     hi[0]=lo[1]; hi[1]=lo[2]; hi[2]=lo[3];
   }
-  struct _Partition Repartition(const vector<int>& shape){
-    struct _Partition ret;
+  Partition Repartition(const vector<int>& shape){
+    Partition ret;
     ret.mode=mode;
     int k=0;
     if(pdim==0){
@@ -107,7 +160,14 @@ public:
     return ret;
   }
 
-
+  bool operator==(const Partition& other){
+    CHECK(getDim()==other.getDim());
+    for (int i = 0; i < getDim(); i++) {
+      if(lo[i]!=other.lo[i]|| hi[i]!=other.hi[i])
+        return false;
+    }
+    return true;
+  }
   const vector<Range> Slice() {
     vector<Range> ret;
     for(int i=0;i<dim;i++)
@@ -134,6 +194,15 @@ public:
       hi[i]=slice[i].second-1;
     }
   }
+pulic:
+  int mode;
+  int size;
+  // range of each dimension on local; depends on mode,
+  // first for local or distributed
+  // the next 3 bit for partition dim
+  // the higher 16 bit for dimension
+  int dptr[12];
+  int *lo,*hi,*ld;
 };
 
 class Ary {

@@ -23,9 +23,10 @@ namespace lapis {
 class DAry {
  public:
   ~DAry();
-  DAry():dim_(0), size_(0), la_(nullptr), ga_(nullptr){};//alloc_size_(0),dptr_(nullptr){}
+  DAry():Ary(), offset_(0), dptr_(nullptr), ga_(nullptr){};//alloc_size_(0),dptr_(nullptr){}
   inline void SetPartition(const Partition& part);
   inline void SetPartition(const short mode, const short dim);
+  // alloc local mem; set ga
   void Setup();
   /**
    * init with the same shape and partition as other,
@@ -244,11 +245,11 @@ class DAry {
     return dptr_!=nullptr;
   }
  protected:
-  int dim_;
-  int size_;
-  Shape shape_;
+  int offset_;
+  std::shared_ptr<float> dptr_;
+  GAry *ga_;
   Partition part_;
-  GAry ga_;
+  Shape shape_;
   static arraymath::ArrayMath& arymath();
 };
 

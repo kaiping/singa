@@ -61,7 +61,7 @@ void Layer::ToProto(LayerProto *proto, bool copyData) {
 
 void Layer::InitDAryShape(const vector<vector<int>>& shapes){ }
 void Layer::InitDAryShape(){}
-void Layer::AllocateMemory(){}
+void Layer::SetupDAry(int mode){}
 void Layer::ComputeFeature(){}
 void Layer::ComputeGradient(){}
 void Layer::CollectParams(vector<Param*> *params){}
@@ -129,28 +129,28 @@ void ConvLayer::InitDAryShape(){
   col_grad_.SetShape({num_, ngroups_, K_, N_});
 }
 
-void ConvLayer::AllocateMemory(){
-  data_.Setup();
-  grad_.Setup();
-  weight_.Setup();
-  bias_.Setup();
+void ConvLayer::SetupDAry(int mode){
+  data_.Setup(mode);
+  grad_.Setup(mode);
+  weight_.Setup(mode);
+  bias_.Setup(mode);
 }
 
 void ConvLayer::ComputeFeature() {
   VLOG(3)<<name_;
-  Range nrng=data_.IndexRange(0);
   const DAry& bottom=in_edges_[0]->GetData(this);
   Img2Col(&col_data_, bottom);
   // copy constructor with rvalue ref DAry(DAry&& other)
   DAry data4=data_.Reshape({num_, ngroups_, K_, N_});
-  DAry bottom4=bottom.Reshape({num_, ngroups_, M_, N_});
+  DAry col4=col_data_.Reshape({num_, ngroups_, M_, N_});
   DAry weight3=weight_.data().Reshape({ngroups_, M_, K_});
+  Range nrng=data_.IndexRange(0);
   for (int n = nrng.first.; n < nrng.second; n++) {
     // copy constructor with rvalue ref
     DAry data3=data4[n];
-    DAry bottom3=bottom[n];
+    DAry col3=col4[n];
     for (int g = 0; g < ngroups_; g++){
-      data3[g].Dot(weight3[g], bottom3[g]);
+      data3[g].Dot(weight3[g], col3[g]);
     }
     DAry mat_data=data3.Reshape({nkernels_, N_});
     mat_data.AddCol(bias_.data());

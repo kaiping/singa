@@ -13,25 +13,58 @@ arraymath::ArrayMath& DAry::arymath(){
   return am;
 }
 DAry::~DAry(){
-  delete ga;
+  delete ga_;
+  /*
+  if(part_.isLocal()&&!part_.isCache())
+    delete dptr_;
+    */
 }
 
-DAry DAry::Setup() {
-  CHECK(mode_>=-2);
-  if(partition_.mode==-1)
-    Cache();
+DAry DAry::Setup(const int mode) {
+  if(mode<0)
+    part_.setLocal();
   else
-    ga_.Setup(shape_, &part_);
+    part_.setpDim(mode);
+  part_.setDim(shape_.dim);
+  if(part.isLocal()){
+    part_.lo[0]=part_.lo[1]=part_.lo[2]=part_.lo[3]=0;
+    part_.hi[0]=shape_.s[0];part_.hi[1]=shape_.s[1];
+    part_.hi[2]=shape_.s[2];part_.hi[3]=shape_.s[3];
+    part_.ld[0]=part_.hi[1];part_.ld[1]=part_.hi[2];ld[2]=part_.hi[3];
+    Allocate();
+  }
+  else{
+    ga_=std::make_shared(new GAry());
+    part_=ga_->Setup(shape_, &part_);
+    Allocate();
+    ga_->Get(dptr_.get(), part_.lo, part_.hi, part_.ld);
+  }
+}
+DAry DAry::Setup(const Partition& part) {
+  part_=part;
+  if(part.isLocal()){
+    part_.lo[0]=part_.lo[1]=part_.lo[2]=part_.lo[3]=0;
+    part_.hi[0]=shape_.s[0];part_.hi[1]=shape_.s[1];
+    part_.hi[2]=shape_.s[2];part_.hi[3]=shape_.s[3];
+    part_.ld[0]=part_.hi[1];part_.ld[1]=part_.hi[2];ld[2]=part_.hi[3];
+    Allocate();
+  }
+  else{
+    ga_=std::make_shared(new GAry());
+    part_=ga_->Setup(shape_, part_);
+    Allocate();
+    ga_->Get(dptr_.get(), part_.lo, part_.hi, part_.ld);
+  }
 }
 
 DAry DAry::Reshape(const vector<int>& shape) {
   // stride for non continuous
   DAry ret;
-  part_.CheckReshape(shape_, shape);
+  ret.offset_=other.offset_;
   ret.dptr_=other.dptr_;
   ret.ga_=other.ga_;
+  ret.part_=part_;
   ret.SetShape(shape);
-  ret.part_=part_.Repartition(shape);;
   return ret;
 }
 
@@ -40,80 +73,117 @@ void DAry::InitFromProto(const DAryProto& proto) {
   for(auto s: proto.shape())
     shape.push_back(s);
   SetShape(shape);
-
+  CHECK(proto.offset()==0);
   part_.mode=proto.mode();
-  part_.pdim=proto.pdim();
+  /*
   for (int i = 0; i < dim_; i++) {
     part_.lo[i]=proto.lo(i);
     part_.hi[i]=proto.hi(i);
   }
-  Setup();
+  */
+  Setup(part);
+}
+
+const Range IndexRange(int d){
+  CHECK(offset_==0);
+  return make_pair<int,int> (part_.lo[d], part_.hi[d]);
 }
 
 void DAry::ToProto(DAryProto* proto, bool copyData) {
+  CHECK(offset_==0);
   for (int i = 0; i < dim_; i++)
     proto->add_shape(shape_.s[i]);
   proto->set_mode(part_.mode);
-  proto->set_pdim(part_.pdim);
+  /*
   for (int i = 0; i < dim_; i++) {
     proto->add_lo(part_.lo[i]);
     proto->add_hi(part_.hi[i]);
   }
+  */
 }
 
 DAry DAry::operator[](int k) const {
   CHECK(k>=0&&k<shape_.s[0]);
   DAry ret;
-  int offset=(k-part_.lo[0])*ret.size_;
-  ret.dptr_=dptr_+offset;
   ret.SetShape(shape_.SubShape());
-  ret.SetPartition(part_.SubPartition());
-  if(ga_!=nullptr)
-    ret.ga_=ga_->Sub(offset, ret.size_);
+  ret.offset_=offset_+k*ret.size_;
+  ret.ga_=ga_;
+  ret.part_=part_;
+  /*
+  if(ga_==nullptr){
+    ret.dptr_=dptr_+k*ret.size_;
+  }
+  else{
+  */
+  ga_->UpdatePartition(&ret.part_, offset_, ret.size);
+  //ret.dptr_=ga_->GetPartitionPtr(part_);
+  Allocate();
+  ga_->Get(dptr_.get(), part_.lo, part_.hi, part_.ld);
   return ret;
 }
 
 DAry::DAry(const DAry& other, bool copy) {
+  part_=other.part_;
+  part_.SetLocal(); //local
   SetShape(other.shape_);
-  Cache();
-  range_=other.range_;
-  if(copy)
-    Copy(other);
+  ga_=other.ga_;
+  Allocate();
+  ga_->Get(dptr_.get(), part_.lo, part_.hi, part_.ld);
 }
+/*
 DAry::DAry(const vector<int>& shape) {
   dptr_=nullptr;
+  mode_=1;
   SetShape(shape);
-  Cache();
+  Allocate();
 }
+*/
 DAry DAry::Fetch(const vector<Range>& slice) {
-  if(part_.SameAs(slice)){
-      if(!cached())
-        Cache();
-      ga_->Get(dptr_);
-      return *this;
-    }
-    DAry ret;
-    ret.SetShape(shape_);
-    ret.SetPartition(slice);
-    ret.Cache();
-    ret.ga_.Setup(ga_, slice);
-    ret.ga_->Get(ret.dptr_);
-    return ret;
+  Partition part;
+  part.Setup(slice);
+  return Fetch(part);
+}
+DAry DAry::Fetch(const Partition& part) {
+  CHECK(ga_!=nullptr);
+  if(part_==part)
+    return *this;
+  DAry ret;
+  ret.part_.setLocal();
+  ret.SetShape(shape_);
+  ret.offset_=offset_+shape_.Offset(ret.part_);
+  ret.Allocate();
+  ret.ga_=ga_;
+  ga_->UpdatePartition(&ret.part_, ret.offset_, ret.shape_.size);
+  ga_->Get(ret.dptr_.get(), ret.part_.lo, ret.part_.hi, ret.part_.ld);
+  /*
+   * conver slice to partition, offset=offset_+slice.offset
+    ga_->Fetch(ret.dptr_, lo, hi, ld);
+   */
+  return ret;
 }
 
+/*
 void DAry::InitLike(const DAry& other) {
+  mode_=1;
   SetShape(other.shape_);
-  part_=other.part_;
-  Cache();
+  Allocate();
 }
+*/
+
 DAry DAry::FetchEleOp(const DAry& src) {
-  if(!cached())
-    Cache();
-  return src.Fetch(part_.Slice());
+  ShapeCheck(shape_, src.shape_);
+  Partition p=ga_->LocateParition();
+  return src.Fetch(p);
+}
+
+void PutIfGlobal(){
+  if(!part_.isLocal())
+    ga_->Put(dptr_.get(), part_.lo, part_.hi, part.ld);
 }
 
 /**
   * Dot production
+  * either all are cached or all are global
   */
 void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
   CHECK(dptr_!=src1.dptr_);
@@ -123,93 +193,78 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
   CHECK_EQ(dim_,2);
   int M=src1.shape(0), N=src2.shape(1), K=src1.shape(1);
   CHECK_EQ(src2.shape(0),K);
-
-  if(src1.glb()&&src2.glb()&&glb()){
-    ga_.Dot(src1.ga_, src2.ga_, trans1, trans2);
-    return;
+  const float* dptr1=nullptr, *dptr2=nullptr;
+  if(!src1.Cached()&&!src2.Cached()){
+    const DAry lsrc1=src1.Fetch({{part_.lo[0], part_.lo[1]}, {0,K}});
+    const DAry lsrc2=src2.Fetch({{0,K},{part_.hi[0], part_.hi[1]}});
+    M=part_.lo[1]-part_.lo[0];N=part_.hi[1]-part_.hi[0];
+    dptr1=lsrc1.dptr_; dptr2=lsrc2.dptr_;
+  }else{
+    dptr1=src1.dptr_; dptr2=src2.dptr_;
   }
-  if(!cached())
-    Cache();
-  if(!src1.cached())
-    src1.Fetch({{part_.lo[0], part_.lo[1]}, {0,K}});
-  if(!src2.cached())
-    src2.Fetch({{0,K},{part_.hi[0], part_.hi[1]}});
-  M=part_.lo[1]-part_.lo[0];N=part_.hi[1]-part_.hi[0];
   int lda=trans1==false?K:M;
   int ldb=trans2==false?N:K;
   CBLAS_TRANSPOSE TransA =trans1?CblasTrans:CblasNoTrans;
   CBLAS_TRANSPOSE TransB =trans2?CblasTrans:CblasNoTrans;
   cblas_sgemm(CblasRowMajor,  TransA, TransB, M, N, K,
-      1.0f, src1.dptr_, lda, src2.dptr_, ldb, 0.0f, dptr_, N);
-  if(!local())
-    ga_.Put(dptr_,part_);
+      1.0f, lsrc1.dptr_, lda, lsrc2.dptr_, ldb, 0.0f, dptr_, N);
+  PutIfGlobal();
 }
+
 void DAry::Copy( const DAry& src) {
-  CHECK_EQ(size_, src.size_);
-  if(src.local()||local()){
-    DAry fetched=FetchEleOp(src);
-    memcpy(dptr_, fetched.dptr_, alloc_size_*sizeof(float));
-    PutIfGlobal();
-  }
-  else{
-    ga_.Copy(src.ga_);
-  }
+  CHECK_EQ(shape_.size, src.shape_.size);
+
+  const DAry lsrc=src.Fetch(part_);
+  memcpy(dptr_.get(), lsrc.dptr_.get(), part_.size*sizeof(float));
+  PutifGlobal();
 }
 
 void DAry::Mult( const DAry& src1, const DAry& src2) {
   int len=shape_.Size();
-  CHECK_EQ(len, src1.shape().Size());
-  CHECK_EQ(len, src2.shape().Size());
+  CHECK_EQ(shape_.size, src1.shape_.size);
+  CHECK_EQ(shape_.size, src2.shape_.size);
 
-  if(src1.local()||src2.local()||local()){
-    FetchEleOp(src1);
-    FetchEleOp(src2);
-    arymath().mul(dptr_, src1.dptr_,src2.dptr_, part_.Size());
-    PutIfGlobal();
-  }
-  else{
-    ga_.Mult(src1, src2);
-  }
+  const DAry lsrc1=src1.Fetch(part_);
+  const DAry lsrc2=src2.Fetch(part_);
+  arymath().mul(dptr_.get(), lsrc1.dptr_.get(),lsrc2.dptr_.get(), part_.size_);
+  PutifGlobal();
 }
 void DAry::Div( const DAry& src1, const DAry& src2){
   int len=shape_.Size();
-  CHECK_EQ(len, src1.shape().Size());
-  CHECK_EQ(len, src2.shape().Size());
-  if(local()||src1.local()||src2.local()){
-  FetchForEleOp(src1);
-  FetchForEleOp(src2);
-  arymath().div(dptr_, src1.dptr_,src2.dptr_, part_.Size());
-  PutIfGlobal();
-  }else{
-    ga_.Div(src1.ga_, src2.ga_);
-  }
+  CHECK_EQ(shape_.size, src1.shape_.size);
+  CHECK_EQ(shape_.size, src2.shape_.size);
+
+  const DAry lsrc1=src1.Fetch(part_);
+  const DAry lsrc2=src2.Fetch(part_);
+  arymath().div(dptr_.get(), lsrc1.dptr_.get(),lsrc2.dptr_.get(), part_.size_);
+  PutifGlobal();
 }
 
 
 void DAry::Mult(const DAry& src, const float x) {
-  int len=shape_.Size();
-  CHECK_EQ(len, src.shape().Size());
-  arymath().mul(dptr_, x, src.dptr_, part_.Size());
-  PutIfGlobal();
+  CHECK_EQ(shape_.size, src.shape_.size);
+  const DAry lsrc=src.Fetch(part_);
+  arymath().mul(dptr_.get(), x, lsrc.dptr_.get(), part_.size);
+  PutifGlobal();
 }
 
 void DAry::Div( const DAry& src, const float x) {
   CHECK(x!=0);
   Mult(src, 1.0f/x);
+  PutifGlobal();
 }
-
 
 /**
   * dst=src1-src2
   */
 void DAry::Minus( const DAry& src1, const DAry& src2) {
-  int len=shape_.Size();
-  CHECK_EQ(len, src1.shape().Size());
-  CHECK_EQ(len, src2.shape().Size());
-  FetchEleOp(src1);
-  FetchEleOp(src2);
-  arymath().sub(dptr_, src1.dptr_,src2.dptr_, len);
-  PutIfGlobal();
+  CHECK_EQ(shape_.size, src1.shape_.size);
+  CHECK_EQ(shape_.size, src2.shape_.size);
+
+  const DAry lsrc1=src1.Fetch(part_);
+  const DAry lsrc2=src2.Fetch(part_);
+  arymath().sub(dptr_.get(), lsrc1.dptr_.get(),lsrc2.dptr_.get(), part_.size_);
+  PutifGlobal();
 }
 
 void DAry::Minus( const DAry& src, const float x) {
@@ -222,17 +277,13 @@ void DAry::Minus( const DAry& src) {
   * dst=src1+src2
   */
 void DAry::Add( const DAry& src1, const DAry& src2){
-  int len=shape_.Size();
-  CHECK_EQ(len, src1.shape().Size());
-  CHECK_EQ(len, src2.shape().Size());
-  if(local()||src1.local()||src2.local()){
-  FetchEleOp(src1);
-  FetchEleOp(src2);
-  arymath().add(dptr_,src1.dptr_, src2.dptr_, len);
-  PutIfGlobal();
-  }else{
-    ga_.Add(src1.ga_, src2.ga_);
-  }
+  CHECK_EQ(shape_.size, src1.shape_.size);
+  CHECK_EQ(shape_.size, src2.shape_.size);
+
+  const DAry lsrc1=src1.Fetch(part_);
+  const DAry lsrc2=src2.Fetch(part_);
+  arymath().add(dptr_.get(), lsrc1.dptr_.get(),lsrc2.dptr_.get(), part_.size_);
+  PutifGlobal();
 }
 
 void DAry::Add(const float x) {
@@ -242,63 +293,53 @@ void DAry::Add(const float x) {
   * dst=src1+x
   */
 void DAry::Add( const DAry& src, const float x){
-  int len=shape_.Size();
-  CHECK_EQ(len, src.shape().Size());
-  if(local()||src.local()){
-  FetchEleOp(src);
-  arymath().add(dptr_, x, src.dptr_, len);
-  PutIfGlobal();
-  }else{
-    ga_.Add(src1.ga_,x);
-  }
+  CHECK_EQ(shape_.size, src.shape_.size);
+  const DAry lsrc=src.Fetch(part_);
+  arymath().add(dptr_.get(), x, lsrc.dptr_.get(), part_.size);
+  PutifGlobal();
 }
 void DAry::Add(const DAry& src){
   Add(*this, src);
+  PutifGlobal();
 }
 
 /**
   * generate random number between 0-1 for every element
   */
 void DAry::Random() {
-  if(!cached())
-    Cache();
-  arymath().random(dptr_, 0.0f, 1.0f, size_);
-  PutIfGlobal();
+  arymath().random(dptr_.get(), 0.0f, 1.0f, part_.size);
+  PutifGlobal();
 }
 void DAry::SampleGaussian(float mean, float std){
-  if(!cached())
-    Cache();
-
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine generator(seed);
   std::normal_distribution<double> distribution(mean, std);
-  for (int i = 0; i < size_; i++) {
-    dptr_[i]=distribution(generator);
+  float *dptr=dptr.get();
+  for (int i = 0; i < part_.size; i++) {
+    dptr[i]=distribution(generator);
   }
-  PutIfGlobal();
+  PutifGlobal();
 }
 void DAry::SampleUniform(float low, float high) {
-  if(!cached())
-    Cache();
-  arymath().random(dptr_, low, high, size_);
-  PutIfGlobal();
+  arymath().random(dptr_.get(), low, high, part_.size);
+  PutifGlobal();
 }
 
 void DAry::Square(const DAry& src) {
-  FetchEleOp(src);
-  CHECK_EQ(size_, src.size_);
-  arymath().mul(dptr_, src.dptr_, src.dptr_, size_);
-  PutIfGlobal();
+  CHECK_EQ(shape_.size, src.shape_.size);
+  const DAry lsrc=src.Fetch(part_);
+  arymath().mul(dptr_.get(), lsrc.dptr_.get(), lsrc.dptr_.get(), part_.size);
+  PutifGlobal();
 }
 
 /**
   * dst=src^x
   */
 void DAry::Pow( const DAry& src, const float x) {
-  CHECK_EQ(size_, src.size_);
-  FetchEleOp(src);
-  arymath().pow(dptr_, src.dptr_, x, size_);
-  PutIfGlobal();
+  CHECK_EQ(shape_.size, src.shape_.size);
+  const DAry lsrc=src.Fetch(part_);
+  arymath().pow(dptr_.get(), src.dptr_.get(), x, part_.size);
+  PutifGlobal();
 }
 
 /**
@@ -306,34 +347,38 @@ void DAry::Pow( const DAry& src, const float x) {
   * Map(&mask_, [t](float v){return v<=t?1.0f:0.0f;}, mask_);
   */
 void DAry::Threshold( const DAry& src, float t) {
-  FetchEleOp(src);
   Map([t](float v) {return v<=t?1.0f:0.0f;}, src);
-  PutIfGlobal();
 }
 void DAry::Map( std::function<float(float)> func, const DAry& src) {
-  CHECK_EQ(size_,src.size_);
-  FetchEleOp(src);
+  CHECK_EQ(shape_.size,src.shape_.size);
+  DAry lsrc=src.Fetch(part_);
+  float *dptr=dptr_.get(), srcdptr=src.dptr_.get();
   for (int i = 0; i < size_; i++) {
-    dptr_[i]=func(src.dptr_[i]);
+    dptr[i]=func(src.dptr[i]);
   }
-  PutIfGlobal();
+  PutifGlobal();
 }
 void DAry::Map( std::function<float(float, float)> func, const DAry& src1, const DAry& src2) {
-  CHECK_EQ(size_, src1.size_);
-  FetchEleOp(src1);
-  FetchEleOp(src2);
+  CHECK_EQ(shape_.size_, src1.shape_.size_);
+  CHECK_EQ(shape_.size_, src2.shape_.size_);
+  DAry lsrc1=src1.Fetch(part_);
+  DAry lsrc2=src2.Fetch(part_);
+  float *dptr=dptr_.get(), dptr1=src1.dptr_.get(), dptr2=src2.dptr_.get();
   for (int i = 0; i < size_; i++) {
-    dptr_[i]=func(src1.dptr_[i], src2.dptr_[i]);
+    dptr[i]=func(dptr1[i], dptr2[i]);
   }
   PutIfGlobal();
 }
 void DAry::Map( std::function<float(float, float, float)> func, const DAry& src1, const DAry& src2,const DAry& src3){
-  CHECK_EQ(size_, src1.size_);
-  FetchEleOp(src1);
-  FetchEleOp(src2);
-  FetchEleOp(src3);
+  CHECK_EQ(shape_.size_, src1.shape_.size_);
+  CHECK_EQ(shape_.size_, src2.shape_.size_);
+  CHECK_EQ(shape_.size_, src3.shape_.size_);
+  DAry lsrc1=src1.Fetch(part_);
+  DAry lsrc2=src2.Fetch(part_);
+  DAry lsrc3=src3.Fetch(part_);
+  float *dptr=dptr_.get(), dptr1=src1.dptr_.get(), dptr2=src2.dptr_.get(), dptr3=src3.dptr_.get();
   for (int i = 0; i < size_; i++) {
-    dptr_[i]=func(src1.dptr_[i], src2.dptr_[i], src3.dptr_[i]);
+    dptr[i]=func(dptr1[i], dptr2[i], dptr3[i]);
   }
   PutIfGlobal();
 }
@@ -343,11 +388,18 @@ void DAry::Map( std::function<float(float, float, float)> func, const DAry& src1
   * # of dimensions of dst is that of src-1
   */
 void DAry::Sum( const DAry& src, Range r) {
-  CHECK_EQ(dim,0);
-  CHECK_EQ(size_,src.size_/src.shape_.s[0]);
-  Set(0.0f);
-  for (int i = r.first; i < r.second; i++) {
-    arymath().add(dptr_, dptr_, src.dptr_+i*size_, size_);
+  int rowsize=shape_.size;
+  CHECK_EQ(rowsize, src.shape_.size/src.shape_.s[0]);
+  SetLocal(0.0f);
+
+  vector<Range> slice;
+  slice.push_back(r);
+  for (int i = 1; i < src.shape_.dim; i++)
+    slice.push_back({0,src.shape_.s[i]});
+  part.Setup(slice);
+  const DAry lsrc=src.Fetch(part_);
+  for (int i = 0; i < r.second-r.first; i++) {
+    arymath().add(dptr_.get(), dptr_.get(), src.dptr_+i*rowsize, rowsize);
   }
 }
 
@@ -356,38 +408,53 @@ void DAry::Sum( const DAry& src, Range r) {
   * this is a vector
   */
 void DAry::SumRow(const DAry& src) {
-  CHECK_EQ(dim_,1);
-  CHECK_EQ(src.dim_,2);
-  CHECK_EQ(size_, src.shape_.s[1]);
+  CHECK_EQ(shape_.dim,1);
+  CHECK_EQ(src.shape.dim,2);
+  CHECK(src.part_.isLocal());
+  int rowlen=shape_.size;
+  CHECK_EQ(collen, src.shape_.s[1]);
   for (int i = 0; i < src.shape_.s[0]; i++) {
-    arymath().add(dptr_,src.dptr_+size_*i, dptr_, size_);
+    arymath().add(dptr_.get(),src.dptr_.get()+rowlen*i, dptr_.get(), rowlen);
   }
 }
 void DAry::AddRow( const DAry& src) {
   // only support dim being the last dimension
-  CHECK_EQ(dim_, 2);
-  CHECK_EQ(src.dim_, 1);
-  CHECK_EQ(src.size_, shape_.s[1]);
+  CHECK_EQ(src.shape.dim,1);
+  CHECK(src.part_.isLocal());
+  CHECK_EQ(shape_.dim,2);
+  int rowlen=src.shape_.size;
+  CHECK_EQ(rowlen, shape_.s[1]);
   for (int i = 0; i < shape_.s[0]; i++) {
-    arymath().add(dptr_+src.size_*i, dptr_+src.size_*i, src.dptr_, src.size_);
-  }
-}
-
-void DAry::AddCol(const DAry& src) {
-  CHECK_EQ(src.dim_,1);
-  CHECK_EQ(dim_,2);
-  CHECK_EQ(src.size_, shape_.s[0]);
-  for (int i = 0; i < shape_.s[0]; i++) {
-    arymath().add(dptr_+shape_.s[1]*i, src.dptr_[i],dptr_+shape_.s[1]*i, shape_.s[1]);
+    arymath().add(dptr_.get()+rowlen*i, dptr_.get()+rowlen*i, src.dptr_.get(), rowlen);
   }
 }
 void DAry::SumCol(const DAry& src) {
-  CHECK_EQ(dim_,1);
-  CHECK_EQ(src.dim_,2);
-  for (int i = 0; i < size_; i++) {
-    dptr_[i]+=arymath().sum(src.dptr_+i*src.shape_.s[1], src.shape_.s[1]);
+  CHECK_EQ(src.shape_.dim,2);
+  CHECK(src.part_.isLocal());
+  CHECK_EQ(shape_.dim,1);
+  int collen=shape_.size;
+  CHECK_EQ(collen, src.shape_.s[0]);
+  int rowlen=src.shape_.s[1];
+  float* dptr=dptr_.get(), *srcdptr=src.dptr_.get();
+  for (int i = 0; i < collen_; i++) {
+    dptr[i]+=arymath().sum(srcdptr+i*rowlen, rowlen);
   }
 }
+// assume both are cached
+void DAry::AddCol(const DAry& src) {
+  CHECK(src.Cached());
+  CHECK_EQ(src.shape_.dim,1);
+  CHECK_EQ(shape_.dim,2);
+  int collen=shape_.s[0];
+  int rowlen=shape_.s[1];
+  CHECK_EQ(src.shape_.size, collen);
+  float* dptr=dptr_.get(), *srcdptr=src.dptr_.get();
+  for (int i = 0; i < collen; i++) {
+    arymath().add(dptr+rowlen*i, srcdptr[i],dptr+rowlen*i, rowlen);
+  }
+  PutIfGlobal();
+}
+
 
 /**
   * sum the src except the dim-th dimension
@@ -400,16 +467,12 @@ void DAry::SumExcept(const DAry& src, int dim){}
   * sum all elements
   */
 float DAry::Sum(){
-  if(local())
-    return arymath().sum(dptr_, size_);
-  else
-  return ga_.Sum();
+  return arymath().sum(dptr_, shape_.size);
 }
 /**
   * put max(src,x) into dst
   */
 void DAry::Max( const DAry& src, float x) {
-  FetchEleOp(src);
   Map([x](float v) {return v<x?x:v;}, src);
   PutIfGlobal();
 }
@@ -418,35 +481,29 @@ void DAry::Max( const DAry& src, float x) {
   * max element
   */
 float DAry::Max(){
-  ga_.Fetch(shape_.ToSlice());
-  return arymath().max(dptr_, size_);
+  const DAry lary=ga_->Fetch(shape_.ToSlice());
+  return arymath().max(lary.dptr_.get(), shape_.size);
 }
 
+void DAry::SetLocal(const float x){
+  arymath().fill(dptr_.get(), x, part_.size);
+}
 void DAry::Set(float x){
   ga_.Fill(x, shape_.ToSlice());
-  //arymath().fill(dptr_, x, shape_.Size());
 }
 
-void DAry::Cache() {
+void DAry::Allocate() {
   if(dptr_!=nullptr){
     LOG(WARNING)<<"the dary has been allocated before, size: "<<alloc_size_;
     delete dptr_;
   }
+  if(part_.size==0)
+    part_.Size();
   // it is possible the range is empry on some dimension
-  alloc_size_=part_.size();
-  dptr_=new float[alloc_size_];
-  ga_.Get(dptr_, part_);
-}
-
-void DAry::FreeMemory() {
-  if(dptr_!=nullptr)
-    delete dptr_;
-  else
-    CHECK(alloc_size_==0)<<"dptr_ is null but alloc_size is "<<alloc_size_;
-  alloc_size_=0;
+  dptr_=std::make_shared(new float[part_.size]);
+  alloc_size_=part_.size;
 }
 
 DAry::~DAry() {
-  FreeMemory();
 }
 }  // namespace lapis

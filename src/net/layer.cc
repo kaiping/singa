@@ -462,7 +462,6 @@ void PoolingLayer::ComputeGradient() {
     default:
       LOG(ERROR) << "Not supported pooling method ";
   }
-
 }
 
 

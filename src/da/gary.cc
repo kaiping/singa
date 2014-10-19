@@ -1,17 +1,38 @@
-const Partition GAry::Setup(const Shape& shape, const Partition part){
-  CHECK(!part.isLocal());
-  SetShape(shape);
-  int* chunks=new int[dim_];
-  for (int i = 0; i < dim_; i++) {
-    chunks[i]=shape_.s[i];
-  }
-  chunks[part.pdim]=0;
-  handle_=NGA_Create(C_FLOAT, dim_, shape.s, "ga", chunks);
-  GA_Set_pgroup(handle_, GlobalContext::Get()->gagroup());
-  NGA_Distribution(handle_, GlobalContext::Get()->rank() , part_.lo, part.hi);
-  part_.Size();
-  return part_;
+GAry::GAry(){
+  groupsize_=GlobalContext::Get()->groupsize();
+  id_=GlobalContext::Get()->idInGroup();
 }
+shared_ptr<float> GAry::Get(int offset, const Partition& part){
+  int totaloffset=offset+part.start;
+  shared_ptr<float> dptr=make_shared(new float[part.size]);
+
+}
+shared_ptr<float> GAry::Setup(const Shape& shape, Partition *part){
+  shape_=shape;
+  int pdim=part->getpDim();
+  int rows=1;
+  for(int i=0;i<pdim;i++)
+    rows*=shape.s[i];
+  CHECK(shape.s[pdim]%groupsize==0);
+  stepsize_=shape.size/rows/groupsize;
+  stride_=shape.size/rows;
+  ARMIC_Malloc((void**)dptrs_, shape.size/groupsize);
+  part->stepsize=stepsize_;
+  part->stride=stride_;
+  part->start=stepsize_*id_;
+  part->end=shape.size-(groupsize_-id_-1)*stepsize_;
+  return dptrs_[id_];
+}
+
+const Range IndexRange(int k){
+  if(k==part_.getpDim()){
+    int rngpernode=shape_.s[k]/groupsize_;
+    return make_pair(rngpernode*id_, rngpernode*(id_+1));
+  }else{
+    return make_pair(0, shape_.s[k]);
+  }
+}
+
 
 void GAry::UpdatePartition(Partition* part, int offset, int size){
   int lo[4], hi[4], subsize[4];

@@ -187,55 +187,55 @@ class DAry {
     * return the ref for the ary at this index
     * check shape
     */
-  float* at(int idx0,int idx1, int idx2, int idx3) const {
+  float* addr(int idx0,int idx1, int idx2, int idx3) const {
     return dptr_+locate(idx0,idx1,idx2,idx3);
   }
-  float* at(int idx0,int idx1, int idx2) const{
+  float* addr(int idx0,int idx1, int idx2) const{
     return dptr_+locate(idx0,idx1,idx2);
   }
-  float* at(int idx0,int idx1) const {
+  float* addr(int idx0,int idx1) const {
     return dptr_+locate(idx0,idx1);
   }
-  float* at(int idx0) const {
+  float* addr(int idx0) const {
     return dptr_+locate(idx0);
   }
   int locate(int idx0,int idx1, int idx2, int idx3) const {
     CHECK_EQ(dim_,4);
     int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
-    CHECK(pos< alloc_size_);
-    return pos;
+    CHECK(pos> part_.start);
+    return pos-part_.start;
   }
   int locate(int idx0,int idx1, int idx2) const{
     CHECK_EQ(dim_,3);
     int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
-    CHECK(pos< alloc_size_);
-    return pos;
+    CHECK(pos> part_.start);
+    return pos-part_.start;
   }
   int locate(int idx0,int idx1) const {
     CHECK_EQ(dim_,2);
     int pos=idx0*shape_.s[1]+idx1;
-    CHECK(pos< alloc_size_);
-    return pos;
+    CHECK(pos> part_.start);
+    return pos-part_.start;
   }
   int locate(int idx0) const {
     CHECK_EQ(dim_,1);
-    CHECK(idx0< alloc_size_);
-    return idx0;
+    CHECK(idx0> part_.start);
+    return idx0-part_.start;
   }
   /**
     * return the value for the ary at this index
     * check shape
     */
-  const float get(int idx0,int idx1, int idx2, int idx3) const {
+  float& at(int idx0,int idx1, int idx2, int idx3) const {
     return dptr_[locate(idx0,idx1,idx2,idx3)];
   }
-  const float get(int idx0,int idx1, int idx2) const{
+  float& at(int idx0,int idx1, int idx2) const{
     return dptr_[locate(idx0,idx1,idx2)];
   }
-  const float get(int idx0,int idx1) const{
+  float& at(int idx0,int idx1) const{
     return dptr_[locate(idx0,idx1)];
   }
-  const float get(int idx0) const{
+  float& at(int idx0) const{
     return dptr_[locate(idx0)];
   }
   bool local(){
@@ -244,10 +244,22 @@ class DAry {
   bool cached(){
     return dptr_!=nullptr;
   }
+  void SetShape(const vector<int>& shape) {
+    dim_=shape.size();
+    shape_.Reset(shape);
+    size_=shape_.Size();
+  }
+  void SetShape(const Shape& shape) {
+    dim_=shape.dim;
+    shape_=shape;
+    size_=shape.Size();
+  }
+
  protected:
-  int offset_;
+  int offset_;// offset to the base dary
   std::shared_ptr<float> dptr_;
-  GAry *ga_;
+  std::shard_ptr<GAry> ga_;
+  std::shard_ptr<DAry> parent_;
   Partition part_;
   Shape shape_;
   static arraymath::ArrayMath& arymath();

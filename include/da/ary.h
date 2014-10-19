@@ -83,27 +83,33 @@ class Partition{
 public:
   // >=0 put all data to idInGroup; -1 local ary; -2 partition on dim
   // partition on this dimension
-  Partition():mode(0),size(0){
-    lo=dptr;
-    hi=lo+4;
-    ld=hi+4;
+  Partition():mode(0),size(0), start(0), stepsize(0), stride(0), end(0){ }
+  void LocalSetup(const Shape& shape){
+    setLocal();
+    size=shape.size;
+    start=0;
+    stepsize=size;
+    stride=size;
+    end=size;
   }
-  Partition(const Partition& other){
-    mempcy(dptr, other.dptr, 12*sizeof(int));
-    mode=other.mode;
-    size=other.size;
-    lo=dptr;
-    hi=lo+4;
-    ld=hi+4;
-  }
-  void Setup(const vector<Range>& slice) {
-    setDim(slice.size());
-    for (int i = 0; i < slice.size(); i++) {
-      lo[i]=slice[i].first;
-      hi[i]=slice[i].second;
-      if(i>0)
-        ld[i-1]=hi[i]-lo[i];
+
+  Partition(const Shape& shape, const vector<Range>& slice) {
+    int rows=1;
+    for(int i=0;i<slice.size();i++){
+      int rng=slice[i].second-slicei[i].first;
+      if(rng!=shape.s[i]){
+        start=slice[i].first;
+        stepsize=rng;
+        setpDim(i);
+        break;
+      }else{
+        rows*=rng;
+      }
     }
+    stride=shape.size/rows;
+    stepsize*=stride/shape_.s[getpDim()];
+    end=start+rows*stride;
+    size=rows*stepsize;
   }
   bool isLocal() {
     return mode&1;
@@ -132,51 +138,54 @@ public:
   }
   int Size(){
     size=1;
-    for (int i = 0; i < dim(); i++) {
-      size*=hi[i]-lo[i];
-    }
     return size;
   }
-  Partition SubPartition(){
+  Partition SubPartition(int offset, int len){
     Partition ret;
     ret.mode=mode;
-    ret.pdim=pdim-1;
-    lo[0]=lo[1]; lo[1]=lo[2]; lo[2]=lo[3];
-    hi[0]=lo[1]; hi[1]=lo[2]; hi[2]=lo[3];
+    ret.setpDim(getpDim()-1);
+    ret.setDim(getDim()-1);
+
+    CHECK(start<offset+len);
+    CHECK(offset<end);
+
+    if(start>=offset){
+      ret.start=start-offset;
+    }else{
+      ret.start=(offset-start)%stride;
+      if(ret.start<stepsize){
+        ret.start=0;
+        CHECK(len<stepsize);
+      }
+      else
+        ret.start=stride-ret.start;
+    }
+    if(len-ret.start<=stepsize)
+      ret.stepsize=ret.stride=len-ret.start;
+    else
+      ret.stepsize=stepsize;
+    if(end-offset>len)
+      ret.end=len;
+    else
+      ret.end=end-offset;
+    ret.stride=stride>len?len:stride;
+    int l=ret.end-ret.start;
+    ret.size=l/ret.stride*ret.stepsize+l%ret.stride;
   }
-  Partition Repartition(const vector<int>& shape){
+  int GetPtrOffset(int offset){
+    int dist=offset-start;
+    int steps=dist/stride;
+    if(dist%stride>=stepsize)
+      return (steps+1)*stepsize;
+    else
+      return steps*stepsize+(dist%stride%stepsize);
+  }
+  Partition Intersect(int offset, int len){
     Partition ret;
     ret.mode=mode;
-    int k=0;
-    if(pdim==0){
-      ret.lo[0]=lo[0];
-      ret.hi[0]=hi[0];
-      k++;
-    }
-    for(;k<shape.size();k++){
-      ret.lo[i]=0;
-      ret.hi[i]=shape[i]-1;
-    }
     return ret;
   }
 
-  bool operator==(const Partition& other){
-    CHECK(getDim()==other.getDim());
-    for (int i = 0; i < getDim(); i++) {
-      if(lo[i]!=other.lo[i]|| hi[i]!=other.hi[i])
-        return false;
-    }
-    return true;
-  }
-  const vector<Range> Slice() {
-    vector<Range> ret;
-    for(int i=0;i<dim;i++)
-      ret.push_back({lo[i], hi[i]});
-    return ret;
-  }
-  const int Size() {
-    return size;
-  }
   void CheckReshape(const Shape& old, const Shape& cur){
     CHECK(old.Size()==cur.Size());
     if(mode==-2){
@@ -197,12 +206,8 @@ public:
 pulic:
   int mode;
   int size;
-  // range of each dimension on local; depends on mode,
-  // first for local or distributed
-  // the next 3 bit for partition dim
-  // the higher 16 bit for dimension
-  int dptr[12];
-  int *lo,*hi,*ld;
+  // include start, not include end, stride>=stepsize
+  int start, stepsize, stride, end, padstep, padstride;
 };
 
 class Ary {
@@ -223,15 +228,5 @@ class Ary {
   int size_;
   Shape shape_;
 };
-inline void Ary::SetShape(const vector<int>& shape) {
-  dim_=shape.size();
-  shape_.Reset(shape);
-  size_=shape_.Size();
-}
-inline void Ary::SetShape(const Shape& shape) {
-  dim_=shape.dim;
-  shape_=shape;
-  size_=shape.Size();
-}
 }  // namespace lapis
 #endif  // INCLUDE_DA_DAY_H_

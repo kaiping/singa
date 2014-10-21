@@ -23,19 +23,19 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //------------------------------------------------------------------------------
 
-#include "darray/arraymath.h"
+#include "da/arraymath.h"
 
-#include "darray/arm/ArrayMathARM.h"
-#include "darray/arm/ArrayMathNEON.h"
-#include "darray/arm/RandomNEON.h"
-#include "darray/common/Architecture.h"
-#include "darray/common/CPUFeatureDetector.h"
-#include "darray/generic/ArrayMathGeneric.h"
-#include "darray/generic/RandomGeneric.h"
-#include "darray/x86/ArrayMathAVX.h"
-#include "darray/x86/ArrayMathSSE.h"
-#include "darray/x86/ArrayMathSSE4.h"
-#include "darray/x86/RandomSSE2.h"
+#include "da/arm/ArrayMathARM.h"
+#include "da/arm/ArrayMathNEON.h"
+#include "da/arm/RandomNEON.h"
+#include "da/common/Architecture.h"
+#include "da/common/CPUFeatureDetector.h"
+#include "da/generic/ArrayMathGeneric.h"
+#include "da/generic/RandomGeneric.h"
+#include "da/x86/ArrayMathAVX.h"
+#include "da/x86/ArrayMathSSE.h"
+#include "da/x86/ArrayMathSSE4.h"
+#include "da/x86/RandomSSE2.h"
 
 namespace arraymath {
 

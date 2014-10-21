@@ -18,7 +18,7 @@ MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath
+							opencv_core openblas arraymath armci
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib
 #$(HOME_DIR)/atlas/lib

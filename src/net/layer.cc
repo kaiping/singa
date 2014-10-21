@@ -281,7 +281,7 @@ void DropoutLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
   drop_prob_=proto.drop_prob();
   if(proto.has_data());
-    mask_.InitLike(data_);
+    mask_.InitFromProto(data_);
 }
 
 void DropoutLayer::ToProto(LayerProto *proto, bool copyData) {
@@ -464,7 +464,7 @@ void LRNLayer::Init(const LayerProto &proto, StrStrEdge *edge_map)  {
   beta_ = proto.beta();
   knorm_=proto.knorm();
   if(proto.has_data())
-    norm_.InitLike(data_);
+    norm_.InitFromProto(data_);
 }
 
 void LRNLayer::ToProto(LayerProto* proto, bool copyData) {

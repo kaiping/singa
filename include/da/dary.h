@@ -6,51 +6,50 @@
 
 #include <glog/logging.h>
 
-#include <vector>
 #include <utility>
 #include <functional>
-#include <sstream>
+#include <memory>
 #include <string>
-#include "darray/arraymath.h"
 
-
-#include "proto/model.pb.h"
-
-using std::string;
-using std::vector;
+#include "da/arraymath.h"
+#include "da/gary.h"
 
 namespace lapis {
 class DAry {
  public:
   ~DAry();
-  DAry():Ary(), offset_(0), dptr_(nullptr), ga_(nullptr){};//alloc_size_(0),dptr_(nullptr){}
-  inline void SetPartition(const Partition& part);
-  inline void SetPartition(const short mode, const short dim);
+  DAry();//alloc_size_(0),dptr_(nullptr){}
   // alloc local mem; set ga
-  void Setup();
+  void Setup(int mode);
+  void SetShape(const vector<int>& shape){
+    shape_.Reset(shape);
+  }
+
   /**
    * init with the same shape and partition as other,
    * if other has no partition, create a local array;
    * alloc memory may copy data
    */
+  DAry(const vector<int>& shape) ;
   DAry(const DAry& other, bool copy);
+  DAry(DAry&& other) ;
+  DAry(const DAry& other) ;
+  DAry& operator=(const DAry& other) ;
+  DAry& operator=(DAry&& other) ;
   /**
     * create a new dary with data and partition from other dary,
     * but a new shape, this new shape only diff with other dary on
     * the first or last few dimension, total size should the same;
     * like Reshape();
     */
-  DAry Reshape(const DAry& other, const vector<int>& shape) ;
+  DAry Reshape(const vector<int>& shape) ;
   /**
     * set shape and partition from proto
-    */
   void InitFromProto(const DAryProto& proto);
   void ToProto(DAryProto* proto, bool copyData);
-
-  /**
-    * set shape and partition as other dary, allocate memory
     */
-  void InitLike(const DAry& other);
+
+  void Allocate();
   /**
     * subdary on the 0-th dim
     */
@@ -110,7 +109,6 @@ class DAry {
     * Add the src to dst as a vector along dim-th dimension
     * i.e., the dim-th dimension should have the same length as src
     */
-  void AddVec(const DAry& src, int dimidx);
   void AddRow(const DAry& src);
   void AddCol(const DAry& src);
 
@@ -118,7 +116,7 @@ class DAry {
     * sum along dim-th dimension, with range r
     * # of dimensions of dst is that of src-1
     */
-  void Sum( const DAry& src, int dim, Range r);
+  void Sum( const DAry& src, const Range& r);
 
   /**
     * src must be a matrix
@@ -126,14 +124,6 @@ class DAry {
     */
   void SumRow(const DAry& src);
   void SumCol(const DAry& src);
-
-  /**
-    * sum the src except the dim-th dimension
-    * e.g., let src be a tensor with shape (2,4,5), then SumExcept(dst, src,1)
-    * would results a vector of length 4
-    */
-  void SumExcept(const DAry& src, int dim);
-
   /**
     * sum all elements
     */
@@ -148,7 +138,7 @@ class DAry {
     */
   float Max();
 
-  void Set(float x);
+  void Fill(const float x);
   /**
     * apply the func for every element in src, put result to dst
     */
@@ -157,22 +147,11 @@ class DAry {
   void Map(std::function<float(float, float, float)> func, const DAry& src1, const DAry& src2,const DAry& src3);
 
   /**
-    * check whether the element at index is local
-    */
-  bool isLocal(vector<int> index){
-    for (int i = 0; i < dim_; i++) {
-      if(index[i]>=range_[i].second||index[i]<range_[i].first)
-        return false;
-    }
-    return true;
-  }
-
-  /**
     * return the local index range for dim-th dimension
     */
   Range IndexRange(int k) const{
-    CHECK(k< dim_);
-    return make_pair<int,int>(part_.lo[k], part_.hi[k]);
+    CHECK(offset_==0&&ga_!=nullptr);
+    return ga_->IndexRange(k);
   }
 
   /**
@@ -180,8 +159,13 @@ class DAry {
     * create a new DAry which has the same shape as this dary, but
     * the requested data are local
     */
-  DAry Fetch(const vector<Range>& slice);
-
+  DAry Fetch(const vector<Range>& slice) const;
+  float* FetchPtr(const vector<Range>& slice) const;
+  float* FetchPtr(const Partition& part) const;
+  void Delete(float* dptr)const{
+    if (dptr!=dptr_)
+      delete dptr;
+  }
 
   /**
     * return the ref for the ary at this index
@@ -200,25 +184,25 @@ class DAry {
     return dptr_+locate(idx0);
   }
   int locate(int idx0,int idx1, int idx2, int idx3) const {
-    CHECK_EQ(dim_,4);
+    CHECK_EQ(shape_.dim,4);
     int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
-    return pos-ga_==nullptr?0:ga_->offset();
+    return pos-part_.start;
   }
   int locate(int idx0,int idx1, int idx2) const{
-    CHECK_EQ(dim_,3);
+    CHECK_EQ(shape_.dim,3);
     int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
     CHECK(pos> part_.start);
-    return pos-ga_==nullptr?0:ga_->offset();
+    return pos-part_.start;
   }
   int locate(int idx0,int idx1) const {
-    CHECK_EQ(dim_,2);
+    CHECK_EQ(shape_.dim,2);
     int pos=idx0*shape_.s[1]+idx1;
     CHECK(pos> part_.start);
-    return pos-ga_==nullptr?0:ga_->offset();
+    return pos-part_.start;
   }
   int locate(int idx0) const {
-    CHECK_EQ(dim_,1);
-    return idx0-ga_==nullptr?0:ga_->offset();
+    CHECK_EQ(shape_.dim,1);
+    return idx0-part_.start;
   }
   /**
     * return the value for the ary at this index
@@ -236,40 +220,33 @@ class DAry {
   float& at(int idx0) const{
     return dptr_[locate(idx0)];
   }
-  bool local(){
-    return part_.mode==-1;
-  }
-  bool cached(){
-    return dptr_!=nullptr;
-  }
-  void SetShape(const vector<int>& shape) {
-    dim_=shape.size();
-    shape_.Reset(shape);
-    size_=shape_.Size();
-  }
-  void SetShape(const Shape& shape) {
-    dim_=shape.dim;
-    shape_=shape;
-    size_=shape.Size();
+
+  std::string ToString(bool dataonly=true){
+    std::string ret;
+    if(!dataonly){
+      ret+=shape_.ToString();
+      ret+=part_.ToString();
+    }
+    char buf[1024];
+    sprintf(buf, "ary: ");
+    for (int i = 0; i < part_.size; i++) {
+      sprintf(buf+strlen(buf), "%.2f ", dptr_[i]);
+    }
+    return ret+std::string(buf);
   }
 
+  const bool EmptyPartition(){
+    return part_.size>0;
+  }
  protected:
   int offset_;// offset to the base dary
-  std::shared_ptr<float> dptr_;
-  std::shard_ptr<GAry> ga_;
-  std::shard_ptr<DAry> parent_;
+  int alloc_size_;
+  float* dptr_;
+  std::shared_ptr<GAry> ga_;
   Partition part_;
   Shape shape_;
   static arraymath::ArrayMath& arymath();
 };
 
-void DAry::SetPartition(const Partition& part){
-  part_=part;
-}
-void DAry::SetPartition(const vector<Range>& slice){
-  part_=slice;
-}
-
 }  // namespace lapis
-
 #endif  // INCLUDE_DARRAY_DARY_H_

@@ -23,21 +23,18 @@ class GAry{
   float* Fetch(const vector<Range>& slice) const ;
   //int local_size(){return shape_.size/groupsize;}
   //int offset() {return offset_;}
-  static void Init(int id, int groupsize){
-    ARMCI_Init();
-    id_=id;
-    groupsize_=groupsize;
-  }
-  static void Finalize() {
-    ARMCI_Finalize();
-  }
+  static void Init(int rank, const vector<int>& procslist);
+  static void Finalize() ;
  private:
   Shape shape_, shape2d_;
   int lo_[2], hi_[2];
   int pdim_;
   float** dptrs_;
-  static int id_, groupsize_;
   int offset_;
+
+  static int* procslist_;
+  static int grp_rank_, groupsize_;
+  static ARMCI_Group group_;
 };
 }  // namespace lapis
 #endif // INCLUDE_DA_LARY_H_

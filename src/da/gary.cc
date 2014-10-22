@@ -8,11 +8,35 @@
 
 #include "da/gary.h"
 namespace lapis {
-int GAry::id_=0;
+int GAry::grp_rank_=0;
 int GAry::groupsize_=1;
+int* GAry::procslist_=nullptr;
+ARMCI_Group GAry::group_;
+void GAry::Init(int rank, const vector<int>& procslist){
+  groupsize_=procslist.size();
+  CHECK(groupsize_);
+  procslist_=new int[groupsize_];
+  grp_rank_=-1;
+  int k=0;
+  for(auto procs: procslist) {
+    procslist_[k]=procs;
+    if(rank==procs)
+      grp_rank_=k;
+    k++;
+  }
+  CHECK(grp_rank_!=-1)
+    <<"The process is not in the group provided";
+  ARMCI_Init();
+  ARMCI_Group_create(groupsize_, procslist_, &group_);
+}
+void GAry::Finalize() {
+  delete procslist_;
+  ARMCI_Group_free(&group_);
+  ARMCI_Finalize();
+}
 
 GAry::~GAry(){
-  ARMCI_Free((void*) dptrs_[id_]);
+  ARMCI_Free_group((void*) dptrs_[grp_rank_], &group_);
   free(dptrs_);
 }
 float* GAry::Setup(const Shape& shape, Partition* part){
@@ -32,8 +56,8 @@ float* GAry::Setup(const Shape& shape, Partition* part){
 
   lo_[0]=0;
   hi_[0]=shape2d_.s[0];
-  lo_[1]=shape2d_.s[1]/groupsize_*id_;
-  hi_[1]=shape2d_.s[1]/groupsize_*(id_+1);
+  lo_[1]=shape2d_.s[1]/groupsize_*grp_rank_;
+  hi_[1]=shape2d_.s[1]/groupsize_*(grp_rank_+1);
 
   part->start=lo_[1];
   part->stepsize=hi_[1]-lo_[1];
@@ -43,13 +67,13 @@ float* GAry::Setup(const Shape& shape, Partition* part){
   part->stride=part->size<part->stride?part->size:part->stride;
 
   dptrs_=(float**) malloc(sizeof(float*)* groupsize_);//new FloatPtr[groupsize_];
-  ARMCI_Malloc((void**)dptrs_, sizeof(float)*shape.size/groupsize_);
-  return dptrs_[id_];
+  ARMCI_Malloc_group((void**)dptrs_, sizeof(float)*shape.size/groupsize_,&group_);
+  return dptrs_[grp_rank_];
 }
 
 const Range GAry::IndexRange(int k){
   if(k==pdim_)
-    return std::make_pair(shape_.s[k]/groupsize_*id_, shape_.s[k]/groupsize_*(id_+1));
+    return std::make_pair(shape_.s[k]/groupsize_*grp_rank_, shape_.s[k]/groupsize_*(grp_rank_+1));
   else return std::make_pair(0,shape_.s[k]);
 }
 
@@ -69,23 +93,24 @@ float* GAry::Fetch(const Partition& part, int offset)const {
   int count[2];
   count[0]=std::min(part.stepsize, gwidth)*unit;
   count[1]=(part.end-part.start)/width+((part.end-part.start)%width!=0);
-  if(part.stride-part.stepsize>width)
+  if(part.stride-part.stepsize>width){
+    CHECK(part.stride%width==0)<<"stride: "<<part.stride<<" width: "<<width;
     count[1]/=part.stride/part.stepsize;
+  }
   int start=(offset+part.start)%width;
   int srcstride=unit*((width%part.stride!=0)+width/part.stride)*std::min(width, part.stepsize);
   int tgtstride=gwidth*unit;
   float* ret=new float[part.size];
   float* srcaddr=ret;
-  for(int i=0, len=0;i<part.size*unit/(count[0]*count[1]); i++){
-    int gid=(len+start)/gwidth;
-    float* tgtaddr=dptrs_[gid]+srow*gwidth+(len+start)%gwidth;
-    ARMCI_GetS((void*)tgtaddr, &tgtstride, (void*)srcaddr, &srcstride, count, stridelevel, gid);
+  for(int i=0 ;i<part.size*unit/(count[0]*count[1]); i++){
+    int gid=start/gwidth;
+    float* tgtaddr=dptrs_[gid]+srow*gwidth+start%gwidth;
+    ARMCI_GetS((void*)tgtaddr, &tgtstride, (void*)srcaddr, &srcstride, count, stridelevel, procslist_[gid]);
     srcaddr+=std::min(gwidth, part.stepsize);
-    len+=std::min(part.stride, gwidth);
-    if(len==width){
-      len=0;
+    start+=std::min(part.stride, gwidth);
+    if(start>=width){
       srow+=part.stride/width;
-      start+=width*part.stride/width;
+      start=start%width;
     }
   }
  return ret;
@@ -94,7 +119,6 @@ float* GAry::Fetch(const Partition& part, int offset)const {
 /**
  * this is called to fetch data of the based dary which has the same shape as
  * the gary
- */
 float* GAry::Fetch(const vector<Range>& slice) const {
   bool local=true;
   int size=1;
@@ -104,7 +128,7 @@ float* GAry::Fetch(const vector<Range>& slice) const {
     local&=(slice[i].second==hi_[i]&&slice[i].first==lo_[i]);
   }
   if(local)
-    return dptrs_[id_];
+    return dptrs_[grp_rank_];
 
   float* ret=new float[size];
   int lo0=slice[0].first, hi0=slice[0].second;
@@ -132,4 +156,5 @@ float* GAry::Fetch(const vector<Range>& slice) const {
   }
   return ret;
 }
+ */
 }  // namespace lapis

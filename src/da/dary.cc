@@ -2,6 +2,7 @@
 // 2014-09-10 16:43
 #include <cblas.h>
 #include <armci.h>
+//#include <mpi.h>
 
 #include <glog/logging.h>
 #include <chrono>
@@ -201,6 +202,7 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
   CHECK_EQ(shape_.dim,2);
   int M, K, N;
   float  *dptr1=src1.dptr_, *dptr2=src2.dptr_;
+  //double t1, t2; t1=MPI_Wtime();
   if(ga_!=nullptr){
     //CHECK(src1.ga_!=nullptr&&src2.ga_!=nullptr);
     auto rrng=ga_->IndexRange(0);
@@ -231,12 +233,14 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
     //N=trans2?src2.shape_.s[0]:src2.shape_.s[1];
     K=trans1?src1.shape_.s[0]:src1.shape_.s[1];
   }
+  //t2=MPI_Wtime();
   int lda=trans1==false?K:M;
   int ldb=trans2==false?N:K;
   CBLAS_TRANSPOSE TransA =trans1?CblasTrans:CblasNoTrans;
   CBLAS_TRANSPOSE TransB =trans2?CblasTrans:CblasNoTrans;
   cblas_sgemm(CblasRowMajor,  TransA, TransB, M, N, K,
       1.0f, dptr1, lda, dptr2, ldb, 0.0f, dptr_, N);
+  //LOG(ERROR)<<"comm time :"<<t2-t1<<" comp time: "<<MPI_Wtime()-t2;
   src1.Delete(dptr1);
   src2.Delete(dptr2);
 }

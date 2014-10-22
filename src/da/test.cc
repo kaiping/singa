@@ -322,6 +322,33 @@ void TestMixedParElt(int pa, int pb, int pc, int rank){
 }
 
 
+void TestLargeDot(int pa, int pb, int pc, int rank){
+  if(rank==0){
+    LOG(ERROR)<<"test Dot, partition for a, b, c : "
+      << pa<<" "<<pb<<" "<<pc<<" dim";
+  }
+
+  double t1, t2, t3;
+  t1=MPI_Wtime();
+  lapis::DAry a,b,c;
+  a.SetShape({256,9216});
+  b.SetShape({9216,4096});
+  c.SetShape({256,4096});
+  a.Setup(pa);
+  b.Setup(pb);
+  c.Setup(pc);
+  a.Random();
+  b.Random();
+  c.Random();
+  ARMCI_Barrier();
+  t2=MPI_Wtime();
+  c.Dot(a,b);
+  t3=MPI_Wtime();
+  ARMCI_Barrier();
+  LOG(ERROR)<<"setup time: "<<t2-t1<<" dot time: "
+    <<t3-t2<<" wait time:"<<MPI_Wtime()-t3;
+}
+
 void TestDot(int pa, int pb, int pc, int rank){
   vector<lapis::Range> slicea{make_pair(0,4), make_pair(0,8)};
   vector<lapis::Range> sliceb{make_pair(0,8), make_pair(0,4)};
@@ -602,14 +629,19 @@ void TestReshape(int pa, int pb, int pc, int rank){
 
 
 int main(int argc, char**argv){
-  int provided;
  // MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   MPI_Init(&argc, &argv);
   int rank, nprocs;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-  lapis::GAry::Init(rank,nprocs);
+  vector<int> procs;
+  for (int i = 0; i < nprocs; i++) {
+    procs.push_back(i);
+  }
+  //Debug();
+  lapis::GAry::Init(rank,procs);
   google::InitGoogleLogging(argv[0]);
+  /*
   if(nprocs%3==0){
     TestMixedParElt(0,0,0,rank);
     TestMixedParElt(0,0,1,rank);
@@ -626,9 +658,6 @@ int main(int argc, char**argv){
     TestMixedParElt(1,1,2,rank);
     TestMixedParElt(2,2,2,rank);
   }
-
-  TestPar(0, rank);
-  TestPar(1, rank);
   TestDot(0,0,0,rank);
   TestDot(0,0,1,rank);
   TestDot(0,1,0,rank);
@@ -637,6 +666,24 @@ int main(int argc, char**argv){
   TestDot(1,0,1,rank);
   TestDot(1,1,0,rank);
   TestDot(1,1,1,rank);
+
+  TestPar(0, rank);
+  TestPar(1, rank);
+  */
+  double start, end;
+  start=MPI_Wtime();
+  TestLargeDot(0,0,0,rank);
+  TestLargeDot(0,0,1,rank);
+  TestLargeDot(0,1,0,rank);
+  TestLargeDot(0,1,1,rank);
+  TestLargeDot(1,0,0,rank);
+  TestLargeDot(1,0,1,rank);
+  TestLargeDot(1,1,0,rank);
+  TestLargeDot(1,1,1,rank);
+  end=MPI_Wtime();
+  if(rank==0)
+    LOG(ERROR)<<"dot time for 256*4k 4k*4k matrix, "<<end-start;
+  /*
   TestSubarray(0,0,0,rank);
   TestSubarray(0,0,1,rank);
   TestSubarray(0,1,0,rank);
@@ -645,6 +692,7 @@ int main(int argc, char**argv){
   TestReshape(0,0,1,rank);
   TestReshape(0,1,0,rank);
   TestReshape(0,1,1,rank);
+  */
 
   LOG(ERROR)<<"finish";
   lapis::GAry::Finalize();

@@ -40,6 +40,7 @@ float* GAry::Setup(const Shape& shape, Partition* part){
   part->stride=shape2d_.s[1];
   part->end=shape.size-(part->stride-hi_[1]);
   part->size=shape.size/groupsize_;
+  part->stride=part->size<part->stride?part->size:part->stride;
 
   dptrs_=(float**) malloc(sizeof(float*)* groupsize_);//new FloatPtr[groupsize_];
   ARMCI_Malloc((void**)dptrs_, sizeof(float)*shape.size/groupsize_);
@@ -68,18 +69,24 @@ float* GAry::Fetch(const Partition& part, int offset)const {
   int count[2];
   count[0]=std::min(part.stepsize, gwidth)*unit;
   count[1]=(part.end-part.start)/width+((part.end-part.start)%width!=0);
+  if(part.stride-part.stepsize>width)
+    count[1]/=part.stride/part.stepsize;
   int start=(offset+part.start)%width;
-  int len=0;
   int srcstride=unit*((width%part.stride!=0)+width/part.stride)*std::min(width, part.stepsize);
   int tgtstride=gwidth*unit;
   float* ret=new float[part.size];
   float* srcaddr=ret;
-  for(int i=0;i<part.size*unit/(count[0]*count[1]); i++){
+  for(int i=0, len=0;i<part.size*unit/(count[0]*count[1]); i++){
     int gid=(len+start)/gwidth;
     float* tgtaddr=dptrs_[gid]+srow*gwidth+(len+start)%gwidth;
     ARMCI_GetS((void*)tgtaddr, &tgtstride, (void*)srcaddr, &srcstride, count, stridelevel, gid);
     srcaddr+=std::min(gwidth, part.stepsize);
     len+=std::min(part.stride, gwidth);
+    if(len==width){
+      len=0;
+      srow+=part.stride/width;
+      start+=width*part.stride/width;
+    }
   }
  return ret;
 }

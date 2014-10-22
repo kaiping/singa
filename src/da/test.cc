@@ -12,6 +12,16 @@
 
 using std::make_pair;
 using std::vector;
+void Debug() {
+  int i = 0;
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+  printf("PID %d on %s ready for attach\n", getpid(), hostname);
+  fflush(stdout);
+  while (0 == i)
+    sleep(5);
+}
+
 
 
 void TestPar(int pdim, int rank){
@@ -71,16 +81,16 @@ void TestMixedParElt(int pa, int pb, int pc, int rank){
   if(rank==0){
     LOG(ERROR)<<"test elementwise ops with mixed partition";
     lapis::DAry a5, a4;
-    //Debug();
+//    Debug();
     a5=a1.Fetch(slice);
     a4=a2.Fetch(slice);
     LOG(ERROR)<<"fetch a";
-    LOG(ERROR)<<a3.ToString();
+    LOG(ERROR)<<a5.ToString();
     LOG(ERROR)<<"fetch b";
     LOG(ERROR)<<a4.ToString();
-    a3.Copy(a4);
+    a5.Copy(a4);
     LOG(ERROR)<<"fetch op a.Copy(b)";
-    LOG(ERROR)<<a3.ToString();
+    LOG(ERROR)<<a5.ToString();
   }
   ARMCI_Barrier();
   a1.Copy(a2);
@@ -617,7 +627,6 @@ int main(int argc, char**argv){
     TestMixedParElt(2,2,2,rank);
   }
 
-  /*
   TestPar(0, rank);
   TestPar(1, rank);
   TestDot(0,0,0,rank);
@@ -636,7 +645,6 @@ int main(int argc, char**argv){
   TestReshape(0,0,1,rank);
   TestReshape(0,1,0,rank);
   TestReshape(0,1,1,rank);
-  */
 
   LOG(ERROR)<<"finish";
   lapis::GAry::Finalize();

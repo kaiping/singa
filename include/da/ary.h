@@ -122,16 +122,6 @@ class Partition{
     stride=size;
     end=size;
   }
-void Debug() const{
-  int i = 0;
-  char hostname[256];
-  gethostname(hostname, sizeof(hostname));
-  printf("PID %d on %s ready for attach\n", getpid(), hostname);
-  fflush(stdout);
-  while (0 == i)
-    sleep(5);
-}
-
 
   Partition(const Shape& shape, const vector<Range>& slice) {
     int rows=1;
@@ -154,6 +144,7 @@ void Debug() const{
       stepsize*=stride/shape.s[pdim];
       end=start+(rows-1)*stride+stepsize;
       size=rows*stepsize;
+      stride=size<stride?size:stride;
     }
     else{
       start=0;

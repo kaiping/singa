@@ -19,3 +19,4 @@ cscope.*
 build/
 tmp/
 include/proto/*.h
+dary.test

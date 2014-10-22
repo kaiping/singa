@@ -203,7 +203,7 @@ void protobuf_AddDesc_common_2eproto() {
     "ams\022\030\n\004attr\030\001 \003(\0132\n.lapis.Arg\022\026\n\013compres"
     "sion\030\002 \001(\005:\0010\"G\n\nConfigData\022\023\n\013num_worke"
     "rs\030\001 \002(\005\022\021\n\tworker_id\030\002 \002(\005\022\021\n\tmaster_id"
-    "\030\003 \002(\005*\376\004\n\014MessageTypes\022\025\n\021MTYPE_PUT_REQ"
+    "\030\003 \002(\005*\304\005\n\014MessageTypes\022\025\n\021MTYPE_PUT_REQ"
     "UEST\020\001\022\025\n\021MTYPE_GET_REQUEST\020\002\022\026\n\022MTYPE_G"
     "ET_RESPONSE\020\003\022\031\n\025MTYPE_WORKER_SHUTDOWN\020\004"
     "\022\031\n\025MTYPE_REGISTER_WORKER\020\005\022\026\n\022MTYPE_WOR"
@@ -219,8 +219,10 @@ void protobuf_AddDesc_common_2eproto() {
     "NCE\020\024\022\026\n\022MTYPE_GROUP_CONFIG\020\025\022\023\n\017MTYPE_P"
     "UT_SHARD\020\027\022\031\n\025MTYPE_BARRIER_REQUEST\020\030\022\027\n"
     "\023MTYPE_BARRIER_REPLY\020\031\022\027\n\023MTYPE_BARRIER_"
-    "READY\020\032*0\n\021CompressionFormat\022\010\n\004NONE\020\000\022\007"
-    "\n\003LZO\020\001\022\010\n\004ZLIB\020\002", 977);
+    "READY\020\032\022\017\n\013MTYPE_START\020\033\022\034\n\030MTYPE_FINISH"
+    "_INIT_PARAMS\020\034\022\025\n\021MTYPE_INIT_PARAMS\020\035*0\n"
+    "\021CompressionFormat\022\010\n\004NONE\020\000\022\007\n\003LZO\020\001\022\010\n"
+    "\004ZLIB\020\002", 1047);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "common.proto", &protobuf_RegisterTypes);
   EmptyMessage::default_instance_ = new EmptyMessage();
@@ -274,6 +276,9 @@ bool MessageTypes_IsValid(int value) {
     case 24:
     case 25:
     case 26:
+    case 27:
+    case 28:
+    case 29:
       return true;
     default:
       return false;

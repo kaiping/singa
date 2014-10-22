@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 
-#include "darray/dary.h"
+#include "da/dary.h"
 #include "net/param.h"
 #include "utils/global_context.h"
 #include "utils/common.h"
@@ -174,7 +174,7 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
   for(auto param: params){
     const DAry& dary=param->data();
     int id=param->id()*group_size+wid;
-    int local_size=dary.allocated();
+    int local_size=dary.local_size();
     int splitsize=param->split_threshold();
     /*
     //int splitsize=std::max(param->split_threshold(), local_size/num_servers);
@@ -190,7 +190,7 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
     int nsplits=local_size/splitsize+local_size%splitsize;
     vector<std::pair<int, int>> splits;
     for(auto j = 0, pos=0; j < nsplits; j++) {
-      int len=pos+splitsize<local_size?splitsize:local_size-pos;
+      int len=(pos+splitsize)<local_size?splitsize:local_size-pos;
       splits.push_back(std::make_pair(id*kMaxSplits_+j,len));
       pos+=len;
     }
@@ -236,7 +236,7 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
     }
     CHECK_EQ(v.data().value_size(), entry.second);
   }
-  CHECK_EQ(offset, param->data().allocated());
+  CHECK_EQ(offset, param->data().local_size());
 }
 
 template<class K, class V>

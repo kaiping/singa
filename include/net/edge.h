@@ -5,7 +5,7 @@
 #define INCLUDE_NET_EDGE_H_
 #include <string>
 #include "net/layer.h"
-#include "darray/darray.h"
+#include "da/dary.h"
 
 using std::string;
 
@@ -33,16 +33,14 @@ class Edge {
   Layer *OtherSide(const Layer *layer) {
     return node1_ == layer ? node2_ : node1_;
   }
-  const std::string &GetName() {
-    return node1_->name()+"-"+node2_->name();
-  }
-  const DArray& GetData(Layer* tolayer);
+  const std::string GetName();
+  const DAry& GetData(Layer* tolayer);
 
-  DArray* GetMutableData(Layer* tolayer);
+  DAry* GetMutableData(Layer* tolayer);
 
-  const DArray& GetGrad(Layer* tolayer);
+  const DAry& GetGrad(Layer* tolayer);
 
-  DArray* GetMutableGrad(Layer* tolayer);
+  DAry* GetMutableGrad(Layer* tolayer);
 
   /**
    * used for directed edge

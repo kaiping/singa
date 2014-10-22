@@ -61,8 +61,8 @@ class Coordinator {
     * parameter vector and sgd/adagrad meta info from solver
     * @threshold if sync mode, it is the group size; for async ,0
     */
-  void DistributePartition(const vector<NetProto> & protos);
-  const vector<NetProto> PartitionNet(Net* net);
+  void DistributePartition(const NetProto & protos);
+  const NetProto PartitionNet(Net* net);
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;

@@ -113,21 +113,26 @@ Net* Coordinator::SetupNetShape(const ModelProto& model) {
   return net;
 }
 // TODO model partitioning
-const vector<NetProto> Coordinator::PartitionNet(Net* net){
+const NetProto Coordinator::PartitionNet(Net* net){
+  int pdim=0;
+  for(Layer* layer: net->layers()){
+    if(layer->name()=="pool5")
+      pdim=1;
+    layer->SetPartition(pdim);
+  }
+  for(Layer* layer: net->layers()){
+    if(layer->name()=="label")
+      layer->SetPartition(-1);
+    if(layer->name()=="softmax")
+      layer->SetPartition(-1);
+  }
   NetProto netproto;
   net->ToProto(&netproto);
-  vector<NetProto> ret{netproto};
-  return ret;
+  return netproto;
 }
 
-void Coordinator::DistributePartition(const vector<NetProto> & protos) {
-  for(int i=0;i<context_->num_groups();i++){
-    auto workers=context_->MembersOfGroup(i);
-    CHECK_EQ(workers.size(), protos.size());
-    for (unsigned int i = 0; i < protos.size(); i++) {
-      mpi_->Send(workers[i], MTYPE_NET_PARTITION, protos[i]);
-    }
-  }
+void Coordinator::DistributePartition(const NetProto & netproto) {
+  mpi_->Broadcast(MTYPE_NET_PARTITION, netproto);
 }
 
 
@@ -138,20 +143,19 @@ void Coordinator::Start(const ModelProto& model) {
   TableDelegate* delegate=CreateTableDelegate(sp);
 
   Net* net=SetupNetShape(model);
-  vector<NetProto> partitions=PartitionNet(net);
+  const NetProto partition=PartitionNet(net);
   delete net;
+  /*
   int wid=0;
   for(auto& np: partitions){
-    ModelProto mp;
-    mp.mutable_net()->CopyFrom(np);
-    net=SetupNetShape(model);
     net->InitParameters();
     delegate->SplitParams(net->params(), wid);
     delegate->Put(net->params());
     delete net;
     wid++;
   }
-  DistributePartition(partitions);
+  */
+  DistributePartition(partition);
   Run();
 }
 
@@ -166,6 +170,17 @@ void Coordinator::Resume() {
 }
 
 void Coordinator::Run(){
+  EmptyMessage dummy_msg;
+  LOG(INFO)<<"Tell group 0 to init parameters";
+  for(auto wid: context_->MembersOfGroup(0))
+    mpi_->Send(wid, MTYPE_INIT_PARAMS, dummy_msg );
+  int src;
+  for(auto wid: context_->MembersOfGroup(0))
+    mpi_->Read(wid, MTYPE_FINISH_INIT_PARAMS, &dummy_msg, &src);
+  LOG(INFO)<<"Group 0 has finished init parameters; "
+    <<"Broadcast all workers to start running";
+  mpi_->Broadcast(MTYPE_START, dummy_msg);
+
   StateQueue<int> groups(context_->num_groups());
   while(groups.HasValid()) {
     int src = 0;

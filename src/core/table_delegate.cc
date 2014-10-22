@@ -8,7 +8,7 @@
 #include "core/table.h"
 #include "proto/model.pb.h"
 
-#include "darray/dary.h"
+#include "da/dary.h"
 
 namespace lapis {
 UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){

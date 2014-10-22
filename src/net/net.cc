@@ -127,10 +127,10 @@ void Net::InitDAryShape(const vector<vector<int>>& shapes){
   InitDAryShape();
 }
 
-void Net::AllocateMemory() {
+void Net::SetupDAry() {
   for(auto* layer: layers_){
     VLOG(3)<<layer->name();
-    layer->AllocateMemory();
+    layer->SetupDAry(-1);
   }
 }
 
@@ -144,14 +144,13 @@ void Net::InitParameters() {
  */
 void Net::Setup() {
   InitDAryShape();
-  AllocateMemory();
+  //SetupDAry();
 }
 /**
  * called by coordiator
  */
 void Net::Setup(const vector<vector<int>>& input_shapes) {
   InitDAryShape(input_shapes);
-  InitParameters();
 }
 
 void Net::ToProto(NetProto *proto, bool copyData) {

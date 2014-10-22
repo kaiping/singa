@@ -43,6 +43,7 @@ class Solver {
   void Train();
   void Validate();
   leveldb::DB* OpenShard(string path) ;
+  void InitParams();
 
   /**
    * train the model for one-minibatch by either backpropagation or contrastive divergence

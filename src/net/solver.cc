@@ -7,6 +7,7 @@
 
 #include "proto/model.pb.h"
 #include "net/solver.h"
+#include "da/gary.h"
 
 namespace lapis {
 Phase Solver::phase=Phase::kTrain;
@@ -25,6 +26,8 @@ Solver::Solver(const SolverProto &proto) {
 
   train_steps_=proto.train_steps();
   validation_steps_=proto.validation_steps();
+  auto gc=GlobalContext::Get();
+  GAry::Init(gc->rank(), gc->MembersOfGroup(gc->group_id()));
 }
 
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
@@ -36,8 +39,14 @@ void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto&
   val_shard_=shard_folder+"/"+dp.validation_data().name()+"-leveldb";
 }
 
+void Solver::InitParams(){
+  net_->InitParameters();
+  delegate_->Put(net_->params());
+}
+
 Solver::~Solver() {
   delete net_;
+  GAry::Finalize();
 }
 void Solver::ToProto(SolverProto *proto) {
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);

@@ -83,6 +83,17 @@ void Worker::Run(const ModelProto& model){
   Solver solver(model.solver());
   solver.Setup(delegate, model.data(), model.net());
 
+
+  EmptyMessage dummy_msg;
+  while(true){
+    int src;
+    if(mpi_->TryRead(context_->kCoordinator, MTYPE_INIT_PARAMS, &dummy_msg, &src)){
+      solver.InitParams();
+      mpi_->Send(context_->kCoordinator, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
+    }
+    if(mpi_->TryRead(context_->kCoordinator, MTYPE_START, &dummy_msg, &src))
+      break;
+  }
   pthread_t solver_thread;
   pthread_create(&solver_thread, NULL, &SolverThread, &solver);
   auto val_perf=solver.val_perf();

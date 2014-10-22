@@ -33,6 +33,10 @@ enum MessageTypes {
   MTYPE_BARRIER_REQUEST=24;
   MTYPE_BARRIER_REPLY=25;
   MTYPE_BARRIER_READY=26;
+
+  MTYPE_START =27;
+  MTYPE_FINISH_INIT_PARAMS =28;
+  MTYPE_INIT_PARAMS=29;
 };
 message EmptyMessage {}
 message ShortMsg {

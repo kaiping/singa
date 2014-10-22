@@ -14,7 +14,7 @@
 #include "proto/model.pb.h"
 #include "net/edge.h"
 #include "net/param.h"
-#include "darray/darray.h"
+#include "da/dary.h"
 #include "utils/common.h"
 #include "utils/timer.h"
 
@@ -55,21 +55,18 @@ class Layer {
    * @param edge_map a map from edge name to the edge object.
    */
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape(const vector<vector<int>>& shapes);
-  virtual void InitDArrayShape();
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void InitDAryShape();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
 
   /**
    * partition the layer along k-th dimension starting from 0
    * the parameters should be partitioned according to the
-   * partition of the layer; Called after InitDArrayShape;
+   * partition of the layer; Called after InitDAryShape;
    */
-  virtual void Partition(int k=-1);
-  /**
-   * allocate memory for storing activations/features/gradients, etc.
-   */
-  virtual void AllocateMemory();
+  void SetupDAry(int pdim);
+  void SetPartition(int pdim);
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the
@@ -102,10 +99,10 @@ class Layer {
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual const DArray &GetData(Edge *edge){
+  virtual const DAry &GetData(Edge *edge){
     return data_;
   }
-  virtual DArray *GetMutableData(Edge *edge){
+  virtual DAry *GetMutableData(Edge *edge){
     return &data_;
   }
 
@@ -117,10 +114,10 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual DArray * GetMutableGrad(Edge *edge){
+  virtual DAry * GetMutableGrad(Edge *edge){
     return &grad_;
   }
-  virtual const DArray& GetGrad(Edge *edge){
+  virtual const DAry& GetGrad(Edge *edge){
     return grad_;
   }
   /**
@@ -155,21 +152,21 @@ class Layer {
   std::string name_, type_;
   std::vector<Edge *> out_edges_;
   std::vector<Edge *> in_edges_;
-  DArray data_, grad_;
+  DAry data_, grad_;
 };
 class ConvLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape();
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  void Img2Col(DArray* dst, const DArray& src);
-  void Col2Img(DArray* dst, const DArray& src);
+  void Img2Col(DAry* dst, const DAry& src);
+  void Col2Img(DAry* dst, const DAry& src);
  private:
   //! the feature (e.g., input image) shape for the bottom layer
   int num_, channels_, height_, width_;
@@ -192,7 +189,7 @@ class ConvLayer: public Layer {
   //! the length is nkernels_
   Param bias_;
   //! store result of image to column, TODO create ColLayer
-  DArray col_data_, col_grad_;
+  DAry col_data_, col_grad_;
 
   Timer t;
  public:
@@ -201,7 +198,7 @@ class ConvLayer: public Layer {
 
 class ReLULayer: public Layer {
  public:
-  virtual void InitDArrayShape();
+  virtual void InitDAryShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
 };
@@ -209,8 +206,9 @@ class ReLULayer: public Layer {
 class DropoutLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape();
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
+  virtual void SetPartition(int pdim);
+  virtual void SetupDAry(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -219,15 +217,13 @@ class DropoutLayer: public Layer {
   /* record which neuron is dropped, required for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
-  DArray mask_;
+  DAry mask_;
 };
 
 class PoolingLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape();
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -255,9 +251,9 @@ class LRNLayer: public Layer {
 
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape();
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -269,7 +265,7 @@ class LRNLayer: public Layer {
   int wsize_, lpad_, rpad_;
   //! hyper-parameter
   float alpha_, beta_, knorm_;
-  DArray norm_, ratio_; //ratio : grad/(data*norm)
+  DAry norm_, ratio_; //ratio : grad/(data*norm)
 };
 class FCLayer: public Layer {
   /*
@@ -277,9 +273,9 @@ class FCLayer: public Layer {
    */
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDArrayShape();
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void CollectParams(vector<Param*> *params);
@@ -305,9 +301,9 @@ class SoftmaxLossLayer: public OutputLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasOutput() {return true;}
-  virtual void InitDArrayShape();
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -323,25 +319,25 @@ class InputLayer: public Layer {
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record)=0;
-  virtual void SetInputData(DArray *data);
-  virtual const DArray& GetGrad(Edge* edge) {
+  virtual void SetInputData(DAry *data);
+  virtual const DAry& GetGrad(Edge* edge) {
     LOG(ERROR)<<"input layer has no grad";
     return grad_;
   }
-  virtual DArray* GetMutableGrad(Edge* edge) {
+  virtual DAry* GetMutableGrad(Edge* edge) {
     return nullptr;
   }
  protected:
-  DArray prefetch_data_;
+  DAry prefetch_data_;
   int offset_;
 };
 class ImageLayer: public InputLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void InitDArrayShape(const vector<vector<int>>& shapes);
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void AddInputRecord(const Record& record);
 
  private:
@@ -352,13 +348,11 @@ class ImageLayer: public InputLayer {
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void InitDArrayShape(const vector<vector<int>>& shapes);
-  virtual void Partition(int k=-1);
-  virtual void AllocateMemory();
+  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   virtual void AddInputRecord(const Record& record);
 };
-
-
 
 /****************************************************************************/
 /**

@@ -26,8 +26,8 @@
 #ifndef _ARRAYMATH_ARRAYMATH_H
 #define _ARRAYMATH_ARRAYMATH_H
 
-#include "darray/Random.h"
-#include "darray/common/Types.h"
+#include "da/Random.h"
+#include "da/common/Types.h"
 
 namespace arraymath {
 

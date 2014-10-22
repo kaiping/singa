@@ -1,11 +1,11 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-03 18:02
 
-#include <google/protobuf/repeated_field.h>
 #include <glog/logging.h>
+#include <cmath>
+
 #include "net/param.h"
 #include "utils/common.h"
-using google::protobuf::RepeatedField;
 
 namespace lapis {
 void Param::Init(const ParamProto &proto){
@@ -36,43 +36,36 @@ void Param::SetShape(int h, int w){
   data_.SetShape({h,w});
   grad_.SetShape({h,w});
 }
-void Param::Partition(int k) {
-  data_.set_mode(k);
-  grad_.set_mode(k);
+void Param::SetPartition(int k) {
+  data_.SetPartition(k);
+  grad_.SetPartition(k);
 }
-void Param::AllocateMemory() {
-  data_.Setup();
-  grad_.Setup();
+void Param::SetupDAry(int k) {
+  data_.Setup(k);
+  grad_.Setup(k);
 }
-void Param::FreeMemory() {
-  data_.FreeMemory();
-  grad_.FreeMemory();
-}
-
 void Param::Fill(){
-  CHECK(data_.shape().Size())<<"must set shape of param";
-  if(!data_.allocated())
-    data_.AllocateMemory();
+  CHECK(data_.shape().size)<<"must set shape of param";
   switch (init_method_) {
   case ParamProto::kConstant:
-    data_.Set(value_);
+    data_.Fill(value_);
     break;
   case ParamProto::kUniform:
     FillUniformData(low_, high_, value_);
     break;
   case ParamProto::kUniformSqrtFanIn:
-    CHECK_EQ(data_.shape().Size(), 2);
+    CHECK_EQ(data_.shape().size, 2);
     FillUniformData(low_ , high_, value_ / sqrt(data_.shape(0) / 3.0f));
     break;
   case ParamProto::kUniformSqrtFanInOut:
-    CHECK_EQ(data_.shape().Size(), 2);
+    CHECK_EQ(data_.shape().size, 2);
     FillUniformData(low_, high_, value_ / sqrt(data_.shape(0) + data_.shape(1)));
     break;
   case ParamProto::kGaussain:
     FillGaussainData(mean_, std_, value_);
     break;
   case ParamProto::kGaussainSqrtFanIn:
-    CHECK_EQ(data_.shape().Size(), 2);
+    CHECK_EQ(data_.shape().size, 2);
     FillGaussainData(mean_,std_, value_ / sqrt(data_.shape(0)));
     break;
   case ParamProto::kPretrained:

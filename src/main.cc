@@ -27,9 +27,12 @@ DEFINE_bool(time, true,  "time training algorithm");
 #endif
 // for debugging use
 int main(int argc, char **argv) {
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   //FLAGS_stderrthreshold=0;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+  LOG(ERROR)<<"mpi thread level provided: "<<provided;
   VLOG(3)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
 
   // Note you can register you own layer/edge/datasource here

@@ -7,23 +7,22 @@ HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include/ ./include/darray/ $(HOME_DIR)/include \
-	$(HOME_DIR)/include/openmpi /home/wangwei/install/jdk1.7.0_67/include\
+
+INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./include\
+	/home/wangwei/install/jdk1.7.0_67/include\
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
-#$(HOME_DIR)/atlas/include
-
-CXXFLAGS := -O2 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
 	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
-MPI_LIBRARIES := mpi_cxx mpi open-rte open-pal dl rt nsl util m
+MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
-LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf boost_system boost_regex \
+LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath leveldb hdfs jvm
+							opencv_core openblas arraymath leveldb hdfs jvm armci
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib \
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
 	/home/wangwei/install/jdk1.7.0_67/jre/lib/amd64/server
 #$(HOME_DIR)/atlas/lib
@@ -32,14 +31,6 @@ LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
 
 BUILD_DIR := build
-
-##############################################################################
-# build test with dary
-#############################################################################
-DARY_HDRS: = $(shell find include/darray -name "*.h" -type f)
-DARY_SRCS: = $(shell find src/darray -name "*.cc" -type f)
-DARY_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(DARY_SRCS:.cc=.o)) $(PROTO_OBJS) )
--include $(DARY_OBJS:%.o=%.P)
 
 ###############################################################################
 # Build Lapis into .a and .so library

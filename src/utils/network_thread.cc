@@ -65,7 +65,7 @@ NetworkThread::NetworkThread() {
     running_ = false;
     return;
   }
-  MPI::Init_thread(MPI_THREAD_SINGLE);
+  //MPI::Init_thread(MPI_THREAD_SINGLE);
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
   id_ = world_->Get_rank();

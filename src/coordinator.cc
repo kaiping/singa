@@ -81,7 +81,8 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
     }
   }
   LOG(ERROR)<<"finish table assignment, req size "<<req.assign_size();
-  mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
+  mpi_->Broadcast(MTYPE_SHARD_ASSIGNMENT, req);
+  mpi_->WaitForSync(MTYPE_SHARD_ASSIGNMENT_DONE, context_->num_table_servers());
   LOG(ERROR)<<"finish table server init";
 }
 

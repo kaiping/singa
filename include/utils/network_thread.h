@@ -91,6 +91,7 @@ class NetworkThread {
   // set the barrier
   void barrier();
 
+  void WaitForSync(int method, int count);
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;
@@ -137,7 +138,6 @@ class NetworkThread {
   //  loop that receives and sends messages
   void NetworkLoop();
 
-  void WaitForSync(int method, int count);
 
 
   NetworkThread();

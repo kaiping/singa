@@ -251,7 +251,7 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
 
 template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
-  auto splits=param_splits_map_[param->id()];
+  auto splits=param_splits_map_.at(param->id());
   K key;
   key.set_version(step);
   V v;

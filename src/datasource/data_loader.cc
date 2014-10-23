@@ -54,7 +54,7 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
     records.push_back(i);
   }
   if(source.shuffle()){
-    DLOG(INFO)<<"Do Shuffling...";
+    LOG(ERROR)<<"Do Shuffling...";
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(records.begin(), records.end(), std::default_random_engine(seed));
   }

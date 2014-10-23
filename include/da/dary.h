@@ -250,19 +250,7 @@ class DAry {
     return dptr_[locate(idx0)];
   }
 
-  std::string ToString(bool dataonly=true){
-    std::string ret;
-    if(!dataonly){
-      ret+=shape_.ToString();
-      ret+=part_.ToString();
-    }
-    char buf[1024];
-    sprintf(buf, "ary: ");
-    for (int i = 0; i < part_.size; i++) {
-      sprintf(buf+strlen(buf), "%.2f ", dptr_[i]);
-    }
-    return ret+std::string(buf);
-  }
+  std::string ToString(bool dataonly=true);
   int shape(int k) const {
     CHECK(k< shape_.dim);
     return shape_.s[k];

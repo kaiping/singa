@@ -58,12 +58,13 @@ void TableServer::HandleShardAssignment() {
   VLOG(3)<<"finish handle shard assignment";
 }
 
-void TableServer::HandleDisk(const Message* data){
+bool TableServer::HandleDisk(const Message* data){
 	const DiskData *dt = static_cast<const DiskData*>(data);
 	if (dt->is_empty())
 		FinishDataPut(dt);
 	else
 		HandleDataPut(dt);
+	return true;
 }
 
 void TableServer::HandleDataPut(const DiskData* data){
@@ -87,7 +88,7 @@ void TableServer::FinishDataPut(const DiskData* data) {
 }
 
 //  respond to request
-void TableServer::HandleGetRequest(const Message *message) {
+bool TableServer::HandleGetRequest(const Message *message) {
   const HashGet *get_req = static_cast<const HashGet *>(message);
   TableData get_resp;
   // prepare
@@ -98,18 +99,20 @@ void TableServer::HandleGetRequest(const Message *message) {
   get_resp.set_done(true);
   get_resp.set_key(get_req->key());
   // fill data
-  {
+
     GlobalTable *t = tables_.at(get_req->table());
-    t->handle_get(*get_req, &get_resp);
-  }
-  net_->Send(get_req->source(), MTYPE_GET_RESPONSE, get_resp);
+    if (t->handle_get(*get_req, &get_resp)){
+    	net_->Send(get_req->source(), MTYPE_GET_RESPONSE, get_resp);
+    	return true;
+    }
+    else return false;
 }
 
-void TableServer::HandleUpdateRequest(const Message *message) {
+bool TableServer::HandleUpdateRequest(const Message *message) {
   boost::recursive_mutex::scoped_lock sl(state_lock_);
   const TableData *put = static_cast<const TableData *>(message);
   GlobalTable *t = tables_.at(put->table());
-  t->ApplyUpdates(*put);
+  return t->ApplyUpdates(*put);
 }
 
 int TableServer::peer_for_partition(int table, int shard) {

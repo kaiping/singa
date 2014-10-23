@@ -59,6 +59,8 @@ class NetworkThread {
   void Send(RPCRequest *req);
   void Send(int dst, int method, const Message &msg);
 
+  void send_to_local_rx_queue(int dst, int method, const Message &msg);
+
   void Broadcast(int method, const Message &msg);
   void SyncBroadcast(int method, int reply, const Message &msg);
 

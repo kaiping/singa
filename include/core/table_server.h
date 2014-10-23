@@ -36,13 +36,13 @@ class TableServer : private boost::noncopyable {
   //  assignment happens only once at the beginning
   void HandleShardAssignment();
 
-  void HandleDisk(const Message *message);
+  bool HandleDisk(const Message *message);
 
   //  shutdown gracefully
   void HandleServerShutdown();
 
-  void HandleUpdateRequest(const Message *message);
-  void HandleGetRequest(const Message *message);
+  bool HandleUpdateRequest(const Message *message);
+  bool HandleGetRequest(const Message *message);
 
   //  id of the peer responsible for storing the partition
   int peer_for_partition(int table, int shard);

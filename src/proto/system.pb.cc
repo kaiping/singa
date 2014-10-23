@@ -175,7 +175,6 @@ const int GroupConfig::kLeaderFieldNumber;
 GroupConfig::GroupConfig()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.GroupConfig)
 }
 
 void GroupConfig::InitAsDefaultInstance() {
@@ -185,7 +184,6 @@ GroupConfig::GroupConfig(const GroupConfig& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.GroupConfig)
 }
 
 void GroupConfig::SharedCtor() {
@@ -197,7 +195,6 @@ void GroupConfig::SharedCtor() {
 }
 
 GroupConfig::~GroupConfig() {
-  // @@protoc_insertion_point(destructor:lapis.GroupConfig)
   SharedDtor();
 }
 
@@ -228,44 +225,31 @@ GroupConfig* GroupConfig::New() const {
 }
 
 void GroupConfig::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<GroupConfig*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  ZR_(start_, leader_);
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    start_ = 0;
+    end_ = 0;
+    leader_ = 0;
+  }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool GroupConfig::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.GroupConfig)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // optional int32 start = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &start_)));
           set_has_start();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(16)) goto parse_end;
         break;
@@ -273,14 +257,15 @@ bool GroupConfig::MergePartialFromCodedStream(
 
       // optional int32 end = 2;
       case 2: {
-        if (tag == 16) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &end_)));
           set_has_end();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(24)) goto parse_leader;
         break;
@@ -288,25 +273,25 @@ bool GroupConfig::MergePartialFromCodedStream(
 
       // optional int32 leader = 3;
       case 3: {
-        if (tag == 24) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_leader:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &leader_)));
           set_has_leader();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -314,18 +299,12 @@ bool GroupConfig::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.GroupConfig)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.GroupConfig)
-  return false;
 #undef DO_
 }
 
 void GroupConfig::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.GroupConfig)
   // optional int32 start = 1;
   if (has_start()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->start(), output);
@@ -345,12 +324,10 @@ void GroupConfig::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.GroupConfig)
 }
 
 ::google::protobuf::uint8* GroupConfig::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.GroupConfig)
   // optional int32 start = 1;
   if (has_start()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->start(), target);
@@ -370,7 +347,6 @@ void GroupConfig::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.GroupConfig)
   return target;
 }
 
@@ -491,7 +467,6 @@ const int ClusterConfig::kHdfsFolderFieldNumber;
 ClusterConfig::ClusterConfig()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.ClusterConfig)
 }
 
 void ClusterConfig::InitAsDefaultInstance() {
@@ -501,11 +476,9 @@ ClusterConfig::ClusterConfig(const ClusterConfig& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.ClusterConfig)
 }
 
 void ClusterConfig::SharedCtor() {
-  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   server_start_ = 0;
   server_end_ = 0;
@@ -515,7 +488,6 @@ void ClusterConfig::SharedCtor() {
 }
 
 ClusterConfig::~ClusterConfig() {
-  // @@protoc_insertion_point(destructor:lapis.ClusterConfig)
   SharedDtor();
 }
 
@@ -552,18 +524,9 @@ ClusterConfig* ClusterConfig::New() const {
 }
 
 void ClusterConfig::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<ClusterConfig*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 27) {
-    ZR_(server_start_, server_end_);
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    server_start_ = 0;
+    server_end_ = 0;
     if (has_shard_folder()) {
       if (shard_folder_ != _default_shard_folder_) {
         shard_folder_->assign(*_default_shard_folder_);
@@ -575,10 +538,6 @@ void ClusterConfig::Clear() {
       }
     }
   }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
   group_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -586,23 +545,20 @@ void ClusterConfig::Clear() {
 
 bool ClusterConfig::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.ClusterConfig)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // optional int32 server_start = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &server_start_)));
           set_has_server_start();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(16)) goto parse_server_end;
         break;
@@ -610,14 +566,15 @@ bool ClusterConfig::MergePartialFromCodedStream(
 
       // optional int32 server_end = 2;
       case 2: {
-        if (tag == 16) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_server_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &server_end_)));
           set_has_server_end();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(26)) goto parse_group;
         break;
@@ -625,12 +582,13 @@ bool ClusterConfig::MergePartialFromCodedStream(
 
       // repeated .lapis.GroupConfig group = 3;
       case 3: {
-        if (tag == 26) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_group:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_group()));
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(26)) goto parse_group;
         if (input->ExpectTag(34)) goto parse_shard_folder;
@@ -639,16 +597,16 @@ bool ClusterConfig::MergePartialFromCodedStream(
 
       // optional string shard_folder = 4 [default = "/data1/wangwei/lapis"];
       case 4: {
-        if (tag == 34) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_shard_folder:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_shard_folder()));
-          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
             this->shard_folder().data(), this->shard_folder().length(),
-            ::google::protobuf::internal::WireFormat::PARSE,
-            "shard_folder");
+            ::google::protobuf::internal::WireFormat::PARSE);
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(42)) goto parse_hdfs_folder;
         break;
@@ -656,27 +614,26 @@ bool ClusterConfig::MergePartialFromCodedStream(
 
       // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
       case 5: {
-        if (tag == 42) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_hdfs_folder:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_hdfs_folder()));
-          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
             this->hdfs_folder().data(), this->hdfs_folder().length(),
-            ::google::protobuf::internal::WireFormat::PARSE,
-            "hdfs_folder");
+            ::google::protobuf::internal::WireFormat::PARSE);
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -684,18 +641,12 @@ bool ClusterConfig::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.ClusterConfig)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.ClusterConfig)
-  return false;
 #undef DO_
 }
 
 void ClusterConfig::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.ClusterConfig)
   // optional int32 server_start = 1;
   if (has_server_start()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->server_start(), output);
@@ -714,21 +665,19 @@ void ClusterConfig::SerializeWithCachedSizes(
 
   // optional string shard_folder = 4 [default = "/data1/wangwei/lapis"];
   if (has_shard_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->shard_folder().data(), this->shard_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "shard_folder");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
       4, this->shard_folder(), output);
   }
 
   // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
   if (has_hdfs_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->hdfs_folder().data(), this->hdfs_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "hdfs_folder");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
       5, this->hdfs_folder(), output);
   }
 
@@ -736,12 +685,10 @@ void ClusterConfig::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.ClusterConfig)
 }
 
 ::google::protobuf::uint8* ClusterConfig::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.ClusterConfig)
   // optional int32 server_start = 1;
   if (has_server_start()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->server_start(), target);
@@ -761,10 +708,9 @@ void ClusterConfig::SerializeWithCachedSizes(
 
   // optional string shard_folder = 4 [default = "/data1/wangwei/lapis"];
   if (has_shard_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->shard_folder().data(), this->shard_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "shard_folder");
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         4, this->shard_folder(), target);
@@ -772,10 +718,9 @@ void ClusterConfig::SerializeWithCachedSizes(
 
   // optional string hdfs_folder = 5 [default = "/users/wangwei/"];
   if (has_hdfs_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->hdfs_folder().data(), this->hdfs_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "hdfs_folder");
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         5, this->hdfs_folder(), target);
@@ -785,7 +730,6 @@ void ClusterConfig::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.ClusterConfig)
   return target;
 }
 
@@ -923,7 +867,6 @@ const int SystemProto::kSynchronousFieldNumber;
 SystemProto::SystemProto()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.SystemProto)
 }
 
 void SystemProto::InitAsDefaultInstance() {
@@ -934,7 +877,6 @@ SystemProto::SystemProto(const SystemProto& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.SystemProto)
 }
 
 void SystemProto::SharedCtor() {
@@ -946,7 +888,6 @@ void SystemProto::SharedCtor() {
 }
 
 SystemProto::~SystemProto() {
-  // @@protoc_insertion_point(destructor:lapis.SystemProto)
   SharedDtor();
 }
 
@@ -978,7 +919,7 @@ SystemProto* SystemProto::New() const {
 }
 
 void SystemProto::Clear() {
-  if (_has_bits_[0 / 32] & 7) {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (has_cluster()) {
       if (cluster_ != NULL) cluster_->::lapis::ClusterConfig::Clear();
     }
@@ -991,21 +932,18 @@ void SystemProto::Clear() {
 
 bool SystemProto::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.SystemProto)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // optional .lapis.ClusterConfig cluster = 1;
       case 1: {
-        if (tag == 10) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_cluster()));
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(24)) goto parse_standalone;
         break;
@@ -1013,14 +951,15 @@ bool SystemProto::MergePartialFromCodedStream(
 
       // optional bool standalone = 3 [default = true];
       case 3: {
-        if (tag == 24) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_standalone:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &standalone_)));
           set_has_standalone();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(32)) goto parse_synchronous;
         break;
@@ -1028,25 +967,25 @@ bool SystemProto::MergePartialFromCodedStream(
 
       // optional bool synchronous = 4 [default = true];
       case 4: {
-        if (tag == 32) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_synchronous:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &synchronous_)));
           set_has_synchronous();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -1054,18 +993,12 @@ bool SystemProto::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.SystemProto)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.SystemProto)
-  return false;
 #undef DO_
 }
 
 void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.SystemProto)
   // optional .lapis.ClusterConfig cluster = 1;
   if (has_cluster()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -1086,12 +1019,10 @@ void SystemProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.SystemProto)
 }
 
 ::google::protobuf::uint8* SystemProto::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.SystemProto)
   // optional .lapis.ClusterConfig cluster = 1;
   if (has_cluster()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -1113,7 +1044,6 @@ void SystemProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.SystemProto)
   return target;
 }
 

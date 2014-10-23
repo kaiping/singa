@@ -30,7 +30,7 @@ namespace lapis {
 class RequestDispatcher {
  public:
 	//  callback to handle put/get requests
-	typedef boost::function<void (const Message *)> Callback;
+	typedef boost::function<bool (const Message *)> Callback;
 
 	void RegisterTableCallback(int message_type, Callback callback){
 		callbacks_[message_type] = callback;

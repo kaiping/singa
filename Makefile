@@ -3,7 +3,7 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei/install
+HOME_DIR := /usr
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
@@ -20,11 +20,11 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath leveldb hdfs jvm armci
+							opencv_core blas arraymath leveldb hdfs jvm armci
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
-	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
-	/home/wangwei/install/jdk1.7.0_67/jre/lib/amd64/server
+	/home/dinhtta/Downloads/hadoop-0.22.0/c++/Linux-amd64-64/lib/\
+	/home/dinhtta/Downloads/jdk1.7.0_25/jre/lib/amd64/server
 #$(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \

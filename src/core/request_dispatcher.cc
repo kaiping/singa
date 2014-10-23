@@ -86,10 +86,14 @@ namespace lapis {
 				message.reset(new TableData());
 			}
 			message->ParseFromArray(t_msg.data.data(), t_msg.data.size());
-			callbacks_[t_msg.tag](message.get());
 
-			num_outstanding_request_--;
-			table_queue_->event_complete(key);
+			if (callbacks_[t_msg.tag](message.get())){
+				num_outstanding_request_--;
+				table_queue_->event_complete(key);
+			}
+			else{ //enqueue again
+				table_queue_->Enqueue(t_msg.tag, t_msg.data);
+			}
 		}
 	}
 

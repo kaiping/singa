@@ -106,6 +106,25 @@ void GlobalTable::async_get_remote(int shard, const StringPiece &k){
 	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
 }
 
+// return false when there's no response with given key
+bool GlobalTable::async_get_remote_collect_key(int shard, const string &k, string *v){
+	TableData resp;
+	int source = w_->peer_for_partition(info().table_id,shard);
+
+	  if (NetworkThread::Get()->TryRead(source, MTYPE_GET_RESPONSE, &resp)){
+		  if (k.compare(resp.kv_data(0).key())==0){
+			  *v = resp.kv_data(0).value();
+			  return true;
+		  }
+		  else{
+			  //put back and return false
+			  NetworkThread::Get()->send_to_local_rx_queue(source, MTYPE_GET_RESPONSE, resp);
+			  return false;
+		  }
+	  }
+	  else return false;
+}
+
 bool GlobalTable::async_get_remote_collect(string *k, string *v) {
   TableData resp;
 
@@ -117,7 +136,7 @@ bool GlobalTable::async_get_remote_collect(string *k, string *v) {
   else return false;
 }
 
-void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
+bool GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
   boost::recursive_mutex::scoped_lock sl(mutex());
   int shard = get_req.shard();
   if (!is_local_shard(shard)) {
@@ -126,10 +145,16 @@ void GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
   LocalTable *t = (LocalTable *)partitions_[shard];
   if (!t->contains_str(get_req.key())) {
     get_resp->set_missing_key(true);
+    return false;
   } else {
     Arg *kv = get_resp->add_kv_data();
     kv->set_key(get_req.key());
-    kv->set_value(t->get_str(get_req.key()));
+    string value = t->get_str(get_req.key());
+    if (!value.empty()){
+    	kv->set_value(value);
+    	return true;
+    }
+    else return false;
   }
   //VLOG(3)<<"end of handle_get local";
 }
@@ -180,7 +205,7 @@ int GlobalTable::pending_write_bytes() {
   return s;
 }
 
-void GlobalTable::ApplyUpdates(const lapis::TableData &req) {
+bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
   boost::recursive_mutex::scoped_lock sl(mutex());
   if (!is_local_shard(req.shard())) {
     LOG_EVERY_N(INFO, 1000)
@@ -188,7 +213,7 @@ void GlobalTable::ApplyUpdates(const lapis::TableData &req) {
         << " to " << owner(req.shard());
   }
   RPCTableCoder c(&req);
-  partitions_[req.shard()]->ApplyUpdates(&c);
+  return partitions_[req.shard()]->ApplyUpdates(&c);
 }
 
 }

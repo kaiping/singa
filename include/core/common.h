@@ -63,9 +63,10 @@ private:
   unordered_map<string, double> p_;
 };
 
-template <class V>
+template <class K, class V>
 struct BaseUpdateHandler {
   virtual bool Update(V *a, const V &b) = 0;
+  virtual bool Get(const K k, const V &v, V* ret) = 0;
 };
 
 template <class K>

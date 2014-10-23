@@ -42,7 +42,7 @@ bool GetHandler<AdaGradValue>::Get(const AdaGradValue& from, AdaGradValue* to){
 }
 */
 template<typename V>
-class UpdateHandler: public BaseUpdateHandler<V>{
+class UpdateHandler: public BaseUpdateHandler<VKey, V>{
  public:
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(V* data, const V& update);

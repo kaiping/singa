@@ -237,9 +237,20 @@ void NetworkThread::Send(RPCRequest *req) {
   pending_sends_.push_back(req);
 }
 
+// when data is not used, it can be put back again
+void NetworkThread::send_to_local_rx_queue(int src, int method, const Message &msg){
+	 RPCRequest *r = new RPCRequest(src, method, msg);
+	 boost::recursive_mutex::scoped_lock sl(response_queue_locks_[method]);
+	 response_queue_[method][src].push_back(r->payload);
+}
+
 void NetworkThread::Send(int dst, int method, const Message &msg) {
-  RPCRequest *r = new RPCRequest(dst, method, msg);
-  Send(r);
+	 RPCRequest *r = new RPCRequest(dst, method, msg);
+	if (dst == id()){ //local rank
+		boost::recursive_mutex::scoped_lock sl(response_queue_locks_[method]);
+		response_queue_[method][dst].push_back(r->payload);
+	}
+	else Send(r);
 }
 
 void NetworkThread::Shutdown() {

@@ -26,14 +26,18 @@ Solver::Solver(const SolverProto &proto) {
 
   train_steps_=proto.train_steps();
   validation_steps_=proto.validation_steps();
-  auto gc=GlobalContext::Get();
-  GAry::Init(gc->rank(), gc->MembersOfGroup(gc->group_id()));
+  context_=GlobalContext::Get();
+  mpi_=NetworkThread::Get();
+
 }
 
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
   net_=new Net(np);
   net_->Setup();
-  delegate_->SplitParams(net_->params(), GlobalContext::Get()->worker_id());
+  auto params=net_->params();
+  auto grp_rank=context_->worker_id();
+  delegate_=delegate;
+  delegate_->SplitParams(params, grp_rank);
   string shard_folder=GlobalContext::Get()->shard_folder();
   train_shard_=shard_folder+"/"+dp.train_data().name()+"-leveldb";
   val_shard_=shard_folder+"/"+dp.validation_data().name()+"-leveldb";
@@ -46,7 +50,6 @@ void Solver::InitParams(){
 
 Solver::~Solver() {
   delete net_;
-  GAry::Finalize();
 }
 void Solver::ToProto(SolverProto *proto) {
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
@@ -72,6 +75,7 @@ void* PrefetchData(void* context){
   Net* net=parg->net;
   const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
+  Debug();
   for(int n=0;n<nrng.first;n++){
     if(!iter->Valid())
       iter->SeekToFirst();
@@ -113,6 +117,22 @@ void Solver::Validate(){
   delete db;
 }
 
+void Solver::ReportPerformance(Performance perf) {
+  if(context_->AmIGroupLeader()){
+    StateQueue<int> q(context_->MembersOfGroup(context_->group_id()));
+    while(q.HasValid()){
+      Performance p;
+      if(mpi_->TryRead(q.Next(), MTYPE_PERFORMANCE, &p)){
+        perf.Aggregate(p);
+        q.Invalide();
+      }
+    }
+    //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
+    LOG(INFO)<<perf.ToString();
+  }else{
+    mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
+ }
+}
 
 void Solver::Train(){
   leveldb::DB* db=OpenShard(train_shard_);
@@ -120,27 +140,24 @@ void Solver::Train(){
   iter->SeekToFirst();
   PrefetchArg arg{iter, net_};
 
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
-  //Debug();
+  //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
   while (!HasFinished()) {
     LOG(INFO)<<step();
-    pthread_join(prefetch_thread_, NULL);
+    //pthread_join(prefetch_thread_, NULL);
+    PrefetchData(&arg);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
     train_perf_.Aggregate(TrainOneBatch(net_));
-    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
     if(DisplayNow()){
-      Pause();
-      while(DisplayNow()&&PauseNow())
-        sleep(0.001);
+      ReportPerformance(train_perf_.Avg());
+      train_perf_.Reset();
     }
     if(ValidateNow()){
-      Pause();
-      while(ValidateNow()&&PauseNow())
-        sleep(0.1);
-    }else{
-      IncStep();
+      Validate();
+      ReportPerformance(val_perf_.Avg());
     }
+    IncStep();
   }
   delete db;
   delete iter;

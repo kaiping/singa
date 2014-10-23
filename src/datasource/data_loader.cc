@@ -64,19 +64,21 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   for (int g= 0; g < ngroups; g++) {
     ShardProto sp;
     sp.set_shard_folder(shard_folder_);
-    int shardsize=g==0?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
+    int shardsize=(g==0)?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
     for(int k=0;k<shardsize;k++){
       sp.add_record(*riter);
+      riter++;
     }
     for(auto worker: GlobalContext::Get()->MembersOfGroup(g))
       mpi->Send(worker, MTYPE_PUT_SHARD, sp);
   }
-  CHECK(riter== records.end());
+  CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
   LOG(ERROR)<<"Finish Sharding for "<<source.name();
 }
 
 
-void DataLoader::CreateLocalShard(const DataSourceProto& source, const ShardProto& shard){
+void DataLoader::CreateLocalShard(const DataSourceProto& source,
+    const ShardProto& shard){
   LOG(ERROR)<<"Create Shard for DataSource : "<<source.name();
   DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
   ds->Init(source, shard);

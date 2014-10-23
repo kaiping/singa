@@ -101,6 +101,10 @@ void ConvLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
     weight_.Init(proto.param(0));
     bias_.Init(proto.param(1));
   }
+  if(proto.has_col_data()){
+    col_data_.InitFromProto(proto.col_data());
+    col_grad_.InitFromProto(proto.col_grad());
+  }
 }
 void ConvLayer::CollectParams(vector<Param*> *params){
   weight_.set_id(params->size());
@@ -123,6 +127,10 @@ void ConvLayer::ToProto(LayerProto *proto, bool copyData) {
   weight_.ToProto(weight, copyData);
   ParamProto* bias=proto->add_param();
   bias_.ToProto(bias, copyData);
+  DAryProto* coldata=proto->mutable_col_data();
+  DAryProto* colgrad=proto->mutable_col_grad();
+  col_data_.ToProto(coldata, false);
+  col_grad_.ToProto(colgrad, false);
 }
 
 void ConvLayer::InitDAryShape(){
@@ -320,7 +328,7 @@ void ReLULayer::ComputeGradient() {
 void DropoutLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
   drop_prob_=proto.drop_prob();
-  if(proto.has_data());
+  if(proto.has_data())
     mask_.InitFromProto(proto.data());
 }
 
@@ -793,13 +801,11 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
  ***************************************************************************/
 void InputLayer::Init(const LayerProto& proto,StrStrEdge *edge_map){
   Layer::Init(proto, edge_map);
-  if(proto.has_data()){
-    prefetch_data_.InitFromProto(proto.data());
-  }
+  offset_=0;
 }
 void InputLayer::SetInputData(DAry *data){
   if(data==nullptr)
-    data_.SwapDptr(&prefetch_data_);
+    data_.SwapDptr(&grad_);
   else
     data_.SwapDptr(data);
   offset_=0;
@@ -822,61 +828,55 @@ void ImageLayer::ToProto(LayerProto* proto, bool copyData) {
 void ImageLayer::InitDAryShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes[0].size(),4);
   data_.SetShape(shapes[0]);
-  prefetch_data_.SetShape(shapes[0]);
-}
-void ImageLayer::SetupDAry(int pdim){
-  data_.Setup(pdim);
-  prefetch_data_.Setup(pdim);
-}
-
-void ImageLayer::SetPartition(int pdim){
-  data_.SetPartition(pdim);
-  prefetch_data_.SetPartition(pdim);
+  grad_.SetShape(shapes[0]);
 }
 void ImageLayer::AddInputRecord(const Record &record){
-  Range nrng=prefetch_data_.IndexRange(0);
+  Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
   const DAryProto& image=record.image();
+  int channels=data_.shape(1);
+  int height=data_.shape(2);
+  int width=data_.shape(3);
   if (cropsize_) {
     // get a blob
     int h_off, w_off;
     // We only do random crop when we do training.
     if (Solver::phase == kTrain) {
-      h_off = rand() % (height_ - cropsize_);
-      w_off = rand() % (width_ - cropsize_);
+      h_off = rand() % (height - cropsize_);
+      w_off = rand() % (width - cropsize_);
     } else {
-      h_off = (height_ - cropsize_) / 2;
-      w_off = (width_ - cropsize_) / 2;
+      h_off = (height - cropsize_) / 2;
+      w_off = (width - cropsize_) / 2;
     }
     // NOLINT_NEXT_LINE(runtime/threadsafe_fn)
     if (mirror_ && rand() % 2) {
       // Copy mirrored version
-      for (int c = 0; c < channels_; ++c) {
+      for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            prefetch_data_.at(n,c,h,cropsize_-1-w)=image.value(
-                (c * height_ + h + h_off) * width_ + w + w_off);
+            grad_.at(n,c,h,cropsize_-1-w)=image.value(
+                (c * height + h + h_off) * width + w + w_off);
           }
         }
       }
     }
     else {
       // Normal copy
-      for (int c = 0; c < channels_; ++c) {
+      for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            prefetch_data_.at(n,c,h,w)= image.value(
-                (c * height_+ h + h_off) * width_ + w + w_off);
+            grad_.at(n,c,h,w)= image.value(
+                (c * height+ h + h_off) * width + w + w_off);
           }
         }
       }
     }
   }else{
-    for (int c = 0; c < channels_; ++c) {
-      for (int h = 0; h < height_; ++h) {
-        for (int w = 0; w < width_; ++w) {
-          prefetch_data_.at(n,c,h,w)= image.value((c * height_+ h ) * width_ + w);
+    for (int c = 0; c < channels; ++c) {
+      for (int h = 0; h < height; ++h) {
+        for (int w = 0; w < width; ++w) {
+          grad_.at(n,c,h,w)= image.value((c * height+ h ) * width + w);
         }
       }
     }
@@ -891,22 +891,14 @@ void LabelLayer::InitDAryShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes.size(),2);
   CHECK_EQ(shapes[1].size(),2);
   data_.SetShape(shapes[1]);
-  prefetch_data_.SetShape(shapes[1]);
-}
-void LabelLayer::SetupDAry(int pdim){
-  data_.Setup(pdim);
-  prefetch_data_.Setup(pdim);
-}
-void LabelLayer::SetPartition(int pdim){
-  data_.SetPartition(pdim);
-  prefetch_data_.SetPartition(pdim);
+  grad_.SetShape(shapes[1]);
 }
 
 void LabelLayer::AddInputRecord(const Record &record){
-  Range nrng=prefetch_data_.IndexRange(0);
+  Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
-  prefetch_data_.at(n,0)=static_cast<int>(record.label());
+  grad_.at(n,0)=static_cast<int>(record.label());
   offset_++;
 }
 

@@ -103,9 +103,11 @@ message LayerProto {
   optional float drop_prob = 19 [default=0.0]; // droput probability
   optional DAryProto data = 20;
   optional DAryProto grad = 21;
-  optional int32 topk=23;
-  repeated string top=24;
-  repeated string bottom=25;
+  optional DAryProto col_data = 22;
+  optional DAryProto col_grad = 23;
+  optional int32 topk=24;
+  repeated string top=25;
+  repeated string bottom=26;
 }
 
 // used to load image mean provided by caffe, in RGBDirSource

@@ -29,7 +29,8 @@ class DAry {
     if(shape_==shape)
       return;
     else{
-      LOG(ERROR)<<"SetShape called twice with diff shape";
+      if(shape_.size>0)
+        LOG(ERROR)<<"SetShape called twice with diff shape";
       shape_=shape;
     }
   }
@@ -37,7 +38,8 @@ class DAry {
     if(shape_==shape)
       return;
     else{
-      LOG(ERROR)<<"SetShape called twice with diff shape";
+      if(shape_.size>0)
+        LOG(ERROR)<<"SetShape called twice with diff shape";
       shape_.Reset(shape);
     }
   }
@@ -168,14 +170,18 @@ class DAry {
     * return the local index range for dim-th dimension
     */
   Range IndexRange(int k) const{
-    CHECK(offset_==0&&ga_!=nullptr);
-    return ga_->IndexRange(k);
+    CHECK(k<shape_.dim);
+    if(ga_!=nullptr)
+      return ga_->IndexRange(k);
+    else{
+      std::pair<int, int> rng(0, shape_.s[k]);
+      return rng;
+    }
   }
 
   /**
-    * fetch data to local according to index ranges
-    * create a new DAry which has the same shape as this dary, but
-    * the requested data are local
+    * fetch data according to index ranges
+    * create a new DAry whose local partition is the same shape as this dary,
     */
   DAry Fetch(const vector<Range>& slice) const;
   float* FetchPtr(const vector<Range>& slice) const;
@@ -204,22 +210,24 @@ class DAry {
   int locate(int idx0,int idx1, int idx2, int idx3) const {
     CHECK_EQ(shape_.dim,4);
     int pos=((idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2)*shape_.s[3]+idx3;
+    CHECK(pos>=part_.start);
     return pos-part_.start;
   }
   int locate(int idx0,int idx1, int idx2) const{
     CHECK_EQ(shape_.dim,3);
     int pos=(idx0*shape_.s[1]+idx1)*shape_.s[2]+idx2;
-    CHECK(pos> part_.start);
+    CHECK(pos>=part_.start);
     return pos-part_.start;
   }
   int locate(int idx0,int idx1) const {
     CHECK_EQ(shape_.dim,2);
     int pos=idx0*shape_.s[1]+idx1;
-    CHECK(pos> part_.start);
+    CHECK(pos>=part_.start);
     return pos-part_.start;
   }
   int locate(int idx0) const {
     CHECK_EQ(shape_.dim,1);
+    CHECK(idx0>=part_.start);
     return idx0-part_.start;
   }
   int isLocal(int idx0, int idx1){

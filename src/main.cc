@@ -15,6 +15,8 @@
 #include "coordinator.h"
 #include "datasource/data_loader.h"
 #include "worker.h"
+#include "da/gary.h"
+
 
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
@@ -25,6 +27,7 @@ DEFINE_bool(time, true,  "time training algorithm");
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
+
 // for debugging use
 int main(int argc, char **argv) {
   int provided;
@@ -33,12 +36,13 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   LOG(ERROR)<<"mpi thread level provided: "<<provided;
-  VLOG(3)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
+  LOG(ERROR)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
 
   // Note you can register you own layer/edge/datasource here
 
   // Init GlobalContext
   auto gc=lapis::GlobalContext::Get(FLAGS_system_conf);
+  LOG(ERROR)<<"group id"<<gc->group_id();
   lapis::ModelProto model;
   lapis::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
   if(FLAGS_load) {
@@ -51,13 +55,16 @@ int main(int argc, char **argv) {
     LOG(INFO)<<"Finish Load Data";
   }
   if(FLAGS_run){
+    lapis::GAry::Init(gc->rank(), gc->groups());
     if(gc->AmICoordinator()) {
       lapis::Coordinator coordinator(gc);
       coordinator.Start(model);
     }else {
+      // worker or table server
       lapis::Worker worker(gc);
       worker.Start(model.data(), model.solver());
     }
+    lapis::GAry::Finalize();
   }
   /*
   if(FLAGS_resume){

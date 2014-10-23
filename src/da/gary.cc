@@ -8,26 +8,39 @@
 
 #include "da/gary.h"
 namespace lapis {
-int GAry::grp_rank_=0;
-int GAry::groupsize_=1;
+int GAry::grp_rank_=-1;
+int GAry::groupsize_=0;
 int* GAry::procslist_=nullptr;
 ARMCI_Group GAry::group_;
-void GAry::Init(int rank, const vector<int>& procslist){
-  groupsize_=procslist.size();
-  CHECK(groupsize_);
-  procslist_=new int[groupsize_];
-  grp_rank_=-1;
-  int k=0;
-  for(auto procs: procslist) {
-    procslist_[k]=procs;
-    if(rank==procs)
-      grp_rank_=k;
-    k++;
-  }
-  CHECK(grp_rank_!=-1)
-    <<"The process is not in the group provided";
+void GAry::Init(int rank, const vector<vector<int>>& groups){
   ARMCI_Init();
-  ARMCI_Group_create(groupsize_, procslist_, &group_);
+  LOG(ERROR)<<"init gary";
+  int size,*procslist;
+  ARMCI_Group group;
+  for(auto& list: groups){
+    int size=list.size();
+    procslist=new int[size];
+    int k=0;
+    for(auto procs: list) {
+      procslist[k]=procs;
+      if(rank==procs){
+        grp_rank_=k;
+        procslist_=procslist;
+        groupsize_=size;
+      }
+      k++;
+    }
+    if(procslist_==procslist){
+      ARMCI_Group_create(size, procslist, &group_);
+    } else{
+      ARMCI_Group_create(size, procslist, &group);
+      delete procslist;
+    }
+  }
+
+  if(grp_rank_==-1)
+    LOG(ERROR)<<"this should be the cooridnator process";
+  else LOG(ERROR)<<"group rank "<<grp_rank_<<" size "<<groupsize_;
 }
 void GAry::Finalize() {
   delete procslist_;
@@ -62,6 +75,7 @@ float* GAry::Setup(const Shape& shape, Partition* part){
   part->start=lo_[1];
   part->stepsize=hi_[1]-lo_[1];
   part->stride=shape2d_.s[1];
+  CHECK_GE(part->stride, hi_[1]);
   part->end=shape.size-(part->stride-hi_[1]);
   part->size=shape.size/groupsize_;
   part->stride=part->size<part->stride?part->size:part->stride;

@@ -61,6 +61,8 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   auto mpi=NetworkThread::Get();
   auto riter=records.begin();
   LOG(ERROR)<<"Sharding "<<records.size() <<" records to "<<ngroups<<" groups";
+  bool replicateInGroup=true;
+  if(replicateInGroup){
   for (int g= 0; g < ngroups; g++) {
     ShardProto sp;
     sp.set_shard_folder(shard_folder_);
@@ -73,6 +75,7 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
       mpi->Send(worker, MTYPE_PUT_SHARD, sp);
   }
   CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
+  }
   LOG(ERROR)<<"Finish Sharding for "<<source.name();
 }
 

@@ -90,6 +90,7 @@ class TableDelegate {
   virtual void SplitParams(const std::vector<Param *> &params, int wid)=0;
 
   virtual const std::map<int, GlobalTable*> tables()=0;
+  void HandleShardAssignment() ;
 
   void Update(const std::vector<Param *> &params, int step);
   void Get(const std::vector<Param *> &params, int step);
@@ -155,6 +156,7 @@ TypedTableDelegate<VKey,AdaGradValue>::TypedTableDelegate(const SolverProto& pro
 
 
 TableDelegate* CreateTableDelegate(const SolverProto& proto);
+void HandleShardAssignment();
 template<class K, class V>
 TypedGlobalTable<K, V>* TypedTableDelegate<K,V>::CreateParamTable(
     const int id, int num_shards, UpdateHandler<V>* update, Sharder<K> *skey,

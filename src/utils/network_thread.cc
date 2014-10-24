@@ -59,12 +59,14 @@ std::shared_ptr<NetworkThread> NetworkThread::Get() {
   return instance_;
 }
 NetworkThread::NetworkThread() {
+  /*
   if (!getenv("OMPI_COMM_WORLD_RANK")) {
     world_ = NULL;
     id_ = -1;
     running_ = false;
     return;
   }
+  */
   //MPI::Init_thread(MPI_THREAD_SINGLE);
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
@@ -81,6 +83,7 @@ NetworkThread::NetworkThread() {
 	network_thread_stats_[FIRST_BYTE_RECEIVED] =
 			network_thread_stats_[LAST_BYTE_RECEIVED] =
 					network_thread_stats_[TOTAL_BYTE_RECEIVED] = 0;
+  LOG(ERROR)<<"network started";
 }
 
 bool NetworkThread::active() const {

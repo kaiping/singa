@@ -2,7 +2,7 @@
 // 2014-06-28 14:58
 #ifndef INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 #define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
-
+#include <glog/logging.h>
 #include <string>
 #include <utility>
 #include <memory>
@@ -27,6 +27,8 @@ class GlobalContext {
   bool synchronous() {return synchronous_;}
   // num of memory servers, default is the num of processes
   int num_table_servers() { return table_server_end_-table_server_start_; }
+  int server_start() {return table_server_start_;}
+  int server_end() {return table_server_end_;}
   int num_procs() { return num_procs_; }
   int num_workers() {return num_workers_;}
   bool IsTableServer(int rank) {
@@ -41,12 +43,13 @@ class GlobalContext {
   bool AmIGroupLeader() {return  rank_==groups_[gid_][0];}
   int worker_id() {return worker_id_;}
   int group_id() {return gid_;}
-  int num_groups() {return num_groups_;}
-  int group_size() {return group_size_;}
+  int num_groups() {return groups_.size();}
+  int group_size() {CHECK(groups_.size());return groups_[0].size();}
   int rank() {return rank_;}
   int leader() {return MembersOfGroup(gid_)[0];}
   const string shard_folder() {return shard_folder_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
+  vector<vector<int>> groups() {return groups_;}
   // assume the rank of coordinator is 0
   static int kCoordinator;
   void Finish();
@@ -71,8 +74,6 @@ class GlobalContext {
   std::string  system_conf_, shard_folder_;
   // number of workers per group
   int gid_;
-  int num_groups_;
-  int group_size_;
   vector<vector<int>> groups_;
   static shared_ptr<GlobalContext> instance_;
 };

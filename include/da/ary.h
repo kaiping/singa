@@ -130,7 +130,7 @@ class Partition{
   // >=0 partition on this dim; -1 local ary
   Partition(): pdim(0),size(0), start(0), stepsize(0), stride(0), end(0){}
   void LocalSetup(const Shape& shape){
-    pdim=0;
+    pdim=-1;
     size=shape.size;
     start=0;
     stepsize=size;
@@ -162,6 +162,7 @@ class Partition{
       stride=size<stride?size:stride;
     }
     else{
+      pdim=-1;
       start=0;
       size=end=stepsize=stride=shape.size;
     }

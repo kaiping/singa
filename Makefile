@@ -13,8 +13,7 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./inc
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
-	-funroll-loops -DMSHADOW_USE_MKL=0 -DMSHADOW_USE_CBLAS=1 \
-	-DMSHADOW_USE_CUDA=0 $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
+	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
@@ -63,13 +62,13 @@ SPLIT_TEST_SRCS := src/test/test_split.cc
 SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 9 -hostfile examples/imagenet12/hostfile -nooversubscribe \
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
 run_run: lapis.bin
-	mpirun --prefix /users/dinhtta/local  -np 3 -hostfile examples/imagenet12/hostfile -nooversubscribe ./lapis.bin \
+	mpirun  -np 3 -hostfile examples/imagenet12/hostfile ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=1 --data_dir=/data/tmp --load_data=false --run=true --table_buffer=20 --block_size=10
+	--v=3 -load=false --run=true --table_buffer=20 --block_size=10
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

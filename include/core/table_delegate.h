@@ -125,7 +125,12 @@ class TypedTableDelegate:public TableDelegate {
   int kMaxSplits_;
   V example_;
   TypedGlobalTable<K,V> * param_table_;
-  std::map<int, vector<std::pair<int, int>>> split_map_;
+  // map param id to splits (id, len)
+  std::map<int, vector<std::pair<int, int>>> param_splits_map_;
+  // map split id to param* and offset (to local partition start)
+  std::map<int, std::pair<Param*, int>> split_param_map_;
+  // async get marker
+  std::map<int, bool> asyncget_split_;
 };
 
 template<class K, class V>
@@ -172,6 +177,7 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
   int total_splits=0;
   int group_size=GlobalContext::Get()->group_size();
   for(auto param: params){
+    LOG(ERROR)<<"split param";
     const DAry& dary=param->data();
     int id=param->id()*group_size+wid;
     int local_size=dary.local_size();
@@ -184,17 +190,21 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
     if(splitsize>=16777216){
       LOG(WARNING)<<"split of size "<<splitsize
         <<"  exceeds the size of max google protobuf message, i.e., 64MB"
-        <<" param length is "<<local_size <<", reset the split threshold to 1000000";
+        <<" param length is "<<local_size
+        <<", reset the split threshold to 4000,000 Bytes";
       splitsize = 1000000;
     }
-    int nsplits=local_size/splitsize+local_size%splitsize;
+    int nsplits=local_size/splitsize+(local_size%splitsize!=0);
     vector<std::pair<int, int>> splits;
     for(auto j = 0, pos=0; j < nsplits; j++) {
       int len=(pos+splitsize)<local_size?splitsize:local_size-pos;
-      splits.push_back(std::make_pair(id*kMaxSplits_+j,len));
+      int splitid=id*kMaxSplits_+j;
+      splits.push_back(std::make_pair(splitid,len));
+      split_param_map_[splitid]=std::make_pair(param, pos);
+      asyncget_split_[splitid]=false;
       pos+=len;
     }
-    split_map_[param->id()]=splits;
+    param_splits_map_[param->id()]=splits;
     total_splits+=splits.size();
   }
   CHECK(total_splits<kMaxSplits_)
@@ -207,7 +217,7 @@ void TypedTableDelegate<K, V>::Update(Param *param, int step){
   const float * dptr = param->grad().dptr();
   K key;
   key.set_version(step);
-  for(auto& entry: split_map_[param->id()]) {
+  for(auto& entry: param_splits_map_[param->id()]) {
     V v(example_);
     // sgd related hyper-parameters
     v.set_version(step);
@@ -228,7 +238,7 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
   K key;
   key.set_version(step);
   int offset=0;
-  for(auto entry: split_map_[param->id()]) {
+  for(auto entry: param_splits_map_[param->id()]) {
     key.set_key(entry.first);
     V v=param_table_->get(key);
     for(auto x: v.data().value()){
@@ -241,42 +251,51 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
 
 template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
-  auto splits=split_map_[param->id()];
+  auto splits=param_splits_map_[param->id()];
   K key;
   key.set_version(step);
   V v;
   for(auto entry: splits) {
     key.set_key(entry.first);
     param_table_->async_get(key, &v);
+    asyncget_split_.at(entry.first)=true;
   }
 }
 
 template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
-  float * dptr = param->mutable_data()->dptr();
-  auto& splits=split_map_[param->id()];
-  std::map<int, int> offset;
-  int pos=0;
-  for(auto entry: splits){
-    offset[entry.first]=pos;
-    pos+=entry.second;
+  auto& splits=param_splits_map_[param->id()];
+  unsigned int nget=0;
+  // check num of splits collected before
+  for(auto& split: splits){
+    if(asyncget_split_.at(split.first))
+      nget++;
   }
   K key;
-  key.set_version(step);
-  int nget=0;
+  V val;
   while(nget<splits.size()){
-    for(auto i=0;i<splits.size();++i){
-      V v;
-      key.set_key(splits[i].first);
-      if(param_table_->async_get_collect(&key,&v)){
-        int k=offset[key.key()];
-        for(auto x: v.data().value())
-          dptr[k++]=x;
-        nget++;
-      } else {
-        sleep(0.001);
-      }
+    // may collect splits of other params used later
+    if(param_table_->async_get_collect(&key,&val)){
+      int splitid=key.key();
+      auto& split=split_param_map_.at(splitid);
+      Param* p=split.first;
+      int offset=split.second;
+      float * dptr = p->mutable_data()->dptr();
+      for(auto v: val.data().value())
+        dptr[offset++]=v;
+      // check this split is complete, i.e. offset is the start of next split
+      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
+        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
+      asyncget_split_[splitid]=true;
+    }else{
+      sleep(0.001);
     }
+  }
+
+  // check all splits have been collected, reset async get markers,
+  for(auto& split:splits){
+    CHECK(asyncget_split_[split.first]);
+    asyncget_split_[split.first]=false;
   }
 }
 

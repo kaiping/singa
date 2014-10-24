@@ -29,7 +29,7 @@ Coordinator::~Coordinator() {
 }
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
-  for (int i = 0; i < context_->num_procs()-1; ++i) {
+  for (int i = context_->server_start();i<context_->server_end();++i){
     VLOG(3)<<"in table server "<<i;
     RegisterWorkerRequest req;
     int src = 0;
@@ -80,9 +80,9 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
       delete task;
     }
   }
-  VLOG(3)<<"finish table assignment, req size "<<req.assign_size();
+  LOG(ERROR)<<"finish table assignment, req size "<<req.assign_size();
   mpi_->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
-  VLOG(3)<<"finish table server init";
+  LOG(ERROR)<<"finish table server init";
 }
 
 
@@ -141,6 +141,7 @@ void Coordinator::Start(const ModelProto& model) {
   sp.mutable_sgd()->set_threshold(context_->num_groups());
   sp.mutable_adagrad()->set_threshold(0);
   TableDelegate* delegate=CreateTableDelegate(sp);
+  InitTableServers(delegate->tables());
 
   Net* net=SetupNetShape(model);
   const NetProto partition=PartitionNet(net);
@@ -156,6 +157,15 @@ void Coordinator::Start(const ModelProto& model) {
   }
   */
   DistributePartition(partition);
+  EmptyMessage dummy_msg;
+  LOG(ERROR)<<"Tell group 0 to init parameters";
+  for(auto wid: context_->MembersOfGroup(0))
+    mpi_->Send(wid, MTYPE_INIT_PARAMS, dummy_msg);
+  int src;
+  LOG(ERROR)<<"waiting Group 0 to finish init parameters";
+  for(auto wid: context_->MembersOfGroup(0))
+    mpi_->Read(wid, MTYPE_FINISH_INIT_PARAMS, &dummy_msg, &src);
+  LOG(ERROR)<<"Group 0 has finished init parameters";
   Run();
 }
 
@@ -165,20 +175,15 @@ void Coordinator::Resume() {
    * workers will fetch netpartition
    * table server will resume from checkpoint
    * just notify workers to run
+    TableDelegate* delegate=CreateTableDelegate(sp);
+    InitTableServers(delegate->tables());
    */
   Run();
 }
 
 void Coordinator::Run(){
+  LOG(ERROR)<<"Broadcast all workers to start running";
   EmptyMessage dummy_msg;
-  LOG(INFO)<<"Tell group 0 to init parameters";
-  for(auto wid: context_->MembersOfGroup(0))
-    mpi_->Send(wid, MTYPE_INIT_PARAMS, dummy_msg );
-  int src;
-  for(auto wid: context_->MembersOfGroup(0))
-    mpi_->Read(wid, MTYPE_FINISH_INIT_PARAMS, &dummy_msg, &src);
-  LOG(INFO)<<"Group 0 has finished init parameters; "
-    <<"Broadcast all workers to start running";
   mpi_->Broadcast(MTYPE_START, dummy_msg);
 
   StateQueue<int> groups(context_->num_groups());

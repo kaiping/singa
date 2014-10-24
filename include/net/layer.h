@@ -328,7 +328,7 @@ class InputLayer: public Layer {
     return nullptr;
   }
  protected:
-  DAry prefetch_data_;
+  //DAry prefetch_data_; use the grad_ field for prefetch data
   int offset_;
 };
 class ImageLayer: public InputLayer {
@@ -336,21 +336,17 @@ class ImageLayer: public InputLayer {
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
   virtual void AddInputRecord(const Record& record);
 
  private:
   bool mirror_;
   int cropsize_;
-  int batchsize_, channels_, height_, width_;
+  //int batchsize_, channels_, height_, width_;
 };
 
 class LabelLayer: public InputLayer {
  public:
   virtual void InitDAryShape(const vector<vector<int>>& shapes);
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
   virtual void AddInputRecord(const Record& record);
 };
 

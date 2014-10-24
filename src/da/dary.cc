@@ -168,8 +168,22 @@ DAry::DAry(const vector<int>& shape) {
   alloc_size_=0;
   Allocate();
 }
-
+/**
+ * generate a global dary with the same shape as this one
+ */
 DAry DAry::Fetch(const vector<Range>& slice) const{
+  DAry ret;
+  ret.part_=Partition(shape_, slice);
+  ret.part_.pdim=part_.pdim;
+  ret.ga_=ga_;
+  ret.dptr_=FetchPtr(ret.part_);
+  ret.shape_=shape_;
+  ret.alloc_size_=ret.dptr_==dptr_?0:ret.part_.size;
+  return ret;
+}
+/**
+ * generate a local dary with fetched content
+DAry DAry::FetchToLocal(const vector<Range>& slice) const{
   DAry ret;
   Partition tmp(shape_, slice);
   ret.ga_=nullptr;
@@ -179,6 +193,7 @@ DAry DAry::Fetch(const vector<Range>& slice) const{
   ret.alloc_size_=ret.dptr_==dptr_?0:ret.part_.size;
   return ret;
 }
+*/
 
 float* DAry::FetchPtr(const vector<Range>& slice) const{
   Partition part(shape_, slice);

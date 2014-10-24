@@ -29,8 +29,8 @@ class Worker {
   ~Worker();
 
  private:
-  void Run(const ModelProto& proto);
-  void ReportPerformance(Performance perf);
+  //void Run(const ModelProto& proto);
+  //void ReportPerformance(Performance perf);
   // must provide globalcontext with Worker
   Worker(){};
 

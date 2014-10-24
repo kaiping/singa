@@ -912,17 +912,35 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::lapis::DAryProto* release_grad();
   inline void set_allocated_grad(::lapis::DAryProto* grad);
 
-  // optional int32 topk = 23;
+  // optional .lapis.DAryProto col_data = 22;
+  inline bool has_col_data() const;
+  inline void clear_col_data();
+  static const int kColDataFieldNumber = 22;
+  inline const ::lapis::DAryProto& col_data() const;
+  inline ::lapis::DAryProto* mutable_col_data();
+  inline ::lapis::DAryProto* release_col_data();
+  inline void set_allocated_col_data(::lapis::DAryProto* col_data);
+
+  // optional .lapis.DAryProto col_grad = 23;
+  inline bool has_col_grad() const;
+  inline void clear_col_grad();
+  static const int kColGradFieldNumber = 23;
+  inline const ::lapis::DAryProto& col_grad() const;
+  inline ::lapis::DAryProto* mutable_col_grad();
+  inline ::lapis::DAryProto* release_col_grad();
+  inline void set_allocated_col_grad(::lapis::DAryProto* col_grad);
+
+  // optional int32 topk = 24;
   inline bool has_topk() const;
   inline void clear_topk();
-  static const int kTopkFieldNumber = 23;
+  static const int kTopkFieldNumber = 24;
   inline ::google::protobuf::int32 topk() const;
   inline void set_topk(::google::protobuf::int32 value);
 
-  // repeated string top = 24;
+  // repeated string top = 25;
   inline int top_size() const;
   inline void clear_top();
-  static const int kTopFieldNumber = 24;
+  static const int kTopFieldNumber = 25;
   inline const ::std::string& top(int index) const;
   inline ::std::string* mutable_top(int index);
   inline void set_top(int index, const ::std::string& value);
@@ -935,10 +953,10 @@ class LayerProto : public ::google::protobuf::Message {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& top() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_top();
 
-  // repeated string bottom = 25;
+  // repeated string bottom = 26;
   inline int bottom_size() const;
   inline void clear_bottom();
-  static const int kBottomFieldNumber = 25;
+  static const int kBottomFieldNumber = 26;
   inline const ::std::string& bottom(int index) const;
   inline ::std::string* mutable_bottom(int index);
   inline void set_bottom(int index, const ::std::string& value);
@@ -985,6 +1003,10 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_data();
   inline void set_has_grad();
   inline void clear_has_grad();
+  inline void set_has_col_data();
+  inline void clear_has_col_data();
+  inline void set_has_col_grad();
+  inline void clear_has_col_grad();
   inline void set_has_topk();
   inline void clear_has_topk();
 
@@ -1007,6 +1029,8 @@ class LayerProto : public ::google::protobuf::Message {
   float drop_prob_;
   ::lapis::DAryProto* data_;
   ::lapis::DAryProto* grad_;
+  ::lapis::DAryProto* col_data_;
+  ::lapis::DAryProto* col_grad_;
   ::google::protobuf::RepeatedPtrField< ::std::string> top_;
   ::google::protobuf::RepeatedPtrField< ::std::string> bottom_;
   ::google::protobuf::int32 topk_;
@@ -4115,15 +4139,97 @@ inline void LayerProto::set_allocated_grad(::lapis::DAryProto* grad) {
   }
 }
 
-// optional int32 topk = 23;
-inline bool LayerProto::has_topk() const {
+// optional .lapis.DAryProto col_data = 22;
+inline bool LayerProto::has_col_data() const {
   return (_has_bits_[0] & 0x00020000u) != 0;
 }
-inline void LayerProto::set_has_topk() {
+inline void LayerProto::set_has_col_data() {
   _has_bits_[0] |= 0x00020000u;
 }
-inline void LayerProto::clear_has_topk() {
+inline void LayerProto::clear_has_col_data() {
   _has_bits_[0] &= ~0x00020000u;
+}
+inline void LayerProto::clear_col_data() {
+  if (col_data_ != NULL) col_data_->::lapis::DAryProto::Clear();
+  clear_has_col_data();
+}
+inline const ::lapis::DAryProto& LayerProto::col_data() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.col_data)
+  return col_data_ != NULL ? *col_data_ : *default_instance_->col_data_;
+}
+inline ::lapis::DAryProto* LayerProto::mutable_col_data() {
+  set_has_col_data();
+  if (col_data_ == NULL) col_data_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.col_data)
+  return col_data_;
+}
+inline ::lapis::DAryProto* LayerProto::release_col_data() {
+  clear_has_col_data();
+  ::lapis::DAryProto* temp = col_data_;
+  col_data_ = NULL;
+  return temp;
+}
+inline void LayerProto::set_allocated_col_data(::lapis::DAryProto* col_data) {
+  delete col_data_;
+  col_data_ = col_data;
+  if (col_data) {
+    set_has_col_data();
+  } else {
+    clear_has_col_data();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_data)
+}
+
+// optional .lapis.DAryProto col_grad = 23;
+inline bool LayerProto::has_col_grad() const {
+  return (_has_bits_[0] & 0x00040000u) != 0;
+}
+inline void LayerProto::set_has_col_grad() {
+  _has_bits_[0] |= 0x00040000u;
+}
+inline void LayerProto::clear_has_col_grad() {
+  _has_bits_[0] &= ~0x00040000u;
+}
+inline void LayerProto::clear_col_grad() {
+  if (col_grad_ != NULL) col_grad_->::lapis::DAryProto::Clear();
+  clear_has_col_grad();
+}
+inline const ::lapis::DAryProto& LayerProto::col_grad() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.col_grad)
+  return col_grad_ != NULL ? *col_grad_ : *default_instance_->col_grad_;
+}
+inline ::lapis::DAryProto* LayerProto::mutable_col_grad() {
+  set_has_col_grad();
+  if (col_grad_ == NULL) col_grad_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.col_grad)
+  return col_grad_;
+}
+inline ::lapis::DAryProto* LayerProto::release_col_grad() {
+  clear_has_col_grad();
+  ::lapis::DAryProto* temp = col_grad_;
+  col_grad_ = NULL;
+  return temp;
+}
+inline void LayerProto::set_allocated_col_grad(::lapis::DAryProto* col_grad) {
+  delete col_grad_;
+  col_grad_ = col_grad;
+  if (col_grad) {
+    set_has_col_grad();
+  } else {
+    clear_has_col_grad();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_grad)
+}
+
+// optional int32 topk = 24;
+inline bool LayerProto::has_topk() const {
+  return (_has_bits_[0] & 0x00080000u) != 0;
+}
+inline void LayerProto::set_has_topk() {
+  _has_bits_[0] |= 0x00080000u;
+}
+inline void LayerProto::clear_has_topk() {
+  _has_bits_[0] &= ~0x00080000u;
 }
 inline void LayerProto::clear_topk() {
   topk_ = 0;
@@ -4137,7 +4243,7 @@ inline void LayerProto::set_topk(::google::protobuf::int32 value) {
   topk_ = value;
 }
 
-// repeated string top = 24;
+// repeated string top = 25;
 inline int LayerProto::top_size() const {
   return top_.size();
 }
@@ -4181,7 +4287,7 @@ LayerProto::mutable_top() {
   return &top_;
 }
 
-// repeated string bottom = 25;
+// repeated string bottom = 26;
 inline int LayerProto::bottom_size() const {
   return bottom_.size();
 }

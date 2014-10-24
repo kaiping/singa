@@ -23,7 +23,7 @@ class GAry{
   float* Fetch(const vector<Range>& slice) const ;
   //int local_size(){return shape_.size/groupsize;}
   //int offset() {return offset_;}
-  static void Init(int rank, const vector<int>& procslist);
+  static void Init(int rank, const vector<vector<int>>& groups);
   static void Finalize() ;
  private:
   Shape shape_, shape2d_;

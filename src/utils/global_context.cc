@@ -4,6 +4,8 @@
 #include "utils/global_context.h"
 #include "proto/system.pb.h"
 #include "utils/proto_helper.h"
+#include "utils/common.h"
+
 
 namespace lapis {
 
@@ -30,7 +32,8 @@ void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
   rank_=nt->id();
   num_procs_=nt->size();
   kCoordinator=nt->size()-1;
-  int gid=0, gid_=-1;
+  int gid=0;
+  gid_=-1;
   for(auto& group: groups_){
     worker_id_=0;
     for(auto& worker: group){
@@ -44,7 +47,7 @@ void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
       break;
     gid++;
   }
-  CHECK(gid_==-1||rank_==kCoordinator);
+  CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer())<<gid_<<" "<<rank_<<" "<<worker_id_<<" "<<gid;
   VLOG(3)<<"init network thread";
 }
 shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf){

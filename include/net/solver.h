@@ -110,17 +110,10 @@ class Solver {
   void Pause() {pause_=true;}
   bool PauseNow() {return pause_;}
   void Continue() {pause_=false; phase=Phase::kTrain;}
-
-  Performance& train_perf() {
-    return train_perf_;
-
-  }
-Performance& val_perf() {
-    return val_perf_;
-  }
   int validation_steps() {
     return validation_steps_;
   }
+  void ReportPerformance(Performance perf);
   /**
    * increase the step by one after each iteration
    * this operation is immediately called after the ::Train().
@@ -168,6 +161,8 @@ Performance& val_perf() {
   Net* net_;
   pthread_t prefetch_thread_;
   TableDelegate* delegate_;
+  std::shared_ptr<NetworkThread> mpi_;
+  std::shared_ptr<GlobalContext> context_;
 };
 
 }  // namespace lapis

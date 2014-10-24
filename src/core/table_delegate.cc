@@ -173,7 +173,7 @@ template<>
 void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
   int offset = 0;
   const float * data_addr = param->data().dptr();
-  for(auto& entry: split_map_[param->id()]) {
+  for(auto& entry: param_splits_map_[param->id()]) {
     SGDValue v(example_);
     // sgd related hyper-parameters
     v.set_learning_rate_multiplier(param->learning_rate_multiplier());
@@ -200,7 +200,7 @@ template<>
 void TypedTableDelegate<VKey, AdaGradValue>::Put(Param * param){
   int offset = 0;
   const float * data_addr = param->data().dptr();
-  for(auto& entry: split_map_[param->id()]) {
+  for(auto& entry: param_splits_map_[param->id()]) {
     AdaGradValue v(example_);
     // sgd related hyper-parameters
     v.set_version(0);

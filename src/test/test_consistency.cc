@@ -13,7 +13,6 @@
 #include "proto/model.pb.h"
 #include "worker.h"
 #include "coordinator.h"
-//#include "model_controller/myacc.h"
 #include "utils/common.h"
 
 #include <cmath>
@@ -31,9 +30,21 @@ DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configurat
 DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
 DEFINE_int32(workers,2,"numer of workers doing get/put");
+/*
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
+*/
+struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
+	bool Update(int *a, const int &bb){
+		return true; 
+	}
+
+	bool Get(const int k, const int &val, int *ret){
+		*ret = val; 
+		return true; 
+	}
+};
 
 typedef map<int, GlobalTable*> Map;
 Map tables;
@@ -42,50 +53,23 @@ shared_ptr<GlobalContext> context;
 std::vector<ServerState*> server_states;
 TableServer *table_server;
 
-FloatVector large_msg, small_msg;
-const int SIZE=16;
-
-long sizes[] = { 37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,
-		14112, 4096, 4096, 1000, 384, 384, 256, 256, 96 };
-
-vector<FloatVector*> value_msg;
-
 int num_keys;
-
-// create large and small messages
-void init_messages(){
-	num_keys = 0;
-  long nservers=context->num_table_servers();
-	for (int i=0; i<SIZE; i++){
-		int total=0;
-    int threshold=std::max(FLAGS_threshold,0l);//, sizes[i]/nservers);
-    VLOG(3)<<"worker: "<<threshold;
-		while (total<sizes[i]){
-			FloatVector* fv = new FloatVector();
-			for (int j=0; j+total<sizes[i] && j<threshold; j++)
-				fv->add_data(static_cast<float>(rand())/static_cast<float>(RAND_MAX));
-			value_msg.push_back(fv);
-			total+=threshold;
-			num_keys++;
-		}
-	}
-}
 
 void create_mem_table(int id, int num_shards){
 
 	TableDescriptor *info = new TableDescriptor(id, num_shards);
 	  info->key_marshal = new Marshal<int>();
-	  info->value_marshal = new Marshal<FloatVector>();
+	  info->value_marshal = new Marshal<int>();
 	  info->sharder = new Sharding::Mod;
-	  info->accum = new MyAcc();
-	  info->partition_factory = new typename SparseTable<int, FloatVector>::Factory;
-	  auto table=new TypedGlobalTable<int, FloatVector>();
+	  info->accum = new AnhUpdateHandler;
+	  info->partition_factory = new typename SparseTable<int, int>::Factory;
+	  auto table=new TypedGlobalTable<int, int>();
 	  table->Init(info);
 	  tables[id] = table;
 }
 
 void coordinator_assign_tables(int id){
-	for (int i = 0; i < context->num_processes()-1; ++i) {
+	for (int i = 0; i < context->num_procs()-1; ++i) {
 	    RegisterWorkerRequest req;
 	    int src = 0;
 	    network->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
@@ -132,6 +116,7 @@ void coordinator_assign_tables(int id){
 	    }
 	  }
 	  VLOG(3)<<"finish table assignment, req size "<<req.assign_size();
+	  network->Broadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE)
 	  network->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 	  VLOG(3)<<"finish table server init";
 }
@@ -149,100 +134,53 @@ double random_double(){
 // popular table with random large or small messages.
 // the message distribution specified in FLAGS_large_precentage
 void coordinator_load_data(){
-	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
+	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
 
 	num_keys = 0;
-  int nservers=context->num_table_servers();
-	for (int i = 0; i < SIZE; i++) {
-		int total = 0;
-    int threshold=std::max(FLAGS_threshold,0l);//  sizes[i]/nservers);
-    while (total < sizes[i]) {
-      FloatVector* fv = new FloatVector();
-      for (int j = 0; j + total < sizes[i] && j < threshold; j++)
-        fv->add_data(
-            static_cast<float>(rand())
-            / static_cast<float>(RAND_MAX));
-      table->put(num_keys,*fv);
-      total += threshold;
-      num_keys++;
-    }
+	int nservers=context->num_table_servers();
+
+	for (int i=0; i<100; i++){
+		table->put(i,i);
 	}
-	VLOG(3) << "Loaded data successfully ... " << num_keys << " messages";
+	VLOG(3) << "Coordinator done loading ...";
 }
 
-void get(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
+void get(TypedGlobalTable<int,int>* table, ofstream &latency){
 	double start , end;
-  StateQueue<int> state(num_keys);
-  FloatVector v;
-  /*
-	for (int i=0; i<num_keys; i++){
-    start = Now();
-    table->get(i);
-    end=Now();
-    latency << "get: " << (end - start) << endl;
-  }
-  */
-  start=Now();
-	for (int i=0; i<num_keys; i++){
-    if(table->async_get(i, &v))
-      state.Invalid(i);
-	}
-  latency << "send get: " << (Now() - start) << endl;
-  start=Now();
-  while(state.HasValid()){
-    int key=state.Next();
-    if(table->async_get_collect(&key, &v))
-      state.Invalid(key);
-    sleep(0.001);
-  }
-  latency << "collect get: " << (Now() - start) << endl;
+  	int v;
+	for (int i=0; i<num_keys; i++)
+    		table->async_get(i, &v);
+  
+  	start=Now();
+  
+    int key=0;
+    table->async_get_collect(&key, &v);
+  	latency << "collect get: " << (Now() - start) << endl;
 }
 
-void update(TypedGlobalTable<int,FloatVector>* table, ofstream &latency){
-	double start, end;
-	for (int i=0; i<num_keys; i++){
-		start = Now();
-		table->update(i,*value_msg[i]);
-    end=Now();
-		latency << "update: " << (end - start) << endl;
-	}
+void update(TypedGlobalTable<int,int>* table, ofstream &latency){
 }
 
 void worker_test_data(){
-	init_messages();
-	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
+	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
 
 	ofstream latency(StringPrintf("latency_%d",NetworkThread::Get()->id()));
 	ofstream throughput(StringPrintf("throughput_%d", NetworkThread::Get()->id()));
-	double start, end;
-	for (int i=0; i<FLAGS_iterations; i++){
-		start = Now();
+
+
 		get(table, latency);
-    end=Now();
-		throughput << "get: " << (end - start) << " over " << num_keys << " ops " << endl;
-		start = Now();
-		update(table, latency);
-    end=Now();
-		throughput << "update: " << (end - start) << " over " << num_keys << " ops " << endl;
-    sleep(10);
-	}
+		//update(table, latency);
+
+
 	latency.close();
 	throughput.close();
 
 }
 
-void print_table_stats(){
-	auto table = static_cast<TypedGlobalTable<int,FloatVector>*>(tables[0]);
-	ofstream log_file(StringPrintf("log_variance_%d", NetworkThread::Get()->id()));
-	log_file << "table size at process "<< NetworkThread::Get()->id()<<" = " << table->stats()["TABLE_SIZE"] << endl;
-	log_file.close();
-}
-
 void shutdown(){
 	if (context->AmICoordinator()){
-		VLOG(3) << "Coordinator is shutting down ...";
 		EmptyMessage msg;
-		for (int i=0; i<context->num_processes()-1; i++)
+		for (int i=0; i<context->num_procs()-1; i++)
 			network->Read(MPI::ANY_SOURCE, MTYPE_WORKER_END, &msg);
 		 EmptyMessage shutdown_msg;
 		  for (int i = 0; i < network->size() - 1; i++) {
@@ -254,14 +192,11 @@ void shutdown(){
 	else{
 		VLOG(3) << "Worker " << network->id() << " is shutting down ...";
 	  network->Flush();
-	  VLOG(3) << "Done flushing the network thread";
-	  network->Send(GlobalContext::kCoordinatorRank, MTYPE_WORKER_END, EmptyMessage());
+	  network->Send(context->num_procs()-1, MTYPE_WORKER_END, EmptyMessage());
 	  EmptyMessage msg;
-	  network->Read(GlobalContext::kCoordinatorRank, MTYPE_WORKER_SHUTDOWN, &msg);
-	  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
+	  network->Read(context->num_procs()-1, MTYPE_WORKER_SHUTDOWN, &msg);
 
 	  table_server->ShutdownTableServer();
-	  VLOG(3) << "Flushing node " << network->id();
 	  network->Shutdown();
 	}
 }
@@ -269,32 +204,31 @@ void shutdown(){
 
 int main(int argc, char **argv) {
 	FLAGS_logtostderr = 1;
+	int provided;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 	google::InitGoogleLogging(argv[0]);
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-	context = GlobalContext::Get(FLAGS_system_conf, FLAGS_model_conf);
+	context = GlobalContext::Get(FLAGS_system_conf);
 	network = NetworkThread::Get();
-	VLOG(3) << "*** testing memory servers, with "
-			<< context->num_table_servers() << " servers";
 
 
 	create_mem_table(0,context->num_table_servers());
 
-  LOG(INFO)<<"threshold: "<<FLAGS_threshold<<" nworkers: "<<FLAGS_workers;
 	if (context->AmICoordinator()){
 		coordinator_assign_tables(0);
 		coordinator_load_data();
 		network->barrier();
 	}
 	else{
-		worker_table_init();
-		network->barrier();
-		VLOG(3) << "passed the barrier";
-		print_table_stats();
-
-		//Sleep(1);
-    if(network->id()<FLAGS_workers)
-      worker_test_data();
+		if (context->AmITableServer()){
+			worker_table_init();
+			network->barrier();
+		}
+		else{
+			network->barrier();
+			worker_test_data();
+		}
 	}
 
 	shutdown();

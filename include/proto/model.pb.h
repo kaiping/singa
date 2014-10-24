@@ -1036,7 +1036,7 @@ class LayerProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 topk_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(20 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(22 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -4154,13 +4154,11 @@ inline void LayerProto::clear_col_data() {
   clear_has_col_data();
 }
 inline const ::lapis::DAryProto& LayerProto::col_data() const {
-  // @@protoc_insertion_point(field_get:lapis.LayerProto.col_data)
   return col_data_ != NULL ? *col_data_ : *default_instance_->col_data_;
 }
 inline ::lapis::DAryProto* LayerProto::mutable_col_data() {
   set_has_col_data();
   if (col_data_ == NULL) col_data_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.col_data)
   return col_data_;
 }
 inline ::lapis::DAryProto* LayerProto::release_col_data() {
@@ -4177,7 +4175,6 @@ inline void LayerProto::set_allocated_col_data(::lapis::DAryProto* col_data) {
   } else {
     clear_has_col_data();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_data)
 }
 
 // optional .lapis.DAryProto col_grad = 23;
@@ -4195,13 +4192,11 @@ inline void LayerProto::clear_col_grad() {
   clear_has_col_grad();
 }
 inline const ::lapis::DAryProto& LayerProto::col_grad() const {
-  // @@protoc_insertion_point(field_get:lapis.LayerProto.col_grad)
   return col_grad_ != NULL ? *col_grad_ : *default_instance_->col_grad_;
 }
 inline ::lapis::DAryProto* LayerProto::mutable_col_grad() {
   set_has_col_grad();
   if (col_grad_ == NULL) col_grad_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.col_grad)
   return col_grad_;
 }
 inline ::lapis::DAryProto* LayerProto::release_col_grad() {
@@ -4218,7 +4213,6 @@ inline void LayerProto::set_allocated_col_grad(::lapis::DAryProto* col_grad) {
   } else {
     clear_has_col_grad();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_grad)
 }
 
 // optional int32 topk = 24;

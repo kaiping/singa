@@ -250,7 +250,6 @@ void NetworkThread::Shutdown() {
     running_ = false;
     sender_and_reciever_thread_->join();
     //processing_thread_->join();
-    MPI_Finalize();
   }
 }
 

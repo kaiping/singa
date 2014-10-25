@@ -40,19 +40,22 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   }
   int len=data->data().value_size();
   float* history=data->mutable_grad()->mutable_value()->mutable_data();
+  const float* grad=update.grad().value().data();
+  CHECK_EQ(len, update.grad().value_size());
+  CHECK_EQ(len, data->grad().value_size());
+  float* dptr=data->mutable_data()->mutable_value()->mutable_data();
   float lr=learning_rate_*data->learning_rate_multiplier();
   float w=weight_decay_*data->weight_decay_multiplier();
-  const float* grad=update.grad().value().data();
-  float* dptr=data->mutable_data()->mutable_value()->mutable_data();
   // hist=hist-lr*grad
-  DAry::arymath().madd(history, -lr, grad, history, len);
+  DAry::arymath().madd(history, lr, grad, history, len);
   // hist=hist-lr*weight*param
-  DAry::arymath().madd(history, -lr*w, dptr, history, len);
+  if(w>0)
+    DAry::arymath().madd(history, lr*w, dptr, history, len);
   data->set_n_update(data->n_update()+1);
 
   if(data->n_update()==data->threshold()){
     // param+=history/n
-    DAry::arymath().madd(dptr, 1.0f/data->n_update(), history, dptr, len);
+    DAry::arymath().madd(dptr, -1.0f/data->n_update(), history, dptr, len);
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);
@@ -82,6 +85,7 @@ float UpdateHyperParam(int step, SGDValue::ChangeProto change, int change_steps,
       break;
     case SGDValue::kStep:
       // a is the base learning rate, b is gamma, from caffe
+      // notice it is step/change_steps, not step*1.0/change_steps
       ret = a * pow(b, step / change_steps);
       break;
     default:

@@ -63,18 +63,18 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   LOG(ERROR)<<"Sharding "<<records.size() <<" records to "<<ngroups<<" groups";
   bool replicateInGroup=true;
   if(replicateInGroup){
-  for (int g= 0; g < ngroups; g++) {
-    ShardProto sp;
-    sp.set_shard_folder(shard_folder_);
-    int shardsize=(g==0)?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
-    for(int k=0;k<shardsize;k++){
-      sp.add_record(*riter);
-      riter++;
+    for (int g= 0; g < ngroups; g++) {
+      ShardProto sp;
+      sp.set_shard_folder(shard_folder_);
+      int shardsize=(g==0)?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
+      for(int k=0;k<shardsize;k++){
+        sp.add_record(*riter);
+        riter++;
+      }
+      for(auto worker: GlobalContext::Get()->MembersOfGroup(g))
+        mpi->Send(worker, MTYPE_PUT_SHARD, sp);
     }
-    for(auto worker: GlobalContext::Get()->MembersOfGroup(g))
-      mpi->Send(worker, MTYPE_PUT_SHARD, sp);
-  }
-  CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
+    CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
   }
   LOG(ERROR)<<"Finish Sharding for "<<source.name();
 }
@@ -98,11 +98,15 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
 
   Record record;
   int num=0;
+  const int kMaxKeyLen=256;
+  char key_cstr[kMaxKeyLen];
   while(!ds->eof()){
     string value, key;
     ds->NextRecord(&key, &record);
     record.SerializeToString(&value);
-    batch->Put(key, value);
+    snprintf(key_cstr, kMaxKeyLen, "%08d_%s", num, key.c_str());
+    string keystr(key_cstr);
+    batch->Put(keystr, value);
     if (++num % 100 == 0) {
       LOG(INFO)<<"Have insered "<<num<<" messages into leveldb";
       // Commit txn

@@ -397,6 +397,7 @@ void DAry::SampleGaussian(float mean, float std){
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine generator(seed);
   std::normal_distribution<double> distribution(mean, std);
+  LOG(INFO)<<"gaussain mean "<<mean<<" std "<<std;
   for (int i = 0; i < part_.size; i++) {
     dptr_[i]=distribution(generator);
   }
@@ -554,5 +555,12 @@ float DAry::Sum(){
 float DAry::Max(){
   CHECK(ga_==nullptr);
   return arymath().max(dptr_, part_.size);
+}
+
+float DAry::Norm1()const{
+  float ret=0.f;
+  for(int i=0;i<part_.size;i++)
+    ret+=abs(dptr_[i]);
+  return ret/part_.size;
 }
 }  // namespace lapis

@@ -47,6 +47,7 @@ void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
       break;
     gid++;
   }
+  LOG(INFO)<<"group id "<<gid_<<" rank "<<rank_<<" group rank "<<worker_id_;
   CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer())<<gid_<<" "<<rank_<<" "<<worker_id_<<" "<<gid;
   VLOG(3)<<"init network thread";
 }

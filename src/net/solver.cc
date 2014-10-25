@@ -72,26 +72,34 @@ leveldb::DB* Solver::OpenShard(string path) {
 void* PrefetchData(void* context){
   PrefetchArg *parg=static_cast<PrefetchArg*>(context);
   leveldb::Iterator* iter=parg->iter;
+  CHECK(iter);
   Net* net=parg->net;
   const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
   for(int n=0;n<nrng.first;n++){
-    if(!iter->Valid())
+    if(!iter->Valid()){
+      LOG(INFO)<<"reset to start leveldb";
       iter->SeekToFirst();
+    }
     iter->Next();
   }
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
-    CHECK(iter);
-    CHECK(iter->Valid());
+    if(!iter->Valid()){
+      LOG(INFO)<<"reset to start leveldb";
+      iter->SeekToFirst();
+    }
     record.ParseFromString(iter->value().ToString());
+    //LOG(INFO)<<iter->key().ToString()<<" "<<record.label();
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
     iter->Next();
   }
   for(int n=0;n<input.shape(0)-nrng.second;n++){
-    if(!iter->Valid())
+    if(!iter->Valid()){
+      LOG(INFO)<<"reset to start leveldb";
       iter->SeekToFirst();
+    }
     iter->Next();
   }
 }
@@ -142,7 +150,6 @@ void Solver::Train(){
 
   //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
   while (!HasFinished()) {
-    LOG(INFO)<<step();
     //pthread_join(prefetch_thread_, NULL);
     PrefetchData(&arg);
     for(auto* layer:net_->input_layer())
@@ -157,21 +164,23 @@ void Solver::Train(){
       Validate();
       ReportPerformance(val_perf_.Avg());
     }
+    IncStep();
   }
   delete db;
   delete iter;
   pthread_join(prefetch_thread_, NULL);
 }
 Performance Solver::TrainOneBatch(Net *net){
-  Debug();
   LOG(ERROR)<<"Training Step : "<<step();
   delegate_->AsyncGet(net->params(),step());
   auto layers=net->layers();
   for(auto* layer: layers){
-    LOG(ERROR)<<layer->name();
-    for(auto* param: layer->GetParams())
+    for(auto* param: layer->GetParams()){
       delegate_->AsyncCollect(param, step());
+      LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
+    }
     layer->ComputeFeature();
+    LOG(ERROR)<<layer->name()<<" norm "<<layer->data().Norm1();
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
@@ -180,7 +189,6 @@ Performance Solver::TrainOneBatch(Net *net){
     for(auto* param: (*layer)->GetParams())
       delegate_->Update(param, step());
   }
-  IncStep();
   return perf;
 }
 

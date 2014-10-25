@@ -250,6 +250,7 @@ class DAry {
     return dptr_[locate(idx0)];
   }
 
+  float Norm1()const;
   std::string ToString(bool dataonly=true);
   int shape(int k) const {
     CHECK(k< shape_.dim);

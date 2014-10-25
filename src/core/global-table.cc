@@ -82,7 +82,7 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
   req.set_table(info().table_id);
   req.set_shard(shard);
   req.set_source(worker_id_);
-  int peer = w_->peer_for_partition(info().table_id, shard);
+  int peer = owner(shard);//w_->peer_for_partition(info().table_id, shard);
   //VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
   //VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
@@ -101,7 +101,7 @@ void GlobalTable::async_get_remote(int shard, const StringPiece &k){
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);
-	int peer = w_->peer_for_partition(info().table_id, shard);
+	int peer = owner(shard);//w_->peer_for_partition(info().table_id, shard);
 	//VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
 	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
 }

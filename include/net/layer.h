@@ -148,6 +148,8 @@ class Layer {
     return in_edges_;
   }
 
+  const DAry& data() {return data_;}
+
  protected:
   std::string name_, type_;
   std::vector<Edge *> out_edges_;

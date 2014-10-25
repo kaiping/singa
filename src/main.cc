@@ -32,7 +32,7 @@ DEFINE_bool(time, true,  "time training algorithm");
 int main(int argc, char **argv) {
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-  //FLAGS_stderrthreshold=0;
+  FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   LOG(ERROR)<<"mpi thread level provided: "<<provided;
@@ -52,8 +52,9 @@ int main(int argc, char **argv) {
       loader.ShardData(model.data());
     else if(gc->AmIWorker())
       loader.CreateLocalShards(model.data());
-
-    LOG(ERROR)<<"Finish Load Data";
+    else {
+      LOG(ERROR)<<" Neither worker nor coordinator, nothing todo";
+    }
   }
   if(FLAGS_run){
     lapis::GAry::Init(gc->rank(), gc->groups());
@@ -79,5 +80,6 @@ int main(int argc, char **argv) {
   }
   */
   gc->Finish();
+  MPI_Finalize();
   return 0;
 }

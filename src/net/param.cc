@@ -15,7 +15,6 @@ void Param::Init(const ParamProto &proto){
   weight_decay_multiplier_ = proto.weight_decay_multiplier();
   init_method_=proto.init_method();
 
-
   low_=proto.low();
   high_=proto.high();
   mean_=proto.mean();
@@ -28,6 +27,24 @@ void Param::Init(const ParamProto &proto){
     grad_.InitFromProto(proto.grad());
 }
 
+void Param::ToProto(ParamProto *proto, bool copyData) {
+  // TODO(wangwei) store the proto as a member for easy ToProto.
+  proto->set_name(name_);
+  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
+  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
+  proto->set_init_method(init_method_);
+  proto->set_split_threshold(split_threshold_);
+  proto->set_mean(mean_);
+  proto->set_std(std_);
+  proto->set_low(low_);
+  proto->set_high(high_);
+  proto->set_value(value_);
+
+  DAryProto* data=proto->mutable_data();
+  data_.ToProto(data, copyData);
+  DAryProto* grad=proto->mutable_grad();
+  grad_.ToProto(grad, copyData);
+}
 void Param::SetShape(int len){
   data_.SetShape({len});
   grad_.SetShape({len});
@@ -78,18 +95,6 @@ void Param::Fill(){
 }
 
 
-void Param::ToProto(ParamProto *proto, bool copyData) {
-  // TODO(wangwei) store the proto as a member for easy ToProto.
-  proto->set_name(name_);
-  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
-  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
-  proto->set_init_method(init_method_);
-  proto->set_split_threshold(split_threshold_);
-  DAryProto* data=proto->mutable_data();
-  data_.ToProto(data, copyData);
-  DAryProto* grad=proto->mutable_grad();
-  grad_.ToProto(grad, copyData);
-}
 
 void Param::FillGaussainData(float mean, float std, float factor) {
   data_.SampleGaussian(mean, std);

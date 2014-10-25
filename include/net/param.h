@@ -61,6 +61,10 @@ class Param {
    */
   void Fill();
 
+  const std::string& name() {
+    return name_;
+  }
+
   int id() {
     return id_;
   }
@@ -90,7 +94,6 @@ class Param {
    * Gaussain distribution.
    */
   void FillGaussainData(float mean, float std, float factor);
-
   /**
    * name of the parameter used to identify the ParamProto configed in
    * EdgeProto by users. Currently there are two kinds of parameters, 'weight'

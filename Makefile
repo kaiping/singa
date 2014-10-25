@@ -62,7 +62,7 @@ SPLIT_TEST_SRCS := src/test/test_split.cc
 SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 6 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
 run_run: lapis.bin

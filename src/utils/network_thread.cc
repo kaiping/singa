@@ -250,6 +250,7 @@ void NetworkThread::send_to_local_rx_queue(int src, int method, const Message &m
 void NetworkThread::Send(int dst, int method, const Message &msg) {
 	 RPCRequest *r = new RPCRequest(dst, method, msg);
 	if (dst == id()){ //local rank
+		VLOG(3) << "LOCAL SEND";
 		boost::recursive_mutex::scoped_lock sl(response_queue_locks_[method]);
 		response_queue_[method][dst].push_back(r->payload);
 	}
@@ -306,11 +307,17 @@ void NetworkThread::barrier(){
     Broadcast(MTYPE_BARRIER_READY, EmptyMessage());
   }
   else{
+
     EmptyMessage msg;
     Read(GlobalContext::kCoordinator, MTYPE_BARRIER_REQUEST, &msg);
+
     Flush();
+
     Send(GlobalContext::kCoordinator, MTYPE_BARRIER_REPLY, msg);
-    Read(GlobalContext::kCoordinator, MTYPE_BARRIER_READY, &msg);
+
+    	EmptyMessage new_msg;
+    Read(GlobalContext::kCoordinator, MTYPE_BARRIER_READY, &new_msg);
+
   }
 }
 }  // namespace lapis

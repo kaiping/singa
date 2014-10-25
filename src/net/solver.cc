@@ -75,7 +75,6 @@ void* PrefetchData(void* context){
   Net* net=parg->net;
   const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
-  Debug();
   for(int n=0;n<nrng.first;n++){
     if(!iter->Valid())
       iter->SeekToFirst();
@@ -88,6 +87,7 @@ void* PrefetchData(void* context){
     record.ParseFromString(iter->value().ToString());
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
+    iter->Next();
   }
   for(int n=0;n<input.shape(0)-nrng.second;n++){
     if(!iter->Valid())
@@ -119,16 +119,16 @@ void Solver::Validate(){
 
 void Solver::ReportPerformance(Performance perf) {
   if(context_->AmIGroupLeader()){
-    StateQueue<int> q(context_->MembersOfGroup(context_->group_id()));
-    while(q.HasValid()){
+    int toRcv=context_->group_size()-1;
+    while(toRcv>0){
       Performance p;
-      if(mpi_->TryRead(q.Next(), MTYPE_PERFORMANCE, &p)){
+      if(mpi_->TryRead(0, MTYPE_PERFORMANCE, &p)){
         perf.Aggregate(p);
-        q.Invalide();
+        toRcv--;
       }
     }
     //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
-    LOG(INFO)<<perf.ToString();
+    LOG(ERROR)<<perf.ToString();
   }else{
     mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
  }
@@ -157,24 +157,25 @@ void Solver::Train(){
       Validate();
       ReportPerformance(val_perf_.Avg());
     }
-    IncStep();
   }
   delete db;
   delete iter;
   pthread_join(prefetch_thread_, NULL);
 }
 Performance Solver::TrainOneBatch(Net *net){
+  Debug();
+  LOG(ERROR)<<"Training Step : "<<step();
   delegate_->AsyncGet(net->params(),step());
   auto layers=net->layers();
   for(auto* layer: layers){
-    VLOG(3)<<layer->name();
+    LOG(ERROR)<<layer->name();
     for(auto* param: layer->GetParams())
       delegate_->AsyncCollect(param, step());
     layer->ComputeFeature();
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    VLOG(3)<<(*layer)->name();
+    LOG(ERROR)<<(*layer)->name();
     (*layer)->ComputeGradient();
     for(auto* param: (*layer)->GetParams())
       delegate_->Update(param, step());

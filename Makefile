@@ -65,7 +65,7 @@ CONST_SRCS := src/test/test_consistency.cc
 CONST_OBJS = $(CONST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 6 -hostfile examples/imagenet12/hostfile \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
 run_run: lapis.bin
@@ -84,7 +84,7 @@ run_test_split: lapis.test.split
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_const: lapis.test.const
-	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 5 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
@@ -112,8 +112,12 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis.test.const: lapis.bin $(CONST_OBJS)
+lapis.test.const: $(CONST_OBJS)
 	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(CONST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+	@echo
+
+$(CONST_OBJS): $(CONST_SRCS) lapis.bin
+	$(CXX) $< $(CXXFLAGS) -MMD -c -o $@
 	@echo
 
 lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
@@ -136,8 +140,6 @@ $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 		-e '/^$$/ d' -e 's/$$/ :/' < $(BUILD_DIR)/$*.d >> $(BUILD_DIR)/$*.P; \
 	rm -f $*.d
 
-$(CONST_OBJS): $(CONST_SRCS)
-	$(CXX) $< $(CXXFLAGS) -c -o $@
 $(TABLE_TEST_OBJS): $(TABLE_TEST_SRCS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 

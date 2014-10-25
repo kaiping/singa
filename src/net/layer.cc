@@ -183,20 +183,20 @@ void ConvLayer::ComputeFeature() {
   img2col+=t.elapsed();
   // copy constructor with rvalue ref DAry(DAry&& other)
   // copy constructor with rvalue ref DAry(DAry&& other)
-  DAry data4=data_.Reshape({num_, ngroups_, K_, N_});
-  DAry col4=col_data_.Reshape({num_, ngroups_, M_, N_});
+  DAry data4=data_.Reshape({num_, ngroups_, M_, N_});
+  DAry col4=col_data_.Reshape({num_, ngroups_, K_, N_});
   DAry weight3=weight_.data().Reshape({ngroups_, M_, K_});
   Range nrng=data_.IndexRange(0);
   for (int n = nrng.first; n < nrng.second; n++) {
     // copy constructor with rvalue ref
     DAry data3=data4[n];
     DAry col3=col4[n];
-    t.reset();
+    //t.reset();
     for (int g = 0; g < ngroups_; g++){
       data3[g].Dot(weight3[g], col3[g]);
     }
     tdot+=t.elapsed();
-    t.reset();
+    //t.reset();
     DAry mat_data=data3.Reshape({nkernels_, N_});
     mat_data.AddCol(bias_.data());
     tadd+=t.elapsed();
@@ -218,11 +218,12 @@ void ConvLayer::ComputeGradient() {
   DAry col4=col_data_.Reshape({num_, ngroups_,K_, N_});
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   DAry gcol4=col_grad_.Reshape({num_, ngroups_,K_, N_});
+  DAry grad4=grad_.Reshape({num_, ngroups_,M_,N_});
   if(gbottom!=nullptr){
     Range nrng=gbottom->IndexRange(0);
     // fetch grad_ and col
     for (int n = nrng.first; n < nrng.second; n++) {
-      DAry grad3=grad_[n].Reshape({ngroups_,M_,N_});
+      DAry grad3=grad4[n];
       DAry col3=col4[n];
       DAry gcol3=gcol4[n];
       for (int g = 0; g < ngroups_; g++) {
@@ -234,7 +235,7 @@ void ConvLayer::ComputeGradient() {
   } else {
     t.reset();
     for (int n = 0; n < num_; n++) {
-      DAry grad3=grad_[n].Reshape({ngroups_,M_,N_});
+      DAry grad3=grad4[n];
       DAry col3=col4[n];
       for (int g = 0; g < ngroups_; g++){
         gweight3[g].Dot(grad3[g], col3[g], false, true);
@@ -248,14 +249,15 @@ void ConvLayer::ComputeGradient() {
  */
 void ConvLayer::Img2Col(DAry* dst, const DAry& src){
   const Range& nrng=dst->IndexRange(0);
-  const Range& crng=dst->IndexRange(1);
-  std::vector<Range> slice{nrng, crng,
-    Range({0, height_}), Range({0, width_})};
+  const Range& dstcrng=dst->IndexRange(1);
+  int w2=wsize_*wsize_;
+  Range srccrng(dstcrng.first/w2, dstcrng.second/w2);
+  vector<Range> slice{nrng, srccrng, Range({0, height_}), Range({0, width_})};
   const DAry lsrc=src.Fetch(slice);
   //float* dstptr=dst->dptr();
-  for(int n=nrng.first; n<nrng.second;n++){
-    for (int c = crng.first; c < crng.second; ++c) {
-      float* dptr=lsrc.addr(n,c,0,0);
+  for(int n=nrng.first; n<nrng.second;++n){
+    for (int c = dstcrng.first; c < dstcrng.second; ++c) {
+      float* dptr=dst->addr(n,c,0,0);
       int w_offset = c % wsize_;
       int h_offset = (c / wsize_) % wsize_;
       int c_im = c / wsize_ / wsize_;
@@ -279,13 +281,13 @@ void ConvLayer::Img2Col(DAry* dst, const DAry& src){
 void ConvLayer::Col2Img(DAry* dst, const DAry& src){
   Range nrng=dst->IndexRange(0);
   Range crng=dst->IndexRange(1);
-  std::vector<Range> slice{nrng, crng,// {0, channels_*wsize_*wsize_},
-    Range({0, cheight_}), Range({0, cwidth_})};
+  Range srccrng(crng.first*wsize_*wsize_, crng.second*wsize_*wsize_);
+  vector<Range> slice{nrng, srccrng, Range({0, cheight_}), Range({0, cwidth_})};
   DAry lsrc=src.Fetch(slice);
   lsrc.Fill(0.0f);
   // float *srcptr=lsrc.dptr();
   for(int n=nrng.first;n<nrng.second;n++){
-    for (int c = crng.first; c < crng.second; ++c) {
+    for (int c = srccrng.first; c < srccrng.second; ++c) {
       float* dptr=lsrc.addr(n,c,0,0);
       int w_offset = c % wsize_;
       int h_offset = (c / wsize_) % wsize_;
@@ -399,7 +401,7 @@ void PoolingLayer::InitDAryShape(){
 void PoolingLayer::ComputeFeature() {
   Range nrng=data_.IndexRange(0);
   Range crng=data_.IndexRange(1);
-  vector<Range> slice{nrng, crng,Range({0, pheight_}),Range({0,pwidth_})};
+  vector<Range> slice{nrng, crng, Range({0, height_}),Range({0,width_})};
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry lbottom=bottom.Fetch(slice);
   switch (pooling_method_) {
@@ -548,12 +550,14 @@ void LRNLayer::SetupDAry(int pdim){
 }
 void LRNLayer::ComputeFeature() {
   Range nrng=data_.IndexRange(0);
+  // crng.first<- max(0, data_.IndexRange(1).first-lpad_)
   Range crng({0, data_.shape(1)});
   std::vector<Range>slice{nrng, crng, Range({0, data_.shape(2)}), Range({0, data_.shape(3)})};
   const DAry& bottom=in_edges_[0]->GetData(this);
   const DAry& lbottom=bottom.Fetch(slice);
   // only share shape and partition not share data, allocate data here
   DAry squared3(lbottom.shape().SubShape());
+  DAry cur(norm_.shape().SubShape().SubShape());
   float alpha= alpha_ / wsize_;
   for(int n=nrng.first;n<nrng.second;++n) {
     DAry norm3=norm_[n];
@@ -562,12 +566,10 @@ void LRNLayer::ComputeFeature() {
     squared3.Mult(squared3, alpha);
     norm3[0].Sum(squared3, Range(0, rpad_));
     for(int c=1;c<channels_;++c){
-      DAry cur=norm3[c];
       cur.Copy(norm3[c-1]);
       if(c-lpad_>=0)
         cur.Minus(cur, squared3[c-lpad_]);
       if(c+rpad_<=crng.second)
-
         cur.Add(cur, squared3[c+rpad_-1]);
     }
   }
@@ -582,6 +584,7 @@ void LRNLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   const DAry& bottom=in_edges_[0]->GetData(this);
   Range nrng=bottom.IndexRange(0);
+  // current crng is full
   Range crng({0, bottom.shape(1)});
   std::vector<Range>slice{nrng, crng, Range({0, bottom.shape(2)}),Range({0, bottom.shape(3)})};
   DAry ldata=data_.Fetch(slice);
@@ -730,7 +733,7 @@ void SoftmaxLossLayer::ComputeFeature() {
     */
   Range nrng=data_.IndexRange(0);
   const DAry& bottom=in_edges_[0]->GetData(this);
-  vector<Range> slice{nrng, {0,data_.shape().SubShape().size}};
+  vector<Range> slice{nrng, {0,dim_}};
   DAry lbottom=bottom.Fetch(slice);
   for (int n = nrng.first; n < nrng.second; ++n) {
     float mmax = lbottom[n].Max();
@@ -747,11 +750,9 @@ void SoftmaxLossLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   gbottom->Copy(data_);
   Range nrng=gbottom->IndexRange(0);
-  vector<Range> slice{nrng};
-  DAry llabel=label.Fetch(slice);
   DAry gbottom2=gbottom->Reshape({num_, gbottom->shape().size/num_});
   for (int n = nrng.first; n < nrng.second; n++) {
-    int k = static_cast<int>(llabel.at(n,0));
+    int k = static_cast<int>(label.at(n,0));
     // check gobottom2[n,k] on this node, 1 for 1-th dim
     if(gbottom2.isLocal(n,k))
       gbottom2.at(n,k)-=1.0f;
@@ -764,31 +765,27 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
   int ncorrect=0;
   float logprob=0.0f;
   //if(data_.allocated()){
-    // DAry:SubShape returns the shape without the 0-th dimension
-    int record_len=data_.shape().SubShape().size;
-    const DAry& label=in_edges_[1]->GetData(this);
-    Range nrng=data_.IndexRange(0);
-    vector<Range> slice{nrng};
-    DAry llabel=label.Fetch(slice);
-    for(int n=nrng.first;n<nrng.second;n++) {
-      int label=static_cast<int>(llabel.at(n,0));
-      CHECK(label>=0&&label<1000)<<"label "<<label;
-      float prob_of_truth=data_.at(n,label);
-      if(accuracy){
-        int nlarger=0;
-        // count num of probs larger than the prob of the ground truth label
-        for(int i=0;i<record_len;i++) {
-          if (data_.at(n,i)>prob_of_truth)
-            nlarger++;
-        }
-        // if the ground truth is within the topk largest, this precdition is correct
-        if(nlarger<=topk_)
-          ncorrect++;
+  const DAry& labelary=in_edges_[1]->GetData(this);
+  Range nrng=data_.IndexRange(0);
+  for(int n=nrng.first;n<nrng.second;n++) {
+    int label=static_cast<int>(labelary.at(n,0));
+    CHECK(label>=0&&label<1000)<<"label "<<label;
+    float prob_of_truth=data_.at(n,label);
+    if(accuracy){
+      int nlarger=0;
+      // count num of probs larger than the prob of the ground truth label
+      for(int i=0;i<dim_;i++) {
+        if (data_.at(n,i)>prob_of_truth)
+          nlarger++;
       }
-      if(loss) {
-        logprob-=log(std::max(prob_of_truth, FLT_MIN));
-      }
+      // if the ground truth is within the topk largest, this precdition is correct
+      if(nlarger<=topk_)
+        ncorrect++;
     }
+    if(loss) {
+      logprob-=log(std::max(prob_of_truth, FLT_MIN));
+    }
+  }
   //}
   Performance perf;
   perf.set_precision(ncorrect*1.0/num_);

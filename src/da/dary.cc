@@ -19,6 +19,20 @@ DAry::~DAry(){
   if(alloc_size_>0)
     delete dptr_;
 }
+std::string DAry::ToString(bool dataonly){
+  std::string ret;
+  if(!dataonly){
+    ret+=shape_.ToString();
+    ret+=part_.ToString();
+  }
+  char buf[1024];
+  sprintf(buf, "ary: ");
+  for (int i = 0; i < part_.size; i++) {
+    sprintf(buf+strlen(buf), "%.2f ", dptr_[i]);
+  }
+  return ret+std::string(buf);
+}
+
 void DAry::Allocate() {
   if(dptr_!=nullptr){
     LOG(ERROR)<<"the dary has been allocated before, size: "<<alloc_size_;
@@ -152,7 +166,8 @@ DAry::DAry(const DAry& other, bool copy) {
   Allocate();
 }
 DAry::DAry(const Shape& shape) {
-  part_.LocalSetup(shape_);
+  part_.LocalSetup(shape);
+  shape_=shape;
   dptr_=nullptr;
   ga_=nullptr;
   offset_=0;
@@ -455,73 +470,76 @@ void DAry::Map( std::function<float(float, float, float)> func, const DAry& src1
   * sum along dim-th dimension, with range r
   * # of dimensions of dst is that of src-1
   */
-void DAry::Sum( const DAry& src, const Range& r) {
-  CHECK(ga_==nullptr);
+void DAry::Sum( const DAry& src, const Range& rng) {
+  CHECK_EQ(shape_.size, src.shape_.size/src.shape_.s[0]);
   int rowlen=part_.size;
-  CHECK_EQ(rowlen, src.shape_.size/src.shape_.s[0]);
+  Range srcrng=src.IndexRange(0);
+  int rows=srcrng.second-srcrng.first;
+  CHECK_EQ(rowlen, src.part_.size/rows);
   Fill(0.0f);
-  float* dptr=dptr_;
-  float* srcdptr=src.dptr_;
-  for (int i = r.first; i < r.second; i++) {
-    arymath().add(dptr, dptr, srcdptr+i*rowlen, rowlen);
+  CHECK(rng.first>=srcrng.first&&rng.second<=srcrng.second);
+  float* srcdptr=src.dptr_+(rng.first-srcrng.first)*rowlen;
+  for (int i = 0; i < rng.second-rng.first; i++) {
+    arymath().add(dptr_, dptr_, srcdptr+i*rowlen, rowlen);
   }
 }
 
 /**
   * src must be a matrix
   * this is a vector
+  * assume src and this have same column partition
+  * sum local rows
   */
 void DAry::SumRow(const DAry& src, bool overwrite) {
-  CHECK_EQ(shape_.dim,1);
-  CHECK_EQ(src.shape_.dim,2);
+  CHECK_EQ(shape_.size, src.shape_.size/src.shape_.s[0]);
+  if(overwrite) Fill(0.0f);
+  Range rng=src.IndexRange(0);
+  int rows=rng.second-rng.first;
   int rowlen=part_.size;
-  CHECK_EQ(rowlen, src.shape_.size/src.shape_.s[0]);
-  if(overwrite)
-    Fill(0.0f);
-  float* dptr=dptr_;
+  CHECK_EQ(rowlen, src.part_.size/rows);
   float* srcdptr=src.dptr_;
-  for (int i = 0; i < shape_.s[0]; i++) {
-    arymath().add(dptr, dptr, srcdptr+i*rowlen, rowlen);
+  for (int i = 0; i < rows; i++) {
+    arymath().add(dptr_, dptr_, srcdptr+i*rowlen, rowlen);
   }
 }
 void DAry::SumCol(const DAry& src, bool overwrite) {
-  CHECK(ga_==nullptr);
-  CHECK_EQ(src.shape_.dim,2);
-  CHECK_EQ(shape_.dim,1);
-  int collen=shape_.size;
-  CHECK_EQ(collen, src.shape_.s[0]);
-  int rowlen=src.shape_.s[1];
+  CHECK_EQ(shape_.size, src.shape_.s[0]);
+  Range rng=src.IndexRange(0);
+  CHECK_EQ(part_.size, rng.second-rng.first);
+  int rowlen=src.part_.size/part_.size;
   float* dptr=dptr_, *srcdptr=src.dptr_;
-  if(overwrite)
-    Fill(0.0f);
-  for (int i = 0; i < collen; i++) {
+  if(overwrite) Fill(0.0f);
+  for (int i = 0; i < part_.size; i++) {
     dptr[i]+=arymath().sum(srcdptr+i*rowlen, rowlen);
   }
 }
-void DAry::AddRow( const DAry& src) {
-  CHECK(ga_==nullptr);
-  CHECK_EQ(src.shape_.dim,1);
-  CHECK_EQ(shape_.dim,2);
-  int rowlen=src.shape_.size;
-  CHECK_EQ(rowlen, shape_.s[1]);
-  float* dptr=dptr_;
-  float* srcdptr=src.dptr_;
-  for (int i = 0; i < shape_.s[0]; i++) {
-    arymath().add(dptr+rowlen*i, dptr+rowlen*i, srcdptr, rowlen);
+void DAry::AddRow(const DAry& src) {
+  CHECK_EQ(shape_.size/shape_.s[0], src.shape_.size);
+  Range rng=IndexRange(0);
+  int rows=rng.second-rng.first;
+  int rowlen=part_.size/rows;
+  DAry row=this->operator[](rng.first);
+  CHECK_EQ(row.part_.size, rowlen);
+  float* srcdptr=src.FetchPtr(row.part_);
+  for (int i = 0; i < rows; i++) {
+    arymath().add(dptr_+rowlen*i, dptr_+rowlen*i, srcdptr, rowlen);
   }
+  src.Delete(srcdptr);
 }
 
 void DAry::AddCol(const DAry& src) {
-  CHECK(ga_==nullptr);
-  CHECK_EQ(src.shape_.dim,1);
-  CHECK_EQ(shape_.dim,2);
-  int collen=shape_.s[0];
-  int rowlen=shape_.s[1];
-  CHECK_EQ(src.shape_.size, collen);
-  float* dptr=dptr_, *srcdptr=src.dptr_;
-  for (int i = 0; i < collen; i++) {
-    arymath().add(dptr+rowlen*i, srcdptr[i],dptr+rowlen*i, rowlen);
+  CHECK_EQ(shape_.s[0], src.shape_.size);
+  Range rng=IndexRange(0);
+  int rows=rng.second-rng.first;
+  int rowlen=part_.size/rows;
+  Partition p;
+  p.start=rng.first;p.stepsize=p.stride=p.size=rows;
+  p.end=p.start+p.size;
+  float* srcdptr=src.FetchPtr(p);
+  for (int i = 0; i < rows; i++) {
+    arymath().add(dptr_+rowlen*i, srcdptr[i], dptr_+rowlen*i, rowlen);
   }
+  src.Delete(srcdptr);
 }
 /**
   * sum all elements

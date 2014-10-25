@@ -1,6 +1,5 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
 
-
 //  Testing the unbalance in spliting parameter vectors.
 
 #include "core/global-table.h"
@@ -14,6 +13,7 @@
 #include "worker.h"
 #include "coordinator.h"
 #include "utils/common.h"
+#include "utils/proto_helper.h"
 
 #include <cmath>
 #include <stdlib.h>
@@ -36,7 +36,8 @@ DEFINE_int32(workers,2,"numer of workers doing get/put");
 #endif
 */
 struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
-	bool Update(int *a, const int &bb){
+	bool Update(int *a, const int &b){
+		*a = b*b; //replace
 		return true; 
 	}
 
@@ -52,8 +53,9 @@ shared_ptr<NetworkThread> network;
 shared_ptr<GlobalContext> context;
 std::vector<ServerState*> server_states;
 TableServer *table_server;
+TableDelegate *delegate;
 
-int num_keys;
+int num_keys=100;
 
 void create_mem_table(int id, int num_shards){
 
@@ -69,12 +71,12 @@ void create_mem_table(int id, int num_shards){
 }
 
 void coordinator_assign_tables(int id){
-	for (int i = 0; i < context->num_procs()-1; ++i) {
+	for (int i = 0; i < context->num_procs() 	; ++i) {
 	    RegisterWorkerRequest req;
 	    int src = 0;
-	    network->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
 	    //  adding memory server.
 	    if (context->IsTableServer(i)) {
+	      network->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
 	      server_states.push_back(new ServerState(i));
 	    }
 	  }
@@ -116,10 +118,10 @@ void coordinator_assign_tables(int id){
 	    }
 	  }
 	  VLOG(3)<<"finish table assignment, req size "<<req.assign_size();
-	  network->Broadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE)
 	  network->SyncBroadcast(MTYPE_SHARD_ASSIGNMENT, MTYPE_SHARD_ASSIGNMENT_DONE, req);
 	  VLOG(3)<<"finish table server init";
 }
+
 
 void worker_table_init(){
 	table_server = new TableServer();
@@ -136,45 +138,43 @@ double random_double(){
 void coordinator_load_data(){
 	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
 
-	num_keys = 0;
 	int nservers=context->num_table_servers();
 
-	for (int i=0; i<100; i++){
+	for (int i=0; i<num_keys; i++){
+
 		table->put(i,i);
 	}
-	VLOG(3) << "Coordinator done loading ...";
+	VLOG(3) << "Coordinator done loading ..., from process "<<NetworkThread::Get()->id();
 }
 
-void get(TypedGlobalTable<int,int>* table, ofstream &latency){
+void get(TypedGlobalTable<int,int>* table){
 	double start , end;
   	int v;
 	for (int i=0; i<num_keys; i++)
     		table->async_get(i, &v);
-  
-  	start=Now();
+
   
     int key=0;
-    table->async_get_collect(&key, &v);
-  	latency << "collect get: " << (Now() - start) << endl;
+    int val=0;
+
+    for (int i=0; i<num_keys; i++){
+    	while(!table->async_get_collect(&key, &val))
+    		Sleep(0.001);
+    }
 }
 
-void update(TypedGlobalTable<int,int>* table, ofstream &latency){
+void update(TypedGlobalTable<int,int>* table){
+	for (int i=0; i<num_keys; i++)
+		table->update(i,i*2);
+
 }
 
 void worker_test_data(){
 	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
 
-	ofstream latency(StringPrintf("latency_%d",NetworkThread::Get()->id()));
-	ofstream throughput(StringPrintf("throughput_%d", NetworkThread::Get()->id()));
-
-
-		get(table, latency);
-		//update(table, latency);
-
-
-	latency.close();
-	throughput.close();
-
+		get(table);
+		update(table);
+		get(table);
 }
 
 void shutdown(){
@@ -190,15 +190,36 @@ void shutdown(){
 		  network->Shutdown();
 	}
 	else{
-		VLOG(3) << "Worker " << network->id() << " is shutting down ...";
 	  network->Flush();
+
 	  network->Send(context->num_procs()-1, MTYPE_WORKER_END, EmptyMessage());
+
 	  EmptyMessage msg;
+
 	  network->Read(context->num_procs()-1, MTYPE_WORKER_SHUTDOWN, &msg);
 
-	  table_server->ShutdownTableServer();
+	  if (context->AmITableServer())
+		  table_server->ShutdownTableServer();
+
 	  network->Shutdown();
 	}
+}
+
+void HandleShardAssignment() {
+
+  ShardAssignmentRequest shard_req;
+  auto mpi=NetworkThread::Get();
+  mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
+  //  request read from coordinator
+  for (int i = 0; i < shard_req.assign_size(); i++) {
+    const ShardAssignment &a = shard_req.assign(i);
+    GlobalTable *t = tables.at(a.table());
+    t->get_partition_info(a.shard())->owner = a.new_worker();
+    //LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
+  }
+  EmptyMessage empty;
+  mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+  VLOG(3)<<"finish handle shard assignment **";
 }
 
 
@@ -212,20 +233,27 @@ int main(int argc, char **argv) {
 	context = GlobalContext::Get(FLAGS_system_conf);
 	network = NetworkThread::Get();
 
+	ModelProto model;
+	ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
 
 	create_mem_table(0,context->num_table_servers());
 
 	if (context->AmICoordinator()){
+		VLOG(3) << "Coordinator process rank = " << NetworkThread::Get()->id(); 
 		coordinator_assign_tables(0);
 		coordinator_load_data();
+
 		network->barrier();
 	}
 	else{
 		if (context->AmITableServer()){
 			worker_table_init();
+			HandleShardAssignment();
 			network->barrier();
 		}
 		else{
+			VLOG(3) << "Inside worker, waiting for assignemtn";
+			HandleShardAssignment();
 			network->barrier();
 			worker_test_data();
 		}

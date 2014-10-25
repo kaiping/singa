@@ -64,7 +64,7 @@ class RequestDispatcher {
 
 	int num_outstanding_request_;
 
-	static const int kMaxMethods = 36;
+	static const int kMaxMethods = 100;
 
 	RequestQueue* table_queue_;
 	deque<string> disk_queue_;

@@ -161,14 +161,13 @@ V TypedGlobalTable<K, V>::get_local(const K &k) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
   int shard = this->get_shard(k);
-  //VLOG(3)<<"sent to shard: "<<shard;
+	
   //  boost::recursive_mutex::scoped_lock sl(mutex());
   string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
   if (is_local_shard(shard))
 	  RequestDispatcher::Get()->sync_local_put(key);
 
   partition(shard)->put(k, v);
-
   if (is_local_shard(shard))
 	  RequestDispatcher::Get()->event_complete(key);
 
@@ -200,9 +199,10 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
       put.set_done(true);
       NetworkThread::Get()->Send(local_rank, MTYPE_PUT_REQUEST, put);//send locally
   }
-  else
+  else{
+    partition(shard)->put(k,v); 
     SendUpdates();
-
+  }
   return true;
 }
 

@@ -63,15 +63,24 @@ void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
     while (key_locks_.empty() && request_queues_.empty()){
       Sleep(FLAGS_sleep_time);
     }
-    Queue &key_queue = request_queues_[key_index_];
+
     {
+    	boost::recursive_mutex::scoped_lock ql(whole_queue_lock_);
+    	Queue &key_queue = request_queues_[key_index_];
+
+
       boost::recursive_mutex &key_lock = *(key_locks_[key_index_]);
       boost::recursive_mutex::scoped_lock sl(key_lock);
       if (!key_queue.empty()) {
+
         TaggedMessage *q_msg = key_queue.front();
+
         message->tag = q_msg->tag;
+
         message->data = q_msg->data;
+
         key_queue.pop_front();
+
         delete (q_msg);
         success = true;
       }

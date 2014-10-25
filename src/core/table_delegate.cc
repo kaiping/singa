@@ -105,6 +105,25 @@ void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
       sgd_proto_.weight_decay_x());
       */
 }
+void TableDelegate::HandleShardAssignment() {
+	VLOG(3) << "Handle Shard Assignment";
+  ShardAssignmentRequest shard_req;
+  auto mpi=NetworkThread::Get();
+  mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
+  //  request read from coordinator
+  auto _tables=tables();
+  for (int i = 0; i < shard_req.assign_size(); i++) {
+    const ShardAssignment &a = shard_req.assign(i);
+    GlobalTable *t = _tables.at(a.table());
+    t->get_partition_info(a.shard())->owner = a.new_worker();
+    //LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
+  }
+  EmptyMessage empty;
+  mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
+  VLOG(3)<<"finish handle shard assignment";
+}
+
+
 TableDelegate* CreateTableDelegate(const SolverProto& proto){
 /**
  * need to know the tuple type to create parameter table
@@ -116,6 +135,9 @@ TableDelegate* CreateTableDelegate(const SolverProto& proto){
   else{
     delegate= new lapis::TypedTableDelegate<VKey, lapis::AdaGradValue>(proto);
   }
+  NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
+                         boost::bind(&TableDelegate::HandleShardAssignment, delegate));
+
   return delegate;
 }
 

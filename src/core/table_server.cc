@@ -26,8 +26,8 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   net_->Send(GlobalContext::kCoordinator, MTYPE_REGISTER_WORKER, req);
 
   // register callbacks
-  net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
-                         boost::bind(&TableServer::HandleShardAssignment, this));
+  // net_->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
+    //                     boost::bind(&TableServer::HandleShardAssignment, this));
 
   // Start dispatcher
   VLOG(3) << "start request dispatchers from TableServer";
@@ -41,22 +41,6 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
 }
 
 
-void TableServer::HandleShardAssignment() {
-  CHECK(GlobalContext::Get()->IsTableServer(id()))
-    << "Assign table to wrong server " << id();
-  ShardAssignmentRequest shard_req;
-  net_->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
-  //  request read from coordinator
-  for (int i = 0; i < shard_req.assign_size(); i++) {
-    const ShardAssignment &a = shard_req.assign(i);
-    GlobalTable *t = tables_.at(a.table());
-    t->get_partition_info(a.shard())->owner = a.new_worker();
-    //LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
-  }
-  EmptyMessage empty;
-  net_->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
-  VLOG(3)<<"finish handle shard assignment";
-}
 
 bool TableServer::HandleDisk(const Message* data){
 	const DiskData *dt = static_cast<const DiskData*>(data);
@@ -112,7 +96,8 @@ bool TableServer::HandleUpdateRequest(const Message *message) {
   boost::recursive_mutex::scoped_lock sl(state_lock_);
   const TableData *put = static_cast<const TableData *>(message);
   GlobalTable *t = tables_.at(put->table());
-  return t->ApplyUpdates(*put);
+  bool ret = t->ApplyUpdates(*put);
+  return ret;
 }
 
 int TableServer::peer_for_partition(int table, int shard) {

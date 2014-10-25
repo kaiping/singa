@@ -46,13 +46,14 @@ int main(int argc, char **argv) {
   lapis::ModelProto model;
   lapis::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
   if(FLAGS_load) {
-    LOG(INFO)<<"Loading Data...";
+    LOG(ERROR)<<"Loading Data...";
     lapis::DataLoader loader(gc);
     if(gc->AmICoordinator())
       loader.ShardData(model.data());
-    else
+    else if(gc->AmIWorker())
       loader.CreateLocalShards(model.data());
-    LOG(INFO)<<"Finish Load Data";
+
+    LOG(ERROR)<<"Finish Load Data";
   }
   if(FLAGS_run){
     lapis::GAry::Init(gc->rank(), gc->groups());

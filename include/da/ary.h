@@ -141,7 +141,6 @@ class Partition{
   Partition(const Shape& shape, const vector<Range>& slice) {
     int rows=1;
     start=0;
-    int pdim=0;
     for(unsigned int i=0;i<slice.size();i++){
       int rng=slice[i].second-slice[i].first;
       if(rng!=shape.s[i]){

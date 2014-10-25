@@ -30,7 +30,7 @@ bool GlobalTable::is_local_key(const StringPiece &k) {
 
 void GlobalTable::Init(const lapis::TableDescriptor *info) {
   TableBase::Init(info);
-  worker_id_ = -1;
+  worker_id_ = NetworkThread::Get()->id();
   partitions_.resize(info->num_shards);
   partinfo_.resize(info->num_shards);
 }
@@ -72,7 +72,6 @@ void GlobalTable::resize(int64_t new_size) {
 void GlobalTable::set_worker(TableServer *w) {
   w_ = w;
   worker_id_ = w->id();
-  VLOG(3)<<"set work id"<<worker_id_;
 }
 
 bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
@@ -82,7 +81,7 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
   req.set_table(info().table_id);
   req.set_shard(shard);
   req.set_source(worker_id_);
-  int peer = w_->peer_for_partition(info().table_id, shard);
+  int peer = owner(shard); // w_->peer_for_partition(info().table_id, shard);
   //VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
   NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
   //VLOG(3)<<"get remote ater send"<<peer<<" from "<<worker_id_;
@@ -101,7 +100,8 @@ void GlobalTable::async_get_remote(int shard, const StringPiece &k){
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);
-	int peer = w_->peer_for_partition(info().table_id, shard);
+	int peer = owner(shard);
+			// w_->peer_for_partition(info().table_id, shard);
 	//VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
 	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
 }

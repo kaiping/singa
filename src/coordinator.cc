@@ -121,13 +121,12 @@ const NetProto Coordinator::PartitionNet(Net* net){
   for(Layer* layer: net->layers()){
     if(layer->name()=="pool5")
       pdim=1;
-    layer->SetPartition(pdim);
-  }
-  for(Layer* layer: net->layers()){
     if(layer->name()=="label")
       layer->SetPartition(-1);
-    if(layer->name()=="softmax")
+    else if(layer->name()=="softmax")
       layer->SetPartition(-1);
+    else
+      layer->SetPartition(pdim);
   }
   NetProto netproto;
   net->ToProto(&netproto);

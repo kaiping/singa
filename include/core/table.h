@@ -130,7 +130,7 @@ struct TableCoder {
 
 class Serializable {
  public:
-  virtual void ApplyUpdates(TableCoder *in) = 0;
+  virtual bool ApplyUpdates(TableCoder *in) = 0;
   virtual void Serialize(TableCoder *out) = 0;
 };
 
@@ -143,7 +143,7 @@ class TypedTable {
   virtual bool contains(const K &k) = 0;
   virtual V get(const K &k) = 0;
   virtual void put(const K &k, const V &v) = 0;
-  virtual void update(const K &k, const V &v) = 0;
+  virtual bool update(const K &k, const V &v) = 0;
   virtual void remove(const K &k) = 0;
 };
 

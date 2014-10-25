@@ -80,6 +80,9 @@ class Param {
   const int split_threshold(){
     return split_threshold_;
   }
+  const bool partition(){
+    return partition_;
+  }
  protected:
   /**
    * Fill in the val with data generated from a uniform distribution
@@ -108,6 +111,7 @@ class Param {
   float momentum_, learning_rate_multiplier_, weight_decay_multiplier_;
   float low_, high_, mean_, std_, value_;
   int split_threshold_;
+  bool partition_;
   //! content, gradient and history gradient of this parameter
   DAry data_, grad_;
   /**

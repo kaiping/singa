@@ -68,6 +68,7 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
     mpi_->Read(cdntor, MTYPE_NET_PARTITION, &np);
     Solver solver(sp);
     LOG(ERROR)<<"setup solver";
+
     solver.Setup(delegate, dp, np);
 
     while(true){

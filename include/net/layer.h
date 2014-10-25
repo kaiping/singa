@@ -65,8 +65,8 @@ class Layer {
    * the parameters should be partitioned according to the
    * partition of the layer; Called after InitDAryShape;
    */
-  void SetupDAry(int pdim);
-  void SetPartition(int pdim);
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
   /**
    * Forward propagate features through the Net
    * It aggregates activations from all incoming edges, and then apply the

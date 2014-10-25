@@ -21,6 +21,34 @@ bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data, const AdaGradValue&
   */
   return true;
 }
+bool UpdateHandler<AdaGradValue>::Get(const VKey& key, const AdaGradValue &val, AdaGradValue* ret) {
+  //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
+  if(key.version()<=val.version()){
+    DAryProto* retdat=ret->mutable_data();
+    retdat->clear_value();
+    for(auto x: val.data().value())
+      retdat->add_value(x);
+    return true;
+  }
+
+  return false;
+}
+
+/*********************************************************************
+ * SGDValue
+ **********************************************************************/
+bool UpdateHandler<SGDValue>::Get(const VKey& key, const SGDValue &val, SGDValue* ret) {
+  //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
+  if(key.version()<=val.version()){
+    DAryProto* retdat=ret->mutable_data();
+    retdat->clear_value();
+    for(auto x: val.data().value())
+      retdat->add_value(x);
+    return true;
+  }
+  return false;
+}
+
 
 UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
   step_=0;
@@ -33,9 +61,11 @@ UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
 }
 
 bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
-  if(update.version()!=data->version()){
-    CHECK_EQ(data->version()+1, update.version());
-    data->set_version(update.version());
+  Debug();
+  LOG(INFO)<<"update for "<<data->id()<<" version "<<data->version()<<" "<<update.version();
+  CHECK_EQ(data->version(), update.version())<<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
+  data->set_n_update(data->n_update()+1);
+  if(data->n_update()==data->threshold()){
     UpdateHyperParams(data->version());
   }
   int len=data->data().value_size();
@@ -51,7 +81,6 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   // hist=hist-lr*weight*param
   if(w>0)
     DAry::arymath().madd(history, lr*w, dptr, history, len);
-  data->set_n_update(data->n_update()+1);
 
   if(data->n_update()==data->threshold()){
     // param+=history/n
@@ -59,6 +88,8 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);
+    data->set_version(update.version()+1);
+    LOG(INFO)<<"update version for "<<data->id()<<" from "<<update.version();
   }
   return true;
 }
@@ -109,7 +140,12 @@ void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
       sgd_proto_.weight_decay_x());
       */
 }
+
+/********************************************************************
+ * Table Delegate
+ * *************************************************************/
 void TableDelegate::HandleShardAssignment() {
+	LOG(INFO) << "Handle Shard Assignment";
   ShardAssignmentRequest shard_req;
   auto mpi=NetworkThread::Get();
   mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
@@ -123,9 +159,8 @@ void TableDelegate::HandleShardAssignment() {
   }
   EmptyMessage empty;
   mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
-  VLOG(3)<<"finish handle shard assignment";
+  LOG(INFO)<<"Finish handle shard assignment";
 }
-
 
 TableDelegate* CreateTableDelegate(const SolverProto& proto){
 /**
@@ -147,7 +182,6 @@ TableDelegate* CreateTableDelegate(const SolverProto& proto){
 
 template<>
 TypedTableDelegate<VKey,AdaGradValue>::TypedTableDelegate (const SolverProto& proto){
-  VLOG(3)<<"In model controller";
   auto* update_handler=new UpdateHandler<AdaGradValue>(proto);
   param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
       update_handler,new VKeySharder, new Marshal<VKey>, new Marshal<AdaGradValue>);
@@ -159,7 +193,6 @@ TypedTableDelegate<VKey,AdaGradValue>::TypedTableDelegate (const SolverProto& pr
 
 template<>
 TypedTableDelegate<VKey,SGDValue>::TypedTableDelegate (const SolverProto& proto){
-  VLOG(3)<<"In model controller";
   auto* update_handler=new UpdateHandler<SGDValue>(proto);
   param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
       update_handler,new VKeySharder, new Marshal<VKey>, new Marshal<SGDValue>);
@@ -175,7 +208,6 @@ void TableDelegate::Update(const std::vector<Param*> &params, int step) {
 }
 
 void TableDelegate::Put(const std::vector<Param*> &params) {
-  VLOG(3)<<"model controller put";
   if(GlobalContext::Get()->standalone())return;
   for(auto* param: params)
     Put(param);
@@ -197,6 +229,7 @@ void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
 template<>
 void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
   int offset = 0;
+  int groupsize=GlobalContext::Get()->group_size();
   const float * data_addr = param->data().dptr();
   for(auto& entry: param_splits_map_[param->id()]) {
     SGDValue v(example_);
@@ -205,6 +238,11 @@ void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
     v.set_weight_decay_multiplier(param->weight_decay_multiplier());
     v.set_version(0);
     v.set_n_update(0);
+    v.set_id(param->id());
+    if(!param->partition())
+      v.set_threshold(groupsize);
+    else
+      v.set_threshold(1);
     DAryProto* dary=v.mutable_data();
     DAryProto* grad=v.mutable_grad();
     dary->clear_value();

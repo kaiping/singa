@@ -13,7 +13,7 @@
 #include "proto/model.pb.h"
 #include "worker.h"
 #include "coordinator.h"
-#include "model_controller/myacc.h"
+//#include "model_controller/myacc.h"
 #include "utils/common.h"
 
 #include <cmath>

@@ -25,6 +25,7 @@ void Param::Init(const ParamProto &proto){
     data_.InitFromProto(proto.data());
   if(proto.has_grad())
     grad_.InitFromProto(proto.grad());
+  partition_=proto.partition();
 }
 
 void Param::ToProto(ParamProto *proto, bool copyData) {
@@ -39,6 +40,7 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
   proto->set_low(low_);
   proto->set_high(high_);
   proto->set_value(value_);
+  proto->set_partition(partition_);
 
   DAryProto* data=proto->mutable_data();
   data_.ToProto(data, copyData);
@@ -56,6 +58,8 @@ void Param::SetShape(int h, int w){
 void Param::SetPartition(int k) {
   data_.SetPartition(k);
   grad_.SetPartition(k);
+  if(k!=-1)
+    partition_=true;
 }
 void Param::SetupDAry(int k) {
   data_.Setup(k);

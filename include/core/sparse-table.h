@@ -91,7 +91,7 @@ class SparseTable :
   V get(const K &k);
   bool contains(const K &k);
   void put(const K &k, const V &v);
-  void update(const K &k, const V &v);
+  bool update(const K &k, const V &v);
   void remove(const K &k) {
     LOG(FATAL) << "Not implemented.";
   }
@@ -117,7 +117,7 @@ class SparseTable :
   }
 
   void Serialize(TableCoder *out);
-  void ApplyUpdates(TableCoder *in);
+  bool ApplyUpdates(TableCoder *in);
 
   bool contains_str(const StringPiece &s) {
     K k;
@@ -127,10 +127,16 @@ class SparseTable :
 
   string get_str(const StringPiece &s) {
     K k;
+    V v;
     ((Marshal<K> *)info_->key_marshal)->unmarshal(s, &k);
     string out;
-    ((Marshal<V> *)info_->value_marshal)->marshal(get(k), &out);
-    return out;
+    v = get(k);
+    V ret;
+    if (((BaseUpdateHandler<K,V> *)info_->accum)->Get(k,v, &ret)){
+    	((Marshal<V> *)info_->value_marshal)->marshal(ret, &out);
+    	return out;
+    }
+    else return out; //empty string
   }
 
   void update_str(const StringPiece &kstr, const StringPiece &vstr) {
@@ -190,17 +196,18 @@ void SparseTable<K, V>::Serialize(TableCoder *out) {
 }
 
 template <class K, class V>
-void SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
+bool SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
   K k;
   V v;
   string kt, vt;
-  int count=0;
+  //only 1 entry
   while (in->ReadEntry(&kt, &vt)) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
-    update(k, v);
-    count++;
+    return update(k, v);
   }
+
+  return false;
 }
 
 template <class K, class V>
@@ -229,15 +236,15 @@ bool SparseTable<K, V>::contains(const K &k) {
 template <class K, class V>
 V SparseTable<K, V>::get(const K &k) {
   int b = bucket_for_key(k);
-  CHECK_NE(b, -1) << "No entry for requested key: " << k.key();
+  //CHECK_NE(b, -1) << "No entry for requested key: " << k;//.key();
   return buckets_[b].v;
 }
 
 template <class K, class V>
-void SparseTable<K, V>::update(const K &k, const V &v) {
+bool SparseTable<K, V>::update(const K &k, const V &v) {
   int b = bucket_for_key(k);
   if (b != -1) {
-    ((BaseUpdateHandler<V> *)info_->accum)->Update(&buckets_[b].v, v);
+    return ((BaseUpdateHandler<K, V> *)info_->accum)->Update(&buckets_[b].v, v);
   } else {
     put(k, v);
     string xk,xv;
@@ -245,6 +252,7 @@ void SparseTable<K, V>::update(const K &k, const V &v) {
     ((Marshal<V>*)info_->value_marshal)->marshal(v,&xv);
     //VLOG(3)<< "Table " << NetworkThread::Get()->id() << " put " << (xk.size()+xv.size());
     stats_["TABLE_SIZE"]+=xk.size()+xv.size();
+    return true;
   }
 }
 

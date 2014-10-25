@@ -65,10 +65,11 @@ message ParamProto {
   optional float learning_rate_multiplier =10 [default=1];
   optional float weight_decay_multiplier =11 [default=1];
   optional int32 split_threshold=12 [default=1000000];
+  optional bool partition=13 [default =false];
   // data of the parameter
-  optional DAryProto data = 13;
+  optional DAryProto data = 14;
   // history gradient of the parameter
-  optional DAryProto grad = 14;
+  optional DAryProto grad = 15;
 }
 
 // Only edge have params
@@ -218,17 +219,18 @@ message AdaGradValue {
   optional DAryProto grad = 5;
   optional float base_learning_rate = 6;
   optional int32 threshold=7;
+  optional int32 gid=12;
+  repeated DAryProto history=15;
 }
 
 // value field of the tuple for normal SGD
 message SGDValue {
-  required float base_learning_rate = 1;
+  optional float base_learning_rate = 1;
   optional float momentum = 2 [default = 0];
   optional float weight_decay = 3 [default = 0];
   // for SGDProto::kStep, this field is the gamma used in caffe
   optional float gamma = 4;
   optional int32 learning_rate_change_steps = 5;
-
   enum ChangeProto {
     kFixed = 0;
     kInverse_t= 1;
@@ -237,13 +239,15 @@ message SGDValue {
     kStep = 4;
   }
   optional ChangeProto learning_rate_change = 6 [default = kInverse_t];
+
   optional float learning_rate_multiplier=7 [default=1.0];
   optional float weight_decay_multiplier=8 [default=1.0];
   optional int32 n_update = 9 [default=0];
   optional int32 version = 10 [default=0];
   optional int32 threshold=11;
-  optional DAryProto data=12;
-  optional DAryProto grad=13;
+  optional DAryProto data=13;
+  optional DAryProto grad=14;
+  optional int32 id=15;
 }
 
 message VKey {

@@ -3,7 +3,10 @@
 #include <boost/filesystem.hpp>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
+#include <lmdb.h>
+
 #include <glog/logging.h>
+#include <sys/stat.h>
 #include <chrono>
 #include <random>
 
@@ -14,8 +17,9 @@
 #include "utils/global_context.h"
 #include "proto/model.pb.h"
 
-namespace lapis {
 
+DECLARE_string(db_backend);
+namespace lapis {
 DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
   shard_folder_=gc->shard_folder();
   boost::filesystem::path dir_path(shard_folder_);
@@ -61,7 +65,7 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   auto mpi=NetworkThread::Get();
   auto riter=records.begin();
   LOG(ERROR)<<"Sharding "<<records.size() <<" records to "<<ngroups<<" groups";
-  bool replicateInGroup=true;
+  bool replicateInGroup=false;
   if(replicateInGroup){
     for (int g= 0; g < ngroups; g++) {
       ShardProto sp;
@@ -75,6 +79,25 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
         mpi->Send(worker, MTYPE_PUT_SHARD, sp);
     }
     CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
+  }else{
+    // evenly distribute to all workers
+    for (int g= 0; g < ngroups; g++) {
+      int shardsize=(g==0)?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
+      auto members=GlobalContext::Get()->MembersOfGroup(g);
+      int gsize=members.size();
+      for(int w=0;w<gsize;w++){
+        int _shardsize=(w==0)?shardsize/gsize+shardsize%gsize:shardsize/gsize;
+        ShardProto sp;
+        sp.clear_record();
+        sp.set_shard_folder(shard_folder_);
+        for(int k=0;k<_shardsize;k++){
+          sp.add_record(*riter);
+          riter++;
+        }
+        mpi->Send(members[w], MTYPE_PUT_SHARD, sp);
+      }
+    }
+    CHECK(riter==records.end())<<nrecords<<" "<<ngroups;
   }
   LOG(ERROR)<<"Finish Sharding for "<<source.name();
 }
@@ -86,43 +109,102 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   DataSource *ds=DataSourceFactory::Instance()->Create(source.type());
   ds->Init(source, shard);
 
+  //Open new db
+  // lmdb
+  MDB_env *mdb_env;
+  MDB_dbi mdb_dbi;
+  MDB_val mdb_key, mdb_data;
+  MDB_txn *mdb_txn;
+  // leveldb
   leveldb::DB* db;
   leveldb::Options options;
   options.error_if_exists = true;
   options.create_if_missing = true;
   options.write_buffer_size = 268435456;
-  leveldb::WriteBatch* batch =new leveldb::WriteBatch();
-  string dbname=shard_folder_+"/"+source.name()+"-leveldb";
-  leveldb::Status status = leveldb::DB::Open(options, dbname, &db);
-  CHECK(status.ok()) << "Failed to open leveldb " << dbname;
+  leveldb::WriteBatch* batch = NULL;
 
+  string dbname=shard_folder_+"/"+source.name()+"-"+FLAGS_db_backend;
+  // Open db
+  if (FLAGS_db_backend == "leveldb") {  // leveldb
+    LOG(INFO) << "Opening leveldb " << dbname;
+    leveldb::Status status = leveldb::DB::Open(options, dbname, &db);
+    CHECK(status.ok()) << "Failed to open leveldb " << dbname;
+    batch = new leveldb::WriteBatch();
+  } else if (FLAGS_db_backend== "lmdb") {  // lmdb
+    LOG(INFO) << "Opening lmdb " << dbname;
+    CHECK_EQ(mkdir(dbname.c_str(), 0744), 0) << "mkdir " << dbname << "failed";
+    CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
+    CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS)  // 1TB
+      << "mdb_env_set_mapsize failed";
+    CHECK_EQ(mdb_env_open(mdb_env, dbname.c_str(), 0, 0664), MDB_SUCCESS)
+      << "mdb_env_open failed";
+    CHECK_EQ(mdb_txn_begin(mdb_env, NULL, 0, &mdb_txn), MDB_SUCCESS)
+      << "mdb_txn_begin failed";
+    CHECK_EQ(mdb_open(mdb_txn, NULL, 0, &mdb_dbi), MDB_SUCCESS)
+      << "mdb_open failed";
+  } else {
+    LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
+  }
+
+  // Storing to db
   Record record;
-  int num=0;
+  int count=0;
   const int kMaxKeyLen=256;
   char key_cstr[kMaxKeyLen];
   while(!ds->eof()){
     string value, key;
     ds->NextRecord(&key, &record);
     record.SerializeToString(&value);
-    snprintf(key_cstr, kMaxKeyLen, "%08d_%s", num, key.c_str());
+    snprintf(key_cstr, kMaxKeyLen, "%08d_%s", count, key.c_str());
     string keystr(key_cstr);
-    batch->Put(keystr, value);
-    if (++num % 100 == 0) {
-      LOG(INFO)<<"Have insered "<<num<<" messages into leveldb";
+    if(FLAGS_db_backend=="leveldb"){
+      batch->Put(keystr, value);
+    } else if (FLAGS_db_backend == "lmdb") {  // lmdb
+      mdb_data.mv_size = value.size();
+      mdb_data.mv_data = reinterpret_cast<void*>(&value[0]);
+      mdb_key.mv_size = keystr.size();
+      mdb_key.mv_data = reinterpret_cast<void*>(&keystr[0]);
+      CHECK_EQ(mdb_put(mdb_txn, mdb_dbi, &mdb_key, &mdb_data, 0), MDB_SUCCESS)
+        << "mdb_put failed";
+    } else {
+      LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
+    }
+
+    if (++count % 1000 == 0) {
       // Commit txn
-      db->Write(leveldb::WriteOptions(), batch);
-      delete batch;
-      batch = new leveldb::WriteBatch();
+      if (FLAGS_db_backend== "leveldb") {   //leveldb
+        db->Write(leveldb::WriteOptions(), batch);
+        delete batch;
+        batch = new leveldb::WriteBatch();
+      } else if (FLAGS_db_backend== "lmdb") {   //klmdb
+        CHECK_EQ(mdb_txn_commit(mdb_txn), MDB_SUCCESS)
+          << "mdb_txn_commit failed";
+        CHECK_EQ(mdb_txn_begin(mdb_env, NULL, 0, &mdb_txn), MDB_SUCCESS)
+          << "mdb_txn_begin failed";
+      } else {
+        LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
+      }
+      LOG(ERROR) << "Processed " << count << " files.";
     }
   }
-  if(num%1000!=0){
-    db->Write(leveldb::WriteOptions(), batch);
-    delete batch;
-    delete db;
+  //write the last batch
+  if (count % 1000 != 0) {
+    if (FLAGS_db_backend== "leveldb") {
+      db->Write(leveldb::WriteOptions(), batch);
+      delete batch;
+      delete db;
+    } else if (FLAGS_db_backend== "lmdb") {
+      CHECK_EQ(mdb_txn_commit(mdb_txn), MDB_SUCCESS) << "mdb_txn_commit failed";
+      mdb_close(mdb_env, mdb_dbi);
+      mdb_env_close(mdb_env);
+    } else {
+      LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
+    }
   }
   delete ds;
-  LOG(ERROR)<<"Finish Create Shard "<<dbname<<" for DataSource : "<<ds->name()
-    <<", it has "<<num<<" records";
+  LOG(ERROR)<<"Finish Create Shard  for DataSource : "<<ds->name()
+    <<", it has "<<count<<" records";
+  CHECK_EQ(count, shard.record_size());
 }
 void DataLoader::CreateLocalShards(const DataProto& dp) {
   LOG(INFO)<<"Create data shards on local disk";

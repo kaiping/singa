@@ -560,7 +560,7 @@ float DAry::Max(){
 float DAry::Norm1()const{
   float ret=0.f;
   for(int i=0;i<part_.size;i++)
-    ret+=abs(dptr_[i]);
+    ret+=fabs(dptr_[i]);
   return ret/part_.size;
 }
 }  // namespace lapis

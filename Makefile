@@ -19,7 +19,7 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath leveldb hdfs jvm armci
+							opencv_core openblas arraymath leveldb hdfs jvm armci lmdb
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
@@ -61,14 +61,17 @@ MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
 SPLIT_TEST_SRCS := src/test/test_split.cc
 SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
 
+CONST_SRCS := src/test/test_consistency.cc
+CONST_OBJS = $(CONST_SRCS:.cc=.o)
+
 run_load: lapis.bin
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 9 -hostfile examples/imagenet12/hostfile \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
+		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_run: lapis.bin
-	mpirun  -np 3 -hostfile examples/imagenet12/hostfile ./lapis.bin \
+	mpirun  -np 4 -hostfile examples/imagenet12/hostfile ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=3 -load=false --run=true --table_buffer=20 --block_size=10
+	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
@@ -80,6 +83,11 @@ run_test_split: lapis.test.split
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
+run_test_const: lapis.test.const
+	mpirun -np 4 -hostfile examples/imagenet12/hostfile \
+		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
+		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
+		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_disk_load: lapis.test.disk
 	rm -rf tmp/*
@@ -103,6 +111,9 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
+lapis.test.const: $(CONST_OBJS)
+	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(CONST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+	@echo
 #lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
 #	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 #	@echo

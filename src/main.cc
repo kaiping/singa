@@ -18,6 +18,7 @@
 #include "da/gary.h"
 
 
+DEFINE_string(db_backend, "lmdb", "database backend");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(load, false, "Load data to distributed tables");
@@ -32,7 +33,7 @@ DEFINE_bool(time, true,  "time training algorithm");
 int main(int argc, char **argv) {
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-  FLAGS_logtostderr = 1;
+  //FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   LOG(ERROR)<<"mpi thread level provided: "<<provided;

@@ -27,6 +27,7 @@ using std::vector;
 //DEFINE_bool(sync_update, false, "Synchronous put/update queue");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
+DEFINE_string(checkpoint_dir,"tmp","check point dir"); 
 DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
 DEFINE_int32(workers,2,"numer of workers doing get/put");
@@ -55,7 +56,7 @@ std::vector<ServerState*> server_states;
 TableServer *table_server;
 TableDelegate *delegate;
 
-int num_keys=100;
+int num_keys=10;
 
 void create_mem_table(int id, int num_shards){
 
@@ -144,6 +145,10 @@ void coordinator_load_data(){
 
 		table->put(i,i);
 	}
+	/*
+	for (int i=0; i<num_keys; i++){
+		table->put(i,0); //loaded again
+	}*/
 	VLOG(3) << "Coordinator done loading ..., from process "<<NetworkThread::Get()->id();
 }
 
@@ -160,6 +165,7 @@ void get(TypedGlobalTable<int,int>* table){
     for (int i=0; i<num_keys; i++){
     	while(!table->async_get_collect(&key, &val))
     		Sleep(0.001);
+    	VLOG(3) << StringPrintf(" Get (%d,%d)", key, val);
     }
 }
 
@@ -215,7 +221,21 @@ void HandleShardAssignment() {
     const ShardAssignment &a = shard_req.assign(i);
     GlobalTable *t = tables.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
-    //LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
+
+	//if local shard, create check-point files
+	if (t->is_local_shard(a.shard())){
+		string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
+		FILE *tmp_file = fopen(checkpoint_file.c_str(), "r"); 
+		if (tmp_file){//exists -> open to reading and writing
+			fclose(tmp_file); 	
+			VLOG(3) << "Already exists, open checkpoint file "<< checkpoint_file;  
+			t->checkpoint_files().push_back(new LogFile(checkpoint_file,"rw",a.shard())); 
+		}	
+		else{// not exist -> open to writing first time
+			t->checkpoint_files().push_back(new LogFile(checkpoint_file,"w",a.shard())); 
+		}
+	}
+
   }
   EmptyMessage empty;
   mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);

@@ -205,6 +205,29 @@ class Decoder {
   }
 };
 
+
+// format of the LogFile is:
+// [<key length><key><val><current table size><total length>]
+class LogFile{
+	public: 
+		LogFile(const string &path, const string &mode, int shard_id); 
+		
+		~LogFile(){
+			if (fp_){
+				fflush(fp_); 
+				fclose(fp_);
+			} 
+		}
+		
+		void append(const string &key, const string &value, const int size); 
+		void previous_entry(string *key, string *val, int *size);
+		int current_offset(){ return current_offset_; }
+		int read_shard_id(); 
+	private:
+		FILE *fp_;
+		int current_offset_; //from SEEK_END  
+}; 
+
 class RecordFile {
  public:
   enum CompressionType {

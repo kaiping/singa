@@ -118,6 +118,7 @@ class SparseTable :
 
   void Serialize(TableCoder *out);
   bool ApplyUpdates(TableCoder *in);
+  bool ApplyPut(TableCoder *in);
 
   bool contains_str(const StringPiece &s) {
     K k;
@@ -208,6 +209,21 @@ bool SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
   }
 
   return false;
+}
+
+template <class K, class V>
+bool SparseTable<K, V>::ApplyPut(TableCoder *in) {
+  K k;
+  V v;
+  string kt, vt;
+  //only 1 entry
+  while (in->ReadEntry(&kt, &vt)) {
+    ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
+    ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
+    put(k, v);
+  }
+
+  return true;
 }
 
 template <class K, class V>

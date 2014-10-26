@@ -33,7 +33,7 @@ class DataLoader {
   public:
     DataLoader(const std::shared_ptr<GlobalContext>& gc);
     void ShardData(const DataProto& proto) ;
-    void ShardData(const DataSourceProto& source, int ngroups);
+    void ShardData(const DataSourceProto& source, const vector<vector<int>>& groups, bool replicateInGroup);
     void CreateLocalShard(const DataSourceProto& source, const ShardProto& shard);
     void CreateLocalShards(const DataProto& dp) ;
   private:

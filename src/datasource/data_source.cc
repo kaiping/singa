@@ -12,6 +12,7 @@
 
 #include "datasource/data_source.h"
 #include "utils/proto_helper.h"
+#include "utils/common.h"
 
 
 namespace lapis {
@@ -155,7 +156,6 @@ int ImageNetSource::CopyFileFromHDFS(string hdfs_path, string local_path) {
   hdfsDisconnect(lfs);
   return ret;
 }
-
 int ImageNetSource::CopyFilesFromHDFS(string hdfs_folder, string local_folder,
     std::vector<string> files) {
   LOG(INFO)<<"Copy files from hdfs: "<<hdfs_folder<<" to local: "<<local_folder;
@@ -172,16 +172,21 @@ int ImageNetSource::CopyFilesFromHDFS(string hdfs_folder, string local_folder,
   if(boost::filesystem::create_directories(dir_path)) {
     LOG(INFO)<<"create shard folder "<<local_folder;
   }
-  int ncopy=0;
+  int ncopy=0, nlocal=0;
   for(auto& file: files){
     string hdfs_path=hdfs_folder+"/"+file;
     string local_path=local_folder+"/"+file;
-    if(!hdfsCopy(fs, hdfs_path.c_str(), lfs, local_path.c_str()))
-      ncopy++;
-    else
-      LOG(INFO)<<"Failed to Copy "<<hdfs_path<<" to "<<local_path;
-    if(ncopy%100==0)
-      LOG(INFO)<<"Have copied "<<ncopy<<" files";
+    if(check_exists(local_path)){
+      nlocal++;
+    }else{
+      if(!hdfsCopy(fs, hdfs_path.c_str(), lfs, local_path.c_str()))
+        ncopy++;
+      else
+        LOG(INFO)<<"Failed to Copy "<<hdfs_path<<" to "<<local_path;
+    }
+    if((ncopy+nlocal)%100==0)
+      LOG(INFO)<<"Have copied "<<ncopy<<" files"
+        <<" , in addition there are "<<nlocal<<" files";
   }
   hdfsDisconnect(fs);
   hdfsDisconnect(lfs);

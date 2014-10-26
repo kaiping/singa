@@ -57,7 +57,8 @@ class Solver {
     ~Solver();
     void Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np);
     void Train();
-    void Validate();
+    void Test();
+    Performance Test(const Phase& phase); //kValidation or kTest
     leveldb::DB* OpenShard(string path) ;
     void InitParams();
 
@@ -65,20 +66,13 @@ class Solver {
      * train the model for one-minibatch by either backpropagation or contrastive divergence
      * @param net the Net object to be trained
      */
-    virtual Performance TrainOneBatch(Net* net);
-    /**
-     * test performance on validation dataset
-     * @param net the Net object
-     * @param nbatches number of batches
-     */
-    virtual Performance ValidateOneBatch(Net *net);
-
+    virtual Performance TrainOneBatch(Net* net, int step);
     void TimeOneBatch(int runs);
     /**
      * test performance on test dataset
      * @param net the current Net object
-     virtual Performance TestOneBatch(Net *net);
      */
+     virtual Performance TestOneBatch(Net *net, int step);
     /**
      * marshal the state of the trainer to google protobuf object, which will
      * later be dumped onto disk by ::Checkpoint()
@@ -100,6 +94,10 @@ class Solver {
       }
       return false;
     }
+    const bool CheckpointNow() {
+      return CheckpointNow(step_);
+    }
+
     const bool DisplayNow(const int step) {
       if (display_after_steps_ > 0 && step >= display_after_steps_) {
         if ((step - display_after_steps_) % display_every_steps_ == 0)
@@ -110,9 +108,8 @@ class Solver {
     const bool DisplayNow() {
       return DisplayNow(step_);
     }
-    const bool CheckpointNow() {return CheckpointNow(step_);}
+
     /**
-     * return true if it is time to do checkpoint
      * @param step the ::Train() has been called step times.
      */
     const bool ValidateNow(const int step) {
@@ -123,13 +120,20 @@ class Solver {
       return false;
     }
     const bool ValidateNow() {return ValidateNow(step_);}
-    void Pause() {pause_=true;}
-    bool PauseNow() {return pause_;}
-    void Continue() {pause_=false; phase=Phase::kTrain;}
+
+    const bool TestNow(const int step) {
+      if (test_after_steps_ > 0 && step >= test_after_steps_) {
+        if ((step - test_after_steps_) % test_every_steps_ == 0)
+          return true;
+      }
+      return false;
+    }
+    const bool TestNow() {return TestNow(step_);}
+
     int validation_steps() {
       return validation_steps_;
     }
-    void ReportPerformance(Performance perf);
+    void ReportPerformance(string prefix, Performance perf);
     /**
      * increase the step by one after each iteration
      * this operation is immediately called after the ::Train().
@@ -149,8 +153,6 @@ class Solver {
     //! current phase, need this field to change the data sources for input layer
     //! current training step, e.g., such num of mini-batches have been processed
     int step_;
-    //! pause training for validation/checkpoint or...
-    std::atomic<bool> pause_;
 
     //! start checkpoint after this num of steps
     int checkpoint_after_steps_;
@@ -168,20 +170,24 @@ class Solver {
     int validation_after_steps_;
     //! display frequency
     int validation_every_steps_;
-    //! path prefix for Performance
+
+    //! start validation after this num of steps
+    int test_after_steps_;
+    //! display frequency
+    int test_every_steps_;
+
+    // number of mini-batches for each phase
     int train_steps_;
     int validation_steps_;
+    int test_steps_;
 
-    Performance train_perf_, val_perf_;
-    string train_shard_, val_shard_;
-    Net* net_;
+    Performance train_perf_, val_perf_, test_perf_;
+    string train_shard_, val_shard_, test_shard_;
     pthread_t prefetch_thread_;
-    TableDelegate* delegate_;
     std::shared_ptr<NetworkThread> mpi_;
     std::shared_ptr<GlobalContext> context_;
-
-
-
+    Net* net_;
+    TableDelegate* delegate_;
 };
 
 }  // namespace lapis

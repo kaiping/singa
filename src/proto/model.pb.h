@@ -1667,10 +1667,31 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 validation_every_steps() const;
   inline void set_validation_every_steps(::google::protobuf::int32 value);
 
-  // optional string perf_prefix = 12 [default = "tmp/performance"];
+  // optional int32 test_step = 12 [default = 0];
+  inline bool has_test_step() const;
+  inline void clear_test_step();
+  static const int kTestStepFieldNumber = 12;
+  inline ::google::protobuf::int32 test_step() const;
+  inline void set_test_step(::google::protobuf::int32 value);
+
+  // optional int32 test_after_steps = 13 [default = 0];
+  inline bool has_test_after_steps() const;
+  inline void clear_test_after_steps();
+  static const int kTestAfterStepsFieldNumber = 13;
+  inline ::google::protobuf::int32 test_after_steps() const;
+  inline void set_test_after_steps(::google::protobuf::int32 value);
+
+  // optional int32 test_every_steps = 14 [default = 0];
+  inline bool has_test_every_steps() const;
+  inline void clear_test_every_steps();
+  static const int kTestEveryStepsFieldNumber = 14;
+  inline ::google::protobuf::int32 test_every_steps() const;
+  inline void set_test_every_steps(::google::protobuf::int32 value);
+
+  // optional string perf_prefix = 15 [default = "tmp/performance"];
   inline bool has_perf_prefix() const;
   inline void clear_perf_prefix();
-  static const int kPerfPrefixFieldNumber = 12;
+  static const int kPerfPrefixFieldNumber = 15;
   inline const ::std::string& perf_prefix() const;
   inline void set_perf_prefix(const ::std::string& value);
   inline void set_perf_prefix(const char* value);
@@ -1679,19 +1700,19 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::std::string* release_perf_prefix();
   inline void set_allocated_perf_prefix(::std::string* perf_prefix);
 
-  // optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
+  // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
   inline bool has_alg() const;
   inline void clear_alg();
-  static const int kAlgFieldNumber = 13;
+  static const int kAlgFieldNumber = 16;
   inline ::lapis::SolverProto_GradAlg alg() const;
   inline void set_alg(::lapis::SolverProto_GradAlg value);
 
-  // optional int32 train_batchsize = 19;
-  inline bool has_train_batchsize() const;
-  inline void clear_train_batchsize();
-  static const int kTrainBatchsizeFieldNumber = 19;
-  inline ::google::protobuf::int32 train_batchsize() const;
-  inline void set_train_batchsize(::google::protobuf::int32 value);
+  // optional int32 batchsize = 19;
+  inline bool has_batchsize() const;
+  inline void clear_batchsize();
+  static const int kBatchsizeFieldNumber = 19;
+  inline ::google::protobuf::int32 batchsize() const;
+  inline void set_batchsize(::google::protobuf::int32 value);
 
   // optional int32 train_steps = 20;
   inline bool has_train_steps() const;
@@ -1700,19 +1721,19 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 train_steps() const;
   inline void set_train_steps(::google::protobuf::int32 value);
 
-  // optional int32 validation_batchsize = 21;
-  inline bool has_validation_batchsize() const;
-  inline void clear_validation_batchsize();
-  static const int kValidationBatchsizeFieldNumber = 21;
-  inline ::google::protobuf::int32 validation_batchsize() const;
-  inline void set_validation_batchsize(::google::protobuf::int32 value);
-
-  // optional int32 validation_steps = 22;
+  // optional int32 validation_steps = 21;
   inline bool has_validation_steps() const;
   inline void clear_validation_steps();
-  static const int kValidationStepsFieldNumber = 22;
+  static const int kValidationStepsFieldNumber = 21;
   inline ::google::protobuf::int32 validation_steps() const;
   inline void set_validation_steps(::google::protobuf::int32 value);
+
+  // optional int32 test_steps = 22;
+  inline bool has_test_steps() const;
+  inline void clear_test_steps();
+  static const int kTestStepsFieldNumber = 22;
+  inline ::google::protobuf::int32 test_steps() const;
+  inline void set_test_steps(::google::protobuf::int32 value);
 
   // optional int32 max_splits = 23 [default = 3571];
   inline bool has_max_splits() const;
@@ -1763,18 +1784,24 @@ class SolverProto : public ::google::protobuf::Message {
   inline void clear_has_validation_after_steps();
   inline void set_has_validation_every_steps();
   inline void clear_has_validation_every_steps();
+  inline void set_has_test_step();
+  inline void clear_has_test_step();
+  inline void set_has_test_after_steps();
+  inline void clear_has_test_after_steps();
+  inline void set_has_test_every_steps();
+  inline void clear_has_test_every_steps();
   inline void set_has_perf_prefix();
   inline void clear_has_perf_prefix();
   inline void set_has_alg();
   inline void clear_has_alg();
-  inline void set_has_train_batchsize();
-  inline void clear_has_train_batchsize();
+  inline void set_has_batchsize();
+  inline void clear_has_batchsize();
   inline void set_has_train_steps();
   inline void clear_has_train_steps();
-  inline void set_has_validation_batchsize();
-  inline void clear_has_validation_batchsize();
   inline void set_has_validation_steps();
   inline void clear_has_validation_steps();
+  inline void set_has_test_steps();
+  inline void clear_has_test_steps();
   inline void set_has_max_splits();
   inline void clear_has_max_splits();
   inline void set_has_sgd();
@@ -1798,17 +1825,20 @@ class SolverProto : public ::google::protobuf::Message {
   ::std::string* display_prefix_;
   ::google::protobuf::int32 validation_step_;
   ::google::protobuf::int32 validation_after_steps_;
+  ::google::protobuf::int32 validation_every_steps_;
+  ::google::protobuf::int32 test_step_;
+  ::google::protobuf::int32 test_after_steps_;
+  ::google::protobuf::int32 test_every_steps_;
   static ::std::string* _default_perf_prefix_;
   ::std::string* perf_prefix_;
-  ::google::protobuf::int32 validation_every_steps_;
   int alg_;
-  ::google::protobuf::int32 train_batchsize_;
+  ::google::protobuf::int32 batchsize_;
   ::google::protobuf::int32 train_steps_;
-  ::google::protobuf::int32 validation_batchsize_;
   ::google::protobuf::int32 validation_steps_;
+  ::google::protobuf::int32 test_steps_;
+  ::google::protobuf::int32 max_splits_;
   ::lapis::SGDValue* sgd_;
   ::lapis::AdaGradValue* adagrad_;
-  ::google::protobuf::int32 max_splits_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -5259,15 +5289,87 @@ inline void SolverProto::set_validation_every_steps(::google::protobuf::int32 va
   // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_every_steps)
 }
 
-// optional string perf_prefix = 12 [default = "tmp/performance"];
-inline bool SolverProto::has_perf_prefix() const {
+// optional int32 test_step = 12 [default = 0];
+inline bool SolverProto::has_test_step() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
-inline void SolverProto::set_has_perf_prefix() {
+inline void SolverProto::set_has_test_step() {
   _has_bits_[0] |= 0x00000800u;
 }
-inline void SolverProto::clear_has_perf_prefix() {
+inline void SolverProto::clear_has_test_step() {
   _has_bits_[0] &= ~0x00000800u;
+}
+inline void SolverProto::clear_test_step() {
+  test_step_ = 0;
+  clear_has_test_step();
+}
+inline ::google::protobuf::int32 SolverProto::test_step() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.test_step)
+  return test_step_;
+}
+inline void SolverProto::set_test_step(::google::protobuf::int32 value) {
+  set_has_test_step();
+  test_step_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.test_step)
+}
+
+// optional int32 test_after_steps = 13 [default = 0];
+inline bool SolverProto::has_test_after_steps() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
+}
+inline void SolverProto::set_has_test_after_steps() {
+  _has_bits_[0] |= 0x00001000u;
+}
+inline void SolverProto::clear_has_test_after_steps() {
+  _has_bits_[0] &= ~0x00001000u;
+}
+inline void SolverProto::clear_test_after_steps() {
+  test_after_steps_ = 0;
+  clear_has_test_after_steps();
+}
+inline ::google::protobuf::int32 SolverProto::test_after_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.test_after_steps)
+  return test_after_steps_;
+}
+inline void SolverProto::set_test_after_steps(::google::protobuf::int32 value) {
+  set_has_test_after_steps();
+  test_after_steps_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.test_after_steps)
+}
+
+// optional int32 test_every_steps = 14 [default = 0];
+inline bool SolverProto::has_test_every_steps() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void SolverProto::set_has_test_every_steps() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void SolverProto::clear_has_test_every_steps() {
+  _has_bits_[0] &= ~0x00002000u;
+}
+inline void SolverProto::clear_test_every_steps() {
+  test_every_steps_ = 0;
+  clear_has_test_every_steps();
+}
+inline ::google::protobuf::int32 SolverProto::test_every_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.test_every_steps)
+  return test_every_steps_;
+}
+inline void SolverProto::set_test_every_steps(::google::protobuf::int32 value) {
+  set_has_test_every_steps();
+  test_every_steps_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.test_every_steps)
+}
+
+// optional string perf_prefix = 15 [default = "tmp/performance"];
+inline bool SolverProto::has_perf_prefix() const {
+  return (_has_bits_[0] & 0x00004000u) != 0;
+}
+inline void SolverProto::set_has_perf_prefix() {
+  _has_bits_[0] |= 0x00004000u;
+}
+inline void SolverProto::clear_has_perf_prefix() {
+  _has_bits_[0] &= ~0x00004000u;
 }
 inline void SolverProto::clear_perf_prefix() {
   if (perf_prefix_ != _default_perf_prefix_) {
@@ -5335,15 +5437,15 @@ inline void SolverProto::set_allocated_perf_prefix(::std::string* perf_prefix) {
   // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.perf_prefix)
 }
 
-// optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
+// optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
 inline bool SolverProto::has_alg() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00008000u) != 0;
 }
 inline void SolverProto::set_has_alg() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00008000u;
 }
 inline void SolverProto::clear_has_alg() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00008000u;
 }
 inline void SolverProto::clear_alg() {
   alg_ = 1;
@@ -5360,39 +5462,39 @@ inline void SolverProto::set_alg(::lapis::SolverProto_GradAlg value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.alg)
 }
 
-// optional int32 train_batchsize = 19;
-inline bool SolverProto::has_train_batchsize() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
+// optional int32 batchsize = 19;
+inline bool SolverProto::has_batchsize() const {
+  return (_has_bits_[0] & 0x00010000u) != 0;
 }
-inline void SolverProto::set_has_train_batchsize() {
-  _has_bits_[0] |= 0x00002000u;
+inline void SolverProto::set_has_batchsize() {
+  _has_bits_[0] |= 0x00010000u;
 }
-inline void SolverProto::clear_has_train_batchsize() {
-  _has_bits_[0] &= ~0x00002000u;
+inline void SolverProto::clear_has_batchsize() {
+  _has_bits_[0] &= ~0x00010000u;
 }
-inline void SolverProto::clear_train_batchsize() {
-  train_batchsize_ = 0;
-  clear_has_train_batchsize();
+inline void SolverProto::clear_batchsize() {
+  batchsize_ = 0;
+  clear_has_batchsize();
 }
-inline ::google::protobuf::int32 SolverProto::train_batchsize() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.train_batchsize)
-  return train_batchsize_;
+inline ::google::protobuf::int32 SolverProto::batchsize() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.batchsize)
+  return batchsize_;
 }
-inline void SolverProto::set_train_batchsize(::google::protobuf::int32 value) {
-  set_has_train_batchsize();
-  train_batchsize_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.train_batchsize)
+inline void SolverProto::set_batchsize(::google::protobuf::int32 value) {
+  set_has_batchsize();
+  batchsize_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.batchsize)
 }
 
 // optional int32 train_steps = 20;
 inline bool SolverProto::has_train_steps() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
+  return (_has_bits_[0] & 0x00020000u) != 0;
 }
 inline void SolverProto::set_has_train_steps() {
-  _has_bits_[0] |= 0x00004000u;
+  _has_bits_[0] |= 0x00020000u;
 }
 inline void SolverProto::clear_has_train_steps() {
-  _has_bits_[0] &= ~0x00004000u;
+  _has_bits_[0] &= ~0x00020000u;
 }
 inline void SolverProto::clear_train_steps() {
   train_steps_ = 0;
@@ -5408,39 +5510,15 @@ inline void SolverProto::set_train_steps(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.train_steps)
 }
 
-// optional int32 validation_batchsize = 21;
-inline bool SolverProto::has_validation_batchsize() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
-}
-inline void SolverProto::set_has_validation_batchsize() {
-  _has_bits_[0] |= 0x00008000u;
-}
-inline void SolverProto::clear_has_validation_batchsize() {
-  _has_bits_[0] &= ~0x00008000u;
-}
-inline void SolverProto::clear_validation_batchsize() {
-  validation_batchsize_ = 0;
-  clear_has_validation_batchsize();
-}
-inline ::google::protobuf::int32 SolverProto::validation_batchsize() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.validation_batchsize)
-  return validation_batchsize_;
-}
-inline void SolverProto::set_validation_batchsize(::google::protobuf::int32 value) {
-  set_has_validation_batchsize();
-  validation_batchsize_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_batchsize)
-}
-
-// optional int32 validation_steps = 22;
+// optional int32 validation_steps = 21;
 inline bool SolverProto::has_validation_steps() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
+  return (_has_bits_[0] & 0x00040000u) != 0;
 }
 inline void SolverProto::set_has_validation_steps() {
-  _has_bits_[0] |= 0x00010000u;
+  _has_bits_[0] |= 0x00040000u;
 }
 inline void SolverProto::clear_has_validation_steps() {
-  _has_bits_[0] &= ~0x00010000u;
+  _has_bits_[0] &= ~0x00040000u;
 }
 inline void SolverProto::clear_validation_steps() {
   validation_steps_ = 0;
@@ -5456,15 +5534,39 @@ inline void SolverProto::set_validation_steps(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_steps)
 }
 
+// optional int32 test_steps = 22;
+inline bool SolverProto::has_test_steps() const {
+  return (_has_bits_[0] & 0x00080000u) != 0;
+}
+inline void SolverProto::set_has_test_steps() {
+  _has_bits_[0] |= 0x00080000u;
+}
+inline void SolverProto::clear_has_test_steps() {
+  _has_bits_[0] &= ~0x00080000u;
+}
+inline void SolverProto::clear_test_steps() {
+  test_steps_ = 0;
+  clear_has_test_steps();
+}
+inline ::google::protobuf::int32 SolverProto::test_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.test_steps)
+  return test_steps_;
+}
+inline void SolverProto::set_test_steps(::google::protobuf::int32 value) {
+  set_has_test_steps();
+  test_steps_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.test_steps)
+}
+
 // optional int32 max_splits = 23 [default = 3571];
 inline bool SolverProto::has_max_splits() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
+  return (_has_bits_[0] & 0x00100000u) != 0;
 }
 inline void SolverProto::set_has_max_splits() {
-  _has_bits_[0] |= 0x00020000u;
+  _has_bits_[0] |= 0x00100000u;
 }
 inline void SolverProto::clear_has_max_splits() {
-  _has_bits_[0] &= ~0x00020000u;
+  _has_bits_[0] &= ~0x00100000u;
 }
 inline void SolverProto::clear_max_splits() {
   max_splits_ = 3571;
@@ -5482,13 +5584,13 @@ inline void SolverProto::set_max_splits(::google::protobuf::int32 value) {
 
 // optional .lapis.SGDValue sgd = 24;
 inline bool SolverProto::has_sgd() const {
-  return (_has_bits_[0] & 0x00040000u) != 0;
+  return (_has_bits_[0] & 0x00200000u) != 0;
 }
 inline void SolverProto::set_has_sgd() {
-  _has_bits_[0] |= 0x00040000u;
+  _has_bits_[0] |= 0x00200000u;
 }
 inline void SolverProto::clear_has_sgd() {
-  _has_bits_[0] &= ~0x00040000u;
+  _has_bits_[0] &= ~0x00200000u;
 }
 inline void SolverProto::clear_sgd() {
   if (sgd_ != NULL) sgd_->::lapis::SGDValue::Clear();
@@ -5523,13 +5625,13 @@ inline void SolverProto::set_allocated_sgd(::lapis::SGDValue* sgd) {
 
 // optional .lapis.AdaGradValue adagrad = 25;
 inline bool SolverProto::has_adagrad() const {
-  return (_has_bits_[0] & 0x00080000u) != 0;
+  return (_has_bits_[0] & 0x00400000u) != 0;
 }
 inline void SolverProto::set_has_adagrad() {
-  _has_bits_[0] |= 0x00080000u;
+  _has_bits_[0] |= 0x00400000u;
 }
 inline void SolverProto::clear_has_adagrad() {
-  _has_bits_[0] &= ~0x00080000u;
+  _has_bits_[0] &= ~0x00400000u;
 }
 inline void SolverProto::clear_adagrad() {
   if (adagrad_ != NULL) adagrad_->::lapis::AdaGradValue::Clear();

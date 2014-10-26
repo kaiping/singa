@@ -104,7 +104,7 @@ void Coordinator::Shutdown() {
 Net* Coordinator::SetupNetShape(const ModelProto& model) {
   Net *net=new Net(model.net());
   // setup the net, init parameters
-  int batchsize=model.solver().train_batchsize();
+  int batchsize=model.solver().batchsize();
   vector<vector<int>> shapes;
   for(auto& shape: model.data().train_data().shape()){
     vector<int> s{batchsize};

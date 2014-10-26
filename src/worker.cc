@@ -76,10 +76,11 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
         solver.InitParams();
         mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
       }
-      if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src))
+      if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src)){
+        solver.Train();
         break;
+      }
     }
-    solver.Train();
     mpi_->Flush();
     mpi_->Send(cdntor, MTYPE_WORKER_END, dummy_msg);
     mpi_->Read(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src);
@@ -88,7 +89,7 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
       if(mpi_->TryRead(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src))
         break;
       else
-        sleep(1);
+        sleep(2);
     }
     // flush or checkpoint server
   }

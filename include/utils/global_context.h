@@ -52,7 +52,7 @@ class GlobalContext {
   const string shard_folder() {return shard_folder_;}
   const MPI_Comm& mpicomm() {return mpicomm_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
-  vector<vector<int>> groups() {return groups_;}
+  const vector<vector<int>>& groups() {return groups_;}
   // assume the rank of coordinator is 0
   static int kCoordinator;
   void Finish();

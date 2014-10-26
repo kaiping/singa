@@ -5,6 +5,8 @@
 #include <glog/logging.h>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
+
 #include <map>
 #include "proto/model.pb.h"
 
@@ -19,6 +21,10 @@ enum Phase{
   kTest
 };
 
+inline bool check_exists(const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
 
 template<typename T>
 class StateQueue {

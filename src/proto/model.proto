@@ -168,20 +168,27 @@ message SolverProto {
   // frequency of validation
   optional int32 validation_every_steps = 11 [default = 0];
 
+  // the time of test
+  optional int32 test_step = 12 [default = 0];
+  // start test after this num steps
+  optional int32 test_after_steps = 13 [default = 0];
+  // frequency of test
+  optional int32 test_every_steps = 14 [default = 0];
 
-  optional string perf_prefix = 12 [default = "tmp/performance"];
+
+  optional string perf_prefix = 15 [default = "tmp/performance"];
 
   enum GradAlg{
     kBackPropagation = 1;
     kContrastiveDivergence = 2;
   }
-  optional GradAlg alg= 13 [default = kBackPropagation];
+  optional GradAlg alg= 16 [default = kBackPropagation];
 
   // batchsize is the num of instances processed per step
-  optional int32 train_batchsize = 19;
+  optional int32 batchsize = 19;
   optional int32 train_steps = 20;
-  optional int32 validation_batchsize = 21;
-  optional int32 validation_steps=22;
+  optional int32 validation_steps=21;
+  optional int32 test_steps=22;
   // max number of tuples; 3571 is the 500-th prime number
   optional int32 max_splits=23 [default = 3571];
 

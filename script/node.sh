@@ -3,11 +3,16 @@ folder="/data1/wangwei/lapis"
 #folder="/tmp/lapis.bin.awan*"
 if [ $# -eq 0 ]
 then
-  echo "must provide argument, [ssh, delete, create or reset] + hostfile"
+  echo "must provide argument, [ssh,ls, delete, create or reset] + hostfile"
   exit
 fi
 for i in `cat $2 |cut -d ' ' -f 1`
 do
+  if [ $1 == "ls" ]
+  then
+    echo "ssh $i"
+    ssh $i "ls $folder"
+  fi
   if [ $1 == "ssh" ]
   then
     echo "ssh $i"

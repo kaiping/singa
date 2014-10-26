@@ -16,7 +16,6 @@ DECLARE_string(db_backend);
 namespace lapis {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
-  pause_=false;
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.checkpoint_step();
   checkpoint_after_steps_ = proto.checkpoint_after_steps();
@@ -27,9 +26,13 @@ Solver::Solver(const SolverProto &proto) {
   display_every_steps_ = proto.display_every_steps();
   validation_after_steps_ = proto.validation_after_steps();
   validation_every_steps_ = proto.validation_every_steps();
+  test_after_steps_ = proto.test_after_steps();
+  test_every_steps_ = proto.test_every_steps();
 
   train_steps_=proto.train_steps();
+  test_steps_=proto.test_steps();
   validation_steps_=proto.validation_steps();
+
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
 }
@@ -44,6 +47,7 @@ void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto&
   string shard_folder=GlobalContext::Get()->shard_folder();
   train_shard_=shard_folder+"/"+dp.train_data().name()+"-"+FLAGS_db_backend;
   val_shard_=shard_folder+"/"+dp.validation_data().name()+"-"+FLAGS_db_backend;
+  test_shard_=shard_folder+"/"+dp.test_data().name()+"-"+FLAGS_db_backend;
 }
 
 void Solver::InitParams(){
@@ -61,8 +65,15 @@ void Solver::ToProto(SolverProto *proto) {
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
   proto->set_checkpoint_every_steps(checkpoint_every_steps_);
   proto->set_checkpoint_step(checkpoint_step_);
+
   proto->set_display_after_steps(display_after_steps_);
   proto->set_display_every_steps(display_every_steps_);
+
+  proto->set_validation_after_steps(validation_after_steps_);
+  proto->set_validation_every_steps(validation_every_steps_);
+
+  proto->set_test_after_steps(test_after_steps_);
+  proto->set_test_every_steps(test_every_steps_);
 }
 Prefetcher::Prefetcher(string path, Net* _net) {
   net=_net;
@@ -155,25 +166,54 @@ void* PrefetchData(void* context){
     prefetcher->NextIterator();
 }
 
-void Solver::Validate(){
-  val_perf_.Reset();
-  Prefetcher prefetcher(val_shard_, net_);
-
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
-  Solver::phase=kValidation;
+void Solver::Test(){
   Performance perf;
-  for(int b=0;b<validation_steps_;b++){
+  while(!HasFinished()){
+    if(ValidateNow()){
+      perf=Test(Phase::kValidation);
+      ReportPerformance("Validation", perf);
+    }
+    if(TestNow()){
+      perf=Test(Phase::kTest);
+      ReportPerformance("Test", perf);
+    }
+    IncStep();
+    sleep(1);
+  }
+}
+Performance Solver::Test(const Phase& phase){
+  string shard;
+  int nsteps;
+  if(phase==Phase::kValidation){
+    shard=val_shard_;
+    nsteps=validation_steps_;
+  }
+  else if(phase==Phase::kTest){
+    shard=test_shard_;
+    nsteps=test_steps_;
+  }
+  else
+    LOG(ERROR)<<"Phase must be kValidation or kTest";
+  // fetch params once
+
+  Prefetcher prefetcher(shard, net_);
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+  Solver::phase=phase;
+  Performance perf;
+  for(int b=0;b<nsteps;b++){
     pthread_join(prefetch_thread_, NULL);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
     pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
-    val_perf_.Aggregate(ValidateOneBatch(net_));
+    perf.Aggregate(TestOneBatch(net_, step_));
   }
   pthread_join(prefetch_thread_, NULL);
   prefetcher.Free();
+  Solver::phase=Phase::kTrain;
+  return perf;
 }
 
-void Solver::ReportPerformance(Performance perf) {
+void Solver::ReportPerformance(string prefix, Performance perf) {
   if(context_->AmIGroupLeader()){
     int toRcv=context_->group_size()-1;
     while(toRcv>0){
@@ -184,7 +224,7 @@ void Solver::ReportPerformance(Performance perf) {
       }
     }
     //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
-    LOG(ERROR)<<perf.ToString();
+    LOG(ERROR)<<step_<<" "<<prefix<<" "<<perf.ToString();
   }else{
     mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
  }
@@ -194,33 +234,41 @@ void Solver::Train(){
   Prefetcher prefetcher(train_shard_, net_);
   //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
   while (!HasFinished()) {
+    Solver::phase=Phase::kTrain;
     //pthread_join(prefetch_thread_, NULL);
     PrefetchData(&prefetcher);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    train_perf_.Aggregate(TrainOneBatch(net_));
+    //if(!ValidateNow()&&!TestNow())
     //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    train_perf_.Aggregate(TrainOneBatch(net_, step_));
     if(DisplayNow()){
-      ReportPerformance(train_perf_.Avg());
+      ReportPerformance("Train", train_perf_.Avg());
       train_perf_.Reset();
     }
     if(ValidateNow()){
-      Validate();
-      ReportPerformance(val_perf_.Avg());
+      Performance perf=Test(Phase::kValidation);
+      ReportPerformance("Val", perf.Avg());
     }
+    if(TestNow()){
+      Performance perf=Test(Phase::kTest);
+      ReportPerformance("Test", perf.Avg());
+    }
+    //if(ValidateNow()||TestNow())
+    //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
     IncStep();
   }
   pthread_join(prefetch_thread_, NULL);
   prefetcher.Free();
 }
-Performance Solver::TrainOneBatch(Net *net){
-  LOG(INFO)<<"Training Step : "<<step();
-  delegate_->AsyncGet(net->params(),step());
+Performance Solver::TrainOneBatch(Net *net, int step){
+  LOG(INFO)<<"Training Step : "<<step;
+  delegate_->AsyncGet(net->params(),step);
   auto layers=net->layers();
   //Debug();
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
-      delegate_->AsyncCollect(param, step());
+      delegate_->AsyncCollect(param, step);
       LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
     }
     if(typeid(*layer)==typeid(FCLayer)){
@@ -237,7 +285,7 @@ Performance Solver::TrainOneBatch(Net *net){
     (*layer)->ComputeGradient();
     LOG(INFO)<<(*layer)->name()<<" afeter norm "<<(*layer)->data().Norm1();
     for(auto* param: (*layer)->GetParams())
-      delegate_->Update(param, step());
+      delegate_->Update(param, step);
     if(typeid(*layer)==typeid(FCLayer*)){
       MPI_Barrier(context_->mpicomm());
     }
@@ -245,12 +293,9 @@ Performance Solver::TrainOneBatch(Net *net){
   return perf;
 }
 
-Performance Solver::ValidateOneBatch(Net *net){
-  delegate_->AsyncGet(net->params(), step());
+Performance Solver::TestOneBatch(Net *net, int step){
   for(auto* layer: net->layers()){
     VLOG(3)<<layer->name();
-    for(auto* param: layer->GetParams())
-      delegate_->AsyncCollect(param, step());
     layer->ComputeFeature();
   }
   return net->output_layer(0)->CalcPerf(true, true);
@@ -289,7 +334,6 @@ void Solver::TimeOneBatch(int runs) {
 
 
 //Performance Solver::Test(Net *net) { }
-
 bool Solver::HasFinished(){
   if (step_ >= train_steps_)
     return true;

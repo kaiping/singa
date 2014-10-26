@@ -15,6 +15,8 @@
 #include "datasource/data_loader.h"
 #include "utils/timer.h"
 #include "utils/global_context.h"
+#include "utils/proto_helper.h"
+
 #include "proto/model.pb.h"
 
 
@@ -34,24 +36,27 @@ DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
 }
 
 void DataLoader::ShardData(const DataProto& dp) {
+  auto& groups=GlobalContext::Get()->groups();
   if(dp.has_train_data()){
     LOG(INFO)<<"shard train data...";
-    ShardData(dp.train_data(),ngroups_);
+    ShardData(dp.train_data(),groups,false);
   }
   if(dp.has_validation_data()){
     LOG(INFO)<<"load validation data...";
-    ShardData(dp.validation_data(),1);
+    ShardData(dp.validation_data(),groups, true);
   }
   if(dp.has_test_data()){
     LOG(INFO)<<"load test data...";
-    ShardData(dp.test_data(),1);
-    LOG(INFO)<<"worker finish load test data";
+    ShardData(dp.test_data(),groups, true);
   }
 
   NetworkThread::Get()->barrier();
+  LOG(INFO)<<"worker finish load data";
 }
 
-void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
+void DataLoader::ShardData(const DataSourceProto& source,
+    const vector<vector<int>>& groups, bool replicateInGroup){
+  int ngroups=groups.size();
   int nrecords=source.size();
   vector<int> records;
   for (int i = 0; i < nrecords; i++) {
@@ -65,7 +70,6 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
   auto mpi=NetworkThread::Get();
   auto riter=records.begin();
   LOG(ERROR)<<"Sharding "<<records.size() <<" records to "<<ngroups<<" groups";
-  bool replicateInGroup=false;
   if(replicateInGroup){
     for (int g= 0; g < ngroups; g++) {
       ShardProto sp;
@@ -75,7 +79,7 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
         sp.add_record(*riter);
         riter++;
       }
-      for(auto worker: GlobalContext::Get()->MembersOfGroup(g))
+      for(auto worker: groups[g])
         mpi->Send(worker, MTYPE_PUT_SHARD, sp);
     }
     CHECK(riter== records.end())<<nrecords<<" "<<ngroups;
@@ -83,7 +87,7 @@ void DataLoader::ShardData(const DataSourceProto& source, int ngroups){
     // evenly distribute to all workers
     for (int g= 0; g < ngroups; g++) {
       int shardsize=(g==0)?nrecords/ngroups+nrecords%ngroups:nrecords/ngroups;
-      auto members=GlobalContext::Get()->MembersOfGroup(g);
+      auto members=groups[g];
       int gsize=members.size();
       for(int w=0;w<gsize;w++){
         int _shardsize=(w==0)?shardsize/gsize+shardsize%gsize:shardsize/gsize;
@@ -212,15 +216,33 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
   ShardProto sp;
   if(dp.has_train_data()){
     // nprocs_-1 is the rank of cooordinator
-    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+    string shardlist=shard_folder_+"/train-list.txt";
+    if(!check_exists(shardlist)){
+      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
     CreateLocalShard(dp.train_data(), sp);
   }
-  if(dp.has_validation_data()&&gid_>0){
-    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+  if(dp.has_validation_data()){
+    string shardlist=shard_folder_+"/val-list.txt";
+    if(!check_exists(shardlist)){
+      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
     CreateLocalShard(dp.validation_data(), sp);
   }
-  if(dp.has_test_data()&&gid_>0){
-    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+  if(dp.has_test_data()){
+    string shardlist=shard_folder_+"/test-list.txt";
+    if(!check_exists(shardlist)){
+      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
     CreateLocalShard(dp.test_data(), sp);
   }
   NetworkThread::Get()->barrier();

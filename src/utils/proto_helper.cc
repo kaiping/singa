@@ -39,7 +39,7 @@ void ReadProtoFromTextFile(const char* filename,
   close(fd);
 }
 void WriteProtoToTextFile(const Message& proto, const char* filename) {
-  int fd = open(filename, O_WRONLY);
+  int fd = open(filename, O_WRONLY | O_CREAT);
   FileOutputStream* output = new FileOutputStream(fd);
   CHECK(google::protobuf::TextFormat::Print(proto, output));
   delete output;

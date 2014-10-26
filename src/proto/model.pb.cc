@@ -260,7 +260,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(PerformanceProto));
   SolverProto_descriptor_ = file->message_type(7);
-  static const int SolverProto_offsets_[20] = {
+  static const int SolverProto_offsets_[23] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, method_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, checkpoint_after_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, checkpoint_every_steps_),
@@ -272,12 +272,15 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, validation_step_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, validation_after_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, validation_every_steps_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, test_step_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, test_after_steps_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, test_every_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, perf_prefix_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, alg_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, train_batchsize_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, batchsize_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, train_steps_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, validation_batchsize_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, validation_steps_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, test_steps_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, max_splits_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, sgd_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SolverProto, adagrad_),
@@ -566,7 +569,7 @@ void protobuf_AddDesc_model_2eproto() {
     "\n\010NetProto\022 \n\005layer\030\002 \003(\0132\021.lapis.LayerP"
     "roto\"P\n\020PerformanceProto\022\021\n\tprecision\030\001 "
     "\001(\002\022\014\n\004loss\030\002 \001(\002\022\r\n\005count\030\003 \001(\005\022\014\n\004step"
-    "\030\004 \001(\005\"\226\006\n\013SolverProto\022/\n\006method\030\001 \001(\0162\031"
+    "\030\004 \001(\005\"\326\006\n\013SolverProto\022/\n\006method\030\001 \001(\0162\031"
     ".lapis.SolverProto.Method:\004kSGD\022!\n\026check"
     "point_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint"
     "_every_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_pref"
@@ -576,45 +579,47 @@ void protobuf_AddDesc_model_2eproto() {
     "display_prefix\030\010 \001(\t:\013tmp/display\022\032\n\017val"
     "idation_step\030\t \001(\005:\0010\022!\n\026validation_afte"
     "r_steps\030\n \001(\005:\0010\022!\n\026validation_every_ste"
-    "ps\030\013 \001(\005:\0010\022$\n\013perf_prefix\030\014 \001(\t:\017tmp/pe"
-    "rformance\0229\n\003alg\030\r \001(\0162\032.lapis.SolverPro"
-    "to.GradAlg:\020kBackPropagation\022\027\n\017train_ba"
-    "tchsize\030\023 \001(\005\022\023\n\013train_steps\030\024 \001(\005\022\034\n\024va"
-    "lidation_batchsize\030\025 \001(\005\022\030\n\020validation_s"
-    "teps\030\026 \001(\005\022\030\n\nmax_splits\030\027 \001(\005:\0043571\022\034\n\003"
-    "sgd\030\030 \001(\0132\017.lapis.SGDValue\022$\n\007adagrad\030\031 "
-    "\001(\0132\023.lapis.AdaGradValue\" \n\006Method\022\010\n\004kS"
-    "GD\020\001\022\014\n\010kAdaGrad\020\002\";\n\007GradAlg\022\024\n\020kBackPr"
-    "opagation\020\001\022\032\n\026kContrastiveDivergence\020\002\""
-    "\223\001\n\tDataProto\022*\n\ntrain_data\030\001 \001(\0132\026.lapi"
-    "s.DataSourceProto\022/\n\017validation_data\030\002 \001"
-    "(\0132\026.lapis.DataSourceProto\022)\n\ttest_data\030"
-    "\003 \001(\0132\026.lapis.DataSourceProto\"|\n\nModelPr"
-    "oto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.N"
-    "etProto\022\"\n\006solver\030\003 \001(\0132\022.lapis.SolverPr"
-    "oto\022\036\n\004data\030\004 \001(\0132\020.lapis.DataProto\"2\n\nS"
-    "hardProto\022\016\n\006record\030\001 \003(\005\022\024\n\014shard_folde"
-    "r\030\002 \001(\t\"D\n\006Record\022\037\n\005image\030\001 \001(\0132\020.lapis"
-    ".DAryProto\022\r\n\005label\030\002 \001(\005\022\n\n\002id\030\003 \001(\t\"\326\001"
-    "\n\014AdaGradValue\022\023\n\010n_update\030\001 \001(\005:\0010\022\022\n\007v"
-    "ersion\030\002 \001(\005:\0010\022\036\n\004data\030\004 \001(\0132\020.lapis.DA"
-    "ryProto\022\036\n\004grad\030\005 \001(\0132\020.lapis.DAryProto\022"
-    "\032\n\022base_learning_rate\030\006 \001(\002\022\021\n\tthreshold"
-    "\030\007 \001(\005\022\013\n\003gid\030\014 \001(\005\022!\n\007history\030\017 \003(\0132\020.l"
-    "apis.DAryProto\"\364\003\n\010SGDValue\022\032\n\022base_lear"
-    "ning_rate\030\001 \001(\002\022\023\n\010momentum\030\002 \001(\002:\0010\022\027\n\014"
-    "weight_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032"
-    "learning_rate_change_steps\030\005 \001(\005\022E\n\024lear"
-    "ning_rate_change\030\006 \001(\0162\033.lapis.SGDValue."
-    "ChangeProto:\nkInverse_t\022#\n\030learning_rate"
-    "_multiplier\030\007 \001(\002:\0011\022\"\n\027weight_decay_mul"
-    "tiplier\030\010 \001(\002:\0011\022\023\n\010n_update\030\t \001(\005:\0010\022\022\n"
-    "\007version\030\n \001(\005:\0010\022\021\n\tthreshold\030\013 \001(\005\022\036\n\004"
-    "data\030\r \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\016 \001"
-    "(\0132\020.lapis.DAryProto\022\n\n\002id\030\017 \001(\005\"S\n\013Chan"
-    "geProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014k"
-    "Exponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004\"$\n"
-    "\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n\007version\030\002 \001(\005", 3675);
+    "ps\030\013 \001(\005:\0010\022\024\n\ttest_step\030\014 \001(\005:\0010\022\033\n\020tes"
+    "t_after_steps\030\r \001(\005:\0010\022\033\n\020test_every_ste"
+    "ps\030\016 \001(\005:\0010\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/pe"
+    "rformance\0229\n\003alg\030\020 \001(\0162\032.lapis.SolverPro"
+    "to.GradAlg:\020kBackPropagation\022\021\n\tbatchsiz"
+    "e\030\023 \001(\005\022\023\n\013train_steps\030\024 \001(\005\022\030\n\020validati"
+    "on_steps\030\025 \001(\005\022\022\n\ntest_steps\030\026 \001(\005\022\030\n\nma"
+    "x_splits\030\027 \001(\005:\0043571\022\034\n\003sgd\030\030 \001(\0132\017.lapi"
+    "s.SGDValue\022$\n\007adagrad\030\031 \001(\0132\023.lapis.AdaG"
+    "radValue\" \n\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGrad"
+    "\020\002\";\n\007GradAlg\022\024\n\020kBackPropagation\020\001\022\032\n\026k"
+    "ContrastiveDivergence\020\002\"\223\001\n\tDataProto\022*\n"
+    "\ntrain_data\030\001 \001(\0132\026.lapis.DataSourceProt"
+    "o\022/\n\017validation_data\030\002 \001(\0132\026.lapis.DataS"
+    "ourceProto\022)\n\ttest_data\030\003 \001(\0132\026.lapis.Da"
+    "taSourceProto\"|\n\nModelProto\022\014\n\004name\030\001 \001("
+    "\t\022\034\n\003net\030\002 \001(\0132\017.lapis.NetProto\022\"\n\006solve"
+    "r\030\003 \001(\0132\022.lapis.SolverProto\022\036\n\004data\030\004 \001("
+    "\0132\020.lapis.DataProto\"2\n\nShardProto\022\016\n\006rec"
+    "ord\030\001 \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Recor"
+    "d\022\037\n\005image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005la"
+    "bel\030\002 \001(\005\022\n\n\002id\030\003 \001(\t\"\326\001\n\014AdaGradValue\022\023"
+    "\n\010n_update\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022"
+    "\036\n\004data\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030"
+    "\005 \001(\0132\020.lapis.DAryProto\022\032\n\022base_learning"
+    "_rate\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\022\013\n\003gid\030\014 "
+    "\001(\005\022!\n\007history\030\017 \003(\0132\020.lapis.DAryProto\"\364"
+    "\003\n\010SGDValue\022\032\n\022base_learning_rate\030\001 \001(\002\022"
+    "\023\n\010momentum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001"
+    "(\002:\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learning_rate_ch"
+    "ange_steps\030\005 \001(\005\022E\n\024learning_rate_change"
+    "\030\006 \001(\0162\033.lapis.SGDValue.ChangeProto:\nkIn"
+    "verse_t\022#\n\030learning_rate_multiplier\030\007 \001("
+    "\002:\0011\022\"\n\027weight_decay_multiplier\030\010 \001(\002:\0011"
+    "\022\023\n\010n_update\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\001"
+    "0\022\021\n\tthreshold\030\013 \001(\005\022\036\n\004data\030\r \001(\0132\020.lap"
+    "is.DAryProto\022\036\n\004grad\030\016 \001(\0132\020.lapis.DAryP"
+    "roto\022\n\n\002id\030\017 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixe"
+    "d\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExponential\020\002\022\013\n"
+    "\007kLinear\020\003\022\t\n\005kStep\020\004\"$\n\004VKey\022\013\n\003key\030\001 \001"
+    "(\005\022\017\n\007version\030\002 \001(\005", 3739);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -5004,12 +5009,15 @@ const int SolverProto::kDisplayPrefixFieldNumber;
 const int SolverProto::kValidationStepFieldNumber;
 const int SolverProto::kValidationAfterStepsFieldNumber;
 const int SolverProto::kValidationEveryStepsFieldNumber;
+const int SolverProto::kTestStepFieldNumber;
+const int SolverProto::kTestAfterStepsFieldNumber;
+const int SolverProto::kTestEveryStepsFieldNumber;
 const int SolverProto::kPerfPrefixFieldNumber;
 const int SolverProto::kAlgFieldNumber;
-const int SolverProto::kTrainBatchsizeFieldNumber;
+const int SolverProto::kBatchsizeFieldNumber;
 const int SolverProto::kTrainStepsFieldNumber;
-const int SolverProto::kValidationBatchsizeFieldNumber;
 const int SolverProto::kValidationStepsFieldNumber;
+const int SolverProto::kTestStepsFieldNumber;
 const int SolverProto::kMaxSplitsFieldNumber;
 const int SolverProto::kSgdFieldNumber;
 const int SolverProto::kAdagradFieldNumber;
@@ -5047,12 +5055,15 @@ void SolverProto::SharedCtor() {
   validation_step_ = 0;
   validation_after_steps_ = 0;
   validation_every_steps_ = 0;
+  test_step_ = 0;
+  test_after_steps_ = 0;
+  test_every_steps_ = 0;
   perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
   alg_ = 1;
-  train_batchsize_ = 0;
+  batchsize_ = 0;
   train_steps_ = 0;
-  validation_batchsize_ = 0;
   validation_steps_ = 0;
+  test_steps_ = 0;
   max_splits_ = 3571;
   sgd_ = NULL;
   adagrad_ = NULL;
@@ -5128,9 +5139,7 @@ void SolverProto::Clear() {
     }
   }
   if (_has_bits_[8 / 32] & 65280) {
-    ZR_(validation_step_, validation_after_steps_);
-    ZR_(train_batchsize_, validation_batchsize_);
-    validation_every_steps_ = 0;
+    ZR_(validation_step_, test_every_steps_);
     if (has_perf_prefix()) {
       if (perf_prefix_ != _default_perf_prefix_) {
         perf_prefix_->assign(*_default_perf_prefix_);
@@ -5138,8 +5147,8 @@ void SolverProto::Clear() {
     }
     alg_ = 1;
   }
-  if (_has_bits_[16 / 32] & 983040) {
-    validation_steps_ = 0;
+  if (_has_bits_[16 / 32] & 8323072) {
+    ZR_(batchsize_, test_steps_);
     max_splits_ = 3571;
     if (has_sgd()) {
       if (sgd_ != NULL) sgd_->::lapis::SGDValue::Clear();
@@ -5335,13 +5344,58 @@ bool SolverProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(98)) goto parse_perf_prefix;
+        if (input->ExpectTag(96)) goto parse_test_step;
         break;
       }
 
-      // optional string perf_prefix = 12 [default = "tmp/performance"];
+      // optional int32 test_step = 12 [default = 0];
       case 12: {
-        if (tag == 98) {
+        if (tag == 96) {
+         parse_test_step:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &test_step_)));
+          set_has_test_step();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(104)) goto parse_test_after_steps;
+        break;
+      }
+
+      // optional int32 test_after_steps = 13 [default = 0];
+      case 13: {
+        if (tag == 104) {
+         parse_test_after_steps:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &test_after_steps_)));
+          set_has_test_after_steps();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(112)) goto parse_test_every_steps;
+        break;
+      }
+
+      // optional int32 test_every_steps = 14 [default = 0];
+      case 14: {
+        if (tag == 112) {
+         parse_test_every_steps:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &test_every_steps_)));
+          set_has_test_every_steps();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(122)) goto parse_perf_prefix;
+        break;
+      }
+
+      // optional string perf_prefix = 15 [default = "tmp/performance"];
+      case 15: {
+        if (tag == 122) {
          parse_perf_prefix:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_perf_prefix()));
@@ -5352,13 +5406,13 @@ bool SolverProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(104)) goto parse_alg;
+        if (input->ExpectTag(128)) goto parse_alg;
         break;
       }
 
-      // optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
-      case 13: {
-        if (tag == 104) {
+      // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
+      case 16: {
+        if (tag == 128) {
          parse_alg:
           int value;
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
@@ -5367,23 +5421,23 @@ bool SolverProto::MergePartialFromCodedStream(
           if (::lapis::SolverProto_GradAlg_IsValid(value)) {
             set_alg(static_cast< ::lapis::SolverProto_GradAlg >(value));
           } else {
-            mutable_unknown_fields()->AddVarint(13, value);
+            mutable_unknown_fields()->AddVarint(16, value);
           }
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(152)) goto parse_train_batchsize;
+        if (input->ExpectTag(152)) goto parse_batchsize;
         break;
       }
 
-      // optional int32 train_batchsize = 19;
+      // optional int32 batchsize = 19;
       case 19: {
         if (tag == 152) {
-         parse_train_batchsize:
+         parse_batchsize:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &train_batchsize_)));
-          set_has_train_batchsize();
+                 input, &batchsize_)));
+          set_has_batchsize();
         } else {
           goto handle_unusual;
         }
@@ -5402,33 +5456,33 @@ bool SolverProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(168)) goto parse_validation_batchsize;
+        if (input->ExpectTag(168)) goto parse_validation_steps;
         break;
       }
 
-      // optional int32 validation_batchsize = 21;
+      // optional int32 validation_steps = 21;
       case 21: {
         if (tag == 168) {
-         parse_validation_batchsize:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &validation_batchsize_)));
-          set_has_validation_batchsize();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(176)) goto parse_validation_steps;
-        break;
-      }
-
-      // optional int32 validation_steps = 22;
-      case 22: {
-        if (tag == 176) {
          parse_validation_steps:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &validation_steps_)));
           set_has_validation_steps();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(176)) goto parse_test_steps;
+        break;
+      }
+
+      // optional int32 test_steps = 22;
+      case 22: {
+        if (tag == 176) {
+         parse_test_steps:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &test_steps_)));
+          set_has_test_steps();
         } else {
           goto handle_unusual;
         }
@@ -5568,25 +5622,40 @@ void SolverProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->validation_every_steps(), output);
   }
 
-  // optional string perf_prefix = 12 [default = "tmp/performance"];
+  // optional int32 test_step = 12 [default = 0];
+  if (has_test_step()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(12, this->test_step(), output);
+  }
+
+  // optional int32 test_after_steps = 13 [default = 0];
+  if (has_test_after_steps()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(13, this->test_after_steps(), output);
+  }
+
+  // optional int32 test_every_steps = 14 [default = 0];
+  if (has_test_every_steps()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(14, this->test_every_steps(), output);
+  }
+
+  // optional string perf_prefix = 15 [default = "tmp/performance"];
   if (has_perf_prefix()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->perf_prefix().data(), this->perf_prefix().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "perf_prefix");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      12, this->perf_prefix(), output);
+      15, this->perf_prefix(), output);
   }
 
-  // optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
+  // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
   if (has_alg()) {
     ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      13, this->alg(), output);
+      16, this->alg(), output);
   }
 
-  // optional int32 train_batchsize = 19;
-  if (has_train_batchsize()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(19, this->train_batchsize(), output);
+  // optional int32 batchsize = 19;
+  if (has_batchsize()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(19, this->batchsize(), output);
   }
 
   // optional int32 train_steps = 20;
@@ -5594,14 +5663,14 @@ void SolverProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(20, this->train_steps(), output);
   }
 
-  // optional int32 validation_batchsize = 21;
-  if (has_validation_batchsize()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(21, this->validation_batchsize(), output);
+  // optional int32 validation_steps = 21;
+  if (has_validation_steps()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(21, this->validation_steps(), output);
   }
 
-  // optional int32 validation_steps = 22;
-  if (has_validation_steps()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(22, this->validation_steps(), output);
+  // optional int32 test_steps = 22;
+  if (has_test_steps()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(22, this->test_steps(), output);
   }
 
   // optional int32 max_splits = 23 [default = 3571];
@@ -5699,7 +5768,22 @@ void SolverProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(11, this->validation_every_steps(), target);
   }
 
-  // optional string perf_prefix = 12 [default = "tmp/performance"];
+  // optional int32 test_step = 12 [default = 0];
+  if (has_test_step()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(12, this->test_step(), target);
+  }
+
+  // optional int32 test_after_steps = 13 [default = 0];
+  if (has_test_after_steps()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(13, this->test_after_steps(), target);
+  }
+
+  // optional int32 test_every_steps = 14 [default = 0];
+  if (has_test_every_steps()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(14, this->test_every_steps(), target);
+  }
+
+  // optional string perf_prefix = 15 [default = "tmp/performance"];
   if (has_perf_prefix()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->perf_prefix().data(), this->perf_prefix().length(),
@@ -5707,18 +5791,18 @@ void SolverProto::SerializeWithCachedSizes(
       "perf_prefix");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        12, this->perf_prefix(), target);
+        15, this->perf_prefix(), target);
   }
 
-  // optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
+  // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
   if (has_alg()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      13, this->alg(), target);
+      16, this->alg(), target);
   }
 
-  // optional int32 train_batchsize = 19;
-  if (has_train_batchsize()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(19, this->train_batchsize(), target);
+  // optional int32 batchsize = 19;
+  if (has_batchsize()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(19, this->batchsize(), target);
   }
 
   // optional int32 train_steps = 20;
@@ -5726,14 +5810,14 @@ void SolverProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(20, this->train_steps(), target);
   }
 
-  // optional int32 validation_batchsize = 21;
-  if (has_validation_batchsize()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(21, this->validation_batchsize(), target);
+  // optional int32 validation_steps = 21;
+  if (has_validation_steps()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(21, this->validation_steps(), target);
   }
 
-  // optional int32 validation_steps = 22;
-  if (has_validation_steps()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(22, this->validation_steps(), target);
+  // optional int32 test_steps = 22;
+  if (has_test_steps()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(22, this->test_steps(), target);
   }
 
   // optional int32 max_splits = 23 [default = 3571];
@@ -5845,24 +5929,47 @@ int SolverProto::ByteSize() const {
           this->validation_every_steps());
     }
 
-    // optional string perf_prefix = 12 [default = "tmp/performance"];
+    // optional int32 test_step = 12 [default = 0];
+    if (has_test_step()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->test_step());
+    }
+
+    // optional int32 test_after_steps = 13 [default = 0];
+    if (has_test_after_steps()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->test_after_steps());
+    }
+
+    // optional int32 test_every_steps = 14 [default = 0];
+    if (has_test_every_steps()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->test_every_steps());
+    }
+
+    // optional string perf_prefix = 15 [default = "tmp/performance"];
     if (has_perf_prefix()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->perf_prefix());
     }
 
-    // optional .lapis.SolverProto.GradAlg alg = 13 [default = kBackPropagation];
+    // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
     if (has_alg()) {
-      total_size += 1 +
+      total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::EnumSize(this->alg());
     }
 
-    // optional int32 train_batchsize = 19;
-    if (has_train_batchsize()) {
+  }
+  if (_has_bits_[16 / 32] & (0xffu << (16 % 32))) {
+    // optional int32 batchsize = 19;
+    if (has_batchsize()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->train_batchsize());
+          this->batchsize());
     }
 
     // optional int32 train_steps = 20;
@@ -5872,20 +5979,18 @@ int SolverProto::ByteSize() const {
           this->train_steps());
     }
 
-    // optional int32 validation_batchsize = 21;
-    if (has_validation_batchsize()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->validation_batchsize());
-    }
-
-  }
-  if (_has_bits_[16 / 32] & (0xffu << (16 % 32))) {
-    // optional int32 validation_steps = 22;
+    // optional int32 validation_steps = 21;
     if (has_validation_steps()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->validation_steps());
+    }
+
+    // optional int32 test_steps = 22;
+    if (has_test_steps()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->test_steps());
     }
 
     // optional int32 max_splits = 23 [default = 3571];
@@ -5971,25 +6076,34 @@ void SolverProto::MergeFrom(const SolverProto& from) {
     if (from.has_validation_every_steps()) {
       set_validation_every_steps(from.validation_every_steps());
     }
+    if (from.has_test_step()) {
+      set_test_step(from.test_step());
+    }
+    if (from.has_test_after_steps()) {
+      set_test_after_steps(from.test_after_steps());
+    }
+    if (from.has_test_every_steps()) {
+      set_test_every_steps(from.test_every_steps());
+    }
     if (from.has_perf_prefix()) {
       set_perf_prefix(from.perf_prefix());
     }
     if (from.has_alg()) {
       set_alg(from.alg());
     }
-    if (from.has_train_batchsize()) {
-      set_train_batchsize(from.train_batchsize());
+  }
+  if (from._has_bits_[16 / 32] & (0xffu << (16 % 32))) {
+    if (from.has_batchsize()) {
+      set_batchsize(from.batchsize());
     }
     if (from.has_train_steps()) {
       set_train_steps(from.train_steps());
     }
-    if (from.has_validation_batchsize()) {
-      set_validation_batchsize(from.validation_batchsize());
-    }
-  }
-  if (from._has_bits_[16 / 32] & (0xffu << (16 % 32))) {
     if (from.has_validation_steps()) {
       set_validation_steps(from.validation_steps());
+    }
+    if (from.has_test_steps()) {
+      set_test_steps(from.test_steps());
     }
     if (from.has_max_splits()) {
       set_max_splits(from.max_splits());
@@ -6034,12 +6148,15 @@ void SolverProto::Swap(SolverProto* other) {
     std::swap(validation_step_, other->validation_step_);
     std::swap(validation_after_steps_, other->validation_after_steps_);
     std::swap(validation_every_steps_, other->validation_every_steps_);
+    std::swap(test_step_, other->test_step_);
+    std::swap(test_after_steps_, other->test_after_steps_);
+    std::swap(test_every_steps_, other->test_every_steps_);
     std::swap(perf_prefix_, other->perf_prefix_);
     std::swap(alg_, other->alg_);
-    std::swap(train_batchsize_, other->train_batchsize_);
+    std::swap(batchsize_, other->batchsize_);
     std::swap(train_steps_, other->train_steps_);
-    std::swap(validation_batchsize_, other->validation_batchsize_);
     std::swap(validation_steps_, other->validation_steps_);
+    std::swap(test_steps_, other->test_steps_);
     std::swap(max_splits_, other->max_splits_);
     std::swap(sgd_, other->sgd_);
     std::swap(adagrad_, other->adagrad_);

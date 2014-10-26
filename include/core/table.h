@@ -130,8 +130,9 @@ struct TableCoder {
 
 class Serializable {
  public:
-  virtual bool ApplyUpdates(TableCoder *in) = 0;
-  virtual bool ApplyPut(TableCoder *in) = 0;
+  virtual bool ApplyUpdates(TableCoder *in, LogFile *logfile) = 0;
+  virtual bool ApplyPut(TableCoder *in, LogFile *logfile) = 0;
+  virtual void restore(LogFile *logfile, int desired_size)=0; 
   virtual void Serialize(TableCoder *out) = 0;
 };
 

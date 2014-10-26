@@ -3,7 +3,7 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei/install
+HOME_DIR := /usr
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
@@ -19,7 +19,7 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath leveldb hdfs jvm armci lmdb
+							opencv_core blas arraymath leveldb hdfs jvm armci lmdb
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
@@ -84,9 +84,15 @@ run_test_split: lapis.test.split
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_const: lapis.test.const
-	mpirun -np 4 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
+		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
+
+run_test_const_restore: lapis.test.const
+	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
+		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
+		-model_conf=examples/imagenet12/model.conf --v=3 --restore_mode --data_dir=tmp \
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_disk_load: lapis.test.disk
@@ -137,6 +143,8 @@ $(TABLE_TEST_OBJS): $(TABLE_TEST_SRCS)
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 
 $(MEMORY_TEST_OBJS): $(MEMORY_TEST_SRCS) lapis.bin
+	$(CXX) $< $(CXXFLAGS) -c -o $@
+$(CONST_OBJS): $(CONST_SRCS) lapis.bin
 	$(CXX) $< $(CXXFLAGS) -c -o $@
 
 # create folders

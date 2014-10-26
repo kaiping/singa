@@ -245,7 +245,12 @@ void RecordFile::seek(uint64_t pos) {
 }
 
 LogFile::LogFile(const string &path, const string &mode, int shard_id){
+	path_=path;
+	test_val_ = 7;
 	fp_ = fopen(path.c_str(), mode.c_str());
+	if (!fp_){
+		VLOG(3) << "ERROR in FILE OPENING *****";
+	}
   	setvbuf(fp_, NULL, _IONBF, kFileBufferSize);
 	current_offset_ = 0; 
 	if (mode=="w"){ //write header 
@@ -257,13 +262,14 @@ LogFile::LogFile(const string &path, const string &mode, int shard_id){
 
 void LogFile::append(const string &key, const string &val, const int size){
 	int key_size = key.length(); 
-	int val_size = val.length(); 
+	int val_size = val.length();
 	int total_size = key_size+val_size+2*sizeof(int); 
-
-	fwrite((char*)&key_size, sizeof(int),1,fp_); 
+	int error = fwrite((char*)&key_size, sizeof(int),1,fp_);
 	fwrite(key.data(), key_size, 1, fp_); 
 	fwrite(val.data(), val_size, 1, fp_); 
+	fwrite((char*)&size, sizeof(int), 1, fp_);
 	fwrite((char*)&total_size, sizeof(int), 1, fp_); 
+
 }
 
 
@@ -275,24 +281,27 @@ void LogFile::previous_entry(string *key, string *val, int *size){
 	fread((char*)&total_length,sizeof(int),1, fp_);  
 
 	current_offset_+=total_length; 
-	fseek(fp_,-current_offset_, SEEK_END); 	
-	string *buf;
+	fseek(fp_,-current_offset_, SEEK_END);
+	string *buf = new string();
 	buf->resize(total_length); 
-	fread(&(*buf)[0],total_length,1,fp_); 
 
+	fread(&(*buf)[0],total_length,1,fp_);
 	//read key 
 	int key_size; 
-	memcpy((char*)key_size, &(*buf)[0], sizeof(int)); 
+	memcpy((char*)&key_size, &(*buf)[0], sizeof(int));
 	key->resize(key_size); 
 	memcpy(&(*key)[0], &(*buf)[sizeof(int)], key_size); 
 	
 	//read value
-	int value_size = total_length-2*sizeof(int)-key_size; 
+	int value_size = total_length-2*sizeof(int)-key_size;
+
+
 	val->resize(value_size); 
 	memcpy(&(*val)[0], &(*buf)[sizeof(int)+key_size], value_size); 
 
 	//read current size	
-	memcpy((char*)&size,&(*buf)[sizeof(int)+key_size+value_size], sizeof(int));  	
+	memcpy((char*)size,&(*buf)[sizeof(int)+key_size+value_size], sizeof(int));
+
 	delete buf; 
 }
 
@@ -302,4 +311,14 @@ int LogFile::read_shard_id(){
 	fread((char*)&shard_id,sizeof(int),1,fp_); 
 	return shard_id; 
 }
+
+// the size is from the 8th bytes from the end.
+int LogFile::read_latest_table_size(){
+	fseek(fp_,-8,SEEK_END);
+	int size;
+	fread((char*)&size, sizeof(int), 1, fp_);
+	fseek(fp_,0,SEEK_END);
+	return size;
+}
+
 } //namespace

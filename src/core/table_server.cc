@@ -44,10 +44,9 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
 
 void TableServer::ShutdownTableServer(){
 	for (auto& i:tables_){
-		vector<LogFile*> checkpoint_files = i.second->checkpoint_files(); 
-		for (int i=0; i<checkpoint_files.size(); i++)
-			delete checkpoint_files[i]; 
-		checkpoint_files.clear(); 
+		map<int, LogFile*>* checkpoint_files = i.second->checkpoint_files();
+		for (auto iterator = checkpoint_files->begin(); iterator!=checkpoint_files->end(); iterator++)
+			delete iterator->second;
 	}
 }
 
@@ -106,7 +105,7 @@ bool TableServer::HandlePutRequest(const Message *message) {
   const TableData *put = static_cast<const TableData *>(message);
   GlobalTable *t = tables_.at(put->table());
   bool ret = t->ApplyPut(*put);
-  return ret;
+  return true;
 }
 
 bool TableServer::HandleUpdateRequest(const Message *message) {

@@ -21,7 +21,10 @@ struct hash<lapis::VKey> {
 };
 }  // namespace std
 
+
+DECLARE_bool(checkpoint_enabled); 
 namespace lapis {
+
 
 static const double kLoadFactor = 0.8;
 
@@ -117,8 +120,10 @@ class SparseTable :
   }
 
   void Serialize(TableCoder *out);
-  bool ApplyUpdates(TableCoder *in);
-  bool ApplyPut(TableCoder *in);
+  bool ApplyUpdates(TableCoder *in, LogFile *logfile);
+  bool ApplyPut(TableCoder *in, LogFile *logfile);
+  void check_point(TableCoder *in, LogFile *logfile);
+  void restore(LogFile *logfile, int desired_size);
 
   bool contains_str(const StringPiece &s) {
     K k;
@@ -197,7 +202,7 @@ void SparseTable<K, V>::Serialize(TableCoder *out) {
 }
 
 template <class K, class V>
-bool SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
+bool SparseTable<K, V>::ApplyUpdates(TableCoder *in, LogFile *logfile) {
   K k;
   V v;
   string kt, vt;
@@ -205,14 +210,24 @@ bool SparseTable<K, V>::ApplyUpdates(TableCoder *in) {
   while (in->ReadEntry(&kt, &vt)) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
-    return update(k, v);
+    bool ret = update(k, v);
+    if (ret && FLAGS_checkpoint_enabled)
+       if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
+		V ret_v = get(k); 
+		string xv; 
+		((Marshal<V>*)info_->key_marshal)->marshal(ret_v,&xv);
+	  	logfile->append(kt, xv, size());
+	
+	}
+
+    return ret; 
   }
 
   return false;
 }
 
 template <class K, class V>
-bool SparseTable<K, V>::ApplyPut(TableCoder *in) {
+bool SparseTable<K, V>::ApplyPut(TableCoder *in, LogFile *logfile) {
   K k;
   V v;
   string kt, vt;
@@ -221,9 +236,30 @@ bool SparseTable<K, V>::ApplyPut(TableCoder *in) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
     put(k, v);
+    if (FLAGS_checkpoint_enabled)
+	if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
+	  	logfile->append(kt, vt, size());
+	}
+
   }
 
   return true;
+}
+
+template <class K, class V>
+void SparseTable<K, V>::restore(LogFile *logfile, int desired_size) {
+	int tmp;
+	K k;
+	V v;
+	while (size()!=desired_size){
+		string k_str,v_str;
+		logfile->previous_entry(&k_str,&v_str,&tmp);
+		((Marshal<K> *)info_->key_marshal)->unmarshal(k_str, &k);
+		    ((Marshal<V> *)info_->value_marshal)->unmarshal(v_str, &v);
+		 if (bucket_for_key(k)==-1)
+		    	put(k, v);
+	}
+
 }
 
 template <class K, class V>

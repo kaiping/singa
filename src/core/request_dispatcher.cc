@@ -60,7 +60,7 @@ namespace lapis {
 		return num_outstanding_request_>0;
 	}
 	void RequestDispatcher::Enqueue(int tag, string &data){
-		if (tag==MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST){
+		if (tag==MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST || tag == MTYPE_UPDATE_REQUEST){
 			table_queue_->Enqueue(tag, data);
 			num_outstanding_request_++;
 		}
@@ -82,7 +82,6 @@ namespace lapis {
 			if (t_msg.tag == MTYPE_GET_REQUEST)
 				message.reset(new HashGet());
 			else {
-				CHECK_EQ(t_msg.tag, MTYPE_PUT_REQUEST);
 				message.reset(new TableData());
 			}
 			message->ParseFromArray(t_msg.data.data(), t_msg.data.size());

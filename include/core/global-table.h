@@ -40,11 +40,17 @@ class GlobalTable :
 
   // Handle updates from the master or other workers.
   void SendUpdates();
+  void SendPut();
+
   bool ApplyUpdates(const TableData &req);
+  bool ApplyPut(const TableData &req);
+
   void UpdatePartitions(const ShardInfo &sinfo);
 
   Stats stats();
-
+  
+  vector<LogFile*> checkpoint_files(){ return checkpoint_files_;}
+  
   int pending_write_bytes();
 
   // Clear any local data for which this table has ownership.
@@ -65,6 +71,8 @@ class GlobalTable :
   }
   vector<LocalTable *> partitions_;
   vector<LocalTable *> cache_;
+
+  vector<LogFile*> checkpoint_files_; 
 
   volatile int pending_writes_;
   boost::recursive_mutex m_;
@@ -160,21 +168,30 @@ V TypedGlobalTable<K, V>::get_local(const K &k) {
 // and the update is queued for transmission to the owner.
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
-  int shard = this->get_shard(k);
-	
-  //  boost::recursive_mutex::scoped_lock sl(mutex());
-  string key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
-  if (is_local_shard(shard))
-	  RequestDispatcher::Get()->sync_local_put(key);
+	int shard = this->get_shard(k);
+	  StringPiece key = marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k);
 
-  partition(shard)->put(k, v);
-  if (is_local_shard(shard))
-	  RequestDispatcher::Get()->event_complete(key);
+	  int local_rank = NetworkThread::Get()->id();
+	  // if local, create a TableData, then Send
+	  if (is_local_shard(shard)){
+		  TableData put;
+	      put.set_shard(shard);
+	      put.set_source(local_rank);
+	      put.set_table(this->id());
 
-  //  always send
-  if (!is_local_shard(shard)) {
-    SendUpdates();
-  }
+	      StringPiece value = marshal(static_cast<Marshal<V>*>(this->info().value_marshal), v);
+
+	      put.set_key(key.AsString());
+	      Arg *a = put.add_kv_data();
+	      a->set_key(key.data, key.len);
+	      a->set_value(value.data, value.len);
+	      put.set_done(true);
+	      NetworkThread::Get()->Send(local_rank, MTYPE_PUT_REQUEST, put);//send locally
+	  }
+	  else{
+	    partition(shard)->put(k,v);
+	    SendPut();
+	  }
 }
 
 template<class K, class V>
@@ -197,7 +214,7 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
       a->set_key(key.data, key.len);
       a->set_value(value.data, value.len);
       put.set_done(true);
-      NetworkThread::Get()->Send(local_rank, MTYPE_PUT_REQUEST, put);//send locally
+      NetworkThread::Get()->Send(local_rank, MTYPE_UPDATE_REQUEST, put);//send locally
   }
   else{
     partition(shard)->put(k,v); 

@@ -11,6 +11,7 @@
 *.odp
 *.project
 *.cproject
+*.log
 out
 log*
 latency*

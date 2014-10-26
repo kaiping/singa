@@ -136,7 +136,7 @@ void NetworkThread::NetworkLoop() {
 			}
 
 			//  put request to the queue
-			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_GET_REQUEST
+			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST || tag == MTYPE_GET_REQUEST
 					|| tag == MTYPE_DATA_PUT_REQUEST
 					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
 				RequestDispatcher::Get()->Enqueue(tag, data);

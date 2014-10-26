@@ -61,6 +61,7 @@ class Solver {
     Performance Test(const Phase& phase); //kValidation or kTest
     leveldb::DB* OpenShard(string path) ;
     void InitParams();
+    void DebugInfo(Net* net);
 
     /**
      * train the model for one-minibatch by either backpropagation or contrastive divergence

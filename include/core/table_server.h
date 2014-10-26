@@ -25,7 +25,7 @@ class TableServer : private boost::noncopyable {
   void StartTableServer(const std::map<int, GlobalTable*> &tables);
 
   //  sends signals to the manager and ends gracefully
-  void ShutdownTableServer(){}
+  void ShutdownTableServer();
 
   int id() {
     return server_id_;
@@ -42,6 +42,7 @@ class TableServer : private boost::noncopyable {
   void HandleServerShutdown();
 
   bool HandleUpdateRequest(const Message *message);
+  bool HandlePutRequest(const Message *message);
   bool HandleGetRequest(const Message *message);
 
   //  id of the peer responsible for storing the partition

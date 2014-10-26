@@ -887,7 +887,7 @@ class LayerProto : public ::google::protobuf::Message {
   inline bool mirror() const;
   inline void set_mirror(bool value);
 
-  // optional float drop_prob = 19 [default = 0];
+  // optional float drop_prob = 19 [default = 0.5];
   inline bool has_drop_prob() const;
   inline void clear_drop_prob();
   static const int kDropProbFieldNumber = 19;
@@ -4214,7 +4214,7 @@ inline void LayerProto::set_mirror(bool value) {
   // @@protoc_insertion_point(field_set:lapis.LayerProto.mirror)
 }
 
-// optional float drop_prob = 19 [default = 0];
+// optional float drop_prob = 19 [default = 0.5];
 inline bool LayerProto::has_drop_prob() const {
   return (_has_bits_[0] & 0x00004000u) != 0;
 }
@@ -4225,7 +4225,7 @@ inline void LayerProto::clear_has_drop_prob() {
   _has_bits_[0] &= ~0x00004000u;
 }
 inline void LayerProto::clear_drop_prob() {
-  drop_prob_ = 0;
+  drop_prob_ = 0.5f;
   clear_has_drop_prob();
 }
 inline float LayerProto::drop_prob() const {

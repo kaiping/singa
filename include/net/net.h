@@ -38,7 +38,7 @@ class Net {
                          std::vector<Layer *>> &adjacent_list,
                          std::map<Layer *, bool> *visited,
                          std::stack<Layer *> *stack) ;
-
+  std::string ShapeInfo();
   /**
    * setup the net by init dary shapes,
    * then allocate memory(optional) and init parameters (optional)

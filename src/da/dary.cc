@@ -212,19 +212,25 @@ DAry DAry::FetchToLocal(const vector<Range>& slice) const{
 
 float* DAry::FetchPtr(const vector<Range>& slice) const{
   Partition part(shape_, slice);
-  if(part.size==0)
-    return nullptr;
-  if(ga_==nullptr||part==part_)
-    return dptr_;
-  return ga_->Fetch(part, offset_);
+  return FetchPtr(part);
 }
 
 float* DAry::FetchPtr(const Partition& part) const{
   if(part.size==0)
     return nullptr;
-  if(ga_==nullptr||part==part_)
+  if(part==part_)
     return dptr_;
-  return ga_->Fetch(part, offset_);
+  if(ga_==nullptr){
+    //LOG(ERROR)<<"ga nullptr fetch";
+    CHECK_EQ(part_.size, shape_.size);
+    float* ret=new float[part.size];
+    for(int count1=0;count1<part.size/part.stepsize;count1++){
+      memcpy(ret+part.stepsize*count1, dptr_+part.start+part.stride*count1,
+          sizeof(float)*part.stepsize);
+    }
+    return ret;
+  }
+  else return ga_->Fetch(part, offset_);
 }
 /**
   * Dot production
@@ -396,11 +402,20 @@ void DAry::SampleUniform(const float low, const float high) {
 void DAry::SampleGaussian(float mean, float std){
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine generator(seed);
-  std::normal_distribution<double> distribution(mean, std);
+  std::normal_distribution<float> distribution(mean, std);
   LOG(INFO)<<"gaussain mean "<<mean<<" std "<<std;
   for (int i = 0; i < part_.size; i++) {
     dptr_[i]=distribution(generator);
   }
+  /*
+  float _mean=0.f, _std=0.f;
+    _mean+=dptr_[i];
+  _mean/=part_.size;
+  for (int i = 0; i < part_.size; i++) {
+    _std+=(dptr_[i]-_mean)*(dptr_[i]-_mean);
+  }
+  LOG(INFO)<<"generated mean "<<_mean<<" std "<<sqrt(_std/part_.size);
+  */
 }
 void DAry::Random(){
   //arymath().random(dptr_, 0.0f, 1.0f, part_.size);

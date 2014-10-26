@@ -100,7 +100,7 @@ class Shape {
     return ret;
   }
 
-  std::string ToString() {
+  std::string ToString() const{
     char buf[1024];
     sprintf(buf, "shape (");
     for (int i = 0; i < dim; i++) {
@@ -223,13 +223,15 @@ class Partition{
         ret.start=stride-ret.start;
     }
     ret.end=end-offset>len?len:end-offset;
-    ret.end=ret.start+((ret.end-ret.start)/stride)*stride
-      +(((ret.end-ret.start)%stride)<stepsize?(ret.end-ret.start)%stride:stepsize);
-    if(ret.end-ret.start<=stepsize)
-      ret.size=ret.end-ret.start;
-    else{
-      ret.size=((ret.end-ret.start)/stride)*stepsize+(ret.end-ret.start)%stride;
-      //CHECK((ret.end-ret.start)%stride>=stepsize);
+    int remains=(ret.end-ret.start)%stride;
+    ret.size=(ret.end-ret.start)/stride*stepsize;
+    if(remains==0){
+      ret.end-=stride-stepsize;
+    }else if(remains>stepsize){
+        ret.end-=remains-stepsize;
+        ret.size+=stepsize;
+    }else{
+      ret.size+=remains;
     }
     ret.stepsize=stepsize>=ret.size?ret.size:stepsize;
     ret.stride=stride>=ret.size?ret.size:stride;;
@@ -250,7 +252,7 @@ class Partition{
     int dist=offset-start;
     int steps=dist/stride;
     CHECK(dist%stride<stepsize);
-    return steps*stepsize+(dist%stride%stepsize);
+    return steps*stepsize+(dist%stride);
   }
 
   // assume reshape happen for dimension after pdim

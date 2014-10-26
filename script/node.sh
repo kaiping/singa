@@ -1,17 +1,28 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis"
-#folder="/tmp/lapis.bin.awan*"
+folder="/data1/wangwei/lapis/train-lmdb"
+#folder="/tmp/lapis.bin.INFO"
+hostfile="examples/imagenet12/datahost"
 if [ $# -eq 0 ]
 then
-  echo "must provide argument, [ssh,ls, delete, create or reset] + hostfile"
+  echo "must provide argument, [chmod, ssh,ls,cat, delete, create or reset] + hostfile"
   exit
 fi
-for i in `cat $2 |cut -d ' ' -f 1`
+for i in `cat $hostfile |cut -d ' ' -f 1`
 do
+  if [ $1 == "chmod" ]
+  then
+    echo "ssh $i"
+    ssh $i "chmod 644 $folder"
+  fi
+  if [ $1 == "cat" ]
+  then
+    echo "ssh $i"
+    ssh $i "cat $folder"
+  fi
   if [ $1 == "ls" ]
   then
     echo "ssh $i"
-    ssh $i "ls $folder"
+    ssh $i "ls $folder |wc -l"
   fi
   if [ $1 == "ssh" ]
   then

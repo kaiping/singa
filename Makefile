@@ -65,7 +65,7 @@ CONST_SRCS := src/test/test_consistency.cc
 CONST_OBJS = $(CONST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 9 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 9 -hostfile examples/imagenet12/datahost \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_run: lapis.bin

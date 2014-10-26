@@ -61,8 +61,7 @@ UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
 }
 
 bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
-  Debug();
-  LOG(INFO)<<"update for "<<data->id()<<" version "<<data->version()<<" "<<update.version();
+  //LOG(INFO)<<"update for "<<data->id()<<" version "<<data->version()<<" "<<update.version();
   CHECK_EQ(data->version(), update.version())<<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
   data->set_n_update(data->n_update()+1);
   if(data->n_update()==data->threshold()){
@@ -83,13 +82,17 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
     DAry::arymath().madd(history, lr*w, dptr, history, len);
 
   if(data->n_update()==data->threshold()){
-    // param+=history/n
-    DAry::arymath().madd(dptr, -1.0f/data->n_update(), history, dptr, len);
+    // param+=history/n, /data->n_update()
+    DAry::arymath().sub(dptr, dptr, history, len);
+    float upp=0.f;
+    for(int i=0;i<len;i++)
+      upp+=fabs(history[i]);
+    LOG(INFO)<<"update for "<<data->id()<<" "<<upp/len;
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);
     data->set_version(update.version()+1);
-    LOG(INFO)<<"update version for "<<data->id()<<" from "<<update.version();
+    //LOG(INFO)<<"update version for "<<data->id()<<" from "<<update.version();
   }
   return true;
 }
@@ -231,6 +234,8 @@ void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
   int offset = 0;
   int groupsize=GlobalContext::Get()->group_size();
   const float * data_addr = param->data().dptr();
+  LOG(INFO)<<"param id "<<param->id()<<" name "<<param->name()
+    <<" "<<param->partition()<<" "<<groupsize;
   for(auto& entry: param_splits_map_[param->id()]) {
     SGDValue v(example_);
     // sgd related hyper-parameters

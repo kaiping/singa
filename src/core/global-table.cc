@@ -178,6 +178,31 @@ void GlobalTable::SendUpdates() {
         t->Serialize(&c);
         t->clear();
         put.set_done(true);
+        NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put);
+      } while (!t->empty());
+      t->clear();
+    }
+  }
+  pending_writes_ = 0;
+}
+
+void GlobalTable::SendPut() {
+  TableData put;
+  for (size_t i = 0; i < partitions_.size(); ++i) {
+    LocalTable *t = partitions_[i];
+    if (!is_local_shard(i) && !t->empty()) {
+      // Always send at least one chunk, to ensure that we clear taint on
+      // tables we own.
+      do {
+        put.Clear();
+        put.set_shard(i);
+        //put.set_source(w_->id());
+        put.set_source(worker_id_);
+        put.set_table(id());
+        RPCTableCoder c(&put);
+        t->Serialize(&c);
+        t->clear();
+        put.set_done(true);
         NetworkThread::Get()->Send(owner(i), MTYPE_PUT_REQUEST, put);
       } while (!t->empty());
       t->clear();
@@ -214,6 +239,17 @@ bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
   }
   RPCTableCoder c(&req);
   return partitions_[req.shard()]->ApplyUpdates(&c);
+}
+
+bool GlobalTable::ApplyPut(const lapis::TableData &req) {
+  boost::recursive_mutex::scoped_lock sl(mutex());
+  if (!is_local_shard(req.shard())) {
+    LOG_EVERY_N(INFO, 1000)
+        << "Forwarding push request from: " << MP(id(), req.shard())
+        << " to " << owner(req.shard());
+  }
+  RPCTableCoder c(&req);
+  return partitions_[req.shard()]->ApplyPut(&c);
 }
 
 }

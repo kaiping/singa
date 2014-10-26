@@ -20,7 +20,7 @@ void RequestQueue::ExtractKey(int tag, string data, string *key) {
     HashGet message;
     message.ParseFromArray(data.data(), data.size());
     *key = message.key();
-  } else if (tag == MTYPE_PUT_REQUEST) {
+  } else if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST) {
     TableData message;
     message.ParseFromArray(data.data(), data.size());
     *key = message.key();
@@ -115,7 +115,7 @@ void SyncRequestQueue::Enqueue(int tag, string &data) {
   {
     boost::recursive_mutex::scoped_lock sl(key_lock);
 
-    if (tag == MTYPE_PUT_REQUEST)
+    if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST)
       CHECK_LT(put_queues_[idx].size(),
                num_mem_servers_) << "failed at key index " << idx << " for key " << *reinterpret_cast<const int*>(key.c_str());
     else if (tag == MTYPE_GET_REQUEST)
@@ -125,7 +125,6 @@ void SyncRequestQueue::Enqueue(int tag, string &data) {
     if (tag == MTYPE_GET_REQUEST) {
       get_queues_[idx].push_back(new TaggedMessage(tag, data));
     } else {
-      CHECK_EQ(tag, MTYPE_PUT_REQUEST);
       put_queues_[idx].push_back(new TaggedMessage(tag, data));
     }
   }

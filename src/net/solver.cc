@@ -40,6 +40,7 @@ Solver::Solver(const SolverProto &proto) {
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
   net_=new Net(np);
   net_->Setup();
+  LOG(INFO)<<net_->ShapeInfo();
   auto params=net_->params();
   auto grp_rank=context_->worker_id();
   delegate_=delegate;
@@ -214,6 +215,8 @@ Performance Solver::Test(const Phase& phase){
 }
 
 void Solver::ReportPerformance(string prefix, Performance perf) {
+  LOG(ERROR)<<step_<<" "<<prefix<<" "<<perf.ToString();
+  /*
   if(context_->AmIGroupLeader()){
     int toRcv=context_->group_size()-1;
     while(toRcv>0){
@@ -224,10 +227,10 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
       }
     }
     //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
-    LOG(ERROR)<<step_<<" "<<prefix<<" "<<perf.ToString();
   }else{
     mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
  }
+ */
 }
 
 void Solver::Train(){
@@ -261,35 +264,56 @@ void Solver::Train(){
   pthread_join(prefetch_thread_, NULL);
   prefetcher.Free();
 }
+
+void Solver::DebugInfo(Net* net){
+  char display[1024];
+  auto layers=net->layers();
+  for(auto* layer: layers){
+    sprintf(display, "Forward layer %10s data norm1 %10.6f",
+          layer->name().c_str(), layer->data().Norm1());
+    LOG(INFO)<<string(display);
+  }
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+    sprintf(display, "Backward layer %10s grad norm1 %10.8f",
+          (*layer)->name().c_str(), (*layer)->grad().Norm1());
+    LOG(INFO)<<string(display);
+  }
+  for(auto* layer: layers){
+    for(auto* param: layer->GetParams()){
+      sprintf(display, "Layer %10s, param id %2d, name %10s, value norm1 %10.8f , grad norm1 %10.8f",
+          layer->name().c_str(), param->id(),
+          param->name().c_str(), param->data().Norm1(), param->grad().Norm1());
+      LOG(INFO)<<string(display);
+    }
+  }
+}
+
 Performance Solver::TrainOneBatch(Net *net, int step){
   LOG(INFO)<<"Training Step : "<<step;
   delegate_->AsyncGet(net->params(),step);
   auto layers=net->layers();
-  //Debug();
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
       delegate_->AsyncCollect(param, step);
-      LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
     }
-    if(typeid(*layer)==typeid(FCLayer)){
+    if(layer->SyncForFeature()){
       MPI_Barrier(context_->mpicomm());
     }
-    LOG(INFO)<<layer->name()<<" before norm "<<layer->data().Norm1();
     layer->ComputeFeature();
-    LOG(INFO)<<layer->name()<<" afeter norm "<<layer->data().Norm1();
   }
-  Debug();
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
+  //Debug();
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    LOG(INFO)<<(*layer)->name()<<" before norm "<<(*layer)->data().Norm1();
-    (*layer)->ComputeGradient();
-    LOG(INFO)<<(*layer)->name()<<" afeter norm "<<(*layer)->data().Norm1();
-    for(auto* param: (*layer)->GetParams())
-      delegate_->Update(param, step);
-    if(typeid(*layer)==typeid(FCLayer*)){
+    if((*layer)->SyncForGradient()){
+      //LOG(ERROR)<<(*layer)->name()<<" sync for grad";
       MPI_Barrier(context_->mpicomm());
     }
+    (*layer)->ComputeGradient();
+    for(auto* param: (*layer)->GetParams()){
+      delegate_->Update(param, step);
+    }
   }
+  DebugInfo(net);
   return perf;
 }
 

@@ -28,6 +28,7 @@ class DataSource {
   virtual void Init(const DataSourceProto &proto, const ShardProto& shard)=0;
   virtual void ToProto(DataSourceProto *ds_proto);
   virtual void NextRecord(string* key, Record *record)=0;
+  void Next() {offset_++;}
   //virtual bool GetRecord(const int key, Record* record)=0;
   //virtual void Reset(const ShardProto& sp)=0;
   /**

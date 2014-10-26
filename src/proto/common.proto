@@ -1,6 +1,6 @@
 package lapis;
 enum MessageTypes {
-  MTYPE_PUT_REQUEST = 1;
+  MTYPE_PUT_REQUEST = 1;  
   MTYPE_GET_REQUEST = 2;
   MTYPE_GET_RESPONSE = 3;
 
@@ -37,6 +37,8 @@ enum MessageTypes {
   MTYPE_WORKER_START =27;
   MTYPE_FINISH_INIT_PARAMS =28;
   MTYPE_INIT_PARAMS=29;
+  
+  MTYPE_UPDATE_REQUEST=30; 
 };
 message EmptyMessage {}
 message ShortMsg {

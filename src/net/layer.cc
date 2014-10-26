@@ -82,6 +82,25 @@ void Layer::SetupDAry(int pdim){
 }
 void Layer::ComputeFeature(){}
 void Layer::ComputeGradient(){}
+bool Layer::SyncForFeature(){
+  if(in_edges_.size()==0)
+    return false;
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(bottom.GetPartition()==-1||bottom.GetPartition()==data_.GetPartition())
+    return false;
+  else
+    return true;
+}
+bool Layer::SyncForGradient(){
+  if(in_edges_.size()==0)
+    return false;
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(data_.GetPartition()==-1||bottom.GetPartition()==data_.GetPartition())
+    return false;
+  else
+    return true;
+}
+
 void Layer::CollectParams(vector<Param*> *params){}
 vector<Param*> Layer::GetParams(){
   return vector<Param*>();
@@ -178,11 +197,8 @@ void ConvLayer::SetupDAry(int pdim){
 
 void ConvLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
-  t.reset();
   Img2Col(&col_data_, bottom);
-  img2col+=t.elapsed();
-  // copy constructor with rvalue ref DAry(DAry&& other)
-  // copy constructor with rvalue ref DAry(DAry&& other)
+
   DAry data4=data_.Reshape({num_, ngroups_, M_, N_});
   DAry col4=col_data_.Reshape({num_, ngroups_, K_, N_});
   DAry weight3=weight_.data().Reshape({ngroups_, M_, K_});
@@ -195,11 +211,9 @@ void ConvLayer::ComputeFeature() {
     for (int g = 0; g < ngroups_; g++){
       data3[g].Dot(weight3[g], col3[g]);
     }
-    tdot+=t.elapsed();
     //t.reset();
     DAry mat_data=data3.Reshape({nkernels_, N_});
     mat_data.AddCol(bias_.data());
-    tadd+=t.elapsed();
   }
 }
 
@@ -235,7 +249,8 @@ void ConvLayer::ComputeGradient() {
     Col2Img(gbottom, col_grad_);
   } else {
     t.reset();
-    for (int n = 0; n < num_; n++) {
+    Range nrng=grad_.IndexRange(0);
+    for (int n = nrng.first; n < nrng.second; n++) {
       DAry grad3=grad4[n];
       DAry col3=col4[n];
       for (int g = 0; g < ngroups_; g++){
@@ -284,8 +299,8 @@ void ConvLayer::Col2Img(DAry* dst, const DAry& src){
   Range crng=dst->IndexRange(1);
   Range srccrng(crng.first*wsize_*wsize_, crng.second*wsize_*wsize_);
   vector<Range> slice{nrng, srccrng, Range({0, cheight_}), Range({0, cwidth_})};
-  DAry lsrc=src.Fetch(slice);
-  lsrc.Fill(0.0f);
+  const DAry lsrc=src.Fetch(slice);
+  dst->Fill(0.0f);
   // float *srcptr=lsrc.dptr();
   for(int n=nrng.first;n<nrng.second;n++){
     for (int c = srccrng.first; c < srccrng.second; ++c) {
@@ -368,7 +383,8 @@ void DropoutLayer::ComputeFeature() {
 
 void DropoutLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  gbottom->Mult(grad_, mask_);
+  float scale=1.0/(1.0-drop_prob_);
+  gbottom->Map([scale](float g, float m) {return g*m*scale;}, grad_, mask_);
 }
 /*****************************************************************************
  * Implementation for PoolingLayer
@@ -404,7 +420,7 @@ void PoolingLayer::ComputeFeature() {
   Range crng=data_.IndexRange(1);
   vector<Range> slice{nrng, crng, Range({0, height_}),Range({0,width_})};
   const DAry& bottom=in_edges_[0]->GetData(this);
-  DAry lbottom=bottom.Fetch(slice);
+  const DAry lbottom=bottom.Fetch(slice);
   switch (pooling_method_) {
     case LayerProto::kMaxPooling:
       data_.Fill(-FLT_MAX);
@@ -443,8 +459,8 @@ void PoolingLayer::ComputeGradient() {
   Range nrng=bottom.IndexRange(0);
   Range crng=bottom.IndexRange(1);
   vector<Range> slice{nrng, crng, Range({0, pheight_}),Range({0,pwidth_})};
-  DAry ldata=data_.Fetch(slice);
-  DAry lgrad=grad_.Fetch(slice);
+  const DAry ldata=data_.Fetch(slice);
+  const DAry lgrad=grad_.Fetch(slice);
   switch (pooling_method_) {
     case LayerProto::kMaxPooling:
       gbottom->Fill(0.0f);
@@ -515,7 +531,6 @@ void LRNLayer::SetPartition(int pdim){
   norm_.SetPartition(pdim);
   ratio_.SetPartition(pdim);
 }
-
 void LRNLayer::SetupDAry(int pdim){
   Layer::SetupDAry(pdim);
   norm_.Setup(pdim);
@@ -523,8 +538,9 @@ void LRNLayer::SetupDAry(int pdim){
 }
 void LRNLayer::ComputeFeature() {
   Range nrng=data_.IndexRange(0);
+  Range crng=data_.IndexRange(0);
   // crng.first<- max(0, data_.IndexRange(1).first-lpad_)
-  Range crng({0, data_.shape(1)});
+  //Range crng({0, data_.shape(1)});
   std::vector<Range>slice{nrng, crng, Range({0, data_.shape(2)}), Range({0, data_.shape(3)})};
   const DAry& bottom=in_edges_[0]->GetData(this);
   const DAry& lbottom=bottom.Fetch(slice);
@@ -537,10 +553,10 @@ void LRNLayer::ComputeFeature() {
     DAry bottom3=lbottom[n];
     squared3.Square(bottom3);
     squared3.Mult(squared3, alpha);
-    norm3[0].Sum(squared3, Range(0, rpad_));
-    for(int c=1;c<channels_;++c){
+    norm3[0].Sum(squared3, Range(crng.first, rpad_));
+    for(int c=crng.first+1;c<crng.second;++c){
       cur.Copy(norm3[c-1]);
-      if(c-lpad_>=0)
+      if(c-lpad_>=crng.first)
         cur.Minus(cur, squared3[c-lpad_]);
       if(c+rpad_<=crng.second)
         cur.Add(cur, squared3[c+rpad_-1]);
@@ -557,12 +573,13 @@ void LRNLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   const DAry& bottom=in_edges_[0]->GetData(this);
   Range nrng=bottom.IndexRange(0);
+  Range crng=bottom.IndexRange(1);
   // current crng is full
-  Range crng({0, bottom.shape(1)});
+  //Range crng({0, bottom.shape(1)});
   std::vector<Range>slice{nrng, crng, Range({0, bottom.shape(2)}),Range({0, bottom.shape(3)})};
-  DAry ldata=data_.Fetch(slice);
-  DAry lgrad=grad_.Fetch(slice);
-  DAry lnorm=norm_.Fetch(slice);
+  const DAry ldata=data_.Fetch(slice);
+  const DAry lgrad=grad_.Fetch(slice);
+  const DAry lnorm=norm_.Fetch(slice);
   gbottom->Pow(lnorm, -beta_);
   gbottom->Mult(*gbottom, lgrad);
   ratio_.Mult(lgrad, ldata);
@@ -572,14 +589,12 @@ void LRNLayer::ComputeGradient() {
     DAry gbottom3=(*gbottom)[n];
     DAry bottom3=bottom[n];
     DAry ratio3=ratio_[n];
-    accum_ratio.Sum(ratio3, {0, lpad_});
+    accum_ratio.Sum(ratio3, {crng.first, lpad_});
     for(int c=crng.first;c<crng.second;++c) {
-      if(c+lpad_<crng.second)
-        accum_ratio.Add(ratio3[c+lpad_]);
+      if(c+lpad_<crng.second) accum_ratio.Add(ratio3[c+lpad_]);
       gbottom3[c].Map([factor](float g, float a, float b)
-          {return g+factor*a*b;}, gbottom3[c], accum_ratio, bottom3[c]);
-      if(c-rpad_+1>=0)
-        accum_ratio.Minus(ratio3[c-rpad_+1]);
+                      {return g+factor*a*b;}, gbottom3[c], accum_ratio, bottom3[c]);
+      if(c-rpad_+1>=crng.first) accum_ratio.Minus(ratio3[c-rpad_+1]);
     }
   }
 }
@@ -647,9 +662,22 @@ void FCLayer::SetPartition(int pdim){
     bias_.SetPartition(-1);
   }
 }
+bool FCLayer::SyncForFeature(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+    return false;
+  else
+    return true;
+}
+bool FCLayer::SyncForGradient(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+    return false;
+  else
+    return true;
+}
 
 void FCLayer::ComputeFeature() {
-  VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry bottom2=bottom.Reshape({num_, vdim_});
   data_.Dot(bottom2, weight_.data());
@@ -657,7 +685,6 @@ void FCLayer::ComputeFeature() {
 }
 
 void FCLayer::ComputeGradient() {
-  VLOG(3)<<name_;
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   DAry bottom2=bottom.Reshape({num_, vdim_});
@@ -691,6 +718,7 @@ void SoftmaxLossLayer::ToProto(LayerProto* proto, bool copyData) {
   proto->set_num_output(dim_);
   proto->set_topk(topk_);
 }
+
 void SoftmaxLossLayer::SetupDAry(int pdim) {
   Layer::SetupDAry(pdim);
 }
@@ -719,10 +747,10 @@ void SoftmaxLossLayer::ComputeFeature() {
   vector<Range> slice{nrng, {0,dim_}};
   DAry lbottom=bottom.Fetch(slice);
   for (int n = nrng.first; n < nrng.second; ++n) {
-    float mmax = lbottom[n].Max();
+    DAry lbottom1=lbottom[n];
+    float mmax = lbottom1.Max();
     DAry data=data_[n];
-    data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom[n]);
-
+    data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom1);
     float sum=data.Sum();
     data.Div(data, sum);
   }
@@ -808,17 +836,23 @@ void ImageLayer::ToProto(LayerProto* proto, bool copyData) {
 }
 void ImageLayer::InitDAryShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes[0].size(),4);
-  data_.SetShape(shapes[0]);
-  grad_.SetShape(shapes[0]);
+  vector<int> shape=shapes[0];
+
+  if(cropsize_>0){
+    shape[2]=cropsize_;
+    shape[3]=cropsize_;
+  }
+  data_.SetShape(shape);
+  grad_.SetShape(shape);
 }
 void ImageLayer::AddInputRecord(const Record &record){
   Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
   const DAryProto& image=record.image();
-  int channels=data_.shape(1);
-  int height=data_.shape(2);
-  int width=data_.shape(3);
+  int channels=image.shape(0);
+  int height=image.shape(1);
+  int width=image.shape(2);
   if (cropsize_) {
     // get a blob
     int h_off, w_off;

@@ -95,6 +95,18 @@ Net::Net(const NetProto &net_proto) {
  // the softmax loss layer
   LOG(ERROR)<<"Neural Net constructed";
 }
+std::string Net::ShapeInfo(){
+  char display[8*1024];
+  for(auto* layer:layers_){
+    sprintf(display+strlen(display), "Layer: %10s, %s\n", layer->name().c_str(),
+          layer->data().shape().ToString().c_str());
+  }
+  for(auto* param:params_){
+    sprintf(display+strlen(display), "Param: %10s, %s\n", param->name().c_str(),
+          param->data().shape().ToString().c_str());
+  }
+  return string(display);
+}
 /*
 void Net::Forward() {
   for (auto* layer : layers_){

@@ -73,12 +73,14 @@ class Layer {
    * activation function
    */
     virtual void ComputeFeature();
+    virtual bool SyncForFeature();
   /**
    * Backward propagate gradients through the Net
    * It aggregates gradients from all outgoing edges, and then computes
    * the gradient w.r.t the aggregated activation.
    */
     virtual void ComputeGradient();
+    virtual bool SyncForGradient();
  /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -149,6 +151,7 @@ class Layer {
   }
 
   const DAry& data() {return data_;}
+  const DAry& grad() {return grad_;}
 
  protected:
   std::string name_, type_;
@@ -280,6 +283,8 @@ class FCLayer: public Layer {
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
+  virtual bool SyncForFeature();
+  virtual bool SyncForGradient();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);

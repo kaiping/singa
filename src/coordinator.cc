@@ -119,11 +119,9 @@ Net* Coordinator::SetupNetShape(const ModelProto& model) {
 const NetProto Coordinator::PartitionNet(Net* net){
   int pdim=0;
   for(Layer* layer: net->layers()){
-    if(layer->name()=="pool5")
+    if(layer->name()=="fc6")
       pdim=1;
-    if(layer->name()=="label")
-      layer->SetPartition(-1);
-    else if(layer->name()=="softmax")
+    if(layer->name()=="label"||layer->name()=="softmax")
       layer->SetPartition(-1);
     else
       layer->SetPartition(pdim);

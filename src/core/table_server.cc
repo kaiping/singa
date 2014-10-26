@@ -33,14 +33,23 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
   VLOG(3) << "start request dispatchers from TableServer";
   RequestDispatcher *dispatcher = RequestDispatcher::Get();
   dispatcher->RegisterTableCallback(MTYPE_PUT_REQUEST,
-                               boost::bind(&TableServer::HandleUpdateRequest, this, _1));
+                               boost::bind(&TableServer::HandlePutRequest, this, _1));
+  dispatcher->RegisterTableCallback(MTYPE_UPDATE_REQUEST,
+                                 boost::bind(&TableServer::HandleUpdateRequest, this, _1));
   dispatcher->RegisterTableCallback(MTYPE_GET_REQUEST,
                                boost::bind(&TableServer::HandleGetRequest, this, _1));
   dispatcher->RegisterDiskCallback(boost::bind(&TableServer::HandleDisk, this, _1));
   VLOG(3) << "done registering callback for dipsatcher";
 }
 
-
+void TableServer::ShutdownTableServer(){
+	for (auto& i:tables_){
+		vector<LogFile*> checkpoint_files = i.second->checkpoint_files(); 
+		for (int i=0; i<checkpoint_files.size(); i++)
+			delete checkpoint_files[i]; 
+		checkpoint_files.clear(); 
+	}
+}
 
 bool TableServer::HandleDisk(const Message* data){
 	const DiskData *dt = static_cast<const DiskData*>(data);
@@ -90,6 +99,14 @@ bool TableServer::HandleGetRequest(const Message *message) {
     	return true;
     }
     else return false;
+}
+
+bool TableServer::HandlePutRequest(const Message *message) {
+  boost::recursive_mutex::scoped_lock sl(state_lock_);
+  const TableData *put = static_cast<const TableData *>(message);
+  GlobalTable *t = tables_.at(put->table());
+  bool ret = t->ApplyPut(*put);
+  return ret;
 }
 
 bool TableServer::HandleUpdateRequest(const Message *message) {

@@ -37,20 +37,24 @@ DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
 
 void DataLoader::ShardData(const DataProto& dp) {
   auto& groups=GlobalContext::Get()->groups();
-  if(dp.has_train_data()){
-    LOG(INFO)<<"shard train data...";
-    ShardData(dp.train_data(),groups,false);
-  }
-  if(dp.has_validation_data()){
-    LOG(INFO)<<"load validation data...";
-    ShardData(dp.validation_data(),groups, true);
-  }
+  /*
   if(dp.has_test_data()){
     LOG(INFO)<<"load test data...";
     ShardData(dp.test_data(),groups, true);
   }
+  */
 
-  NetworkThread::Get()->barrier();
+  if(dp.has_train_data()){
+    LOG(INFO)<<"shard train data...";
+    ShardData(dp.train_data(),groups,false);
+  }
+  /*
+     if(dp.has_validation_data()){
+     LOG(INFO)<<"load validation data...";
+     ShardData(dp.validation_data(),groups, true);
+     }
+     */
+  MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO)<<"worker finish load data";
 }
 
@@ -119,6 +123,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   MDB_dbi mdb_dbi;
   MDB_val mdb_key, mdb_data;
   MDB_txn *mdb_txn;
+  MDB_stat mdb_stat;
   // leveldb
   leveldb::DB* db;
   leveldb::Options options;
@@ -127,6 +132,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   options.write_buffer_size = 268435456;
   leveldb::WriteBatch* batch = NULL;
 
+  int count=0;
   string dbname=shard_folder_+"/"+source.name()+"-"+FLAGS_db_backend;
   // Open db
   if (FLAGS_db_backend == "leveldb") {  // leveldb
@@ -136,23 +142,30 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
     batch = new leveldb::WriteBatch();
   } else if (FLAGS_db_backend== "lmdb") {  // lmdb
     LOG(INFO) << "Opening lmdb " << dbname;
-    CHECK_EQ(mkdir(dbname.c_str(), 0744), 0) << "mkdir " << dbname << "failed";
-    CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
-    CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS)  // 1TB
+    if(!check_exists(dbname)){
+      CHECK_EQ(mkdir(dbname.c_str(), 0744), 0) << "mkdir " << dbname << "failed";
+      CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
+      CHECK_EQ(mdb_env_set_mapsize(mdb_env,214748364800), MDB_SUCCESS)  // 1TB
       << "mdb_env_set_mapsize failed";
+    }else{
+      CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
+    }
     CHECK_EQ(mdb_env_open(mdb_env, dbname.c_str(), 0, 0664), MDB_SUCCESS)
       << "mdb_env_open failed";
     CHECK_EQ(mdb_txn_begin(mdb_env, NULL, 0, &mdb_txn), MDB_SUCCESS)
       << "mdb_txn_begin failed";
     CHECK_EQ(mdb_open(mdb_txn, NULL, 0, &mdb_dbi), MDB_SUCCESS)
       << "mdb_open failed";
+    CHECK_EQ(mdb_env_stat(mdb_env, &mdb_stat), MDB_SUCCESS);
+    LOG(INFO)<<"This db has "<<mdb_stat.ms_entries;
+    for(int i=0;i<mdb_stat.ms_entries;i++)
+      ds->Next();
+    count+=mdb_stat.ms_entries;
   } else {
     LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
   }
-
   // Storing to db
   Record record;
-  int count=0;
   const int kMaxKeyLen=256;
   char key_cstr[kMaxKeyLen];
   while(!ds->eof()){
@@ -169,7 +182,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
       mdb_key.mv_size = keystr.size();
       mdb_key.mv_data = reinterpret_cast<void*>(&keystr[0]);
       CHECK_EQ(mdb_put(mdb_txn, mdb_dbi, &mdb_key, &mdb_data, 0), MDB_SUCCESS)
-        << "mdb_put failed";
+        << "mdb_put failed"<< keystr<< " "<<count;
     } else {
       LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
     }
@@ -207,13 +220,27 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   }
   delete ds;
   LOG(ERROR)<<"Finish Create Shard  for DataSource : "<<ds->name()
-    <<", it has "<<count<<" records";
+    <<", it has "<<count<<" records, it should insert "<<shard.record_size();
   CHECK_EQ(count, shard.record_size());
 }
 void DataLoader::CreateLocalShards(const DataProto& dp) {
   LOG(INFO)<<"Create data shards on local disk";
   auto mpi=NetworkThread::Get();
   ShardProto sp;
+  /*
+  if(dp.has_test_data()){
+    string shardlist=shard_folder_+"/test-list.txt";
+    if(!check_exists(shardlist)){
+      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      LOG(ERROR)<<"load from local shard list";
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
+    CreateLocalShard(dp.test_data(), sp);
+  }
+  */
+
   if(dp.has_train_data()){
     // nprocs_-1 is the rank of cooordinator
     string shardlist=shard_folder_+"/train-list.txt";
@@ -221,31 +248,25 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
       mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
       WriteProtoToTextFile(sp, shardlist.c_str());
     }else{
+      LOG(ERROR)<<"load from local shard list";
       ReadProtoFromTextFile(shardlist.c_str(), &sp);
     }
     CreateLocalShard(dp.train_data(), sp);
   }
-  if(dp.has_validation_data()){
-    string shardlist=shard_folder_+"/val-list.txt";
-    if(!check_exists(shardlist)){
-      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
-      WriteProtoToTextFile(sp, shardlist.c_str());
-    }else{
-      ReadProtoFromTextFile(shardlist.c_str(), &sp);
-    }
-    CreateLocalShard(dp.validation_data(), sp);
-  }
-  if(dp.has_test_data()){
-    string shardlist=shard_folder_+"/test-list.txt";
-    if(!check_exists(shardlist)){
-      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
-      WriteProtoToTextFile(sp, shardlist.c_str());
-    }else{
-      ReadProtoFromTextFile(shardlist.c_str(), &sp);
-    }
-    CreateLocalShard(dp.test_data(), sp);
-  }
-  NetworkThread::Get()->barrier();
+  /*
+     if(dp.has_validation_data()){
+     string shardlist=shard_folder_+"/val-list.txt";
+     if(!check_exists(shardlist)){
+     mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+     WriteProtoToTextFile(sp, shardlist.c_str());
+     }else{
+     LOG(ERROR)<<"load from local shard list";
+     ReadProtoFromTextFile(shardlist.c_str(), &sp);
+     }
+     CreateLocalShard(dp.validation_data(), sp);
+     }
+     */
+  MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO)<<"Data shards created";
 }
 /*

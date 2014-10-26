@@ -22,6 +22,9 @@ class DAry {
   DAry();//alloc_size_(0),dptr_(nullptr){}
   // alloc local mem; set ga
   void Setup(int mode);
+  int GetPartition() const {
+    return part_.pdim;
+  }
   void SetPartition(int pdim) {
     part_.pdim=pdim;
   }

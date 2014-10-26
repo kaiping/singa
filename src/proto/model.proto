@@ -101,7 +101,7 @@ message LayerProto {
   optional int32 cropsize =17;
   optional bool mirror = 18;
 
-  optional float drop_prob = 19 [default=0.0]; // droput probability
+  optional float drop_prob = 19 [default=0.5]; // droput probability
   optional DAryProto data = 20;
   optional DAryProto grad = 21;
   optional DAryProto col_data = 22;

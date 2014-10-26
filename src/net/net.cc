@@ -67,11 +67,10 @@ void Net::topology_sort(std::vector<Layer *> *layers) {
 }
 
 Net::Net(const NetProto &net_proto) {
-  LOG(ERROR)<<"Construct Neural Net...";
+  LOG(INFO)<<"Construct Neural Net...";
   std::map<std::pair<string, string>, Edge *> edge_map;
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
-    LOG(ERROR)<<"initing layer "<<layer_proto.name();
     layer->Init(layer_proto, &edge_map);
     layers_.push_back(layer);
     if(layer->HasInput())
@@ -79,7 +78,7 @@ Net::Net(const NetProto &net_proto) {
     if(layer->HasOutput())
       output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
   }
-  LOG(ERROR)<<"layers inited";
+  LOG(INFO)<<"layers inited";
   for(auto& entry: edge_map){
     edges_.push_back(entry.second);
     CHECK(entry.second->src()!=nullptr)<<"missing src node, dst node is "
@@ -87,12 +86,10 @@ Net::Net(const NetProto &net_proto) {
     CHECK(entry.second->dst()!=nullptr)<<"missing dst node, src node is "
       <<entry.second->src()->name();
   }
-  LOG(ERROR)<<"edges inited";
+  LOG(INFO)<<"edges inited";
 
   topology_sort(&layers_);
-  VLOG(3)<<"sorted layer ";
   for(auto* layer: layers_){
-    VLOG(2)<<layer->name();
     layer->CollectParams(&params_);
   }
  // the softmax loss layer
@@ -118,7 +115,6 @@ void Net::Backward() {
 
 void Net::InitDAryShape(){
   for(auto *layer : layers_) {
-    LOG(ERROR)<<layer->name();
     layer->InitDAryShape();
   }
 }
@@ -133,7 +129,6 @@ void Net::InitDAryShape(const vector<vector<int>>& shapes){
 
 void Net::SetupDAry() {
   for(auto* layer: layers_){
-    VLOG(3)<<layer->name();
     layer->SetupDAry(-1);
   }
 }

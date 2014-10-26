@@ -3,7 +3,7 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /usr
+HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
@@ -19,11 +19,11 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core blas arraymath leveldb hdfs jvm armci
+							opencv_core openblas arraymath leveldb hdfs jvm armci lmdb
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib $(HOME_DIR)/lib/openblas-base\
-	/home/dinhtta/Downloads/hadoop-0.22.0/c++/Linux-amd64-64/lib/\
-	/home/dinhtta/Downloads/jdk1.7.0_25/jre/lib/amd64/server
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
+	/home/wangwei/hadoop-1.2.1/c++/Linux-amd64-64/lib/\
+	/home/wangwei/install/jdk1.7.0_67/jre/lib/amd64/server
 #$(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
@@ -65,13 +65,13 @@ CONST_SRCS := src/test/test_consistency.cc
 CONST_OBJS = $(CONST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 6 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 9 -hostfile examples/imagenet12/hostfile \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3
+		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_run: lapis.bin
-	mpirun  -np 3 -hostfile examples/imagenet12/hostfile ./lapis.bin \
+	mpirun  -np 4 -hostfile examples/imagenet12/hostfile ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=3 -load=false --run=true --table_buffer=20 --block_size=10
+	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
@@ -84,11 +84,10 @@ run_test_split: lapis.test.split
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_const: lapis.test.const
-	mpirun -np 5 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 4 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
-
 
 run_test_disk_load: lapis.test.disk
 	rm -rf tmp/*
@@ -115,23 +114,17 @@ lapis.bin: init proto $(LAPIS_OBJS)
 lapis.test.const: $(CONST_OBJS)
 	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(CONST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
-
-$(CONST_OBJS): $(CONST_SRCS) lapis.bin
-	$(CXX) $< $(CXXFLAGS) -MMD -c -o $@
-	@echo
-
-lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
-	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
-	@echo
+#lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
+#	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+#	@echo
 
 #lapis.test.memory: lapis.bin $(MEMORY_TEST_OBJS)
 #	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(MEMORY_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 #	@echo
 
-lapis.test.split: $(SPLIT_TEST_OBJS)
+lapis.test.split: lapis.bin $(SPLIT_TEST_OBJS)
 	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(SPLIT_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
-
 
 $(LAPIS_OBJS):$(BUILD_DIR)/%.o : %.cc
 	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@

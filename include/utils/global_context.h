@@ -7,6 +7,8 @@
 #include <utility>
 #include <memory>
 #include <vector>
+#include <mpi.h>
+
 #include "utils/network_thread.h"
 
 
@@ -48,6 +50,7 @@ class GlobalContext {
   int rank() {return rank_;}
   int leader() {return MembersOfGroup(gid_)[0];}
   const string shard_folder() {return shard_folder_;}
+  const MPI_Comm& mpicomm() {return mpicomm_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   vector<vector<int>> groups() {return groups_;}
   // assume the rank of coordinator is 0
@@ -74,6 +77,8 @@ class GlobalContext {
   std::string  system_conf_, shard_folder_;
   // number of workers per group
   int gid_;
+  MPI_Group mpigroup_;
+  MPI_Comm mpicomm_;
   vector<vector<int>> groups_;
   static shared_ptr<GlobalContext> instance_;
 };

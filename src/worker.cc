@@ -19,20 +19,11 @@ Worker::Worker(const std::shared_ptr<GlobalContext>& gc){
 }
 
 Worker::~Worker() {
-  Shutdown();
+  //Shutdown();
   if(table_server_!=nullptr)
     delete table_server_;
 }
 void Worker::Shutdown() {
-	LOG(INFO) << "Worker is shutting down ...";
-  mpi_->Flush();
-  mpi_->Send(GlobalContext::kCoordinator, MTYPE_WORKER_END, EmptyMessage());
-  EmptyMessage msg;
-  int src = 0;
-  mpi_->Read(GlobalContext::kCoordinator, MTYPE_WORKER_SHUTDOWN, &msg, &src);
-  VLOG(3) << "Worker received MTYPE_WORKER_SHUTDOWN";
-  table_server_->ShutdownTableServer();
-  context_->Finish();
 }
 
 
@@ -69,33 +60,40 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
     table_server_->StartTableServer(delegate->tables());
     LOG(ERROR)<<"table server tarted";
   }
+  int src, cdntor=GlobalContext::kCoordinator;
+  EmptyMessage dummy_msg;
 
   if(context_->AmIWorker()){
     NetProto np;
-    mpi_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &np);
+    mpi_->Read(cdntor, MTYPE_NET_PARTITION, &np);
     Solver solver(sp);
     LOG(ERROR)<<"setup solver";
-    //Debug();
+
     solver.Setup(delegate, dp, np);
 
-    EmptyMessage dummy_msg;
     while(true){
-      int src;
-      if(mpi_->TryRead(context_->kCoordinator, MTYPE_INIT_PARAMS, &dummy_msg, &src)){
+      if(mpi_->TryRead(cdntor, MTYPE_INIT_PARAMS, &dummy_msg, &src)){
         solver.InitParams();
-        mpi_->Send(context_->kCoordinator, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
+        mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
       }
-      if(mpi_->TryRead(context_->kCoordinator, MTYPE_START, &dummy_msg, &src))
+      if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src))
         break;
     }
     solver.Train();
-    //Run(&solver);
+    mpi_->Flush();
+    mpi_->Send(cdntor, MTYPE_WORKER_END, dummy_msg);
+    mpi_->Read(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src);
   }else{
-    while(true)
-      sleep(2);
-    // server
-    LOG(ERROR)<<"not implemented";
+    while(true){
+      if(mpi_->TryRead(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src))
+        break;
+      else
+        sleep(1);
+    }
+    // flush or checkpoint server
   }
+  if(table_server_!=nullptr)
+    table_server_->ShutdownTableServer();
 }
 
 /*

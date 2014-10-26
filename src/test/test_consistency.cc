@@ -10,6 +10,7 @@
 #include "utils/global_context.h"
 #include <gflags/gflags.h>
 #include "proto/model.pb.h"
+#include "proto/common.pb.h"
 #include "worker.h"
 #include "coordinator.h"
 #include "utils/common.h"
@@ -25,27 +26,32 @@ using namespace lapis;
 using std::vector;
 
 //DEFINE_bool(sync_update, false, "Synchronous put/update queue");
+DEFINE_string(db_backend, "lmdb", "backend db");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_string(checkpoint_dir,"tmp","check point dir"); 
 DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
 DEFINE_int32(workers,2,"numer of workers doing get/put");
-/*
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
-*/
 struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
 	bool Update(int *a, const int &b){
-		*a = b*b; //replace
-		return true; 
+		*a = *a+b; //replace
+		return true;
 	}
 
-	bool Get(const int k, const int &val, int *ret){
-		*ret = val; 
-		return true; 
-	}
+  bool Get(const int k, const int &val, int *ret){
+    if(val<k+2&&val!=k){
+      VLOG(3)<<"get false";
+      return false;
+    }
+    else{
+      *ret = val;
+      return true;
+    }
+  }
 };
 
 typedef map<int, GlobalTable*> Map;
@@ -56,7 +62,7 @@ std::vector<ServerState*> server_states;
 TableServer *table_server;
 TableDelegate *delegate;
 
-int num_keys=10;
+int num_keys=5;
 
 void create_mem_table(int id, int num_shards){
 
@@ -141,7 +147,7 @@ void coordinator_load_data(){
 
 	int nservers=context->num_table_servers();
 
-	for (int i=0; i<num_keys; i++){
+	for (int i=1; i<num_keys; i++){
 
 		table->put(i,i);
 	}
@@ -153,34 +159,37 @@ void coordinator_load_data(){
 }
 
 void get(TypedGlobalTable<int,int>* table){
-	double start , end;
-  	int v;
-	for (int i=0; i<num_keys; i++)
-    		table->async_get(i, &v);
+  double start , end;
+  int v;
+  for (int i=0; i<num_keys; i++)
+    table->async_get(i, &v);
 
-  
-    int key=0;
-    int val=0;
 
-    for (int i=0; i<num_keys; i++){
-    	while(!table->async_get_collect(&key, &val))
-    		Sleep(0.001);
-    	VLOG(3) << StringPrintf(" Get (%d,%d)", key, val);
-    }
+  int key=0;
+  int val=0;
+
+  LOG(INFO)<<"start collect key";
+  for (int i=1; i<num_keys; i++){
+    while(!table->async_get_collect(&key, &val))
+      Sleep(0.001);
+    LOG(INFO)<<"collect key "<<key<<" with val "<<val;
+  }
 }
 
 void update(TypedGlobalTable<int,int>* table){
-	for (int i=0; i<num_keys; i++)
-		table->update(i,i*2);
-
+  if(NetworkThread::Get()->id()==0)
+    sleep(10);
+  LOG(INFO)<<"start update";
+  for (int i=0; i<num_keys; i++)
+    table->update(i,1);
 }
 
 void worker_test_data(){
-	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
+  auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
 
-		get(table);
-		update(table);
-		get(table);
+  get(table);
+  update(table);
+  get(table);
 }
 
 void shutdown(){
@@ -190,7 +199,7 @@ void shutdown(){
 			network->Read(MPI::ANY_SOURCE, MTYPE_WORKER_END, &msg);
 		 EmptyMessage shutdown_msg;
 		  for (int i = 0; i < network->size() - 1; i++) {
-		    network->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
+		    network->Send(i, MTYPE_SHUTDOWN, shutdown_msg);
 		  }
 		  network->Flush();
 		  network->Shutdown();
@@ -202,7 +211,7 @@ void shutdown(){
 
 	  EmptyMessage msg;
 
-	  network->Read(context->num_procs()-1, MTYPE_WORKER_SHUTDOWN, &msg);
+	  network->Read(context->num_procs()-1, MTYPE_SHUTDOWN, &msg);
 
 	  if (context->AmITableServer())
 		  table_server->ShutdownTableServer();
@@ -259,7 +268,7 @@ int main(int argc, char **argv) {
 	create_mem_table(0,context->num_table_servers());
 
 	if (context->AmICoordinator()){
-		VLOG(3) << "Coordinator process rank = " << NetworkThread::Get()->id(); 
+		VLOG(3) << "Coordinator process rank = " << NetworkThread::Get()->id();
 		coordinator_assign_tables(0);
 		coordinator_load_data();
 

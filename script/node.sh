@@ -1,5 +1,6 @@
 #!/bin/bash
 folder="/data1/wangwei/lapis"
+#folder="/tmp/lapis.bin.awan*"
 if [ $# -eq 0 ]
 then
   echo "must provide argument, [ssh, delete, create or reset] + hostfile"

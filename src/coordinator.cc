@@ -91,12 +91,14 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
 //  send MTYPE_WORKER_SHUTDOWN messages to other
 //  do not have to wait, simply exit.
 void Coordinator::Shutdown() {
+  /*
   EmptyMessage shutdown_msg;
   for (int i = 0; i < mpi_->size() - 1; i++) {
-    mpi_->Send(i, MTYPE_WORKER_SHUTDOWN, shutdown_msg);
+    mpi_->Send(i, MTYPE_SHUTDOWN, shutdown_msg);
   }
   mpi_->Flush();
   mpi_->Shutdown();
+  */
 }
 
 Net* Coordinator::SetupNetShape(const ModelProto& model) {
@@ -119,13 +121,12 @@ const NetProto Coordinator::PartitionNet(Net* net){
   for(Layer* layer: net->layers()){
     if(layer->name()=="pool5")
       pdim=1;
-    layer->SetPartition(pdim);
-  }
-  for(Layer* layer: net->layers()){
     if(layer->name()=="label")
       layer->SetPartition(-1);
-    if(layer->name()=="softmax")
+    else if(layer->name()=="softmax")
       layer->SetPartition(-1);
+    else
+      layer->SetPartition(pdim);
   }
   NetProto netproto;
   net->ToProto(&netproto);
@@ -185,14 +186,15 @@ void Coordinator::Resume() {
 void Coordinator::Run(){
   LOG(ERROR)<<"Broadcast all workers to start running";
   EmptyMessage dummy_msg;
-  mpi_->Broadcast(MTYPE_START, dummy_msg);
+  mpi_->Broadcast(MTYPE_WORKER_START, dummy_msg);
 
   StateQueue<int> groups(context_->num_groups());
-  while(groups.HasValid()) {
-    int src = 0;
-    EmptyMessage end_msg;
+  int alive_workers=context_->num_groups()*context_->group_size();
+  int src = 0;
+  EmptyMessage end_msg;
+  while(alive_workers) {
     if(mpi_->TryRead(groups.Next(),MTYPE_WORKER_END, &end_msg, &src)) {
-      groups.Invalide();
+      alive_workers--;
     }
     Performance perf;
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
@@ -200,6 +202,7 @@ void Coordinator::Run(){
     }
     Sleep(FLAGS_sleep_time);
   }
+  mpi_->Broadcast(MTYPE_SHUTDOWN, dummy_msg);
 }
 
 }  // namespace lapis

@@ -3,12 +3,16 @@
 
 #include <glog/logging.h>
 #include <leveldb/db.h>
+#include <lmdb.h>
+#include <mpi.h>
 #include <vector>
+#include <typeinfo>
 
 #include "proto/model.pb.h"
 #include "net/solver.h"
 #include "da/gary.h"
 
+DECLARE_string(db_backend);
 namespace lapis {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
@@ -28,7 +32,6 @@ Solver::Solver(const SolverProto &proto) {
   validation_steps_=proto.validation_steps();
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
-
 }
 
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
@@ -39,12 +42,15 @@ void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto&
   delegate_=delegate;
   delegate_->SplitParams(params, grp_rank);
   string shard_folder=GlobalContext::Get()->shard_folder();
-  train_shard_=shard_folder+"/"+dp.train_data().name()+"-leveldb";
-  val_shard_=shard_folder+"/"+dp.validation_data().name()+"-leveldb";
+  train_shard_=shard_folder+"/"+dp.train_data().name()+"-"+FLAGS_db_backend;
+  val_shard_=shard_folder+"/"+dp.validation_data().name()+"-"+FLAGS_db_backend;
 }
 
 void Solver::InitParams(){
-  net_->InitParameters();
+  for(auto* param: net_->params()){
+    param->Fill();
+    LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
+  }
   delegate_->Put(net_->params());
 }
 
@@ -58,63 +64,113 @@ void Solver::ToProto(SolverProto *proto) {
   proto->set_display_after_steps(display_after_steps_);
   proto->set_display_every_steps(display_every_steps_);
 }
-leveldb::DB* Solver::OpenShard(string path) {
-  leveldb::DB* db_temp;
-  leveldb::Options options;
-  options.create_if_missing = false;
-  options.max_open_files = 100;
-  LOG(INFO) << "Opening leveldb " << path;
-  leveldb::Status status = leveldb::DB::Open(options, path, &db_temp);
-  CHECK(status.ok()) << "Failed to open leveldb " << path << std::endl
-    << status.ToString();
-  return db_temp;
+Prefetcher::Prefetcher(string path, Net* _net) {
+  net=_net;
+  // Initialize DB
+  if(FLAGS_db_backend=="leveldb"){
+    leveldb::Options options;
+    options.create_if_missing = false;
+    options.max_open_files = 100;
+    LOG(INFO) << "Opening leveldb " << path;
+    leveldb::Status status = leveldb::DB::Open( options, path, &db);
+    CHECK(status.ok()) << "Failed to open leveldb "
+      << path << std::endl << status.ToString();
+    iter=db->NewIterator(leveldb::ReadOptions());
+    iter->SeekToFirst();
+  }else if(FLAGS_db_backend=="lmdb"){
+    CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
+    CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS);
+    CHECK_EQ(mdb_env_open(mdb_env, path.c_str(),
+            MDB_RDONLY|MDB_NOTLS, 0664), MDB_SUCCESS) << "mdb_env_open failed";
+    CHECK_EQ(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn), MDB_SUCCESS)
+      << "mdb_txn_begin failed";
+    CHECK_EQ(mdb_open(mdb_txn, NULL, 0, &mdb_dbi), MDB_SUCCESS)
+      << "mdb_open failed";
+    CHECK_EQ(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor), MDB_SUCCESS)
+      << "mdb_cursor_open failed";
+    LOG(INFO) << "Opening lmdb " <<path;
+    CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_FIRST),
+        MDB_SUCCESS) << "mdb_cursor_get failed";
+  }else{
+    LOG(FATAL) << "Unknown database backend";
+  }
 }
+
+void Prefetcher::Free(){
+  if(FLAGS_db_backend=="leveldb"){
+    delete db;
+    delete iter;
+  }else{
+    mdb_cursor_close(mdb_cursor);
+    mdb_close(mdb_env, mdb_dbi);
+    mdb_txn_abort(mdb_txn);
+    mdb_env_close(mdb_env);
+  }
+}
+
+
+void Prefetcher::NextIterator(){
+  if(FLAGS_db_backend=="leveldb"){
+    iter->Next();
+    if(!iter->Valid()){
+      LOG(INFO)<<"reset to start leveldb";
+      iter->SeekToFirst();
+    }
+  }else{
+    if( mdb_cursor_get(mdb_cursor, &mdb_key,
+          &mdb_value, MDB_NEXT)!= MDB_SUCCESS){
+      LOG(INFO)<<"reset to start lmdb";
+      CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key,
+          &mdb_value, MDB_FIRST), MDB_SUCCESS);
+    }
+  }
+}
+
+void Prefetcher::ReadRecord(Record* record){
+  if(FLAGS_db_backend=="leveldb"){
+    record->ParseFromString(iter->value().ToString());
+  }else{
+    CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key,
+          &mdb_value, MDB_GET_CURRENT), MDB_SUCCESS);
+    record->ParseFromArray(mdb_value.mv_data, mdb_value.mv_size);
+  }
+}
+
 void* PrefetchData(void* context){
-  PrefetchArg *parg=static_cast<PrefetchArg*>(context);
-  leveldb::Iterator* iter=parg->iter;
-  Net* net=parg->net;
+  Prefetcher *prefetcher=static_cast<Prefetcher*>(context);
+  Net* net=prefetcher->net;
   const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
-  for(int n=0;n<nrng.first;n++){
-    if(!iter->Valid())
-      iter->SeekToFirst();
-    iter->Next();
-  }
+  for(int n=0;n<nrng.first;n++)
+    prefetcher->NextIterator();
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
-    CHECK(iter);
-    CHECK(iter->Valid());
-    record.ParseFromString(iter->value().ToString());
+    //LOG(INFO)<<iter->key().ToString()<<" "<<record.label();
+    prefetcher->ReadRecord(&record);
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
-    iter->Next();
+    prefetcher->NextIterator();
   }
-  for(int n=0;n<input.shape(0)-nrng.second;n++){
-    if(!iter->Valid())
-      iter->SeekToFirst();
-    iter->Next();
-  }
+  for(int n=0;n<input.shape(0)-nrng.second;n++)
+    prefetcher->NextIterator();
 }
+
 void Solver::Validate(){
   val_perf_.Reset();
-  leveldb::DB* db=OpenShard(val_shard_);
-  leveldb::Iterator* iter(db->NewIterator(leveldb::ReadOptions()));
-  iter->SeekToFirst();
-  PrefetchArg arg{iter, net_};
+  Prefetcher prefetcher(val_shard_, net_);
 
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
   Solver::phase=kValidation;
   Performance perf;
   for(int b=0;b<validation_steps_;b++){
     pthread_join(prefetch_thread_, NULL);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     val_perf_.Aggregate(ValidateOneBatch(net_));
   }
   pthread_join(prefetch_thread_, NULL);
-  delete iter;
-  delete db;
+  prefetcher.Free();
 }
 
 void Solver::ReportPerformance(Performance perf) {
@@ -135,16 +191,11 @@ void Solver::ReportPerformance(Performance perf) {
 }
 
 void Solver::Train(){
-  leveldb::DB* db=OpenShard(train_shard_);
-  leveldb::Iterator* iter(db->NewIterator(leveldb::ReadOptions()));
-  iter->SeekToFirst();
-  PrefetchArg arg{iter, net_};
-
+  Prefetcher prefetcher(train_shard_, net_);
   //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
   while (!HasFinished()) {
-    LOG(INFO)<<step();
     //pthread_join(prefetch_thread_, NULL);
-    PrefetchData(&arg);
+    PrefetchData(&prefetcher);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
     train_perf_.Aggregate(TrainOneBatch(net_));
@@ -157,30 +208,40 @@ void Solver::Train(){
       Validate();
       ReportPerformance(val_perf_.Avg());
     }
+    IncStep();
   }
-  delete db;
-  delete iter;
   pthread_join(prefetch_thread_, NULL);
+  prefetcher.Free();
 }
 Performance Solver::TrainOneBatch(Net *net){
-  Debug();
-  LOG(ERROR)<<"Training Step : "<<step();
+  LOG(INFO)<<"Training Step : "<<step();
   delegate_->AsyncGet(net->params(),step());
   auto layers=net->layers();
+  //Debug();
   for(auto* layer: layers){
-    LOG(ERROR)<<layer->name();
-    for(auto* param: layer->GetParams())
+    for(auto* param: layer->GetParams()){
       delegate_->AsyncCollect(param, step());
+      LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
+    }
+    if(typeid(*layer)==typeid(FCLayer)){
+      MPI_Barrier(context_->mpicomm());
+    }
+    LOG(INFO)<<layer->name()<<" before norm "<<layer->data().Norm1();
     layer->ComputeFeature();
+    LOG(INFO)<<layer->name()<<" afeter norm "<<layer->data().Norm1();
   }
+  Debug();
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    LOG(ERROR)<<(*layer)->name();
+    LOG(INFO)<<(*layer)->name()<<" before norm "<<(*layer)->data().Norm1();
     (*layer)->ComputeGradient();
+    LOG(INFO)<<(*layer)->name()<<" afeter norm "<<(*layer)->data().Norm1();
     for(auto* param: (*layer)->GetParams())
       delegate_->Update(param, step());
+    if(typeid(*layer)==typeid(FCLayer*)){
+      MPI_Barrier(context_->mpicomm());
+    }
   }
-  IncStep();
   return perf;
 }
 

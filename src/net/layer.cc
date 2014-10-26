@@ -209,7 +209,8 @@ void ConvLayer::ComputeGradient() {
     DAry grad3=grad_.Reshape({num_, nkernels_, N_});
     // sum along 1-th dim, i.e., the result aray has length as the 1-th dim
     gbias->Fill(0.0f);
-    for (int i = 0; i < num_; i++) {
+    Range rng=grad_.IndexRange(0);
+    for (int i = rng.first; i < rng.second; i++) {
       gbias->SumCol(grad3[i], false);
     }
   }
@@ -409,7 +410,6 @@ void PoolingLayer::ComputeFeature() {
       data_.Fill(-FLT_MAX);
       for (int n = nrng.first; n < nrng.second; n++) {
         for (int c = crng.first; c < crng.second; c++) {
-          float* dptr=lbottom.addr(n,c,0,0);
           for (int ph = 0; ph < pheight_; ph++) {
             for (int pw = 0; pw < pwidth_; pw++) {
               int hstart = ph * stride_;
@@ -418,33 +418,10 @@ void PoolingLayer::ComputeFeature() {
               int wend = std::min(wstart + wsize_, width_);
               for (int h = hstart; h < hend; h++) {
                 for (int w = wstart; w < wend; w++) {
-                  data_.at(n,c,ph,pw)= std::max(data_.at(n,c,ph,pw), *dptr);
-                  dptr++;
+                  data_.at(n,c,ph,pw)= std::max(data_.at(n,c,ph,pw),
+                      lbottom.at(n,c,h,w));
                 }
               }
-            }
-          }
-        }
-      }
-      break;
-    case LayerProto::kAvgPooling:
-      data_.Fill(0.0f);
-      for (int n = nrng.first; n < nrng.second; n++) {
-        for (int c = crng.first; c < crng.second; c++) {
-          float* dptr=lbottom.addr(n,c,0,0);
-          for (int ph = 0; ph < pheight_; ph++) {
-            for (int pw = 0; pw < pwidth_; pw++) {
-              int hstart = ph * stride_;
-              int wstart = pw * stride_;
-              int hend = std::min(hstart + wsize_, height_);
-              int wend = std::min(wstart + wsize_, width_);
-              for (int h = hstart; h < hend; h++) {
-                for (int w = wstart; w < wend; w++) {
-                  data_.at(n,c,ph,pw) += *dptr;
-                  dptr++;
-                }
-              }
-              data_.at(n,c,ph,pw) /= (hend - hstart) * (wend - wstart);
             }
           }
         }
@@ -465,7 +442,7 @@ void PoolingLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   Range nrng=bottom.IndexRange(0);
   Range crng=bottom.IndexRange(1);
-  vector<Range> slice{nrng, crng,Range({0, pheight_}),Range({0,pwidth_})};
+  vector<Range> slice{nrng, crng, Range({0, pheight_}),Range({0,pwidth_})};
   DAry ldata=data_.Fetch(slice);
   DAry lgrad=grad_.Fetch(slice);
   switch (pooling_method_) {
@@ -473,8 +450,6 @@ void PoolingLayer::ComputeGradient() {
       gbottom->Fill(0.0f);
       for (int n = nrng.first; n < nrng.second; n++) {
         for (int c = crng.first; c < crng.second; c++) {
-          float* bgdptr=gbottom->addr(n,c,0,0);
-          float* bdptr=bottom.addr(n,c,0,0);
           for (int ph = 0; ph < pheight_; ph++) {
             for (int pw = 0; pw < pwidth_; pw++) {
               int hstart = ph * stride_;
@@ -483,10 +458,8 @@ void PoolingLayer::ComputeGradient() {
               int wend = std::min(wstart + wsize_, width_);
               for (int h = hstart; h < hend; h++) {
                 for (int w = wstart; w < wend; w++) {
-                  (*bgdptr) += lgrad.at(n,c,ph,pw)* (
-                      *bdptr==ldata.at(n,c,ph,pw));
-                  bgdptr++;
-                  bdptr++;
+                  gbottom->at(n,c,h,w) += lgrad.at(n,c,ph,pw)* (
+                      bottom.at(n,c,h,w)==ldata.at(n,c,ph,pw));
                 }
               }
             }
@@ -656,13 +629,23 @@ void FCLayer::InitDAryShape(){
 void FCLayer::SetupDAry(int pdim){
   Layer::SetupDAry(pdim);
   // partition parameters when doing model parallelism
-  weight_.SetupDAry(1);
-  bias_.SetupDAry(0);
+  if(pdim==-1){
+    weight_.SetupDAry(1);
+    bias_.SetupDAry(0);
+  }else{
+    weight_.SetupDAry(-1);
+    bias_.SetupDAry(-1);
+  }
 }
 void FCLayer::SetPartition(int pdim){
   Layer::SetPartition(pdim);
-  weight_.SetPartition(1);
-  bias_.SetPartition(0);
+  if(pdim==1){
+    weight_.SetPartition(1);
+    bias_.SetPartition(0);
+  }else {
+    weight_.SetPartition(-1);
+    bias_.SetPartition(-1);
+  }
 }
 
 void FCLayer::ComputeFeature() {
@@ -788,8 +771,9 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
   }
   //}
   Performance perf;
-  perf.set_precision(ncorrect*1.0/num_);
-  perf.set_loss(logprob/num_);
+  int nrecords=nrng.second-nrng.first;
+  perf.set_precision(ncorrect*1.0/nrecords);
+  perf.set_loss(logprob/nrecords);
   return perf;
 }
 

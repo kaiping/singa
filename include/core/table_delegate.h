@@ -24,28 +24,11 @@ namespace lapis {
 using std::string;
 
 template<typename V>
-class GetHandler{
- public:
- /**
-  * return true for Success; false for failure;
-  */
-  bool Get(const V& from, V* to);
-};
-/*
-template<>
-bool GetHandler<SGDValue>::Get(const SGDValue& from, SGDValue* to){
-  return true;
-}
-template<>
-bool GetHandler<AdaGradValue>::Get(const AdaGradValue& from, AdaGradValue* to){
-  return true;
-}
-*/
-template<typename V>
 class UpdateHandler: public BaseUpdateHandler<VKey, V>{
  public:
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(V* data, const V& update);
+  virtual bool Get(const VKey& key, const V &val, V* ret);
 };
 
 template<>
@@ -53,6 +36,7 @@ class UpdateHandler<AdaGradValue>{
  public:
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(AdaGradValue* data, const AdaGradValue& update);
+  virtual bool Get(const VKey& key, const AdaGradValue &val, AdaGradValue* ret);
 };
 
 template<>
@@ -60,6 +44,7 @@ class UpdateHandler<SGDValue>{
  public:
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(SGDValue* data, const SGDValue& update);
+  virtual bool Get(const VKey& key, const SGDValue &val, SGDValue* ret);
   void UpdateHyperParams(const int step);
  private:
   int step_;
@@ -169,8 +154,7 @@ TypedGlobalTable<K, V>* TypedTableDelegate<K,V>::CreateParamTable(
   info->partition_factory = new typename SparseTable<K, V>::Factory;
   auto table=new TypedGlobalTable<K, V>();
   table->Init(info);
-  VLOG(3)<<"after create param table ";
-  VLOG(3)<<"table shards num "<<table->num_shards();
+  //LOG(INFO)<<"table shards num "<<table->num_shards();
   return table;
 }
 template<class K, class V>
@@ -178,9 +162,10 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
   int total_splits=0;
   int group_size=GlobalContext::Get()->group_size();
   for(auto param: params){
-    LOG(ERROR)<<"split param";
     const DAry& dary=param->data();
-    int id=param->id()*group_size+wid;
+    int id=param->id()*group_size;
+    if(param->partition())
+      id+=wid;
     int local_size=dary.local_size();
     int splitsize=param->split_threshold();
     /*
@@ -196,6 +181,8 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
       splitsize = 1000000;
     }
     int nsplits=local_size/splitsize+(local_size%splitsize!=0);
+    CHECK_LE(nsplits,kMaxSplits_)<<"total splits for one param partition "
+      <<" exceeds kMaxSplits, raise kMaxSplits in solver config";
     vector<std::pair<int, int>> splits;
     for(auto j = 0, pos=0; j < nsplits; j++) {
       int len=(pos+splitsize)<local_size?splitsize:local_size-pos;
@@ -207,9 +194,14 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
     }
     param_splits_map_[param->id()]=splits;
     total_splits+=splits.size();
+    // for debug
+    for(auto& split: splits){
+      char tmpbuf[1024];
+      sprintf(tmpbuf, "%4d %5d %5d", param->id(), split.first, split.second);
+      LOG(INFO)<<string(tmpbuf);
+    }
   }
-  CHECK(total_splits<kMaxSplits_)
-    <<"total splits exceeds kMaxSplits, raise kMaxSplits in solver config";
+  LOG(INFO)<<"Total splits for this worker "<<total_splits;
 }
 
 template<class K, class V>
@@ -259,7 +251,8 @@ void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
   for(auto entry: splits) {
     key.set_key(entry.first);
     param_table_->async_get(key, &v);
-    asyncget_split_.at(entry.first)=true;
+    asyncget_split_.at(entry.first)=false;
+    //LOG(INFO)<<"get "<<entry.first;
   }
 }
 
@@ -267,6 +260,8 @@ template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
   auto& splits=param_splits_map_[param->id()];
   unsigned int nget=0;
+  int start_split_id=splits.front().first;
+  int end_split_id=splits.back().first;
   // check num of splits collected before
   for(auto& split: splits){
     if(asyncget_split_.at(split.first))
@@ -278,6 +273,7 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
     // may collect splits of other params used later
     if(param_table_->async_get_collect(&key,&val)){
       int splitid=key.key();
+      //LOG(INFO)<<"collected "<<splitid;
       auto& split=split_param_map_.at(splitid);
       Param* p=split.first;
       int offset=split.second;
@@ -288,6 +284,8 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
       if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
         CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
       asyncget_split_[splitid]=true;
+      if(splitid>=start_split_id&&splitid<=end_split_id)
+        nget++;
     }else{
       sleep(0.001);
     }

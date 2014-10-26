@@ -245,6 +245,14 @@ class Partition{
       return steps*stepsize+(dist%stride%stepsize);
   }
 
+  int LocateOffset(int offset) const {
+    CHECK(offset>=start)<<offset<<" "<<start<<" "<<size<<" "<<stepsize<<" "<<stride;
+    int dist=offset-start;
+    int steps=dist/stride;
+    CHECK(dist%stride<stepsize);
+    return steps*stepsize+(dist%stride%stepsize);
+  }
+
   // assume reshape happen for dimension after pdim
   // in this case, the mem is continuous after reshape and subshape
   void CheckReshape(Shape& old, Shape& cur){

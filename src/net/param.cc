@@ -15,7 +15,6 @@ void Param::Init(const ParamProto &proto){
   weight_decay_multiplier_ = proto.weight_decay_multiplier();
   init_method_=proto.init_method();
 
-
   low_=proto.low();
   high_=proto.high();
   mean_=proto.mean();
@@ -26,8 +25,28 @@ void Param::Init(const ParamProto &proto){
     data_.InitFromProto(proto.data());
   if(proto.has_grad())
     grad_.InitFromProto(proto.grad());
+  partition_=proto.partition();
 }
 
+void Param::ToProto(ParamProto *proto, bool copyData) {
+  // TODO(wangwei) store the proto as a member for easy ToProto.
+  proto->set_name(name_);
+  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
+  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
+  proto->set_init_method(init_method_);
+  proto->set_split_threshold(split_threshold_);
+  proto->set_mean(mean_);
+  proto->set_std(std_);
+  proto->set_low(low_);
+  proto->set_high(high_);
+  proto->set_value(value_);
+  proto->set_partition(partition_);
+
+  DAryProto* data=proto->mutable_data();
+  data_.ToProto(data, copyData);
+  DAryProto* grad=proto->mutable_grad();
+  grad_.ToProto(grad, copyData);
+}
 void Param::SetShape(int len){
   data_.SetShape({len});
   grad_.SetShape({len});
@@ -39,6 +58,8 @@ void Param::SetShape(int h, int w){
 void Param::SetPartition(int k) {
   data_.SetPartition(k);
   grad_.SetPartition(k);
+  if(k!=-1)
+    partition_=true;
 }
 void Param::SetupDAry(int k) {
   data_.Setup(k);
@@ -78,18 +99,6 @@ void Param::Fill(){
 }
 
 
-void Param::ToProto(ParamProto *proto, bool copyData) {
-  // TODO(wangwei) store the proto as a member for easy ToProto.
-  proto->set_name(name_);
-  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
-  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
-  proto->set_init_method(init_method_);
-  proto->set_split_threshold(split_threshold_);
-  DAryProto* data=proto->mutable_data();
-  data_.ToProto(data, copyData);
-  DAryProto* grad=proto->mutable_grad();
-  grad_.ToProto(grad, copyData);
-}
 
 void Param::FillGaussainData(float mean, float std, float factor) {
   data_.SampleGaussian(mean, std);

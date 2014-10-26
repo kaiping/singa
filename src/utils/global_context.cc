@@ -47,8 +47,21 @@ void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
       break;
     gid++;
   }
-  CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer())<<gid_<<" "<<rank_<<" "<<worker_id_<<" "<<gid;
-  VLOG(3)<<"init network thread";
+  LOG(INFO)<<"GlobalConxt Setup finish: "<<
+    "Group id "<<gid_<<" rank "<<rank_<<" group rank "<<worker_id_;
+  CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer());
+  if(gid_!=-1) {
+    int gsize=group_size();
+    int *member=new int[gsize];
+    int k=0;
+    for(auto mem: groups_[gid_])
+      member[k++]=mem;
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    MPI_Group_incl(world_group, gsize, member, &mpigroup_);
+    MPI_Comm_create_group(MPI_COMM_WORLD, mpigroup_,0, &mpicomm_);
+    delete member;
+  }
 }
 shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf){
   if(!instance_) {
@@ -59,6 +72,8 @@ shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf){
   return instance_;
 }
 void GlobalContext::Finish() {
+  MPI_Group_free(&mpigroup_);
+  MPI_Comm_free(&mpicomm_);
   NetworkThread::Get()->Shutdown();
 }
 shared_ptr<GlobalContext> GlobalContext::Get() {

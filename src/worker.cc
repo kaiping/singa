@@ -16,6 +16,7 @@ Worker::Worker(const std::shared_ptr<GlobalContext>& gc){
   LOG(INFO) << "starting Worker...";
   mpi_=NetworkThread::Get();
   context_=gc;
+  table_server_=nullptr;
 }
 
 Worker::~Worker() {
@@ -68,7 +69,6 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
     mpi_->Read(cdntor, MTYPE_NET_PARTITION, &np);
     Solver solver(sp);
     LOG(ERROR)<<"setup solver";
-
     solver.Setup(delegate, dp, np);
 
     while(true){
@@ -77,10 +77,12 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
         mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
       }
       if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src)){
-        solver.Train();
+        //solver.Train();
+        solver.TimeOneBatch();
         break;
       }
     }
+    LOG(ERROR)<<"Worker Finish Training";
     mpi_->Flush();
     mpi_->Send(cdntor, MTYPE_WORKER_END, dummy_msg);
     mpi_->Read(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src);
@@ -91,10 +93,14 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
       else
         sleep(2);
     }
-    // flush or checkpoint server
+    LOG(ERROR)<<"Table Server shutting down";
   }
-  if(table_server_!=nullptr)
+  if(table_server_!=nullptr){
     table_server_->ShutdownTableServer();
+  }
+  delete delegate;
+
+  LOG(ERROR)<<"Worker shutting down";
 }
 
 /*

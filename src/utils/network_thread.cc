@@ -261,6 +261,7 @@ void NetworkThread::Shutdown() {
   if (running_) {
     running_ = false;
     sender_and_reciever_thread_->join();
+    delete sender_and_reciever_thread_;
     //processing_thread_->join();
   }
 }

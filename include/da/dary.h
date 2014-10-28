@@ -81,7 +81,8 @@ class DAry {
   /**
     * Dot production
     */
-  void Dot( const DAry& src1, const DAry& src2, bool trans1=false, bool trans2=false);
+  void Dot( const DAry& src1, const DAry& src2, bool trans1=false, bool trans2=false
+      ,bool overwrite=true);
   void Mult( const DAry& src1, const DAry& src2);
   void Mult( const DAry& src1, const float x);
   void Div( const DAry& src1, const float x);
@@ -174,13 +175,25 @@ class DAry {
     */
   Range IndexRange(int k) const{
     CHECK(k<shape_.dim);
-    if(ga_!=nullptr)
-      return ga_->IndexRange(k);
-    else{
-      std::pair<int, int> rng(0, shape_.s[k]);
-      return rng;
-    }
+    if(k!=part_.pdim)
+      return std::make_pair(0, shape_.s[k]);
+    CHECK(ga_!=nullptr);
+    return ga_->IndexRange(k);
   }
+  Range InterIndexRange(int k) const{
+    CHECK(k<shape_.dim);
+    if(k!=part_.pdim)
+      return std::make_pair(0, shape_.s[k]);
+    CHECK(ga_!=nullptr);
+    if(shape_.s[k]== ga_->shape().s[k])
+      return ga_->IndexRange(k);
+    else if(shape_.s[k+1]==ga_->shape().s[k])
+      return ga_->IndexRange(k+1);
+    else
+      LOG(ERROR)<<"IndexRange error "
+      <<shape_.ToString()<<ga_->shape().ToString();
+  }
+
 
   /**
     * fetch data according to index ranges

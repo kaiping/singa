@@ -29,6 +29,7 @@ GlobalContext::GlobalContext(const std::string &system_conf):system_conf_(system
 }
 
 void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
+  mpi_=nt;
   rank_=nt->id();
   num_procs_=nt->size();
   kCoordinator=nt->size()-1;
@@ -66,15 +67,17 @@ void GlobalContext::Setup(const std::shared_ptr<NetworkThread>& nt){
 shared_ptr<GlobalContext> GlobalContext::Get(const std::string &sys_conf){
   if(!instance_) {
     instance_.reset(new GlobalContext(sys_conf));
-    auto nt=NetworkThread::Get();
-    instance_->Setup(nt);
+    instance_->Setup(NetworkThread::Get());
   }
   return instance_;
 }
-void GlobalContext::Finish() {
-  MPI_Group_free(&mpigroup_);
-  MPI_Comm_free(&mpicomm_);
-  NetworkThread::Get()->Shutdown();
+void GlobalContext::Shutdown() {
+  mpi_->Shutdown();
+  if(gid_!=-1){
+    MPI_Group_free(&mpigroup_);
+    MPI_Comm_free(&mpicomm_);
+  }
+  MPI_Finalize();
 }
 shared_ptr<GlobalContext> GlobalContext::Get() {
   if(!instance_) {

@@ -55,7 +55,7 @@ class GlobalContext {
   const vector<vector<int>>& groups() {return groups_;}
   // assume the rank of coordinator is 0
   static int kCoordinator;
-  void Finish();
+  void Shutdown();
  private:
   GlobalContext(const std::string &sys_conf);
   void Setup(const std::shared_ptr<NetworkThread>& nt);
@@ -80,6 +80,7 @@ class GlobalContext {
   MPI_Group mpigroup_;
   MPI_Comm mpicomm_;
   vector<vector<int>> groups_;
+  shared_ptr<NetworkThread> mpi_;
   static shared_ptr<GlobalContext> instance_;
 };
 }  // namespace lapis

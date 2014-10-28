@@ -5,9 +5,11 @@
 #include <armci.h>
 #include <stdlib.h>
 #include <utility>
+#include "utils/timer.h"
 
 #include "da/gary.h"
 namespace lapis {
+double GAry::comm_time=0.0;
 int GAry::grp_rank_=-1;
 int GAry::groupsize_=0;
 int* GAry::procslist_=nullptr;
@@ -15,7 +17,7 @@ ARMCI_Group GAry::group_;
 void GAry::Init(int rank, const vector<vector<int>>& groups){
   ARMCI_Init();
   LOG(ERROR)<<"init gary";
-  int size,*procslist;
+  int *procslist;
   ARMCI_Group group;
   for(auto& list: groups){
     int size=list.size();
@@ -39,12 +41,15 @@ void GAry::Init(int rank, const vector<vector<int>>& groups){
   }
 
   if(grp_rank_==-1)
-    LOG(ERROR)<<"this should be the cooridnator process";
+    LOG(ERROR)<<"this should be the coordinator process";
   else LOG(ERROR)<<"group rank "<<grp_rank_<<" size "<<groupsize_;
 }
 void GAry::Finalize() {
+  LOG(ERROR)<<"GAry remote get/put time "<< comm_time;
   delete procslist_;
-  ARMCI_Group_free(&group_);
+  if(grp_rank_!=-1){
+    ARMCI_Group_free(&group_);
+  }
   ARMCI_Finalize();
 }
 
@@ -65,7 +70,7 @@ float* GAry::Setup(const Shape& shape, Partition* part){
     shape2d_.s[0]*=shape.s[i];
   }
   shape2d_.s[1]=shape.size/shape2d_.s[0];
-  CHECK(shape2d_.s[1]%groupsize_==0);
+  CHECK(shape2d_.s[1]%groupsize_==0)<<"shape is "<<shape.ToString()<<" groupszie "<<groupsize_;
 
   lo_[0]=0;
   hi_[0]=shape2d_.s[0];
@@ -91,6 +96,32 @@ const Range GAry::IndexRange(int k){
   else return std::make_pair(0,shape_.s[k]);
 }
 
+void GAry::Accum(float* dptr){
+  int grouppartsize=shape2d_.size/groupsize_;
+  int count [2], unit=sizeof(float);
+  float scale=1.0f, *srcaddr;
+  int stridelevel=1, srcstride, tgtstride;
+  for(int i=0;i<groupsize_;i++){
+    if(shape2d_.s[0]==1){
+      srcaddr=dptr+i*grouppartsize;
+      srcstride=grouppartsize*unit;
+      tgtstride=grouppartsize*unit;
+      count[0]=grouppartsize*unit;
+      count[1]=1;
+    }else{
+      tgtstride=shape2d_.s[1]/groupsize_;
+      srcaddr=dptr+tgtstride*i;
+      srcstride=shape2d_.s[1]*unit;
+      tgtstride*=unit;
+      count[0]=tgtstride;
+      count[1]=shape2d_.s[0];
+    }
+    double tick=Now();
+    ARMCI_AccS(ARMCI_ACC_FLT, &scale, srcaddr, &srcstride, dptrs_[i],
+        &tgtstride, count, stridelevel, procslist_[i]);
+    comm_time+=Now()-tick;
+  }
+}
 
 /**
  * dst<-src
@@ -116,10 +147,13 @@ float* GAry::Fetch(const Partition& part, int offset)const {
   int tgtstride=gwidth*unit;
   float* ret=new float[part.size];
   float* srcaddr=ret;
+  double tick;
   for(int i=0 ;i<part.size*unit/(count[0]*count[1]); i++){
     int gid=start/gwidth;
     float* tgtaddr=dptrs_[gid]+srow*gwidth+start%gwidth;
+    tick=Now();
     ARMCI_GetS((void*)tgtaddr, &tgtstride, (void*)srcaddr, &srcstride, count, stridelevel, procslist_[gid]);
+    comm_time+=Now()-tick;
     srcaddr+=std::min(gwidth, part.stepsize);
     start+=std::min(part.stride, gwidth);
     if(start>=width){

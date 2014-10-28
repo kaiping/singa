@@ -35,7 +35,7 @@ class Shape {
     s[0]=other.s[0]; s[1]=other.s[1]; s[2]=other.s[2]; s[3]=other.s[3];
     return *this;
   }
-  bool operator==(const Shape& other) {
+  bool operator==(const Shape& other) const {
     if(dim!=other.dim)
       return false;
     for(int i=0;i<dim;i++)

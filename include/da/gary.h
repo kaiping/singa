@@ -21,10 +21,13 @@ class GAry{
   const Range IndexRange(int k);
   float* Fetch(const Partition& part, int offset) const;
   float* Fetch(const vector<Range>& slice) const ;
+  void Accum(float* dptr);
   //int local_size(){return shape_.size/groupsize;}
   //int offset() {return offset_;}
   static void Init(int rank, const vector<vector<int>>& groups);
   static void Finalize() ;
+  const Shape& shape() const {return shape_;}
+  static double comm_time;
  private:
   Shape shape_, shape2d_;
   int lo_[2], hi_[2];

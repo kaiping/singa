@@ -192,11 +192,15 @@ int ImageNetSource::CopyFilesFromHDFS(string hdfs_folder, string local_folder,
   hdfsDisconnect(lfs);
   return ncopy;
 }
-void ImageNetSource::ReadImage(const std::string &path, int height, int width,
+int ImageNetSource::ReadImage(const std::string &path, int height, int width,
     const float *mean, DAryProto* image) {
   cv::Mat cv_img;
   if (height > 0 && width > 0) {
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
+    if(!cv_img_origin.data){
+      LOG(ERROR)<<"invalid img "<<path;
+      return 0;
+    }
     cv::resize(cv_img_origin, cv_img, cv::Size(height, width));
   } else {
     cv_img = cv::imread(path, CV_LOAD_IMAGE_COLOR);
@@ -224,6 +228,7 @@ void ImageNetSource::ReadImage(const std::string &path, int height, int width,
       }
     }
   }
+  return 1;
 }
 
 bool ImageNetSource::GetRecord(const int key, Record* record) {
@@ -240,17 +245,17 @@ bool ImageNetSource::GetRecord(const int key, Record* record) {
   return true;
 }
 
-void ImageNetSource::NextRecord(string* key, Record *record) {
+int ImageNetSource::NextRecord(string* key, Record *record) {
   DAryProto *image=record->mutable_image();
   if(image->value().size()<record_size_){
     for(int i=0;i<record_size_;i++)
       image->add_value(0);
   }
   *key=lines_.at(offset_).first;
-  ReadImage(image_folder_ + "/" + *key, height_,
-            width_, data_mean_->data().data(),image);
+  int ret=ReadImage(image_folder_ + "/" + *key, height_, width_, data_mean_->data().data(),image);
   record->set_label(lines_.at(offset_).second);
   offset_++;
+  return ret;
 }
 /*****************************************************************************
  * Implementation of DataSourceFactory

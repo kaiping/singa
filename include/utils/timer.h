@@ -25,7 +25,7 @@ inline std::string LocalTime() {
 
   time (&rawtime);
   timeinfo = localtime (&rawtime);
-  return string(asctime(timeinfo));
+  return std::string(asctime(timeinfo));
 }
 
 class Timer {

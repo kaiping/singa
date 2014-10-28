@@ -170,7 +170,8 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   char key_cstr[kMaxKeyLen];
   while(!ds->eof()){
     string value, key;
-    ds->NextRecord(&key, &record);
+    if(!ds->NextRecord(&key, &record))
+      continue;
     record.SerializeToString(&value);
     snprintf(key_cstr, kMaxKeyLen, "%08d_%s", count, key.c_str());
     string keystr(key_cstr);
@@ -221,7 +222,6 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   delete ds;
   LOG(ERROR)<<"Finish Create Shard  for DataSource : "<<ds->name()
     <<", it has "<<count<<" records, it should insert "<<shard.record_size();
-  CHECK_EQ(count, shard.record_size());
 }
 void DataLoader::CreateLocalShards(const DataProto& dp) {
   LOG(INFO)<<"Create data shards on local disk";

@@ -44,10 +44,10 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
 
 void TableServer::ShutdownTableServer(){
 	for (auto& i:tables_){
-		vector<LogFile*> checkpoint_files = i.second->checkpoint_files(); 
+		vector<LogFile*> checkpoint_files = i.second->checkpoint_files();
 		for (int i=0; i<checkpoint_files.size(); i++)
-			delete checkpoint_files[i]; 
-		checkpoint_files.clear(); 
+			delete checkpoint_files[i];
+		checkpoint_files.clear();
 	}
 }
 

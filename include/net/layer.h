@@ -295,6 +295,7 @@ class FCLayer: public Layer {
   int vdim_;
   int num_;
   Param weight_, bias_;
+  DAry cache_data_;
 };
 
 class OutputLayer: public Layer{

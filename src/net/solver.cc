@@ -302,7 +302,6 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     layer->ComputeFeature();
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
-  //Debug();
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     if((*layer)->SyncForGradient()){
       //LOG(ERROR)<<(*layer)->name()<<" sync for grad";
@@ -325,37 +324,80 @@ Performance Solver::TestOneBatch(Net *net, int step){
   return net->output_layer(0)->CalcPerf(true, true);
 }
 
+void Solver::TimeTableServer(int runs){
+
+}
 void Solver::TimeOneBatch(int runs) {
-  delegate_->Get(net_->params(), 0);
-  Timer t;
-  LOG(INFO)<<"Forwarding...";
+  phase=Phase::kTrain;
+  Prefetcher prefetcher(train_shard_, net_);
+  PrefetchData(&prefetcher);
+  for(auto* layer:net_->input_layer())
+    layer->SetInputData(nullptr);
 
   auto layers=net_->layers();
-  for (auto* layer : layers){
-    t.reset();
-    for (int i = 0; i < runs; i++)
+  int nlayers=layers.size();
+  double* forward=new double[nlayers+1];;
+  double* backward=new double[nlayers+1];;
+  double* refresh=new double[nlayers+1];;
+  double* sync=new double[nlayers+1];;
+  memset(forward, 0, sizeof(double)*(1+nlayers));
+  MPI_Barrier(context_->mpicomm());
+  LOG(ERROR)<<"Time One Batch...";;
+  double sync_start, refresh_start, comp_start;
+  double start=Now();
+  for(int k=0;k<runs;k++){
+    delegate_->AsyncGet(net_->params(),step_);
+    int layerid=0;
+    for(auto* layer: layers){
+      refresh_start=Now();
+      for(auto* param: layer->GetParams())
+        delegate_->AsyncCollect(param, step_);
+      sync_start=Now();
+      refresh[layerid]+=sync_start-refresh_start;
+      if(layer->SyncForFeature()){
+        MPI_Barrier(context_->mpicomm());
+      }
+      comp_start=Now();
+      sync[layerid]+=comp_start-sync_start;
       layer->ComputeFeature();
-    LOG(INFO)<<layer->name() <<": "<<t.elapsed()*1.0/runs;
-    if(layer->name().find("conv")!=std::string::npos){
-      ConvLayer* cl=dynamic_cast<ConvLayer*> (layer);
-      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
-        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
+      forward[layerid++]+=Now()-comp_start;
     }
-  }
-  LOG(INFO)<<"Backwarding...";
-  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    t.reset();
-    for(int i=0;i<runs;i++)
+    for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+      sync_start=Now();
+      if((*layer)->SyncForGradient()){
+        MPI_Barrier(context_->mpicomm());
+      }
+      comp_start=Now();
+      sync[--layerid]+=comp_start-sync_start;
       (*layer)->ComputeGradient();
-    LOG(INFO)<<(*layer)->name()<<": "<<t.elapsed()*1.0/runs;
-    if((*layer)->name().find("conv")!=std::string::npos){
-      ConvLayer* cl=dynamic_cast<ConvLayer*> (*layer);
-      LOG(INFO)<<"img2col "<<cl->img2col<<" col2img "<<cl->col2img
-        <<" tdot "<<cl->tdot<<" tadd "<<cl->tadd;
-    }
-  }
-}
+      refresh_start=Now();
+      backward[layerid]+=refresh_start-comp_start;
 
+      for(auto* param: (*layer)->GetParams())
+        delegate_->Update(param, step_);
+      refresh[layerid]+=Now()-refresh_start;
+    }
+    IncStep();
+  }
+  double total=Now()-start;
+  MPI_Barrier(context_->mpicomm());
+  char buf[8192];
+  //memset(buf, 0, 8192);
+  //sprintf(buf, "\nTime One Batch with %d runs using %6.2fs\n", runs, total);
+  sprintf(buf, "\n");
+  for(int i=0;i<nlayers;i++){
+    sprintf(buf+strlen(buf), "Layer %10s forward %6.2f backward %6.2f sync %6.2f refresh %6.2f\n",
+        layers[i]->name().c_str(),forward[i]/runs, backward[i]/runs, sync[i]/runs, refresh[i]/runs);
+    forward[nlayers]+=forward[i];
+    backward[nlayers]+=backward[i];
+    sync[nlayers]+=sync[i];
+    refresh[nlayers]+=refresh[i];
+  }
+  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
+    total/runs,forward[nlayers]/runs, backward[nlayers]/runs, sync[nlayers]/runs, refresh[nlayers]/runs, GAry::comm_time/runs);
+  LOG(ERROR)<<string(buf);
+  //DebugInfo(net_);
+}
 
 //Performance Solver::Test(Net *net) { }
 bool Solver::HasFinished(){

@@ -79,16 +79,20 @@ DAry DAry::Reshape(const vector<int>& shape) const{
   ret.ga_=ga_;
   ret.dptr_=dptr_;
   int row=1;
-  for(int i=0;i<part_.getpDim();i++)
-    row*=shape_.s[i];
   ret.shape_.Reset(shape);
-  int nrow=1;
-  for(int i=0;i<shape_.dim;i++){
-    if(nrow==row){
-      ret.part_.setpDim(i);
-      break;
+  if(part_.pdim<0)
+    return ret;
+  else{
+    for(int i=0;i<part_.pdim;i++)
+      row*=shape_.s[i];
+    int nrow=1;
+    for(int i=0;i<ret.shape_.dim;i++){
+      if(nrow>=row){
+        ret.part_.pdim=i;
+        break;
+      }
+      nrow*=ret.shape_.s[i];
     }
-    nrow*=shape_.s[i];
   }
   return ret;
 }
@@ -236,52 +240,75 @@ float* DAry::FetchPtr(const Partition& part) const{
   * Dot production
   * either all are local or all are global
   */
-void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2){
+void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2,
+    bool overwrite){
   CHECK(dptr_!=src1.dptr_);
   CHECK(dptr_!=src2.dptr_);
   CHECK_EQ(src1.shape_.dim,2);
   CHECK_EQ(src2.shape_.dim,2);
   CHECK_EQ(shape_.dim,2);
   int M, K, N;
-  float  *dptr1=src1.dptr_, *dptr2=src2.dptr_;
+  bool do_put=false;
+  float *dptr=dptr_, *dptr1=src1.dptr_, *dptr2=src2.dptr_;
   //double t1, t2; t1=MPI_Wtime();
   if(ga_!=nullptr){
-    //CHECK(src1.ga_!=nullptr&&src2.ga_!=nullptr);
-    auto rrng=ga_->IndexRange(0);
-    auto crng=ga_->IndexRange(1);
-    M=rrng.second-rrng.first;
-    N=crng.second-crng.first;
-    vector<Range> slice1, slice2;
-    if(!trans1){
-      slice1=vector<Range>{rrng, make_pair(0, src1.shape_.s[1])};
-      K=src1.shape_.s[1];
+    if(!trans1&&trans2&&src1.part_.pdim==1&&src2.part_.pdim==1){
+      // V=H*W^T
+      M=shape_.s[0];
+      N=shape_.s[1];
+      auto rng1=src1.InterIndexRange(1);
+      auto rng2=src2.InterIndexRange(1);
+      CHECK(rng1==rng2);
+      K=rng1.second-rng1.first;
+      dptr=new float[M*N];
+      do_put=true;
+    }else{
+      auto rrng=InterIndexRange(0);
+      auto crng=InterIndexRange(1);
+      M=rrng.second-rrng.first;
+      N=crng.second-crng.first;
+      vector<Range> slice1, slice2;
+      if(!trans1){
+        slice1=vector<Range>{rrng, make_pair(0, src1.shape_.s[1])};
+        K=src1.shape_.s[1];
+      }
+      else{
+        slice1=vector<Range>{make_pair(0,src1.shape_.s[0]),rrng};
+        K=src1.shape_.s[0];
+      }
+      if(!trans2){
+        slice2=vector<Range>{make_pair(0, src2.shape_.s[0]), crng};
+      }
+      else{
+        slice2=vector<Range>{crng, make_pair(0, src2.shape_.s[1])};
+      }
+      dptr1=src1.FetchPtr(slice1);
+      dptr2=src2.FetchPtr(slice2);
     }
-    else{
-      slice1=vector<Range>{make_pair(0,src1.shape_.s[0]),rrng};
-      K=src1.shape_.s[0];
-    }
-    if(!trans2){
-      slice2=vector<Range>{make_pair(0, src2.shape_.s[0]), crng};
-    }
-    else{
-      slice2=vector<Range>{crng, make_pair(0, src2.shape_.s[1])};
-    }
-    dptr1=src1.FetchPtr(slice1);
-    dptr2=src2.FetchPtr(slice2);
   }else{
     M=shape_.s[0];
     N=shape_.s[1];
-    //M=trans1?src1.shape_.s[1]:src1.shape_.s[0];
-    //N=trans2?src2.shape_.s[0]:src2.shape_.s[1];
-    K=trans1?src1.shape_.s[0]:src1.shape_.s[1];
+    if(src1.ga_!=nullptr&&src2.ga_!=nullptr){
+      CHECK_EQ(trans1, true);
+      CHECK_EQ(trans2, false);
+      // K=src1.IndexRange(1).second-first
+      auto rng=src2.IndexRange(0);
+      K=rng.second-rng.first;
+    }else
+      K=trans1?src1.shape_.s[0]:src1.shape_.s[1];
   }
   //t2=MPI_Wtime();
   int lda=trans1==false?K:M;
   int ldb=trans2==false?N:K;
+  float scale=overwrite?0.0f:1.0f;
   CBLAS_TRANSPOSE TransA =trans1?CblasTrans:CblasNoTrans;
   CBLAS_TRANSPOSE TransB =trans2?CblasTrans:CblasNoTrans;
   cblas_sgemm(CblasRowMajor,  TransA, TransB, M, N, K,
-      1.0f, dptr1, lda, dptr2, ldb, 0.0f, dptr_, N);
+      1.0f, dptr1, lda, dptr2, ldb, scale, dptr_, N);
+  if(do_put){
+    ga_->Accum(dptr);
+    delete dptr;
+  }
   //LOG(ERROR)<<"comm time :"<<t2-t1<<" comp time: "<<MPI_Wtime()-t2;
   src1.Delete(dptr1);
   src2.Delete(dptr2);
@@ -453,7 +480,7 @@ void DAry::Map( std::function<float(float, float)> func, const DAry& src1, const
   float* dptr1=src1.FetchPtr(part_);
   float* dptr2=src2.FetchPtr(part_);;
   for (int i = 0; i < part_.size; i++) {
-    dptr_[i]=func(src1.dptr_[i], src2.dptr_[i]);
+    dptr_[i]=func(dptr1[i], dptr2[i]);
   }
   src1.Delete(dptr1);
   src2.Delete(dptr2);
@@ -466,7 +493,7 @@ void DAry::Map( std::function<float(float, float, float)> func, const DAry& src1
   float* dptr2=src2.FetchPtr(part_);;
   float* dptr3=src3.FetchPtr(part_);;
   for (int i = 0; i < part_.size; i++) {
-    dptr_[i]=func(src1.dptr_[i], src2.dptr_[i], src3.dptr_[i]);
+    dptr_[i]=func(dptr1[i], dptr2[i], dptr3[i]);
   }
   src1.Delete(dptr1);
   src2.Delete(dptr2);
@@ -489,7 +516,7 @@ void DAry::Map( std::function<float(float, float, float)> func, const DAry& src1
 void DAry::Sum( const DAry& src, const Range& rng) {
   CHECK_EQ(shape_.size, src.shape_.size/src.shape_.s[0]);
   int rowlen=part_.size;
-  Range srcrng=src.IndexRange(0);
+  Range srcrng=src.InterIndexRange(0);
   int rows=srcrng.second-srcrng.first;
   CHECK_EQ(rowlen, src.part_.size/rows);
   Fill(0.0f);
@@ -509,7 +536,7 @@ void DAry::Sum( const DAry& src, const Range& rng) {
 void DAry::SumRow(const DAry& src, bool overwrite) {
   CHECK_EQ(shape_.size, src.shape_.size/src.shape_.s[0]);
   if(overwrite) Fill(0.0f);
-  Range rng=src.IndexRange(0);
+  Range rng=src.InterIndexRange(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size;
   CHECK_EQ(rowlen, src.part_.size/rows);
@@ -520,7 +547,7 @@ void DAry::SumRow(const DAry& src, bool overwrite) {
 }
 void DAry::SumCol(const DAry& src, bool overwrite) {
   CHECK_EQ(shape_.size, src.shape_.s[0]);
-  Range rng=src.IndexRange(0);
+  Range rng=src.InterIndexRange(0);
   CHECK_EQ(part_.size, rng.second-rng.first);
   int rowlen=src.part_.size/part_.size;
   float* dptr=dptr_, *srcdptr=src.dptr_;
@@ -531,7 +558,7 @@ void DAry::SumCol(const DAry& src, bool overwrite) {
 }
 void DAry::AddRow(const DAry& src) {
   CHECK_EQ(shape_.size/shape_.s[0], src.shape_.size);
-  Range rng=IndexRange(0);
+  Range rng=InterIndexRange(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size/rows;
   DAry row=this->operator[](rng.first);
@@ -545,7 +572,7 @@ void DAry::AddRow(const DAry& src) {
 
 void DAry::AddCol(const DAry& src) {
   CHECK_EQ(shape_.s[0], src.shape_.size);
-  Range rng=IndexRange(0);
+  Range rng=InterIndexRange(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size/rows;
   Partition p;

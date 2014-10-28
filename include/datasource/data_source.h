@@ -27,7 +27,7 @@ class DataSource {
   virtual void Init(const DataSourceProto &ds_proto);
   virtual void Init(const DataSourceProto &proto, const ShardProto& shard)=0;
   virtual void ToProto(DataSourceProto *ds_proto);
-  virtual void NextRecord(string* key, Record *record)=0;
+  virtual int NextRecord(string* key, Record *record)=0;
   void Next() {offset_++;}
   //virtual bool GetRecord(const int key, Record* record)=0;
   //virtual void Reset(const ShardProto& sp)=0;
@@ -73,11 +73,11 @@ class ImageNetSource : public DataSource {
  public:
   virtual void Init(const DataSourceProto &proto, const ShardProto& shard);
   virtual void Init(const DataSourceProto &proto);
-  virtual void NextRecord(string* key, Record *record);
+  virtual int NextRecord(string* key, Record *record);
 
   void Reset(const ShardProto& sp);
   bool GetRecord(const int key, Record* record);
-  void ReadImage(const std::string &path, int height, int width,
+  int ReadImage(const std::string &path, int height, int width,
       const float *mean, DAryProto* datum);
   void LoadLabel(string path);
   void LoadMeanFile(string path);

@@ -62,13 +62,15 @@ class Solver {
     leveldb::DB* OpenShard(string path) ;
     void InitParams();
     void DebugInfo(Net* net);
+    void TimeOneBatch(int runs=5) ;
+    void TimeTableServer(int runs);
+
 
     /**
      * train the model for one-minibatch by either backpropagation or contrastive divergence
      * @param net the Net object to be trained
      */
     virtual Performance TrainOneBatch(Net* net, int step);
-    void TimeOneBatch(int runs);
     /**
      * test performance on test dataset
      * @param net the current Net object

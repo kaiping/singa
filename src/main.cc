@@ -16,8 +16,9 @@
 #include "datasource/data_loader.h"
 #include "worker.h"
 #include "da/gary.h"
+#include "utils/common.h"
 
-
+DEFINE_string(par_mode, "model",  "time training algorithm");
 DEFINE_string(db_backend, "lmdb", "database backend");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
   // Note you can register you own layer/edge/datasource here
 
   // Init GlobalContext
+  auto nt=lapis::NetworkThread::Get();
   auto gc=lapis::GlobalContext::Get(FLAGS_system_conf);
   LOG(ERROR)<<"group id"<<gc->group_id();
   lapis::ModelProto model;
@@ -67,6 +69,7 @@ int main(int argc, char **argv) {
       lapis::Worker worker(gc);
       worker.Start(model.data(), model.solver());
     }
+    //lapis::Debug();
     lapis::GAry::Finalize();
   }
   /*
@@ -80,7 +83,7 @@ int main(int argc, char **argv) {
     }
   }
   */
-  gc->Finish();
-  MPI_Finalize();
+  gc->Shutdown();
+  LOG(ERROR)<<"shutdown";
   return 0;
 }

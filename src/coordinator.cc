@@ -11,6 +11,7 @@
 using std::string;
 using std::vector;
 DECLARE_double(sleep_time);
+DECLARE_string(par_mode);
 
 namespace lapis {
 Coordinator::Coordinator(const shared_ptr<GlobalContext>& gc){
@@ -20,12 +21,13 @@ Coordinator::Coordinator(const shared_ptr<GlobalContext>& gc){
 }
 
 Coordinator::~Coordinator() {
+  /*
   for (auto* state: server_states_) {
     for (auto* taskid : state->local_shards)
       delete taskid;
     delete state;
   }
-  Shutdown();
+  */
 }
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
@@ -118,13 +120,29 @@ Net* Coordinator::SetupNetShape(const ModelProto& model) {
 // TODO model partitioning
 const NetProto Coordinator::PartitionNet(Net* net){
   int pdim=0;
-  for(Layer* layer: net->layers()){
-    if(layer->name()=="fc6")
-      pdim=1;
-    if(layer->name()=="label"||layer->name()=="softmax")
-      layer->SetPartition(-1);
-    else
-      layer->SetPartition(pdim);
+  if(FLAGS_par_mode==string("hybrid")){
+    for(Layer* layer: net->layers()){
+      if(layer->name()=="fc6")
+        pdim=1;
+      if(layer->name()=="fc8")
+        pdim=0;
+      if(layer->name()=="label"||layer->name()=="softmax")
+        layer->SetPartition(-1);
+      else
+        layer->SetPartition(pdim);
+    }
+  }else if (FLAGS_par_mode==string("data")){
+    for(Layer* layer: net->layers())
+      layer->SetPartition(0);
+  }else{
+     for(Layer* layer: net->layers()){
+      if(layer->name()=="label"||layer->name()=="softmax")
+        layer->SetPartition(-1);
+      else if(layer->name()=="image"||layer->name()=="fc8")
+        layer->SetPartition(0);
+      else
+        layer->SetPartition(1);
+     }
   }
   NetProto netproto;
   net->ToProto(&netproto);
@@ -186,12 +204,14 @@ void Coordinator::Run(){
   EmptyMessage dummy_msg;
   mpi_->Broadcast(MTYPE_WORKER_START, dummy_msg);
 
-  StateQueue<int> groups(context_->num_groups());
   int alive_workers=context_->num_groups()*context_->group_size();
   int src = 0;
   EmptyMessage end_msg;
+
+  LOG(ERROR)<<"Coordinator waits for "<<alive_workers;
   while(alive_workers) {
-    if(mpi_->TryRead(groups.Next(),MTYPE_WORKER_END, &end_msg, &src)) {
+    if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {
+      LOG(ERROR)<<"Worker "<<src<<" finished task";
       alive_workers--;
     }
     Performance perf;
@@ -201,6 +221,7 @@ void Coordinator::Run(){
     Sleep(FLAGS_sleep_time);
   }
   mpi_->Broadcast(MTYPE_SHUTDOWN, dummy_msg);
+  mpi_->Flush();
+  LOG(ERROR)<<"coordinator shutting down";
 }
-
 }  // namespace lapis

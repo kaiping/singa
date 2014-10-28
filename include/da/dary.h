@@ -125,6 +125,8 @@ class DAry {
 
   void Square( const DAry& src);
   void Copy( const DAry& src);
+  void CopyToCol(int col_start, int col_end, const DAry& src);
+  void CopyFromCol(int col_start, int col_end, const DAry& src);
   /**
     * dst=src^x
     */

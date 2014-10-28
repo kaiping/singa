@@ -105,10 +105,13 @@ message LayerProto {
   optional DAryProto data = 20;
   optional DAryProto grad = 21;
   optional DAryProto col_data = 22;
-  optional DAryProto col_grad = 23;
-  optional int32 topk=24;
-  repeated string top=25;
-  repeated string bottom=26;
+  optional DAryProto split_data = 23;
+  optional int32 split_size = 24;
+  optional int32 split_dim = 25 [default =1];
+  optional int32 concat_dim = 26 [default =1];
+  optional int32 topk=27;
+  repeated string top=28;
+  repeated string bottom=29;
 }
 
 // used to load image mean provided by caffe, in RGBDirSource

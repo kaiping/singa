@@ -116,13 +116,7 @@ class Layer {
    * prediction and the data (e.g., label).
    * @param edge which connectes to the gradient
    */
-  virtual DAry * GetMutableGrad(Edge *edge){
-    return &grad_;
-  }
-  virtual const DAry& GetGrad(Edge *edge){
-    return grad_;
-  }
-  /**
+ /**
    * Return name of this layer
    */
   const std::string &name() {
@@ -149,9 +143,11 @@ class Layer {
   const std::vector<Edge *> &in_edges() {
     return in_edges_;
   }
+  virtual DAry * GetMutableGrad(Edge *edge=nullptr){ return &grad_; }
+  virtual const DAry& GetGrad(Edge *edge=nullptr){ return grad_; }
 
-  const DAry& data() {return data_;}
-  const DAry& grad() {return grad_;}
+  virtual const DAry& data(Edge* edge=nullptr) {return data_;}
+  virtual const DAry& grad(Edge *edge=nullptr) {return grad_;}
 
  protected:
   std::string name_, type_;
@@ -159,7 +155,112 @@ class Layer {
   std::vector<Edge *> in_edges_;
   DAry data_, grad_;
 };
-class ConvLayer: public Layer {
+class ConcatLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+ private:
+  int concat_dim_;
+  int num_, channels_, height_, width_;
+};
+class SplitLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual DAry * GetMutableGrad(Edge *edge=nullptr){
+    if(edge==out_edges_[0])
+      return &grad_;
+    else if(edge==out_edges_[1])
+      retuen &grad2_;
+    else
+      LOG(ERROR)<<"get mutable grad from "<<edge->name();
+  }
+  virtual const DAry& GetGrad(Edge *edge=nullptr){
+    if(edge==out_edges_[0])
+      return grad_;
+    else if(edge==out_edges_[1])
+      retuen grad2_;
+    else
+      LOG(ERROR)<<"get grad from "<<edge->name();
+  }
+  virtual DAry * GetMutableData(Edge *edge=nullptr){
+    if(edge==out_edges_[0])
+      return &data_;
+    else if(edge==out_edges_[1])
+      retuen &data2_;
+    else
+      LOG(ERROR)<<"get mutable grad from "<<edge->name();
+  }
+  virtual const DAry& GetGrad(Edge *edge=nullptr){
+    if(edge==out_edges_[0])
+      return data_;
+    else if(edge==out_edges_[1])
+      retuen data2_;
+    else
+      LOG(ERROR)<<"get grad from "<<edge->name();
+  }
+
+ private:
+  int split_dim_, split_size_;
+  DAry data2_, grad2_;
+};
+
+
+class ImgColLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  void Img2Col(DAry* dst, const DAry& src);
+  void Col2Img(DAry* dst, const DAry& src);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+ protected:
+  int concat_dim_;
+  int num_, channels_, height_, width_;
+  //! shape for conv image
+  int cheight_, cwidth_;
+  //! height and width of the kernel/filter, assume the kernel is square
+  int wsize_;
+  //! length/width between to successive kernels/filters
+  int stride_;
+  //! padding size for boundary rows and cols
+  int pad_;
+};
+
+class ConvProductLayer: public Layer {
+ public:
+  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
+  virtual void InitDAryShape();
+  virtual void SetupDAry(int pdim);
+  virtual void SetPartition(int pdim);
+  virtual void ComputeFeature();
+  virtual void ComputeGradient();
+  virtual bool SyncForFeature();
+  virtual bool SyncForGradient();
+  virtual void CollectParams(vector<Param*> *params);
+  virtual vector<Param*> GetParams();
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+ private:
+  //! dimension of the hidden layer
+  int kernels_;
+  int num_, channels_, height_, width_;
+  Param weight_, bias_;
+};
+
+class ConvLayer: public ImgColLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
@@ -170,23 +271,11 @@ class ConvLayer: public Layer {
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  void Img2Col(DAry* dst, const DAry& src);
-  void Col2Img(DAry* dst, const DAry& src);
  private:
-  //! the feature (e.g., input image) shape for the bottom layer
-  int num_, channels_, height_, width_;
-  //! shape for conv image
-  int cheight_, cwidth_;
-  //! group weight height, width (col height), and col width
+   //! group weight height, width (col height), and col width
   int M_, K_, N_;
   //! num of groups, from caffe
   int ngroups_;
-  //! height and width of the kernel/filter, assume the kernel is square
-  int wsize_;
-  //! length/width between to successive kernels/filters
-  int stride_;
-  //! padding size for boundary rows and cols
-  int pad_;
   //! number of kernels
   int nkernels_;
   //! one row per kernel; shape is num_kernels_*(channels_*kernel_size^2)

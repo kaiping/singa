@@ -106,6 +106,388 @@ vector<Param*> Layer::GetParams(){
   return vector<Param*>();
 };
 /*****************************************************************************
+ * Implementation for SplitLayer
+ *****************************************************************************/
+void SplitLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
+  CHECK(proto.has_concat_dim());
+  split_dim_=proto.split_dim();
+  split_size_=proto.split_size();
+  if(proto.has_split_data()){
+    data2_.InitFromProto(proto.split_data());
+    grad2_.InitFromProto(proto.split_data());
+  }
+}
+
+void SplitLayer::SetPartition(int pdim){
+  Layer::SetPartition(pdim);
+  data2_.SetPartition(pdim);
+  grad2_.SetPartition(pdim);
+}
+
+void SplitLayer::SetupDAry(int pdim){
+  Layer::SetupDAry(pdim);
+  data2_.Setup(pdim);
+  grad2_.Setup(pdim);
+}
+void SplitLayer::ToProto(LayerProto *proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
+  DAryProto* dproto=proto->mutable_split_data();
+  data2_.ToProto(dproto, false);
+  proto->set_split_dim(split_dim_);
+  proto->set_split_size(split_size_);
+}
+void SplitLayer::InitDAryShape(){
+  CHECK_EQ(in_edges_.size(), 1);
+  CHECK_EQ(out_edges_.size(), 2);
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  int num, channels, height, width, first_split=split_size_, second_split;
+  if(split_dim_==0){
+    LOG(ERROR)<<"Not implemented";
+  } else{
+    num=bottom.shape(0);
+    second_split_=bottom.shape(1)-first_split;
+  }
+  height = bottom.shape(2);
+  width = bottom.shape(3);
+
+  vector<int> shape1{num, first_split, height, width};
+  data_.SetShape(shape1);
+  grad_.SetShape(shape1);
+  vector<int> shape1{num, second_split, height, width};
+  data2_.SetShape(shape2);
+  grad2_.SetShape(shape2);
+}
+
+void SplitLayer::ComputeFeature() {
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(concat_dim_==0){
+    //data_.CopyToRows(0,top0.shape(0),top0);
+    //data_.CopyToRows(top0.shape(0),num_, top1);
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& s0=data_.shape();
+    const Shape& s1=data2_.shape();
+    int a=s0.size/s0.s[0];
+    int b=a+s1.size/s1.s[0];
+    data_.CopyFromCols(0, a, bottom);
+    data2_.CopyFromCols(a, b, bottom);
+  }
+}
+
+void SplitLayer::ComputeGradient() {
+  DAry* gbottom=out_edges_[0]->GetMutableGrad(this);
+  if(concat_dim_==0){
+    //data_.CopyToRows(0,top0.shape(0),top0);
+    //data_.CopyToRows(top0.shape(0),num_, top1);
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& s0=data_.shape();
+    const Shape& s1=data2_.shape();
+    int a=s0.size/s0.s[0];
+    int b=a+s1.size/s1.s[0];
+    gbottom->CopyToCols(0, a, grad_);
+    gbottom->CopyToCols(a, b, grad2_);
+  }
+}
+/*****************************************************************************
+ * Implementation for ConcatLayer
+ *****************************************************************************/
+void ConcatLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
+  CHECK(proto.has_concat_dim());
+  concat_dim_=proto.concat_dim();
+}
+void ConcatLayer::ToProto(LayerProto *proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
+  proto->set_concat_dim(concat_dim_);
+}
+void ConcatLayer::InitDAryShape(){
+  CHECK_EQ(in_edges_.size(), 2);
+  CHECK_EQ(out_edges_.size(), 1);
+  const DAry& bottom0=in_edges_[0]->GetData(this);
+  const DAry& bottom1=in_edges_[1]->GetData(this);
+  int num, channels, height, width;
+  if(concat_dim_==0){
+    num = bottom0.shape(0)+bottom1.shape(0);;
+    channels = bottom0.shape(1);
+    CHECK_EQ(channels, bottom1.shape(1));
+  } else{
+    num=bottom0.shape(0);
+    CHECK_EQ(num, bottom1.shape(0));
+    channels=bottom0.shape(1)+bottom1.shape(1);
+  }
+  height = bottom0.shape(2);
+  width = bottom0.shape(3);
+  CHECK_EQ(height, bottom1.shape(2));
+  CHECK_EQ(width, bottom1.shape(3));
+
+  vector<int> shape{num, channels, height, width};
+  data_.SetShape(shape);
+  grad_.SetShape(shape);
+}
+
+void ConcatLayer::ComputeFeature() {
+  const DAry& bottom0=in_edges_[0]->GetData(this);
+  const DAry& bottom1=in_edges_[1]->GetData(this);
+
+  if(concat_dim_==0){
+    //data_.CopyToRows(0,bottom0.shape(0),bottom0);
+    //data_.CopyToRows(bottom0.shape(0),num_, bottom1);
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& s0=bottom0.shape();
+    const Shape& s1=bottom1.shape();
+    int a=s0.size/s0.s[0];
+    int b=a+s1.size/s1.s[0];
+    data_.CopyToCols(0, a, bottom0);
+    data_.CopyToCols(a, b, bottom1);
+  }
+}
+
+void ConcatLayer::ComputeGradient() {
+  DAry* gbottom0=in_edges_[0]->GetMutableGrad(this);
+  DAry* gbottom1=in_edges_[1]->GetMutableGrad(this);
+
+  if(concat_dim_==0){
+    //data_.CopyToRows(0,bottom0.shape(0),bottom0);
+    //data_.CopyToRows(bottom0.shape(0),num_, bottom1);
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& s0=bottom0.shape();
+    const Shape& s1=bottom1.shape();
+    int a=s0.size/s0.s[0];
+    int b=a+s1.size/s1.s[0];
+    gbottom0.CopyFromCols(0, a, grad_);
+    gbottom1.CopyFromCols(a, b, grad_);
+  }
+}
+
+/*****************************************************************************
+ * Implementation for ImgColLayer
+ *****************************************************************************/
+void ImgColLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  CHECK_EQ(in_edges_.size(), 1);
+  CHECK_EQ(out_edges_.size(), 1);
+  Layer::Init(proto, edge_map);
+  CHECK(proto.has_window_size());
+  wsize_ = proto.window_size();
+  stride_ = proto.stride();
+  pad_ = proto.pad();
+}
+void ImgColLayer::ToProto(LayerProto *proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
+  proto->set_window_size(wsize_);
+  proto->set_stride(stride_);
+  proto->set_pad(pad_);
+}
+
+void ImgColLayer::InitDAryShape(){
+  CHECK_EQ(in_edges_.size(), 1);
+  CHECK_EQ(out_edges_.size(), 1);
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  num_ = bottom.shape(0);
+  channels_ = bottom.shape(1);
+  height_ = bottom.shape(2);
+  width_ = bottom.shape(3);
+  // height and width of the image after convolution
+  cheight_ = (height_ + 2 * pad_ - wsize_) / stride_ + 1;
+  cwidth_ = (height_ + 2 * pad_ - wsize_) / stride_ + 1;
+  vector<int> shape{num_, channels_*wsize_*wsize_, cheight_, cwidth_};
+  data_.SetShape(shape);
+  grad_.SetShape(shape);
+}
+
+/*
+ * only consider parition along the num dimension
+ */
+void ImgColLayer::Img2Col(DAry* dst, const DAry& src){
+  const Range& nrng=dst->IndexRange(0);
+  const Range& dstcrng=dst->IndexRange(1);
+  int w2=wsize_*wsize_;
+  Range srccrng(dstcrng.first/w2, dstcrng.second/w2);
+  vector<Range> slice{nrng, srccrng, Range({0, height_}), Range({0, width_})};
+  const DAry& lsrc=src.Fetch(slice);
+  //float* dstptr=dst->dptr();
+  for(int n=nrng.first; n<nrng.second;++n){
+    for (int c = dstcrng.first; c < dstcrng.second; ++c) {
+      int w_offset = c % wsize_;
+      int h_offset = (c / wsize_) % wsize_;
+      int c_im = c / wsize_ / wsize_;
+      float* dptr=dst->addr(n,c,0,0);
+      float* sdptr=lsrc.addr(n,c_im,0,0);
+      for (int h = 0; h < cheight_; ++h) {
+        for (int w = 0; w < cwidth_; ++w) {
+          int h_pad = h * stride_ - pad_ + h_offset;
+          int w_pad = w * stride_ - pad_ + w_offset;
+          if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
+            *dptr=sdptr[h_pad*width_+w_pad];//lsrc.at(n, c_im,h_pad, w_pad);
+          else
+            *dptr= 0;
+          dptr++;
+        }
+      }
+    }
+  }
+}
+
+/*
+ * consider only partition on num dimension
+ */
+void ImgColLayer::Col2Img(DAry* dst, const DAry& src){
+  Range nrng=dst->IndexRange(0);
+  Range crng=dst->IndexRange(1);
+  Range srccrng(crng.first*wsize_*wsize_, crng.second*wsize_*wsize_);
+  vector<Range> slice{nrng, srccrng, Range({0, cheight_}), Range({0, cwidth_})};
+  const DAry& lsrc=src.Fetch(slice);
+  dst->Fill(0.0f);
+  // float *srcptr=lsrc.dptr();
+  for(int n=nrng.first;n<nrng.second;n++){
+    for (int c = srccrng.first; c < srccrng.second; ++c) {
+      int w_offset = c % wsize_;
+      int h_offset = (c / wsize_) % wsize_;
+      int c_im = c / wsize_ / wsize_;
+      float *ddptr=dst->addr(n, c_im, 0,0);
+      float* dptr=lsrc.addr(n,c,0,0);
+      for (int h = 0; h < cheight_; ++h) {
+        for (int w = 0; w < cwidth_; ++w) {
+          int h_pad = h * stride_ - pad_ + h_offset;
+          int w_pad = w * stride_ - pad_ + w_offset;
+          if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
+            ddptr[h_pad*width_+w_pad]+=*dptr;
+            //dst->at(n, c_im,h_pad, w_pad) += *dptr;
+          dptr++;
+        }
+      }
+    }
+  }
+}
+
+void ImgColLayer::ComputeFeature() {
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  Img2Col(&data_, bottom);
+}
+
+void ImgColLayer::ComputeGradient() {
+  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
+  Col2Img(gbottom, grad_);
+}
+
+/*****************************************************************************
+ * Implementation for ConvProductLayer
+ *****************************************************************************/
+void ConvProductLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
+  kernels_=proto.num_output();
+  CHECK(hdim_);
+  if(proto.param().size()==2){
+    weight_.Init(proto.param(0));
+    bias_.Init(proto.param(1));
+  }
+}
+
+void ConvProductLayer::ToProto(LayerProto* proto, bool copyData) {
+  Layer::ToProto(proto, copyData);
+  ParamProto* weight=proto->add_param();
+  weight_.ToProto(weight, copyData);
+  ParamProto* bias=proto->add_param();
+  bias_.ToProto(bias, copyData);
+  proto->set_num_output(kernels_);
+}
+void ConvProductLayer::CollectParams(vector<Param*> *params){
+  weight_.set_id(params->size());
+  params->push_back(&weight_);
+  bias_.set_id(params->size());
+  params->push_back(&bias_);
+}
+vector<Param*> ConvProductLayer::GetParams() {
+  vector<Param*> ret{&weight_, &bias_};
+  return ret;
+}
+
+void ConvProductLayer::InitDAryShape(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  num_=bottom.shape(0);
+  channels_=bottom.shape(1);
+  height_=bottom.shape(2);
+  width_=bottom.shape(3);
+  vector<int> shape{num_, kernels_, height_, width_};
+  data_.SetShape(shape);
+  grad_.SetShape(shape);
+  weight_.SetShape(kernels_, channels_);
+  bias_.SetShape(kernels_);
+}
+void ConvProductLayer::SetupDAry(int pdim){
+  Layer::SetupDAry(pdim);
+  // partition parameters when doing model parallelism
+  if(pdim==1){
+    weight_.SetupDAry(0);
+    bias_.SetupDAry(0);
+  }else{
+    weight_.SetupDAry(-1);
+    bias_.SetupDAry(-1);
+  }
+}
+void ConvProductLayer::SetPartition(int pdim){
+  Layer::SetPartition(pdim);
+  if(pdim==1){
+    weight_.SetPartition(0);
+    bias_.SetPartition(0);
+  }else {
+    weight_.SetPartition(-1);
+    bias_.SetPartition(-1);
+  }
+}
+bool ConvProductLayer::SyncForFeature(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+    return false;
+  else
+    return true;
+}
+bool ConvProductLayer::SyncForGradient(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+    return false;
+  else
+    return true;
+}
+
+void ConvProductLayer::ComputeFeature() {
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  DAry bottom3=bottom.Reshape({num_, channels_, height_*width_});
+  DAry data=data_.Reshape({num_, kernels_, height_*width_});
+  const Range nrng=data_.IndexRange(0);
+  for(int n=nrng.first;n<nrng.second;n++){
+    DAry image=data[n];
+    image.Dot(weight_.data(), bottom3[n]);
+    image.AddCol(bias_.data());
+  }
+}
+
+void ConvProductLayer::ComputeGradient() {
+  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
+  DAry gbottom3=gbottom->Reshape({num_, channels_, height_*width_});
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  DAry bottom3=bottom.Reshape({num_, channels_, height_*width_});
+  DAry data=data_.Reshape({num_, kernels_, height_*width_});
+  DAry grad=grad_.Reshape({num_, kernels_, height_*width_});
+  const Range nrng=gbottom->IndexRange(0);
+  DAry* gweight=weight_.mutable_grad();
+  gweight->Fill(0.f);
+  DAry* gbias=bias_.mutable_grad();
+  gbias->Fill(0.f);
+  for(int n=nrng.first;n<nrng.second;n++){
+    DAry image_grad=gbottom3[n];
+    DAry gradn=grad[n];
+    image_grad.Dot(weight_, gradn, true, false);
+    weight_.mutable_grad()->Dot(data, bottom3[n], false, true, false);
+    bias_.mutable_grad()->SumCols(gradn, false);
+  }
+}
+
+
+/*****************************************************************************
  * Implementation for ConvLayer
  *****************************************************************************/
 void ConvLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
@@ -122,7 +504,7 @@ void ConvLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   }
   if(proto.has_col_data()){
     col_data_.InitFromProto(proto.col_data());
-    col_grad_.InitFromProto(proto.col_grad());
+    col_grad_.InitFromProto(proto.col_data());
   }
 }
 void ConvLayer::CollectParams(vector<Param*> *params){
@@ -147,9 +529,7 @@ void ConvLayer::ToProto(LayerProto *proto, bool copyData) {
   ParamProto* bias=proto->add_param();
   bias_.ToProto(bias, copyData);
   DAryProto* coldata=proto->mutable_col_data();
-  DAryProto* colgrad=proto->mutable_col_grad();
   col_data_.ToProto(coldata, false);
-  col_grad_.ToProto(colgrad, false);
 }
 
 void ConvLayer::InitDAryShape(){
@@ -261,71 +641,6 @@ void ConvLayer::ComputeGradient() {
     }
   }
 }
-
-/*
- * only consider parition along the num dimension
- */
-void ConvLayer::Img2Col(DAry* dst, const DAry& src){
-  const Range& nrng=dst->IndexRange(0);
-  const Range& dstcrng=dst->IndexRange(1);
-  int w2=wsize_*wsize_;
-  Range srccrng(dstcrng.first/w2, dstcrng.second/w2);
-  vector<Range> slice{nrng, srccrng, Range({0, height_}), Range({0, width_})};
-  const DAry& lsrc=src.Fetch(slice);
-  //float* dstptr=dst->dptr();
-  for(int n=nrng.first; n<nrng.second;++n){
-    for (int c = dstcrng.first; c < dstcrng.second; ++c) {
-      int w_offset = c % wsize_;
-      int h_offset = (c / wsize_) % wsize_;
-      int c_im = c / wsize_ / wsize_;
-      float* dptr=dst->addr(n,c,0,0);
-      float* sdptr=lsrc.addr(n,c_im,0,0);
-      for (int h = 0; h < cheight_; ++h) {
-        for (int w = 0; w < cwidth_; ++w) {
-          int h_pad = h * stride_ - pad_ + h_offset;
-          int w_pad = w * stride_ - pad_ + w_offset;
-          if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            *dptr=sdptr[h_pad*width_+w_pad];//lsrc.at(n, c_im,h_pad, w_pad);
-          else
-            *dptr= 0;
-          dptr++;
-        }
-      }
-    }
-  }
-}
-/*
- * consider only partition on num dimension
- */
-void ConvLayer::Col2Img(DAry* dst, const DAry& src){
-  Range nrng=dst->IndexRange(0);
-  Range crng=dst->IndexRange(1);
-  Range srccrng(crng.first*wsize_*wsize_, crng.second*wsize_*wsize_);
-  vector<Range> slice{nrng, srccrng, Range({0, cheight_}), Range({0, cwidth_})};
-  const DAry& lsrc=src.Fetch(slice);
-  dst->Fill(0.0f);
-  // float *srcptr=lsrc.dptr();
-  for(int n=nrng.first;n<nrng.second;n++){
-    for (int c = srccrng.first; c < srccrng.second; ++c) {
-      int w_offset = c % wsize_;
-      int h_offset = (c / wsize_) % wsize_;
-      int c_im = c / wsize_ / wsize_;
-      float *ddptr=dst->addr(n, c_im, 0,0);
-      float* dptr=lsrc.addr(n,c,0,0);
-      for (int h = 0; h < cheight_; ++h) {
-        for (int w = 0; w < cwidth_; ++w) {
-          int h_pad = h * stride_ - pad_ + h_offset;
-          int w_pad = w * stride_ - pad_ + w_offset;
-          if (h_pad >= 0 && h_pad < height_ && w_pad >= 0 && w_pad < width_)
-            ddptr[h_pad*width_+w_pad]+=*dptr;
-            //dst->at(n, c_im,h_pad, w_pad) += *dptr;
-          dptr++;
-        }
-      }
-    }
-  }
-}
-
 /*****************************************************************************
  * Implementation for ReLULayer
  *****************************************************************************/
@@ -955,6 +1270,10 @@ std::shared_ptr<LayerFactory> LayerFactory::Instance() {
 LayerFactory::LayerFactory() {
   RegisterCreateFunction("ImageLayer", CreateLayer(ImageLayer));
   RegisterCreateFunction("LabelLayer", CreateLayer(LabelLayer));
+  RegisterCreateFunction("ConcatLayer", CreateLayer(ConcatLayer));
+  RegisterCreateFunction("SplitLayer", CreateLayer(SplitLayer));
+  RegisterCreateFunction("ImgColLayer", CreateLayer(ImgColLayer));
+  RegisterCreateFunction("ConvProductLayer", CreateLayer(ConvProductLayer));
   RegisterCreateFunction("ConvLayer", CreateLayer(ConvLayer));
   RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
   RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));

@@ -19,7 +19,7 @@ class GAry{
     */
   float* Setup(const Shape& shape, Partition* part);
   const Range IndexRange(int k);
-  float* Fetch(const Partition& part, int offset) const;
+  float* Fetch(const Partition& part, int offset, float* todptr=nullptr) const;
   float* Fetch(const vector<Range>& slice) const ;
   void Accum(float* dptr);
   //int local_size(){return shape_.size/groupsize;}

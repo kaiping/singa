@@ -130,7 +130,7 @@ void GAry::Accum(float* dptr){
  * this function fetches against base dary
  * into two dimension area.
  */
-float* GAry::Fetch(const Partition& part, int offset)const {
+float* GAry::Fetch(const Partition& part, int offset, float* todptr)const {
   int unit=sizeof(float), stridelevel=1;
   int width=shape2d_.s[1], gwidth=width/groupsize_;
   CHECK(part.stride%width==0||width%part.stride==0);
@@ -145,7 +145,8 @@ float* GAry::Fetch(const Partition& part, int offset)const {
   int start=(offset+part.start)%width;
   int srcstride=unit*((width%part.stride!=0)+width/part.stride)*std::min(width, part.stepsize);
   int tgtstride=gwidth*unit;
-  float* ret=new float[part.size];
+  float* ret=todptr;
+  if(todptr==nullptr) ret=new float[part.size];
   float* srcaddr=ret;
   double tick;
   for(int i=0 ;i<part.size*unit/(count[0]*count[1]); i++){

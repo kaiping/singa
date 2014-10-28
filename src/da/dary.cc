@@ -320,6 +320,54 @@ void DAry::Copy( const DAry& src) {
   memcpy(dptr_, dptr, part_.size*sizeof(float));
   src.Delete(dptr);
 }
+void DAry::CopyToCol(int col_start, int col_end, const DAry& src) {
+  Partition part;
+  CHECK_EQ(col_end-colstart,src.shape_.size/src.shape_.s[0]);
+  if(part_.pdim==1){
+    if(part_.start+part_.stepsize<col_start||part_.start>=col_end)
+      return;
+    CHECK(part_.start>=col_start&&part_.start+part_.stepsize<=col_end);
+    part.start=part_.start-col_start;
+    part.stepsize=std::min(part_.stepsize, col_end-part_.start);
+    part.stride=col_end-col_start;
+    float* dptr=src.ga_->Fetch(part,0);
+    for(int row=0;row<shape_.s[0];row++){
+      memcpy(dptr_+row*part_.stepsize, dptr, part.stepsize*sizeof(float));
+    }
+    delete dptr;
+  }else if(part_.dim==0){
+    int rows=part_.start/part_.stride;
+    part.start=(col_end-col_start)*rows;
+    CHECK_EQ(part_.size%part_.stride, 0);
+    int nrows=part_.size/part_.stride;
+    part.stepsize=(col_end-col_start)*nrows;
+    part.stride=part.stepsize;
+    part.end=part.start+part.stepsize;
+    float* dptr=src.ga_->Fetch(part, 0);
+    for(int k=0;k<nrows;k++){
+      memcpy(dptr_+k*part_.stride+col_start, dptr, (col_end-col_start)*sizeof(float));
+    }
+    delete dptr;
+  }
+}
+void DAry::CopyFromCol(int col_start, int col_end, const DAry& src) {
+  Partition part;
+  if(part_.pdim==1){
+    part.start=col_start+part_.start;
+    part.stride=src.shape_.size/src.shape_.s[0];
+    part.stepsize=std::min(part.stride, part_.stepsize);
+    part.end=(shape_.s[0]-1)*part.stride+part.start+part.stepsize;
+    src.ga_->Fetch(part, 0, dptr_);
+  }else if(part_.pdim==0){
+    int row=part_.start/shape_.s[1];
+    part.stride=src.shape_.size/src.shape_.s[0];
+    part.start=col_start+ row*part.stride;
+    part.stepsize=shape_.s[1];
+    int nrow=part_.size/shape_.s[1];
+    part.end=part.start+(nrow-1)*part.stride+part.stepsize;
+    src.ga_->Fetch(part, 0, dptr_);
+  }
+}
 
 void DAry::Mult( const DAry& src1, const DAry& src2) {
   CHECK_EQ(shape_.size, src1.shape_.size);

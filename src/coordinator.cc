@@ -119,14 +119,12 @@ Net* Coordinator::SetupNetShape(const ModelProto& model) {
 }
 // TODO model partitioning
 const NetProto Coordinator::PartitionNet(Net* net){
-  int pdim=0;
   if(FLAGS_par_mode==string("hybrid")){
+    int pdim=0;
     for(Layer* layer: net->layers()){
       if(layer->name()=="fc6")
         pdim=1;
-      if(layer->name()=="fc8")
-        pdim=0;
-      if(layer->name()=="label"||layer->name()=="softmax")
+      if(layer->name()=="softmax")
         layer->SetPartition(-1);
       else
         layer->SetPartition(pdim);
@@ -136,14 +134,20 @@ const NetProto Coordinator::PartitionNet(Net* net){
       layer->SetPartition(0);
   }else{
      for(Layer* layer: net->layers()){
-      if(layer->name()=="label"||layer->name()=="softmax")
+      if(layer->name()=="softmax")
         layer->SetPartition(-1);
-      else if(layer->name()=="image"||layer->name()=="fc8"||layer->name()=="imgcol1")
-        layer->SetPartition(0);
       else
         layer->SetPartition(1);
      }
   }
+  // data are envenly distributed to all workers, the input layer must be
+  // partitioned on num (0-th) dim
+  // fc8 and imgcol1's 1-th dim mode 2^k !=0
+  for(Layer* layer: net->layers()){
+    if(layer->HasInput()||layer->name()=="fc8"||layer->name()=="imgcol1")
+      layer->SetPartition(0);
+  }
+
   NetProto netproto;
   net->ToProto(&netproto);
   return netproto;

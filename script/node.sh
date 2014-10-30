@@ -1,7 +1,7 @@
 #!/bin/bash
 folder="/data1/wangwei/lapis/train-lmdb"
 #folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/datahost"
+hostfile="examples/imagenet12/rack2"
 if [ $# -eq 0 ]
 then
   echo "must provide argument, [chmod, ssh,ls,cat, delete, create or reset] + hostfile"

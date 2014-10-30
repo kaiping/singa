@@ -38,9 +38,13 @@ DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
 void DataLoader::ShardData(const DataProto& dp) {
   auto& groups=GlobalContext::Get()->groups();
   /*
+  if(dp.has_validation_data()){
+    LOG(INFO)<<"load validation data...";
+    ShardData(dp.validation_data(),groups, false);
+  }
   if(dp.has_test_data()){
     LOG(INFO)<<"load test data...";
-    ShardData(dp.test_data(),groups, true);
+    ShardData(dp.test_data(),groups, false);
   }
   */
 
@@ -48,14 +52,55 @@ void DataLoader::ShardData(const DataProto& dp) {
     LOG(INFO)<<"shard train data...";
     ShardData(dp.train_data(),groups,false);
   }
-  /*
-     if(dp.has_validation_data()){
-     LOG(INFO)<<"load validation data...";
-     ShardData(dp.validation_data(),groups, true);
-     }
-     */
   MPI_Barrier(MPI_COMM_WORLD);
   LOG(INFO)<<"worker finish load data";
+}
+void DataLoader::CreateLocalShards(const DataProto& dp) {
+  LOG(INFO)<<"Create data shards on local disk";
+  auto mpi=NetworkThread::Get();
+  ShardProto sp;
+  /*
+  if(dp.has_validation_data()){
+    string shardlist=shard_folder_+"/val-list.txt";
+    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+    if(!check_exists(shardlist)){
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      sp.clear_record();
+      LOG(ERROR)<<"load from local shard list";
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
+    CreateLocalShard(dp.validation_data(), sp);
+  }
+
+  if(dp.has_test_data()){
+    string shardlist=shard_folder_+"/test-list.txt";
+    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+    if(!check_exists(shardlist)){
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      sp.clear_record();
+      LOG(ERROR)<<"load from local shard list";
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
+    CreateLocalShard(dp.test_data(), sp);
+  }
+  */
+
+  if(dp.has_train_data()){
+    // nprocs_-1 is the rank of cooordinator
+    string shardlist=shard_folder_+"/train-list.txt";
+    if(!check_exists(shardlist)){
+      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
+      WriteProtoToTextFile(sp, shardlist.c_str());
+    }else{
+      LOG(ERROR)<<"load from local shard list";
+      ReadProtoFromTextFile(shardlist.c_str(), &sp);
+    }
+    CreateLocalShard(dp.train_data(), sp);
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  LOG(INFO)<<"Data shards created";
 }
 
 void DataLoader::ShardData(const DataSourceProto& source,
@@ -202,7 +247,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
       } else {
         LOG(FATAL) << "Unknown db backend " << FLAGS_db_backend;
       }
-      LOG(ERROR) << "Processed " << count << " files.";
+      LOG(INFO) << "Processed " << count << " files.";
     }
   }
   //write the last batch
@@ -222,52 +267,6 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   delete ds;
   LOG(ERROR)<<"Finish Create Shard  for DataSource : "<<ds->name()
     <<", it has "<<count<<" records, it should insert "<<shard.record_size();
-}
-void DataLoader::CreateLocalShards(const DataProto& dp) {
-  LOG(INFO)<<"Create data shards on local disk";
-  auto mpi=NetworkThread::Get();
-  ShardProto sp;
-  /*
-  if(dp.has_test_data()){
-    string shardlist=shard_folder_+"/test-list.txt";
-    if(!check_exists(shardlist)){
-      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
-      WriteProtoToTextFile(sp, shardlist.c_str());
-    }else{
-      LOG(ERROR)<<"load from local shard list";
-      ReadProtoFromTextFile(shardlist.c_str(), &sp);
-    }
-    CreateLocalShard(dp.test_data(), sp);
-  }
-  */
-
-  if(dp.has_train_data()){
-    // nprocs_-1 is the rank of cooordinator
-    string shardlist=shard_folder_+"/train-list.txt";
-    if(!check_exists(shardlist)){
-      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
-      WriteProtoToTextFile(sp, shardlist.c_str());
-    }else{
-      LOG(ERROR)<<"load from local shard list";
-      ReadProtoFromTextFile(shardlist.c_str(), &sp);
-    }
-    CreateLocalShard(dp.train_data(), sp);
-  }
-  /*
-     if(dp.has_validation_data()){
-     string shardlist=shard_folder_+"/val-list.txt";
-     if(!check_exists(shardlist)){
-     mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
-     WriteProtoToTextFile(sp, shardlist.c_str());
-     }else{
-     LOG(ERROR)<<"load from local shard list";
-     ReadProtoFromTextFile(shardlist.c_str(), &sp);
-     }
-     CreateLocalShard(dp.validation_data(), sp);
-     }
-     */
-  MPI_Barrier(MPI_COMM_WORLD);
-  LOG(INFO)<<"Data shards created";
 }
 /*
 void DataLoader::CopyShardTo(int sid, int dst) {

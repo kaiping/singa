@@ -82,7 +82,7 @@ void Layer::SetupDAry(int pdim){
 }
 void Layer::ComputeFeature(){}
 void Layer::ComputeGradient(){}
-bool Layer::SyncForFeature(){
+bool Layer::PreSyncF(){
   if(in_edges_.size()==0)
     return false;
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -91,7 +91,7 @@ bool Layer::SyncForFeature(){
   else
     return true;
 }
-bool Layer::SyncForGradient(){
+bool Layer::PreSyncG(){
   if(in_edges_.size()==0)
     return false;
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -110,6 +110,7 @@ vector<Param*> Layer::GetParams(){
  *****************************************************************************/
 void SplitLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
+  CHECK(in_edges_.size());
   split_dim_=proto.split_dim();
   split_size_=proto.split_size();
   if(proto.has_split_data()){
@@ -157,12 +158,34 @@ void SplitLayer::InitDAryShape(){
   data2_.SetShape(shape2);
   grad2_.SetShape(shape2);
 }
+bool SplitLayer::PreSyncF(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
+    "Not supported for diff parallelism modes";
+  // bottom is replicated/local, or both are data parallel
+  if(bottom.GetPartition()==-1||
+      (bottom.GetPartition()==0&&data_.GetPartition()==0))
+    return false;
+  else
+    return true;
+}
+bool SplitLayer::PreSyncG(){
+  if(in_edges_.size()==0)
+    return false;
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
+    "Not supported for diff parallelism modes";
+  // bottom is replicated/local, or both are data parallel
+  if(data_.GetPartition()==-1||
+      (bottom.GetPartition()==0&&data_.GetPartition()==0))
+    return false;
+  else
+    return true;
+}
 
 void SplitLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
   if(split_dim_==0){
-    //data_.CopyToRows(0,top0.shape(0),top0);
-    //data_.CopyToRows(top0.shape(0),num_, top1);
     LOG(ERROR)<<"Not implemented";
   }else{
     const Shape& s0=data_.shape();
@@ -175,7 +198,7 @@ void SplitLayer::ComputeFeature() {
 }
 
 void SplitLayer::ComputeGradient() {
-  DAry* gbottom=out_edges_[0]->GetMutableGrad(this);
+  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
   if(split_dim_==0){
     //data_.CopyToRows(0,top0.shape(0),top0);
     //data_.CopyToRows(top0.shape(0),num_, top1);
@@ -224,7 +247,30 @@ void ConcatLayer::InitDAryShape(){
   data_.SetShape(shape);
   grad_.SetShape(shape);
 }
-
+bool ConcatLayer::PreSyncF(){
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
+    "Not supported for diff parallelism modes";
+  // bottom is replicated/local, or both are data parallel
+  if(bottom.GetPartition()==-1||
+      (bottom.GetPartition()==0&&data_.GetPartition()==0))
+    return false;
+  else
+    return true;
+}
+bool ConcatLayer::PreSyncG(){
+  if(in_edges_.size()==0)
+    return false;
+  const DAry& bottom=in_edges_[0]->GetData(this);
+  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
+    "Not supported for diff parallelism modes";
+  // bottom is replicated/local, or both are data parallel
+  if(data_.GetPartition()==-1||
+      (bottom.GetPartition()==0&&data_.GetPartition()==0))
+    return false;
+  else
+    return true;
+}
 void ConcatLayer::ComputeFeature() {
   const DAry& bottom0=in_edges_[0]->GetData(this);
   const DAry& bottom1=in_edges_[1]->GetData(this);
@@ -281,8 +327,6 @@ void ImgColLayer::ToProto(LayerProto *proto, bool copyData) {
 }
 
 void ImgColLayer::InitDAryShape(){
-  CHECK_EQ(in_edges_.size(), 1);
-  CHECK_EQ(out_edges_.size(), 1);
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_ = bottom.shape(0);
   channels_ = bottom.shape(1);
@@ -297,12 +341,17 @@ void ImgColLayer::InitDAryShape(){
 }
 
 /*
- * only consider parition along the num dimension
+ * only consider parition along the num/channel dimension
  */
 void ImgColLayer::Img2Col(DAry* dst, const DAry& src){
+  CHECK_EQ(src.shape().dim,4);
+  CHECK_EQ(dst->shape().dim,4);
+
   const Range& nrng=dst->IndexRange(0);
   const Range& dstcrng=dst->IndexRange(1);
   int w2=wsize_*wsize_;
+  CHECK_EQ(dstcrng.first%w2,0);
+  CHECK_EQ(dstcrng.second%w2,0);
   Range srccrng(dstcrng.first/w2, dstcrng.second/w2);
   vector<Range> slice{nrng, srccrng, Range({0, height_}), Range({0, width_})};
   const DAry& lsrc=src.Fetch(slice);
@@ -330,7 +379,7 @@ void ImgColLayer::Img2Col(DAry* dst, const DAry& src){
 }
 
 /*
- * consider only partition on num dimension
+ * consider only partition on num/channels dimension
  */
 void ImgColLayer::Col2Img(DAry* dst, const DAry& src){
   Range nrng=dst->IndexRange(0);
@@ -378,10 +427,10 @@ void ImgColLayer::ComputeGradient() {
 void ConvProductLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
   kernels_=proto.num_output();
-  if(proto.param().size()==2){
-    weight_.Init(proto.param(0));
-    bias_.Init(proto.param(1));
-  }
+  CHECK_GT(kernels_,0);
+  CHECK_EQ(proto.param().size(),2);
+  weight_.Init(proto.param(0));
+  bias_.Init(proto.param(1));
 }
 
 void ConvProductLayer::ToProto(LayerProto* proto, bool copyData) {
@@ -418,37 +467,49 @@ void ConvProductLayer::InitDAryShape(){
 void ConvProductLayer::SetupDAry(int pdim){
   Layer::SetupDAry(pdim);
   // partition parameters when doing model parallelism
-  if(pdim==1){
+  if(pdim==0||pdim==-1){
+    weight_.SetupDAry(-1);
+    bias_.SetupDAry(-1);
+  }else if(pdim==1){
     weight_.SetupDAry(0);
     bias_.SetupDAry(0);
   }else{
-    weight_.SetupDAry(-1);
-    bias_.SetupDAry(-1);
+    LOG(ERROR)<<"Not supported partition dim "<<pdim;
   }
 }
 void ConvProductLayer::SetPartition(int pdim){
   Layer::SetPartition(pdim);
-  if(pdim==1){
-    weight_.SetPartition(0);
-    bias_.SetPartition(0);
-  }else {
+  if(pdim==-1||pdim==0){
     weight_.SetPartition(-1);
     bias_.SetPartition(-1);
+  }else if(pdim==1){
+    weight_.SetPartition(0);
+    bias_.SetPartition(0);
+  }else{
+    LOG(ERROR)<<"Not supported partition dim "<<pdim;
   }
 }
-bool ConvProductLayer::SyncForFeature(){
+bool ConvProductLayer::PreSyncF(){
   const DAry& bottom=in_edges_[0]->GetData(this);
-  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+  if((bottom.GetPartition()==0&&data_.GetPartition()==0)
+      ||bottom.GetPartition()==-1)
     return false;
   else
     return true;
 }
-bool ConvProductLayer::SyncForGradient(){
+bool ConvProductLayer::PreSyncG(){
   const DAry& bottom=in_edges_[0]->GetData(this);
-  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+  if((bottom.GetPartition()==0&&data_.GetPartition()==0)
+      ||data_.GetPartition()==-1)
     return false;
   else
     return true;
+}
+bool ConvProductLayer::PostSyncF(){
+  return PreSyncG();
+}
+bool ConvProductLayer::PostSyncG(){
+  return PreSyncF();
 }
 
 void ConvProductLayer::ComputeFeature() {
@@ -480,8 +541,8 @@ void ConvProductLayer::ComputeGradient() {
     DAry image_grad=gbottom3[n];
     DAry gradn=grad[n];
     image_grad.Dot(weight_.data(), gradn, true, false, true);
-    weight_.mutable_grad()->Dot(data[n], bottom3[n], false, true, false);
-    bias_.mutable_grad()->SumCol(gradn, false);
+    gweight->Dot(gradn, bottom3[n], false, true, false);
+    gbias->SumCol(gradn, false);
   }
 }
 
@@ -975,9 +1036,12 @@ void FCLayer::InitDAryShape(){
 void FCLayer::SetupDAry(int pdim){
   Layer::SetupDAry(pdim);
   // partition parameters when doing model parallelism
-  if(pdim==-1){
+  if(pdim==1){
     weight_.SetupDAry(1);
     bias_.SetupDAry(0);
+  }else if(pdim==0){
+    weight_.SetupDAry(0);
+    bias_.SetupDAry(-1);
   }else{
     weight_.SetupDAry(-1);
     bias_.SetupDAry(-1);
@@ -988,51 +1052,59 @@ void FCLayer::SetPartition(int pdim){
   if(pdim==1){
     weight_.SetPartition(1);
     bias_.SetPartition(0);
-  }else {
+  }else if(pdim==0){
+    weight_.SetPartition(0);
+    bias_.SetPartition(-1);
+  }else{
     weight_.SetPartition(-1);
     bias_.SetPartition(-1);
   }
 }
-bool FCLayer::SyncForFeature(){
+bool FCLayer::PreSyncF(){
   const DAry& bottom=in_edges_[0]->GetData(this);
-  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
+  if(bottom.GetPartition()==0&&data_.GetPartition()==0)
     return false;
   else
     return true;
 }
-bool FCLayer::SyncForGradient(){
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  if(bottom.GetPartition()==data_.GetPartition()&&data_.GetPartition()==0)
-    return false;
-  else
-    return true;
+bool FCLayer::PreSyncG(){
+  return PreSyncF();
 }
 
+bool FCLayer::PostSyncF(){
+  return PreSyncF();
+}
+
+bool FCLayer::PostSyncG(){
+  return PreSyncF();
+}
 void FCLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
   DAry bottom2=bottom.Reshape({num_, vdim_});
   vector<Range> slice{Range({0, num_}), Range({0, vdim_})};
-  cache_data_=bottom2.Fetch(slice);
-  data_.Dot(cache_data_, weight_.data());
+  //cache_data_=bottom2.Fetch(slice);
+  data_.Dot(bottom2, weight_.data());
   data_.AddRow(bias_.data());
-  grad_.Fill(0.0f);
+  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
+  gbottom->Fill(0.0f);
 }
 
 void FCLayer::ComputeGradient() {
-  //const DAry& bottom=in_edges_[0]->GetData(this);
+  const DAry& bottom=in_edges_[0]->GetData(this);
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  //DAry bottom2=bottom.Reshape({num_, vdim_});
+  DAry bottom2=bottom.Reshape({num_, vdim_});
   DAry grad2=grad_.Reshape({num_, hdim_});
 
-  //weight_.mutable_grad()->Dot(bottom2, grad2, true, false);
-  weight_.mutable_grad()->Dot(cache_data_, grad2, true, false, true);
+  weight_.mutable_grad()->Dot(bottom2, grad2, true, false, true);
+  //weight_.mutable_grad()->Dot(cache_data_, grad2, true, false, true);
   bias_.mutable_grad()->SumRow(grad2, true);
 
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   // if (gbottom != nullptr) {
   DAry gbottom2=gbottom->Reshape({num_, vdim_});
-  gbottom2.Dot(grad2, weight_.data(), false, true, true);
+  gbottom2.Dot(grad2, weight_.data(), false, true,true);
+  data_.Fill(0.0f);
   //}
 }
 
@@ -1060,8 +1132,11 @@ void SoftmaxLossLayer::SetupDAry(int pdim) {
 void SoftmaxLossLayer::SetPartition(int pdim) {
   if(pdim==0)
     Layer::SetPartition(0);
-  else
+  else if(pdim==-1){
     Layer::SetPartition(-1);
+  }else{
+    LOG(ERROR)<<"Not supported parition dim for softmax layer "<<pdim<<"-th";
+  }
 }
 
 void SoftmaxLossLayer::InitDAryShape(){
@@ -1099,8 +1174,9 @@ void SoftmaxLossLayer::ComputeGradient() {
   gbottom->Copy(data_);
   Range nrng=gbottom->IndexRange(0);
   DAry gbottom2=gbottom->Reshape({num_, dim_});
+  DAry llabel=label.Fetch({nrng, Range({0,1})});
   for (int n = nrng.first; n < nrng.second; n++) {
-    int k = static_cast<int>(label.at(n,0));
+    int k = static_cast<int>(llabel.at(n,0));
     // check gobottom2[n,k] on this node, 1 for 1-th dim
     if(gbottom2.isLocal(n,k))
       gbottom2.at(n,k)-=1.0f;
@@ -1113,10 +1189,11 @@ Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
   int ncorrect=0;
   float logprob=0.0f;
   //if(data_.allocated()){
-  const DAry& labelary=in_edges_[1]->GetData(this);
   Range nrng=data_.IndexRange(0);
+  const DAry& labelary=in_edges_[1]->GetData(this);
+  const DAry& llabel=labelary.Fetch({nrng, Range({0,1})});
   for(int n=nrng.first;n<nrng.second;n++) {
-    int label=static_cast<int>(labelary.at(n,0));
+    int label=static_cast<int>(llabel.at(n,0));
     CHECK(label>=0&&label<1000)<<"label "<<label;
     float prob_of_truth=data_.at(n,label);
     if(accuracy){

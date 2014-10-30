@@ -77,8 +77,8 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
         mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
       }
       if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src)){
-        //solver.Train();
-        solver.TimeOneBatch();
+        solver.Train();
+        //solver.TimeOneBatch();
         break;
       }
     }

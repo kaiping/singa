@@ -12,7 +12,7 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./inc
 	/home/wangwei/install/jdk1.7.0_67/include\
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
-CXXFLAGS := -O2 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -65,13 +65,19 @@ CONST_SRCS := src/test/test_consistency.cc
 CONST_OBJS = $(CONST_SRCS:.cc=.o)
 
 run_load: lapis.bin
-	mpirun -np 5 -hostfile examples/imagenet12/datahost \
+	mpirun -np 25 -hostfile examples/imagenet12/rack2 \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
-run_run: lapis.bin
-	mpirun  -np 13 -hostfile examples/imagenet12/hostfile ./lapis.bin \
+run_hybrid: lapis.bin
+	mpirun  -np 5 -hostfile examples/imagenet12/hostfile ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb
+	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
+
+run_data: lapis.bin
+	mpirun  -np 5 -hostfile examples/imagenet12/hostfile ./lapis.bin \
+	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
+	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=data
+
 
 run_test_memory: lapis.test.memory
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \

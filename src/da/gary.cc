@@ -45,7 +45,6 @@ void GAry::Init(int rank, const vector<vector<int>>& groups){
   else LOG(ERROR)<<"group rank "<<grp_rank_<<" size "<<groupsize_;
 }
 void GAry::Finalize() {
-  LOG(ERROR)<<"GAry remote get/put time "<< comm_time;
   delete procslist_;
   if(grp_rank_!=-1){
     ARMCI_Group_free(&group_);

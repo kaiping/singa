@@ -73,14 +73,16 @@ class Layer {
    * activation function
    */
     virtual void ComputeFeature();
-    virtual bool SyncForFeature();
+    virtual bool PreSyncF();
+    virtual bool PreSyncG();
   /**
    * Backward propagate gradients through the Net
    * It aggregates gradients from all outgoing edges, and then computes
    * the gradient w.r.t the aggregated activation.
    */
     virtual void ComputeGradient();
-    virtual bool SyncForGradient();
+    virtual bool PostSyncF(){return false;}
+    virtual bool PostSyncG() {return false;}
  /**
    * Marshal layer properties and parameters into google protobuf object
    * @param proto see LayerProto in lapis.proto
@@ -156,6 +158,8 @@ class ConcatLayer: public Layer {
   virtual void InitDAryShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
+  virtual bool PreSyncF();
+  virtual bool PreSyncG();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   int concat_dim_;
@@ -169,38 +173,36 @@ class SplitLayer: public Layer {
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
+  virtual bool PreSyncF();
+  virtual bool PreSyncG();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual DAry * GetMutableGrad(Edge *edge=nullptr){
+    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
     if(edge==out_edges_[0])
       return &grad_;
-    else if(edge==out_edges_[1])
-      return &grad2_;
     else
-      LOG(ERROR)<<"get mutable grad from null edge";
+      return &grad2_;
   }
   virtual const DAry& GetGrad(Edge *edge=nullptr){
+    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
     if(edge==out_edges_[0])
       return grad_;
-    else if(edge==out_edges_[1])
-      return grad2_;
     else
-      LOG(ERROR)<<"get grad from null edge";
+      return grad2_;
   }
   virtual DAry * GetMutableData(Edge *edge=nullptr){
+    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
     if(edge==out_edges_[0])
       return &data_;
-    else if(edge==out_edges_[1])
-      return &data2_;
     else
-      LOG(ERROR)<<"get mutable grad from nulledge";
+      return &data2_;
   }
   virtual const DAry& GetData(Edge *edge=nullptr){
+    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
     if(edge==out_edges_[0])
       return data_;
-    else if(edge==out_edges_[1])
-      return data2_;
     else
-      LOG(ERROR)<<"get grad from null edge";
+      return data2_;
   }
 
  private:
@@ -239,8 +241,10 @@ class ConvProductLayer: public Layer {
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual bool SyncForFeature();
-  virtual bool SyncForGradient();
+  virtual bool PreSyncF();
+  virtual bool PreSyncG();
+  virtual bool PostSyncF();
+  virtual bool PostSyncG();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -363,8 +367,10 @@ class FCLayer: public Layer {
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
-  virtual bool SyncForFeature();
-  virtual bool SyncForGradient();
+  virtual bool PreSyncF();
+  virtual bool PreSyncG();
+  virtual bool PostSyncF();
+  virtual bool PostSyncG();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);

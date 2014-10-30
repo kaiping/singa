@@ -141,6 +141,8 @@ DAry::DAry(const DAry& other) {
   shape_=other.shape_;
 }
 DAry& DAry::operator=(DAry&& other) {
+  if(alloc_size_!=0)
+    delete dptr_;
   offset_=other.offset_;
   shape_=other.shape_;
   ga_=other.ga_;
@@ -154,6 +156,8 @@ DAry& DAry::operator=(DAry&& other) {
 }
 
 DAry& DAry::operator=(const DAry& other) {
+  if(alloc_size_!=0)
+    delete dptr_;
   offset_=other.offset_;
   alloc_size_=0;
   dptr_=other.dptr_;
@@ -304,7 +308,7 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2,
   CBLAS_TRANSPOSE TransA =trans1?CblasTrans:CblasNoTrans;
   CBLAS_TRANSPOSE TransB =trans2?CblasTrans:CblasNoTrans;
   cblas_sgemm(CblasRowMajor,  TransA, TransB, M, N, K,
-      1.0f, dptr1, lda, dptr2, ldb, scale, dptr_, N);
+      1.0f, dptr1, lda, dptr2, ldb, scale, dptr, N);
   if(do_put){
     ga_->Accum(dptr);
     delete dptr;

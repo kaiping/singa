@@ -152,8 +152,10 @@ void* PrefetchData(void* context){
   Net* net=prefetcher->net;
   const DAry& input= net->input_layer(0)->GetData(nullptr);
   Range nrng=input.IndexRange(0);
+  /*
   for(int n=0;n<nrng.first;n++)
     prefetcher->NextIterator();
+    */
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
     //LOG(INFO)<<iter->key().ToString()<<" "<<record.label();
@@ -162,8 +164,10 @@ void* PrefetchData(void* context){
       layer->AddInputRecord(record);
     prefetcher->NextIterator();
   }
+  /*
   for(int n=0;n<input.shape(0)-nrng.second;n++)
     prefetcher->NextIterator();
+    */
 }
 
 void Solver::Test(){
@@ -295,21 +299,22 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     for(auto* param: layer->GetParams()){
       delegate_->AsyncCollect(param, step);
     }
-    if(layer->SyncForFeature()){
+    if(layer->PreSyncF())
       MPI_Barrier(context_->mpicomm());
-    }
     layer->ComputeFeature();
+    if(layer->PostSyncF())
+      MPI_Barrier(context_->mpicomm());
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    if((*layer)->SyncForGradient()){
-      //LOG(ERROR)<<(*layer)->name()<<" sync for grad";
+    if((*layer)->PreSyncG())
       MPI_Barrier(context_->mpicomm());
-    }
     (*layer)->ComputeGradient();
     for(auto* param: (*layer)->GetParams()){
       delegate_->Update(param, step);
     }
+    if((*layer)->PostSyncG())
+      MPI_Barrier(context_->mpicomm());
   }
   DebugInfo(net);
   return perf;
@@ -356,19 +361,19 @@ void Solver::TimeOneBatch(int runs) {
         delegate_->AsyncCollect(param, step_);
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
-      if(layer->SyncForFeature()){
+      if(layer->PreSyncF())
         MPI_Barrier(context_->mpicomm());
-      }
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
       layer->ComputeFeature();
+      if(layer->PostSyncF())
+        MPI_Barrier(context_->mpicomm());
       forward[layerid++]+=Now()-comp_start;
     }
     for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
       sync_start=Now();
-      if((*layer)->SyncForGradient()){
+      if((*layer)->PreSyncG())
         MPI_Barrier(context_->mpicomm());
-      }
       comp_start=Now();
       sync[--layerid]+=comp_start-sync_start;
       (*layer)->ComputeGradient();
@@ -378,6 +383,8 @@ void Solver::TimeOneBatch(int runs) {
 
       for(auto* param: (*layer)->GetParams())
         delegate_->Update(param, step_);
+      if((*layer)->PostSyncG())
+        MPI_Barrier(context_->mpicomm());
       refresh[layerid]+=Now()-refresh_start;
     }
     IncStep();

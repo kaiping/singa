@@ -29,6 +29,7 @@ class UpdateHandler: public BaseUpdateHandler<VKey, V>{
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(V* data, const V& update);
   virtual bool Get(const VKey& key, const V &val, V* ret);
+  virtual bool is_checkpointable(const VKey& key, const V& val);
 };
 
 template<>
@@ -37,6 +38,7 @@ class UpdateHandler<AdaGradValue>{
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(AdaGradValue* data, const AdaGradValue& update);
   virtual bool Get(const VKey& key, const AdaGradValue &val, AdaGradValue* ret);
+  virtual bool is_checkpointable(const VKey& key, const AdaGradValue& val);
 };
 
 template<>
@@ -45,6 +47,7 @@ class UpdateHandler<SGDValue>{
   explicit UpdateHandler(const SolverProto& solver);
   virtual bool Update(SGDValue* data, const SGDValue& update);
   virtual bool Get(const VKey& key, const SGDValue &val, SGDValue* ret);
+  virtual bool is_checkpointable(const VKey& key, const SGDValue& val);
   void UpdateHyperParams(const int step);
  private:
   int step_;

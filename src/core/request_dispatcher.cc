@@ -71,7 +71,6 @@ namespace lapis {
 	}
 
 	void RequestDispatcher::table_dispatch_loop() {
-		VLOG(3) << "In table dispatch loop of process " << NetworkThread::Get()->id();
 		while (true) {
 			TaggedMessage t_msg;
 			string key;
@@ -97,7 +96,6 @@ namespace lapis {
 	}
 
 	void RequestDispatcher::disk_dispatch_loop(){
-		VLOG(3) << " In disk dispatch loop of process " << NetworkThread::Get()->id();
 		while (true) {
 			DiskData *data = new DiskData();
 			boost::recursive_mutex::scoped_lock sl(disk_lock_);

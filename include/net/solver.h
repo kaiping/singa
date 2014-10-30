@@ -56,7 +56,7 @@ class Solver {
     Solver(const SolverProto &proto);
     ~Solver();
     void Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np);
-    void Train();
+    void Train(int start_step=0);
     void Test();
     Performance Test(const Phase& phase); //kValidation or kTest
     leveldb::DB* OpenShard(string path) ;

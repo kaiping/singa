@@ -238,7 +238,8 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
  */
 }
 
-void Solver::Train(){
+void Solver::Train(int start_step){
+  step_=start_step;
   Prefetcher prefetcher(train_shard_, net_);
   pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
   while (!HasFinished()) {

@@ -84,7 +84,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   }
   LOG(ERROR)<<"finish table assignment, req size "<<req.assign_size();
   mpi_->Broadcast(MTYPE_SHARD_ASSIGNMENT, req);
-  mpi_->WaitForSync(MTYPE_SHARD_ASSIGNMENT_DONE, context_->num_table_servers());
+  mpi_->WaitForSync(MTYPE_SHARD_ASSIGNMENT_DONE, GlobalContext::kCoordinator);//context_->num_table_servers());
   LOG(ERROR)<<"finish table server init";
 }
 
@@ -157,7 +157,7 @@ void Coordinator::DistributePartition(const NetProto & netproto) {
 }
 
 
-void Coordinator::Start(const ModelProto& model) {
+void Coordinator::Init(const ModelProto& model) {
   SolverProto sp(model.solver());
   sp.mutable_sgd()->set_threshold(context_->num_groups());
   sp.mutable_adagrad()->set_threshold(0);
@@ -167,17 +167,11 @@ void Coordinator::Start(const ModelProto& model) {
   Net* net=SetupNetShape(model);
   const NetProto partition=PartitionNet(net);
   delete net;
-  /*
-  int wid=0;
-  for(auto& np: partitions){
-    net->InitParameters();
-    delegate->SplitParams(net->params(), wid);
-    delegate->Put(net->params());
-    delete net;
-    wid++;
-  }
-  */
   DistributePartition(partition);
+}
+
+void Coordinator::Start(const ModelProto& model) {
+  Init(model);
   EmptyMessage dummy_msg;
   LOG(ERROR)<<"Tell group 0 to init parameters";
   for(auto wid: context_->MembersOfGroup(0))
@@ -190,7 +184,7 @@ void Coordinator::Start(const ModelProto& model) {
   Run();
 }
 
-void Coordinator::Resume() {
+void Coordinator::Resume(const ModelProto& model) {
   /*
    * no need to fetch net partition from hdfs
    * workers will fetch netpartition
@@ -199,6 +193,13 @@ void Coordinator::Resume() {
     TableDelegate* delegate=CreateTableDelegate(sp);
     InitTableServers(delegate->tables());
    */
+  Init(model);
+  EmptyMessage dummy_msg;
+  int src;
+  LOG(ERROR)<<"Coordiantor wait for servers to restore";
+  for(int sid=context_->server_start();sid<context_->server_end();sid++)
+    mpi_->Read(sid, MTYPE_SERVER_RESTORED, &dummy_msg, &src);
+  LOG(ERROR)<<"All servers have restored";
   Run();
 }
 
@@ -210,7 +211,6 @@ void Coordinator::Run(){
   int alive_workers=context_->num_groups()*context_->group_size();
   int src = 0;
   EmptyMessage end_msg;
-
   LOG(ERROR)<<"Coordinator waits for "<<alive_workers;
   while(alive_workers) {
     if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {

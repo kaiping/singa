@@ -22,6 +22,8 @@
 #include <iostream>
 #include <fstream>
 
+
+DEFINE_bool(restore_mode, false, "restore from checkpoint file");
 using namespace lapis;
 using std::vector;
 
@@ -29,13 +31,17 @@ using std::vector;
 DEFINE_string(db_backend, "lmdb", "backend db");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_string(checkpoint_dir,"tmp","check point dir"); 
+DEFINE_string(checkpoint_dir,"tmp","check point dir");
 DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
 DEFINE_int32(workers,2,"numer of workers doing get/put");
+DECLARE_bool(checkpoint_enabled);
+
+/*
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
+*/
 struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
 	bool Update(int *a, const int &b){
 		*a = *a+b; //replace
@@ -43,14 +49,11 @@ struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
 	}
 
   bool Get(const int k, const int &val, int *ret){
-    if(val<k+2&&val!=k){
-      VLOG(3)<<"get false";
-      return false;
-    }
-    else{
       *ret = val;
       return true;
-    }
+  }
+  bool is_checkpointable(const int k, const int v){
+  	return true; //always checkpoint
   }
 };
 
@@ -62,7 +65,7 @@ std::vector<ServerState*> server_states;
 TableServer *table_server;
 TableDelegate *delegate;
 
-int num_keys=5;
+int num_keys=10;
 
 void create_mem_table(int id, int num_shards){
 
@@ -147,10 +150,29 @@ void coordinator_load_data(){
 
 	int nservers=context->num_table_servers();
 
-	for (int i=1; i<num_keys; i++){
-
-		table->put(i,i);
+	if (!FLAGS_restore_mode){
+		for (int i=0; i<num_keys; i++){
+			table->put(i,i);
+		}
 	}
+
+
+/*
+	LogFile *file = new LogFile("tmp/checkpoint_0","rw",0);
+	VLOG(3) << "Loaded table " << file->file_name();
+	string k,v;
+	int table_size = file->read_latest_table_size();
+	VLOG(3) << "table size = " << table_size;
+	for (int i=0; i<table_size; i++){
+		int tmp;
+		file->previous_entry(&k, &v, &tmp);
+		int *key = reinterpret_cast<int *>((char*)&k[0]);
+		int *val = reinterpret_cast<int *>((char*)&v[0]);
+		VLOG(3) << "k = " << *key << " val = " << *val;
+	}
+	delete file;
+*/
+
 	/*
 	for (int i=0; i<num_keys; i++){
 		table->put(i,0); //loaded again
@@ -169,7 +191,7 @@ void get(TypedGlobalTable<int,int>* table){
   int val=0;
 
   LOG(INFO)<<"start collect key";
-  for (int i=1; i<num_keys; i++){
+  for (int i=0; i<num_keys; i++){
     while(!table->async_get_collect(&key, &val))
       Sleep(0.001);
     LOG(INFO)<<"collect key "<<key<<" with val "<<val;
@@ -178,7 +200,7 @@ void get(TypedGlobalTable<int,int>* table){
 
 void update(TypedGlobalTable<int,int>* table){
   if(NetworkThread::Get()->id()==0)
-    sleep(10);
+    sleep(2);
   LOG(INFO)<<"start update";
   for (int i=0; i<num_keys; i++)
     table->update(i,1);
@@ -231,19 +253,33 @@ void HandleShardAssignment() {
     GlobalTable *t = tables.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
 
-	//if local shard, create check-point files
-	if (t->is_local_shard(a.shard())){
-		string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
-		FILE *tmp_file = fopen(checkpoint_file.c_str(), "r"); 
-		if (tmp_file){//exists -> open to reading and writing
-			fclose(tmp_file); 	
-			VLOG(3) << "Already exists, open checkpoint file "<< checkpoint_file;  
-			t->checkpoint_files().push_back(new LogFile(checkpoint_file,"rw",a.shard())); 
-		}	
-		else{// not exist -> open to writing first time
-			t->checkpoint_files().push_back(new LogFile(checkpoint_file,"w",a.shard())); 
-		}
-	}
+
+    //if local shard, create check-point files
+    if (FLAGS_checkpoint_enabled && t->is_local_shard(a.shard())){
+      string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
+      FILE *tmp_file = fopen(checkpoint_file.c_str(), "r");
+      if (tmp_file){//exists -> open to reading and writing
+        fclose(tmp_file);
+        auto cp = t->checkpoint_files();
+
+        if (FLAGS_restore_mode){//open in read mode to restore, then close
+          VLOG(3) << "Open checkpoint file to restore";
+          (*cp)[a.shard()] = new LogFile(checkpoint_file,"r",a.shard());
+          t->Restore(a.shard());
+          delete (*cp)[a.shard()];
+        }
+
+        VLOG(3) << "Open checkpoint file for writing";
+        (*cp)[a.shard()] = new LogFile(checkpoint_file,"a",a.shard());
+      }
+      else{// not exist -> open to writing first time
+        auto cp = t->checkpoint_files();
+        (*cp)[a.shard()] = new LogFile(checkpoint_file,"w",a.shard());
+        VLOG(3) << "Added to new checkpoint files for shard "<< a.shard();
+      }
+
+    }
+
 
   }
   EmptyMessage empty;
@@ -289,6 +325,7 @@ int main(int argc, char **argv) {
 	}
 
 	shutdown();
+	VLOG(3) << "Done ...";
 	return 0;
 }
 

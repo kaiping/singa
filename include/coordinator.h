@@ -45,10 +45,11 @@ class Coordinator {
  public:
   explicit Coordinator(const shared_ptr<GlobalContext>& gc);
   void Start(const ModelProto& model);
-  void Resume();
+  void Resume(const ModelProto& model );
   void Shutdown();
   ~Coordinator();
  private:
+  void Init(const ModelProto& mdoel) ;
   void Run();
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
   /**

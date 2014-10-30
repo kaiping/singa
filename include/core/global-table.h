@@ -45,11 +45,13 @@ class GlobalTable :
   bool ApplyUpdates(const TableData &req);
   bool ApplyPut(const TableData &req);
 
+  void Restore(int shard); 
+
   void UpdatePartitions(const ShardInfo &sinfo);
 
   Stats stats();
   
-  vector<LogFile*> checkpoint_files(){ return checkpoint_files_;}
+  map<int, LogFile*>* checkpoint_files(){ return &checkpoint_files_;}
   
   int pending_write_bytes();
 
@@ -72,7 +74,7 @@ class GlobalTable :
   vector<LocalTable *> partitions_;
   vector<LocalTable *> cache_;
 
-  vector<LogFile*> checkpoint_files_; 
+  map<int, LogFile*> checkpoint_files_;
 
   volatile int pending_writes_;
   boost::recursive_mutex m_;

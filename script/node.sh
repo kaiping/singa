@@ -1,5 +1,5 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/train-lmdb"
+folder="/data1/wangwei/lapis/checkpoint*"
 #folder="/tmp/lapis.bin.INFO"
 hostfile="examples/imagenet12/rack2"
 if [ $# -eq 0 ]

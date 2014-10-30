@@ -10,10 +10,15 @@
 
 #include "da/dary.h"
 
+DECLARE_bool(restore);
+DECLARE_string(checkpoint_dir);
+DECLARE_int32(checkpoint_frequency);
+DECLARE_int32(checkpoint_after);
 namespace lapis {
 UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
 }
-bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data, const AdaGradValue& update){
+bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data,
+    const AdaGradValue& update){
   /*
   Vector dst(data->grad());
   Vector src(update->grad());
@@ -21,7 +26,8 @@ bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data, const AdaGradValue&
   */
   return true;
 }
-bool UpdateHandler<AdaGradValue>::Get(const VKey& key, const AdaGradValue &val, AdaGradValue* ret) {
+bool UpdateHandler<AdaGradValue>::Get(const VKey& key,
+    const AdaGradValue &val, AdaGradValue* ret) {
   //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
   if(key.version()<=val.version()){
     DAryProto* retdat=ret->mutable_data();
@@ -34,9 +40,26 @@ bool UpdateHandler<AdaGradValue>::Get(const VKey& key, const AdaGradValue &val, 
   return false;
 }
 
+bool UpdateHandler<AdaGradValue>::is_checkpointable(const VKey& key,
+    const AdaGradValue& val) {
+  if(val.version()>FLAGS_checkpoint_after&&
+      val.version()%FLAGS_checkpoint_frequency==0)
+    return true;
+  else
+    return false;
+}
+
 /*********************************************************************
  * SGDValue
  **********************************************************************/
+bool UpdateHandler<SGDValue>::is_checkpointable(const VKey& key, const SGDValue& val) {
+  if(val.version()>FLAGS_checkpoint_after&&
+      val.version()%FLAGS_checkpoint_frequency==0)
+    return true;
+  else
+    return false;
+}
+
 bool UpdateHandler<SGDValue>::Get(const VKey& key, const SGDValue &val, SGDValue* ret) {
   //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
   if(key.version()<=val.version()){
@@ -148,7 +171,7 @@ void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
  * Table Delegate
  * *************************************************************/
 void TableDelegate::HandleShardAssignment() {
-	LOG(INFO) << "Handle Shard Assignment";
+  LOG(INFO) << "Handle Shard Assignment";
   ShardAssignmentRequest shard_req;
   auto mpi=NetworkThread::Get();
   mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
@@ -158,11 +181,37 @@ void TableDelegate::HandleShardAssignment() {
     const ShardAssignment &a = shard_req.assign(i);
     GlobalTable *t = _tables.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
-    //LOG(INFO) << StringPrintf("Process %d is assigned shard (%d,%d)", NetworkThread::Get()->id(), a.table(), a.shard());
+    //if local shard, create check-point files
+    if (FLAGS_checkpoint_enabled && t->is_local_shard(a.shard())){
+      string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
+      FILE *tmp_file = fopen(checkpoint_file.c_str(), "r");
+      if (tmp_file){//exists -> open to reading and writing
+        fclose(tmp_file);
+        auto cp = t->checkpoint_files();
+
+        if (FLAGS_restore){//open in read mode to restore, then close
+          (*cp)[a.shard()] = new LogFile(checkpoint_file,"r",a.shard());
+          t->Restore(a.shard());
+          delete (*cp)[a.shard()];
+          EmptyMessage dummy;
+          mpi->Send(GlobalContext::kCoordinator, MTYPE_SERVER_RESTORED, dummy);
+          LOG(ERROR) << "Server restored";
+        }
+
+        VLOG(3) << "Open checkpoint file for writing";
+        (*cp)[a.shard()] = new LogFile(checkpoint_file,"a",a.shard());
+      }
+      else{// not exist -> open to writing first time
+        auto cp = t->checkpoint_files();
+        (*cp)[a.shard()] = new LogFile(checkpoint_file,"w",a.shard());
+        VLOG(3) << "Added to new checkpoint files for shard "<< a.shard();
+      }
+
+    }
   }
   EmptyMessage empty;
   mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
-  LOG(INFO)<<"Finish handle shard assignment";
+  LOG(ERROR)<<"Finish handle shard assignment";
 }
 
 TableDelegate* CreateTableDelegate(const SolverProto& proto){

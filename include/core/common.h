@@ -67,6 +67,7 @@ template <class K, class V>
 struct BaseUpdateHandler {
   virtual bool Update(V *a, const V &b) = 0;
   virtual bool Get(const K k, const V &v, V* ret) = 0;
+  virtual bool is_checkpointable(const K, const V) = 0; 
 };
 
 template <class K>

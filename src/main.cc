@@ -18,12 +18,16 @@
 #include "da/gary.h"
 #include "utils/common.h"
 
+DEFINE_int32(checkpoint_frequency, 10000, "frequency for cp");
+DEFINE_int32(checkpoint_after, 1, "cp after this steps");
+DEFINE_string(checkpoint_dir,"/data1/wangwei/lapis","check point dir");
 DEFINE_string(par_mode, "model",  "time training algorithm");
 DEFINE_string(db_backend, "lmdb", "database backend");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(load, false, "Load data to distributed tables");
 DEFINE_bool(run, true,  "Run training algorithm");
+DEFINE_bool(restore, false, "restore from checkpoint file");
 DEFINE_bool(time, true,  "time training algorithm");
 // for debugging use
 #ifndef FLAGS_v
@@ -72,17 +76,17 @@ int main(int argc, char **argv) {
     //lapis::Debug();
     lapis::GAry::Finalize();
   }
-  /*
-  if(FLAGS_resume){
+  if(FLAGS_restore){
+    lapis::GAry::Init(gc->rank(), gc->groups());
      if(gc->AmICoordinator()) {
       lapis::Coordinator coordinator(gc);
-      coordinator.Resume();
+      coordinator.Resume(model);
     }else {
       lapis::Worker worker(gc);
-      worker.Resume(model.data());
+      worker.Start(model.data(), model.solver());
     }
+    lapis::GAry::Finalize();
   }
-  */
   gc->Shutdown();
   LOG(ERROR)<<"shutdown";
   return 0;

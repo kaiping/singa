@@ -223,7 +223,11 @@ class LogFile{
 		void previous_entry(string *key, string *val, int *size);
 		int current_offset(){ return current_offset_; }
 		int read_shard_id(); 
+		int read_latest_table_size();
+		string file_name(){return path_;}
 	private:
+		string path_;
+		int test_val_;
 		FILE *fp_;
 		int current_offset_; //from SEEK_END  
 }; 

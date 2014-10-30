@@ -1,11 +1,16 @@
 #include "core/global-table.h"
 #include "core/table_server.h"
 #include "utils/network_thread.h"
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 
 static const int kMaxNetworkPending = 1 << 26;
 static const int kMaxNetworkChunk = 1 << 20;
 
+DEFINE_bool(checkpoint_enabled, true, "enabling checkpoint");
+
 namespace lapis {
+
 
 void GlobalTable::UpdatePartitions(const ShardInfo &info) {
 }
@@ -238,7 +243,9 @@ bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
         << " to " << owner(req.shard());
   }
   RPCTableCoder c(&req);
-  return partitions_[req.shard()]->ApplyUpdates(&c);
+  bool ret =  partitions_[req.shard()]->ApplyUpdates(&c, checkpoint_files_[req.shard()]);
+
+  return ret;
 }
 
 bool GlobalTable::ApplyPut(const lapis::TableData &req) {
@@ -249,7 +256,18 @@ bool GlobalTable::ApplyPut(const lapis::TableData &req) {
         << " to " << owner(req.shard());
   }
   RPCTableCoder c(&req);
-  return partitions_[req.shard()]->ApplyPut(&c);
+  bool ret =  partitions_[req.shard()]->ApplyPut(&c, checkpoint_files_[req.shard()]);
+
+  return ret;
 }
 
+void GlobalTable::Restore(int shard){
+	//only restore local shard
+	if (is_local_shard(shard)){
+		LogFile *logfile = (*checkpoint_files())[shard]; 
+		int restored_size = logfile->read_latest_table_size(); 
+		partitions_[shard]->restore(logfile, restored_size); 
+		VLOG(3) << "Done restoring table"; 
+	}		
+}
 }

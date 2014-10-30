@@ -68,7 +68,6 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
     NetProto np;
     mpi_->Read(cdntor, MTYPE_NET_PARTITION, &np);
     Solver solver(sp);
-    LOG(ERROR)<<"setup solver";
     solver.Setup(delegate, dp, np);
 
     while(true){
@@ -77,10 +76,13 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
         mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
       }
       if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src)){
+        LOG(ERROR)<<"Worker starting...";
+        // read start step from coordinator's msg
         solver.Train();
         //solver.TimeOneBatch();
         break;
       }
+      sleep(0.1);
     }
     LOG(ERROR)<<"Worker Finish Training";
     mpi_->Flush();
@@ -91,7 +93,7 @@ void Worker::Start(const DataProto& dp, const SolverProto& sp){
       if(mpi_->TryRead(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src))
         break;
       else
-        sleep(2);
+        sleep(5);
     }
     LOG(ERROR)<<"Table Server shutting down";
   }

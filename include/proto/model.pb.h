@@ -921,26 +921,47 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::lapis::DAryProto* release_col_data();
   inline void set_allocated_col_data(::lapis::DAryProto* col_data);
 
-  // optional .lapis.DAryProto col_grad = 23;
-  inline bool has_col_grad() const;
-  inline void clear_col_grad();
-  static const int kColGradFieldNumber = 23;
-  inline const ::lapis::DAryProto& col_grad() const;
-  inline ::lapis::DAryProto* mutable_col_grad();
-  inline ::lapis::DAryProto* release_col_grad();
-  inline void set_allocated_col_grad(::lapis::DAryProto* col_grad);
+  // optional .lapis.DAryProto split_data = 23;
+  inline bool has_split_data() const;
+  inline void clear_split_data();
+  static const int kSplitDataFieldNumber = 23;
+  inline const ::lapis::DAryProto& split_data() const;
+  inline ::lapis::DAryProto* mutable_split_data();
+  inline ::lapis::DAryProto* release_split_data();
+  inline void set_allocated_split_data(::lapis::DAryProto* split_data);
 
-  // optional int32 topk = 24;
+  // optional int32 split_size = 24;
+  inline bool has_split_size() const;
+  inline void clear_split_size();
+  static const int kSplitSizeFieldNumber = 24;
+  inline ::google::protobuf::int32 split_size() const;
+  inline void set_split_size(::google::protobuf::int32 value);
+
+  // optional int32 split_dim = 25 [default = 1];
+  inline bool has_split_dim() const;
+  inline void clear_split_dim();
+  static const int kSplitDimFieldNumber = 25;
+  inline ::google::protobuf::int32 split_dim() const;
+  inline void set_split_dim(::google::protobuf::int32 value);
+
+  // optional int32 concat_dim = 26 [default = 1];
+  inline bool has_concat_dim() const;
+  inline void clear_concat_dim();
+  static const int kConcatDimFieldNumber = 26;
+  inline ::google::protobuf::int32 concat_dim() const;
+  inline void set_concat_dim(::google::protobuf::int32 value);
+
+  // optional int32 topk = 27;
   inline bool has_topk() const;
   inline void clear_topk();
-  static const int kTopkFieldNumber = 24;
+  static const int kTopkFieldNumber = 27;
   inline ::google::protobuf::int32 topk() const;
   inline void set_topk(::google::protobuf::int32 value);
 
-  // repeated string top = 25;
+  // repeated string top = 28;
   inline int top_size() const;
   inline void clear_top();
-  static const int kTopFieldNumber = 25;
+  static const int kTopFieldNumber = 28;
   inline const ::std::string& top(int index) const;
   inline ::std::string* mutable_top(int index);
   inline void set_top(int index, const ::std::string& value);
@@ -953,10 +974,10 @@ class LayerProto : public ::google::protobuf::Message {
   inline const ::google::protobuf::RepeatedPtrField< ::std::string>& top() const;
   inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_top();
 
-  // repeated string bottom = 26;
+  // repeated string bottom = 29;
   inline int bottom_size() const;
   inline void clear_bottom();
-  static const int kBottomFieldNumber = 26;
+  static const int kBottomFieldNumber = 29;
   inline const ::std::string& bottom(int index) const;
   inline ::std::string* mutable_bottom(int index);
   inline void set_bottom(int index, const ::std::string& value);
@@ -1005,8 +1026,14 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_grad();
   inline void set_has_col_data();
   inline void clear_has_col_data();
-  inline void set_has_col_grad();
-  inline void clear_has_col_grad();
+  inline void set_has_split_data();
+  inline void clear_has_split_data();
+  inline void set_has_split_size();
+  inline void clear_has_split_size();
+  inline void set_has_split_dim();
+  inline void clear_has_split_dim();
+  inline void set_has_concat_dim();
+  inline void clear_has_concat_dim();
   inline void set_has_topk();
   inline void clear_has_topk();
 
@@ -1032,10 +1059,13 @@ class LayerProto : public ::google::protobuf::Message {
   ::lapis::DAryProto* data_;
   ::lapis::DAryProto* grad_;
   ::lapis::DAryProto* col_data_;
-  ::lapis::DAryProto* col_grad_;
+  ::lapis::DAryProto* split_data_;
+  ::google::protobuf::int32 split_size_;
+  ::google::protobuf::int32 split_dim_;
+  ::google::protobuf::int32 concat_dim_;
+  ::google::protobuf::int32 topk_;
   ::google::protobuf::RepeatedPtrField< ::std::string> top_;
   ::google::protobuf::RepeatedPtrField< ::std::string> bottom_;
-  ::google::protobuf::int32 topk_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -4361,56 +4391,128 @@ inline void LayerProto::set_allocated_col_data(::lapis::DAryProto* col_data) {
   // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_data)
 }
 
-// optional .lapis.DAryProto col_grad = 23;
-inline bool LayerProto::has_col_grad() const {
+// optional .lapis.DAryProto split_data = 23;
+inline bool LayerProto::has_split_data() const {
   return (_has_bits_[0] & 0x00040000u) != 0;
 }
-inline void LayerProto::set_has_col_grad() {
+inline void LayerProto::set_has_split_data() {
   _has_bits_[0] |= 0x00040000u;
 }
-inline void LayerProto::clear_has_col_grad() {
+inline void LayerProto::clear_has_split_data() {
   _has_bits_[0] &= ~0x00040000u;
 }
-inline void LayerProto::clear_col_grad() {
-  if (col_grad_ != NULL) col_grad_->::lapis::DAryProto::Clear();
-  clear_has_col_grad();
+inline void LayerProto::clear_split_data() {
+  if (split_data_ != NULL) split_data_->::lapis::DAryProto::Clear();
+  clear_has_split_data();
 }
-inline const ::lapis::DAryProto& LayerProto::col_grad() const {
-  // @@protoc_insertion_point(field_get:lapis.LayerProto.col_grad)
-  return col_grad_ != NULL ? *col_grad_ : *default_instance_->col_grad_;
+inline const ::lapis::DAryProto& LayerProto::split_data() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.split_data)
+  return split_data_ != NULL ? *split_data_ : *default_instance_->split_data_;
 }
-inline ::lapis::DAryProto* LayerProto::mutable_col_grad() {
-  set_has_col_grad();
-  if (col_grad_ == NULL) col_grad_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.col_grad)
-  return col_grad_;
+inline ::lapis::DAryProto* LayerProto::mutable_split_data() {
+  set_has_split_data();
+  if (split_data_ == NULL) split_data_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.LayerProto.split_data)
+  return split_data_;
 }
-inline ::lapis::DAryProto* LayerProto::release_col_grad() {
-  clear_has_col_grad();
-  ::lapis::DAryProto* temp = col_grad_;
-  col_grad_ = NULL;
+inline ::lapis::DAryProto* LayerProto::release_split_data() {
+  clear_has_split_data();
+  ::lapis::DAryProto* temp = split_data_;
+  split_data_ = NULL;
   return temp;
 }
-inline void LayerProto::set_allocated_col_grad(::lapis::DAryProto* col_grad) {
-  delete col_grad_;
-  col_grad_ = col_grad;
-  if (col_grad) {
-    set_has_col_grad();
+inline void LayerProto::set_allocated_split_data(::lapis::DAryProto* split_data) {
+  delete split_data_;
+  split_data_ = split_data;
+  if (split_data) {
+    set_has_split_data();
   } else {
-    clear_has_col_grad();
+    clear_has_split_data();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.col_grad)
+  // @@protoc_insertion_point(field_set_allocated:lapis.LayerProto.split_data)
 }
 
-// optional int32 topk = 24;
-inline bool LayerProto::has_topk() const {
+// optional int32 split_size = 24;
+inline bool LayerProto::has_split_size() const {
   return (_has_bits_[0] & 0x00080000u) != 0;
 }
-inline void LayerProto::set_has_topk() {
+inline void LayerProto::set_has_split_size() {
   _has_bits_[0] |= 0x00080000u;
 }
-inline void LayerProto::clear_has_topk() {
+inline void LayerProto::clear_has_split_size() {
   _has_bits_[0] &= ~0x00080000u;
+}
+inline void LayerProto::clear_split_size() {
+  split_size_ = 0;
+  clear_has_split_size();
+}
+inline ::google::protobuf::int32 LayerProto::split_size() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.split_size)
+  return split_size_;
+}
+inline void LayerProto::set_split_size(::google::protobuf::int32 value) {
+  set_has_split_size();
+  split_size_ = value;
+  // @@protoc_insertion_point(field_set:lapis.LayerProto.split_size)
+}
+
+// optional int32 split_dim = 25 [default = 1];
+inline bool LayerProto::has_split_dim() const {
+  return (_has_bits_[0] & 0x00100000u) != 0;
+}
+inline void LayerProto::set_has_split_dim() {
+  _has_bits_[0] |= 0x00100000u;
+}
+inline void LayerProto::clear_has_split_dim() {
+  _has_bits_[0] &= ~0x00100000u;
+}
+inline void LayerProto::clear_split_dim() {
+  split_dim_ = 1;
+  clear_has_split_dim();
+}
+inline ::google::protobuf::int32 LayerProto::split_dim() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.split_dim)
+  return split_dim_;
+}
+inline void LayerProto::set_split_dim(::google::protobuf::int32 value) {
+  set_has_split_dim();
+  split_dim_ = value;
+  // @@protoc_insertion_point(field_set:lapis.LayerProto.split_dim)
+}
+
+// optional int32 concat_dim = 26 [default = 1];
+inline bool LayerProto::has_concat_dim() const {
+  return (_has_bits_[0] & 0x00200000u) != 0;
+}
+inline void LayerProto::set_has_concat_dim() {
+  _has_bits_[0] |= 0x00200000u;
+}
+inline void LayerProto::clear_has_concat_dim() {
+  _has_bits_[0] &= ~0x00200000u;
+}
+inline void LayerProto::clear_concat_dim() {
+  concat_dim_ = 1;
+  clear_has_concat_dim();
+}
+inline ::google::protobuf::int32 LayerProto::concat_dim() const {
+  // @@protoc_insertion_point(field_get:lapis.LayerProto.concat_dim)
+  return concat_dim_;
+}
+inline void LayerProto::set_concat_dim(::google::protobuf::int32 value) {
+  set_has_concat_dim();
+  concat_dim_ = value;
+  // @@protoc_insertion_point(field_set:lapis.LayerProto.concat_dim)
+}
+
+// optional int32 topk = 27;
+inline bool LayerProto::has_topk() const {
+  return (_has_bits_[0] & 0x00400000u) != 0;
+}
+inline void LayerProto::set_has_topk() {
+  _has_bits_[0] |= 0x00400000u;
+}
+inline void LayerProto::clear_has_topk() {
+  _has_bits_[0] &= ~0x00400000u;
 }
 inline void LayerProto::clear_topk() {
   topk_ = 0;
@@ -4426,7 +4528,7 @@ inline void LayerProto::set_topk(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.LayerProto.topk)
 }
 
-// repeated string top = 25;
+// repeated string top = 28;
 inline int LayerProto::top_size() const {
   return top_.size();
 }
@@ -4480,7 +4582,7 @@ LayerProto::mutable_top() {
   return &top_;
 }
 
-// repeated string bottom = 26;
+// repeated string bottom = 29;
 inline int LayerProto::bottom_size() const {
   return bottom_.size();
 }

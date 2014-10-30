@@ -205,9 +205,11 @@ class Partition{
     ret.setpDim(getpDim()-1);
 
     if(start>=offset+len||offset>=end){
-      LOG(ERROR)<<"no data";
-      ret.stride=stride;
-      ret.stepsize=stepsize;
+      //LOG(ERROR)<<"no data";
+      ret.size=0;
+      ret.end=0;
+      ret.stride=0;
+      ret.stepsize=0;
       return ret;
     }
 

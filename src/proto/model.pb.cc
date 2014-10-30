@@ -153,7 +153,7 @@ void protobuf_AssignDesc_model_2eproto() {
       sizeof(ParamProto));
   ParamProto_InitMethod_descriptor_ = ParamProto_descriptor_->enum_type(0);
   LayerProto_descriptor_ = file->message_type(2);
-  static const int LayerProto_offsets_[22] = {
+  static const int LayerProto_offsets_[25] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, num_output_),
@@ -172,7 +172,10 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, data_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, grad_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, col_data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, col_grad_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, split_data_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, split_size_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, split_dim_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, concat_dim_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, topk_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, top_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LayerProto, bottom_),
@@ -547,7 +550,7 @@ void protobuf_AddDesc_model_2eproto() {
     "\022\r\n\tkGaussain\020\001\022\014\n\010kUniform\020\002\022\017\n\013kPretra"
     "ined\020\003\022\026\n\022kGaussainSqrtFanIn\020\004\022\025\n\021kUnifo"
     "rmSqrtFanIn\020\005\022\030\n\024kUniformSqrtFanInOut\020\006\""
-    "\265\004\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002"
+    "\370\004\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002"
     "(\t\022\022\n\nnum_output\030\003 \001(\005\022 \n\005param\030\004 \003(\0132\021."
     "lapis.ParamProto\022\023\n\013window_size\030\010 \001(\005\022\021\n"
     "\006stride\030\t \001(\005:\0011\022\016\n\003pad\030\n \001(\005:\0010\022\025\n\nnum_"
@@ -557,69 +560,71 @@ void protobuf_AddDesc_model_2eproto() {
     "\020\n\010cropsize\030\021 \001(\005\022\016\n\006mirror\030\022 \001(\010\022\026\n\tdro"
     "p_prob\030\023 \001(\002:\0030.5\022\036\n\004data\030\024 \001(\0132\020.lapis."
     "DAryProto\022\036\n\004grad\030\025 \001(\0132\020.lapis.DAryProt"
-    "o\022\"\n\010col_data\030\026 \001(\0132\020.lapis.DAryProto\022\"\n"
-    "\010col_grad\030\027 \001(\0132\020.lapis.DAryProto\022\014\n\004top"
-    "k\030\030 \001(\005\022\013\n\003top\030\031 \003(\t\022\016\n\006bottom\030\032 \003(\t\"1\n\r"
-    "PoolingMethod\022\017\n\013kMaxPooling\020\001\022\017\n\013kAvgPo"
-    "oling\020\002\"y\n\tMeanProto\022\016\n\003num\030\001 \001(\005:\0010\022\023\n\010"
-    "channels\030\002 \001(\005:\0010\022\021\n\006height\030\003 \001(\005:\0010\022\020\n\005"
-    "width\030\004 \001(\005:\0010\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020\n\004diff"
-    "\030\006 \003(\002B\002\020\001\"D\n\tDAryProto\022\025\n\rpartition_dim"
-    "\030\001 \001(\005\022\r\n\005shape\030\002 \003(\005\022\021\n\005value\030\003 \003(\002B\002\020\001"
-    "\",\n\010NetProto\022 \n\005layer\030\002 \003(\0132\021.lapis.Laye"
-    "rProto\"P\n\020PerformanceProto\022\021\n\tprecision\030"
-    "\001 \001(\002\022\014\n\004loss\030\002 \001(\002\022\r\n\005count\030\003 \001(\005\022\014\n\004st"
-    "ep\030\004 \001(\005\"\326\006\n\013SolverProto\022/\n\006method\030\001 \001(\016"
-    "2\031.lapis.SolverProto.Method:\004kSGD\022!\n\026che"
-    "ckpoint_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoi"
-    "nt_every_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_pr"
-    "efix\030\004 \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint"
-    "_step\030\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 "
-    "\001(\005:\0010\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#"
-    "\n\016display_prefix\030\010 \001(\t:\013tmp/display\022\032\n\017v"
-    "alidation_step\030\t \001(\005:\0010\022!\n\026validation_af"
-    "ter_steps\030\n \001(\005:\0010\022!\n\026validation_every_s"
-    "teps\030\013 \001(\005:\0010\022\024\n\ttest_step\030\014 \001(\005:\0010\022\033\n\020t"
-    "est_after_steps\030\r \001(\005:\0010\022\033\n\020test_every_s"
-    "teps\030\016 \001(\005:\0010\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/"
-    "performance\0229\n\003alg\030\020 \001(\0162\032.lapis.SolverP"
-    "roto.GradAlg:\020kBackPropagation\022\021\n\tbatchs"
-    "ize\030\023 \001(\005\022\023\n\013train_steps\030\024 \001(\005\022\030\n\020valida"
-    "tion_steps\030\025 \001(\005\022\022\n\ntest_steps\030\026 \001(\005\022\030\n\n"
-    "max_splits\030\027 \001(\005:\0043571\022\034\n\003sgd\030\030 \001(\0132\017.la"
-    "pis.SGDValue\022$\n\007adagrad\030\031 \001(\0132\023.lapis.Ad"
-    "aGradValue\" \n\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGr"
-    "ad\020\002\";\n\007GradAlg\022\024\n\020kBackPropagation\020\001\022\032\n"
-    "\026kContrastiveDivergence\020\002\"\223\001\n\tDataProto\022"
-    "*\n\ntrain_data\030\001 \001(\0132\026.lapis.DataSourcePr"
-    "oto\022/\n\017validation_data\030\002 \001(\0132\026.lapis.Dat"
-    "aSourceProto\022)\n\ttest_data\030\003 \001(\0132\026.lapis."
-    "DataSourceProto\"|\n\nModelProto\022\014\n\004name\030\001 "
-    "\001(\t\022\034\n\003net\030\002 \001(\0132\017.lapis.NetProto\022\"\n\006sol"
-    "ver\030\003 \001(\0132\022.lapis.SolverProto\022\036\n\004data\030\004 "
-    "\001(\0132\020.lapis.DataProto\"2\n\nShardProto\022\016\n\006r"
-    "ecord\030\001 \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Rec"
-    "ord\022\037\n\005image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005"
-    "label\030\002 \001(\005\022\n\n\002id\030\003 \001(\t\"\326\001\n\014AdaGradValue"
-    "\022\023\n\010n_update\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\001"
-    "0\022\036\n\004data\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004gra"
-    "d\030\005 \001(\0132\020.lapis.DAryProto\022\032\n\022base_learni"
-    "ng_rate\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\022\013\n\003gid\030"
-    "\014 \001(\005\022!\n\007history\030\017 \003(\0132\020.lapis.DAryProto"
-    "\"\364\003\n\010SGDValue\022\032\n\022base_learning_rate\030\001 \001("
-    "\002\022\023\n\010momentum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003"
-    " \001(\002:\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learning_rate_"
-    "change_steps\030\005 \001(\005\022E\n\024learning_rate_chan"
-    "ge\030\006 \001(\0162\033.lapis.SGDValue.ChangeProto:\nk"
-    "Inverse_t\022#\n\030learning_rate_multiplier\030\007 "
-    "\001(\002:\0011\022\"\n\027weight_decay_multiplier\030\010 \001(\002:"
-    "\0011\022\023\n\010n_update\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005"
-    ":\0010\022\021\n\tthreshold\030\013 \001(\005\022\036\n\004data\030\r \001(\0132\020.l"
-    "apis.DAryProto\022\036\n\004grad\030\016 \001(\0132\020.lapis.DAr"
-    "yProto\022\n\n\002id\030\017 \001(\005\"S\n\013ChangeProto\022\n\n\006kFi"
-    "xed\020\000\022\016\n\nkInverse_t\020\001\022\020\n\014kExponential\020\002\022"
-    "\013\n\007kLinear\020\003\022\t\n\005kStep\020\004\"$\n\004VKey\022\013\n\003key\030\001"
-    " \001(\005\022\017\n\007version\030\002 \001(\005", 3741);
+    "o\022\"\n\010col_data\030\026 \001(\0132\020.lapis.DAryProto\022$\n"
+    "\nsplit_data\030\027 \001(\0132\020.lapis.DAryProto\022\022\n\ns"
+    "plit_size\030\030 \001(\005\022\024\n\tsplit_dim\030\031 \001(\005:\0011\022\025\n"
+    "\nconcat_dim\030\032 \001(\005:\0011\022\014\n\004topk\030\033 \001(\005\022\013\n\003to"
+    "p\030\034 \003(\t\022\016\n\006bottom\030\035 \003(\t\"1\n\rPoolingMethod"
+    "\022\017\n\013kMaxPooling\020\001\022\017\n\013kAvgPooling\020\002\"y\n\tMe"
+    "anProto\022\016\n\003num\030\001 \001(\005:\0010\022\023\n\010channels\030\002 \001("
+    "\005:\0010\022\021\n\006height\030\003 \001(\005:\0010\022\020\n\005width\030\004 \001(\005:\001"
+    "0\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020\n\004diff\030\006 \003(\002B\002\020\001\"D\n"
+    "\tDAryProto\022\025\n\rpartition_dim\030\001 \001(\005\022\r\n\005sha"
+    "pe\030\002 \003(\005\022\021\n\005value\030\003 \003(\002B\002\020\001\",\n\010NetProto\022"
+    " \n\005layer\030\002 \003(\0132\021.lapis.LayerProto\"P\n\020Per"
+    "formanceProto\022\021\n\tprecision\030\001 \001(\002\022\014\n\004loss"
+    "\030\002 \001(\002\022\r\n\005count\030\003 \001(\005\022\014\n\004step\030\004 \001(\005\"\326\006\n\013"
+    "SolverProto\022/\n\006method\030\001 \001(\0162\031.lapis.Solv"
+    "erProto.Method:\004kSGD\022!\n\026checkpoint_after"
+    "_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_every_step"
+    "s\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004 \001(\t:\016t"
+    "mp/checkpoint\022\032\n\017checkpoint_step\030\005 \001(\005:\001"
+    "0\022\036\n\023display_after_steps\030\006 \001(\005:\0010\022\036\n\023dis"
+    "play_every_steps\030\007 \001(\005:\0010\022#\n\016display_pre"
+    "fix\030\010 \001(\t:\013tmp/display\022\032\n\017validation_ste"
+    "p\030\t \001(\005:\0010\022!\n\026validation_after_steps\030\n \001"
+    "(\005:\0010\022!\n\026validation_every_steps\030\013 \001(\005:\0010"
+    "\022\024\n\ttest_step\030\014 \001(\005:\0010\022\033\n\020test_after_ste"
+    "ps\030\r \001(\005:\0010\022\033\n\020test_every_steps\030\016 \001(\005:\0010"
+    "\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/performance\0229"
+    "\n\003alg\030\020 \001(\0162\032.lapis.SolverProto.GradAlg:"
+    "\020kBackPropagation\022\021\n\tbatchsize\030\023 \001(\005\022\023\n\013"
+    "train_steps\030\024 \001(\005\022\030\n\020validation_steps\030\025 "
+    "\001(\005\022\022\n\ntest_steps\030\026 \001(\005\022\030\n\nmax_splits\030\027 "
+    "\001(\005:\0043571\022\034\n\003sgd\030\030 \001(\0132\017.lapis.SGDValue\022"
+    "$\n\007adagrad\030\031 \001(\0132\023.lapis.AdaGradValue\" \n"
+    "\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGrad\020\002\";\n\007GradA"
+    "lg\022\024\n\020kBackPropagation\020\001\022\032\n\026kContrastive"
+    "Divergence\020\002\"\223\001\n\tDataProto\022*\n\ntrain_data"
+    "\030\001 \001(\0132\026.lapis.DataSourceProto\022/\n\017valida"
+    "tion_data\030\002 \001(\0132\026.lapis.DataSourceProto\022"
+    ")\n\ttest_data\030\003 \001(\0132\026.lapis.DataSourcePro"
+    "to\"|\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003net\030\002 "
+    "\001(\0132\017.lapis.NetProto\022\"\n\006solver\030\003 \001(\0132\022.l"
+    "apis.SolverProto\022\036\n\004data\030\004 \001(\0132\020.lapis.D"
+    "ataProto\"2\n\nShardProto\022\016\n\006record\030\001 \003(\005\022\024"
+    "\n\014shard_folder\030\002 \001(\t\"D\n\006Record\022\037\n\005image\030"
+    "\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002 \001(\005\022\n"
+    "\n\002id\030\003 \001(\t\"\326\001\n\014AdaGradValue\022\023\n\010n_update\030"
+    "\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004data\030\004 \001"
+    "(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\0132\020.lap"
+    "is.DAryProto\022\032\n\022base_learning_rate\030\006 \001(\002"
+    "\022\021\n\tthreshold\030\007 \001(\005\022\013\n\003gid\030\014 \001(\005\022!\n\007hist"
+    "ory\030\017 \003(\0132\020.lapis.DAryProto\"\364\003\n\010SGDValue"
+    "\022\032\n\022base_learning_rate\030\001 \001(\002\022\023\n\010momentum"
+    "\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n\005ga"
+    "mma\030\004 \001(\002\022\"\n\032learning_rate_change_steps\030"
+    "\005 \001(\005\022E\n\024learning_rate_change\030\006 \001(\0162\033.la"
+    "pis.SGDValue.ChangeProto:\nkInverse_t\022#\n\030"
+    "learning_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027wei"
+    "ght_decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_updat"
+    "e\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthresh"
+    "old\030\013 \001(\005\022\036\n\004data\030\r \001(\0132\020.lapis.DAryProt"
+    "o\022\036\n\004grad\030\016 \001(\0132\020.lapis.DAryProto\022\n\n\002id\030"
+    "\017 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInv"
+    "erse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003\022"
+    "\t\n\005kStep\020\004\"$\n\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n\007versi"
+    "on\030\002 \001(\005", 3808);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -2462,7 +2467,10 @@ const int LayerProto::kDropProbFieldNumber;
 const int LayerProto::kDataFieldNumber;
 const int LayerProto::kGradFieldNumber;
 const int LayerProto::kColDataFieldNumber;
-const int LayerProto::kColGradFieldNumber;
+const int LayerProto::kSplitDataFieldNumber;
+const int LayerProto::kSplitSizeFieldNumber;
+const int LayerProto::kSplitDimFieldNumber;
+const int LayerProto::kConcatDimFieldNumber;
 const int LayerProto::kTopkFieldNumber;
 const int LayerProto::kTopFieldNumber;
 const int LayerProto::kBottomFieldNumber;
@@ -2478,7 +2486,7 @@ void LayerProto::InitAsDefaultInstance() {
   data_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
   grad_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
   col_data_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
-  col_grad_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
+  split_data_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
 }
 
 LayerProto::LayerProto(const LayerProto& from)
@@ -2508,7 +2516,10 @@ void LayerProto::SharedCtor() {
   data_ = NULL;
   grad_ = NULL;
   col_data_ = NULL;
-  col_grad_ = NULL;
+  split_data_ = NULL;
+  split_size_ = 0;
+  split_dim_ = 1;
+  concat_dim_ = 1;
   topk_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -2529,7 +2540,7 @@ void LayerProto::SharedDtor() {
     delete data_;
     delete grad_;
     delete col_data_;
-    delete col_grad_;
+    delete split_data_;
   }
 }
 
@@ -2591,16 +2602,19 @@ void LayerProto::Clear() {
       if (data_ != NULL) data_->::lapis::DAryProto::Clear();
     }
   }
-  if (_has_bits_[16 / 32] & 983040) {
+  if (_has_bits_[16 / 32] & 8323072) {
     if (has_grad()) {
       if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
     }
     if (has_col_data()) {
       if (col_data_ != NULL) col_data_->::lapis::DAryProto::Clear();
     }
-    if (has_col_grad()) {
-      if (col_grad_ != NULL) col_grad_->::lapis::DAryProto::Clear();
+    if (has_split_data()) {
+      if (split_data_ != NULL) split_data_->::lapis::DAryProto::Clear();
     }
+    split_size_ = 0;
+    split_dim_ = 1;
+    concat_dim_ = 1;
     topk_ = 0;
   }
 
@@ -2891,26 +2905,71 @@ bool LayerProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(186)) goto parse_col_grad;
+        if (input->ExpectTag(186)) goto parse_split_data;
         break;
       }
 
-      // optional .lapis.DAryProto col_grad = 23;
+      // optional .lapis.DAryProto split_data = 23;
       case 23: {
         if (tag == 186) {
-         parse_col_grad:
+         parse_split_data:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_col_grad()));
+               input, mutable_split_data()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(192)) goto parse_topk;
+        if (input->ExpectTag(192)) goto parse_split_size;
         break;
       }
 
-      // optional int32 topk = 24;
+      // optional int32 split_size = 24;
       case 24: {
         if (tag == 192) {
+         parse_split_size:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &split_size_)));
+          set_has_split_size();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(200)) goto parse_split_dim;
+        break;
+      }
+
+      // optional int32 split_dim = 25 [default = 1];
+      case 25: {
+        if (tag == 200) {
+         parse_split_dim:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &split_dim_)));
+          set_has_split_dim();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(208)) goto parse_concat_dim;
+        break;
+      }
+
+      // optional int32 concat_dim = 26 [default = 1];
+      case 26: {
+        if (tag == 208) {
+         parse_concat_dim:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &concat_dim_)));
+          set_has_concat_dim();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(216)) goto parse_topk;
+        break;
+      }
+
+      // optional int32 topk = 27;
+      case 27: {
+        if (tag == 216) {
          parse_topk:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -2919,13 +2978,13 @@ bool LayerProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(202)) goto parse_top;
+        if (input->ExpectTag(226)) goto parse_top;
         break;
       }
 
-      // repeated string top = 25;
-      case 25: {
-        if (tag == 202) {
+      // repeated string top = 28;
+      case 28: {
+        if (tag == 226) {
          parse_top:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->add_top()));
@@ -2937,14 +2996,14 @@ bool LayerProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(202)) goto parse_top;
-        if (input->ExpectTag(210)) goto parse_bottom;
+        if (input->ExpectTag(226)) goto parse_top;
+        if (input->ExpectTag(234)) goto parse_bottom;
         break;
       }
 
-      // repeated string bottom = 26;
-      case 26: {
-        if (tag == 210) {
+      // repeated string bottom = 29;
+      case 29: {
+        if (tag == 234) {
          parse_bottom:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->add_bottom()));
@@ -2956,7 +3015,7 @@ bool LayerProto::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(210)) goto parse_bottom;
+        if (input->ExpectTag(234)) goto parse_bottom;
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -3091,35 +3150,50 @@ void LayerProto::SerializeWithCachedSizes(
       22, this->col_data(), output);
   }
 
-  // optional .lapis.DAryProto col_grad = 23;
-  if (has_col_grad()) {
+  // optional .lapis.DAryProto split_data = 23;
+  if (has_split_data()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      23, this->col_grad(), output);
+      23, this->split_data(), output);
   }
 
-  // optional int32 topk = 24;
+  // optional int32 split_size = 24;
+  if (has_split_size()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(24, this->split_size(), output);
+  }
+
+  // optional int32 split_dim = 25 [default = 1];
+  if (has_split_dim()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(25, this->split_dim(), output);
+  }
+
+  // optional int32 concat_dim = 26 [default = 1];
+  if (has_concat_dim()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(26, this->concat_dim(), output);
+  }
+
+  // optional int32 topk = 27;
   if (has_topk()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(24, this->topk(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(27, this->topk(), output);
   }
 
-  // repeated string top = 25;
+  // repeated string top = 28;
   for (int i = 0; i < this->top_size(); i++) {
   ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
     this->top(i).data(), this->top(i).length(),
     ::google::protobuf::internal::WireFormat::SERIALIZE,
     "top");
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      25, this->top(i), output);
+      28, this->top(i), output);
   }
 
-  // repeated string bottom = 26;
+  // repeated string bottom = 29;
   for (int i = 0; i < this->bottom_size(); i++) {
   ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
     this->bottom(i).data(), this->bottom(i).length(),
     ::google::protobuf::internal::WireFormat::SERIALIZE,
     "bottom");
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      26, this->bottom(i), output);
+      29, this->bottom(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -3243,36 +3317,51 @@ void LayerProto::SerializeWithCachedSizes(
         22, this->col_data(), target);
   }
 
-  // optional .lapis.DAryProto col_grad = 23;
-  if (has_col_grad()) {
+  // optional .lapis.DAryProto split_data = 23;
+  if (has_split_data()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        23, this->col_grad(), target);
+        23, this->split_data(), target);
   }
 
-  // optional int32 topk = 24;
+  // optional int32 split_size = 24;
+  if (has_split_size()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(24, this->split_size(), target);
+  }
+
+  // optional int32 split_dim = 25 [default = 1];
+  if (has_split_dim()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(25, this->split_dim(), target);
+  }
+
+  // optional int32 concat_dim = 26 [default = 1];
+  if (has_concat_dim()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(26, this->concat_dim(), target);
+  }
+
+  // optional int32 topk = 27;
   if (has_topk()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(24, this->topk(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(27, this->topk(), target);
   }
 
-  // repeated string top = 25;
+  // repeated string top = 28;
   for (int i = 0; i < this->top_size(); i++) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->top(i).data(), this->top(i).length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "top");
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteStringToArray(25, this->top(i), target);
+      WriteStringToArray(28, this->top(i), target);
   }
 
-  // repeated string bottom = 26;
+  // repeated string bottom = 29;
   for (int i = 0; i < this->bottom_size(); i++) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->bottom(i).data(), this->bottom(i).length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "bottom");
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteStringToArray(26, this->bottom(i), target);
+      WriteStringToArray(29, this->bottom(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -3399,14 +3488,35 @@ int LayerProto::ByteSize() const {
           this->col_data());
     }
 
-    // optional .lapis.DAryProto col_grad = 23;
-    if (has_col_grad()) {
+    // optional .lapis.DAryProto split_data = 23;
+    if (has_split_data()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->col_grad());
+          this->split_data());
     }
 
-    // optional int32 topk = 24;
+    // optional int32 split_size = 24;
+    if (has_split_size()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->split_size());
+    }
+
+    // optional int32 split_dim = 25 [default = 1];
+    if (has_split_dim()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->split_dim());
+    }
+
+    // optional int32 concat_dim = 26 [default = 1];
+    if (has_concat_dim()) {
+      total_size += 2 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->concat_dim());
+    }
+
+    // optional int32 topk = 27;
     if (has_topk()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
@@ -3422,14 +3532,14 @@ int LayerProto::ByteSize() const {
         this->param(i));
   }
 
-  // repeated string top = 25;
+  // repeated string top = 28;
   total_size += 2 * this->top_size();
   for (int i = 0; i < this->top_size(); i++) {
     total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
       this->top(i));
   }
 
-  // repeated string bottom = 26;
+  // repeated string bottom = 29;
   total_size += 2 * this->bottom_size();
   for (int i = 0; i < this->bottom_size(); i++) {
     total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -3520,8 +3630,17 @@ void LayerProto::MergeFrom(const LayerProto& from) {
     if (from.has_col_data()) {
       mutable_col_data()->::lapis::DAryProto::MergeFrom(from.col_data());
     }
-    if (from.has_col_grad()) {
-      mutable_col_grad()->::lapis::DAryProto::MergeFrom(from.col_grad());
+    if (from.has_split_data()) {
+      mutable_split_data()->::lapis::DAryProto::MergeFrom(from.split_data());
+    }
+    if (from.has_split_size()) {
+      set_split_size(from.split_size());
+    }
+    if (from.has_split_dim()) {
+      set_split_dim(from.split_dim());
+    }
+    if (from.has_concat_dim()) {
+      set_concat_dim(from.concat_dim());
     }
     if (from.has_topk()) {
       set_topk(from.topk());
@@ -3569,7 +3688,10 @@ void LayerProto::Swap(LayerProto* other) {
     std::swap(data_, other->data_);
     std::swap(grad_, other->grad_);
     std::swap(col_data_, other->col_data_);
-    std::swap(col_grad_, other->col_grad_);
+    std::swap(split_data_, other->split_data_);
+    std::swap(split_size_, other->split_size_);
+    std::swap(split_dim_, other->split_dim_);
+    std::swap(concat_dim_, other->concat_dim_);
     std::swap(topk_, other->topk_);
     top_.Swap(&other->top_);
     bottom_.Swap(&other->bottom_);

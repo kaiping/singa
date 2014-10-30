@@ -101,13 +101,6 @@ class Layer {
    * Return the output feature Blob of this layer connected to the edge
    * @param edge which connects to the feature to be returned
    */
-  virtual const DAry &GetData(Edge *edge){
-    return data_;
-  }
-  virtual DAry *GetMutableData(Edge *edge){
-    return &data_;
-  }
-
   /**
    * Return the gradient Blob connected to the edge.
    * Usually, it is the gradient of activations, which will be back propagated
@@ -144,10 +137,12 @@ class Layer {
     return in_edges_;
   }
   virtual DAry * GetMutableGrad(Edge *edge=nullptr){ return &grad_; }
-  virtual const DAry& GetGrad(Edge *edge=nullptr){ return grad_; }
+  virtual DAry *GetMutableData(Edge *edge=nullptr){ return &data_; }
 
-  virtual const DAry& data(Edge* edge=nullptr) {return data_;}
-  virtual const DAry& grad(Edge *edge=nullptr) {return grad_;}
+  virtual const DAry& GetData(Edge* edge=nullptr) {return data_;}
+  virtual const DAry& GetGrad(Edge *edge=nullptr) {return grad_;}
+  virtual const DAry& data() {return data_;}
+  virtual const DAry& grad() {return grad_;}
 
  protected:
   std::string name_, type_;
@@ -159,8 +154,6 @@ class ConcatLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -181,33 +174,33 @@ class SplitLayer: public Layer {
     if(edge==out_edges_[0])
       return &grad_;
     else if(edge==out_edges_[1])
-      retuen &grad2_;
+      return &grad2_;
     else
-      LOG(ERROR)<<"get mutable grad from "<<edge->name();
+      LOG(ERROR)<<"get mutable grad from null edge";
   }
   virtual const DAry& GetGrad(Edge *edge=nullptr){
     if(edge==out_edges_[0])
       return grad_;
     else if(edge==out_edges_[1])
-      retuen grad2_;
+      return grad2_;
     else
-      LOG(ERROR)<<"get grad from "<<edge->name();
+      LOG(ERROR)<<"get grad from null edge";
   }
   virtual DAry * GetMutableData(Edge *edge=nullptr){
     if(edge==out_edges_[0])
       return &data_;
     else if(edge==out_edges_[1])
-      retuen &data2_;
+      return &data2_;
     else
-      LOG(ERROR)<<"get mutable grad from "<<edge->name();
+      LOG(ERROR)<<"get mutable grad from nulledge";
   }
-  virtual const DAry& GetGrad(Edge *edge=nullptr){
+  virtual const DAry& GetData(Edge *edge=nullptr){
     if(edge==out_edges_[0])
       return data_;
     else if(edge==out_edges_[1])
-      retuen data2_;
+      return data2_;
     else
-      LOG(ERROR)<<"get grad from "<<edge->name();
+      LOG(ERROR)<<"get grad from null edge";
   }
 
  private:
@@ -220,8 +213,6 @@ class ImgColLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void InitDAryShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   void Img2Col(DAry* dst, const DAry& src);

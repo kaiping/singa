@@ -256,15 +256,15 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2,
       // V=H*W^T
       M=shape_.s[0];
       N=shape_.s[1];
-      auto rng1=src1.InterIndexRange(1);
-      auto rng2=src2.InterIndexRange(1);
+      auto rng1=src1.IndexRange2d(1);//InterIndexRange(1);
+      auto rng2=src2.IndexRange2d(1);//InterIndexRange(1);
       CHECK(rng1==rng2);
       K=rng1.second-rng1.first;
       dptr=new float[M*N];
       do_put=true;
     }else{
-      auto rrng=InterIndexRange(0);
-      auto crng=InterIndexRange(1);
+      auto rrng=IndexRange2d(0);//InterIndexRange(0);
+      auto crng=IndexRange2d(1);//InterIndexRange(1);
       M=rrng.second-rrng.first;
       N=crng.second-crng.first;
       vector<Range> slice1, slice2;
@@ -292,7 +292,7 @@ void DAry::Dot( const DAry& src1, const DAry& src2, bool trans1, bool trans2,
       CHECK_EQ(trans1, true);
       CHECK_EQ(trans2, false);
       // K=src1.IndexRange(1).second-first
-      auto rng=src2.IndexRange(0);
+      auto rng=src2.IndexRange2d(0);
       K=rng.second-rng.first;
     }else
       K=trans1?src1.shape_.s[0]:src1.shape_.s[1];
@@ -320,50 +320,79 @@ void DAry::Copy( const DAry& src) {
   memcpy(dptr_, dptr, part_.size*sizeof(float));
   src.Delete(dptr);
 }
-void DAry::CopyToCol(int col_start, int col_end, const DAry& src) {
+void DAry::CopyToCols(int col_start, int col_end, const DAry& src) {
   Partition part;
-  CHECK_EQ(col_end-colstart,src.shape_.size/src.shape_.s[0]);
+  int width=src.shape_.size/src.shape_.s[0];
+  CHECK_EQ(col_end-col_start,width);
+  if(src.ga_==nullptr){
+    CHECK(ga_== nullptr);
+    int stride=shape_.size/shape_.s[0];
+    for(int i=0;i<shape_.s[0];i++)
+      memcpy(dptr_+i*stride+col_start, src.dptr_+i*width, width*sizeof(float));
+    return;
+  }
   if(part_.pdim==1){
-    if(part_.start+part_.stepsize<col_start||part_.start>=col_end)
+    if(part_.start+part_.stepsize<=col_start||part_.start>=col_end)
       return;
-    CHECK(part_.start>=col_start&&part_.start+part_.stepsize<=col_end);
-    part.start=part_.start-col_start;
-    part.stepsize=std::min(part_.stepsize, col_end-part_.start);
+    //CHECK(part_.start>=col_start&&part_.start+part_.stepsize<=col_end);
+    part.start=std::max(0,part_.start-col_start);
+    part.stepsize=std::min(col_end, part_.start+part_.stepsize)
+      - std::max(part_.start, col_start);
     part.stride=col_end-col_start;
+    part.size=shape_.s[0]*part.stepsize;
+    part.end=part.start+(shape_.s[0]-1)*part.stride+part.stepsize;
     float* dptr=src.ga_->Fetch(part,0);
+    float* todptr=dptr_+std::max(0, col_start-part_.start);
     for(int row=0;row<shape_.s[0];row++){
-      memcpy(dptr_+row*part_.stepsize, dptr, part.stepsize*sizeof(float));
+      memcpy(todptr+row*part_.stepsize, dptr+row*part.stepsize, part.stepsize*sizeof(float));
     }
     delete dptr;
-  }else if(part_.dim==0){
-    int rows=part_.start/part_.stride;
+  }else if(part_.pdim==0){
+    int dstwidth=shape_.size/shape_.s[0];
+    int rows=part_.start/dstwidth;
     part.start=(col_end-col_start)*rows;
-    CHECK_EQ(part_.size%part_.stride, 0);
-    int nrows=part_.size/part_.stride;
+    CHECK_EQ(part_.size%dstwidth, 0);
+    int nrows=part_.size/dstwidth;
     part.stepsize=(col_end-col_start)*nrows;
     part.stride=part.stepsize;
-    part.end=part.start+part.stepsize;
+    part.size=part.stepsize;
+    part.end=part.start+part.size;
     float* dptr=src.ga_->Fetch(part, 0);
+    int dststride=std::min(dstwidth, part_.stride);
+    int srcstride=col_end-col_start;
     for(int k=0;k<nrows;k++){
-      memcpy(dptr_+k*part_.stride+col_start, dptr, (col_end-col_start)*sizeof(float));
+      memcpy(dptr_+k*dststride+col_start, dptr+k*srcstride, srcstride*sizeof(float));
     }
     delete dptr;
+  }else{
+    LOG(ERROR)<<"CopyToCol must be on matrix, pdim "<<part_.pdim;
   }
 }
-void DAry::CopyFromCol(int col_start, int col_end, const DAry& src) {
+void DAry::CopyFromCols(int col_start, int col_end, const DAry& src) {
   Partition part;
+  int width=shape_.size/shape_.s[0];
+  CHECK_EQ(col_end-col_start, width);
+  if(src.ga_==nullptr){
+    CHECK(ga_== nullptr);
+    int stride=src.shape_.size/src.shape_.s[0];
+    for(int i=0;i<shape_.s[0];i++)
+      memcpy(dptr_+i*width, src.dptr_+i*stride+col_start, width*sizeof(float));
+    return;
+  }
   if(part_.pdim==1){
     part.start=col_start+part_.start;
     part.stride=src.shape_.size/src.shape_.s[0];
-    part.stepsize=std::min(part.stride, part_.stepsize);
+    part.stepsize=std::min(col_end-col_start, part_.stepsize);
     part.end=(shape_.s[0]-1)*part.stride+part.start+part.stepsize;
+    part.size=part_.size;
     src.ga_->Fetch(part, 0, dptr_);
   }else if(part_.pdim==0){
-    int row=part_.start/shape_.s[1];
+    part.stepsize=width;
+    int row=part_.start/width;
     part.stride=src.shape_.size/src.shape_.s[0];
     part.start=col_start+ row*part.stride;
-    part.stepsize=shape_.s[1];
-    int nrow=part_.size/shape_.s[1];
+    part.size=part_.size;
+    int nrow=part_.size/width;
     part.end=part.start+(nrow-1)*part.stride+part.stepsize;
     src.ga_->Fetch(part, 0, dptr_);
   }
@@ -584,7 +613,7 @@ void DAry::Sum( const DAry& src, const Range& rng) {
 void DAry::SumRow(const DAry& src, bool overwrite) {
   CHECK_EQ(shape_.size, src.shape_.size/src.shape_.s[0]);
   if(overwrite) Fill(0.0f);
-  Range rng=src.InterIndexRange(0);
+  Range rng=src.IndexRange2d(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size;
   CHECK_EQ(rowlen, src.part_.size/rows);
@@ -595,7 +624,7 @@ void DAry::SumRow(const DAry& src, bool overwrite) {
 }
 void DAry::SumCol(const DAry& src, bool overwrite) {
   CHECK_EQ(shape_.size, src.shape_.s[0]);
-  Range rng=src.InterIndexRange(0);
+  Range rng=src.IndexRange2d(0);
   CHECK_EQ(part_.size, rng.second-rng.first);
   int rowlen=src.part_.size/part_.size;
   float* dptr=dptr_, *srcdptr=src.dptr_;
@@ -606,7 +635,7 @@ void DAry::SumCol(const DAry& src, bool overwrite) {
 }
 void DAry::AddRow(const DAry& src) {
   CHECK_EQ(shape_.size/shape_.s[0], src.shape_.size);
-  Range rng=InterIndexRange(0);
+  Range rng=IndexRange2d(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size/rows;
   DAry row=this->operator[](rng.first);
@@ -620,7 +649,7 @@ void DAry::AddRow(const DAry& src) {
 
 void DAry::AddCol(const DAry& src) {
   CHECK_EQ(shape_.s[0], src.shape_.size);
-  Range rng=InterIndexRange(0);
+  Range rng=IndexRange2d(0);
   int rows=rng.second-rng.first;
   int rowlen=part_.size/rows;
   Partition p;

@@ -138,7 +138,7 @@ const NetProto Coordinator::PartitionNet(Net* net){
      for(Layer* layer: net->layers()){
       if(layer->name()=="label"||layer->name()=="softmax")
         layer->SetPartition(-1);
-      else if(layer->name()=="image"||layer->name()=="fc8")
+      else if(layer->name()=="image"||layer->name()=="fc8"||layer->name()=="imgcol1")
         layer->SetPartition(0);
       else
         layer->SetPartition(1);

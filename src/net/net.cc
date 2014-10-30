@@ -1,5 +1,7 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-14 13:18
+#include <queue>
+
 #include "net/net.h"
 #include "utils/common.h"
 #include "utils/timer.h"
@@ -90,20 +92,37 @@ Net::Net(const NetProto &net_proto) {
 
   topology_sort(&layers_);
   for(auto* layer: layers_){
+    LOG(INFO)<<layer->name();
     layer->CollectParams(&params_);
   }
  // the softmax loss layer
   LOG(ERROR)<<"Neural Net constructed";
 }
+
 std::string Net::ShapeInfo(){
   char display[8*1024];
-  for(auto* layer:layers_){
-    sprintf(display+strlen(display), "Layer: %10s, %s\n", layer->name().c_str(),
+  std::queue<Layer*> layers;
+  for(auto* layer: layers_)
+    if(layer->HasInput())
+      layers.push(layer);
+  display[0]='\n';
+  while(!layers.empty()){
+    int size=layers.size();
+    for(int i=0;i<size;i++){
+      auto* layer=layers.front();
+      layers.pop();
+      sprintf(display+strlen(display), "\t||Layer: %10s, %s", layer->name().c_str(),
           layer->data().shape().ToString().c_str());
-  }
-  for(auto* param:params_){
-    sprintf(display+strlen(display), "Param: %10s, %s\n", param->name().c_str(),
-          param->data().shape().ToString().c_str());
+      for(auto* param:layer->GetParams())
+        sprintf(display+strlen(display), "\tParam: %10s, %s", param->name().c_str(),
+            param->data().shape().ToString().c_str());
+      for(auto* edge: layer->out_edges()){
+        auto* layer1=edge->OtherSide(layer);
+        if(layers.size()==0||layer1!=layers.front())
+          layers.push(layer1);
+      }
+    }
+    sprintf(display+strlen(display), "\n");
   }
   return string(display);
 }
@@ -137,6 +156,7 @@ void Net::InitDAryShape(const vector<vector<int>>& shapes){
     dlayer->InitDAryShape(shapes);
   }
   InitDAryShape();
+
 }
 
 void Net::SetupDAry() {

@@ -110,7 +110,6 @@ vector<Param*> Layer::GetParams(){
  *****************************************************************************/
 void SplitLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
-  CHECK(proto.has_concat_dim());
   split_dim_=proto.split_dim();
   split_size_=proto.split_size();
   if(proto.has_split_data()){
@@ -141,12 +140,12 @@ void SplitLayer::InitDAryShape(){
   CHECK_EQ(in_edges_.size(), 1);
   CHECK_EQ(out_edges_.size(), 2);
   const DAry& bottom=in_edges_[0]->GetData(this);
-  int num, channels, height, width, first_split=split_size_, second_split;
+  int num, height, width, first_split=split_size_, second_split;
   if(split_dim_==0){
     LOG(ERROR)<<"Not implemented";
   } else{
     num=bottom.shape(0);
-    second_split_=bottom.shape(1)-first_split;
+    second_split=bottom.shape(1)-first_split;
   }
   height = bottom.shape(2);
   width = bottom.shape(3);
@@ -154,14 +153,14 @@ void SplitLayer::InitDAryShape(){
   vector<int> shape1{num, first_split, height, width};
   data_.SetShape(shape1);
   grad_.SetShape(shape1);
-  vector<int> shape1{num, second_split, height, width};
+  vector<int> shape2{num, second_split, height, width};
   data2_.SetShape(shape2);
   grad2_.SetShape(shape2);
 }
 
 void SplitLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
-  if(concat_dim_==0){
+  if(split_dim_==0){
     //data_.CopyToRows(0,top0.shape(0),top0);
     //data_.CopyToRows(top0.shape(0),num_, top1);
     LOG(ERROR)<<"Not implemented";
@@ -177,7 +176,7 @@ void SplitLayer::ComputeFeature() {
 
 void SplitLayer::ComputeGradient() {
   DAry* gbottom=out_edges_[0]->GetMutableGrad(this);
-  if(concat_dim_==0){
+  if(split_dim_==0){
     //data_.CopyToRows(0,top0.shape(0),top0);
     //data_.CopyToRows(top0.shape(0),num_, top1);
     LOG(ERROR)<<"Not implemented";
@@ -195,7 +194,6 @@ void SplitLayer::ComputeGradient() {
  *****************************************************************************/
 void ConcatLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
-  CHECK(proto.has_concat_dim());
   concat_dim_=proto.concat_dim();
 }
 void ConcatLayer::ToProto(LayerProto *proto, bool copyData) {
@@ -254,12 +252,12 @@ void ConcatLayer::ComputeGradient() {
     //data_.CopyToRows(bottom0.shape(0),num_, bottom1);
     LOG(ERROR)<<"Not implemented";
   }else{
-    const Shape& s0=bottom0.shape();
-    const Shape& s1=bottom1.shape();
+    const Shape& s0=gbottom0->shape();
+    const Shape& s1=gbottom1->shape();
     int a=s0.size/s0.s[0];
     int b=a+s1.size/s1.s[0];
-    gbottom0.CopyFromCols(0, a, grad_);
-    gbottom1.CopyFromCols(a, b, grad_);
+    gbottom0->CopyFromCols(0, a, grad_);
+    gbottom1->CopyFromCols(a, b, grad_);
   }
 }
 
@@ -267,9 +265,9 @@ void ConcatLayer::ComputeGradient() {
  * Implementation for ImgColLayer
  *****************************************************************************/
 void ImgColLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+  Layer::Init(proto, edge_map);
   CHECK_EQ(in_edges_.size(), 1);
   CHECK_EQ(out_edges_.size(), 1);
-  Layer::Init(proto, edge_map);
   CHECK(proto.has_window_size());
   wsize_ = proto.window_size();
   stride_ = proto.stride();
@@ -370,16 +368,16 @@ void ImgColLayer::ComputeFeature() {
 
 void ImgColLayer::ComputeGradient() {
   DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  Col2Img(gbottom, grad_);
+  if(gbottom!=nullptr)
+    Col2Img(gbottom, grad_);
 }
 
 /*****************************************************************************
  * Implementation for ConvProductLayer
  *****************************************************************************/
-void ConvProductLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
+void ConvProductLayer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
   Layer::Init(proto, edge_map);
   kernels_=proto.num_output();
-  CHECK(hdim_);
   if(proto.param().size()==2){
     weight_.Init(proto.param(0));
     bias_.Init(proto.param(1));
@@ -454,10 +452,11 @@ bool ConvProductLayer::SyncForGradient(){
 }
 
 void ConvProductLayer::ComputeFeature() {
+  const Range nrng=data_.IndexRange(0);
   const DAry& bottom=in_edges_[0]->GetData(this);
+  //vector<Range> slice{nrng, }
   DAry bottom3=bottom.Reshape({num_, channels_, height_*width_});
   DAry data=data_.Reshape({num_, kernels_, height_*width_});
-  const Range nrng=data_.IndexRange(0);
   for(int n=nrng.first;n<nrng.second;n++){
     DAry image=data[n];
     image.Dot(weight_.data(), bottom3[n]);
@@ -480,9 +479,9 @@ void ConvProductLayer::ComputeGradient() {
   for(int n=nrng.first;n<nrng.second;n++){
     DAry image_grad=gbottom3[n];
     DAry gradn=grad[n];
-    image_grad.Dot(weight_, gradn, true, false);
-    weight_.mutable_grad()->Dot(data, bottom3[n], false, true, false);
-    bias_.mutable_grad()->SumCols(gradn, false);
+    image_grad.Dot(weight_.data(), gradn, true, false, true);
+    weight_.mutable_grad()->Dot(data[n], bottom3[n], false, true, false);
+    bias_.mutable_grad()->SumCol(gradn, false);
   }
 }
 
@@ -626,7 +625,7 @@ void ConvLayer::ComputeGradient() {
       DAry gcol3=gcol4[n];
       for (int g = 0; g < ngroups_; g++) {
         gweight3[g].Dot(grad3[g], col3[g], false, true, false);
-        gcol3[g].Dot(weight3[g], grad3[g], true, false);
+        gcol3[g].Dot(weight3[g], grad3[g], true, false, true);
       }
     }
     Col2Img(gbottom, col_grad_);
@@ -884,7 +883,7 @@ void LRNLayer::ComputeFeature() {
     DAry bottom3=lbottom[n];
     squared3.Square(bottom3);
     squared3.Mult(squared3, alpha);
-    norm3[0].Sum(squared3, Range(crng.first, crng.first+rpad_));
+    norm3[crng.first].Sum(squared3, Range(crng.first, crng.first+rpad_));
     for(int c=crng.first+1;c<crng.second;++c){
       DAry cur=norm3[c];
       cur.Copy(norm3[c-1]);
@@ -1026,14 +1025,14 @@ void FCLayer::ComputeGradient() {
   DAry grad2=grad_.Reshape({num_, hdim_});
 
   //weight_.mutable_grad()->Dot(bottom2, grad2, true, false);
-  weight_.mutable_grad()->Dot(cache_data_, grad2, true, false);
+  weight_.mutable_grad()->Dot(cache_data_, grad2, true, false, true);
   bias_.mutable_grad()->SumRow(grad2, true);
 
   // if dest_grad is nullptr, then we only compute gradients for parameters
   // this may happen when the lower layer is DataLayer
   // if (gbottom != nullptr) {
   DAry gbottom2=gbottom->Reshape({num_, vdim_});
-  gbottom2.Dot(grad2, weight_.data(), false, true);
+  gbottom2.Dot(grad2, weight_.data(), false, true, true);
   //}
 }
 

@@ -125,8 +125,8 @@ class DAry {
 
   void Square( const DAry& src);
   void Copy( const DAry& src);
-  void CopyToCol(int col_start, int col_end, const DAry& src);
-  void CopyFromCol(int col_start, int col_end, const DAry& src);
+  void CopyToCols(int col_start, int col_end, const DAry& src);
+  void CopyFromCols(int col_start, int col_end, const DAry& src);
   /**
     * dst=src^x
     */
@@ -182,6 +182,22 @@ class DAry {
     CHECK(ga_!=nullptr);
     return ga_->IndexRange(k);
   }
+
+  Range IndexRange2d(int k) const {
+    CHECK_EQ(part_.stride%shape_.s[1], 0);
+    int start, end;
+    if (k==0){
+      start=part_.start/shape_.s[1];
+      end=part_.end/shape_.s[1]+(part_.end%shape_.s[1]!=0);
+    }else{
+      start=part_.start%shape_.s[1];
+      end=part_.end%shape_.s[1];
+      if(end==0)
+        end=shape_.s[1];
+    }
+    return Range({start, end});
+  }
+
   Range InterIndexRange(int k) const{
     CHECK(k<shape_.dim);
     if(k!=part_.pdim)
@@ -189,7 +205,7 @@ class DAry {
     CHECK(ga_!=nullptr);
     if(shape_.s[k]== ga_->shape().s[k])
       return ga_->IndexRange(k);
-    else if(shape_.s[k+1]==ga_->shape().s[k])
+    else if(shape_.s[k]==ga_->shape().s[k+1])
       return ga_->IndexRange(k+1);
     else
       LOG(ERROR)<<"IndexRange error "

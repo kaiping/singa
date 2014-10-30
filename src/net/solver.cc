@@ -40,7 +40,6 @@ Solver::Solver(const SolverProto &proto) {
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
   net_=new Net(np);
   net_->Setup();
-  LOG(INFO)<<net_->ShapeInfo();
   auto params=net_->params();
   auto grp_rank=context_->worker_id();
   delegate_=delegate;
@@ -341,6 +340,9 @@ void Solver::TimeOneBatch(int runs) {
   double* refresh=new double[nlayers+1];;
   double* sync=new double[nlayers+1];;
   memset(forward, 0, sizeof(double)*(1+nlayers));
+  memset(backward, 0, sizeof(double)*(1+nlayers));
+  memset(refresh, 0, sizeof(double)*(1+nlayers));
+  memset(sync, 0, sizeof(double)*(1+nlayers));
   MPI_Barrier(context_->mpicomm());
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
@@ -372,15 +374,18 @@ void Solver::TimeOneBatch(int runs) {
       (*layer)->ComputeGradient();
       refresh_start=Now();
       backward[layerid]+=refresh_start-comp_start;
+      //LOG(ERROR)<<(*layer)->name()<<"finish gradient";
 
       for(auto* param: (*layer)->GetParams())
         delegate_->Update(param, step_);
       refresh[layerid]+=Now()-refresh_start;
     }
     IncStep();
+    LOG(ERROR)<<"one iter";
   }
   double total=Now()-start;
   MPI_Barrier(context_->mpicomm());
+  LOG(ERROR)<<"Finish";
   char buf[8192];
   //memset(buf, 0, 8192);
   //sprintf(buf, "\nTime One Batch with %d runs using %6.2fs\n", runs, total);
@@ -396,6 +401,10 @@ void Solver::TimeOneBatch(int runs) {
   sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
     total/runs,forward[nlayers]/runs, backward[nlayers]/runs, sync[nlayers]/runs, refresh[nlayers]/runs, GAry::comm_time/runs);
   LOG(ERROR)<<string(buf);
+  delete forward;
+  delete backward;
+  delete sync;
+  delete refresh;
   //DebugInfo(net_);
 }
 

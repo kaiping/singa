@@ -72,35 +72,33 @@ class StateQueue {
 
 class Performance: public PerformanceProto{
  public:
-  void Aggregate(const Performance& other){
-    if(other.has_loss())
-      set_loss(other.loss()+loss());
-    if(other.has_precision())
-      set_precision(other.precision()+precision());
-    set_count(count()+1);
-  }
+   void Aggregate(const Performance& other){
+     set_loss(other.loss()+loss());
+     set_topk_precision(other.topk_precision()+topk_precision());
+     set_top_precision(other.top_precision()+top_precision());
+     set_count(count()+1);
+   }
   void Reset() {
     set_count(0);
     set_loss(0.f);
-    set_precision(0.f);
+    set_topk_precision(0.f);
+    set_top_precision(0.f);
   }
 
   Performance Avg() {
     Performance perf;
     perf.CopyFrom(*this);
-    if(perf.has_loss())
-      perf.set_loss(perf.loss()/perf.count());
-    if(perf.has_precision())
-      perf.set_precision(perf.precision()/perf.count());
+    perf.set_loss(perf.loss()/perf.count());
+    perf.set_topk_precision(perf.topk_precision()/perf.count());
+    perf.set_top_precision(perf.top_precision()/perf.count());
     return perf;
   }
 
   string ToString(){
     char buf[1024];
-    if (has_precision())
-      sprintf(buf,"Precision %.3f, ", precision());
-    if (has_loss())
-      sprintf(buf+strlen(buf),"loss %.3f, ", loss());
+    sprintf(buf,"TopK Precision %.4f, ", topk_precision());
+    sprintf(buf+strlen(buf),"Top1 Precision %.4f, ", top_precision());
+    sprintf(buf+strlen(buf),"loss %.4f, ", loss());
     return string(buf);
   }
 };

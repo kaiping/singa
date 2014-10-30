@@ -212,13 +212,15 @@ Performance Solver::Test(const Phase& phase){
     perf.Aggregate(TestOneBatch(net_, step_));
   }
   pthread_join(prefetch_thread_, NULL);
+  for(auto* layer:net_->input_layer())
+    layer->SetInputData(nullptr);
   prefetcher.Free();
   Solver::phase=Phase::kTrain;
   return perf;
 }
 
 void Solver::ReportPerformance(string prefix, Performance perf) {
-  LOG(ERROR)<<step_<<" "<<prefix<<" "<<perf.ToString();
+  LOG(ERROR)<<"Train Step: "<<step_<<" "<<prefix<<" "<<perf.ToString();
   /*
   if(context_->AmIGroupLeader()){
     int toRcv=context_->group_size()-1;
@@ -238,30 +240,31 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
 
 void Solver::Train(){
   Prefetcher prefetcher(train_shard_, net_);
-  //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
   while (!HasFinished()) {
     Solver::phase=Phase::kTrain;
-    //pthread_join(prefetch_thread_, NULL);
-    PrefetchData(&prefetcher);
+    pthread_join(prefetch_thread_, NULL);
+    //PrefetchData(&prefetcher);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    //if(!ValidateNow()&&!TestNow())
-    //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    if(!ValidateNow()&&!TestNow())
+      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     train_perf_.Aggregate(TrainOneBatch(net_, step_));
     if(DisplayNow()){
       ReportPerformance("Train", train_perf_.Avg());
+      DebugInfo(net_);
       train_perf_.Reset();
     }
     if(ValidateNow()){
       Performance perf=Test(Phase::kValidation);
-      ReportPerformance("Val", perf.Avg());
+      ReportPerformance("Val  ", perf.Avg());
     }
     if(TestNow()){
       Performance perf=Test(Phase::kTest);
-      ReportPerformance("Test", perf.Avg());
+      ReportPerformance("Test ", perf.Avg());
     }
-    //if(ValidateNow()||TestNow())
-    //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &arg);
+    if(ValidateNow()||TestNow())
+      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     IncStep();
   }
   pthread_join(prefetch_thread_, NULL);
@@ -269,21 +272,22 @@ void Solver::Train(){
 }
 
 void Solver::DebugInfo(Net* net){
-  char display[1024];
+  char display[4096];
   auto layers=net->layers();
+  LOG(INFO)<<"Train Step: "<<step_;
   for(auto* layer: layers){
-    sprintf(display, "Forward layer %10s data norm1 %10.6f",
+    sprintf(display, "Forward layer  %10s data norm1 %13.9f",
           layer->name().c_str(), layer->data().Norm1());
     LOG(INFO)<<string(display);
   }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    sprintf(display, "Backward layer %10s grad norm1 %10.8f",
+    sprintf(display, "Backward layer %10s grad norm1 %13.9f",
           (*layer)->name().c_str(), (*layer)->grad().Norm1());
     LOG(INFO)<<string(display);
   }
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
-      sprintf(display, "Layer %10s, param id %2d, name %10s, value norm1 %10.8f , grad norm1 %10.8f",
+      sprintf(display, "Layer %10s, param id %2d, name %10s, value norm1 %13.9f , grad norm1 %13.9f",
           layer->name().c_str(), param->id(),
           param->name().c_str(), param->data().Norm1(), param->grad().Norm1());
       LOG(INFO)<<string(display);
@@ -292,7 +296,6 @@ void Solver::DebugInfo(Net* net){
 }
 
 Performance Solver::TrainOneBatch(Net *net, int step){
-  LOG(INFO)<<"Training Step : "<<step;
   delegate_->AsyncGet(net->params(),step);
   auto layers=net->layers();
   for(auto* layer: layers){
@@ -316,14 +319,17 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
   }
-  DebugInfo(net);
+  //DebugInfo(net);
   return perf;
 }
 
 Performance Solver::TestOneBatch(Net *net, int step){
   for(auto* layer: net->layers()){
-    VLOG(3)<<layer->name();
+    if(layer->PreSyncF())
+      MPI_Barrier(context_->mpicomm());
     layer->ComputeFeature();
+    if(layer->PostSyncF())
+      MPI_Barrier(context_->mpicomm());
   }
   return net->output_layer(0)->CalcPerf(true, true);
 }
@@ -352,8 +358,8 @@ void Solver::TimeOneBatch(int runs) {
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
   double start=Now();
+  delegate_->AsyncGet(net_->params(),step_);
   for(int k=0;k<runs;k++){
-    delegate_->AsyncGet(net_->params(),step_);
     int layerid=0;
     for(auto* layer: layers){
       refresh_start=Now();
@@ -366,26 +372,33 @@ void Solver::TimeOneBatch(int runs) {
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
       layer->ComputeFeature();
+      sync_start=Now();
+      forward[layerid]+=sync_start-comp_start;
       if(layer->PostSyncF())
         MPI_Barrier(context_->mpicomm());
-      forward[layerid++]+=Now()-comp_start;
+      sync[layerid]+=Now()-sync_start;
+      layerid++;
     }
     for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+      layerid--;
       sync_start=Now();
       if((*layer)->PreSyncG())
         MPI_Barrier(context_->mpicomm());
       comp_start=Now();
-      sync[--layerid]+=comp_start-sync_start;
+      sync[layerid]+=comp_start-sync_start;
       (*layer)->ComputeGradient();
       refresh_start=Now();
       backward[layerid]+=refresh_start-comp_start;
-      //LOG(ERROR)<<(*layer)->name()<<"finish gradient";
 
-      for(auto* param: (*layer)->GetParams())
+      for(auto* param: (*layer)->GetParams()){
         delegate_->Update(param, step_);
+        delegate_->AsyncGet(param, step_+1);
+      }
+      sync_start=Now();
+      refresh[layerid]+=sync_start-refresh_start;
       if((*layer)->PostSyncG())
         MPI_Barrier(context_->mpicomm());
-      refresh[layerid]+=Now()-refresh_start;
+      sync[layerid]+=Now()-sync_start;
     }
     IncStep();
     LOG(ERROR)<<"one iter";
@@ -393,7 +406,8 @@ void Solver::TimeOneBatch(int runs) {
   double total=Now()-start;
   MPI_Barrier(context_->mpicomm());
   LOG(ERROR)<<"Finish";
-  char buf[8192];
+  int K=1024;
+  char buf[10*K];
   //memset(buf, 0, 8192);
   //sprintf(buf, "\nTime One Batch with %d runs using %6.2fs\n", runs, total);
   sprintf(buf, "\n");

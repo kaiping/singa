@@ -87,7 +87,7 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
     float upp=0.f;
     for(int i=0;i<len;i++)
       upp+=fabs(history[i]);
-    LOG(INFO)<<"update for "<<data->id()<<" "<<upp/len;
+    //LOG(INFO)<<"update for "<<data->id()<<" "<<upp/len;
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);

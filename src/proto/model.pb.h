@@ -951,7 +951,7 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 concat_dim() const;
   inline void set_concat_dim(::google::protobuf::int32 value);
 
-  // optional int32 topk = 27;
+  // optional int32 topk = 27 [default = 5];
   inline bool has_topk() const;
   inline void clear_topk();
   static const int kTopkFieldNumber = 27;
@@ -1453,38 +1453,47 @@ class PerformanceProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional float precision = 1;
-  inline bool has_precision() const;
-  inline void clear_precision();
-  static const int kPrecisionFieldNumber = 1;
-  inline float precision() const;
-  inline void set_precision(float value);
+  // optional float topk_precision = 1 [default = 0];
+  inline bool has_topk_precision() const;
+  inline void clear_topk_precision();
+  static const int kTopkPrecisionFieldNumber = 1;
+  inline float topk_precision() const;
+  inline void set_topk_precision(float value);
 
-  // optional float loss = 2;
+  // optional float top_precision = 2 [default = 0];
+  inline bool has_top_precision() const;
+  inline void clear_top_precision();
+  static const int kTopPrecisionFieldNumber = 2;
+  inline float top_precision() const;
+  inline void set_top_precision(float value);
+
+  // optional float loss = 3 [default = 0];
   inline bool has_loss() const;
   inline void clear_loss();
-  static const int kLossFieldNumber = 2;
+  static const int kLossFieldNumber = 3;
   inline float loss() const;
   inline void set_loss(float value);
 
-  // optional int32 count = 3;
+  // optional int32 count = 4 [default = 0];
   inline bool has_count() const;
   inline void clear_count();
-  static const int kCountFieldNumber = 3;
+  static const int kCountFieldNumber = 4;
   inline ::google::protobuf::int32 count() const;
   inline void set_count(::google::protobuf::int32 value);
 
-  // optional int32 step = 4;
+  // optional int32 step = 5 [default = 0];
   inline bool has_step() const;
   inline void clear_step();
-  static const int kStepFieldNumber = 4;
+  static const int kStepFieldNumber = 5;
   inline ::google::protobuf::int32 step() const;
   inline void set_step(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:lapis.PerformanceProto)
  private:
-  inline void set_has_precision();
-  inline void clear_has_precision();
+  inline void set_has_topk_precision();
+  inline void clear_has_topk_precision();
+  inline void set_has_top_precision();
+  inline void clear_has_top_precision();
   inline void set_has_loss();
   inline void clear_has_loss();
   inline void set_has_count();
@@ -1496,7 +1505,8 @@ class PerformanceProto : public ::google::protobuf::Message {
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  float precision_;
+  float topk_precision_;
+  float top_precision_;
   float loss_;
   ::google::protobuf::int32 count_;
   ::google::protobuf::int32 step_;
@@ -4504,7 +4514,7 @@ inline void LayerProto::set_concat_dim(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.LayerProto.concat_dim)
 }
 
-// optional int32 topk = 27;
+// optional int32 topk = 27 [default = 5];
 inline bool LayerProto::has_topk() const {
   return (_has_bits_[0] & 0x00400000u) != 0;
 }
@@ -4515,7 +4525,7 @@ inline void LayerProto::clear_has_topk() {
   _has_bits_[0] &= ~0x00400000u;
 }
 inline void LayerProto::clear_topk() {
-  topk_ = 0;
+  topk_ = 5;
   clear_has_topk();
 }
 inline ::google::protobuf::int32 LayerProto::topk() const {
@@ -4922,39 +4932,63 @@ NetProto::mutable_layer() {
 
 // PerformanceProto
 
-// optional float precision = 1;
-inline bool PerformanceProto::has_precision() const {
+// optional float topk_precision = 1 [default = 0];
+inline bool PerformanceProto::has_topk_precision() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void PerformanceProto::set_has_precision() {
+inline void PerformanceProto::set_has_topk_precision() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void PerformanceProto::clear_has_precision() {
+inline void PerformanceProto::clear_has_topk_precision() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void PerformanceProto::clear_precision() {
-  precision_ = 0;
-  clear_has_precision();
+inline void PerformanceProto::clear_topk_precision() {
+  topk_precision_ = 0;
+  clear_has_topk_precision();
 }
-inline float PerformanceProto::precision() const {
-  // @@protoc_insertion_point(field_get:lapis.PerformanceProto.precision)
-  return precision_;
+inline float PerformanceProto::topk_precision() const {
+  // @@protoc_insertion_point(field_get:lapis.PerformanceProto.topk_precision)
+  return topk_precision_;
 }
-inline void PerformanceProto::set_precision(float value) {
-  set_has_precision();
-  precision_ = value;
-  // @@protoc_insertion_point(field_set:lapis.PerformanceProto.precision)
+inline void PerformanceProto::set_topk_precision(float value) {
+  set_has_topk_precision();
+  topk_precision_ = value;
+  // @@protoc_insertion_point(field_set:lapis.PerformanceProto.topk_precision)
 }
 
-// optional float loss = 2;
-inline bool PerformanceProto::has_loss() const {
+// optional float top_precision = 2 [default = 0];
+inline bool PerformanceProto::has_top_precision() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void PerformanceProto::set_has_loss() {
+inline void PerformanceProto::set_has_top_precision() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void PerformanceProto::clear_has_loss() {
+inline void PerformanceProto::clear_has_top_precision() {
   _has_bits_[0] &= ~0x00000002u;
+}
+inline void PerformanceProto::clear_top_precision() {
+  top_precision_ = 0;
+  clear_has_top_precision();
+}
+inline float PerformanceProto::top_precision() const {
+  // @@protoc_insertion_point(field_get:lapis.PerformanceProto.top_precision)
+  return top_precision_;
+}
+inline void PerformanceProto::set_top_precision(float value) {
+  set_has_top_precision();
+  top_precision_ = value;
+  // @@protoc_insertion_point(field_set:lapis.PerformanceProto.top_precision)
+}
+
+// optional float loss = 3 [default = 0];
+inline bool PerformanceProto::has_loss() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void PerformanceProto::set_has_loss() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void PerformanceProto::clear_has_loss() {
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void PerformanceProto::clear_loss() {
   loss_ = 0;
@@ -4970,15 +5004,15 @@ inline void PerformanceProto::set_loss(float value) {
   // @@protoc_insertion_point(field_set:lapis.PerformanceProto.loss)
 }
 
-// optional int32 count = 3;
+// optional int32 count = 4 [default = 0];
 inline bool PerformanceProto::has_count() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void PerformanceProto::set_has_count() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void PerformanceProto::clear_has_count() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void PerformanceProto::clear_count() {
   count_ = 0;
@@ -4994,15 +5028,15 @@ inline void PerformanceProto::set_count(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.PerformanceProto.count)
 }
 
-// optional int32 step = 4;
+// optional int32 step = 5 [default = 0];
 inline bool PerformanceProto::has_step() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void PerformanceProto::set_has_step() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void PerformanceProto::clear_has_step() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void PerformanceProto::clear_step() {
   step_ = 0;

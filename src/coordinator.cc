@@ -124,10 +124,9 @@ const NetProto Coordinator::PartitionNet(Net* net){
     for(Layer* layer: net->layers()){
       if(layer->name()=="fc6")
         pdim=1;
-      if(layer->name()=="softmax")
-        layer->SetPartition(-1);
-      else
-        layer->SetPartition(pdim);
+      if(layer->name()=="fc8")
+        pdim=0;
+      layer->SetPartition(pdim);
     }
   }else if (FLAGS_par_mode==string("data")){
     for(Layer* layer: net->layers())

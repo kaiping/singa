@@ -141,7 +141,7 @@ void SplitLayer::InitDAryShape(){
   CHECK_EQ(in_edges_.size(), 1);
   CHECK_EQ(out_edges_.size(), 2);
   const DAry& bottom=in_edges_[0]->GetData(this);
-  int num, height, width, first_split=split_size_, second_split;
+  int num=0, height, width, first_split=split_size_, second_split=0;
   if(split_dim_==0){
     LOG(ERROR)<<"Not implemented";
   } else{
@@ -1061,22 +1061,25 @@ void FCLayer::SetPartition(int pdim){
   }
 }
 bool FCLayer::PreSyncF(){
+  data_.Fill(0.0f);
+  return PostSyncF();
+}
+bool FCLayer::PreSyncG(){
+  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
+  gbottom->Fill(0.0f);
+  return PostSyncF();
+}
+
+bool FCLayer::PostSyncF(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   if(bottom.GetPartition()==0&&data_.GetPartition()==0)
     return false;
   else
     return true;
 }
-bool FCLayer::PreSyncG(){
-  return PreSyncF();
-}
-
-bool FCLayer::PostSyncF(){
-  return PreSyncF();
-}
 
 bool FCLayer::PostSyncG(){
-  return PreSyncF();
+  return PostSyncF();
 }
 void FCLayer::ComputeFeature() {
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -1085,8 +1088,6 @@ void FCLayer::ComputeFeature() {
   //cache_data_=bottom2.Fetch(slice);
   data_.Dot(bottom2, weight_.data());
   data_.AddRow(bias_.data());
-  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  gbottom->Fill(0.0f);
 }
 
 void FCLayer::ComputeGradient() {
@@ -1104,7 +1105,6 @@ void FCLayer::ComputeGradient() {
   // if (gbottom != nullptr) {
   DAry gbottom2=gbottom->Reshape({num_, vdim_});
   gbottom2.Dot(grad2, weight_.data(), false, true,true);
-  data_.Fill(0.0f);
   //}
 }
 
@@ -1116,7 +1116,7 @@ Performance OutputLayer::CalcPerf(bool loss, bool accuracy){
  *****************************************************************************/
 void SoftmaxLossLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
   OutputLayer::Init(proto, edge_map);
-  //dim_=proto.num_output();
+  dim_=proto.num_output();
   topk_=proto.topk();
 }
 
@@ -1186,35 +1186,36 @@ void SoftmaxLossLayer::ComputeGradient() {
 
 // assume only partition along 0-th dim, add perfs from all partition
 Performance SoftmaxLossLayer::CalcPerf(bool loss, bool accuracy){
-  int ncorrect=0;
+  int ncorrectk=0, ncorrect=0;
   float logprob=0.0f;
-  //if(data_.allocated()){
   Range nrng=data_.IndexRange(0);
   const DAry& labelary=in_edges_[1]->GetData(this);
   const DAry& llabel=labelary.Fetch({nrng, Range({0,1})});
   for(int n=nrng.first;n<nrng.second;n++) {
+    float *dptr=data_.addr(n,0);
     int label=static_cast<int>(llabel.at(n,0));
     CHECK(label>=0&&label<1000)<<"label "<<label;
-    float prob_of_truth=data_.at(n,label);
+    float prob_of_truth=dptr[label];
     if(accuracy){
       int nlarger=0;
       // count num of probs larger than the prob of the ground truth label
       for(int i=0;i<dim_;i++) {
-        if (data_.at(n,i)>prob_of_truth)
+        if (dptr[i]>prob_of_truth)
           nlarger++;
       }
       // if the ground truth is within the topk largest, this precdition is correct
-      if(nlarger<=topk_)
+      if(nlarger<topk_)
+        ncorrectk++;
+      if(nlarger<1)
         ncorrect++;
     }
-    if(loss) {
+    if(loss)
       logprob-=log(std::max(prob_of_truth, FLT_MIN));
-    }
   }
-  //}
   Performance perf;
   int nrecords=nrng.second-nrng.first;
-  perf.set_precision(ncorrect*1.0/nrecords);
+  perf.set_topk_precision(ncorrectk*1.0/nrecords);
+  perf.set_top_precision(ncorrect*1.0/nrecords);
   perf.set_loss(logprob/nrecords);
   return perf;
 }

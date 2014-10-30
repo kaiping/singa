@@ -109,7 +109,7 @@ message LayerProto {
   optional int32 split_size = 24;
   optional int32 split_dim = 25 [default =1];
   optional int32 concat_dim = 26 [default =1];
-  optional int32 topk=27;
+  optional int32 topk=27 [default=5];
   repeated string top=28;
   repeated string bottom=29;
 }
@@ -135,10 +135,11 @@ message NetProto {
 }
 
 message PerformanceProto {
-  optional float precision = 1;
-  optional float loss = 2;
-  optional int32 count =3;
-  optional int32 step = 4;
+  optional float topk_precision = 1 [default=0.0];
+  optional float top_precision = 2 [default=0.0];
+  optional float loss = 3 [default=0.0];
+  optional int32 count =4 [default=0];
+  optional int32 step = 5 [default=0];
 }
 
 message SolverProto {

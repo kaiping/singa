@@ -12,6 +12,7 @@
 *.project
 *.cproject
 *.log
+*.nfs*
 out
 log*
 latency*

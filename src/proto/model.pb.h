@@ -606,7 +606,7 @@ class ParamProto : public ::google::protobuf::Message {
   inline float weight_decay_multiplier() const;
   inline void set_weight_decay_multiplier(float value);
 
-  // optional int32 split_threshold = 12 [default = 1000000];
+  // optional int32 split_threshold = 12 [default = 5000000];
   inline bool has_split_threshold() const;
   inline void clear_split_threshold();
   static const int kSplitThresholdFieldNumber = 12;
@@ -3673,7 +3673,7 @@ inline void ParamProto::set_weight_decay_multiplier(float value) {
   // @@protoc_insertion_point(field_set:lapis.ParamProto.weight_decay_multiplier)
 }
 
-// optional int32 split_threshold = 12 [default = 1000000];
+// optional int32 split_threshold = 12 [default = 5000000];
 inline bool ParamProto::has_split_threshold() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
@@ -3684,7 +3684,7 @@ inline void ParamProto::clear_has_split_threshold() {
   _has_bits_[0] &= ~0x00000800u;
 }
 inline void ParamProto::clear_split_threshold() {
-  split_threshold_ = 1000000;
+  split_threshold_ = 5000000;
   clear_has_split_threshold();
 }
 inline ::google::protobuf::int32 ParamProto::split_threshold() const {

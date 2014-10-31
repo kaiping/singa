@@ -37,17 +37,16 @@ DataLoader::DataLoader(const std::shared_ptr<GlobalContext>& gc){
 
 void DataLoader::ShardData(const DataProto& dp) {
   auto& groups=GlobalContext::Get()->groups();
-  /*
   if(dp.has_validation_data()){
     LOG(INFO)<<"load validation data...";
     ShardData(dp.validation_data(),groups, false);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
   if(dp.has_test_data()){
     LOG(INFO)<<"load test data...";
     ShardData(dp.test_data(),groups, false);
   }
-  */
-
+  MPI_Barrier(MPI_COMM_WORLD);
   if(dp.has_train_data()){
     LOG(INFO)<<"shard train data...";
     ShardData(dp.train_data(),groups,false);
@@ -59,7 +58,6 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
   LOG(INFO)<<"Create data shards on local disk";
   auto mpi=NetworkThread::Get();
   ShardProto sp;
-  /*
   if(dp.has_validation_data()){
     string shardlist=shard_folder_+"/val-list.txt";
     mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
@@ -72,6 +70,7 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
     }
     CreateLocalShard(dp.validation_data(), sp);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
 
   if(dp.has_test_data()){
     string shardlist=shard_folder_+"/test-list.txt";
@@ -85,15 +84,15 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
     }
     CreateLocalShard(dp.test_data(), sp);
   }
-  */
-
+  MPI_Barrier(MPI_COMM_WORLD);
   if(dp.has_train_data()){
     // nprocs_-1 is the rank of cooordinator
     string shardlist=shard_folder_+"/train-list.txt";
+    mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
     if(!check_exists(shardlist)){
-      mpi->Read(nprocs_-1, MTYPE_PUT_SHARD, &sp);
       WriteProtoToTextFile(sp, shardlist.c_str());
     }else{
+      sp.clear_record();
       LOG(ERROR)<<"load from local shard list";
       ReadProtoFromTextFile(shardlist.c_str(), &sp);
     }
@@ -203,7 +202,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
       << "mdb_open failed";
     CHECK_EQ(mdb_env_stat(mdb_env, &mdb_stat), MDB_SUCCESS);
     LOG(INFO)<<"This db has "<<mdb_stat.ms_entries;
-    for(int i=0;i<mdb_stat.ms_entries;i++)
+    for(unsigned int i=0;i<mdb_stat.ms_entries;i++)
       ds->Next();
     count+=mdb_stat.ms_entries;
   } else {

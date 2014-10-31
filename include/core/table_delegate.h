@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <glog/logging.h>
 #include <string>
+#include <thread>
+#include <atomic>
+
 #include <vector>
 #include <map>
 
@@ -75,6 +78,10 @@ class TableDelegate {
   virtual void AsyncGet(Param * param, int step)=0;
   virtual void AsyncCollect(Param * param, int step)=0;
 
+  virtual void Collect(Param * param, int step)=0;
+  virtual void StopCollectThread()=0;
+  virtual void StartCollectThread()=0;
+
   virtual void SplitParams(const std::vector<Param *> &params, int wid)=0;
 
   virtual const std::map<int, GlobalTable*> tables()=0;
@@ -84,6 +91,8 @@ class TableDelegate {
   void Get(const std::vector<Param *> &params, int step);
   void Put(const std::vector<Param *> &params);
   void AsyncGet(const std::vector<Param *> &params, int step);
+  float wait_time;
+  int nsleeps;
 };
 
 template <typename K, typename V>
@@ -96,6 +105,7 @@ class TypedTableDelegate:public TableDelegate {
   virtual void Put(Param * param);
   virtual void AsyncGet(Param * param, int step);
   virtual void AsyncCollect(Param * param, int step);
+  virtual void Collect(Param * param, int step);
 
   virtual void SplitParams(const std::vector<Param *> &params, int wid);
   virtual const std::map<int, GlobalTable*> tables(){
@@ -103,24 +113,36 @@ class TypedTableDelegate:public TableDelegate {
     ret[0]=param_table_;
     return  ret;
   }
-
+  virtual void StartCollectThread();
+  virtual void StopCollectThread() {
+    collect_flag_=false;
+    collect_thread_.join();
+  }
   void set_example(const V& example){ example_=example; }
   virtual ~TypedTableDelegate();
  private:
   TypedGlobalTable<K, V>* CreateParamTable( const int id, int num_shards,
       UpdateHandler<V> *update, Sharder<K> *skey,
       Marshal<K> *mkey, Marshal<V> *mval) ;
+  virtual void CollectThread();
  private:
   int kMaxSplits_;
   V example_;
   TypedGlobalTable<K,V> * param_table_;
   // map param id to splits (id, len)
-  std::map<int, vector<std::pair<int, int>>> param_splits_map_;
+  std::vector<std::vector<std::pair<int, int>>> param_splits_;
   // map split id to param* and offset (to local partition start)
   std::map<int, std::pair<Param*, int>> split_param_map_;
   // async get marker
   std::map<int, bool> asyncget_split_;
+  std::atomic<int>* collect_counter_;
+  std::atomic<bool> collect_flag_;
+  std::thread collect_thread_;
 };
+template<class K, class V>
+void TypedTableDelegate<K,V>::StartCollectThread() {
+  collect_thread_=std::thread([this] {CollectThread();});
+}
 
 template<class K, class V>
 TypedTableDelegate<K,V>::~TypedTableDelegate(){
@@ -164,6 +186,7 @@ template<class K, class V>
 void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wid) {
   int total_splits=0;
   int group_size=GlobalContext::Get()->group_size();
+  collect_counter_=new std::atomic<int>[params.size()];
   for(auto param: params){
     const DAry& dary=param->data();
     int id=param->id()*group_size;
@@ -195,7 +218,9 @@ void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wi
       asyncget_split_[splitid]=false;
       pos+=len;
     }
-    param_splits_map_[param->id()]=splits;
+    CHECK_EQ(param_splits_.size(), param->id());
+    param_splits_.push_back(splits);
+    collect_counter_[param->id()]=0;
     total_splits+=splits.size();
     // for debug
     for(auto& split: splits){
@@ -213,7 +238,7 @@ void TypedTableDelegate<K, V>::Update(Param *param, int step){
   const float * dptr = param->grad().dptr();
   K key;
   key.set_version(step);
-  for(auto& entry: param_splits_map_[param->id()]) {
+  for(auto& entry: param_splits_[param->id()]) {
     V v(example_);
     // sgd related hyper-parameters
     v.set_version(step);
@@ -234,7 +259,7 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
   K key;
   key.set_version(step);
   int offset=0;
-  for(auto entry: param_splits_map_[param->id()]) {
+  for(auto entry: param_splits_[param->id()]) {
     key.set_key(entry.first);
     V v=param_table_->get(key);
     for(auto x: v.data().value()){
@@ -247,7 +272,8 @@ void TypedTableDelegate<K, V>::Get(Param * param, int step){
 
 template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
-  auto splits=param_splits_map_.at(param->id());
+  CHECK_EQ(collect_counter_[param->id()],0);
+  auto splits=param_splits_[param->id()];
   K key;
   key.set_version(step);
   V v;
@@ -258,10 +284,66 @@ void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
     //LOG(INFO)<<"get "<<entry.first;
   }
 }
+/**
+ * collect splits returned from PS, in parallel with training
+ */
+template<typename K, typename V>
+void TypedTableDelegate<K, V>::CollectThread(){
+  collect_flag_=true;
+  while(collect_flag_){
+    K key;
+    V val;
+    // may collect splits of other params used later
+    if(param_table_->async_get_collect(&key,&val)){
+      int splitid=key.key();
+      //LOG(INFO)<<"collected "<<splitid;
+      auto& split=split_param_map_.at(splitid);
+      Param* p=split.first;
+      int offset=split.second;
+      float * dptr = p->mutable_data()->dptr();
+      for(auto v: val.data().value())
+        dptr[offset++]=v;
+      // check this split is complete, i.e. offset is the start of next split
+      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
+        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
+      asyncget_split_[splitid]=true;
+      collect_counter_[p->id()]+=1;
+    }else{
+      //std::this_thread::yield();
+      sleep(0.0001);
+      nsleeps++;
+    }
+  }
+}
+
+
+template<class K, class V>
+void TypedTableDelegate<K, V>::Collect(Param * param, int step){
+  auto& splits=param_splits_[param->id()];
+  int nsplits=splits.size();
+  while(true){
+    int ncollect=collect_counter_[param->id()];
+    CHECK_LE(ncollect, nsplits);
+    if(ncollect==nsplits){
+      for(auto& split:splits){
+        CHECK(asyncget_split_[split.first]);
+        asyncget_split_[split.first]=false;
+      }
+      collect_counter_[param->id()]=0;
+      break;
+    }
+    else{
+      sleep(0.0001);
+      //std::this_thread::yield();
+      wait_time+=1;
+    }
+  }
+}
+
 
 template<class K, class V>
 void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
-  auto& splits=param_splits_map_[param->id()];
+  auto& splits=param_splits_[param->id()];
   unsigned int nget=0;
   int start_split_id=splits.front().first;
   int end_split_id=splits.back().first;
@@ -290,7 +372,9 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
       if(splitid>=start_split_id&&splitid<=end_split_id)
         nget++;
     }else{
-      sleep(0.001);
+      sleep(0.0001);
+      nsleeps++;
+      wait_time+=0.0001;
     }
   }
 

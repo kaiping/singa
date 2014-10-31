@@ -228,6 +228,7 @@ TableDelegate* CreateTableDelegate(const SolverProto& proto){
   NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableDelegate::HandleShardAssignment, delegate));
 
+  delegate->wait_time=0.0;
   return delegate;
 }
 
@@ -285,7 +286,7 @@ void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
   const float * data_addr = param->data().dptr();
   LOG(INFO)<<"param id "<<param->id()<<" name "<<param->name()
     <<" "<<param->partition()<<" "<<groupsize;
-  for(auto& entry: param_splits_map_[param->id()]) {
+  for(auto& entry: param_splits_[param->id()]) {
     SGDValue v(example_);
     // sgd related hyper-parameters
     v.set_learning_rate_multiplier(param->learning_rate_multiplier());
@@ -317,7 +318,7 @@ template<>
 void TypedTableDelegate<VKey, AdaGradValue>::Put(Param * param){
   int offset = 0;
   const float * data_addr = param->data().dptr();
-  for(auto& entry: param_splits_map_[param->id()]) {
+  for(auto& entry: param_splits_[param->id()]) {
     AdaGradValue v(example_);
     // sgd related hyper-parameters
     v.set_version(0);

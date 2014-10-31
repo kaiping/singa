@@ -1,0 +1,11 @@
+
+make: Warning: File `include/core/table_delegate.h' has modification time 84 s in the future
+g++ src/coordinator.cc  -O2  -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas -funroll-loops  -I/home/wangwei/install/include  -I/home/wangwei/install/mpich/include  -I./include/da  -I./include  -I/home/wangwei/install/jdk1.7.0_67/include  -I/home/wangwei/install/jdk1.7.0_67/include/linux -MMD -c -o build/src/coordinator.o
+In file included from ./include/net/net.h:7:0,
+                 from ./include/coordinator.h:11,
+                 from src/coordinator.cc:3:
+./include/core/table_delegate.h: In member function ‘virtual void lapis::TypedTableDelegate<K, V>::SplitParams(const std::vector<lapis::Param*>&, int)’:
+./include/core/table_delegate.h:223:31: error: request for member ‘size’ in ‘((lapis::TypedTableDelegate<K, V>*)this)->lapis::TypedTableDelegate<K, V>::collect_counter_’, which is of pointer type ‘std::atomic<int>*’ (maybe you meant to use ‘->’ ?)
+     CHECK_EQ(collect_counter_.size(), param->id());
+                               ^
+make: *** [build/src/coordinator.o] Error 1

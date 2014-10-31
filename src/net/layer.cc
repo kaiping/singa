@@ -1053,7 +1053,7 @@ void FCLayer::SetPartition(int pdim){
     weight_.SetPartition(1);
     bias_.SetPartition(0);
   }else if(pdim==0){
-    weight_.SetPartition(0);
+    weight_.SetPartition(-1);
     bias_.SetPartition(-1);
   }else{
     weight_.SetPartition(-1);

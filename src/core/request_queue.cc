@@ -86,7 +86,8 @@ void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
       }
     }
     key_index_ = (key_index_ + 1) % request_queues_.size();
-    Sleep(FLAGS_sleep_time);
+    if(!success)
+      Sleep(FLAGS_sleep_time);
   }
 }
 

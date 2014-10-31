@@ -18,10 +18,10 @@
 #include "da/gary.h"
 #include "utils/common.h"
 
-DEFINE_int32(checkpoint_frequency, 10000, "frequency for cp");
+DEFINE_int32(checkpoint_frequency, 5000, "frequency for cp");
 DEFINE_int32(checkpoint_after, 1, "cp after this steps");
 DEFINE_string(checkpoint_dir,"/data1/wangwei/lapis","check point dir");
-DEFINE_string(par_mode, "model",  "time training algorithm");
+DEFINE_string(par_mode, "hybrid",  "time training algorithm");
 DEFINE_string(db_backend, "lmdb", "database backend");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");

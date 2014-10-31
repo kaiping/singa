@@ -15,7 +15,7 @@
 #include "proto/worker.pb.h"
 
 // sleep duration between reading messages off the network.
-DEFINE_double(sleep_time, 0.001, "");
+DEFINE_double(sleep_time, 0.0001, "");
 
 namespace lapis {
 

@@ -297,7 +297,6 @@ void Solver::DebugInfo(Net* net){
 }
 
 Performance Solver::TrainOneBatch(Net *net, int step){
-  delegate_->AsyncGet(net->params(),step);
   auto layers=net->layers();
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
@@ -316,6 +315,7 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     (*layer)->ComputeGradient();
     for(auto* param: (*layer)->GetParams()){
       delegate_->Update(param, step);
+      delegate_->AsyncGet(param,step+1);
     }
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
@@ -355,17 +355,27 @@ void Solver::TimeOneBatch(int runs) {
   memset(backward, 0, sizeof(double)*(1+nlayers));
   memset(refresh, 0, sizeof(double)*(1+nlayers));
   memset(sync, 0, sizeof(double)*(1+nlayers));
-  MPI_Barrier(context_->mpicomm());
+
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
-  double start=Now();
+  //delegate_->StartCollectThread();
   delegate_->AsyncGet(net_->params(),step_);
+  delegate_->wait_time=0.0f;
+  delegate_->nsleeps=0;
+
+  MPI_Barrier(context_->mpicomm());
+  double start=Now();
   for(int k=0;k<runs;k++){
     int layerid=0;
+    bool do_collect=true;
     for(auto* layer: layers){
       refresh_start=Now();
-      for(auto* param: layer->GetParams())
-        delegate_->AsyncCollect(param, step_);
+      if(layer->name()=="rxxx")
+        do_collect=false;
+      if(do_collect){
+        for(auto* param: layer->GetParams())
+          delegate_->AsyncCollect(param, step_);
+      }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if(layer->PreSyncF())
@@ -380,6 +390,7 @@ void Solver::TimeOneBatch(int runs) {
       sync[layerid]+=Now()-sync_start;
       layerid++;
     }
+
     for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
       layerid--;
       sync_start=Now();
@@ -391,10 +402,14 @@ void Solver::TimeOneBatch(int runs) {
       refresh_start=Now();
       backward[layerid]+=refresh_start-comp_start;
 
-      for(auto* param: (*layer)->GetParams()){
-        delegate_->Update(param, step_);
-        delegate_->AsyncGet(param, step_+1);
+      if(do_collect){
+        for(auto* param: (*layer)->GetParams()){
+          delegate_->Update(param, step_);
+          delegate_->AsyncGet(param, step_+1);
+        }
       }
+      if((*layer)->name()=="rxxx")
+        do_collect=true;
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if((*layer)->PostSyncG())
@@ -404,13 +419,12 @@ void Solver::TimeOneBatch(int runs) {
     IncStep();
     LOG(ERROR)<<"one iter";
   }
+  //delegate_->StopCollectThread();
   double total=Now()-start;
   MPI_Barrier(context_->mpicomm());
   LOG(ERROR)<<"Finish";
   int K=1024;
   char buf[10*K];
-  //memset(buf, 0, 8192);
-  //sprintf(buf, "\nTime One Batch with %d runs using %6.2fs\n", runs, total);
   sprintf(buf, "\n");
   for(int i=0;i<nlayers;i++){
     sprintf(buf+strlen(buf), "Layer %10s forward %6.2f backward %6.2f sync %6.2f refresh %6.2f\n",
@@ -420,8 +434,11 @@ void Solver::TimeOneBatch(int runs) {
     sync[nlayers]+=sync[i];
     refresh[nlayers]+=refresh[i];
   }
-  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
-    total/runs,forward[nlayers]/runs, backward[nlayers]/runs, sync[nlayers]/runs, refresh[nlayers]/runs, GAry::comm_time/runs);
+  double armcitime=GAry::comm_time;
+  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\twait\t%6.2f\tnsleep%d\n",
+    total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
+    refresh[nlayers]/runs, armcitime/runs, delegate_->wait_time/runs,
+    delegate_->nsleeps/runs);
   LOG(ERROR)<<string(buf);
   delete forward;
   delete backward;

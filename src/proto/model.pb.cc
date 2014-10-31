@@ -544,7 +544,7 @@ void protobuf_AddDesc_model_2eproto() {
     "(\002:\0010\022\016\n\003std\030\010 \001(\002:\0011\022\036\n\023momentum_multip"
     "lier\030\t \001(\002:\0011\022#\n\030learning_rate_multiplie"
     "r\030\n \001(\002:\0011\022\"\n\027weight_decay_multiplier\030\013 "
-    "\001(\002:\0011\022 \n\017split_threshold\030\014 \001(\005:\0071000000"
+    "\001(\002:\0011\022 \n\017split_threshold\030\014 \001(\005:\0075000000"
     "\022\030\n\tpartition\030\r \001(\010:\005false\022\036\n\004data\030\016 \001(\013"
     "2\020.lapis.DAryProto\022\036\n\004grad\030\017 \001(\0132\020.lapis"
     ".DAryProto\"\222\001\n\nInitMethod\022\r\n\tkConstant\020\000"
@@ -1676,7 +1676,7 @@ void ParamProto::SharedCtor() {
   momentum_multiplier_ = 1;
   learning_rate_multiplier_ = 1;
   weight_decay_multiplier_ = 1;
-  split_threshold_ = 1000000;
+  split_threshold_ = 5000000;
   partition_ = false;
   data_ = NULL;
   grad_ = NULL;
@@ -1737,7 +1737,7 @@ void ParamProto::Clear() {
     momentum_multiplier_ = 1;
     learning_rate_multiplier_ = 1;
     weight_decay_multiplier_ = 1;
-    split_threshold_ = 1000000;
+    split_threshold_ = 5000000;
     partition_ = false;
     if (has_data()) {
       if (data_ != NULL) data_->::lapis::DAryProto::Clear();
@@ -1936,7 +1936,7 @@ bool ParamProto::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 split_threshold = 12 [default = 1000000];
+      // optional int32 split_threshold = 12 [default = 5000000];
       case 12: {
         if (tag == 96) {
          parse_split_threshold:
@@ -2079,7 +2079,7 @@ void ParamProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->weight_decay_multiplier(), output);
   }
 
-  // optional int32 split_threshold = 12 [default = 1000000];
+  // optional int32 split_threshold = 12 [default = 5000000];
   if (has_split_threshold()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(12, this->split_threshold(), output);
   }
@@ -2174,7 +2174,7 @@ void ParamProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->weight_decay_multiplier(), target);
   }
 
-  // optional int32 split_threshold = 12 [default = 1000000];
+  // optional int32 split_threshold = 12 [default = 5000000];
   if (has_split_threshold()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(12, this->split_threshold(), target);
   }
@@ -2265,7 +2265,7 @@ int ParamProto::ByteSize() const {
       total_size += 1 + 4;
     }
 
-    // optional int32 split_threshold = 12 [default = 1000000];
+    // optional int32 split_threshold = 12 [default = 5000000];
     if (has_split_threshold()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(

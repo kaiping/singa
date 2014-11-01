@@ -7,6 +7,8 @@
 #include "core/disk-table.h"
 #include "core/table.h"
 #include "proto/model.pb.h"
+#include "net/solver.h"
+
 
 #include "da/dary.h"
 
@@ -119,52 +121,11 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   }
   return true;
 }
-float UpdateHyperParam(int step, SGDValue::ChangeProto change, int change_steps, float a, float b) {
-  float ret = 0., r = 0.;
-  switch (change) {
-    case SGDValue::kFixed:
-      ret = a;
-      break;
-    case SGDValue::kLinear:
-      // a is init, b is the final
-      r = step * 1.0  / change_steps;
-      ret = (1.0 - r) * a + r * b;
-      break;
-    case SGDValue::kExponential:
-      // a is init, b is the final, from convnet
-      CHECK_EQ(a, 2 * b) << "final value should be the half";
-      ret = a / pow(2, step * 1. / change_steps);
-      break;
-    case SGDValue::kInverse_t:
-      // a is init, b is the final, from convnet
-      CHECK_EQ(a, 2 * b) << "final value should be the half";
-      ret = a / (1. + step * 1. / b);
-      break;
-    case SGDValue::kStep:
-      // a is the base learning rate, b is gamma, from caffe
-      // notice it is step/change_steps, not step*1.0/change_steps
-      ret = a * pow(b, step / change_steps);
-      break;
-    default:
-      LOG(ERROR) << "Wrong hyper-parameter update method";
-  }
-  return ret;
-}
 void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
-  learning_rate_ = UpdateHyperParam(step, learning_rate_change_,
+  learning_rate_ = Solver::UpdateHyperParam(step, learning_rate_change_,
       learning_rate_change_steps_,
       base_learning_rate_,
       gamma_);
-  /*
-  momentum_ = UpdateHyperParam(step, sgd_proto_.momentum_change(),
-      sgd_proto_.momentum_change_steps(),
-      sgd_proto_.base_momentum(),
-      sgd_proto_.momentum_x());
-  weight_decay_ = UpdateHyperParam(step, sgd_proto_.weight_decay_change(),
-      sgd_proto_.weight_decay_change_steps(),
-      sgd_proto_.base_weight_decay(),
-      sgd_proto_.weight_decay_x());
-      */
 }
 
 /********************************************************************
@@ -228,7 +189,6 @@ TableDelegate* CreateTableDelegate(const SolverProto& proto){
   NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
                          boost::bind(&TableDelegate::HandleShardAssignment, delegate));
 
-  delegate->wait_time=0.0;
   return delegate;
 }
 

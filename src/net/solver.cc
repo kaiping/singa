@@ -7,7 +7,7 @@
 #include <mpi.h>
 #include <vector>
 #include <typeinfo>
-
+#include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "net/solver.h"
 #include "da/gary.h"
@@ -33,9 +33,67 @@ Solver::Solver(const SolverProto &proto) {
   test_steps_=proto.test_steps();
   validation_steps_=proto.validation_steps();
 
+  sgd_=proto.sgd();
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
 }
+
+float Solver::UpdateHyperParam(int step, SGDValue::ChangeProto change,
+    int change_steps, float a, float b) {
+  float ret = 0., r = 0.;
+  switch (change) {
+    case SGDValue::kFixed:
+      ret = a;
+      break;
+    case SGDValue::kLinear:
+      // a is init, b is the final
+      r = step * 1.0  / change_steps;
+      ret = (1.0 - r) * a + r * b;
+      break;
+    case SGDValue::kExponential:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / pow(2, step * 1. / change_steps);
+      break;
+    case SGDValue::kInverse_t:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / (1. + step * 1. / b);
+      break;
+    case SGDValue::kStep:
+      // a is the base learning rate, b is gamma, from caffe
+      // notice it is step/change_steps, not step*1.0/change_steps
+      ret = a * pow(b, step / change_steps);
+      break;
+    default:
+      LOG(ERROR) << "Wrong hyper-parameter update method";
+  }
+  return ret;
+}
+
+void Solver::LocalUpdate(Param* param, int step) {
+  float lr=UpdateHyperParam(step, sgd_.learning_rate_change(),
+      sgd_.learning_rate_change_steps(),sgd_.base_learning_rate(), sgd_.gamma());
+  DAry* history=param->mutable_history();
+  const DAry& grad=param->grad();
+  const DAry& data=param->data();
+  int len=data.local_size();
+  CHECK_EQ(len, grad.local_size());
+  CHECK_EQ(len, history->local_size());
+  lr=lr*param->learning_rate_multiplier();
+  float w=sgd_.weight_decay()*param->weight_decay_multiplier();
+  // hist=hist-lr*grad
+  DAry::arymath().madd(history->dptr(), lr, grad.dptr(), history->dptr(), len);
+  // hist=hist-lr*weight*param
+  if(w>0)
+    DAry::arymath().madd(history->dptr(), lr*w, data.dptr(), history->dptr(), len);
+
+  // param+=history/n, /data->n_update()
+  DAry::arymath().sub(data.dptr(), data.dptr(), history->dptr(), len);
+  // hist=hist*mom
+  DAry::arymath().mul(history->dptr(), sgd_.momentum(), history->dptr(), len);
+}
+
 
 void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
   net_=new Net(np);
@@ -55,7 +113,9 @@ void Solver::InitParams(){
     param->Fill();
     LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
   }
-  delegate_->Put(net_->params());
+  for(auto* param: net_->params())
+    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+      delegate_->Put(param);
 }
 
 Solver::~Solver() {
@@ -264,6 +324,9 @@ void Solver::Train(int start_step){
       Performance perf=Test(Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
     }
+    if(CheckpointNow()){
+      DoLocalCheckpoint(net_);
+    }
     if(ValidateNow()||TestNow())
       pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     IncStep();
@@ -271,19 +334,35 @@ void Solver::Train(int start_step){
   pthread_join(prefetch_thread_, NULL);
   prefetcher.Free();
 }
-
+void Solver::DoLocalCheckpoint(Net* net){
+  for(auto* param: net->params()){
+    if(param->partition()&&GlobalContext::Get()->num_groups()==1){
+      DAryProto data;
+      param->data().ToProto(&data, true);
+      DAryProto grad;
+      param->history().ToProto(&grad, true);
+      char fname[256];
+      sprintf(fname, "%s/local_cp/param_%d_%d.dat", context_->shard_folder().c_str(),
+          param->id(), step_);
+      WriteProtoToBinaryFile(data, fname);
+      sprintf(fname, "%s/local_cp/param_%d_%d.hst", context_->shard_folder().c_str(),
+          param->id(), step_);
+      WriteProtoToBinaryFile(grad, fname);
+    }
+  }
+}
 void Solver::DebugInfo(Net* net){
   char display[4096];
   auto layers=net->layers();
   LOG(INFO)<<"Train Step: "<<step_;
   for(auto* layer: layers){
     sprintf(display, "Forward layer  %10s data norm1 %13.9f",
-          layer->name().c_str(), layer->data().Norm1());
+        layer->name().c_str(), layer->data().Norm1());
     LOG(INFO)<<string(display);
   }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     sprintf(display, "Backward layer %10s grad norm1 %13.9f",
-          (*layer)->name().c_str(), (*layer)->grad().Norm1());
+        (*layer)->name().c_str(), (*layer)->grad().Norm1());
     LOG(INFO)<<string(display);
   }
   for(auto* layer: layers){
@@ -298,9 +377,14 @@ void Solver::DebugInfo(Net* net){
 
 Performance Solver::TrainOneBatch(Net *net, int step){
   auto layers=net->layers();
+  for(auto* param: net->params()){
+    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+      delegate_->AsyncGet(param,step);
+  }
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
-      delegate_->AsyncCollect(param, step);
+      if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+        delegate_->AsyncCollect(param, step);
     }
     if(layer->PreSyncF())
       MPI_Barrier(context_->mpicomm());
@@ -314,8 +398,12 @@ Performance Solver::TrainOneBatch(Net *net, int step){
       MPI_Barrier(context_->mpicomm());
     (*layer)->ComputeGradient();
     for(auto* param: (*layer)->GetParams()){
-      delegate_->Update(param, step);
-      delegate_->AsyncGet(param,step+1);
+      if(!param->partition()||GlobalContext::Get()->num_groups()>1){
+        delegate_->Update(param, step);
+        delegate_->AsyncGet(param,step+1);
+      }else{
+        LocalUpdate(param, step);
+      }
     }
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
@@ -359,7 +447,10 @@ void Solver::TimeOneBatch(int runs) {
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
   //delegate_->StartCollectThread();
-  delegate_->AsyncGet(net_->params(),step_);
+  for(auto* param: net_->params()){
+    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+      delegate_->AsyncGet(param,step_);
+  }
   delegate_->wait_time=0.0f;
   delegate_->nsleeps=0;
 
@@ -373,8 +464,10 @@ void Solver::TimeOneBatch(int runs) {
       if(layer->name()=="rxxx")
         do_collect=false;
       if(do_collect){
-        for(auto* param: layer->GetParams())
-          delegate_->AsyncCollect(param, step_);
+        for(auto* param: layer->GetParams()){
+          if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+            delegate_->AsyncCollect(param, step_);
+        }
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
@@ -404,8 +497,10 @@ void Solver::TimeOneBatch(int runs) {
 
       if(do_collect){
         for(auto* param: (*layer)->GetParams()){
-          delegate_->Update(param, step_);
-          delegate_->AsyncGet(param, step_+1);
+          if(!param->partition()||GlobalContext::Get()->num_groups()>1){
+            delegate_->Update(param, step_);
+            delegate_->AsyncGet(param, step_+1);
+          }
         }
       }
       if((*layer)->name()=="rxxx")
@@ -436,14 +531,15 @@ void Solver::TimeOneBatch(int runs) {
   }
   double armcitime=GAry::comm_time;
   sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\twait\t%6.2f\tnsleep%d\n",
-    total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
-    refresh[nlayers]/runs, armcitime/runs, delegate_->wait_time/runs,
-    delegate_->nsleeps/runs);
+      total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
+      refresh[nlayers]/runs, armcitime/runs, delegate_->wait_time/runs,
+      delegate_->nsleeps/runs);
   LOG(ERROR)<<string(buf);
   delete forward;
   delete backward;
   delete sync;
   delete refresh;
+  DoLocalCheckpoint(net_);
   //DebugInfo(net_);
 }
 

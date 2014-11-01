@@ -51,11 +51,15 @@ void DAry::InitFromProto(const DAryProto& proto) {
   Setup(proto.partition_dim());
 }
 
-void DAry::ToProto(DAryProto* proto, bool copyData) {
+void DAry::ToProto(DAryProto* proto, bool copyData) const{
   CHECK(offset_==0);
   for (int i = 0; i < shape_.dim; i++)
     proto->add_shape(shape_.s[i]);
   proto->set_partition_dim(part_.pdim);
+  if(copyData){
+    for(int i=0;i<part_.size;i++)
+      proto->add_value(dptr_[i]);
+  }
 }
 
 void DAry::Setup(const int mode) {

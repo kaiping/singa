@@ -70,7 +70,7 @@ class DAry {
     * set shape and partition from proto
     */
   void InitFromProto(const DAryProto& proto);
-  void ToProto(DAryProto* proto, bool copyData);
+  void ToProto(DAryProto* proto, bool copyData) const;
 
   void Allocate();
   /**

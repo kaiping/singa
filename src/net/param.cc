@@ -3,7 +3,7 @@
 
 #include <glog/logging.h>
 #include <cmath>
-
+#include "utils/global_context.h"
 #include "net/param.h"
 #include "utils/common.h"
 
@@ -21,11 +21,13 @@ void Param::Init(const ParamProto &proto){
   std_=proto.std();
   value_=proto.value();
   split_threshold_=proto.split_threshold();
-  if(proto.has_data())
+  if(proto.has_data()){
     data_.InitFromProto(proto.data());
-  if(proto.has_grad())
-    grad_.InitFromProto(proto.grad());
+    grad_.InitFromProto(proto.data());
+  }
   partition_=proto.partition();
+  if(partition_&&GlobalContext::Get()->num_groups()==1)
+    history_.InitFromProto(proto.data());
 }
 
 void Param::ToProto(ParamProto *proto, bool copyData) {
@@ -44,8 +46,10 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
 
   DAryProto* data=proto->mutable_data();
   data_.ToProto(data, copyData);
+  /*
   DAryProto* grad=proto->mutable_grad();
   grad_.ToProto(grad, copyData);
+  */
 }
 void Param::SetShape(int len){
   data_.SetShape({len});

@@ -45,11 +45,19 @@ class Param {
   const DAry &grad() {
     return grad_;
   }
+  const DAry &history() {
+    return history_;
+  }
+
   /**
    * Return mem address for the gradient of this parameter
    */
   DAry *mutable_grad() {
     return &grad_;
+  }
+
+  DAry *mutable_history() {
+    return &history_;
   }
 
   void SetShape(int h, int w);
@@ -113,7 +121,7 @@ class Param {
   int split_threshold_;
   bool partition_;
   //! content, gradient and history gradient of this parameter
-  DAry data_, grad_;
+  DAry data_, grad_, history_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

@@ -1,7 +1,7 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/"
+folder="/data1/wangwei/lapis/local_cp"
 #folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/rack0"
+hostfile="examples/imagenet12/rack2"
 if [ $# -eq 0 ]
 then
   echo "must provide argument, [chmod, ssh,ls,cat, delete, create or reset] + hostfile"

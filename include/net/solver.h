@@ -66,6 +66,8 @@ class Solver {
     void TimeTableServer(int runs);
 
 
+    void LocalUpdate(Param* param, int step);
+    static float UpdateHyperParam(int step, SGDValue::ChangeProto change, int change_steps, float a, float b) ;
     /**
      * train the model for one-minibatch by either backpropagation or contrastive divergence
      * @param net the Net object to be trained
@@ -90,6 +92,7 @@ class Solver {
      * return true if it is time to do checkpoint
      * @param step the ::Train() has been called step times.
      */
+    void DoLocalCheckpoint(Net* net);
     const bool CheckpointNow(const int step) {
       if (checkpoint_after_steps_ > 0 && step >= checkpoint_after_steps_) {
         if ((step - checkpoint_after_steps_) % checkpoint_every_steps_ == 0)
@@ -191,6 +194,7 @@ class Solver {
     std::shared_ptr<GlobalContext> context_;
     Net* net_;
     TableDelegate* delegate_;
+    SGDValue sgd_;
 };
 
 }  // namespace lapis

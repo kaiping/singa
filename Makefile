@@ -69,7 +69,7 @@ run_load: lapis.bin
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_hybrid: lapis.bin
-	mpirun  -np 24 -hostfile examples/imagenet12/rack2 ./lapis.bin \
+	mpirun  -np 16 -hostfile examples/imagenet12/rack2 ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
 

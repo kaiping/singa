@@ -21,25 +21,41 @@ UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
 }
 bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data,
     const AdaGradValue& update){
-  /*
-  Vector dst(data->grad());
-  Vector src(update->grad());
-  Add(*dst, dst, src);
-  */
+  int gid=update.gid();
+  CHECK(gid);
+  int threshold=data.threshold();
+  int n_update=data->n_update(gid);
+  int offset=0;
+  float* graddptr=data->mutable_agg_grad(gid).mutable_value();
+  //threshold is the num of workers in one group contributing to this grad
+  if(n_update<threshold){
+    data->set_n_update(n_update+1);
+    for(auto v: update.grad().value())
+      graddptr[offset++]=v;
+  }
+
+  if(n_update==threshold-1){
+    // update data->data()
+    for(int i=0;i<offset;i++)
+      graddptr[i]=0.f;
+    data->set_n_update(0);
+    data->set_version(data->version()+1);
+  }
   return true;
 }
 bool UpdateHandler<AdaGradValue>::Get(const VKey& key,
     const AdaGradValue &val, AdaGradValue* ret) {
   //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
-  if(key.version()<=val.version()){
+  int gid=key.gid();
+  CHECK(gid);
+  if(key.version()<=val.version()&&val.n_update(gid)==0){
     DAryProto* retdat=ret->mutable_data();
     retdat->clear_value();
     for(auto x: val.data().value())
       retdat->add_value(x);
     return true;
-  }
-
-  return false;
+  }else
+    return false;
 }
 
 bool UpdateHandler<AdaGradValue>::is_checkpointable(const VKey& key,

@@ -224,7 +224,7 @@ message Record {
 }
 // value field of the tuple for AdaGrad SGD
 message AdaGradValue {
-  optional int32 n_update = 1 [default=0];
+  optional repeated n_update = 1 [default=0];
   optional int32 version = 2 [default=0];
   optional DAryProto data = 4;
   optional DAryProto grad = 5;

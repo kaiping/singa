@@ -238,7 +238,7 @@ void TypedTableDelegate<K, V>::Update(Param *param, int step){
   key.set_version(step);
   V v(example_);
   v.set_version(step);
-  DAryProto* grad=v.mutable_grad();
+  DAryProto* grad=v.add_grad();
   for(auto& entry: param_splits_[param->id()]) {
     // sgd related hyper-parameters
     grad->clear_value();

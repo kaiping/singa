@@ -393,7 +393,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(AdaGradValue));
   SGDValue_descriptor_ = file->message_type(13);
-  static const int SGDValue_offsets_[14] = {
+  static const int SGDValue_offsets_[15] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, base_learning_rate_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, momentum_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, weight_decay_),
@@ -405,9 +405,10 @@ void protobuf_AssignDesc_model_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, n_update_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, version_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, threshold_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, data_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, grad_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, id_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SGDValue, history_),
   };
   SGDValue_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -422,9 +423,10 @@ void protobuf_AssignDesc_model_2eproto() {
       sizeof(SGDValue));
   SGDValue_ChangeProto_descriptor_ = SGDValue_descriptor_->enum_type(0);
   VKey_descriptor_ = file->message_type(14);
-  static const int VKey_offsets_[2] = {
+  static const int VKey_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(VKey, key_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(VKey, version_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(VKey, gid_),
   };
   VKey_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -607,26 +609,27 @@ void protobuf_AddDesc_model_2eproto() {
     "apis.DataProto\"2\n\nShardProto\022\016\n\006record\030\001"
     " \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Record\022\037\n\005"
     "image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002"
-    " \001(\005\022\n\n\002id\030\003 \001(\t\"\326\001\n\014AdaGradValue\022\023\n\010n_u"
-    "pdate\030\001 \001(\005:\0010\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004da"
-    "ta\030\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \001(\013"
-    "2\020.lapis.DAryProto\022\032\n\022base_learning_rate"
-    "\030\006 \001(\002\022\021\n\tthreshold\030\007 \001(\005\022\013\n\003gid\030\014 \001(\005\022!"
-    "\n\007history\030\017 \003(\0132\020.lapis.DAryProto\"\364\003\n\010SG"
-    "DValue\022\032\n\022base_learning_rate\030\001 \001(\002\022\023\n\010mo"
-    "mentum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010"
-    "\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learning_rate_change_"
-    "steps\030\005 \001(\005\022E\n\024learning_rate_change\030\006 \001("
-    "\0162\033.lapis.SGDValue.ChangeProto:\nkInverse"
-    "_t\022#\n\030learning_rate_multiplier\030\007 \001(\002:\0011\022"
-    "\"\n\027weight_decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n"
-    "_update\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\t"
-    "threshold\030\013 \001(\005\022\036\n\004data\030\r \001(\0132\020.lapis.DA"
-    "ryProto\022\036\n\004grad\030\016 \001(\0132\020.lapis.DAryProto\022"
-    "\n\n\002id\030\017 \001(\005\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016"
-    "\n\nkInverse_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLin"
-    "ear\020\003\022\t\n\005kStep\020\004\"$\n\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n"
-    "\007version\030\002 \001(\005", 3854);
+    " \001(\005\022\n\n\002id\030\003 \001(\t\"\323\001\n\014AdaGradValue\022\020\n\010n_u"
+    "pdate\030\001 \003(\005\022\022\n\007version\030\002 \001(\005:\0010\022\036\n\004data\030"
+    "\004 \001(\0132\020.lapis.DAryProto\022\036\n\004grad\030\005 \003(\0132\020."
+    "lapis.DAryProto\022\032\n\022base_learning_rate\030\006 "
+    "\001(\002\022\021\n\tthreshold\030\007 \001(\005\022\013\n\003gid\030\014 \001(\005\022!\n\007h"
+    "istory\030\017 \001(\0132\020.lapis.DAryProto\"\227\004\n\010SGDVa"
+    "lue\022\032\n\022base_learning_rate\030\001 \001(\002\022\023\n\010momen"
+    "tum\030\002 \001(\002:\0010\022\027\n\014weight_decay\030\003 \001(\002:\0010\022\r\n"
+    "\005gamma\030\004 \001(\002\022\"\n\032learning_rate_change_ste"
+    "ps\030\005 \001(\005\022E\n\024learning_rate_change\030\006 \001(\0162\033"
+    ".lapis.SGDValue.ChangeProto:\nkInverse_t\022"
+    "#\n\030learning_rate_multiplier\030\007 \001(\002:\0011\022\"\n\027"
+    "weight_decay_multiplier\030\010 \001(\002:\0011\022\023\n\010n_up"
+    "date\030\t \001(\005:\0010\022\022\n\007version\030\n \001(\005:\0010\022\021\n\tthr"
+    "eshold\030\013 \001(\005\022\n\n\002id\030\014 \001(\005\022\036\n\004data\030\r \001(\0132\020"
+    ".lapis.DAryProto\022\036\n\004grad\030\016 \003(\0132\020.lapis.D"
+    "AryProto\022!\n\007history\030\017 \001(\0132\020.lapis.DAryPr"
+    "oto\"S\n\013ChangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInver"
+    "se_t\020\001\022\020\n\014kExponential\020\002\022\013\n\007kLinear\020\003\022\t\n"
+    "\005kStep\020\004\"1\n\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n\007version"
+    "\030\002 \001(\005\022\013\n\003gid\030\003 \001(\005", 3899);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -7685,7 +7688,7 @@ AdaGradValue::AdaGradValue()
 
 void AdaGradValue::InitAsDefaultInstance() {
   data_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
-  grad_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
+  history_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
 }
 
 AdaGradValue::AdaGradValue(const AdaGradValue& from)
@@ -7697,13 +7700,12 @@ AdaGradValue::AdaGradValue(const AdaGradValue& from)
 
 void AdaGradValue::SharedCtor() {
   _cached_size_ = 0;
-  n_update_ = 0;
   version_ = 0;
   data_ = NULL;
-  grad_ = NULL;
   base_learning_rate_ = 0;
   threshold_ = 0;
   gid_ = 0;
+  history_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -7715,7 +7717,7 @@ AdaGradValue::~AdaGradValue() {
 void AdaGradValue::SharedDtor() {
   if (this != default_instance_) {
     delete data_;
-    delete grad_;
+    delete history_;
   }
 }
 
@@ -7751,22 +7753,22 @@ void AdaGradValue::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  if (_has_bits_[0 / 32] & 127) {
-    ZR_(n_update_, version_);
-    ZR_(base_learning_rate_, threshold_);
+  if (_has_bits_[0 / 32] & 246) {
+    ZR_(version_, base_learning_rate_);
+    ZR_(threshold_, gid_);
     if (has_data()) {
       if (data_ != NULL) data_->::lapis::DAryProto::Clear();
     }
-    if (has_grad()) {
-      if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
+    if (has_history()) {
+      if (history_ != NULL) history_->::lapis::DAryProto::Clear();
     }
-    gid_ = 0;
   }
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
 
-  history_.Clear();
+  n_update_.Clear();
+  grad_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -7781,16 +7783,21 @@ bool AdaGradValue::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional int32 n_update = 1 [default = 0];
+      // repeated int32 n_update = 1;
       case 1: {
         if (tag == 8) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+         parse_n_update:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &n_update_)));
-          set_has_n_update();
+                 1, 8, input, this->mutable_n_update())));
+        } else if (tag == 10) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, this->mutable_n_update())));
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(8)) goto parse_n_update;
         if (input->ExpectTag(16)) goto parse_version;
         break;
       }
@@ -7823,15 +7830,16 @@ bool AdaGradValue::MergePartialFromCodedStream(
         break;
       }
 
-      // optional .lapis.DAryProto grad = 5;
+      // repeated .lapis.DAryProto grad = 5;
       case 5: {
         if (tag == 42) {
          parse_grad:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_grad()));
+                input, add_grad()));
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(42)) goto parse_grad;
         if (input->ExpectTag(53)) goto parse_base_learning_rate;
         break;
       }
@@ -7881,16 +7889,15 @@ bool AdaGradValue::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .lapis.DAryProto history = 15;
+      // optional .lapis.DAryProto history = 15;
       case 15: {
         if (tag == 122) {
          parse_history:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_history()));
+               input, mutable_history()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(122)) goto parse_history;
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -7920,9 +7927,10 @@ failure:
 void AdaGradValue::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:lapis.AdaGradValue)
-  // optional int32 n_update = 1 [default = 0];
-  if (has_n_update()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->n_update(), output);
+  // repeated int32 n_update = 1;
+  for (int i = 0; i < this->n_update_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(
+      1, this->n_update(i), output);
   }
 
   // optional int32 version = 2 [default = 0];
@@ -7936,10 +7944,10 @@ void AdaGradValue::SerializeWithCachedSizes(
       4, this->data(), output);
   }
 
-  // optional .lapis.DAryProto grad = 5;
-  if (has_grad()) {
+  // repeated .lapis.DAryProto grad = 5;
+  for (int i = 0; i < this->grad_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, this->grad(), output);
+      5, this->grad(i), output);
   }
 
   // optional float base_learning_rate = 6;
@@ -7957,10 +7965,10 @@ void AdaGradValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(12, this->gid(), output);
   }
 
-  // repeated .lapis.DAryProto history = 15;
-  for (int i = 0; i < this->history_size(); i++) {
+  // optional .lapis.DAryProto history = 15;
+  if (has_history()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      15, this->history(i), output);
+      15, this->history(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -7973,9 +7981,10 @@ void AdaGradValue::SerializeWithCachedSizes(
 ::google::protobuf::uint8* AdaGradValue::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
   // @@protoc_insertion_point(serialize_to_array_start:lapis.AdaGradValue)
-  // optional int32 n_update = 1 [default = 0];
-  if (has_n_update()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->n_update(), target);
+  // repeated int32 n_update = 1;
+  for (int i = 0; i < this->n_update_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteInt32ToArray(1, this->n_update(i), target);
   }
 
   // optional int32 version = 2 [default = 0];
@@ -7990,11 +7999,11 @@ void AdaGradValue::SerializeWithCachedSizes(
         4, this->data(), target);
   }
 
-  // optional .lapis.DAryProto grad = 5;
-  if (has_grad()) {
+  // repeated .lapis.DAryProto grad = 5;
+  for (int i = 0; i < this->grad_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        5, this->grad(), target);
+        5, this->grad(i), target);
   }
 
   // optional float base_learning_rate = 6;
@@ -8012,11 +8021,11 @@ void AdaGradValue::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(12, this->gid(), target);
   }
 
-  // repeated .lapis.DAryProto history = 15;
-  for (int i = 0; i < this->history_size(); i++) {
+  // optional .lapis.DAryProto history = 15;
+  if (has_history()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        15, this->history(i), target);
+        15, this->history(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -8030,14 +8039,7 @@ void AdaGradValue::SerializeWithCachedSizes(
 int AdaGradValue::ByteSize() const {
   int total_size = 0;
 
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // optional int32 n_update = 1 [default = 0];
-    if (has_n_update()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->n_update());
-    }
-
+  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
     // optional int32 version = 2 [default = 0];
     if (has_version()) {
       total_size += 1 +
@@ -8050,13 +8052,6 @@ int AdaGradValue::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->data());
-    }
-
-    // optional .lapis.DAryProto grad = 5;
-    if (has_grad()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->grad());
     }
 
     // optional float base_learning_rate = 6;
@@ -8078,13 +8073,30 @@ int AdaGradValue::ByteSize() const {
           this->gid());
     }
 
+    // optional .lapis.DAryProto history = 15;
+    if (has_history()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->history());
+    }
+
   }
-  // repeated .lapis.DAryProto history = 15;
-  total_size += 1 * this->history_size();
-  for (int i = 0; i < this->history_size(); i++) {
+  // repeated int32 n_update = 1;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->n_update_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        Int32Size(this->n_update(i));
+    }
+    total_size += 1 * this->n_update_size() + data_size;
+  }
+
+  // repeated .lapis.DAryProto grad = 5;
+  total_size += 1 * this->grad_size();
+  for (int i = 0; i < this->grad_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->history(i));
+        this->grad(i));
   }
 
   if (!unknown_fields().empty()) {
@@ -8112,19 +8124,14 @@ void AdaGradValue::MergeFrom(const ::google::protobuf::Message& from) {
 
 void AdaGradValue::MergeFrom(const AdaGradValue& from) {
   GOOGLE_CHECK_NE(&from, this);
-  history_.MergeFrom(from.history_);
-  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_n_update()) {
-      set_n_update(from.n_update());
-    }
+  n_update_.MergeFrom(from.n_update_);
+  grad_.MergeFrom(from.grad_);
+  if (from._has_bits_[1 / 32] & (0xffu << (1 % 32))) {
     if (from.has_version()) {
       set_version(from.version());
     }
     if (from.has_data()) {
       mutable_data()->::lapis::DAryProto::MergeFrom(from.data());
-    }
-    if (from.has_grad()) {
-      mutable_grad()->::lapis::DAryProto::MergeFrom(from.grad());
     }
     if (from.has_base_learning_rate()) {
       set_base_learning_rate(from.base_learning_rate());
@@ -8134,6 +8141,9 @@ void AdaGradValue::MergeFrom(const AdaGradValue& from) {
     }
     if (from.has_gid()) {
       set_gid(from.gid());
+    }
+    if (from.has_history()) {
+      mutable_history()->::lapis::DAryProto::MergeFrom(from.history());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -8158,14 +8168,14 @@ bool AdaGradValue::IsInitialized() const {
 
 void AdaGradValue::Swap(AdaGradValue* other) {
   if (other != this) {
-    std::swap(n_update_, other->n_update_);
+    n_update_.Swap(&other->n_update_);
     std::swap(version_, other->version_);
     std::swap(data_, other->data_);
-    std::swap(grad_, other->grad_);
+    grad_.Swap(&other->grad_);
     std::swap(base_learning_rate_, other->base_learning_rate_);
     std::swap(threshold_, other->threshold_);
     std::swap(gid_, other->gid_);
-    history_.Swap(&other->history_);
+    std::swap(history_, other->history_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -8222,9 +8232,10 @@ const int SGDValue::kWeightDecayMultiplierFieldNumber;
 const int SGDValue::kNUpdateFieldNumber;
 const int SGDValue::kVersionFieldNumber;
 const int SGDValue::kThresholdFieldNumber;
+const int SGDValue::kIdFieldNumber;
 const int SGDValue::kDataFieldNumber;
 const int SGDValue::kGradFieldNumber;
-const int SGDValue::kIdFieldNumber;
+const int SGDValue::kHistoryFieldNumber;
 #endif  // !_MSC_VER
 
 SGDValue::SGDValue()
@@ -8235,7 +8246,7 @@ SGDValue::SGDValue()
 
 void SGDValue::InitAsDefaultInstance() {
   data_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
-  grad_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
+  history_ = const_cast< ::lapis::DAryProto*>(&::lapis::DAryProto::default_instance());
 }
 
 SGDValue::SGDValue(const SGDValue& from)
@@ -8258,9 +8269,9 @@ void SGDValue::SharedCtor() {
   n_update_ = 0;
   version_ = 0;
   threshold_ = 0;
-  data_ = NULL;
-  grad_ = NULL;
   id_ = 0;
+  data_ = NULL;
+  history_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -8272,7 +8283,7 @@ SGDValue::~SGDValue() {
 void SGDValue::SharedDtor() {
   if (this != default_instance_) {
     delete data_;
-    delete grad_;
+    delete history_;
   }
 }
 
@@ -8314,20 +8325,20 @@ void SGDValue::Clear() {
     learning_rate_multiplier_ = 1;
     weight_decay_multiplier_ = 1;
   }
-  if (_has_bits_[8 / 32] & 16128) {
-    ZR_(n_update_, version_);
-    ZR_(threshold_, id_);
+  if (_has_bits_[8 / 32] & 24320) {
+    ZR_(n_update_, id_);
     if (has_data()) {
       if (data_ != NULL) data_->::lapis::DAryProto::Clear();
     }
-    if (has_grad()) {
-      if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
+    if (has_history()) {
+      if (history_ != NULL) history_->::lapis::DAryProto::Clear();
     }
   }
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
 
+  grad_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -8507,6 +8518,21 @@ bool SGDValue::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(96)) goto parse_id;
+        break;
+      }
+
+      // optional int32 id = 12;
+      case 12: {
+        if (tag == 96) {
+         parse_id:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &id_)));
+          set_has_id();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectTag(106)) goto parse_data;
         break;
       }
@@ -8524,27 +8550,26 @@ bool SGDValue::MergePartialFromCodedStream(
         break;
       }
 
-      // optional .lapis.DAryProto grad = 14;
+      // repeated .lapis.DAryProto grad = 14;
       case 14: {
         if (tag == 114) {
          parse_grad:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_grad()));
+                input, add_grad()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(120)) goto parse_id;
+        if (input->ExpectTag(114)) goto parse_grad;
+        if (input->ExpectTag(122)) goto parse_history;
         break;
       }
 
-      // optional int32 id = 15;
+      // optional .lapis.DAryProto history = 15;
       case 15: {
-        if (tag == 120) {
-         parse_id:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &id_)));
-          set_has_id();
+        if (tag == 122) {
+         parse_history:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_history()));
         } else {
           goto handle_unusual;
         }
@@ -8633,21 +8658,27 @@ void SGDValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(11, this->threshold(), output);
   }
 
+  // optional int32 id = 12;
+  if (has_id()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(12, this->id(), output);
+  }
+
   // optional .lapis.DAryProto data = 13;
   if (has_data()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       13, this->data(), output);
   }
 
-  // optional .lapis.DAryProto grad = 14;
-  if (has_grad()) {
+  // repeated .lapis.DAryProto grad = 14;
+  for (int i = 0; i < this->grad_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      14, this->grad(), output);
+      14, this->grad(i), output);
   }
 
-  // optional int32 id = 15;
-  if (has_id()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(15, this->id(), output);
+  // optional .lapis.DAryProto history = 15;
+  if (has_history()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      15, this->history(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -8716,6 +8747,11 @@ void SGDValue::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(11, this->threshold(), target);
   }
 
+  // optional int32 id = 12;
+  if (has_id()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(12, this->id(), target);
+  }
+
   // optional .lapis.DAryProto data = 13;
   if (has_data()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -8723,16 +8759,18 @@ void SGDValue::SerializeWithCachedSizes(
         13, this->data(), target);
   }
 
-  // optional .lapis.DAryProto grad = 14;
-  if (has_grad()) {
+  // repeated .lapis.DAryProto grad = 14;
+  for (int i = 0; i < this->grad_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        14, this->grad(), target);
+        14, this->grad(i), target);
   }
 
-  // optional int32 id = 15;
-  if (has_id()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(15, this->id(), target);
+  // optional .lapis.DAryProto history = 15;
+  if (has_history()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        15, this->history(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -8813,6 +8851,13 @@ int SGDValue::ByteSize() const {
           this->threshold());
     }
 
+    // optional int32 id = 12;
+    if (has_id()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->id());
+    }
+
     // optional .lapis.DAryProto data = 13;
     if (has_data()) {
       total_size += 1 +
@@ -8820,21 +8865,22 @@ int SGDValue::ByteSize() const {
           this->data());
     }
 
-    // optional .lapis.DAryProto grad = 14;
-    if (has_grad()) {
+    // optional .lapis.DAryProto history = 15;
+    if (has_history()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->grad());
-    }
-
-    // optional int32 id = 15;
-    if (has_id()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->id());
+          this->history());
     }
 
   }
+  // repeated .lapis.DAryProto grad = 14;
+  total_size += 1 * this->grad_size();
+  for (int i = 0; i < this->grad_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->grad(i));
+  }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -8860,6 +8906,7 @@ void SGDValue::MergeFrom(const ::google::protobuf::Message& from) {
 
 void SGDValue::MergeFrom(const SGDValue& from) {
   GOOGLE_CHECK_NE(&from, this);
+  grad_.MergeFrom(from.grad_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_base_learning_rate()) {
       set_base_learning_rate(from.base_learning_rate());
@@ -8896,14 +8943,14 @@ void SGDValue::MergeFrom(const SGDValue& from) {
     if (from.has_threshold()) {
       set_threshold(from.threshold());
     }
+    if (from.has_id()) {
+      set_id(from.id());
+    }
     if (from.has_data()) {
       mutable_data()->::lapis::DAryProto::MergeFrom(from.data());
     }
-    if (from.has_grad()) {
-      mutable_grad()->::lapis::DAryProto::MergeFrom(from.grad());
-    }
-    if (from.has_id()) {
-      set_id(from.id());
+    if (from.has_history()) {
+      mutable_history()->::lapis::DAryProto::MergeFrom(from.history());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -8939,9 +8986,10 @@ void SGDValue::Swap(SGDValue* other) {
     std::swap(n_update_, other->n_update_);
     std::swap(version_, other->version_);
     std::swap(threshold_, other->threshold_);
-    std::swap(data_, other->data_);
-    std::swap(grad_, other->grad_);
     std::swap(id_, other->id_);
+    std::swap(data_, other->data_);
+    grad_.Swap(&other->grad_);
+    std::swap(history_, other->history_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -8962,6 +9010,7 @@ void SGDValue::Swap(SGDValue* other) {
 #ifndef _MSC_VER
 const int VKey::kKeyFieldNumber;
 const int VKey::kVersionFieldNumber;
+const int VKey::kGidFieldNumber;
 #endif  // !_MSC_VER
 
 VKey::VKey()
@@ -8984,6 +9033,7 @@ void VKey::SharedCtor() {
   _cached_size_ = 0;
   key_ = 0;
   version_ = 0;
+  gid_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -9029,7 +9079,7 @@ void VKey::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  ZR_(key_, version_);
+  ZR_(key_, gid_);
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
@@ -9073,6 +9123,21 @@ bool VKey::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(24)) goto parse_gid;
+        break;
+      }
+
+      // optional int32 gid = 3;
+      case 3: {
+        if (tag == 24) {
+         parse_gid:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &gid_)));
+          set_has_gid();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -9112,6 +9177,11 @@ void VKey::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->version(), output);
   }
 
+  // optional int32 gid = 3;
+  if (has_gid()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->gid(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -9130,6 +9200,11 @@ void VKey::SerializeWithCachedSizes(
   // optional int32 version = 2;
   if (has_version()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->version(), target);
+  }
+
+  // optional int32 gid = 3;
+  if (has_gid()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->gid(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -9156,6 +9231,13 @@ int VKey::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->version());
+    }
+
+    // optional int32 gid = 3;
+    if (has_gid()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->gid());
     }
 
   }
@@ -9191,6 +9273,9 @@ void VKey::MergeFrom(const VKey& from) {
     if (from.has_version()) {
       set_version(from.version());
     }
+    if (from.has_gid()) {
+      set_gid(from.gid());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -9216,6 +9301,7 @@ void VKey::Swap(VKey* other) {
   if (other != this) {
     std::swap(key_, other->key_);
     std::swap(version_, other->version_);
+    std::swap(gid_, other->gid_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

@@ -12,7 +12,7 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./inc
 	/home/wangwei/install/jdk1.7.0_67/include\
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
-CXXFLAGS := -g  -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -O3  -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -69,7 +69,7 @@ run_load: lapis.bin
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
 		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_hybrid: lapis.bin
-	mpirun  -np 4 -hostfile examples/imagenet12/hostfile ./lapis.bin \
+	mpirun  -np 16 -hostfile examples/imagenet12/rack2 ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
 

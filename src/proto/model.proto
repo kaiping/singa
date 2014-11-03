@@ -224,14 +224,14 @@ message Record {
 }
 // value field of the tuple for AdaGrad SGD
 message AdaGradValue {
-  optional repeated n_update = 1 [default=0];
+  repeated int32 n_update = 1 ;
   optional int32 version = 2 [default=0];
   optional DAryProto data = 4;
-  optional DAryProto grad = 5;
+  repeated DAryProto grad = 5;
   optional float base_learning_rate = 6;
   optional int32 threshold=7;
   optional int32 gid=12;
-  repeated DAryProto history=15;
+  optional DAryProto history=15;
 }
 
 // value field of the tuple for normal SGD
@@ -256,13 +256,15 @@ message SGDValue {
   optional int32 n_update = 9 [default=0];
   optional int32 version = 10 [default=0];
   optional int32 threshold=11;
+  optional int32 id=12;
   optional DAryProto data=13;
-  optional DAryProto grad=14;
-  optional int32 id=15;
+  repeated DAryProto grad=14;
+  optional DAryProto history=15;
 }
 
 message VKey {
   optional int32 key=1;
   optional int32 version=2;
+  optional int32 gid=3;
 }
 

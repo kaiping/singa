@@ -226,8 +226,6 @@ void* PrefetchData(void* context){
     */
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
-    record.mutable_image()->clear_value();
-    //LOG(INFO)<<iter->key().ToString()<<" "<<record.label();
     prefetcher->ReadRecord(&record);
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
@@ -310,37 +308,32 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
 void Solver::Train(int start_step){
   step_=start_step;
   Prefetcher prefetcher(train_shard_, net_);
-  //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
   while (!HasFinished()) {
     Solver::phase=Phase::kTrain;
-    //pthread_join(prefetch_thread_, NULL);
-    PrefetchData(&prefetcher);
+    pthread_join(prefetch_thread_, NULL);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-
-    /*
-       if(!ValidateNow()&&!TestNow())
-       pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
-       */
+    if(!ValidateNow()&&!TestNow())
+      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     train_perf_.Aggregate(TrainOneBatch(net_, step_));
-    /*
-       if(DisplayNow()){
-       ReportPerformance("Train", train_perf_.Avg());
-       DebugInfo(net_);
-       train_perf_.Reset();
-       }
-       if(ValidateNow()){
-       Performance perf=Test(Phase::kValidation);
-       ReportPerformance("Val  ", perf.Avg());
-       }
-       if(TestNow()){
-       Performance perf=Test(Phase::kTest);
-       ReportPerformance("Test ", perf.Avg());
-       }
-       if(CheckpointNow()){
-       DoLocalCheckpoint(net_);
-       }
-       */
+
+    if(DisplayNow()){
+      ReportPerformance("Train", train_perf_.Avg());
+      DebugInfo(net_);
+      train_perf_.Reset();
+    }
+    if(ValidateNow()){
+      Performance perf=Test(Phase::kValidation);
+      ReportPerformance("Val  ", perf.Avg());
+    }
+    if(TestNow()){
+      Performance perf=Test(Phase::kTest);
+      ReportPerformance("Test ", perf.Avg());
+    }
+    if(CheckpointNow()){
+      DoLocalCheckpoint(net_);
+    }
     if(ValidateNow()||TestNow())
       pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     IncStep();

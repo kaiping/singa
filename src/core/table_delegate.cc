@@ -23,22 +23,30 @@ bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data,
     const AdaGradValue& update){
   int gid=update.gid();
   CHECK(gid);
-  int threshold=data.threshold();
+  int threshold=data->threshold();
   int n_update=data->n_update(gid);
   int offset=0;
-  float* graddptr=data->mutable_agg_grad(gid).mutable_value();
-  //threshold is the num of workers in one group contributing to this grad
-  if(n_update<threshold){
-    data->set_n_update(n_update+1);
-    for(auto v: update.grad().value())
-      graddptr[offset++]=v;
+  if(data->grad_size()==0){
+    for(int i=0;i<GlobalContext::Get()->num_groups();i++){
+      DAryProto* grad=data->add_grad();
+      for(int j=0;j<update.grad(0).value_size();j++)
+        grad->add_value(0.0f);
+    }
   }
 
-  if(n_update==threshold-1){
+  float* graddptr=data->mutable_grad(gid)->mutable_value()->mutable_data();
+  //threshold is the num of workers in one group contributing to this grad
+  if(n_update<threshold){
+    for(auto v: update.grad(0).value())
+      graddptr[offset++]+=v;
+  }
+
+  data->set_n_update(gid, n_update+1);
+  if(data->n_update(gid)==threshold){
     // update data->data()
     for(int i=0;i<offset;i++)
       graddptr[i]=0.f;
-    data->set_n_update(0);
+    data->set_n_update(gid, 0);
     data->set_version(data->version()+1);
   }
   return true;
@@ -104,15 +112,18 @@ UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
 bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   //LOG(INFO)<<"update for "<<data->id()<<" version "<<data->version()<<" "<<update.version();
   CHECK_EQ(data->version(), update.version())<<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
-  data->set_n_update(data->n_update()+1);
-  if(data->n_update()==data->threshold()){
-    UpdateHyperParams(data->version());
-  }
   int len=data->data().value_size();
-  float* history=data->mutable_grad()->mutable_value()->mutable_data();
-  const float* grad=update.grad().value().data();
-  CHECK_EQ(len, update.grad().value_size());
-  CHECK_EQ(len, data->grad().value_size());
+  if(data->history().value_size()==0){
+    DAryProto* hist=data->mutable_history();
+    for(int i=0;i<len;i++)
+      hist->add_value(0.0f);
+  }
+
+  CHECK_EQ(len, update.grad(0).value_size());
+  CHECK_EQ(len, data->history().value_size());
+
+  float* history=data->mutable_history()->mutable_value()->mutable_data();
+  const float* grad=update.grad(0).value().data();
   float* dptr=data->mutable_data()->mutable_value()->mutable_data();
   float lr=learning_rate_*data->learning_rate_multiplier();
   float w=weight_decay_*data->weight_decay_multiplier();
@@ -122,21 +133,19 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   if(w>0)
     DAry::arymath().madd(history, lr*w, dptr, history, len);
 
+  data->set_n_update(data->n_update()+1);
   if(data->n_update()==data->threshold()){
     // param+=history/n, /data->n_update()
     DAry::arymath().sub(dptr, dptr, history, len);
-    float upp=0.f;
-    for(int i=0;i<len;i++)
-      upp+=fabs(history[i]);
-    //LOG(INFO)<<"update for "<<data->id()<<" "<<upp/len;
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);
     data->set_version(update.version()+1);
-    //LOG(INFO)<<"update version for "<<data->id()<<" from "<<update.version();
+    UpdateHyperParams(data->version());
   }
   return true;
 }
+
 void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
   learning_rate_ = Solver::UpdateHyperParam(step, learning_rate_change_,
       learning_rate_change_steps_,
@@ -275,12 +284,9 @@ void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
     else
       v.set_threshold(1);
     DAryProto* dary=v.mutable_data();
-    DAryProto* grad=v.mutable_grad();
     dary->clear_value();
-    grad->clear_value();
     for(int k = 0; k < entry.second; k++){
       dary->add_value(data_addr[offset]);
-      grad->add_value(0.0f);
       offset++;
     }
     VKey key;
@@ -294,18 +300,22 @@ template<>
 void TypedTableDelegate<VKey, AdaGradValue>::Put(Param * param){
   int offset = 0;
   const float * data_addr = param->data().dptr();
+  int groupsize=GlobalContext::Get()->group_size();
+  int gid=GlobalContext::Get()->group_id();
   for(auto& entry: param_splits_[param->id()]) {
     AdaGradValue v(example_);
     // sgd related hyper-parameters
     v.set_version(0);
-    v.set_n_update(0);
+    v.set_n_update(gid, 0);
+    v.set_gid(gid);
+    if(!param->partition())
+      v.set_threshold(groupsize);
+    else
+      v.set_threshold(1);
     DAryProto* dary=v.mutable_data();
-    DAryProto* grad=v.mutable_grad();
     dary->clear_value();
-    grad->clear_value();
     for(int k = 0; k < entry.second; k++){
       dary->add_value(data_addr[offset]);
-      grad->add_value(0.0f);
       offset++;
     }
     VKey key;

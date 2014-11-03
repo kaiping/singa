@@ -67,11 +67,11 @@ CONST_OBJS = $(CONST_SRCS:.cc=.o)
 run_load: lapis.bin
 	mpirun -np 41 -hostfile examples/imagenet12/rack0 \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=leveldb
+		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
 run_hybrid: lapis.bin
 	mpirun  -np 4 -hostfile examples/imagenet12/hostfile ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=leveldb -par_mode=hybrid
+	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
 
 run_data: lapis.bin
 	mpirun  -np 5 -hostfile examples/imagenet12/hostfile ./lapis.bin \

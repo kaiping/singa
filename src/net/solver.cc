@@ -310,15 +310,13 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
 void Solver::Train(int start_step){
   step_=start_step;
   Prefetcher prefetcher(train_shard_, net_);
-    PrefetchData(&prefetcher);
-    for(auto* layer:net_->input_layer())
-      layer->SetInputData(nullptr);
-
   //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
   while (!HasFinished()) {
     Solver::phase=Phase::kTrain;
     //pthread_join(prefetch_thread_, NULL);
-   debug_mem("fetch"+std::to_string(step_));
+    PrefetchData(&prefetcher);
+    for(auto* layer:net_->input_layer())
+      layer->SetInputData(nullptr);
 
     /*
        if(!ValidateNow()&&!TestNow())
@@ -395,33 +393,28 @@ void Solver::DebugInfo(Net* net){
 
 Performance Solver::TrainOneBatch(Net *net, int step){
   auto layers=net->layers();
-  debug_mem("step ");
-  for(auto* param: net->params()){
-    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
-      delegate_->AsyncGet(param,step);
+  if(step==0){
+    for(auto* param: net->params()){
+      if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+        delegate_->AsyncGet(param,step);
+    }
   }
   for(auto* layer: layers){
-    debug_mem("forward layer: " + layer->name());
     for(auto* param: layer->GetParams()){
       if(!param->partition()||GlobalContext::Get()->num_groups()>1)
         delegate_->AsyncCollect(param, step);
     }
-    debug_mem("afeter collect: ");
     if(layer->PreSyncF())
       MPI_Barrier(context_->mpicomm());
     layer->ComputeFeature();
-    debug_mem("after compute fea");
     if(layer->PostSyncF())
       MPI_Barrier(context_->mpicomm());
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
-  debug_mem("after compute perf");
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    debug_mem("backward layer: " + (*layer)->name());
     if((*layer)->PreSyncG())
       MPI_Barrier(context_->mpicomm());
     (*layer)->ComputeGradient();
-    debug_mem("after compute grad");
     for(auto* param: (*layer)->GetParams()){
       if(!param->partition()||GlobalContext::Get()->num_groups()>1){
         delegate_->Update(param, step);
@@ -430,7 +423,6 @@ Performance Solver::TrainOneBatch(Net *net, int step){
         //LocalUpdate(param, step);
       }
     }
-    debug_mem("after update");
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
   }
@@ -477,8 +469,6 @@ void Solver::TimeOneBatch(int runs) {
     if(!param->partition()||GlobalContext::Get()->num_groups()>1)
       delegate_->AsyncGet(param,step_);
   }
-  delegate_->wait_time=0.0f;
-  delegate_->nsleeps=0;
 
   MPI_Barrier(context_->mpicomm());
   double start=Now();
@@ -556,10 +546,9 @@ void Solver::TimeOneBatch(int runs) {
     refresh[nlayers]+=refresh[i];
   }
   double armcitime=GAry::comm_time;
-  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\twait\t%6.2f\tnsleep%d\n",
+  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
       total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
-      refresh[nlayers]/runs, armcitime/runs, delegate_->wait_time/runs,
-      delegate_->nsleeps/runs);
+      refresh[nlayers]/runs, armcitime/runs);
   LOG(ERROR)<<string(buf);
   delete forward;
   delete backward;

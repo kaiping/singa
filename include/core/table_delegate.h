@@ -91,8 +91,6 @@ class TableDelegate {
   void Get(const std::vector<Param *> &params, int step);
   void Put(const std::vector<Param *> &params);
   void AsyncGet(const std::vector<Param *> &params, int step);
-  float wait_time;
-  int nsleeps;
 };
 
 template <typename K, typename V>
@@ -311,7 +309,6 @@ void TypedTableDelegate<K, V>::CollectThread(){
     }else{
       //std::this_thread::yield();
       sleep(0.0001);
-      nsleeps++;
     }
   }
 }
@@ -335,7 +332,6 @@ void TypedTableDelegate<K, V>::Collect(Param * param, int step){
     else{
       sleep(0.0001);
       //std::this_thread::yield();
-      wait_time+=1;
     }
   }
 }
@@ -375,8 +371,6 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
         nget++;
     }else{
       sleep(0.0001);
-      nsleeps++;
-      wait_time+=0.0001;
     }
   }
 

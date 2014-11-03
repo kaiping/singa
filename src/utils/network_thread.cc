@@ -68,6 +68,7 @@ NetworkThread::NetworkThread() {
   }
   */
   //MPI::Init_thread(MPI_THREAD_SINGLE);
+  counter=0;
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
   id_ = world_->Get_rank();
@@ -145,6 +146,7 @@ void NetworkThread::NetworkLoop() {
 				//  actively by the client
 				boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
 				response_queue_[tag][source].push_back(data);
+        counter++;
 				//if (tag==MTYPE_MODEL_CONFIG)
         //		VLOG(3) << "Barrier message received for process " << id();
 			}
@@ -194,6 +196,7 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     }
 
     q.pop_front();
+    counter--;
     return true;
   }
   return false;

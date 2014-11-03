@@ -5,6 +5,8 @@
 #include <boost/thread.hpp>
 #include <boost/function.hpp>
 #include <unordered_set>
+#include <atomic>
+
 #include <gflags/gflags.h>
 #include "proto/common.pb.h"
 #include "core/common.h"
@@ -94,6 +96,7 @@ class NetworkThread {
   void barrier();
 
   void WaitForSync(int method, int count);
+  std::atomic<int> counter;
  private:
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;

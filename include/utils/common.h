@@ -103,6 +103,8 @@ class Performance: public PerformanceProto{
   }
 };
 
+
 void Debug();
 }  // namespace lapis
+
 #endif  // INCLUDE_UTILS_COMMON_H_

@@ -238,11 +238,11 @@ void TypedTableDelegate<K, V>::Update(Param *param, int step){
   const float * dptr = param->grad().dptr();
   K key;
   key.set_version(step);
+  V v(example_);
+  v.set_version(step);
+  DAryProto* grad=v.mutable_grad();
   for(auto& entry: param_splits_[param->id()]) {
-    V v(example_);
     // sgd related hyper-parameters
-    v.set_version(step);
-    DAryProto* grad=v.mutable_grad();
     grad->clear_value();
     for(int k = 0; k < entry.second; k++){
       grad->add_value(dptr[offset]);
@@ -352,9 +352,10 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
     if(asyncget_split_.at(split.first))
       nget++;
   }
-  K key;
-  V val;
+
   while(nget<splits.size()){
+    K key;
+    V val;
     // may collect splits of other params used later
     if(param_table_->async_get_collect(&key,&val)){
       int splitid=key.key();
@@ -365,6 +366,7 @@ void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
       float * dptr = p->mutable_data()->dptr();
       for(auto v: val.data().value())
         dptr[offset++]=v;
+      val.mutable_data()->clear_value();
       // check this split is complete, i.e. offset is the start of next split
       if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
         CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);

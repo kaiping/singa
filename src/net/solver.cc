@@ -11,6 +11,8 @@
 #include "proto/model.pb.h"
 #include "net/solver.h"
 #include "da/gary.h"
+#include "utils/debug.h"
+
 
 DECLARE_string(db_backend);
 namespace lapis {
@@ -146,7 +148,9 @@ Prefetcher::Prefetcher(string path, Net* _net) {
     leveldb::Status status = leveldb::DB::Open( options, path, &db);
     CHECK(status.ok()) << "Failed to open leveldb "
       << path << std::endl << status.ToString();
-    iter=db->NewIterator(leveldb::ReadOptions());
+    leveldb::ReadOptions readopt;
+    readopt.fill_cache=false;
+    iter=db->NewIterator(readopt);
     iter->SeekToFirst();
   }else if(FLAGS_db_backend=="lmdb"){
     CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
@@ -206,7 +210,11 @@ void Prefetcher::ReadRecord(Record* record){
     record->ParseFromArray(mdb_value.mv_data, mdb_value.mv_size);
   }
 }
-
+void debug_mem(string prefix){
+  char buf[1024];
+  sprintf(buf, "%30s, %12lu", prefix.c_str(), getCurrentRSS());
+  LOG(INFO)<<string(buf);
+}
 void* PrefetchData(void* context){
   Prefetcher *prefetcher=static_cast<Prefetcher*>(context);
   Net* net=prefetcher->net;
@@ -218,6 +226,7 @@ void* PrefetchData(void* context){
     */
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
+    record.mutable_image()->clear_value();
     //LOG(INFO)<<iter->key().ToString()<<" "<<record.label();
     prefetcher->ReadRecord(&record);
     for(auto* layer:net->input_layer())
@@ -301,32 +310,39 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
 void Solver::Train(int start_step){
   step_=start_step;
   Prefetcher prefetcher(train_shard_, net_);
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
-  while (!HasFinished()) {
-    Solver::phase=Phase::kTrain;
-    pthread_join(prefetch_thread_, NULL);
-    //PrefetchData(&prefetcher);
+    PrefetchData(&prefetcher);
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    if(!ValidateNow()&&!TestNow())
-      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+
+  //pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+  while (!HasFinished()) {
+    Solver::phase=Phase::kTrain;
+    //pthread_join(prefetch_thread_, NULL);
+   debug_mem("fetch"+std::to_string(step_));
+
+    /*
+       if(!ValidateNow()&&!TestNow())
+       pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+       */
     train_perf_.Aggregate(TrainOneBatch(net_, step_));
-    if(DisplayNow()){
-      ReportPerformance("Train", train_perf_.Avg());
-      DebugInfo(net_);
-      train_perf_.Reset();
-    }
-    if(ValidateNow()){
-      Performance perf=Test(Phase::kValidation);
-      ReportPerformance("Val  ", perf.Avg());
-    }
-    if(TestNow()){
-      Performance perf=Test(Phase::kTest);
-      ReportPerformance("Test ", perf.Avg());
-    }
-    if(CheckpointNow()){
-      DoLocalCheckpoint(net_);
-    }
+    /*
+       if(DisplayNow()){
+       ReportPerformance("Train", train_perf_.Avg());
+       DebugInfo(net_);
+       train_perf_.Reset();
+       }
+       if(ValidateNow()){
+       Performance perf=Test(Phase::kValidation);
+       ReportPerformance("Val  ", perf.Avg());
+       }
+       if(TestNow()){
+       Performance perf=Test(Phase::kTest);
+       ReportPerformance("Test ", perf.Avg());
+       }
+       if(CheckpointNow()){
+       DoLocalCheckpoint(net_);
+       }
+       */
     if(ValidateNow()||TestNow())
       pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
     IncStep();
@@ -375,36 +391,46 @@ void Solver::DebugInfo(Net* net){
   }
 }
 
+
+
 Performance Solver::TrainOneBatch(Net *net, int step){
   auto layers=net->layers();
+  debug_mem("step ");
   for(auto* param: net->params()){
     if(!param->partition()||GlobalContext::Get()->num_groups()>1)
       delegate_->AsyncGet(param,step);
   }
   for(auto* layer: layers){
+    debug_mem("forward layer: " + layer->name());
     for(auto* param: layer->GetParams()){
       if(!param->partition()||GlobalContext::Get()->num_groups()>1)
         delegate_->AsyncCollect(param, step);
     }
+    debug_mem("afeter collect: ");
     if(layer->PreSyncF())
       MPI_Barrier(context_->mpicomm());
     layer->ComputeFeature();
+    debug_mem("after compute fea");
     if(layer->PostSyncF())
       MPI_Barrier(context_->mpicomm());
   }
   Performance perf=net->output_layer(0)->CalcPerf(true, false);
+  debug_mem("after compute perf");
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+    debug_mem("backward layer: " + (*layer)->name());
     if((*layer)->PreSyncG())
       MPI_Barrier(context_->mpicomm());
     (*layer)->ComputeGradient();
+    debug_mem("after compute grad");
     for(auto* param: (*layer)->GetParams()){
       if(!param->partition()||GlobalContext::Get()->num_groups()>1){
         delegate_->Update(param, step);
         delegate_->AsyncGet(param,step+1);
       }else{
-        LocalUpdate(param, step);
+        //LocalUpdate(param, step);
       }
     }
+    debug_mem("after update");
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
   }

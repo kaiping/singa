@@ -1264,6 +1264,7 @@ void ImageLayer::AddInputRecord(const Record &record){
   Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
+  float *dptr=grad_.addr(n,0,0,0);
   const DAryProto& image=record.image();
   int channels=image.shape(0);
   int height=image.shape(1);
@@ -1285,7 +1286,7 @@ void ImageLayer::AddInputRecord(const Record &record){
       for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            grad_.at(n,c,h,cropsize_-1-w)=image.value(
+            dptr[(c*cropsize_+h)*cropsize_+cropsize_-1-w]=image.value(
                 (c * height + h + h_off) * width + w + w_off);
           }
         }
@@ -1296,8 +1297,9 @@ void ImageLayer::AddInputRecord(const Record &record){
       for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            grad_.at(n,c,h,w)= image.value(
+            *dptr= image.value(
                 (c * height+ h + h_off) * width + w + w_off);
+            dptr++;
           }
         }
       }
@@ -1306,7 +1308,8 @@ void ImageLayer::AddInputRecord(const Record &record){
     for (int c = 0; c < channels; ++c) {
       for (int h = 0; h < height; ++h) {
         for (int w = 0; w < width; ++w) {
-          grad_.at(n,c,h,w)= image.value((c * height+ h ) * width + w);
+          *dptr= image.value((c * height+ h ) * width + w);
+          dptr++;
         }
       }
     }

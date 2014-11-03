@@ -245,6 +245,7 @@ void NetworkThread::send_to_local_rx_queue(int src, int method, const Message &m
 	 RPCRequest *r = new RPCRequest(src, method, msg);
 	 boost::recursive_mutex::scoped_lock sl(response_queue_locks_[method]);
 	 response_queue_[method][src].push_back(r->payload);
+   delete r;
 }
 
 void NetworkThread::Send(int dst, int method, const Message &msg) {

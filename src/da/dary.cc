@@ -208,19 +208,6 @@ DAry DAry::Fetch(const vector<Range>& slice) const{
   ret.alloc_size_=ret.dptr_==dptr_?0:ret.part_.size;
   return ret;
 }
-/**
- * generate a local dary with fetched content
-DAry DAry::FetchToLocal(const vector<Range>& slice) const{
-  DAry ret;
-  Partition tmp(shape_, slice);
-  ret.ga_=nullptr;
-  ret.dptr_=FetchPtr(tmp);//ga_->Fetch(tmp, offset_);
-  ret.shape_.Reset(slice);
-  ret.part_.LocalSetup(ret.shape_);
-  ret.alloc_size_=ret.dptr_==dptr_?0:ret.part_.size;
-  return ret;
-}
-*/
 
 float* DAry::FetchPtr(const vector<Range>& slice) const{
   Partition part(shape_, slice);

@@ -85,6 +85,7 @@ void DataLoader::CreateLocalShards(const DataProto& dp) {
     CreateLocalShard(dp.test_data(), sp);
   }
   MPI_Barrier(MPI_COMM_WORLD);
+  LOG(ERROR)<<"After barrier";
   if(dp.has_train_data()){
     // nprocs_-1 is the rank of cooordinator
     string shardlist=shard_folder_+"/train-list.txt";
@@ -171,7 +172,7 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
   // leveldb
   leveldb::DB* db;
   leveldb::Options options;
-  options.error_if_exists = true;
+  options.error_if_exists = false;
   options.create_if_missing = true;
   options.write_buffer_size = 268435456;
   leveldb::WriteBatch* batch = NULL;
@@ -183,6 +184,16 @@ void DataLoader::CreateLocalShard(const DataSourceProto& source,
     LOG(INFO) << "Opening leveldb " << dbname;
     leveldb::Status status = leveldb::DB::Open(options, dbname, &db);
     CHECK(status.ok()) << "Failed to open leveldb " << dbname;
+    leveldb::Iterator *iter;
+    iter=db->NewIterator(leveldb::ReadOptions());
+    iter->SeekToFirst();
+    while(iter->Valid()){
+      ds->Next();
+      iter->Next();
+      count++;
+    }
+    LOG(INFO)<<"Skip "<<count<<" records inserted before";
+    delete iter;
     batch = new leveldb::WriteBatch();
   } else if (FLAGS_db_backend== "lmdb") {  // lmdb
     LOG(INFO) << "Opening lmdb " << dbname;

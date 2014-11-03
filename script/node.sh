@@ -1,7 +1,7 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/local_cp"
+folder="/data1/wangwei/lapis/"
 #folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/rack2"
+hostfile="examples/imagenet12/hostfile"
 if [ $# -eq 0 ]
 then
   echo "must provide argument, [chmod, ssh,ls,cat, delete, create or reset] + hostfile"
@@ -22,7 +22,7 @@ do
   if [ $1 == "ls" ]
   then
     echo "ssh $i"
-    ssh $i "ls $folder |wc -l"
+    ssh $i "ls $folder "
   fi
   if [ $1 == "ssh" ]
   then

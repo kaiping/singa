@@ -32,7 +32,7 @@ class GlobalContext {
   int server_start() {return table_server_start_;}
   int server_end() {return table_server_end_;}
   int num_procs() { return num_procs_; }
-  int num_workers() {return num_workers_;}
+  int num_workers() {return num_groups()*group_size();}
   bool IsTableServer(int rank) {
     return rank>=table_server_start_&&rank<table_server_end_;
   }

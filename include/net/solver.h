@@ -62,7 +62,7 @@ class Solver {
     leveldb::DB* OpenShard(string path) ;
     void InitParams();
     void DebugInfo(Net* net);
-    void TimeOneBatch(int runs=5) ;
+    void TimeOneBatch(int runs=10) ;
     void TimeTableServer(int runs);
 
 

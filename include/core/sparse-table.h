@@ -22,7 +22,7 @@ struct hash<lapis::VKey> {
 }  // namespace std
 
 
-DECLARE_bool(checkpoint_enabled); 
+DECLARE_bool(checkpoint_enabled);
 namespace lapis {
 
 
@@ -213,14 +213,14 @@ bool SparseTable<K, V>::ApplyUpdates(TableCoder *in, LogFile *logfile) {
     bool ret = update(k, v);
     if (ret && FLAGS_checkpoint_enabled)
        if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
-		V ret_v = get(k); 
-		string xv; 
+		V ret_v = get(k);
+		string xv;
 		((Marshal<V>*)info_->key_marshal)->marshal(ret_v,&xv);
 	  	logfile->append(kt, xv, size());
-	
+
 	}
 
-    return ret; 
+    return ret;
   }
 
   return false;
@@ -237,9 +237,9 @@ bool SparseTable<K, V>::ApplyPut(TableCoder *in, LogFile *logfile) {
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
     put(k, v);
     if (FLAGS_checkpoint_enabled)
-	if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
-	  	logfile->append(kt, vt, size());
-	}
+      if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
+        logfile->append(kt, vt, size());
+      }
 
   }
 
@@ -251,14 +251,37 @@ void SparseTable<K, V>::restore(LogFile *logfile, int desired_size) {
 	int tmp;
 	K k;
 	V v;
+  char buf[4*1024];
+  LOG(ERROR)<<"restroing...................";
+  buf[0]='\n';
+  double t_read=0.0, t_marshal=0.0, t_put=0.0;
 	while (size()!=desired_size){
 		string k_str,v_str;
-		logfile->previous_entry(&k_str,&v_str,&tmp);
-		((Marshal<K> *)info_->key_marshal)->unmarshal(k_str, &k);
-		    ((Marshal<V> *)info_->value_marshal)->unmarshal(v_str, &v);
+    double start=Now();
+		//logfile->previous_entry(&k_str,&v_str,&tmp);
+    logfile->previous_entry(&k, &v, &tmp);
+    double end_read=Now();
+
+	//	((Marshal<K> *)info_->key_marshal)->unmarshal(k_str, &k);
+   // ((Marshal<V> *)info_->value_marshal)->unmarshal(v_str, &v);
+   double end_marshal=Now();
+
 		 if (bucket_for_key(k)==-1)
 		    	put(k, v);
+     double end_put=Now();
+     sprintf(buf+strlen(buf), "read %7.5f\tmarshal%7.5f\tput%7.5f\n",
+     end_read-start,end_marshal-end_read,end_put-end_marshal);
+     t_read+=end_read-start;
+     t_marshal+=end_marshal-end_read;
+     t_put+=end_put-end_marshal;
 	}
+
+  LOG(ERROR)<<string(buf);
+  LOG(ERROR)<<"Total Read "<<t_read<<" Total Marshal "<<t_marshal
+    <<" Total Put "<<t_put;
+  LOG(ERROR)<<"seek time" <<logfile->tseek<<" read time "<<logfile->tread
+    <<" value copy time "<<logfile->tcopy<<" value size "<<logfile->total_value_size
+    <<" time resize "<<logfile->tresize;;
 
 }
 

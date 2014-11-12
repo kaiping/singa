@@ -144,7 +144,7 @@ Prefetcher::Prefetcher(string path, Net* _net) {
     leveldb::Options options;
     options.create_if_missing = false;
     options.max_open_files = 100;
-    LOG(INFO) << "Opening leveldb " << path;
+    LOG(ERROR) << "Opening leveldb " << path;
     leveldb::Status status = leveldb::DB::Open( options, path, &db);
     CHECK(status.ok()) << "Failed to open leveldb "
       << path << std::endl << status.ToString();
@@ -226,6 +226,7 @@ void* PrefetchData(void* context){
     */
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
+    record.Clear();
     prefetcher->ReadRecord(&record);
     for(auto* layer:net->input_layer())
       layer->AddInputRecord(record);
@@ -413,7 +414,7 @@ Performance Solver::TrainOneBatch(Net *net, int step){
         delegate_->Update(param, step);
         delegate_->AsyncGet(param,step+1);
       }else{
-        //LocalUpdate(param, step);
+        LocalUpdate(param, step);
       }
     }
     if((*layer)->PostSyncG())
@@ -455,6 +456,10 @@ void Solver::TimeOneBatch(int runs) {
   memset(refresh, 0, sizeof(double)*(1+nlayers));
   memset(sync, 0, sizeof(double)*(1+nlayers));
 
+  /*
+  if(context_->group_id()!=0)
+    sleep(10000);
+    */
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
   //delegate_->StartCollectThread();
@@ -467,16 +472,11 @@ void Solver::TimeOneBatch(int runs) {
   double start=Now();
   for(int k=0;k<runs;k++){
     int layerid=0;
-    bool do_collect=true;
     for(auto* layer: layers){
       refresh_start=Now();
-      if(layer->name()=="rxxx")
-        do_collect=false;
-      if(do_collect){
-        for(auto* param: layer->GetParams()){
-          if(!param->partition()||GlobalContext::Get()->num_groups()>1)
-            delegate_->AsyncCollect(param, step_);
-        }
+      for(auto* param: layer->GetParams()){
+        if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+          delegate_->AsyncCollect(param, step_);
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
@@ -504,16 +504,12 @@ void Solver::TimeOneBatch(int runs) {
       refresh_start=Now();
       backward[layerid]+=refresh_start-comp_start;
 
-      if(do_collect){
-        for(auto* param: (*layer)->GetParams()){
-          if(!param->partition()||GlobalContext::Get()->num_groups()>1){
-            delegate_->Update(param, step_);
-            delegate_->AsyncGet(param, step_+1);
-          }
+      for(auto* param: (*layer)->GetParams()){
+        if(!param->partition()||GlobalContext::Get()->num_groups()>1){
+          delegate_->Update(param, step_);
+          delegate_->AsyncGet(param, step_+1);
         }
       }
-      if((*layer)->name()=="rxxx")
-        do_collect=true;
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if((*layer)->PostSyncG())
@@ -521,7 +517,8 @@ void Solver::TimeOneBatch(int runs) {
       sync[layerid]+=Now()-sync_start;
     }
     IncStep();
-    LOG(ERROR)<<"one iter";
+    if(GlobalContext::Get()->rank()==0)
+      LOG(ERROR)<<"one iter";
   }
   //delegate_->StopCollectThread();
   double total=Now()-start;

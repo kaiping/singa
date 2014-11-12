@@ -28,31 +28,40 @@ using namespace lapis;
 using std::vector;
 
 //DEFINE_bool(sync_update, false, "Synchronous put/update queue");
+DEFINE_int32(checkpoint_frequency, 5000, "frequency for cp");
+DEFINE_int32(checkpoint_after, 1, "cp after this steps");
+DEFINE_string(par_mode, "hybrid",  "time training algorithm");
+DEFINE_bool(restore, false, "restore from checkpoint file");
+
 DEFINE_string(db_backend, "lmdb", "backend db");
 DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_string(checkpoint_dir,"tmp","check point dir");
-DEFINE_int64(threshold,1000000, "max # of parameters in a vector");
+DEFINE_string(checkpoint_dir,"/data1/wangwei/lapis/","check point dir");
+DEFINE_int32(threshold,1000000, "max # of parameters in a vector");
 DEFINE_int32(iterations,5,"numer of get/put iterations");
 DEFINE_int32(workers,2,"numer of workers doing get/put");
 DECLARE_bool(checkpoint_enabled);
 
-/*
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
-*/
-struct AnhUpdateHandler: BaseUpdateHandler<int,int>{
-	bool Update(int *a, const int &b){
-		*a = *a+b; //replace
+
+
+struct AnhUpdateHandler: BaseUpdateHandler<VKey,SGDValue>{
+	bool Update(SGDValue *a, const SGDValue &b){
+    float * adptr=a->mutable_data()->mutable_value()->mutable_data();
+    const float*bdptr=b.grad(0).value().data();
+    for(int i=0;i<b.grad(0).value_size();i++)
+      adptr[i]+=bdptr[i];
 		return true;
 	}
 
-  bool Get(const int k, const int &val, int *ret){
+  bool Get(const VKey k, const SGDValue &val, SGDValue *ret){
       *ret = val;
       return true;
   }
-  bool is_checkpointable(const int k, const int v){
+
+  bool is_checkpointable(const VKey k, const SGDValue v){
   	return true; //always checkpoint
   }
 };
@@ -64,18 +73,15 @@ shared_ptr<GlobalContext> context;
 std::vector<ServerState*> server_states;
 TableServer *table_server;
 TableDelegate *delegate;
-
-int num_keys=10;
-
 void create_mem_table(int id, int num_shards){
 
 	TableDescriptor *info = new TableDescriptor(id, num_shards);
-	  info->key_marshal = new Marshal<int>();
-	  info->value_marshal = new Marshal<int>();
-	  info->sharder = new Sharding::Mod;
+	  info->key_marshal = new Marshal<VKey>();
+	  info->value_marshal = new Marshal<SGDValue>();
+	  info->sharder = new VKeySharder;
 	  info->accum = new AnhUpdateHandler;
-	  info->partition_factory = new typename SparseTable<int, int>::Factory;
-	  auto table=new TypedGlobalTable<int, int>();
+	  info->partition_factory = new typename SparseTable<VKey, SGDValue>::Factory;
+	  auto table=new TypedGlobalTable<VKey, SGDValue>();
 	  table->Init(info);
 	  tables[id] = table;
 }
@@ -145,20 +151,32 @@ double random_double(){
 
 // popular table with random large or small messages.
 // the message distribution specified in FLAGS_large_precentage
-void coordinator_load_data(){
-	auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
+void coordinator_load_data(const vector<int>& tuples){
+  auto table = static_cast<TypedGlobalTable<VKey,SGDValue>*>(tables[0]);
 
-	int nservers=context->num_table_servers();
+  int nservers=context->num_table_servers();
+  int keyid=0;
+  if (!FLAGS_restore_mode){
+    for(auto tuple: tuples){
+      for(int offset=0;offset<tuple;){
+        SGDValue x;
+        DAryProto *data=x.mutable_data();
+        DAryProto *grad=x.add_grad();
+        for(int i=0;i <std::min(FLAGS_threshold, tuple-offset);i++){
+          data->add_value(i*1.0f);
+          grad->add_value(i*1.0f);
+        }
+        offset+=data->value_size();
+        VKey key;
+        key.set_key(keyid++);
+        table->put(key,x);
+      }
+    }
+    LOG(ERROR)<<"put "<<keyid<<" tuples";
+  }
 
-	if (!FLAGS_restore_mode){
-		for (int i=0; i<num_keys; i++){
-			table->put(i,i);
-		}
-	}
-
-
-/*
-	LogFile *file = new LogFile("tmp/checkpoint_0","rw",0);
+  /*
+	LogFile *file = new LogFile("/data1/wangwei/lapis/checkpoint_0","rw",0);
 	VLOG(3) << "Loaded table " << file->file_name();
 	string k,v;
 	int table_size = file->read_latest_table_size();
@@ -171,7 +189,7 @@ void coordinator_load_data(){
 		VLOG(3) << "k = " << *key << " val = " << *val;
 	}
 	delete file;
-*/
+  */
 
 	/*
 	for (int i=0; i<num_keys; i++){
@@ -180,38 +198,62 @@ void coordinator_load_data(){
 	VLOG(3) << "Coordinator done loading ..., from process "<<NetworkThread::Get()->id();
 }
 
-void get(TypedGlobalTable<int,int>* table){
-  double start , end;
-  int v;
-  for (int i=0; i<num_keys; i++)
-    table->async_get(i, &v);
+void get(TypedGlobalTable<VKey,SGDValue>* table, const vector<int>& tuples){
+  SGDValue v;
+  int num_keys=0;
+  for(auto tuple: tuples){
+    num_keys+=tuple/FLAGS_threshold+(tuple%FLAGS_threshold!=0);
+  }
+  LOG(ERROR)<<"getting "<<num_keys<<" tuples";
+
+  for (int i=0; i<num_keys; i++){
+    VKey key;
+    key.set_key(i);
+    table->async_get(key, &v);
+  }
 
 
   int key=0;
-  int val=0;
+  SGDValue val;
 
   LOG(INFO)<<"start collect key";
   for (int i=0; i<num_keys; i++){
+    VKey key;
     while(!table->async_get_collect(&key, &val))
       Sleep(0.001);
-    LOG(INFO)<<"collect key "<<key<<" with val "<<val;
+    //LOG(INFO)<<"collect key "<<key<<" with val "<<val;
   }
 }
 
-void update(TypedGlobalTable<int,int>* table){
+void update(TypedGlobalTable<VKey,SGDValue>* table, const vector<int>& tuples){
   if(NetworkThread::Get()->id()==0)
     sleep(2);
   LOG(INFO)<<"start update";
-  for (int i=0; i<num_keys; i++)
-    table->update(i,1);
+  int keyid=0;
+  for(auto tuple: tuples){
+    for(int offset=0;offset<tuple;){
+      SGDValue x;
+      DAryProto *grad=x.add_grad();
+      for(int i=0;i <std::min(FLAGS_threshold, tuple-offset);i++){
+        grad->add_value(i*1.0f);
+      }
+      offset+=grad->value_size();
+      VKey key;
+      key.set_key(keyid++);
+      table->update(key,x);
+    }
+  }
+  LOG(ERROR)<<"updated "<<keyid<<" tuples";
 }
 
-void worker_test_data(){
-  auto table = static_cast<TypedGlobalTable<int,int>*>(tables[0]);
+void worker_test_data(const vector<int>& tuples){
+  auto table = static_cast<TypedGlobalTable<VKey,SGDValue>*>(tables[0]);
 
-  get(table);
-  update(table);
-  get(table);
+  get(table, tuples);
+  update(table, tuples);
+  update(table, tuples);
+  update(table, tuples);
+  get(table, tuples);
 }
 
 void shutdown(){
@@ -257,17 +299,35 @@ void HandleShardAssignment() {
     //if local shard, create check-point files
     if (FLAGS_checkpoint_enabled && t->is_local_shard(a.shard())){
       string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
+        char hostname[256];
+        gethostname(hostname, sizeof(hostname));
+        VLOG(3) << "try to open for writing *****"<<checkpoint_file<<" "<<string(hostname);
+
       FILE *tmp_file = fopen(checkpoint_file.c_str(), "r");
       if (tmp_file){//exists -> open to reading and writing
         fclose(tmp_file);
         auto cp = t->checkpoint_files();
 
         if (FLAGS_restore_mode){//open in read mode to restore, then close
+          LogFile *file = new LogFile(checkpoint_file,"rw",0);
+          VLOG(3) << "Loaded table " << file->file_name();
+          int table_size = file->read_latest_table_size();
+          delete file;
+
+          double start=Now();
           VLOG(3) << "Open checkpoint file to restore";
           (*cp)[a.shard()] = new LogFile(checkpoint_file,"r",a.shard());
           t->Restore(a.shard());
           delete (*cp)[a.shard()];
+          double end=Now();
+          LOG(ERROR)<<"restore time\t"<<end-start<< "\tfor\t"
+            <<table_size<<"\tthreshold\t"<<FLAGS_threshold;
         }
+        char hostname[256];
+        gethostname(hostname, sizeof(hostname));
+        VLOG(3) << "open for writing *****"<<checkpoint_file<<" "<<string(hostname);
+
+
 
         VLOG(3) << "Open checkpoint file for writing";
         (*cp)[a.shard()] = new LogFile(checkpoint_file,"a",a.shard());
@@ -285,6 +345,7 @@ void HandleShardAssignment() {
   EmptyMessage empty;
   mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
   VLOG(3)<<"finish handle shard assignment **";
+
 }
 
 
@@ -303,10 +364,21 @@ int main(int argc, char **argv) {
 
 	create_mem_table(0,context->num_table_servers());
 
+  vector<int> tuple_size{37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
+  /*
+  vector<int> tuples;
+  for(int i=0;i<3;i++){
+    for(int j=0;j<FLAGS_workers;j++)
+      tuples.push_back(tuple_size[i]/FLAGS_workers);
+  }
+  for(int i=3;i<tuple_size.size();i++)
+    tuples.push_back(tuple_size[i]);
+    */
+
 	if (context->AmICoordinator()){
 		VLOG(3) << "Coordinator process rank = " << NetworkThread::Get()->id();
 		coordinator_assign_tables(0);
-		coordinator_load_data();
+		coordinator_load_data(tuple_size);
 
 		network->barrier();
 	}
@@ -320,11 +392,13 @@ int main(int argc, char **argv) {
 			VLOG(3) << "Inside worker, waiting for assignemtn";
 			HandleShardAssignment();
 			network->barrier();
-			worker_test_data();
+      if(!FLAGS_restore_mode)
+        worker_test_data(tuple_size);
 		}
 	}
-
 	shutdown();
+
+
 	VLOG(3) << "Done ...";
 	return 0;
 }

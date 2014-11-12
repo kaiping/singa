@@ -2388,19 +2388,56 @@ class AdaGradValue : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 version() const;
   inline void set_version(::google::protobuf::int32 value);
 
-  // optional .lapis.DAryProto data = 4;
+  // optional float learning_rate = 3 [default = 0.1];
+  inline bool has_learning_rate() const;
+  inline void clear_learning_rate();
+  static const int kLearningRateFieldNumber = 3;
+  inline float learning_rate() const;
+  inline void set_learning_rate(float value);
+
+  // optional float kinit = 4 [default = 1];
+  inline bool has_kinit() const;
+  inline void clear_kinit();
+  static const int kKinitFieldNumber = 4;
+  inline float kinit() const;
+  inline void set_kinit(float value);
+
+  // optional int32 threshold = 5;
+  inline bool has_threshold() const;
+  inline void clear_threshold();
+  static const int kThresholdFieldNumber = 5;
+  inline ::google::protobuf::int32 threshold() const;
+  inline void set_threshold(::google::protobuf::int32 value);
+
+  // optional int32 gid = 6;
+  inline bool has_gid() const;
+  inline void clear_gid();
+  static const int kGidFieldNumber = 6;
+  inline ::google::protobuf::int32 gid() const;
+  inline void set_gid(::google::protobuf::int32 value);
+
+  // optional .lapis.DAryProto history = 7;
+  inline bool has_history() const;
+  inline void clear_history();
+  static const int kHistoryFieldNumber = 7;
+  inline const ::lapis::DAryProto& history() const;
+  inline ::lapis::DAryProto* mutable_history();
+  inline ::lapis::DAryProto* release_history();
+  inline void set_allocated_history(::lapis::DAryProto* history);
+
+  // optional .lapis.DAryProto data = 8;
   inline bool has_data() const;
   inline void clear_data();
-  static const int kDataFieldNumber = 4;
+  static const int kDataFieldNumber = 8;
   inline const ::lapis::DAryProto& data() const;
   inline ::lapis::DAryProto* mutable_data();
   inline ::lapis::DAryProto* release_data();
   inline void set_allocated_data(::lapis::DAryProto* data);
 
-  // repeated .lapis.DAryProto grad = 5;
+  // repeated .lapis.DAryProto grad = 9;
   inline int grad_size() const;
   inline void clear_grad();
-  static const int kGradFieldNumber = 5;
+  static const int kGradFieldNumber = 9;
   inline const ::lapis::DAryProto& grad(int index) const;
   inline ::lapis::DAryProto* mutable_grad(int index);
   inline ::lapis::DAryProto* add_grad();
@@ -2409,63 +2446,36 @@ class AdaGradValue : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
       mutable_grad();
 
-  // optional float base_learning_rate = 6;
-  inline bool has_base_learning_rate() const;
-  inline void clear_base_learning_rate();
-  static const int kBaseLearningRateFieldNumber = 6;
-  inline float base_learning_rate() const;
-  inline void set_base_learning_rate(float value);
-
-  // optional int32 threshold = 7;
-  inline bool has_threshold() const;
-  inline void clear_threshold();
-  static const int kThresholdFieldNumber = 7;
-  inline ::google::protobuf::int32 threshold() const;
-  inline void set_threshold(::google::protobuf::int32 value);
-
-  // optional int32 gid = 12;
-  inline bool has_gid() const;
-  inline void clear_gid();
-  static const int kGidFieldNumber = 12;
-  inline ::google::protobuf::int32 gid() const;
-  inline void set_gid(::google::protobuf::int32 value);
-
-  // optional .lapis.DAryProto history = 15;
-  inline bool has_history() const;
-  inline void clear_history();
-  static const int kHistoryFieldNumber = 15;
-  inline const ::lapis::DAryProto& history() const;
-  inline ::lapis::DAryProto* mutable_history();
-  inline ::lapis::DAryProto* release_history();
-  inline void set_allocated_history(::lapis::DAryProto* history);
-
   // @@protoc_insertion_point(class_scope:lapis.AdaGradValue)
  private:
   inline void set_has_version();
   inline void clear_has_version();
-  inline void set_has_data();
-  inline void clear_has_data();
-  inline void set_has_base_learning_rate();
-  inline void clear_has_base_learning_rate();
+  inline void set_has_learning_rate();
+  inline void clear_has_learning_rate();
+  inline void set_has_kinit();
+  inline void clear_has_kinit();
   inline void set_has_threshold();
   inline void clear_has_threshold();
   inline void set_has_gid();
   inline void clear_has_gid();
   inline void set_has_history();
   inline void clear_has_history();
+  inline void set_has_data();
+  inline void clear_has_data();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > n_update_;
-  ::lapis::DAryProto* data_;
   ::google::protobuf::int32 version_;
-  float base_learning_rate_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto > grad_;
+  float learning_rate_;
+  float kinit_;
   ::google::protobuf::int32 threshold_;
-  ::google::protobuf::int32 gid_;
   ::lapis::DAryProto* history_;
+  ::lapis::DAryProto* data_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto > grad_;
+  ::google::protobuf::int32 gid_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -2639,19 +2649,26 @@ class SGDValue : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 id() const;
   inline void set_id(::google::protobuf::int32 value);
 
-  // optional .lapis.DAryProto data = 13;
+  // optional int32 gid = 13;
+  inline bool has_gid() const;
+  inline void clear_gid();
+  static const int kGidFieldNumber = 13;
+  inline ::google::protobuf::int32 gid() const;
+  inline void set_gid(::google::protobuf::int32 value);
+
+  // optional .lapis.DAryProto data = 14;
   inline bool has_data() const;
   inline void clear_data();
-  static const int kDataFieldNumber = 13;
+  static const int kDataFieldNumber = 14;
   inline const ::lapis::DAryProto& data() const;
   inline ::lapis::DAryProto* mutable_data();
   inline ::lapis::DAryProto* release_data();
   inline void set_allocated_data(::lapis::DAryProto* data);
 
-  // repeated .lapis.DAryProto grad = 14;
+  // repeated .lapis.DAryProto grad = 15;
   inline int grad_size() const;
   inline void clear_grad();
-  static const int kGradFieldNumber = 14;
+  static const int kGradFieldNumber = 15;
   inline const ::lapis::DAryProto& grad(int index) const;
   inline ::lapis::DAryProto* mutable_grad(int index);
   inline ::lapis::DAryProto* add_grad();
@@ -2660,10 +2677,10 @@ class SGDValue : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
       mutable_grad();
 
-  // optional .lapis.DAryProto history = 15;
+  // optional .lapis.DAryProto history = 16;
   inline bool has_history() const;
   inline void clear_history();
-  static const int kHistoryFieldNumber = 15;
+  static const int kHistoryFieldNumber = 16;
   inline const ::lapis::DAryProto& history() const;
   inline ::lapis::DAryProto* mutable_history();
   inline ::lapis::DAryProto* release_history();
@@ -2695,6 +2712,8 @@ class SGDValue : public ::google::protobuf::Message {
   inline void clear_has_threshold();
   inline void set_has_id();
   inline void clear_has_id();
+  inline void set_has_gid();
+  inline void clear_has_gid();
   inline void set_has_data();
   inline void clear_has_data();
   inline void set_has_history();
@@ -2719,6 +2738,7 @@ class SGDValue : public ::google::protobuf::Message {
   ::lapis::DAryProto* data_;
   ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto > grad_;
   ::lapis::DAryProto* history_;
+  ::google::protobuf::int32 gid_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -6469,15 +6489,152 @@ inline void AdaGradValue::set_version(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.AdaGradValue.version)
 }
 
-// optional .lapis.DAryProto data = 4;
-inline bool AdaGradValue::has_data() const {
+// optional float learning_rate = 3 [default = 0.1];
+inline bool AdaGradValue::has_learning_rate() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void AdaGradValue::set_has_data() {
+inline void AdaGradValue::set_has_learning_rate() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void AdaGradValue::clear_has_data() {
+inline void AdaGradValue::clear_has_learning_rate() {
   _has_bits_[0] &= ~0x00000004u;
+}
+inline void AdaGradValue::clear_learning_rate() {
+  learning_rate_ = 0.1f;
+  clear_has_learning_rate();
+}
+inline float AdaGradValue::learning_rate() const {
+  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.learning_rate)
+  return learning_rate_;
+}
+inline void AdaGradValue::set_learning_rate(float value) {
+  set_has_learning_rate();
+  learning_rate_ = value;
+  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.learning_rate)
+}
+
+// optional float kinit = 4 [default = 1];
+inline bool AdaGradValue::has_kinit() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void AdaGradValue::set_has_kinit() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void AdaGradValue::clear_has_kinit() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void AdaGradValue::clear_kinit() {
+  kinit_ = 1;
+  clear_has_kinit();
+}
+inline float AdaGradValue::kinit() const {
+  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.kinit)
+  return kinit_;
+}
+inline void AdaGradValue::set_kinit(float value) {
+  set_has_kinit();
+  kinit_ = value;
+  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.kinit)
+}
+
+// optional int32 threshold = 5;
+inline bool AdaGradValue::has_threshold() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void AdaGradValue::set_has_threshold() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void AdaGradValue::clear_has_threshold() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void AdaGradValue::clear_threshold() {
+  threshold_ = 0;
+  clear_has_threshold();
+}
+inline ::google::protobuf::int32 AdaGradValue::threshold() const {
+  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.threshold)
+  return threshold_;
+}
+inline void AdaGradValue::set_threshold(::google::protobuf::int32 value) {
+  set_has_threshold();
+  threshold_ = value;
+  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.threshold)
+}
+
+// optional int32 gid = 6;
+inline bool AdaGradValue::has_gid() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void AdaGradValue::set_has_gid() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void AdaGradValue::clear_has_gid() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void AdaGradValue::clear_gid() {
+  gid_ = 0;
+  clear_has_gid();
+}
+inline ::google::protobuf::int32 AdaGradValue::gid() const {
+  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.gid)
+  return gid_;
+}
+inline void AdaGradValue::set_gid(::google::protobuf::int32 value) {
+  set_has_gid();
+  gid_ = value;
+  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.gid)
+}
+
+// optional .lapis.DAryProto history = 7;
+inline bool AdaGradValue::has_history() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void AdaGradValue::set_has_history() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void AdaGradValue::clear_has_history() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void AdaGradValue::clear_history() {
+  if (history_ != NULL) history_->::lapis::DAryProto::Clear();
+  clear_has_history();
+}
+inline const ::lapis::DAryProto& AdaGradValue::history() const {
+  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.history)
+  return history_ != NULL ? *history_ : *default_instance_->history_;
+}
+inline ::lapis::DAryProto* AdaGradValue::mutable_history() {
+  set_has_history();
+  if (history_ == NULL) history_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.AdaGradValue.history)
+  return history_;
+}
+inline ::lapis::DAryProto* AdaGradValue::release_history() {
+  clear_has_history();
+  ::lapis::DAryProto* temp = history_;
+  history_ = NULL;
+  return temp;
+}
+inline void AdaGradValue::set_allocated_history(::lapis::DAryProto* history) {
+  delete history_;
+  history_ = history;
+  if (history) {
+    set_has_history();
+  } else {
+    clear_has_history();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.AdaGradValue.history)
+}
+
+// optional .lapis.DAryProto data = 8;
+inline bool AdaGradValue::has_data() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void AdaGradValue::set_has_data() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void AdaGradValue::clear_has_data() {
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void AdaGradValue::clear_data() {
   if (data_ != NULL) data_->::lapis::DAryProto::Clear();
@@ -6510,7 +6667,7 @@ inline void AdaGradValue::set_allocated_data(::lapis::DAryProto* data) {
   // @@protoc_insertion_point(field_set_allocated:lapis.AdaGradValue.data)
 }
 
-// repeated .lapis.DAryProto grad = 5;
+// repeated .lapis.DAryProto grad = 9;
 inline int AdaGradValue::grad_size() const {
   return grad_.size();
 }
@@ -6538,119 +6695,6 @@ inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
 AdaGradValue::mutable_grad() {
   // @@protoc_insertion_point(field_mutable_list:lapis.AdaGradValue.grad)
   return &grad_;
-}
-
-// optional float base_learning_rate = 6;
-inline bool AdaGradValue::has_base_learning_rate() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void AdaGradValue::set_has_base_learning_rate() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void AdaGradValue::clear_has_base_learning_rate() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void AdaGradValue::clear_base_learning_rate() {
-  base_learning_rate_ = 0;
-  clear_has_base_learning_rate();
-}
-inline float AdaGradValue::base_learning_rate() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.base_learning_rate)
-  return base_learning_rate_;
-}
-inline void AdaGradValue::set_base_learning_rate(float value) {
-  set_has_base_learning_rate();
-  base_learning_rate_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.base_learning_rate)
-}
-
-// optional int32 threshold = 7;
-inline bool AdaGradValue::has_threshold() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void AdaGradValue::set_has_threshold() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void AdaGradValue::clear_has_threshold() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void AdaGradValue::clear_threshold() {
-  threshold_ = 0;
-  clear_has_threshold();
-}
-inline ::google::protobuf::int32 AdaGradValue::threshold() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.threshold)
-  return threshold_;
-}
-inline void AdaGradValue::set_threshold(::google::protobuf::int32 value) {
-  set_has_threshold();
-  threshold_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.threshold)
-}
-
-// optional int32 gid = 12;
-inline bool AdaGradValue::has_gid() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void AdaGradValue::set_has_gid() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void AdaGradValue::clear_has_gid() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void AdaGradValue::clear_gid() {
-  gid_ = 0;
-  clear_has_gid();
-}
-inline ::google::protobuf::int32 AdaGradValue::gid() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.gid)
-  return gid_;
-}
-inline void AdaGradValue::set_gid(::google::protobuf::int32 value) {
-  set_has_gid();
-  gid_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.gid)
-}
-
-// optional .lapis.DAryProto history = 15;
-inline bool AdaGradValue::has_history() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void AdaGradValue::set_has_history() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void AdaGradValue::clear_has_history() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void AdaGradValue::clear_history() {
-  if (history_ != NULL) history_->::lapis::DAryProto::Clear();
-  clear_has_history();
-}
-inline const ::lapis::DAryProto& AdaGradValue::history() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.history)
-  return history_ != NULL ? *history_ : *default_instance_->history_;
-}
-inline ::lapis::DAryProto* AdaGradValue::mutable_history() {
-  set_has_history();
-  if (history_ == NULL) history_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.AdaGradValue.history)
-  return history_;
-}
-inline ::lapis::DAryProto* AdaGradValue::release_history() {
-  clear_has_history();
-  ::lapis::DAryProto* temp = history_;
-  history_ = NULL;
-  return temp;
-}
-inline void AdaGradValue::set_allocated_history(::lapis::DAryProto* history) {
-  delete history_;
-  history_ = history;
-  if (history) {
-    set_has_history();
-  } else {
-    clear_has_history();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.AdaGradValue.history)
 }
 
 // -------------------------------------------------------------------
@@ -6946,15 +6990,39 @@ inline void SGDValue::set_id(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SGDValue.id)
 }
 
-// optional .lapis.DAryProto data = 13;
-inline bool SGDValue::has_data() const {
+// optional int32 gid = 13;
+inline bool SGDValue::has_gid() const {
   return (_has_bits_[0] & 0x00001000u) != 0;
 }
-inline void SGDValue::set_has_data() {
+inline void SGDValue::set_has_gid() {
   _has_bits_[0] |= 0x00001000u;
 }
-inline void SGDValue::clear_has_data() {
+inline void SGDValue::clear_has_gid() {
   _has_bits_[0] &= ~0x00001000u;
+}
+inline void SGDValue::clear_gid() {
+  gid_ = 0;
+  clear_has_gid();
+}
+inline ::google::protobuf::int32 SGDValue::gid() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDValue.gid)
+  return gid_;
+}
+inline void SGDValue::set_gid(::google::protobuf::int32 value) {
+  set_has_gid();
+  gid_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDValue.gid)
+}
+
+// optional .lapis.DAryProto data = 14;
+inline bool SGDValue::has_data() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
+}
+inline void SGDValue::set_has_data() {
+  _has_bits_[0] |= 0x00002000u;
+}
+inline void SGDValue::clear_has_data() {
+  _has_bits_[0] &= ~0x00002000u;
 }
 inline void SGDValue::clear_data() {
   if (data_ != NULL) data_->::lapis::DAryProto::Clear();
@@ -6987,7 +7055,7 @@ inline void SGDValue::set_allocated_data(::lapis::DAryProto* data) {
   // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.data)
 }
 
-// repeated .lapis.DAryProto grad = 14;
+// repeated .lapis.DAryProto grad = 15;
 inline int SGDValue::grad_size() const {
   return grad_.size();
 }
@@ -7017,15 +7085,15 @@ SGDValue::mutable_grad() {
   return &grad_;
 }
 
-// optional .lapis.DAryProto history = 15;
+// optional .lapis.DAryProto history = 16;
 inline bool SGDValue::has_history() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
+  return (_has_bits_[0] & 0x00008000u) != 0;
 }
 inline void SGDValue::set_has_history() {
-  _has_bits_[0] |= 0x00004000u;
+  _has_bits_[0] |= 0x00008000u;
 }
 inline void SGDValue::clear_has_history() {
-  _has_bits_[0] &= ~0x00004000u;
+  _has_bits_[0] &= ~0x00008000u;
 }
 inline void SGDValue::clear_history() {
   if (history_ != NULL) history_->::lapis::DAryProto::Clear();

@@ -245,71 +245,91 @@ void RecordFile::seek(uint64_t pos) {
 }
 
 LogFile::LogFile(const string &path, const string &mode, int shard_id){
-	path_=path;
-	test_val_ = 7;
-	fp_ = fopen(path.c_str(), mode.c_str());
-	if (!fp_){
-		VLOG(3) << "ERROR in FILE OPENING *****";
-	}
-  	setvbuf(fp_, NULL, _IONBF, kFileBufferSize);
-	current_offset_ = 0; 
-	if (mode=="w"){ //write header 
-		fwrite((char*)&shard_id, sizeof(int), 1, fp_); 
-	}
-	else
-		fseek(fp_,0,SEEK_END); //move to the end  
+  tseek=tread=tcopy=tresize=0.0;
+  total_value_size=0;
+  path_=path;
+  test_val_ = 7;
+  fp_ = fopen(path.c_str(), mode.c_str());
+  if (!fp_){
+
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+    VLOG(3) << "ERROR in FILE OPENING *****"<<path<<" "<<string(hostname);
+  }
+  setvbuf(fp_, NULL, _IONBF, kFileBufferSize);
+  current_offset_ = 0;
+  if (mode=="w"){ //write header
+    fwrite((char*)&shard_id, sizeof(int), 1, fp_);
+  }
+  else
+    fseek(fp_,0,SEEK_END); //move to the end
 }
 
 void LogFile::append(const string &key, const string &val, const int size){
-	int key_size = key.length(); 
-	int val_size = val.length();
-	int total_size = key_size+val_size+2*sizeof(int); 
-	int error = fwrite((char*)&key_size, sizeof(int),1,fp_);
-	fwrite(key.data(), key_size, 1, fp_); 
-	fwrite(val.data(), val_size, 1, fp_); 
-	fwrite((char*)&size, sizeof(int), 1, fp_);
-	fwrite((char*)&total_size, sizeof(int), 1, fp_); 
+int key_size = key.length();
+int val_size = val.length();
+int total_size = key_size+val_size+2*sizeof(int);
+int error = fwrite((char*)&key_size, sizeof(int),1,fp_);
+fwrite(key.data(), key_size, 1, fp_);
+fwrite(val.data(), val_size, 1, fp_);
+fwrite((char*)&size, sizeof(int), 1, fp_);
+fwrite((char*)&total_size, sizeof(int), 1, fp_);
 
 }
 
 
-void LogFile::previous_entry(string *key, string *val, int *size){
-	//read total length
-	current_offset_+=sizeof(int);
-	int total_length;
-	fseek(fp_,-current_offset_, SEEK_END); 
-	fread((char*)&total_length,sizeof(int),1, fp_);  
+//void LogFile::previous_entry(string *key, string *val, int *size){
+void LogFile::previous_entry(Message *key, Message *val, int *size){
+//read total length
 
-	current_offset_+=total_length; 
-	fseek(fp_,-current_offset_, SEEK_END);
-	string *buf = new string();
-	buf->resize(total_length); 
+double start=Now();
+current_offset_+=sizeof(int);
+int total_length;
+fseek(fp_,-current_offset_, SEEK_END);
+fread((char*)&total_length,sizeof(int),1, fp_);
 
+current_offset_+=total_length;
+fseek(fp_,-current_offset_, SEEK_END);
+
+tseek+=Now()-start;
+
+string *buf = new string();
+
+start=Now();
+buf->resize(total_length);
+tresize+=Now()-start;
+
+start=Now();
 	fread(&(*buf)[0],total_length,1,fp_);
-	//read key 
-	int key_size; 
+tread+=Now()-start;
+	//read key
+	int key_size;
 	memcpy((char*)&key_size, &(*buf)[0], sizeof(int));
-	key->resize(key_size); 
-	memcpy(&(*key)[0], &(*buf)[sizeof(int)], key_size); 
-	
+	//key->resize(key_size);
+	//memcpy(&(*key)[0], &(*buf)[sizeof(int)], key_size);
+  key->ParseFromArray(&(*buf)[sizeof(int)], key_size);
+
 	//read value
+  start=Now();
 	int value_size = total_length-2*sizeof(int)-key_size;
 
 
-	val->resize(value_size); 
-	memcpy(&(*val)[0], &(*buf)[sizeof(int)+key_size], value_size); 
+  total_value_size+=value_size;
+	//val->resize(value_size);
+	//memcpy(&(*val)[0], &(*buf)[sizeof(int)+key_size], value_size);
+  val->ParseFromArray(&(*buf)[sizeof(int)+key_size], value_size);
+  tcopy+=Now()-start;
 
-	//read current size	
+	//read current size
 	memcpy((char*)size,&(*buf)[sizeof(int)+key_size+value_size], sizeof(int));
-
-	delete buf; 
+	delete buf;
 }
 
 int LogFile::read_shard_id(){
 	fseek(fp_,0,SEEK_SET); // seek to the begining
-	int shard_id; 
-	fread((char*)&shard_id,sizeof(int),1,fp_); 
-	return shard_id; 
+	int shard_id;
+	fread((char*)&shard_id,sizeof(int),1,fp_);
+	return shard_id;
 }
 
 // the size is from the 8th bytes from the end.

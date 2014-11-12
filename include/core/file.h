@@ -4,6 +4,7 @@
 #ifndef INCLUDE_CORE_FILE_H_
 #define INCLUDE_CORE_FILE_H_
 
+#include <google/protobuf/message.h>
 #include "boost/noncopyable.hpp"
 #include "core/common.h"
 #include "proto/common.pb.h"
@@ -16,12 +17,8 @@
 #include <unistd.h>
 
 
-namespace google {
-namespace protobuf {
-class Message;
-}
-}
 
+using google::protobuf::Message;
 namespace lapis {
 
 class File {
@@ -209,28 +206,33 @@ class Decoder {
 // format of the LogFile is:
 // [<key length><key><val><current table size><total length>]
 class LogFile{
-	public: 
-		LogFile(const string &path, const string &mode, int shard_id); 
-		
+	public:
+		LogFile(const string &path, const string &mode, int shard_id);
+
 		~LogFile(){
 			if (fp_){
-				fflush(fp_); 
+				fflush(fp_);
 				fclose(fp_);
-			} 
+			}
 		}
-		
-		void append(const string &key, const string &value, const int size); 
-		void previous_entry(string *key, string *val, int *size);
+
+		void append(const string &key, const string &value, const int size);
+		//void previous_entry(string *key, string *val, int *size);
+		void previous_entry(Message *key, Message *val, int *size);
+
 		int current_offset(){ return current_offset_; }
-		int read_shard_id(); 
+		int read_shard_id();
 		int read_latest_table_size();
 		string file_name(){return path_;}
+
+    double tseek=0.0, tread=0.0, tcopy, tresize;
+    int total_value_size=0;
 	private:
 		string path_;
 		int test_val_;
 		FILE *fp_;
-		int current_offset_; //from SEEK_END  
-}; 
+		int current_offset_; //from SEEK_END
+};
 
 class RecordFile {
  public:

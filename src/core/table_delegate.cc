@@ -22,30 +22,43 @@ UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
 bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data,
     const AdaGradValue& update){
   int gid=update.gid();
-  CHECK(gid);
+  CHECK_GE(gid,0);
   int threshold=data->threshold();
   int n_update=data->n_update(gid);
-  int offset=0;
+  int len=data->data().value_size();
   if(data->grad_size()==0){
     for(int i=0;i<GlobalContext::Get()->num_groups();i++){
       DAryProto* grad=data->add_grad();
-      for(int j=0;j<update.grad(0).value_size();j++)
+      for(int j=0;j<len;j++)
         grad->add_value(0.0f);
     }
   }
+  if(data->history().value_size()==0){
+    DAryProto* hist=data->mutable_history();
+    for(int i=0;i<len;i++)
+      hist->add_value(data->kinit());
+  }
 
+  int offset=0;
   float* graddptr=data->mutable_grad(gid)->mutable_value()->mutable_data();
   //threshold is the num of workers in one group contributing to this grad
   if(n_update<threshold){
     for(auto v: update.grad(0).value())
       graddptr[offset++]+=v;
+    CHECK_EQ(offset, len);
   }
 
   data->set_n_update(gid, n_update+1);
   if(data->n_update(gid)==threshold){
-    // update data->data()
-    for(int i=0;i<offset;i++)
+    //basic adagrad
+    float * history=data->mutable_history()->mutable_value()->mutable_data();
+    float * dptr=data->mutable_data()->mutable_value()->mutable_data();
+    float lr=data->learning_rate();
+    for(int i=0;i<len;i++){
+      history[i]+=graddptr[i]*graddptr[i];
+      dptr[i]-=graddptr[i]*lr/sqrt(history[i]);
       graddptr[i]=0.f;
+    }
     data->set_n_update(gid, 0);
     data->set_version(data->version()+1);
   }
@@ -55,7 +68,7 @@ bool UpdateHandler<AdaGradValue>::Get(const VKey& key,
     const AdaGradValue &val, AdaGradValue* ret) {
   //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
   int gid=key.gid();
-  CHECK(gid);
+  CHECK_GE(gid,0);
   if(key.version()<=val.version()&&val.n_update(gid)==0){
     DAryProto* retdat=ret->mutable_data();
     retdat->clear_value();
@@ -110,7 +123,6 @@ UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
 }
 
 bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
-  //LOG(INFO)<<"update for "<<data->id()<<" version "<<data->version()<<" "<<update.version();
   CHECK_EQ(data->version(), update.version())<<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
   int len=data->data().value_size();
   if(data->history().value_size()==0){
@@ -136,7 +148,9 @@ bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
   data->set_n_update(data->n_update()+1);
   if(data->n_update()==data->threshold()){
     // param+=history/n, /data->n_update()
-    DAry::arymath().sub(dptr, dptr, history, len);
+    //DAry::arymath().sub(dptr, dptr, history, len);
+    float factor=-1.0/GlobalContext::Get()->num_groups();
+    DAry::arymath().madd(dptr, factor, history, dptr, len);
     // hist=hist*mom
     DAry::arymath().mul(history, momentum_, history, len);
     data->set_n_update(0);
@@ -267,10 +281,9 @@ void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
 template<>
 void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
   int offset = 0;
-  int groupsize=GlobalContext::Get()->group_size();
+  int nworkers=GlobalContext::Get()->num_workers();
+  int ngroups=GlobalContext::Get()->num_groups();
   const float * data_addr = param->data().dptr();
-  LOG(INFO)<<"param id "<<param->id()<<" name "<<param->name()
-    <<" "<<param->partition()<<" "<<groupsize;
   for(auto& entry: param_splits_[param->id()]) {
     SGDValue v(example_);
     // sgd related hyper-parameters
@@ -280,9 +293,10 @@ void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
     v.set_n_update(0);
     v.set_id(param->id());
     if(!param->partition())
-      v.set_threshold(groupsize);
+      v.set_threshold(nworkers);
     else
-      v.set_threshold(1);
+      v.set_threshold(ngroups);
+    LOG(INFO)<<"param "<<v.id()<<" threshold "<<v.threshold()<<" "<<nworkers<<" "<<ngroups;
     DAryProto* dary=v.mutable_data();
     dary->clear_value();
     for(int k = 0; k < entry.second; k++){
@@ -301,17 +315,17 @@ void TypedTableDelegate<VKey, AdaGradValue>::Put(Param * param){
   int offset = 0;
   const float * data_addr = param->data().dptr();
   int groupsize=GlobalContext::Get()->group_size();
-  int gid=GlobalContext::Get()->group_id();
+  int ngroups=GlobalContext::Get()->num_groups();
   for(auto& entry: param_splits_[param->id()]) {
     AdaGradValue v(example_);
     // sgd related hyper-parameters
     v.set_version(0);
-    v.set_n_update(gid, 0);
-    v.set_gid(gid);
     if(!param->partition())
       v.set_threshold(groupsize);
     else
       v.set_threshold(1);
+    for(int i=0;i<ngroups;i++)
+      v.add_n_update(0);
     DAryProto* dary=v.mutable_data();
     dary->clear_value();
     for(int k = 0; k < entry.second; k++){

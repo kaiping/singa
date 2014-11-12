@@ -118,57 +118,57 @@ void NetworkThread::CollectActive() {
 //  are processed right away
 void NetworkThread::NetworkLoop() {
 	VLOG(3) << "In network loop of process " << id();
-	while (running_) {
-		MPI::Status st;
-		if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
-			int tag = st.Get_tag();
-			int source = st.Get_source();
-			int bytes = st.Get_count(MPI::BYTE);
-			string data;
-			data.resize(bytes);
-			if (tag == MTYPE_DATA_PUT_REQUEST
-					&& network_thread_stats_[FIRST_BYTE_RECEIVED] == 0)
-				network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
+  while (running_) {
+    MPI::Status st;
+    if (world_->Iprobe(MPI::ANY_SOURCE, MPI::ANY_TAG, st)) {
+      int tag = st.Get_tag();
+      int source = st.Get_source();
+      int bytes = st.Get_count(MPI::BYTE);
+      string data;
+      data.resize(bytes);
+      if (tag == MTYPE_DATA_PUT_REQUEST
+          && network_thread_stats_[FIRST_BYTE_RECEIVED] == 0)
+        network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
 
-			world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
-			if (tag == MTYPE_DATA_PUT_REQUEST) {
-				network_thread_stats_[LAST_BYTE_RECEIVED] = Now();
-				network_thread_stats_[TOTAL_BYTE_RECEIVED] += bytes;
-			}
+      world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
+      if (tag == MTYPE_DATA_PUT_REQUEST) {
+        network_thread_stats_[LAST_BYTE_RECEIVED] = Now();
+        network_thread_stats_[TOTAL_BYTE_RECEIVED] += bytes;
+      }
 
-			//  put request to the queue
-			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST || tag == MTYPE_GET_REQUEST
-					|| tag == MTYPE_DATA_PUT_REQUEST
-					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
-				RequestDispatcher::Get()->Enqueue(tag, data);
-			}
-			else { //  put reponse, etc. to the response queue. This is read
-				//  actively by the client
-				boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
-				response_queue_[tag][source].push_back(data);
+      //  put request to the queue
+      if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST || tag == MTYPE_GET_REQUEST
+          || tag == MTYPE_DATA_PUT_REQUEST
+          || tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
+        RequestDispatcher::Get()->Enqueue(tag, data);
+      }
+      else { //  put reponse, etc. to the response queue. This is read
+        //  actively by the client
+        boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
+        response_queue_[tag][source].push_back(data);
         counter++;
-				//if (tag==MTYPE_MODEL_CONFIG)
+        //if (tag==MTYPE_MODEL_CONFIG)
         //		VLOG(3) << "Barrier message received for process " << id();
-			}
-			//  other messages that need to be processed right away, e.g. shard assignment
-			if (callbacks_[tag] != NULL) {
-				callbacks_[tag]();
-			}
-		} else {
-			Sleep (FLAGS_sleep_time);
-		}
-		//  push the send queue through
-		while (!pending_sends_.empty()) {
-			boost::recursive_mutex::scoped_lock sl(send_lock);
-			RPCRequest *s = pending_sends_.front();
-			pending_sends_.pop_front();
-			s->start_time = Now();
-			s->mpi_req = world_->Isend(s->payload.data(), s->payload.size(),
-					MPI::BYTE, s->target, s->rpc_type);
-			active_sends_.insert(s);
-		}
-		CollectActive();
-	}
+      }
+      //  other messages that need to be processed right away, e.g. shard assignment
+      if (callbacks_[tag] != NULL) {
+        callbacks_[tag]();
+      }
+    } else {
+      Sleep (FLAGS_sleep_time);
+    }
+    //  push the send queue through
+    while (!pending_sends_.empty()) {
+      boost::recursive_mutex::scoped_lock sl(send_lock);
+      RPCRequest *s = pending_sends_.front();
+      pending_sends_.pop_front();
+      s->start_time = Now();
+      s->mpi_req = world_->Isend(s->payload.data(), s->payload.size(),
+          MPI::BYTE, s->target, s->rpc_type);
+      active_sends_.insert(s);
+    }
+    CollectActive();
+  }
 }
 
 

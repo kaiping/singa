@@ -67,11 +67,17 @@ CONST_OBJS = $(CONST_SRCS:.cc=.o)
 run_load: lapis.bin
 	mpirun -np 41 -hostfile examples/imagenet12/rack0 \
 		./lapis.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=lmdb
+		-model_conf=examples/imagenet12/model.conf --load=true --run=false --v=3 --db_backend=leveldb
 run_hybrid: lapis.bin
 	mpirun  -np 16 -hostfile examples/imagenet12/rack2 ./lapis.bin \
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
+
+run_multi: lapis.bin
+	mpirun  -np 60 -hostfile examples/imagenet12/rack12 ./lapis.bin \
+	-system_conf=examples/imagenet12/multigroup.conf -model_conf=examples/imagenet12/model.conf \
+	--v=0 -load=false --run=true --restore=false --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=hybrid
+
 
 run_data: lapis.bin
 	mpirun  -np 5 -hostfile examples/imagenet12/hostfile ./lapis.bin \
@@ -90,10 +96,10 @@ run_test_split: lapis.test.split
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_const: lapis.test.const
-	mpirun -np 4 -hostfile examples/imagenet12/hostfile \
-		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
-		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
+	mpirun -np 5 -hostfile examples/imagenet12/tmp \
+		./lapis_test.bin -system_conf=examples/imagenet12/multigroup.conf \
+		-model_conf=examples/imagenet12/model.conf --v=3 \
+		--table_buffer=20 --block_size=10 --restore_mode=true  --threshold=5000000
 
 run_test_disk_load: lapis.test.disk
 	rm -rf tmp/*

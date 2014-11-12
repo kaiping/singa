@@ -1,14 +1,30 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/"
+folder="/data1/wangwei/lapis/*"
 #folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/hostfile"
+hostfile="examples/imagenet12/rack12"
 if [ $# -eq 0 ]
 then
-  echo "must provide argument, [chmod, ssh,ls,cat, delete, create or reset] + hostfile"
+  echo "must provide argument, [chmod,ps, ssh,ls,cat, cp, delete, create or reset] + hostfile"
   exit
 fi
-for i in `cat $hostfile |cut -d ' ' -f 1`
+hosts=(`cat $hostfile |cut -d ' ' -f 1`)
+
+if [ $1 == "cp" ]
+then
+  for i in {0..18}
+  do
+      echo ${hosts[i]} ${hosts[i+19]}
+      ssh ${hosts[i]} "scp -r wangwei@${hosts[i+19]}:/data1/wangwei/lapis/train-lmdb /data1/wangwei/lapis/train-lmdb" &
+  done
+fi
+
+for i in ${hosts[@]}
 do
+  if [ $1 == "ps" ]
+  then
+    echo "ssh $i"
+    ssh $i "ps aux|pgrep scp"
+  fi
   if [ $1 == "chmod" ]
   then
     echo "ssh $i"
@@ -22,7 +38,7 @@ do
   if [ $1 == "ls" ]
   then
     echo "ssh $i"
-    ssh $i "ls $folder "
+    ssh $i "ls $folder |wc -l"
   fi
   if [ $1 == "ssh" ]
   then
@@ -41,7 +57,7 @@ do
   fi
   if [ $1 == "kill" ]
   then
-    echo "kill $3 on $i"
-    ssh $i "ps aux|grep $3 |cut -d ' ' -f 3 |xargs kill"
+    echo "kill $2 on $i"
+    ssh $i "ps aux|grep $2 |cut -d ' ' -f 3 |xargs kill"
   fi
 done

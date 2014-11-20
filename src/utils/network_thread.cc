@@ -24,13 +24,12 @@ string LAST_BYTE_RECEIVED="last byte received";
 string TOTAL_BYTE_RECEIVED="total byte received";
 
 
-RPCRequest::~RPCRequest() {}
+NetworkMessage::~NetworkMessage() {}
 
 // Send the given message type and data to this peer.
-RPCRequest::RPCRequest(int tgt, int method, const Message &ureq) {
-  failures = 0;
+NetworkMessage::NetworkMessage(int tgt, int method, const Message &ureq) {
   target = tgt;
-  rpc_type = method;
+  type = method;
   ureq.AppendToString(&payload);
 }
 
@@ -48,6 +47,7 @@ void Sleep(double t){
   req.tv_nsec = (int64_t)(1e9 * (t - (int64_t)t));
   nanosleep(&req, NULL);
 }
+
 void ShutdownMPI() {
   NetworkThread::Get()->Shutdown();
 }
@@ -59,16 +59,6 @@ std::shared_ptr<NetworkThread> NetworkThread::Get() {
   return instance_;
 }
 NetworkThread::NetworkThread() {
-  /*
-  if (!getenv("OMPI_COMM_WORLD_RANK")) {
-    world_ = NULL;
-    id_ = -1;
-    running_ = false;
-    return;
-  }
-  */
-  //MPI::Init_thread(MPI_THREAD_SINGLE);
-  counter=0;
   world_ = &MPI::COMM_WORLD;
   running_ = 1;
   id_ = world_->Get_rank();
@@ -84,7 +74,6 @@ NetworkThread::NetworkThread() {
 	network_thread_stats_[FIRST_BYTE_RECEIVED] =
 			network_thread_stats_[LAST_BYTE_RECEIVED] =
 					network_thread_stats_[TOTAL_BYTE_RECEIVED] = 0;
-  LOG(ERROR)<<"network started";
 }
 
 bool NetworkThread::active() const {
@@ -101,10 +90,6 @@ void NetworkThread::CollectActive() {
     RPCRequest *r = (*i);
     //VLOG(3) << "Pending: " << MP(id(), MP(r->target, r->rpc_type));
     if (r->finished()) {
-      if (r->failures > 0) {
-        LOG(INFO) << "Send " << MP(id(), r->target) << " of size " << r->payload.size()
-                  << " succeeded after " << r->failures << " failures.";
-      }
       delete r;
       i = active_sends_.erase(i);
       continue;
@@ -146,7 +131,6 @@ void NetworkThread::NetworkLoop() {
         //  actively by the client
         boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
         response_queue_[tag][source].push_back(data);
-        counter++;
         //if (tag==MTYPE_MODEL_CONFIG)
         //		VLOG(3) << "Barrier message received for process " << id();
       }
@@ -162,9 +146,8 @@ void NetworkThread::NetworkLoop() {
       boost::recursive_mutex::scoped_lock sl(send_lock);
       RPCRequest *s = pending_sends_.front();
       pending_sends_.pop_front();
-      s->start_time = Now();
       s->mpi_req = world_->Isend(s->payload.data(), s->payload.size(),
-          MPI::BYTE, s->target, s->rpc_type);
+          MPI::BYTE, s->target, s->type);
       active_sends_.insert(s);
     }
     CollectActive();
@@ -196,16 +179,9 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     }
 
     q.pop_front();
-    counter--;
     return true;
   }
   return false;
-}
-
-bool NetworkThread::is_empty_queue(int src, int type){
-	boost::recursive_mutex::scoped_lock sl(response_queue_locks_[type]);
-	Queue &q = response_queue_[type][src];
-	return q.empty();
 }
 
 //  blocking read for the given source and message type.
@@ -237,12 +213,6 @@ bool NetworkThread::TryRead(int src, int type, Message *data, int *source) {
   return false;
 }
 
-//  send = put request to the send queue
-void NetworkThread::Send(RPCRequest *req) {
-  boost::recursive_mutex::scoped_lock sl(send_lock);
-  pending_sends_.push_back(req);
-}
-
 // when data is not used, it can be put back again
 void NetworkThread::send_to_local_rx_queue(int src, int method, const Message &msg){
 	 RPCRequest *r = new RPCRequest(src, method, msg);
@@ -253,12 +223,11 @@ void NetworkThread::send_to_local_rx_queue(int src, int method, const Message &m
 
 void NetworkThread::Send(int dst, int method, const Message &msg) {
 	 RPCRequest *r = new RPCRequest(dst, method, msg);
+	 boost::recursive_mutex::scoped_lock sl(send_lock);
 	if (dst == id()){ //local rank
-		VLOG(3) << "LOCAL SEND";
-		boost::recursive_mutex::scoped_lock sl(response_queue_locks_[method]);
 		response_queue_[method][dst].push_back(r->payload);
 	}
-	else Send(r);
+	else pending_sends_.push_back(r);
 }
 
 void NetworkThread::Shutdown() {
@@ -266,7 +235,6 @@ void NetworkThread::Shutdown() {
     running_ = false;
     sender_and_reciever_thread_->join();
     delete sender_and_reciever_thread_;
-    //processing_thread_->join();
   }
 }
 
@@ -286,12 +254,10 @@ void NetworkThread::Broadcast(int method, const Message &msg) {
 
 void NetworkThread::SyncBroadcast(int method, int reply, const Message &msg) {
   Broadcast(method, msg);
-  VLOG(3)<<"wait for "<<size()-1<<" rplies";
   WaitForSync(reply, size() - 1);
 }
 
 void NetworkThread::WaitForSync(int reply, int count) {
-  VLOG(3)<<"wait for braodcast";
   EmptyMessage empty;
   while (count > 0) {
     Read(MPI::ANY_SOURCE, reply, &empty, NULL);

@@ -1,3 +1,5 @@
+// Copyright © 2014 Anh Dinh. All Rights Reserved.
+
 #ifndef INCLUDE_UTILS_NETWORK_THREAD_H_
 #define INCLUDE_UTILS_NETWORK_THREAD_H_
 #include <mpi.h>
@@ -11,10 +13,21 @@
 #include "proto/common.pb.h"
 #include "core/common.h"
 
-
 using google::protobuf::Message;
+
+/**
+ * Network communication utilities. We use Google ProtoBuffer for message communication.
+ * Once serialized to string, the message is wrapped to NetworkMessage.
+ *
+ * When received, they can be insert to a general receiving queue or to a
+ * dedicated RequestQueue (in which the messages are turned into tagged message)
+ */
 namespace lapis {
 
+/**
+ * Used by RequestQueue to process get/put requests.
+ * The tag represents type of message
+ */
 struct TaggedMessage : private boost::noncopyable {
   int tag;
   string data;
@@ -24,19 +37,21 @@ struct TaggedMessage : private boost::noncopyable {
 };
 
 
-// Represents an active RPC to a remote peer.
-struct RPCRequest : private boost::noncopyable {
+/**
+ * Used to transmit messages between MPI process
+ * type represents the message type
+ * payload is the message content
+ */
+struct NetworkMessage : private boost::noncopyable {
   int target;
-  int rpc_type;
-  int failures;
+  int type;
 
   string payload;
   MPI::Request mpi_req;
   MPI::Status status;
-  double start_time;
 
-  RPCRequest(int target, int method, const Message &msg);
-  ~RPCRequest();
+  NetworkMessage(int target, int method, const Message &msg);
+  ~NetworkMessage();
 
   //  if message has been sent successfully
   bool finished() {
@@ -44,60 +59,65 @@ struct RPCRequest : private boost::noncopyable {
   }
 };
 
+// sleep for t seconds
 void Sleep(double t) ;
-// sleep duration between reading messages off the network.
 
-// Hackery to get around mpi's unhappiness with threads.  This thread
-// simply polls MPI continuously for any kind of update and adds it to
-// a local queue.
+
+/**
+ * A singleton serving as the starting point of each MPI process.
+ * Launch a receiving thread that adds message to one of 2 queues:
+ * + Put/Get requests added to RequestQueue
+ * + Other messages: response + control messages added to ReceiveQueue
+ */
 class NetworkThread {
  public:
 
   // Blocking read for the given source and message type.
   void Read(int desired_src, int type, Message *data, int *source = NULL);
+  // Non-blocking read, true if successfull (data filled with content), false otherwise
   bool TryRead(int desired_src, int type, Message *data, int *source = NULL);
 
   // Enqueue the given request for transmission.
-  void Send(RPCRequest *req);
   void Send(int dst, int method, const Message &msg);
-
+  // local message also go through the ReceiveQueue
   void send_to_local_rx_queue(int dst, int method, const Message &msg);
 
+  // Broadcast a message to all nodes ranking 0..N-2
   void Broadcast(int method, const Message &msg);
+  // Broadcast and wait for response from all nodes ranking 0..N-2
   void SyncBroadcast(int method, int reply, const Message &msg);
 
+  // Wait for the sending queue to clear (no more message to send after this returns)
   void Flush();
+  // Stop the receiving thread
   void Shutdown();
 
+  // current rank
   int id() {
     return id_;
   }
+
+  // number of MPI processes
   int size() const {
     return world_->Get_size();
   }
 
   static std::shared_ptr<NetworkThread> Get();
 
-  // callback to function (in worker.cc) to handle top-priority message
-  // such as shard assignment, etc.
-  typedef boost::function<void ()> Callback;
 
-   void RegisterCallback(int message_type, Callback cb) {
+  // Callback for handling control & response messages.
+  typedef boost::function<void ()> Callback;
+  void RegisterCallback(int message_type, Callback cb) {
     callbacks_[message_type] = cb;
   }
 
-  bool active() const;
-
-  bool is_empty_queue(int src, int type);
-
   void PrintStats();
 
-  // set the barrier
+  // set the barrier. wait for other to reach the barrier before proceeding.
   void barrier();
 
-  void WaitForSync(int method, int count);
-  std::atomic<int> counter;
  private:
+  // max size of the response queue = kMaxHosts.kMaxMethods
   static const int kMaxHosts = 512;
   static const int kMaxMethods = 36;
 
@@ -105,48 +125,48 @@ class NetworkThread {
 
   static std::shared_ptr<NetworkThread> instance_;
 
-  //  set to false when receiving MTYPE_WORKER_SHUTDOWN from the manager
-  //  shared by the receiving thread and processing thread.
-  volatile bool running_;
-
   Callback callbacks_[kMaxMethods];
 
-  //queues of sent messages
-  deque<RPCRequest *> pending_sends_;
-  std::unordered_set<RPCRequest *> active_sends_;
-
+  // set to false when receiving MTYPE_WORKER_SHUTDOWN from the manager
+  // shared by the receiving thread and processing thread.
+  volatile bool running_;
   int id_;
   MPI::Comm *world_;
 
-  //send lock
-  mutable boost::recursive_mutex send_lock;
-  //received locks, one for each kMaxHosts
-  boost::recursive_mutex response_queue_locks_[kMaxMethods];
-
-  mutable boost::thread *sender_and_reciever_thread_;
-
-
-  //response queue (read)
-  Queue response_queue_[kMaxMethods][kMaxHosts];
-  Queue disk_queue_;
 
   Stats network_thread_stats_;
+  mutable boost::thread *sender_and_reciever_thread_;
 
+  // send and receive queues. Each has a lock
+
+  // send queue
+  mutable boost::recursive_mutex send_lock;
+  deque<NetworkMessage *> pending_sends_;
+  std::unordered_set<NetworkMessage *> active_sends_;
+
+  // receive queue. Messages are indexed by their types and source ranks.
+  boost::recursive_mutex receive_queue_locks_[kMaxMethods];
+  Queue receive_queue_[kMaxMethods][kMaxHosts];
+
+
+  // helper method for TryRead
   bool check_queue(int src, int type, Message *data);
 
   //  if there're still messages to send
-  bool is_active() const;
+  bool active() const;
 
   //  reclaim memory of the send queue
   void CollectActive();
 
-  //  loop that receives and sends messages
+  // helper method for SyncBroadcast
+  void WaitForSync(int method, int count);
+
+  // the thread that receives and send messages from the queues
   void NetworkLoop();
 
 
-
+  // private constructor
   NetworkThread();
-
 
 };
 }  // namespace lapis

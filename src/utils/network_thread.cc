@@ -19,14 +19,15 @@ DEFINE_double(sleep_time, 0.0001, "");
 
 namespace lapis {
 
+/**
+ * network-related stats
+ */
 string FIRST_BYTE_RECEIVED="first byte received";
 string LAST_BYTE_RECEIVED="last byte received";
 string TOTAL_BYTE_RECEIVED="total byte received";
 
 
 NetworkMessage::~NetworkMessage() {}
-
-// Send the given message type and data to this peer.
 NetworkMessage::NetworkMessage(int tgt, int method, const Message &ureq) {
   target = tgt;
   type = method;
@@ -34,11 +35,11 @@ NetworkMessage::NetworkMessage(int tgt, int method, const Message &ureq) {
 }
 
 TaggedMessage::~TaggedMessage() {}
-
 TaggedMessage::TaggedMessage(int t, const string &dat) {
   tag = t;
   data = dat;
 }
+
 
 std::shared_ptr<NetworkThread> NetworkThread::instance_;
 void Sleep(double t){

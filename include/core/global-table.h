@@ -151,6 +151,7 @@ public:
 		}
 	}
 
+	// return shard ID for the given key
 	int get_shard(const K &k);
 	int get_shard_str(StringPiece k);
 
@@ -197,9 +198,7 @@ int TypedGlobalTable<K, V>::get_shard_str(StringPiece k) {
 			unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 }
 
-// Store the given key-value pair in this hash. If 'k' has affinity for a
-// remote thread, the application occurs immediately on the local host,
-// and the update is queued for transmission to the owner.
+//  prepares the TableData object and sends off to the shard containing K
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	int shard = this->get_shard(k);
@@ -207,27 +206,29 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 			static_cast<Marshal<K>*>(this->info().key_marshal), k);
 
 	int local_rank = NetworkThread::Get()->id();
-	// if local, create a TableData, then Send
-	if (is_local_shard(shard)) {
-		TableData put;
-		put.set_shard(shard);
-		put.set_source(local_rank);
-		put.set_table(this->id());
 
-		StringPiece value = marshal(
-				static_cast<Marshal<V>*>(this->info().value_marshal), v);
+	// prepare TableData object
+	TableData put;
+	put.set_shard(shard);
+	put.set_source(local_rank);
+	put.set_table(this->id());
 
-		put.set_key(key.AsString());
-		Arg *a = put.add_kv_data();
-		a->set_key(key.data, key.len);
-		a->set_value(value.data, value.len);
-		put.set_done(true);
+	StringPiece value = marshal(
+			static_cast<Marshal<V>*>(this->info().value_marshal), v);
+
+	put.set_key(key.AsString());
+	Arg *a = put.add_kv_data();
+	a->set_key(key.data, key.len);
+	a->set_value(value.data, value.len);
+	put.set_done(true);
+
+	// send over the network
+	if (is_local_shard(shard))
 		NetworkThread::Get()->Send(local_rank, MTYPE_PUT_REQUEST, put); //send locally
-	} else {
-		partition(shard)->put(k, v);
-		send_put();
-	}
+	else
+		NetworkThread::Get()->Send(onwer(shard), MTYPE_PUT_REQUEST, put); //send remote
 }
+
 
 template<class K, class V>
 bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
@@ -235,27 +236,29 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	StringPiece key = marshal(
 			static_cast<Marshal<K>*>(this->info().key_marshal), k);
 
+
 	int local_rank = NetworkThread::Get()->id();
-	// if local, create a TableData, then Send
-	if (is_local_shard(shard)) {
-		TableData put;
-		put.set_shard(shard);
-		put.set_source(local_rank);
-		put.set_table(this->id());
 
-		StringPiece value = marshal(
-				static_cast<Marshal<V>*>(this->info().value_marshal), v);
+	//  prepares TableData
+	TableData put;
+	put.set_shard(shard);
+	put.set_source(local_rank);
+	put.set_table(this->id());
 
-		put.set_key(key.AsString());
-		Arg *a = put.add_kv_data();
-		a->set_key(key.data, key.len);
-		a->set_value(value.data, value.len);
-		put.set_done(true);
+	StringPiece value = marshal(
+			static_cast<Marshal<V>*>(this->info().value_marshal), v);
+
+	put.set_key(key.AsString());
+	Arg *a = put.add_kv_data();
+	a->set_key(key.data, key.len);
+	a->set_value(value.data, value.len);
+	put.set_done(true);
+
+	// send via the network
+	if (is_local_shard(shard))
 		NetworkThread::Get()->Send(local_rank, MTYPE_UPDATE_REQUEST, put); //send locally
-	} else {
-		partition(shard)->put(k, v);
-		send_update();
-	}
+	else
+		NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put); //send remotely
 	return true;
 }
 

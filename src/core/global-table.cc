@@ -12,8 +12,6 @@ DEFINE_bool(checkpoint_enabled, true, "enabling checkpoint");
 namespace lapis {
 
 
-void GlobalTable::UpdatePartitions(const ShardInfo &info) {
-}
 
 GlobalTable::~GlobalTable() {
   for (size_t i = 0; i < partitions_.size(); ++i) {
@@ -21,9 +19,6 @@ GlobalTable::~GlobalTable() {
   }
 }
 
-LocalTable *GlobalTable::get_partition(int shard) {
-  return partitions_[shard];
-}
 
 bool GlobalTable::is_local_shard(int shard) {
   return owner(shard) == worker_id_;
@@ -41,20 +36,12 @@ void GlobalTable::Init(const lapis::TableDescriptor *info) {
 }
 
 int64_t GlobalTable::shard_size(int shard) {
-  if (is_local_shard(shard)) {
-    return partitions_[shard]->size();
-  } else {
-    //return partinfo_[shard].sinfo.entries();
-    return 0;
-  }
+	return is_local_shard(shard) ? partitions_[shard]->size : 0;
 }
 
 void GlobalTable::clear(int shard) {
-  if (is_local_shard(shard)) {
-    partitions_[shard]->clear();
-  } else {
-    LOG(FATAL) << "Tried to clear a non-local shard - this is not supported.";
-  }
+	CHECK(is_local_shard(shard));
+	partitions_[shard]->clear();
 }
 
 bool GlobalTable::empty() {
@@ -75,7 +62,6 @@ void GlobalTable::resize(int64_t new_size) {
 }
 
 void GlobalTable::set_worker(TableServer *w) {
-  w_ = w;
   worker_id_ = w->id();
 }
 
@@ -106,15 +92,13 @@ void GlobalTable::async_get_remote(int shard, const StringPiece &k){
 	req.set_shard(shard);
 	req.set_source(worker_id_);
 	int peer = owner(shard);
-			// w_->peer_for_partition(info().table_id, shard);
-	//VLOG(3)<<"get remote befor send to "<<peer<<" from "<<worker_id_;
 	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
 }
 
 // return false when there's no response with given key
 bool GlobalTable::async_get_remote_collect_key(int shard, const string &k, string *v){
 	TableData resp;
-	int source = w_->peer_for_partition(info().table_id,shard);
+	int source = owner(shard);
 
 	  if (NetworkThread::Get()->TryRead(source, MTYPE_GET_RESPONSE, &resp)){
 		  if (k.compare(resp.kv_data(0).key())==0){
@@ -141,7 +125,7 @@ bool GlobalTable::async_get_remote_collect(string *k, string *v) {
   else return false;
 }
 
-bool GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
+bool GlobalTable::HandleGet(const HashGet &get_req, TableData *get_resp) {
   boost::recursive_mutex::scoped_lock sl(mutex());
   int shard = get_req.shard();
   if (!is_local_shard(shard)) {
@@ -166,7 +150,7 @@ bool GlobalTable::handle_get(const HashGet &get_req, TableData *get_resp) {
 
 
 
-void GlobalTable::SendUpdates() {
+void GlobalTable::send_update() {
   TableData put;
   for (size_t i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
@@ -179,7 +163,7 @@ void GlobalTable::SendUpdates() {
         //put.set_source(w_->id());
         put.set_source(worker_id_);
         put.set_table(id());
-        RPCTableCoder c(&put);
+        NetworkTableCoder c(&put);
         t->Serialize(&c);
         t->clear();
         put.set_done(true);
@@ -191,7 +175,7 @@ void GlobalTable::SendUpdates() {
   pending_writes_ = 0;
 }
 
-void GlobalTable::SendPut() {
+void GlobalTable::send_put() {
   TableData put;
   for (size_t i = 0; i < partitions_.size(); ++i) {
     LocalTable *t = partitions_[i];
@@ -204,7 +188,7 @@ void GlobalTable::SendPut() {
         //put.set_source(w_->id());
         put.set_source(worker_id_);
         put.set_table(id());
-        RPCTableCoder c(&put);
+        NetworkTableCoder c(&put);
         t->Serialize(&c);
         t->clear();
         put.set_done(true);
@@ -224,25 +208,9 @@ Stats GlobalTable::stats(){
 	return stats;
 }
 
-int GlobalTable::pending_write_bytes() {
-  int64_t s = 0;
-  for (size_t i = 0; i < partitions_.size(); ++i) {
-    LocalTable *t = partitions_[i];
-    if (!is_local_shard(i)) {
-      s += t->size();
-    }
-  }
-  return s;
-}
-
 bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
   boost::recursive_mutex::scoped_lock sl(mutex());
-  if (!is_local_shard(req.shard())) {
-    LOG_EVERY_N(INFO, 1000)
-        << "Forwarding push request from: " << MP(id(), req.shard())
-        << " to " << owner(req.shard());
-  }
-  RPCTableCoder c(&req);
+  NetworkTableCoder c(&req);
   bool ret =  partitions_[req.shard()]->ApplyUpdates(&c, checkpoint_files_[req.shard()]);
 
   return ret;
@@ -250,12 +218,7 @@ bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
 
 bool GlobalTable::ApplyPut(const lapis::TableData &req) {
   boost::recursive_mutex::scoped_lock sl(mutex());
-  if (!is_local_shard(req.shard())) {
-    LOG_EVERY_N(INFO, 1000)
-        << "Forwarding push request from: " << MP(id(), req.shard())
-        << " to " << owner(req.shard());
-  }
-  RPCTableCoder c(&req);
+  NetworkTableCoder c(&req);
   bool ret =  partitions_[req.shard()]->ApplyPut(&c, checkpoint_files_[req.shard()]);
 
   return ret;
@@ -267,7 +230,6 @@ void GlobalTable::Restore(int shard){
 		LogFile *logfile = (*checkpoint_files())[shard]; 
 		int restored_size = logfile->read_latest_table_size(); 
 		partitions_[shard]->restore(logfile, restored_size); 
-		VLOG(3) << "Done restoring table"; 
 	}		
 }
 }

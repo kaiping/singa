@@ -86,6 +86,8 @@ class NetworkThread {
   void Broadcast(int method, const Message &msg);
   // Broadcast and wait for response from all nodes ranking 0..N-2
   void SyncBroadcast(int method, int reply, const Message &msg);
+  // helper method for SyncBroadcast
+  void WaitForSync(int method, int count);
 
   // Wait for the sending queue to clear (no more message to send after this returns)
   void Flush();
@@ -107,9 +109,10 @@ class NetworkThread {
 
   // Callback for handling control & response messages.
   typedef boost::function<void ()> Callback;
+
   void RegisterCallback(int message_type, Callback cb) {
-    callbacks_[message_type] = cb;
-  }
+		callbacks_[message_type] = cb;
+   }
 
   void PrintStats();
 
@@ -157,9 +160,6 @@ class NetworkThread {
 
   //  reclaim memory of the send queue
   void CollectActive();
-
-  // helper method for SyncBroadcast
-  void WaitForSync(int method, int count);
 
   // the thread that receives and send messages from the queues
   void NetworkLoop();

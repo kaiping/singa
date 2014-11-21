@@ -129,5 +129,4 @@ T unmarshal(Marshal<T> *m, const StringPiece &s) {
 
 }
 
-#include "utils/tuple.h"
 #endif  // INCLUDE_CORE_COMMON_H_

@@ -93,7 +93,7 @@ bool TableServer::HandleGetRequest(const Message *message) {
   // fill data
 
     GlobalTable *t = tables_.at(get_req->table());
-    if (t->handle_get(*get_req, &get_resp)){
+    if (t->HandleGet(*get_req, &get_resp)){
     	net_->Send(get_req->source(), MTYPE_GET_RESPONSE, get_resp);
     	return true;
     }
@@ -116,7 +116,4 @@ bool TableServer::HandleUpdateRequest(const Message *message) {
   return ret;
 }
 
-int TableServer::peer_for_partition(int table, int shard) {
-  return tables_[table]->owner(shard);
-}
 }

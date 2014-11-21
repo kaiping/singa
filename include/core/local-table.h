@@ -10,26 +10,28 @@
 namespace lapis {
 
 // Represents a single shard of a partitioned global table.
-class LocalTable :
-  public TableBase,
-  public UntypedTable,
-  public Serializable {
- public:
-  LocalTable() : delta_file_(NULL) {}
-  bool empty() {
-    return size() == 0;
-  }
+class LocalTable: public TableBase, public UntypedTable, public Serializable {
+public:
+	LocalTable() :
+			delta_file_(NULL) {
+	}
+	bool empty() {
+		return size() == 0;
+	}
 
-  virtual int64_t size() = 0;
-  virtual void clear() = 0;
-  virtual void resize(int64_t size) = 0;
-  Stats& stats(){ return stats_;}
+	virtual int64_t size() = 0;
+	virtual void clear() = 0;
+	virtual void resize(int64_t size) = 0;
+	Stats& stats() {
+		return stats_;
+	}
 
-  virtual ~LocalTable() {}
- protected:
-  friend class GlobalTable;
-  TableCoder *delta_file_;
-  Stats stats_;
+	virtual ~LocalTable() {
+	}
+protected:
+	friend class GlobalTable;
+	TableCoder *delta_file_;
+	Stats stats_;
 };
 
 }  // namespace lapis

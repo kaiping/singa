@@ -1,3 +1,6 @@
+// Copyright © 2014 Anh Dinh. All Rights Reserved.
+// piccolo/table.h
+
 #ifndef INCLUDE_CORE_TABLE_H_
 #define INCLUDE_CORE_TABLE_H_
 #include <glog/logging.h>
@@ -11,123 +14,103 @@ namespace lapis {
 
 struct TableBase;
 
-template <class V>
-struct Accumulators {
-  /*
-  struct Min : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = std::min(*a, b);
-    }
-  };
-
-  struct Max : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = std::max(*a, b);
-    }
-  };
-
-  struct Sum : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = *a + b;
-    }
-  };
-
-  struct Replace : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = b;
-    }
-  };
-  */
-};
-
+//  differnt mappings of a key to a shard
 struct Sharding {
-  struct String  : public Sharder<string> {
-    int operator()(const string &k, int shards) {
-      return StringPiece(k).hash() % shards;
-    }
-  };
+	struct String: public Sharder<string> {
+		int operator()(const string &k, int shards) {
+			return StringPiece(k).hash() % shards;
+		}
+	};
 
-  struct Mod : public Sharder<int> {
-    int operator()(const int &key, int shards) {
-      return key % shards;
-    }
-  };
+	struct Mod: public Sharder<int> {
+		int operator()(const int &key, int shards) {
+			return key % shards;
+		}
+	};
 
-  struct UintMod : public Sharder<uint32_t> {
-    int operator()(const uint32_t &key, int shards) {
-      return key % shards;
-    }
-  };
+	struct UintMod: public Sharder<uint32_t> {
+		int operator()(const uint32_t &key, int shards) {
+			return key % shards;
+		}
+	};
 };
 
+//  create new local table with this facotry
 struct TableFactory {
-  virtual TableBase *New() = 0;
+	virtual TableBase *New() = 0;
 };
 
+
+//  global information of the table, containing the number of shards
+//  and the table ID
+//  also the helper objects for marshalling/unmarshalling data
 struct TableDescriptor {
- public:
-  TableDescriptor(int id, int shards) {
-    table_id = id;
-    num_shards = shards;
-  }
+public:
+	TableDescriptor(int id, int shards) {
+		table_id = id;
+		num_shards = shards;
+	}
 
-  TableDescriptor(const TableDescriptor &t) {
-    memcpy(this, &t, sizeof(t));
-  }
+	TableDescriptor(const TableDescriptor &t) {
+		memcpy(this, &t, sizeof(t));
+	}
 
-  int table_id;
-  int num_shards;
+	int table_id;
+	int num_shards;
 
-  // For local tables, the shard of the global table they represent.
-  int shard;
-  int default_shard_size;
+	// For local tables, the shard of the global table they represent.
+	int shard;
+	int default_shard_size;
 
-  void *accum;
-  void *sharder;
-  void *key_marshal;
-  void *value_marshal;
-  TableFactory *partition_factory;
+	void *accum;
+	void *sharder;
+	void *key_marshal;
+	void *value_marshal;
+	TableFactory *partition_factory;
 };
 
 
 // Methods common to both global table views and local shards
 class TableBase {
- public:
-  virtual void Init(const TableDescriptor *info) {
-    info_ = new TableDescriptor(*info);
-    //CHECK(info_->accum != NULL);
-    CHECK(info_->key_marshal != NULL);
-    CHECK(info_->value_marshal != NULL);
-  }
+public:
+	virtual void Init(const TableDescriptor *info) {
+		info_ = new TableDescriptor(*info);
+		CHECK(info_->key_marshal != NULL);
+		CHECK(info_->value_marshal != NULL);
+	}
 
-  const TableDescriptor &info() const {
-    return *info_;
-  }
+	const TableDescriptor &info() const {
+		return *info_;
+	}
 
-  virtual int id() {
-    return info().table_id;
-  }
+	virtual int id() {
+		return info().table_id;
+	}
 
-  int shard() const {
-    return info().shard;
-  }
-  virtual int num_shards() const {
-    return info().num_shards;
-  }
+	// current shard ID
+	int shard() const {
+		return info().shard;
+	}
 
- protected:
-  TableDescriptor *info_;
+	virtual int num_shards() const {
+		return info().num_shards;
+	}
+
+protected:
+	TableDescriptor *info_;
 };
 
 
-// Interface for serializing tables, either to disk or for transmitting via RPC.
+// Interface for serializing tables, either to disk or for transmitting over the network.
 struct TableCoder {
-  virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
-  virtual bool ReadEntry(string *k, string *v) = 0;
+	virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
+	virtual bool ReadEntry(string *k, string *v) = 0;
 
-  virtual ~TableCoder() {}
+	virtual ~TableCoder() {
+	}
 };
 
+// serializable interface
 class Serializable {
  public:
   virtual bool ApplyUpdates(TableCoder *in, LogFile *logfile) = 0;
@@ -149,6 +132,7 @@ class TypedTable {
   virtual void remove(const K &k) = 0;
 };
 
+// global, untyped table
 class UntypedTable {
  public:
   virtual bool contains_str(const StringPiece &k) = 0;
@@ -159,8 +143,9 @@ class UntypedTable {
 class TableData;
 
 
-struct RPCTableCoder : public TableCoder {
-  RPCTableCoder(const TableData *in);
+// encoding network table
+struct NetworkTableCoder : public TableCoder {
+	NetworkTableCoder(const TableData *in);
   virtual void WriteEntry(StringPiece k, StringPiece v);
   virtual bool ReadEntry(string *k, string *v);
 
@@ -168,6 +153,7 @@ struct RPCTableCoder : public TableCoder {
   TableData *t_;
 };
 
+// encoding local table (to serialize to disk)
 struct LocalTableCoder : public TableCoder {
   LocalTableCoder(const string &f, const string &mode);
   virtual ~LocalTableCoder();

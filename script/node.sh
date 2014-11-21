@@ -1,7 +1,7 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/*"
+folder="/data1/wangwei/lapis/validation/*"
 #folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/rack12"
+hostfile="examples/imagenet12/hostfile"
 if [ $# -eq 0 ]
 then
   echo "must provide argument, [chmod,ps, ssh,ls,cat, cp, delete, create or reset] + hostfile"
@@ -23,7 +23,7 @@ do
   if [ $1 == "ps" ]
   then
     echo "ssh $i"
-    ssh $i "ps aux|pgrep scp"
+    ssh $i "ps ax|pgrep $2"
   fi
   if [ $1 == "chmod" ]
   then
@@ -38,7 +38,7 @@ do
   if [ $1 == "ls" ]
   then
     echo "ssh $i"
-    ssh $i "ls $folder |wc -l"
+    ssh $i "ls -l $folder "
   fi
   if [ $1 == "ssh" ]
   then
@@ -58,6 +58,6 @@ do
   if [ $1 == "kill" ]
   then
     echo "kill $2 on $i"
-    ssh $i "ps aux|grep $2 |cut -d ' ' -f 3 |xargs kill"
+    ssh $i "ps ax|pgrep $2|xargs kill"
   fi
 done

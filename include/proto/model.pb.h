@@ -386,7 +386,7 @@ class DataSourceProto : public ::google::protobuf::Message {
   inline bool shuffle() const;
   inline void set_shuffle(bool value);
 
-  // optional bool hdfs = 12 [default = true];
+  // optional bool hdfs = 12 [default = false];
   inline bool has_hdfs() const;
   inline void clear_hdfs();
   static const int kHdfsFieldNumber = 12;
@@ -3368,7 +3368,7 @@ inline void DataSourceProto::set_shuffle(bool value) {
   // @@protoc_insertion_point(field_set:lapis.DataSourceProto.shuffle)
 }
 
-// optional bool hdfs = 12 [default = true];
+// optional bool hdfs = 12 [default = false];
 inline bool DataSourceProto::has_hdfs() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
@@ -3379,7 +3379,7 @@ inline void DataSourceProto::clear_has_hdfs() {
   _has_bits_[0] &= ~0x00000200u;
 }
 inline void DataSourceProto::clear_hdfs() {
-  hdfs_ = true;
+  hdfs_ = false;
   clear_has_hdfs();
 }
 inline bool DataSourceProto::hdfs() const {

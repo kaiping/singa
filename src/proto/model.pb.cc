@@ -534,105 +534,105 @@ void protobuf_AddDesc_model_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\013model.proto\022\005lapis\"\367\001\n\017DataSourceProto"
+    "\n\013model.proto\022\005lapis\"\370\001\n\017DataSourceProto"
     "\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002(\t\022\024\n\014image_fo"
     "lder\030\003 \001(\t\022\022\n\nlabel_path\030\004 \001(\t\022+\n\005shape\030"
     "\005 \003(\0132\034.lapis.DataSourceProto.Shape\022\014\n\004s"
     "ize\030\006 \001(\005\022\021\n\006offset\030\t \001(\005:\0010\022\021\n\tmean_fil"
-    "e\030\n \001(\t\022\025\n\007shuffle\030\013 \001(\010:\004true\022\022\n\004hdfs\030\014"
-    " \001(\010:\004true\032\022\n\005Shape\022\t\n\001s\030\001 \003(\005\"\266\004\n\nParam"
-    "Proto\022\014\n\004name\030\001 \002(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013in"
-    "it_method\030\003 \001(\0162\034.lapis.ParamProto.InitM"
-    "ethod:\tkConstant\022\020\n\005value\030\004 \001(\002:\0011\022\017\n\003lo"
-    "w\030\005 \001(\002:\002-1\022\017\n\004high\030\006 \001(\002:\0011\022\017\n\004mean\030\007 \001"
-    "(\002:\0010\022\016\n\003std\030\010 \001(\002:\0011\022\036\n\023momentum_multip"
-    "lier\030\t \001(\002:\0011\022#\n\030learning_rate_multiplie"
-    "r\030\n \001(\002:\0011\022\"\n\027weight_decay_multiplier\030\013 "
-    "\001(\002:\0011\022 \n\017split_threshold\030\014 \001(\005:\0075000000"
-    "\022\030\n\tpartition\030\r \001(\010:\005false\022\036\n\004data\030\016 \001(\013"
-    "2\020.lapis.DAryProto\022\036\n\004grad\030\017 \001(\0132\020.lapis"
-    ".DAryProto\"\222\001\n\nInitMethod\022\r\n\tkConstant\020\000"
-    "\022\r\n\tkGaussain\020\001\022\014\n\010kUniform\020\002\022\017\n\013kPretra"
-    "ined\020\003\022\026\n\022kGaussainSqrtFanIn\020\004\022\025\n\021kUnifo"
-    "rmSqrtFanIn\020\005\022\030\n\024kUniformSqrtFanInOut\020\006\""
-    "\373\004\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 \002"
-    "(\t\022\022\n\nnum_output\030\003 \001(\005\022 \n\005param\030\004 \003(\0132\021."
-    "lapis.ParamProto\022\023\n\013window_size\030\010 \001(\005\022\021\n"
-    "\006stride\030\t \001(\005:\0011\022\016\n\003pad\030\n \001(\005:\0010\022\025\n\nnum_"
-    "groups\030\013 \001(\005:\0011\022\r\n\005alpha\030\014 \001(\002\022\014\n\004beta\030\r"
-    " \001(\002\022\020\n\005knorm\030\016 \001(\002:\0011\0227\n\016pooling_method"
-    "\030\020 \001(\0162\037.lapis.LayerProto.PoolingMethod\022"
-    "\020\n\010cropsize\030\021 \001(\005\022\016\n\006mirror\030\022 \001(\010\022\026\n\tdro"
-    "p_prob\030\023 \001(\002:\0030.5\022\036\n\004data\030\024 \001(\0132\020.lapis."
-    "DAryProto\022\036\n\004grad\030\025 \001(\0132\020.lapis.DAryProt"
-    "o\022\"\n\010col_data\030\026 \001(\0132\020.lapis.DAryProto\022$\n"
-    "\nsplit_data\030\027 \001(\0132\020.lapis.DAryProto\022\022\n\ns"
-    "plit_size\030\030 \001(\005\022\024\n\tsplit_dim\030\031 \001(\005:\0011\022\025\n"
-    "\nconcat_dim\030\032 \001(\005:\0011\022\017\n\004topk\030\033 \001(\005:\0015\022\013\n"
-    "\003top\030\034 \003(\t\022\016\n\006bottom\030\035 \003(\t\"1\n\rPoolingMet"
-    "hod\022\017\n\013kMaxPooling\020\001\022\017\n\013kAvgPooling\020\002\"y\n"
-    "\tMeanProto\022\016\n\003num\030\001 \001(\005:\0010\022\023\n\010channels\030\002"
-    " \001(\005:\0010\022\021\n\006height\030\003 \001(\005:\0010\022\020\n\005width\030\004 \001("
-    "\005:\0010\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020\n\004diff\030\006 \003(\002B\002\020\001"
-    "\"D\n\tDAryProto\022\025\n\rpartition_dim\030\001 \001(\005\022\r\n\005"
-    "shape\030\002 \003(\005\022\021\n\005value\030\003 \003(\002B\002\020\001\",\n\010NetPro"
-    "to\022 \n\005layer\030\002 \003(\0132\021.lapis.LayerProto\"{\n\020"
-    "PerformanceProto\022\031\n\016topk_precision\030\001 \001(\002"
-    ":\0010\022\030\n\rtop_precision\030\002 \001(\002:\0010\022\017\n\004loss\030\003 "
-    "\001(\002:\0010\022\020\n\005count\030\004 \001(\005:\0010\022\017\n\004step\030\005 \001(\005:\001"
-    "0\"\326\006\n\013SolverProto\022/\n\006method\030\001 \001(\0162\031.lapi"
-    "s.SolverProto.Method:\004kSGD\022!\n\026checkpoint"
-    "_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_ever"
-    "y_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004 "
-    "\001(\t:\016tmp/checkpoint\022\032\n\017checkpoint_step\030\005"
-    " \001(\005:\0010\022\036\n\023display_after_steps\030\006 \001(\005:\0010\022"
-    "\036\n\023display_every_steps\030\007 \001(\005:\0010\022#\n\016displ"
-    "ay_prefix\030\010 \001(\t:\013tmp/display\022\032\n\017validati"
-    "on_step\030\t \001(\005:\0010\022!\n\026validation_after_ste"
-    "ps\030\n \001(\005:\0010\022!\n\026validation_every_steps\030\013 "
-    "\001(\005:\0010\022\024\n\ttest_step\030\014 \001(\005:\0010\022\033\n\020test_aft"
-    "er_steps\030\r \001(\005:\0010\022\033\n\020test_every_steps\030\016 "
-    "\001(\005:\0010\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/perform"
-    "ance\0229\n\003alg\030\020 \001(\0162\032.lapis.SolverProto.Gr"
-    "adAlg:\020kBackPropagation\022\021\n\tbatchsize\030\023 \001"
-    "(\005\022\023\n\013train_steps\030\024 \001(\005\022\030\n\020validation_st"
-    "eps\030\025 \001(\005\022\022\n\ntest_steps\030\026 \001(\005\022\030\n\nmax_spl"
-    "its\030\027 \001(\005:\0043571\022\034\n\003sgd\030\030 \001(\0132\017.lapis.SGD"
-    "Value\022$\n\007adagrad\030\031 \001(\0132\023.lapis.AdaGradVa"
-    "lue\" \n\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGrad\020\002\";\n"
-    "\007GradAlg\022\024\n\020kBackPropagation\020\001\022\032\n\026kContr"
-    "astiveDivergence\020\002\"\223\001\n\tDataProto\022*\n\ntrai"
-    "n_data\030\001 \001(\0132\026.lapis.DataSourceProto\022/\n\017"
-    "validation_data\030\002 \001(\0132\026.lapis.DataSource"
-    "Proto\022)\n\ttest_data\030\003 \001(\0132\026.lapis.DataSou"
-    "rceProto\"|\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n\003"
-    "net\030\002 \001(\0132\017.lapis.NetProto\022\"\n\006solver\030\003 \001"
-    "(\0132\022.lapis.SolverProto\022\036\n\004data\030\004 \001(\0132\020.l"
-    "apis.DataProto\"2\n\nShardProto\022\016\n\006record\030\001"
-    " \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Record\022\037\n\005"
-    "image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030\002"
-    " \001(\005\022\n\n\002id\030\003 \001(\t\"\345\001\n\014AdaGradValue\022\020\n\010n_u"
-    "pdate\030\001 \003(\005\022\022\n\007version\030\002 \001(\005:\0010\022\032\n\rlearn"
-    "ing_rate\030\003 \001(\002:\0030.1\022\020\n\005kinit\030\004 \001(\002:\0011\022\021\n"
-    "\tthreshold\030\005 \001(\005\022\013\n\003gid\030\006 \001(\005\022!\n\007history"
-    "\030\007 \001(\0132\020.lapis.DAryProto\022\036\n\004data\030\010 \001(\0132\020"
-    ".lapis.DAryProto\022\036\n\004grad\030\t \003(\0132\020.lapis.D"
-    "AryProto\"\244\004\n\010SGDValue\022\032\n\022base_learning_r"
-    "ate\030\001 \001(\002\022\023\n\010momentum\030\002 \001(\002:\0010\022\027\n\014weight"
-    "_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learni"
-    "ng_rate_change_steps\030\005 \001(\005\022E\n\024learning_r"
-    "ate_change\030\006 \001(\0162\033.lapis.SGDValue.Change"
-    "Proto:\nkInverse_t\022#\n\030learning_rate_multi"
-    "plier\030\007 \001(\002:\0011\022\"\n\027weight_decay_multiplie"
-    "r\030\010 \001(\002:\0011\022\023\n\010n_update\030\t \001(\005:\0010\022\022\n\007versi"
-    "on\030\n \001(\005:\0010\022\021\n\tthreshold\030\013 \001(\005\022\n\n\002id\030\014 \001"
-    "(\005\022\013\n\003gid\030\r \001(\005\022\036\n\004data\030\016 \001(\0132\020.lapis.DA"
-    "ryProto\022\036\n\004grad\030\017 \003(\0132\020.lapis.DAryProto\022"
-    "!\n\007history\030\020 \001(\0132\020.lapis.DAryProto\"S\n\013Ch"
-    "angeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020\n"
-    "\014kExponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004\""
-    "1\n\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n\007version\030\002 \001(\005\022\013\n"
-    "\003gid\030\003 \001(\005", 3930);
+    "e\030\n \001(\t\022\025\n\007shuffle\030\013 \001(\010:\004true\022\023\n\004hdfs\030\014"
+    " \001(\010:\005false\032\022\n\005Shape\022\t\n\001s\030\001 \003(\005\"\266\004\n\nPara"
+    "mProto\022\014\n\004name\030\001 \002(\t\022\r\n\005shape\030\002 \003(\005\022<\n\013i"
+    "nit_method\030\003 \001(\0162\034.lapis.ParamProto.Init"
+    "Method:\tkConstant\022\020\n\005value\030\004 \001(\002:\0011\022\017\n\003l"
+    "ow\030\005 \001(\002:\002-1\022\017\n\004high\030\006 \001(\002:\0011\022\017\n\004mean\030\007 "
+    "\001(\002:\0010\022\016\n\003std\030\010 \001(\002:\0011\022\036\n\023momentum_multi"
+    "plier\030\t \001(\002:\0011\022#\n\030learning_rate_multipli"
+    "er\030\n \001(\002:\0011\022\"\n\027weight_decay_multiplier\030\013"
+    " \001(\002:\0011\022 \n\017split_threshold\030\014 \001(\005:\007500000"
+    "0\022\030\n\tpartition\030\r \001(\010:\005false\022\036\n\004data\030\016 \001("
+    "\0132\020.lapis.DAryProto\022\036\n\004grad\030\017 \001(\0132\020.lapi"
+    "s.DAryProto\"\222\001\n\nInitMethod\022\r\n\tkConstant\020"
+    "\000\022\r\n\tkGaussain\020\001\022\014\n\010kUniform\020\002\022\017\n\013kPretr"
+    "ained\020\003\022\026\n\022kGaussainSqrtFanIn\020\004\022\025\n\021kUnif"
+    "ormSqrtFanIn\020\005\022\030\n\024kUniformSqrtFanInOut\020\006"
+    "\"\373\004\n\nLayerProto\022\014\n\004name\030\001 \002(\t\022\014\n\004type\030\002 "
+    "\002(\t\022\022\n\nnum_output\030\003 \001(\005\022 \n\005param\030\004 \003(\0132\021"
+    ".lapis.ParamProto\022\023\n\013window_size\030\010 \001(\005\022\021"
+    "\n\006stride\030\t \001(\005:\0011\022\016\n\003pad\030\n \001(\005:\0010\022\025\n\nnum"
+    "_groups\030\013 \001(\005:\0011\022\r\n\005alpha\030\014 \001(\002\022\014\n\004beta\030"
+    "\r \001(\002\022\020\n\005knorm\030\016 \001(\002:\0011\0227\n\016pooling_metho"
+    "d\030\020 \001(\0162\037.lapis.LayerProto.PoolingMethod"
+    "\022\020\n\010cropsize\030\021 \001(\005\022\016\n\006mirror\030\022 \001(\010\022\026\n\tdr"
+    "op_prob\030\023 \001(\002:\0030.5\022\036\n\004data\030\024 \001(\0132\020.lapis"
+    ".DAryProto\022\036\n\004grad\030\025 \001(\0132\020.lapis.DAryPro"
+    "to\022\"\n\010col_data\030\026 \001(\0132\020.lapis.DAryProto\022$"
+    "\n\nsplit_data\030\027 \001(\0132\020.lapis.DAryProto\022\022\n\n"
+    "split_size\030\030 \001(\005\022\024\n\tsplit_dim\030\031 \001(\005:\0011\022\025"
+    "\n\nconcat_dim\030\032 \001(\005:\0011\022\017\n\004topk\030\033 \001(\005:\0015\022\013"
+    "\n\003top\030\034 \003(\t\022\016\n\006bottom\030\035 \003(\t\"1\n\rPoolingMe"
+    "thod\022\017\n\013kMaxPooling\020\001\022\017\n\013kAvgPooling\020\002\"y"
+    "\n\tMeanProto\022\016\n\003num\030\001 \001(\005:\0010\022\023\n\010channels\030"
+    "\002 \001(\005:\0010\022\021\n\006height\030\003 \001(\005:\0010\022\020\n\005width\030\004 \001"
+    "(\005:\0010\022\020\n\004data\030\005 \003(\002B\002\020\001\022\020\n\004diff\030\006 \003(\002B\002\020"
+    "\001\"D\n\tDAryProto\022\025\n\rpartition_dim\030\001 \001(\005\022\r\n"
+    "\005shape\030\002 \003(\005\022\021\n\005value\030\003 \003(\002B\002\020\001\",\n\010NetPr"
+    "oto\022 \n\005layer\030\002 \003(\0132\021.lapis.LayerProto\"{\n"
+    "\020PerformanceProto\022\031\n\016topk_precision\030\001 \001("
+    "\002:\0010\022\030\n\rtop_precision\030\002 \001(\002:\0010\022\017\n\004loss\030\003"
+    " \001(\002:\0010\022\020\n\005count\030\004 \001(\005:\0010\022\017\n\004step\030\005 \001(\005:"
+    "\0010\"\326\006\n\013SolverProto\022/\n\006method\030\001 \001(\0162\031.lap"
+    "is.SolverProto.Method:\004kSGD\022!\n\026checkpoin"
+    "t_after_steps\030\002 \001(\005:\0010\022!\n\026checkpoint_eve"
+    "ry_steps\030\003 \001(\005:\0010\022)\n\021checkpoint_prefix\030\004"
+    " \001(\t:\016tmp/checkpoint\022\032\n\017checkpoint_step\030"
+    "\005 \001(\005:\0010\022\036\n\023display_after_steps\030\006 \001(\005:\0010"
+    "\022\036\n\023display_every_steps\030\007 \001(\005:\0010\022#\n\016disp"
+    "lay_prefix\030\010 \001(\t:\013tmp/display\022\032\n\017validat"
+    "ion_step\030\t \001(\005:\0010\022!\n\026validation_after_st"
+    "eps\030\n \001(\005:\0010\022!\n\026validation_every_steps\030\013"
+    " \001(\005:\0010\022\024\n\ttest_step\030\014 \001(\005:\0010\022\033\n\020test_af"
+    "ter_steps\030\r \001(\005:\0010\022\033\n\020test_every_steps\030\016"
+    " \001(\005:\0010\022$\n\013perf_prefix\030\017 \001(\t:\017tmp/perfor"
+    "mance\0229\n\003alg\030\020 \001(\0162\032.lapis.SolverProto.G"
+    "radAlg:\020kBackPropagation\022\021\n\tbatchsize\030\023 "
+    "\001(\005\022\023\n\013train_steps\030\024 \001(\005\022\030\n\020validation_s"
+    "teps\030\025 \001(\005\022\022\n\ntest_steps\030\026 \001(\005\022\030\n\nmax_sp"
+    "lits\030\027 \001(\005:\0043571\022\034\n\003sgd\030\030 \001(\0132\017.lapis.SG"
+    "DValue\022$\n\007adagrad\030\031 \001(\0132\023.lapis.AdaGradV"
+    "alue\" \n\006Method\022\010\n\004kSGD\020\001\022\014\n\010kAdaGrad\020\002\";"
+    "\n\007GradAlg\022\024\n\020kBackPropagation\020\001\022\032\n\026kCont"
+    "rastiveDivergence\020\002\"\223\001\n\tDataProto\022*\n\ntra"
+    "in_data\030\001 \001(\0132\026.lapis.DataSourceProto\022/\n"
+    "\017validation_data\030\002 \001(\0132\026.lapis.DataSourc"
+    "eProto\022)\n\ttest_data\030\003 \001(\0132\026.lapis.DataSo"
+    "urceProto\"|\n\nModelProto\022\014\n\004name\030\001 \001(\t\022\034\n"
+    "\003net\030\002 \001(\0132\017.lapis.NetProto\022\"\n\006solver\030\003 "
+    "\001(\0132\022.lapis.SolverProto\022\036\n\004data\030\004 \001(\0132\020."
+    "lapis.DataProto\"2\n\nShardProto\022\016\n\006record\030"
+    "\001 \003(\005\022\024\n\014shard_folder\030\002 \001(\t\"D\n\006Record\022\037\n"
+    "\005image\030\001 \001(\0132\020.lapis.DAryProto\022\r\n\005label\030"
+    "\002 \001(\005\022\n\n\002id\030\003 \001(\t\"\345\001\n\014AdaGradValue\022\020\n\010n_"
+    "update\030\001 \003(\005\022\022\n\007version\030\002 \001(\005:\0010\022\032\n\rlear"
+    "ning_rate\030\003 \001(\002:\0030.1\022\020\n\005kinit\030\004 \001(\002:\0011\022\021"
+    "\n\tthreshold\030\005 \001(\005\022\013\n\003gid\030\006 \001(\005\022!\n\007histor"
+    "y\030\007 \001(\0132\020.lapis.DAryProto\022\036\n\004data\030\010 \001(\0132"
+    "\020.lapis.DAryProto\022\036\n\004grad\030\t \003(\0132\020.lapis."
+    "DAryProto\"\244\004\n\010SGDValue\022\032\n\022base_learning_"
+    "rate\030\001 \001(\002\022\023\n\010momentum\030\002 \001(\002:\0010\022\027\n\014weigh"
+    "t_decay\030\003 \001(\002:\0010\022\r\n\005gamma\030\004 \001(\002\022\"\n\032learn"
+    "ing_rate_change_steps\030\005 \001(\005\022E\n\024learning_"
+    "rate_change\030\006 \001(\0162\033.lapis.SGDValue.Chang"
+    "eProto:\nkInverse_t\022#\n\030learning_rate_mult"
+    "iplier\030\007 \001(\002:\0011\022\"\n\027weight_decay_multipli"
+    "er\030\010 \001(\002:\0011\022\023\n\010n_update\030\t \001(\005:\0010\022\022\n\007vers"
+    "ion\030\n \001(\005:\0010\022\021\n\tthreshold\030\013 \001(\005\022\n\n\002id\030\014 "
+    "\001(\005\022\013\n\003gid\030\r \001(\005\022\036\n\004data\030\016 \001(\0132\020.lapis.D"
+    "AryProto\022\036\n\004grad\030\017 \003(\0132\020.lapis.DAryProto"
+    "\022!\n\007history\030\020 \001(\0132\020.lapis.DAryProto\"S\n\013C"
+    "hangeProto\022\n\n\006kFixed\020\000\022\016\n\nkInverse_t\020\001\022\020"
+    "\n\014kExponential\020\002\022\013\n\007kLinear\020\003\022\t\n\005kStep\020\004"
+    "\"1\n\004VKey\022\013\n\003key\030\001 \001(\005\022\017\n\007version\030\002 \001(\005\022\013"
+    "\n\003gid\030\003 \001(\005", 3931);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   DataSourceProto::default_instance_ = new DataSourceProto();
@@ -950,7 +950,7 @@ void DataSourceProto::SharedCtor() {
   offset_ = 0;
   mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   shuffle_ = true;
-  hdfs_ = true;
+  hdfs_ = false;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1041,7 +1041,7 @@ void DataSourceProto::Clear() {
   }
   if (_has_bits_[8 / 32] & 768) {
     shuffle_ = true;
-    hdfs_ = true;
+    hdfs_ = false;
   }
 
 #undef OFFSET_OF_FIELD_
@@ -1205,7 +1205,7 @@ bool DataSourceProto::MergePartialFromCodedStream(
         break;
       }
 
-      // optional bool hdfs = 12 [default = true];
+      // optional bool hdfs = 12 [default = false];
       case 12: {
         if (tag == 96) {
          parse_hdfs:
@@ -1316,7 +1316,7 @@ void DataSourceProto::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(11, this->shuffle(), output);
   }
 
-  // optional bool hdfs = 12 [default = true];
+  // optional bool hdfs = 12 [default = false];
   if (has_hdfs()) {
     ::google::protobuf::internal::WireFormatLite::WriteBool(12, this->hdfs(), output);
   }
@@ -1408,7 +1408,7 @@ void DataSourceProto::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(11, this->shuffle(), target);
   }
 
-  // optional bool hdfs = 12 [default = true];
+  // optional bool hdfs = 12 [default = false];
   if (has_hdfs()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(12, this->hdfs(), target);
   }
@@ -1481,7 +1481,7 @@ int DataSourceProto::ByteSize() const {
       total_size += 1 + 1;
     }
 
-    // optional bool hdfs = 12 [default = true];
+    // optional bool hdfs = 12 [default = false];
     if (has_hdfs()) {
       total_size += 1 + 1;
     }

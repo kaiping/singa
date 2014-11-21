@@ -13,6 +13,9 @@
 *.cproject
 *.log
 *.nfs*
+loader
+test
+tmp
 out
 log*
 latency*

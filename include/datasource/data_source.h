@@ -1,8 +1,8 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 // 2014-07-16 22:00
 
-#ifndef INCLUDE_DISK_DATA_SOURCE_H_
-#define INCLUDE_DISK_DATA_SOURCE_H_
+#ifndef INCLUDE_DATA_SOURCE_H_
+#define INCLUDE_DATA_SOURCE_H_
 #include <google/protobuf/repeated_field.h>
 #include <string>
 #include <memory>
@@ -15,22 +15,23 @@
 using std::shared_ptr;
 using std::vector;
 using std::string;
-namespace lapis {
-typedef vector<string> StringVec;
 /**
- * Base class of data source which provides training records for applications.
- * Every worker will call it to parse raw data and insert records into leveldb
+ * Base class of data source which specify the APIs for generating key-record
+ * tuples by paring raw data (e.g., images). It is used in preparing data
+ * shards.
  */
+namespace lapis {
+
 class DataSource {
  public:
-  virtual ~DataSource(){}
-  virtual void Init(const DataSourceProto &ds_proto);
-  virtual void Init(const DataSourceProto &proto, const ShardProto& shard)=0;
-  virtual void ToProto(DataSourceProto *ds_proto);
-  virtual int NextRecord(string* key, Record *record)=0;
-  void Next() {offset_++;}
-  //virtual bool GetRecord(const int key, Record* record)=0;
-  //virtual void Reset(const ShardProto& sp)=0;
+  DataSource() : size_(0), offset_(0), name_("unknown"){}
+  /**
+   * fetch/parse next record
+   * @key pointer to key string, exist content will be overwrite
+   * @pointer to Record, exist content will be overwrite
+   * @return true if read succ, false otherwise
+   */
+  virtual bool NextRecord(string* key, Record *record)=0;
   /**
    * Return name of this data source
    */
@@ -38,20 +39,20 @@ class DataSource {
     return name_;
   }
   /**
-   * Return number of instances of this data source.
+   * Return number of instances of this data source
    */
   const int size() {
     return size_;
   }
   /**
    * Return the offset (or id) of current record to the first record.
-   * This offset may be used by the Trainer to check whether all data sources
-   * are in sync.
    */
   int offset() {
     return offset_;
   }
-
+  /**
+   * Check end of parsing
+   */
   bool eof() {
     return offset_>=size_;
   }
@@ -63,51 +64,70 @@ class DataSource {
   int offset_;
   //! identifier of the data source
   string name_;
-  //! data source type
-  // DataSourceProto_DataType type_;
 };
 /**
- * DataSource whose local source is rgb images under a directory.
+ * ImageNet dataset specific source
  */
 class ImageNetSource : public DataSource {
  public:
-  virtual void Init(const DataSourceProto &proto, const ShardProto& shard);
-  virtual void Init(const DataSourceProto &proto);
-  virtual int NextRecord(string* key, Record *record);
+  /**
+   * @folder local shard folder, it has subdir/file: img/ for original images;
+   * rid.txt for record meta info (image path and label pair); shard.dat,
+   * storing parsed records;
+   * @meanfile, mean google protobuf file for the imagenet images
+   * @width, resize images to this width
+   * @height, resize images to this height
+   */
+  void Init(const string& folder, const string& meanfile,
+      const int width, const int height);
+  virtual bool NextRecord(string* key, Record *record);
 
-  void Reset(const ShardProto& sp);
-  bool GetRecord(const int key, Record* record);
+  // class identifier
+  static const std::string type;
+ protected:
+  /**
+   * get record at the specific offset
+   * return true if succ, otherwise false
+   */
+  bool GetRecord(const int offset, Record* record);
+  /**
+   * Read raw image, resize, normalize (substract mean), copy to DAryProto obj
+   */
   int ReadImage(const std::string &path, int height, int width,
       const float *mean, DAryProto* datum);
+  /**
+   * Load meta info file which has image path and label
+   */
   void LoadLabel(string path);
+  /**
+   * Load meanfile
+   */
   void LoadMeanFile(string path);
-  int CopyFileFromHDFS(string hdfs_path, string local_path) ;
-  int CopyFilesFromHDFS(string hdfs_folder, string local_folder,
-    std::vector<string> files) ;
-  //! the identifier, i.e., "RGBSource"
-  static const std::string type;
 
  private:
-  bool hdfs_; // if true, all following paths are hdfs path
   /**
-   * image folder + lines[i].first is the full path of one image
+   * image folder (shard_folder/img) + lines[i].first is the full path of one image
+   *
    */
   std::string image_folder_;
+  /**
+   * label_path_ is shard_folder/rid.txt
+   */
   std::string label_path_;
   std::string mean_file_;
   /**
    * expected height of the image, assume all images are of the same shape; if
-   * the real shape is not the same as the expected, then resize it. The
+   * the real shape is not the same as the expected, then resize it.
    */
   int height_;
   //! width of the image, assume all images are of the same shape
   int width_;
-  // should be fixed to 3, because this is rgb feature.
-  int channels_;
+  /**
+   * resized image size
+   */
   int record_size_;
-  bool do_shuffle_;
-  MeanProto *data_mean_;
-  //! pairs of image file name and label
+  MeanProto data_mean_;
+  // record meta info,  a pair of image file name and label
   vector<std::pair<string, int>> lines_;
 };
 /*****************************************************************************
@@ -165,6 +185,5 @@ class DataSourceFactory {
   static shared_ptr<DataSourceFactory> instance_;
 };
 
-}  // namespace lapis
-
-#endif  // INCLUDE_DISK_DATA_SOURCE_H_
+}  // namespace
+#endif  // INCLUDE_DATA_SOURCE_H_

@@ -30,7 +30,7 @@ BUILD_DIR := build
 ###############################################################################
 # Build Lapis into .a and .so library
 ###############################################################################
-.PHONY: all shard proto core init model utils test_core flint clean
+.PHONY: all loader proto core init model utils test_core flint clean
 
 # find user defined .proto file, and then compute the corresponding .h, .cc
 # files, which cannot be found by shell find, because they haven't been
@@ -84,7 +84,7 @@ run_data: lapis.bin
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--v=3 -load=false --run=true --table_buffer=20 --block_size=10 --db_backend=lmdb -par_mode=data
 
-shard: init proto $(OBJS)
+loader: init proto $(OBJS)
 	$(CXX) $(OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
 

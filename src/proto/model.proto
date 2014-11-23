@@ -1,27 +1,5 @@
 package lapis;
 
-
-message DataSourceProto {
-  required string name = 1;
-  // e.g., RGBDirSource and LabelSource
-  required string type = 2;
-  // directory for RGBDirSource and file for LabelSource
-  optional string image_folder = 3;
-  optional string label_path = 4;
-  message Shape {
-    // the layer will parse the semantics of the shape
-    repeated int32 s =1;
-  }
-  repeated Shape shape = 5;
-  optional int32 size=6;
-  // offset of record to be read.
-  optional int32 offset =9 [default=0];
-  // MeanProto file, has the mean of images, used by RGBDirSource
-  optional string mean_file=10;
-  optional bool shuffle=11 [default = true];
-  optional bool hdfs=12 [default =false];
-}
-
 message ParamProto {
   // for the program to identify it, each edge/layer has fixed parameters
   // e.g., "weight" "bias"
@@ -200,23 +178,13 @@ message SolverProto {
   optional AdaGradValue adagrad=25;
 }
 
-message DataProto {
-  optional DataSourceProto train_data = 1;
-  optional DataSourceProto validation_data = 2;
-  optional DataSourceProto test_data = 3;
-}
-message ModelProto {
+message Model{
   // model name
   optional string name = 1;
   optional NetProto net = 2;
   optional SolverProto solver = 3;
-  optional DataProto data =4;
 }
 
-message ShardProto {
-  repeated int32 record=1;
-  optional string shard_folder=2;
-}
 message Record {
   optional DAryProto image=1;
   optional int32 label=2;

@@ -4,8 +4,6 @@
 #ifndef INCLUDE_NET_SOLVER_H_
 #define INCLUDE_NET_SOLVER_H_
 #include <pthread.h>
-#include <leveldb/db.h>
-#include <lmdb.h>
 
 #include <atomic>
 #include <string>
@@ -16,26 +14,20 @@
 #include "proto/model.pb.h"
 #include "net/net.h"
 #include "utils/common.h"
+#include "utils/shard.h"
 
 
 namespace lapis {
 class Prefetcher {
  public:
   Prefetcher(std::string path, Net* _net);
-  void ReadRecord(Record* record);
-  void NextIterator();
-  void Free();
-  // leveldb
-  leveldb::DB* db;
-  leveldb::Iterator *iter;
-  // LMDB
-  MDB_env* mdb_env;
-  MDB_dbi mdb_dbi;
-  MDB_txn* mdb_txn;
-  MDB_cursor* mdb_cursor;
-  MDB_val mdb_key, mdb_value;
+  ~Prefetcher();
+  void operator()();
+  void NextRecord(Record* record);
 
-  Net* net;
+ private:
+  Shard* shard_;
+  Net* net_;
 };
 /**
  * Forward declaration of Net class
@@ -55,11 +47,10 @@ class Solver {
      */
     Solver(const SolverProto &proto);
     ~Solver();
-    void Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np);
+    void Setup(TableDelegate* delegate, const NetProto& np);
     void Train(int start_step=0);
     void Test();
     Performance Test(const Phase& phase); //kValidation or kTest
-    leveldb::DB* OpenShard(string path) ;
     void InitParams();
     void DebugInfo(Net* net);
     void TimeOneBatch(int runs=10) ;
@@ -156,10 +147,14 @@ class Solver {
     }
     static Phase phase;
   protected:
+
+    Net* SetupNeuralNet(const NetProto& proto) ;
+  protected:
     //! current phase, need this field to change the data sources for input layer
     //! current training step, e.g., such num of mini-batches have been processed
     int step_;
-
+    //! assume train, validation and test have the same batchsize
+    int batchsize_;
     //! start checkpoint after this num of steps
     int checkpoint_after_steps_;
     //! frequency for checkpoint

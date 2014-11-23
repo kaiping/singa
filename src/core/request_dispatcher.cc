@@ -76,6 +76,8 @@ namespace lapis {
 			string key;
 			table_queue_->NextRequest(&t_msg);
 			table_queue_->ExtractKey(t_msg.tag, t_msg.data, &key);
+      if(GlobalContext::Get()->rank()==17)
+        LOG(ERROR)<<"queue size "<<num_outstanding_request_;
 
 			boost::scoped_ptr <Message> message;
 			if (t_msg.tag == MTYPE_GET_REQUEST)

@@ -34,8 +34,6 @@ void  protobuf_AddDesc_model_2eproto();
 void protobuf_AssignDesc_model_2eproto();
 void protobuf_ShutdownFile_model_2eproto();
 
-class DataSourceProto;
-class DataSourceProto_Shape;
 class ParamProto;
 class LayerProto;
 class MeanProto;
@@ -43,9 +41,7 @@ class DAryProto;
 class NetProto;
 class PerformanceProto;
 class SolverProto;
-class DataProto;
-class ModelProto;
-class ShardProto;
+class Model;
 class Record;
 class AdaGradValue;
 class SGDValue;
@@ -155,287 +151,6 @@ inline bool SGDValue_ChangeProto_Parse(
     SGDValue_ChangeProto_descriptor(), name, value);
 }
 // ===================================================================
-
-class DataSourceProto_Shape : public ::google::protobuf::Message {
- public:
-  DataSourceProto_Shape();
-  virtual ~DataSourceProto_Shape();
-
-  DataSourceProto_Shape(const DataSourceProto_Shape& from);
-
-  inline DataSourceProto_Shape& operator=(const DataSourceProto_Shape& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DataSourceProto_Shape& default_instance();
-
-  void Swap(DataSourceProto_Shape* other);
-
-  // implements Message ----------------------------------------------
-
-  DataSourceProto_Shape* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DataSourceProto_Shape& from);
-  void MergeFrom(const DataSourceProto_Shape& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // repeated int32 s = 1;
-  inline int s_size() const;
-  inline void clear_s();
-  static const int kSFieldNumber = 1;
-  inline ::google::protobuf::int32 s(int index) const;
-  inline void set_s(int index, ::google::protobuf::int32 value);
-  inline void add_s(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-      s() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-      mutable_s();
-
-  // @@protoc_insertion_point(class_scope:lapis.DataSourceProto.Shape)
- private:
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > s_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static DataSourceProto_Shape* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class DataSourceProto : public ::google::protobuf::Message {
- public:
-  DataSourceProto();
-  virtual ~DataSourceProto();
-
-  DataSourceProto(const DataSourceProto& from);
-
-  inline DataSourceProto& operator=(const DataSourceProto& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DataSourceProto& default_instance();
-
-  void Swap(DataSourceProto* other);
-
-  // implements Message ----------------------------------------------
-
-  DataSourceProto* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DataSourceProto& from);
-  void MergeFrom(const DataSourceProto& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  typedef DataSourceProto_Shape Shape;
-
-  // accessors -------------------------------------------------------
-
-  // required string name = 1;
-  inline bool has_name() const;
-  inline void clear_name();
-  static const int kNameFieldNumber = 1;
-  inline const ::std::string& name() const;
-  inline void set_name(const ::std::string& value);
-  inline void set_name(const char* value);
-  inline void set_name(const char* value, size_t size);
-  inline ::std::string* mutable_name();
-  inline ::std::string* release_name();
-  inline void set_allocated_name(::std::string* name);
-
-  // required string type = 2;
-  inline bool has_type() const;
-  inline void clear_type();
-  static const int kTypeFieldNumber = 2;
-  inline const ::std::string& type() const;
-  inline void set_type(const ::std::string& value);
-  inline void set_type(const char* value);
-  inline void set_type(const char* value, size_t size);
-  inline ::std::string* mutable_type();
-  inline ::std::string* release_type();
-  inline void set_allocated_type(::std::string* type);
-
-  // optional string image_folder = 3;
-  inline bool has_image_folder() const;
-  inline void clear_image_folder();
-  static const int kImageFolderFieldNumber = 3;
-  inline const ::std::string& image_folder() const;
-  inline void set_image_folder(const ::std::string& value);
-  inline void set_image_folder(const char* value);
-  inline void set_image_folder(const char* value, size_t size);
-  inline ::std::string* mutable_image_folder();
-  inline ::std::string* release_image_folder();
-  inline void set_allocated_image_folder(::std::string* image_folder);
-
-  // optional string label_path = 4;
-  inline bool has_label_path() const;
-  inline void clear_label_path();
-  static const int kLabelPathFieldNumber = 4;
-  inline const ::std::string& label_path() const;
-  inline void set_label_path(const ::std::string& value);
-  inline void set_label_path(const char* value);
-  inline void set_label_path(const char* value, size_t size);
-  inline ::std::string* mutable_label_path();
-  inline ::std::string* release_label_path();
-  inline void set_allocated_label_path(::std::string* label_path);
-
-  // repeated .lapis.DataSourceProto.Shape shape = 5;
-  inline int shape_size() const;
-  inline void clear_shape();
-  static const int kShapeFieldNumber = 5;
-  inline const ::lapis::DataSourceProto_Shape& shape(int index) const;
-  inline ::lapis::DataSourceProto_Shape* mutable_shape(int index);
-  inline ::lapis::DataSourceProto_Shape* add_shape();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape >&
-      shape() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape >*
-      mutable_shape();
-
-  // optional int32 size = 6;
-  inline bool has_size() const;
-  inline void clear_size();
-  static const int kSizeFieldNumber = 6;
-  inline ::google::protobuf::int32 size() const;
-  inline void set_size(::google::protobuf::int32 value);
-
-  // optional int32 offset = 9 [default = 0];
-  inline bool has_offset() const;
-  inline void clear_offset();
-  static const int kOffsetFieldNumber = 9;
-  inline ::google::protobuf::int32 offset() const;
-  inline void set_offset(::google::protobuf::int32 value);
-
-  // optional string mean_file = 10;
-  inline bool has_mean_file() const;
-  inline void clear_mean_file();
-  static const int kMeanFileFieldNumber = 10;
-  inline const ::std::string& mean_file() const;
-  inline void set_mean_file(const ::std::string& value);
-  inline void set_mean_file(const char* value);
-  inline void set_mean_file(const char* value, size_t size);
-  inline ::std::string* mutable_mean_file();
-  inline ::std::string* release_mean_file();
-  inline void set_allocated_mean_file(::std::string* mean_file);
-
-  // optional bool shuffle = 11 [default = true];
-  inline bool has_shuffle() const;
-  inline void clear_shuffle();
-  static const int kShuffleFieldNumber = 11;
-  inline bool shuffle() const;
-  inline void set_shuffle(bool value);
-
-  // optional bool hdfs = 12 [default = false];
-  inline bool has_hdfs() const;
-  inline void clear_hdfs();
-  static const int kHdfsFieldNumber = 12;
-  inline bool hdfs() const;
-  inline void set_hdfs(bool value);
-
-  // @@protoc_insertion_point(class_scope:lapis.DataSourceProto)
- private:
-  inline void set_has_name();
-  inline void clear_has_name();
-  inline void set_has_type();
-  inline void clear_has_type();
-  inline void set_has_image_folder();
-  inline void clear_has_image_folder();
-  inline void set_has_label_path();
-  inline void clear_has_label_path();
-  inline void set_has_size();
-  inline void clear_has_size();
-  inline void set_has_offset();
-  inline void clear_has_offset();
-  inline void set_has_mean_file();
-  inline void clear_has_mean_file();
-  inline void set_has_shuffle();
-  inline void clear_has_shuffle();
-  inline void set_has_hdfs();
-  inline void clear_has_hdfs();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::std::string* name_;
-  ::std::string* type_;
-  ::std::string* image_folder_;
-  ::std::string* label_path_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape > shape_;
-  ::google::protobuf::int32 size_;
-  ::google::protobuf::int32 offset_;
-  ::std::string* mean_file_;
-  bool shuffle_;
-  bool hdfs_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static DataSourceProto* default_instance_;
-};
-// -------------------------------------------------------------------
 
 class ParamProto : public ::google::protobuf::Message {
  public:
@@ -1888,14 +1603,14 @@ class SolverProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class DataProto : public ::google::protobuf::Message {
+class Model : public ::google::protobuf::Message {
  public:
-  DataProto();
-  virtual ~DataProto();
+  Model();
+  virtual ~Model();
 
-  DataProto(const DataProto& from);
+  Model(const Model& from);
 
-  inline DataProto& operator=(const DataProto& from) {
+  inline Model& operator=(const Model& from) {
     CopyFrom(from);
     return *this;
   }
@@ -1909,122 +1624,17 @@ class DataProto : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const DataProto& default_instance();
+  static const Model& default_instance();
 
-  void Swap(DataProto* other);
-
-  // implements Message ----------------------------------------------
-
-  DataProto* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DataProto& from);
-  void MergeFrom(const DataProto& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional .lapis.DataSourceProto train_data = 1;
-  inline bool has_train_data() const;
-  inline void clear_train_data();
-  static const int kTrainDataFieldNumber = 1;
-  inline const ::lapis::DataSourceProto& train_data() const;
-  inline ::lapis::DataSourceProto* mutable_train_data();
-  inline ::lapis::DataSourceProto* release_train_data();
-  inline void set_allocated_train_data(::lapis::DataSourceProto* train_data);
-
-  // optional .lapis.DataSourceProto validation_data = 2;
-  inline bool has_validation_data() const;
-  inline void clear_validation_data();
-  static const int kValidationDataFieldNumber = 2;
-  inline const ::lapis::DataSourceProto& validation_data() const;
-  inline ::lapis::DataSourceProto* mutable_validation_data();
-  inline ::lapis::DataSourceProto* release_validation_data();
-  inline void set_allocated_validation_data(::lapis::DataSourceProto* validation_data);
-
-  // optional .lapis.DataSourceProto test_data = 3;
-  inline bool has_test_data() const;
-  inline void clear_test_data();
-  static const int kTestDataFieldNumber = 3;
-  inline const ::lapis::DataSourceProto& test_data() const;
-  inline ::lapis::DataSourceProto* mutable_test_data();
-  inline ::lapis::DataSourceProto* release_test_data();
-  inline void set_allocated_test_data(::lapis::DataSourceProto* test_data);
-
-  // @@protoc_insertion_point(class_scope:lapis.DataProto)
- private:
-  inline void set_has_train_data();
-  inline void clear_has_train_data();
-  inline void set_has_validation_data();
-  inline void clear_has_validation_data();
-  inline void set_has_test_data();
-  inline void clear_has_test_data();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::lapis::DataSourceProto* train_data_;
-  ::lapis::DataSourceProto* validation_data_;
-  ::lapis::DataSourceProto* test_data_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static DataProto* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class ModelProto : public ::google::protobuf::Message {
- public:
-  ModelProto();
-  virtual ~ModelProto();
-
-  ModelProto(const ModelProto& from);
-
-  inline ModelProto& operator=(const ModelProto& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ModelProto& default_instance();
-
-  void Swap(ModelProto* other);
+  void Swap(Model* other);
 
   // implements Message ----------------------------------------------
 
-  ModelProto* New() const;
+  Model* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const ModelProto& from);
-  void MergeFrom(const ModelProto& from);
+  void CopyFrom(const Model& from);
+  void MergeFrom(const Model& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -2076,16 +1686,7 @@ class ModelProto : public ::google::protobuf::Message {
   inline ::lapis::SolverProto* release_solver();
   inline void set_allocated_solver(::lapis::SolverProto* solver);
 
-  // optional .lapis.DataProto data = 4;
-  inline bool has_data() const;
-  inline void clear_data();
-  static const int kDataFieldNumber = 4;
-  inline const ::lapis::DataProto& data() const;
-  inline ::lapis::DataProto* mutable_data();
-  inline ::lapis::DataProto* release_data();
-  inline void set_allocated_data(::lapis::DataProto* data);
-
-  // @@protoc_insertion_point(class_scope:lapis.ModelProto)
+  // @@protoc_insertion_point(class_scope:lapis.Model)
  private:
   inline void set_has_name();
   inline void clear_has_name();
@@ -2093,8 +1694,6 @@ class ModelProto : public ::google::protobuf::Message {
   inline void clear_has_net();
   inline void set_has_solver();
   inline void clear_has_solver();
-  inline void set_has_data();
-  inline void clear_has_data();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -2103,110 +1702,12 @@ class ModelProto : public ::google::protobuf::Message {
   ::std::string* name_;
   ::lapis::NetProto* net_;
   ::lapis::SolverProto* solver_;
-  ::lapis::DataProto* data_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static ModelProto* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class ShardProto : public ::google::protobuf::Message {
- public:
-  ShardProto();
-  virtual ~ShardProto();
-
-  ShardProto(const ShardProto& from);
-
-  inline ShardProto& operator=(const ShardProto& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ShardProto& default_instance();
-
-  void Swap(ShardProto* other);
-
-  // implements Message ----------------------------------------------
-
-  ShardProto* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const ShardProto& from);
-  void MergeFrom(const ShardProto& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // repeated int32 record = 1;
-  inline int record_size() const;
-  inline void clear_record();
-  static const int kRecordFieldNumber = 1;
-  inline ::google::protobuf::int32 record(int index) const;
-  inline void set_record(int index, ::google::protobuf::int32 value);
-  inline void add_record(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-      record() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-      mutable_record();
-
-  // optional string shard_folder = 2;
-  inline bool has_shard_folder() const;
-  inline void clear_shard_folder();
-  static const int kShardFolderFieldNumber = 2;
-  inline const ::std::string& shard_folder() const;
-  inline void set_shard_folder(const ::std::string& value);
-  inline void set_shard_folder(const char* value);
-  inline void set_shard_folder(const char* value, size_t size);
-  inline ::std::string* mutable_shard_folder();
-  inline ::std::string* release_shard_folder();
-  inline void set_allocated_shard_folder(::std::string* shard_folder);
-
-  // @@protoc_insertion_point(class_scope:lapis.ShardProto)
- private:
-  inline void set_has_shard_folder();
-  inline void clear_has_shard_folder();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > record_;
-  ::std::string* shard_folder_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static ShardProto* default_instance_;
+  static Model* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -2849,550 +2350,6 @@ class VKey : public ::google::protobuf::Message {
 
 
 // ===================================================================
-
-// DataSourceProto_Shape
-
-// repeated int32 s = 1;
-inline int DataSourceProto_Shape::s_size() const {
-  return s_.size();
-}
-inline void DataSourceProto_Shape::clear_s() {
-  s_.Clear();
-}
-inline ::google::protobuf::int32 DataSourceProto_Shape::s(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.Shape.s)
-  return s_.Get(index);
-}
-inline void DataSourceProto_Shape::set_s(int index, ::google::protobuf::int32 value) {
-  s_.Set(index, value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.Shape.s)
-}
-inline void DataSourceProto_Shape::add_s(::google::protobuf::int32 value) {
-  s_.Add(value);
-  // @@protoc_insertion_point(field_add:lapis.DataSourceProto.Shape.s)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-DataSourceProto_Shape::s() const {
-  // @@protoc_insertion_point(field_list:lapis.DataSourceProto.Shape.s)
-  return s_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-DataSourceProto_Shape::mutable_s() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.DataSourceProto.Shape.s)
-  return &s_;
-}
-
-// -------------------------------------------------------------------
-
-// DataSourceProto
-
-// required string name = 1;
-inline bool DataSourceProto::has_name() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void DataSourceProto::set_has_name() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void DataSourceProto::clear_has_name() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void DataSourceProto::clear_name() {
-  if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_->clear();
-  }
-  clear_has_name();
-}
-inline const ::std::string& DataSourceProto::name() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.name)
-  return *name_;
-}
-inline void DataSourceProto::set_name(const ::std::string& value) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.name)
-}
-inline void DataSourceProto::set_name(const char* value) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.DataSourceProto.name)
-}
-inline void DataSourceProto::set_name(const char* value, size_t size) {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  name_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.DataSourceProto.name)
-}
-inline ::std::string* DataSourceProto::mutable_name() {
-  set_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    name_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.name)
-  return name_;
-}
-inline ::std::string* DataSourceProto::release_name() {
-  clear_has_name();
-  if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void DataSourceProto::set_allocated_name(::std::string* name) {
-  if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete name_;
-  }
-  if (name) {
-    set_has_name();
-    name_ = name;
-  } else {
-    clear_has_name();
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataSourceProto.name)
-}
-
-// required string type = 2;
-inline bool DataSourceProto::has_type() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void DataSourceProto::set_has_type() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void DataSourceProto::clear_has_type() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void DataSourceProto::clear_type() {
-  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_->clear();
-  }
-  clear_has_type();
-}
-inline const ::std::string& DataSourceProto::type() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.type)
-  return *type_;
-}
-inline void DataSourceProto::set_type(const ::std::string& value) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.type)
-}
-inline void DataSourceProto::set_type(const char* value) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.DataSourceProto.type)
-}
-inline void DataSourceProto::set_type(const char* value, size_t size) {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  type_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.DataSourceProto.type)
-}
-inline ::std::string* DataSourceProto::mutable_type() {
-  set_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    type_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.type)
-  return type_;
-}
-inline ::std::string* DataSourceProto::release_type() {
-  clear_has_type();
-  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = type_;
-    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void DataSourceProto::set_allocated_type(::std::string* type) {
-  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete type_;
-  }
-  if (type) {
-    set_has_type();
-    type_ = type;
-  } else {
-    clear_has_type();
-    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataSourceProto.type)
-}
-
-// optional string image_folder = 3;
-inline bool DataSourceProto::has_image_folder() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void DataSourceProto::set_has_image_folder() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void DataSourceProto::clear_has_image_folder() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void DataSourceProto::clear_image_folder() {
-  if (image_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    image_folder_->clear();
-  }
-  clear_has_image_folder();
-}
-inline const ::std::string& DataSourceProto::image_folder() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.image_folder)
-  return *image_folder_;
-}
-inline void DataSourceProto::set_image_folder(const ::std::string& value) {
-  set_has_image_folder();
-  if (image_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    image_folder_ = new ::std::string;
-  }
-  image_folder_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.image_folder)
-}
-inline void DataSourceProto::set_image_folder(const char* value) {
-  set_has_image_folder();
-  if (image_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    image_folder_ = new ::std::string;
-  }
-  image_folder_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.DataSourceProto.image_folder)
-}
-inline void DataSourceProto::set_image_folder(const char* value, size_t size) {
-  set_has_image_folder();
-  if (image_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    image_folder_ = new ::std::string;
-  }
-  image_folder_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.DataSourceProto.image_folder)
-}
-inline ::std::string* DataSourceProto::mutable_image_folder() {
-  set_has_image_folder();
-  if (image_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    image_folder_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.image_folder)
-  return image_folder_;
-}
-inline ::std::string* DataSourceProto::release_image_folder() {
-  clear_has_image_folder();
-  if (image_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = image_folder_;
-    image_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void DataSourceProto::set_allocated_image_folder(::std::string* image_folder) {
-  if (image_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete image_folder_;
-  }
-  if (image_folder) {
-    set_has_image_folder();
-    image_folder_ = image_folder;
-  } else {
-    clear_has_image_folder();
-    image_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataSourceProto.image_folder)
-}
-
-// optional string label_path = 4;
-inline bool DataSourceProto::has_label_path() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void DataSourceProto::set_has_label_path() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void DataSourceProto::clear_has_label_path() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void DataSourceProto::clear_label_path() {
-  if (label_path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    label_path_->clear();
-  }
-  clear_has_label_path();
-}
-inline const ::std::string& DataSourceProto::label_path() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.label_path)
-  return *label_path_;
-}
-inline void DataSourceProto::set_label_path(const ::std::string& value) {
-  set_has_label_path();
-  if (label_path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    label_path_ = new ::std::string;
-  }
-  label_path_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.label_path)
-}
-inline void DataSourceProto::set_label_path(const char* value) {
-  set_has_label_path();
-  if (label_path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    label_path_ = new ::std::string;
-  }
-  label_path_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.DataSourceProto.label_path)
-}
-inline void DataSourceProto::set_label_path(const char* value, size_t size) {
-  set_has_label_path();
-  if (label_path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    label_path_ = new ::std::string;
-  }
-  label_path_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.DataSourceProto.label_path)
-}
-inline ::std::string* DataSourceProto::mutable_label_path() {
-  set_has_label_path();
-  if (label_path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    label_path_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.label_path)
-  return label_path_;
-}
-inline ::std::string* DataSourceProto::release_label_path() {
-  clear_has_label_path();
-  if (label_path_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = label_path_;
-    label_path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void DataSourceProto::set_allocated_label_path(::std::string* label_path) {
-  if (label_path_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete label_path_;
-  }
-  if (label_path) {
-    set_has_label_path();
-    label_path_ = label_path;
-  } else {
-    clear_has_label_path();
-    label_path_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataSourceProto.label_path)
-}
-
-// repeated .lapis.DataSourceProto.Shape shape = 5;
-inline int DataSourceProto::shape_size() const {
-  return shape_.size();
-}
-inline void DataSourceProto::clear_shape() {
-  shape_.Clear();
-}
-inline const ::lapis::DataSourceProto_Shape& DataSourceProto::shape(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.shape)
-  return shape_.Get(index);
-}
-inline ::lapis::DataSourceProto_Shape* DataSourceProto::mutable_shape(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.shape)
-  return shape_.Mutable(index);
-}
-inline ::lapis::DataSourceProto_Shape* DataSourceProto::add_shape() {
-  // @@protoc_insertion_point(field_add:lapis.DataSourceProto.shape)
-  return shape_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape >&
-DataSourceProto::shape() const {
-  // @@protoc_insertion_point(field_list:lapis.DataSourceProto.shape)
-  return shape_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DataSourceProto_Shape >*
-DataSourceProto::mutable_shape() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.DataSourceProto.shape)
-  return &shape_;
-}
-
-// optional int32 size = 6;
-inline bool DataSourceProto::has_size() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void DataSourceProto::set_has_size() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void DataSourceProto::clear_has_size() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void DataSourceProto::clear_size() {
-  size_ = 0;
-  clear_has_size();
-}
-inline ::google::protobuf::int32 DataSourceProto::size() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.size)
-  return size_;
-}
-inline void DataSourceProto::set_size(::google::protobuf::int32 value) {
-  set_has_size();
-  size_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.size)
-}
-
-// optional int32 offset = 9 [default = 0];
-inline bool DataSourceProto::has_offset() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void DataSourceProto::set_has_offset() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void DataSourceProto::clear_has_offset() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void DataSourceProto::clear_offset() {
-  offset_ = 0;
-  clear_has_offset();
-}
-inline ::google::protobuf::int32 DataSourceProto::offset() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.offset)
-  return offset_;
-}
-inline void DataSourceProto::set_offset(::google::protobuf::int32 value) {
-  set_has_offset();
-  offset_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.offset)
-}
-
-// optional string mean_file = 10;
-inline bool DataSourceProto::has_mean_file() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void DataSourceProto::set_has_mean_file() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void DataSourceProto::clear_has_mean_file() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void DataSourceProto::clear_mean_file() {
-  if (mean_file_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    mean_file_->clear();
-  }
-  clear_has_mean_file();
-}
-inline const ::std::string& DataSourceProto::mean_file() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.mean_file)
-  return *mean_file_;
-}
-inline void DataSourceProto::set_mean_file(const ::std::string& value) {
-  set_has_mean_file();
-  if (mean_file_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    mean_file_ = new ::std::string;
-  }
-  mean_file_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.mean_file)
-}
-inline void DataSourceProto::set_mean_file(const char* value) {
-  set_has_mean_file();
-  if (mean_file_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    mean_file_ = new ::std::string;
-  }
-  mean_file_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.DataSourceProto.mean_file)
-}
-inline void DataSourceProto::set_mean_file(const char* value, size_t size) {
-  set_has_mean_file();
-  if (mean_file_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    mean_file_ = new ::std::string;
-  }
-  mean_file_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.DataSourceProto.mean_file)
-}
-inline ::std::string* DataSourceProto::mutable_mean_file() {
-  set_has_mean_file();
-  if (mean_file_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    mean_file_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.DataSourceProto.mean_file)
-  return mean_file_;
-}
-inline ::std::string* DataSourceProto::release_mean_file() {
-  clear_has_mean_file();
-  if (mean_file_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = mean_file_;
-    mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void DataSourceProto::set_allocated_mean_file(::std::string* mean_file) {
-  if (mean_file_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete mean_file_;
-  }
-  if (mean_file) {
-    set_has_mean_file();
-    mean_file_ = mean_file;
-  } else {
-    clear_has_mean_file();
-    mean_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataSourceProto.mean_file)
-}
-
-// optional bool shuffle = 11 [default = true];
-inline bool DataSourceProto::has_shuffle() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
-}
-inline void DataSourceProto::set_has_shuffle() {
-  _has_bits_[0] |= 0x00000100u;
-}
-inline void DataSourceProto::clear_has_shuffle() {
-  _has_bits_[0] &= ~0x00000100u;
-}
-inline void DataSourceProto::clear_shuffle() {
-  shuffle_ = true;
-  clear_has_shuffle();
-}
-inline bool DataSourceProto::shuffle() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.shuffle)
-  return shuffle_;
-}
-inline void DataSourceProto::set_shuffle(bool value) {
-  set_has_shuffle();
-  shuffle_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.shuffle)
-}
-
-// optional bool hdfs = 12 [default = false];
-inline bool DataSourceProto::has_hdfs() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
-}
-inline void DataSourceProto::set_has_hdfs() {
-  _has_bits_[0] |= 0x00000200u;
-}
-inline void DataSourceProto::clear_has_hdfs() {
-  _has_bits_[0] &= ~0x00000200u;
-}
-inline void DataSourceProto::clear_hdfs() {
-  hdfs_ = false;
-  clear_has_hdfs();
-}
-inline bool DataSourceProto::hdfs() const {
-  // @@protoc_insertion_point(field_get:lapis.DataSourceProto.hdfs)
-  return hdfs_;
-}
-inline void DataSourceProto::set_hdfs(bool value) {
-  set_has_hdfs();
-  hdfs_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DataSourceProto.hdfs)
-}
-
-// -------------------------------------------------------------------
 
 // ParamProto
 
@@ -5848,188 +4805,61 @@ inline void SolverProto::set_allocated_adagrad(::lapis::AdaGradValue* adagrad) {
 
 // -------------------------------------------------------------------
 
-// DataProto
-
-// optional .lapis.DataSourceProto train_data = 1;
-inline bool DataProto::has_train_data() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void DataProto::set_has_train_data() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void DataProto::clear_has_train_data() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void DataProto::clear_train_data() {
-  if (train_data_ != NULL) train_data_->::lapis::DataSourceProto::Clear();
-  clear_has_train_data();
-}
-inline const ::lapis::DataSourceProto& DataProto::train_data() const {
-  // @@protoc_insertion_point(field_get:lapis.DataProto.train_data)
-  return train_data_ != NULL ? *train_data_ : *default_instance_->train_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::mutable_train_data() {
-  set_has_train_data();
-  if (train_data_ == NULL) train_data_ = new ::lapis::DataSourceProto;
-  // @@protoc_insertion_point(field_mutable:lapis.DataProto.train_data)
-  return train_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::release_train_data() {
-  clear_has_train_data();
-  ::lapis::DataSourceProto* temp = train_data_;
-  train_data_ = NULL;
-  return temp;
-}
-inline void DataProto::set_allocated_train_data(::lapis::DataSourceProto* train_data) {
-  delete train_data_;
-  train_data_ = train_data;
-  if (train_data) {
-    set_has_train_data();
-  } else {
-    clear_has_train_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataProto.train_data)
-}
-
-// optional .lapis.DataSourceProto validation_data = 2;
-inline bool DataProto::has_validation_data() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void DataProto::set_has_validation_data() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void DataProto::clear_has_validation_data() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void DataProto::clear_validation_data() {
-  if (validation_data_ != NULL) validation_data_->::lapis::DataSourceProto::Clear();
-  clear_has_validation_data();
-}
-inline const ::lapis::DataSourceProto& DataProto::validation_data() const {
-  // @@protoc_insertion_point(field_get:lapis.DataProto.validation_data)
-  return validation_data_ != NULL ? *validation_data_ : *default_instance_->validation_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::mutable_validation_data() {
-  set_has_validation_data();
-  if (validation_data_ == NULL) validation_data_ = new ::lapis::DataSourceProto;
-  // @@protoc_insertion_point(field_mutable:lapis.DataProto.validation_data)
-  return validation_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::release_validation_data() {
-  clear_has_validation_data();
-  ::lapis::DataSourceProto* temp = validation_data_;
-  validation_data_ = NULL;
-  return temp;
-}
-inline void DataProto::set_allocated_validation_data(::lapis::DataSourceProto* validation_data) {
-  delete validation_data_;
-  validation_data_ = validation_data;
-  if (validation_data) {
-    set_has_validation_data();
-  } else {
-    clear_has_validation_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataProto.validation_data)
-}
-
-// optional .lapis.DataSourceProto test_data = 3;
-inline bool DataProto::has_test_data() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void DataProto::set_has_test_data() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void DataProto::clear_has_test_data() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void DataProto::clear_test_data() {
-  if (test_data_ != NULL) test_data_->::lapis::DataSourceProto::Clear();
-  clear_has_test_data();
-}
-inline const ::lapis::DataSourceProto& DataProto::test_data() const {
-  // @@protoc_insertion_point(field_get:lapis.DataProto.test_data)
-  return test_data_ != NULL ? *test_data_ : *default_instance_->test_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::mutable_test_data() {
-  set_has_test_data();
-  if (test_data_ == NULL) test_data_ = new ::lapis::DataSourceProto;
-  // @@protoc_insertion_point(field_mutable:lapis.DataProto.test_data)
-  return test_data_;
-}
-inline ::lapis::DataSourceProto* DataProto::release_test_data() {
-  clear_has_test_data();
-  ::lapis::DataSourceProto* temp = test_data_;
-  test_data_ = NULL;
-  return temp;
-}
-inline void DataProto::set_allocated_test_data(::lapis::DataSourceProto* test_data) {
-  delete test_data_;
-  test_data_ = test_data;
-  if (test_data) {
-    set_has_test_data();
-  } else {
-    clear_has_test_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.DataProto.test_data)
-}
-
-// -------------------------------------------------------------------
-
-// ModelProto
+// Model
 
 // optional string name = 1;
-inline bool ModelProto::has_name() const {
+inline bool Model::has_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void ModelProto::set_has_name() {
+inline void Model::set_has_name() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void ModelProto::clear_has_name() {
+inline void Model::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void ModelProto::clear_name() {
+inline void Model::clear_name() {
   if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     name_->clear();
   }
   clear_has_name();
 }
-inline const ::std::string& ModelProto::name() const {
-  // @@protoc_insertion_point(field_get:lapis.ModelProto.name)
+inline const ::std::string& Model::name() const {
+  // @@protoc_insertion_point(field_get:lapis.Model.name)
   return *name_;
 }
-inline void ModelProto::set_name(const ::std::string& value) {
+inline void Model::set_name(const ::std::string& value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     name_ = new ::std::string;
   }
   name_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.ModelProto.name)
+  // @@protoc_insertion_point(field_set:lapis.Model.name)
 }
-inline void ModelProto::set_name(const char* value) {
+inline void Model::set_name(const char* value) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     name_ = new ::std::string;
   }
   name_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.ModelProto.name)
+  // @@protoc_insertion_point(field_set_char:lapis.Model.name)
 }
-inline void ModelProto::set_name(const char* value, size_t size) {
+inline void Model::set_name(const char* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.ModelProto.name)
+  // @@protoc_insertion_point(field_set_pointer:lapis.Model.name)
 }
-inline ::std::string* ModelProto::mutable_name() {
+inline ::std::string* Model::mutable_name() {
   set_has_name();
   if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     name_ = new ::std::string;
   }
-  // @@protoc_insertion_point(field_mutable:lapis.ModelProto.name)
+  // @@protoc_insertion_point(field_mutable:lapis.Model.name)
   return name_;
 }
-inline ::std::string* ModelProto::release_name() {
+inline ::std::string* Model::release_name() {
   clear_has_name();
   if (name_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     return NULL;
@@ -6039,7 +4869,7 @@ inline ::std::string* ModelProto::release_name() {
     return temp;
   }
 }
-inline void ModelProto::set_allocated_name(::std::string* name) {
+inline void Model::set_allocated_name(::std::string* name) {
   if (name_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete name_;
   }
@@ -6050,40 +4880,40 @@ inline void ModelProto::set_allocated_name(::std::string* name) {
     clear_has_name();
     name_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.ModelProto.name)
+  // @@protoc_insertion_point(field_set_allocated:lapis.Model.name)
 }
 
 // optional .lapis.NetProto net = 2;
-inline bool ModelProto::has_net() const {
+inline bool Model::has_net() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void ModelProto::set_has_net() {
+inline void Model::set_has_net() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void ModelProto::clear_has_net() {
+inline void Model::clear_has_net() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void ModelProto::clear_net() {
+inline void Model::clear_net() {
   if (net_ != NULL) net_->::lapis::NetProto::Clear();
   clear_has_net();
 }
-inline const ::lapis::NetProto& ModelProto::net() const {
-  // @@protoc_insertion_point(field_get:lapis.ModelProto.net)
+inline const ::lapis::NetProto& Model::net() const {
+  // @@protoc_insertion_point(field_get:lapis.Model.net)
   return net_ != NULL ? *net_ : *default_instance_->net_;
 }
-inline ::lapis::NetProto* ModelProto::mutable_net() {
+inline ::lapis::NetProto* Model::mutable_net() {
   set_has_net();
   if (net_ == NULL) net_ = new ::lapis::NetProto;
-  // @@protoc_insertion_point(field_mutable:lapis.ModelProto.net)
+  // @@protoc_insertion_point(field_mutable:lapis.Model.net)
   return net_;
 }
-inline ::lapis::NetProto* ModelProto::release_net() {
+inline ::lapis::NetProto* Model::release_net() {
   clear_has_net();
   ::lapis::NetProto* temp = net_;
   net_ = NULL;
   return temp;
 }
-inline void ModelProto::set_allocated_net(::lapis::NetProto* net) {
+inline void Model::set_allocated_net(::lapis::NetProto* net) {
   delete net_;
   net_ = net;
   if (net) {
@@ -6091,40 +4921,40 @@ inline void ModelProto::set_allocated_net(::lapis::NetProto* net) {
   } else {
     clear_has_net();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.ModelProto.net)
+  // @@protoc_insertion_point(field_set_allocated:lapis.Model.net)
 }
 
 // optional .lapis.SolverProto solver = 3;
-inline bool ModelProto::has_solver() const {
+inline bool Model::has_solver() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void ModelProto::set_has_solver() {
+inline void Model::set_has_solver() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void ModelProto::clear_has_solver() {
+inline void Model::clear_has_solver() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void ModelProto::clear_solver() {
+inline void Model::clear_solver() {
   if (solver_ != NULL) solver_->::lapis::SolverProto::Clear();
   clear_has_solver();
 }
-inline const ::lapis::SolverProto& ModelProto::solver() const {
-  // @@protoc_insertion_point(field_get:lapis.ModelProto.solver)
+inline const ::lapis::SolverProto& Model::solver() const {
+  // @@protoc_insertion_point(field_get:lapis.Model.solver)
   return solver_ != NULL ? *solver_ : *default_instance_->solver_;
 }
-inline ::lapis::SolverProto* ModelProto::mutable_solver() {
+inline ::lapis::SolverProto* Model::mutable_solver() {
   set_has_solver();
   if (solver_ == NULL) solver_ = new ::lapis::SolverProto;
-  // @@protoc_insertion_point(field_mutable:lapis.ModelProto.solver)
+  // @@protoc_insertion_point(field_mutable:lapis.Model.solver)
   return solver_;
 }
-inline ::lapis::SolverProto* ModelProto::release_solver() {
+inline ::lapis::SolverProto* Model::release_solver() {
   clear_has_solver();
   ::lapis::SolverProto* temp = solver_;
   solver_ = NULL;
   return temp;
 }
-inline void ModelProto::set_allocated_solver(::lapis::SolverProto* solver) {
+inline void Model::set_allocated_solver(::lapis::SolverProto* solver) {
   delete solver_;
   solver_ = solver;
   if (solver) {
@@ -6132,158 +4962,7 @@ inline void ModelProto::set_allocated_solver(::lapis::SolverProto* solver) {
   } else {
     clear_has_solver();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.ModelProto.solver)
-}
-
-// optional .lapis.DataProto data = 4;
-inline bool ModelProto::has_data() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void ModelProto::set_has_data() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void ModelProto::clear_has_data() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void ModelProto::clear_data() {
-  if (data_ != NULL) data_->::lapis::DataProto::Clear();
-  clear_has_data();
-}
-inline const ::lapis::DataProto& ModelProto::data() const {
-  // @@protoc_insertion_point(field_get:lapis.ModelProto.data)
-  return data_ != NULL ? *data_ : *default_instance_->data_;
-}
-inline ::lapis::DataProto* ModelProto::mutable_data() {
-  set_has_data();
-  if (data_ == NULL) data_ = new ::lapis::DataProto;
-  // @@protoc_insertion_point(field_mutable:lapis.ModelProto.data)
-  return data_;
-}
-inline ::lapis::DataProto* ModelProto::release_data() {
-  clear_has_data();
-  ::lapis::DataProto* temp = data_;
-  data_ = NULL;
-  return temp;
-}
-inline void ModelProto::set_allocated_data(::lapis::DataProto* data) {
-  delete data_;
-  data_ = data;
-  if (data) {
-    set_has_data();
-  } else {
-    clear_has_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.ModelProto.data)
-}
-
-// -------------------------------------------------------------------
-
-// ShardProto
-
-// repeated int32 record = 1;
-inline int ShardProto::record_size() const {
-  return record_.size();
-}
-inline void ShardProto::clear_record() {
-  record_.Clear();
-}
-inline ::google::protobuf::int32 ShardProto::record(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.ShardProto.record)
-  return record_.Get(index);
-}
-inline void ShardProto::set_record(int index, ::google::protobuf::int32 value) {
-  record_.Set(index, value);
-  // @@protoc_insertion_point(field_set:lapis.ShardProto.record)
-}
-inline void ShardProto::add_record(::google::protobuf::int32 value) {
-  record_.Add(value);
-  // @@protoc_insertion_point(field_add:lapis.ShardProto.record)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-ShardProto::record() const {
-  // @@protoc_insertion_point(field_list:lapis.ShardProto.record)
-  return record_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-ShardProto::mutable_record() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.ShardProto.record)
-  return &record_;
-}
-
-// optional string shard_folder = 2;
-inline bool ShardProto::has_shard_folder() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void ShardProto::set_has_shard_folder() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void ShardProto::clear_has_shard_folder() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void ShardProto::clear_shard_folder() {
-  if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    shard_folder_->clear();
-  }
-  clear_has_shard_folder();
-}
-inline const ::std::string& ShardProto::shard_folder() const {
-  // @@protoc_insertion_point(field_get:lapis.ShardProto.shard_folder)
-  return *shard_folder_;
-}
-inline void ShardProto::set_shard_folder(const ::std::string& value) {
-  set_has_shard_folder();
-  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    shard_folder_ = new ::std::string;
-  }
-  shard_folder_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.ShardProto.shard_folder)
-}
-inline void ShardProto::set_shard_folder(const char* value) {
-  set_has_shard_folder();
-  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    shard_folder_ = new ::std::string;
-  }
-  shard_folder_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.ShardProto.shard_folder)
-}
-inline void ShardProto::set_shard_folder(const char* value, size_t size) {
-  set_has_shard_folder();
-  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    shard_folder_ = new ::std::string;
-  }
-  shard_folder_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.ShardProto.shard_folder)
-}
-inline ::std::string* ShardProto::mutable_shard_folder() {
-  set_has_shard_folder();
-  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    shard_folder_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.ShardProto.shard_folder)
-  return shard_folder_;
-}
-inline ::std::string* ShardProto::release_shard_folder() {
-  clear_has_shard_folder();
-  if (shard_folder_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = shard_folder_;
-    shard_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void ShardProto::set_allocated_shard_folder(::std::string* shard_folder) {
-  if (shard_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete shard_folder_;
-  }
-  if (shard_folder) {
-    set_has_shard_folder();
-    shard_folder_ = shard_folder;
-  } else {
-    clear_has_shard_folder();
-    shard_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.ShardProto.shard_folder)
+  // @@protoc_insertion_point(field_set_allocated:lapis.Model.solver)
 }
 
 // -------------------------------------------------------------------

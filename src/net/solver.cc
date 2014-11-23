@@ -2,19 +2,15 @@
 // 2014-07-14 14:28
 
 #include <glog/logging.h>
-#include <leveldb/db.h>
-#include <lmdb.h>
 #include <mpi.h>
 #include <vector>
-#include <typeinfo>
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "net/solver.h"
 #include "da/gary.h"
 #include "utils/debug.h"
 
-
-DECLARE_string(db_backend);
+DECLARE_string(par_mode);
 namespace lapis {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
@@ -31,6 +27,7 @@ Solver::Solver(const SolverProto &proto) {
   test_after_steps_ = proto.test_after_steps();
   test_every_steps_ = proto.test_every_steps();
 
+  batchsize_=proto.batchsize();
   train_steps_=proto.train_steps();
   test_steps_=proto.test_steps();
   validation_steps_=proto.validation_steps();
@@ -38,6 +35,11 @@ Solver::Solver(const SolverProto &proto) {
   sgd_=proto.sgd();
   context_=GlobalContext::Get();
   mpi_=NetworkThread::Get();
+
+  string data_folder=GlobalContext::Get()->data_folder();
+  train_shard_=data_folder+"/train";
+  val_shard_=data_folder+"/validation";
+  test_shard_=data_folder+"/test";
 }
 
 float Solver::UpdateHyperParam(int step, SGDValue::ChangeProto change,
@@ -97,19 +99,53 @@ void Solver::LocalUpdate(Param* param, int step) {
 }
 
 
-void Solver::Setup(TableDelegate* delegate, const DataProto& dp, const NetProto& np){
-  net_=new Net(np);
-  net_->Setup();
+void Solver::Setup(TableDelegate* delegate,  const NetProto& np){
+  net_=SetupNeuralNet(np);
   auto params=net_->params();
   auto grp_rank=context_->worker_id();
   delegate_=delegate;
   delegate_->SplitParams(params, grp_rank);
-  string shard_folder=GlobalContext::Get()->shard_folder();
-  train_shard_=shard_folder+"/"+dp.train_data().name()+"-"+FLAGS_db_backend;
-  val_shard_=shard_folder+"/"+dp.validation_data().name()+"-"+FLAGS_db_backend;
-  test_shard_=shard_folder+"/"+dp.test_data().name()+"-"+FLAGS_db_backend;
 }
 
+Net* Solver::SetupNeuralNet(const NetProto& proto) {
+  Net *net=new Net(proto);
+  Shard shard(train_shard_, Shard::kRead);
+  Record record;
+  string key;
+  shard.Next(&key, &record);
+  // setup the net, init parameters
+  net->SetNetShape(batchsize_, record);
+
+  if(FLAGS_par_mode==string("hybrid")){
+    int pdim=0;
+    for(Layer* layer: net->layers()){
+      if(layer->name()=="fc6")
+        pdim=1;
+      if(layer->name()=="fc8")
+        pdim=0;
+      layer->SetupDAry(pdim);
+    }
+  }else if (FLAGS_par_mode==string("data")){
+    for(Layer* layer: net->layers())
+      layer->SetupDAry(0);
+  }else{
+     for(Layer* layer: net->layers()){
+      if(layer->name()=="softmax")
+        layer->SetupDAry(-1);
+      else
+        layer->SetupDAry(1);
+     }
+  }
+  // data are envenly distributed to all workers, the input layer must be
+  // partitioned on num (0-th) dim
+  // fc8 and imgcol1's 1-th dim mode 2^k !=0
+  for(Layer* layer: net->layers()){
+    if(layer->HasInput()||layer->name()=="fc8"||layer->name()=="imgcol1")
+      layer->SetupDAry(0);
+  }
+  // net->AllocMemory();
+  return net;
+}
 void Solver::InitParams(){
   for(auto* param: net_->params()){
     param->Fill();
@@ -119,7 +155,6 @@ void Solver::InitParams(){
     if(!param->partition()||GlobalContext::Get()->num_groups()>1)
       delegate_->Put(param);
 }
-
 Solver::~Solver() {
   delete net_;
 }
@@ -137,107 +172,11 @@ void Solver::ToProto(SolverProto *proto) {
   proto->set_test_after_steps(test_after_steps_);
   proto->set_test_every_steps(test_every_steps_);
 }
-Prefetcher::Prefetcher(string path, Net* _net) {
-  net=_net;
-  // Initialize DB
-  if(FLAGS_db_backend=="leveldb"){
-    leveldb::Options options;
-    options.create_if_missing = false;
-    options.max_open_files = 100;
-    LOG(ERROR) << "Opening leveldb " << path;
-    leveldb::Status status = leveldb::DB::Open( options, path, &db);
-    CHECK(status.ok()) << "Failed to open leveldb "
-      << path << std::endl << status.ToString();
-    leveldb::ReadOptions readopt;
-    readopt.fill_cache=false;
-    iter=db->NewIterator(readopt);
-    iter->SeekToFirst();
-  }else if(FLAGS_db_backend=="lmdb"){
-    CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
-    CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS);
-    CHECK_EQ(mdb_env_open(mdb_env, path.c_str(),
-            MDB_RDONLY|MDB_NOTLS, 0664), MDB_SUCCESS) << "mdb_env_open failed";
-    CHECK_EQ(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn), MDB_SUCCESS)
-      << "mdb_txn_begin failed";
-    CHECK_EQ(mdb_open(mdb_txn, NULL, 0, &mdb_dbi), MDB_SUCCESS)
-      << "mdb_open failed";
-    CHECK_EQ(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor), MDB_SUCCESS)
-      << "mdb_cursor_open failed";
-    LOG(INFO) << "Opening lmdb " <<path;
-    CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_FIRST),
-        MDB_SUCCESS) << "mdb_cursor_get failed";
-  }else{
-    LOG(FATAL) << "Unknown database backend";
-  }
-}
-
-void Prefetcher::Free(){
-  if(FLAGS_db_backend=="leveldb"){
-    delete db;
-    delete iter;
-  }else{
-    mdb_cursor_close(mdb_cursor);
-    mdb_close(mdb_env, mdb_dbi);
-    mdb_txn_abort(mdb_txn);
-    mdb_env_close(mdb_env);
-  }
-}
-
-
-void Prefetcher::NextIterator(){
-  if(FLAGS_db_backend=="leveldb"){
-    iter->Next();
-    if(!iter->Valid()){
-      LOG(INFO)<<"reset to start leveldb";
-      iter->SeekToFirst();
-    }
-  }else{
-    if( mdb_cursor_get(mdb_cursor, &mdb_key,
-          &mdb_value, MDB_NEXT)!= MDB_SUCCESS){
-      LOG(INFO)<<"reset to start lmdb";
-      CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key,
-          &mdb_value, MDB_FIRST), MDB_SUCCESS);
-    }
-  }
-}
-
-void Prefetcher::ReadRecord(Record* record){
-  if(FLAGS_db_backend=="leveldb"){
-    record->ParseFromString(iter->value().ToString());
-  }else{
-    CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key,
-          &mdb_value, MDB_GET_CURRENT), MDB_SUCCESS);
-    record->ParseFromArray(mdb_value.mv_data, mdb_value.mv_size);
-  }
-}
 void debug_mem(string prefix){
   char buf[1024];
   sprintf(buf, "%30s, %12lu", prefix.c_str(), getCurrentRSS());
   LOG(INFO)<<string(buf);
 }
-void* PrefetchData(void* context){
-  Prefetcher *prefetcher=static_cast<Prefetcher*>(context);
-  Net* net=prefetcher->net;
-  const DAry& input= net->input_layer(0)->GetData(nullptr);
-  Range nrng=input.IndexRange(0);
-  /*
-  for(int n=0;n<nrng.first;n++)
-    prefetcher->NextIterator();
-    */
-  Record record;
-  for(int n=0;n<nrng.second-nrng.first;++n){
-    record.Clear();
-    prefetcher->ReadRecord(&record);
-    for(auto* layer:net->input_layer())
-      layer->AddInputRecord(record);
-    prefetcher->NextIterator();
-  }
-  /*
-  for(int n=0;n<input.shape(0)-nrng.second;n++)
-    prefetcher->NextIterator();
-    */
-}
-
 void Solver::Test(){
   Performance perf;
   while(!HasFinished()){
@@ -269,56 +208,46 @@ Performance Solver::Test(const Phase& phase){
   // fetch params once
 
   Prefetcher prefetcher(shard, net_);
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+  std::thread *thd=nullptr;
+  thd=new std::thread(std::ref(prefetcher));
   Solver::phase=phase;
   Performance perf;
   for(int b=0;b<nsteps;b++){
-    pthread_join(prefetch_thread_, NULL);
+    thd->join();
+    delete thd;
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
-    pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+    thd=new std::thread(std::ref(prefetcher));
     perf.Aggregate(TestOneBatch(net_, step_));
   }
-  pthread_join(prefetch_thread_, NULL);
+  thd->join();
+  delete thd;
+  /*
   for(auto* layer:net_->input_layer())
     layer->SetInputData(nullptr);
-  prefetcher.Free();
+    */
   Solver::phase=Phase::kTrain;
   return perf;
 }
 
 void Solver::ReportPerformance(string prefix, Performance perf) {
   LOG(ERROR)<<"Train Step: "<<step_<<" "<<prefix<<" "<<perf.ToString();
-  /*
-  if(context_->AmIGroupLeader()){
-    int toRcv=context_->group_size()-1;
-    while(toRcv>0){
-      Performance p;
-      if(mpi_->TryRead(0, MTYPE_PERFORMANCE, &p)){
-        perf.Aggregate(p);
-        toRcv--;
-      }
-    }
-    //context_->Send(GlobalContext::kCoordinator, MTYPE_PERFORMANCE, perf);
-  }else{
-    mpi_->Send(context_->leader(), MTYPE_PERFORMANCE, perf);
- }
- */
 }
 
 void Solver::Train(int start_step){
   step_=start_step;
   Prefetcher prefetcher(train_shard_, net_);
-  pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+  std::thread *thd=nullptr;
+  thd=new std::thread(std::ref(prefetcher));
   while (!HasFinished()) {
     Solver::phase=Phase::kTrain;
-    pthread_join(prefetch_thread_, NULL);
+    thd->join();
+    delete thd;
     for(auto* layer:net_->input_layer())
       layer->SetInputData(nullptr);
     if(!ValidateNow()&&!TestNow())
-      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+      thd=new std::thread(std::ref(prefetcher));
     train_perf_.Aggregate(TrainOneBatch(net_, step_));
-
     if(DisplayNow()){
       ReportPerformance("Train", train_perf_.Avg());
       DebugInfo(net_);
@@ -336,11 +265,11 @@ void Solver::Train(int start_step){
       DoLocalCheckpoint(net_);
     }
     if(ValidateNow()||TestNow())
-      pthread_create(&prefetch_thread_, NULL, &PrefetchData, &prefetcher);
+      thd=new std::thread(std::ref(prefetcher));
     IncStep();
   }
-  pthread_join(prefetch_thread_, NULL);
-  prefetcher.Free();
+  thd->join();
+  delete thd;
 }
 void Solver::DoLocalCheckpoint(Net* net){
   for(auto* param: net->params()){
@@ -350,10 +279,10 @@ void Solver::DoLocalCheckpoint(Net* net){
       DAryProto grad;
       param->history().ToProto(&grad, true);
       char fname[256];
-      sprintf(fname, "%s/local_cp/param_%d_%d.dat", context_->shard_folder().c_str(),
+      sprintf(fname, "%s/local_cp/param_%d_%d.dat", context_->data_folder().c_str(),
           param->id(), step_);
       WriteProtoToBinaryFile(data, fname);
-      sprintf(fname, "%s/local_cp/param_%d_%d.hst", context_->shard_folder().c_str(),
+      sprintf(fname, "%s/local_cp/param_%d_%d.hst", context_->data_folder().c_str(),
           param->id(), step_);
       WriteProtoToBinaryFile(grad, fname);
     }
@@ -441,7 +370,7 @@ void Solver::TimeTableServer(int runs){
 void Solver::TimeOneBatch(int runs) {
   phase=Phase::kTrain;
   Prefetcher prefetcher(train_shard_, net_);
-  PrefetchData(&prefetcher);
+  prefetcher();
   for(auto* layer:net_->input_layer())
     layer->SetInputData(nullptr);
 
@@ -554,6 +483,37 @@ bool Solver::HasFinished(){
     return true;
   else
     return false;
+}
+/***********************************************************************
+ * Prefetcher Implementation
+ ***********************************************************************/
+Prefetcher::Prefetcher(string path, Net* _net) {
+  net_=_net;
+  shard_=new Shard(path, Shard::kRead);
+}
+
+Prefetcher::~Prefetcher() {
+  delete shard_;
+}
+
+void Prefetcher::NextRecord(Record* record){
+  string key;
+  if(!shard_->Next(&key, record)){
+    shard_->SeekToFirst();
+    CHECK(shard_->Next(&key, record));
+  }
+}
+
+
+void Prefetcher::operator()(){
+  const DAry& input= net_->input_layer(0)->GetData(nullptr);
+  Range nrng=input.IndexRange(0);
+  Record record;
+  for(int n=0;n<nrng.second-nrng.first;++n){
+    NextRecord(&record);
+    for(auto* layer:net_->input_layer())
+      layer->AddInputRecord(record);
+  }
 }
 
 }  // namespace lapis

@@ -141,12 +141,12 @@ void NetworkThread::NetworkLoop() {
           || tag == MTYPE_DATA_PUT_REQUEST
           || tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
         RequestDispatcher::Get()->Enqueue(tag, data);
+        counter++;
       }
       else { //  put reponse, etc. to the response queue. This is read
         //  actively by the client
         boost::recursive_mutex::scoped_lock sl(response_queue_locks_[tag]);
         response_queue_[tag][source].push_back(data);
-        counter++;
         //if (tag==MTYPE_MODEL_CONFIG)
         //		VLOG(3) << "Barrier message received for process " << id();
       }
@@ -196,7 +196,6 @@ bool NetworkThread::check_queue(int src, int type, Message *data) {
     }
 
     q.pop_front();
-    counter--;
     return true;
   }
   return false;

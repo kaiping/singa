@@ -1,8 +1,6 @@
 // Copyright © 2014 Wei Wang, Anh. All Rights Reserved.
 // 2014-08-07 11:32
 #include "coordinator.h"
-#include "net/net.h"
-#include "net/solver.h"
 #include "utils/network_thread.h"
 #include "utils/common.h"
 #include "proto/common.pb.h"
@@ -10,33 +8,25 @@
 
 using std::string;
 using std::vector;
-DECLARE_double(sleep_time);
-DECLARE_string(par_mode);
 
 namespace lapis {
-Coordinator::Coordinator(const shared_ptr<GlobalContext>& gc){
-  LOG(INFO)<<"Start coordinator...";
-  context_=gc;
-  mpi_=NetworkThread::Get();
-}
 
 Coordinator::~Coordinator() {
-  /*
   for (auto* state: server_states_) {
     for (auto* taskid : state->local_shards)
       delete taskid;
     delete state;
   }
-  */
 }
 
 void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
+  auto mpi=NetworkThread::Get();
   for (int i = context_->server_start();i<context_->server_end();++i){
     VLOG(3)<<"in table server "<<i;
     RegisterWorkerRequest req;
     int src = 0;
     VLOG(3)<<"before read msg ";
-    mpi_->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
+    mpi->Read(MPI::ANY_SOURCE, MTYPE_REGISTER_WORKER, &req, &src);
     VLOG(3)<<"after read msg ";
     //  adding memory server.
     if (context_->IsTableServer(i)) {
@@ -46,7 +36,7 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
   LOG(INFO) << " All servers registered and started up";
   //  set itself as the current worker for the table
   for (auto &entry: tables)
-    entry.second->worker_id_ = mpi_->id();
+    entry.second->worker_id_ = mpi->id();
 
   // memory servers are specified in global context. Round-robin assignment
   int server_idx = 0;
@@ -83,8 +73,8 @@ void Coordinator::InitTableServers(const std::map<int, GlobalTable*>& tables) {
     }
   }
   LOG(ERROR)<<"finish table assignment, req size "<<req.assign_size();
-  mpi_->Broadcast(MTYPE_SHARD_ASSIGNMENT, req);
-  mpi_->WaitForSync(MTYPE_SHARD_ASSIGNMENT_DONE, GlobalContext::kCoordinator);//context_->num_table_servers());
+  mpi->Broadcast(MTYPE_SHARD_ASSIGNMENT, req);
+  mpi->WaitForSync(MTYPE_SHARD_ASSIGNMENT_DONE, GlobalContext::kCoordinator);//context_->num_table_servers());
   LOG(ERROR)<<"finish table server init";
 }
 
@@ -102,129 +92,11 @@ void Coordinator::Shutdown() {
   mpi_->Shutdown();
   */
 }
-
-Net* Coordinator::SetupNetShape(const ModelProto& model) {
-  Net *net=new Net(model.net());
-  // setup the net, init parameters
-  int batchsize=model.solver().batchsize();
-  vector<vector<int>> shapes;
-  for(auto& shape: model.data().train_data().shape()){
-    vector<int> s{batchsize};
-    for(int k:shape.s())
-      s.push_back(k);
-    shapes.push_back(s);
-  }
-  net->InitDAryShape(shapes);
-  return net;
-}
-// TODO model partitioning
-const NetProto Coordinator::PartitionNet(Net* net){
-  if(FLAGS_par_mode==string("hybrid")){
-    int pdim=0;
-    for(Layer* layer: net->layers()){
-      if(layer->name()=="fc6")
-        pdim=1;
-      if(layer->name()=="fc8")
-        pdim=0;
-      layer->SetPartition(pdim);
-    }
-  }else if (FLAGS_par_mode==string("data")){
-    for(Layer* layer: net->layers())
-      layer->SetPartition(0);
-  }else{
-     for(Layer* layer: net->layers()){
-      if(layer->name()=="softmax")
-        layer->SetPartition(-1);
-      else
-        layer->SetPartition(1);
-     }
-  }
-  // data are envenly distributed to all workers, the input layer must be
-  // partitioned on num (0-th) dim
-  // fc8 and imgcol1's 1-th dim mode 2^k !=0
-  for(Layer* layer: net->layers()){
-    if(layer->HasInput()||layer->name()=="fc8"||layer->name()=="imgcol1")
-      layer->SetPartition(0);
-  }
-
-  NetProto netproto;
-  net->ToProto(&netproto);
-  return netproto;
-}
-
-void Coordinator::DistributePartition(const NetProto & netproto) {
-  mpi_->Broadcast(MTYPE_NET_PARTITION, netproto);
-}
-
-
-void Coordinator::Init(const ModelProto& model) {
+void Coordinator::Run(const Model& model) {
   SolverProto sp(model.solver());
   sp.mutable_sgd()->set_threshold(context_->num_groups());
   sp.mutable_adagrad()->set_threshold(0);
   TableDelegate* delegate=CreateTableDelegate(sp);
   InitTableServers(delegate->tables());
-
-  Net* net=SetupNetShape(model);
-  const NetProto partition=PartitionNet(net);
-  delete net;
-  DistributePartition(partition);
-}
-
-void Coordinator::Start(const ModelProto& model) {
-  Init(model);
-  EmptyMessage dummy_msg;
-  LOG(ERROR)<<"Tell group 0 to init parameters";
-  for(auto wid: context_->MembersOfGroup(0))
-    mpi_->Send(wid, MTYPE_INIT_PARAMS, dummy_msg);
-  int src;
-  LOG(ERROR)<<"waiting Group 0 to finish init parameters";
-  for(auto wid: context_->MembersOfGroup(0))
-    mpi_->Read(wid, MTYPE_FINISH_INIT_PARAMS, &dummy_msg, &src);
-  LOG(ERROR)<<"Group 0 has finished init parameters";
-  Run();
-}
-
-void Coordinator::Resume(const ModelProto& model) {
-  /*
-   * no need to fetch net partition from hdfs
-   * workers will fetch netpartition
-   * table server will resume from checkpoint
-   * just notify workers to run
-    TableDelegate* delegate=CreateTableDelegate(sp);
-    InitTableServers(delegate->tables());
-   */
-  Init(model);
-  EmptyMessage dummy_msg;
-  int src;
-  LOG(ERROR)<<"Coordiantor wait for servers to restore";
-  for(int sid=context_->server_start();sid<context_->server_end();sid++)
-    mpi_->Read(sid, MTYPE_SERVER_RESTORED, &dummy_msg, &src);
-  LOG(ERROR)<<"All servers have restored";
-  Run();
-}
-
-void Coordinator::Run(){
-  LOG(ERROR)<<"Broadcast all workers to start running";
-  EmptyMessage dummy_msg;
-  mpi_->Broadcast(MTYPE_WORKER_START, dummy_msg);
-
-  int alive_workers=context_->num_groups()*context_->group_size();
-  int src = 0;
-  EmptyMessage end_msg;
-  LOG(ERROR)<<"Coordinator waits for "<<alive_workers;
-  while(alive_workers) {
-    if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_WORKER_END, &end_msg, &src)) {
-      LOG(ERROR)<<"Worker "<<src<<" finished task";
-      alive_workers--;
-    }
-    Performance perf;
-    if(mpi_->TryRead(MPI::ANY_SOURCE, MTYPE_PERFORMANCE, &perf, &src)) {
-      LOG(INFO)<<perf.ToString();
-    }
-    Sleep(FLAGS_sleep_time);
-  }
-  mpi_->Broadcast(MTYPE_SHUTDOWN, dummy_msg);
-  mpi_->Flush();
-  LOG(ERROR)<<"coordinator shutting down";
 }
 }  // namespace lapis

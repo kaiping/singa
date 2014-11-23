@@ -8,6 +8,113 @@
 
 
 namespace lapis {
+Net::Net(const NetProto &net_proto) {
+  LOG(INFO)<<"Construct Neural Net...";
+  std::map<std::pair<string, string>, Edge *> edge_map;
+  for (auto &layer_proto : net_proto.layer()) {
+    Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
+    layer->Init(layer_proto, &edge_map);
+    layers_.push_back(layer);
+    if(layer->HasInput())
+      input_layer_.push_back(dynamic_cast<InputLayer*>(layer));
+    if(layer->HasOutput())
+      output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
+  }
+  LOG(INFO)<<"layers inited";
+  for(auto& entry: edge_map){
+    edges_.push_back(entry.second);
+    CHECK(entry.second->src()!=nullptr)<<"missing src node, dst node is "
+      <<entry.second->dst()->name();
+    CHECK(entry.second->dst()!=nullptr)<<"missing dst node, src node is "
+      <<entry.second->src()->name();
+  }
+  LOG(INFO)<<"edges inited";
+
+  topology_sort(&layers_);
+  for(auto* layer: layers_){
+    LOG(INFO)<<layer->name();
+    layer->CollectParams(&params_);
+  }
+ // the softmax loss layer
+  LOG(ERROR)<<"Neural Net constructed";
+}
+Net::~Net() {
+  for(auto* layer: layers_)
+    delete layer;
+  for(auto* edge: edges_)
+    delete edge;
+}
+
+std::string Net::ShapeInfo(){
+  char display[8*1024];
+  std::queue<Layer*> layers;
+  for(auto* layer: layers_)
+    if(layer->HasInput())
+      layers.push(layer);
+  display[0]='\n';
+  while(!layers.empty()){
+    int size=layers.size();
+    for(int i=0;i<size;i++){
+      auto* layer=layers.front();
+      layers.pop();
+      sprintf(display+strlen(display), "\t||Layer: %10s, %s", layer->name().c_str(),
+          layer->data().shape().ToString().c_str());
+      for(auto* param:layer->GetParams())
+        sprintf(display+strlen(display), "\tParam: %10s, %s", param->name().c_str(),
+            param->data().shape().ToString().c_str());
+      for(auto* edge: layer->out_edges()){
+        auto* layer1=edge->OtherSide(layer);
+        if(layers.size()==0||layer1!=layers.front())
+          layers.push(layer1);
+      }
+    }
+    sprintf(display+strlen(display), "\n");
+  }
+  return string(display);
+}
+
+void Net::SetNetShape(){
+  for(auto *layer : layers_) {
+    layer->SetShape();
+  }
+}
+
+void Net::SetNetShape(const int batchsize, const Record &record) {
+  for (auto *layer : input_layer_){
+    InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
+    dlayer->SetShape(batchsize, record);
+  }
+  SetNetShape();
+}
+
+void Net::SetNetShape(const vector<vector<int>>& shapes){
+  for (auto *layer : input_layer_){
+    InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
+    dlayer->SetShape(shapes);
+  }
+  SetNetShape();
+}
+/*
+void Net::SetupDAry() {
+  for(auto* layer: layers_){
+    layer->SetupDAry(-1);
+  }
+}
+
+void Net::InitParameters() {
+  for(auto* param: params_){
+    param->Fill();
+  }
+}
+*/
+
+void Net::ToProto(NetProto *proto, bool copyData) {
+  proto->clear_layer();
+  for (Layer *layer : layers_) {
+    LayerProto *layer_proto = proto->add_layer();
+    layer->ToProto(layer_proto,copyData);
+  }
+}
 // visited all out going layers and then push current layer into the stack
 void Net::topology_sort_inner(Layer *layer,
                          const std::map<Layer *,
@@ -68,133 +175,5 @@ void Net::topology_sort(std::vector<Layer *> *layers) {
   }
 }
 
-Net::Net(const NetProto &net_proto) {
-  LOG(INFO)<<"Construct Neural Net...";
-  std::map<std::pair<string, string>, Edge *> edge_map;
-  for (auto &layer_proto : net_proto.layer()) {
-    Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
-    layer->Init(layer_proto, &edge_map);
-    layers_.push_back(layer);
-    if(layer->HasInput())
-      input_layer_.push_back(dynamic_cast<InputLayer*>(layer));
-    if(layer->HasOutput())
-      output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
-  }
-  LOG(INFO)<<"layers inited";
-  for(auto& entry: edge_map){
-    edges_.push_back(entry.second);
-    CHECK(entry.second->src()!=nullptr)<<"missing src node, dst node is "
-      <<entry.second->dst()->name();
-    CHECK(entry.second->dst()!=nullptr)<<"missing dst node, src node is "
-      <<entry.second->src()->name();
-  }
-  LOG(INFO)<<"edges inited";
 
-  topology_sort(&layers_);
-  for(auto* layer: layers_){
-    LOG(INFO)<<layer->name();
-    layer->CollectParams(&params_);
-  }
- // the softmax loss layer
-  LOG(ERROR)<<"Neural Net constructed";
-}
-
-std::string Net::ShapeInfo(){
-  char display[8*1024];
-  std::queue<Layer*> layers;
-  for(auto* layer: layers_)
-    if(layer->HasInput())
-      layers.push(layer);
-  display[0]='\n';
-  while(!layers.empty()){
-    int size=layers.size();
-    for(int i=0;i<size;i++){
-      auto* layer=layers.front();
-      layers.pop();
-      sprintf(display+strlen(display), "\t||Layer: %10s, %s", layer->name().c_str(),
-          layer->data().shape().ToString().c_str());
-      for(auto* param:layer->GetParams())
-        sprintf(display+strlen(display), "\tParam: %10s, %s", param->name().c_str(),
-            param->data().shape().ToString().c_str());
-      for(auto* edge: layer->out_edges()){
-        auto* layer1=edge->OtherSide(layer);
-        if(layers.size()==0||layer1!=layers.front())
-          layers.push(layer1);
-      }
-    }
-    sprintf(display+strlen(display), "\n");
-  }
-  return string(display);
-}
-/*
-void Net::Forward() {
-  for (auto* layer : layers_){
-    VLOG(3)<<layer->name();
-    layer->ComputeFeature();
-  }
-}
-
-void Net::Backward() {
-  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++){
-    VLOG(3)<<(*layer)->name();
-    (*layer)->ComputeGradient();
-  }
-}
-*/
-
-
-
-void Net::InitDAryShape(){
-  for(auto *layer : layers_) {
-    layer->InitDAryShape();
-  }
-}
-
-void Net::InitDAryShape(const vector<vector<int>>& shapes){
-  for (auto *layer : input_layer_){
-    InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
-    dlayer->InitDAryShape(shapes);
-  }
-  InitDAryShape();
-
-}
-
-void Net::SetupDAry() {
-  for(auto* layer: layers_){
-    layer->SetupDAry(-1);
-  }
-}
-
-void Net::InitParameters() {
-  for(auto* param: params_){
-    param->Fill();
-  }
-}
-/**
- * called by worker
- */
-void Net::Setup() {
-  InitDAryShape();
-  //SetupDAry();
-}
-/**
- * called by coordiator
- */
-void Net::Setup(const vector<vector<int>>& input_shapes) {
-  InitDAryShape(input_shapes);
-}
-
-void Net::ToProto(NetProto *proto, bool copyData) {
-  proto->clear_layer();
-  for (Layer *layer : layers_) {
-    LayerProto *layer_proto = proto->add_layer();
-    layer->ToProto(layer_proto,copyData);
-  }
-}
-Net::~Net() {
-  for(auto* layer: layers_)
-    delete layer;
-  for(auto* edge: edges_)
-    delete edge;
-}
 }  // namespace lapis

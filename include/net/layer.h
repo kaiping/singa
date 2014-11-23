@@ -55,15 +55,14 @@ class Layer {
    * @param edge_map a map from edge name to the edge object.
    */
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape(const vector<vector<int>>& shapes);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
 
   /**
    * partition the layer along k-th dimension starting from 0
    * the parameters should be partitioned according to the
-   * partition of the layer; Called after InitDAryShape;
+   * partition of the layer; Called after SetShape;
    */
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
@@ -155,7 +154,7 @@ class Layer {
 class ConcatLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual bool PreSyncF();
@@ -168,7 +167,7 @@ class ConcatLayer: public Layer {
 class SplitLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -214,7 +213,7 @@ class SplitLayer: public Layer {
 class ImgColLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   void Img2Col(DAry* dst, const DAry& src);
@@ -236,7 +235,7 @@ class ImgColLayer: public Layer {
 class ConvProductLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -258,7 +257,7 @@ class ConvProductLayer: public Layer {
 class ConvLayer: public ImgColLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -287,7 +286,7 @@ class ConvLayer: public ImgColLayer {
 
 class ReLULayer: public Layer {
  public:
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
 };
@@ -295,7 +294,7 @@ class ReLULayer: public Layer {
 class DropoutLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetPartition(int pdim);
   virtual void SetupDAry(int pdim);
   virtual void ComputeFeature();
@@ -312,7 +311,7 @@ class DropoutLayer: public Layer {
 class PoolingLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void ComputeFeature();
   virtual void ComputeGradient();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -340,7 +339,7 @@ class LRNLayer: public Layer {
 
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -362,7 +361,7 @@ class FCLayer: public Layer {
    */
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -395,7 +394,7 @@ class SoftmaxLossLayer: public OutputLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasOutput() {return true;}
-  virtual void InitDAryShape();
+  virtual void SetShape();
   virtual void SetupDAry(int pdim);
   virtual void SetPartition(int pdim);
   virtual void ComputeFeature();
@@ -414,6 +413,8 @@ class InputLayer: public Layer {
   virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record)=0;
   virtual void SetInputData(DAry *data);
+  virtual void SetShape(const vector<vector<int>>& shapes)=0;
+  virtual void SetShape(const int batchsize, const Record & record)=0;
   virtual const DAry& GetGrad(Edge* edge) {
     LOG(ERROR)<<"input layer has no grad";
     return grad_;
@@ -429,7 +430,8 @@ class ImageLayer: public InputLayer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void SetShape(const vector<vector<int>>& shapes);
+  virtual void SetShape(const int batchsize, const Record & record);
   virtual void AddInputRecord(const Record& record);
 
  private:
@@ -440,7 +442,8 @@ class ImageLayer: public InputLayer {
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void InitDAryShape(const vector<vector<int>>& shapes);
+  virtual void SetShape(const vector<vector<int>>& shapes);
+  virtual void SetShape(const int batchsize, const Record & record);
   virtual void AddInputRecord(const Record& record);
 };
 

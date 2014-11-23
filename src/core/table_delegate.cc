@@ -13,9 +13,6 @@
 #include "da/dary.h"
 
 DECLARE_bool(restore);
-DECLARE_string(checkpoint_dir);
-DECLARE_int32(checkpoint_frequency);
-DECLARE_int32(checkpoint_after);
 namespace lapis {
 UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
 }
@@ -81,10 +78,12 @@ bool UpdateHandler<AdaGradValue>::Get(const VKey& key,
 
 bool UpdateHandler<AdaGradValue>::is_checkpointable(const VKey& key,
     const AdaGradValue& val) {
+  /*
   if(val.version()>FLAGS_checkpoint_after&&
       val.version()%FLAGS_checkpoint_frequency==0)
     return true;
   else
+    */
     return false;
 }
 
@@ -92,10 +91,12 @@ bool UpdateHandler<AdaGradValue>::is_checkpointable(const VKey& key,
  * SGDValue
  **********************************************************************/
 bool UpdateHandler<SGDValue>::is_checkpointable(const VKey& key, const SGDValue& val) {
+  /*
   if(val.version()>FLAGS_checkpoint_after&&
       val.version()%FLAGS_checkpoint_frequency==0)
     return true;
   else
+  */
     return false;
 }
 
@@ -175,6 +176,7 @@ void TableDelegate::HandleShardAssignment() {
   ShardAssignmentRequest shard_req;
   auto mpi=NetworkThread::Get();
   mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
+  auto context=GlobalContext::Get();
   //  request read from coordinator
   auto _tables=tables();
   for (int i = 0; i < shard_req.assign_size(); i++) {
@@ -182,8 +184,8 @@ void TableDelegate::HandleShardAssignment() {
     GlobalTable *t = _tables.at(a.table());
     t->get_partition_info(a.shard())->owner = a.new_worker();
     //if local shard, create check-point files
-    if (FLAGS_checkpoint_enabled && t->is_local_shard(a.shard())){
-      string checkpoint_file = StringPrintf("%s/checkpoint_%d",FLAGS_checkpoint_dir.c_str(), a.shard());
+    if (context->checkpoint_enabled() && t->is_local_shard(a.shard())){
+      string checkpoint_file = StringPrintf("%s/checkpoint_%d",context->data_folder().data(), a.shard());
       FILE *tmp_file = fopen(checkpoint_file.c_str(), "r");
       if (tmp_file){//exists -> open to reading and writing
         fclose(tmp_file);
@@ -260,19 +262,16 @@ void TableDelegate::Update(const std::vector<Param*> &params, int step) {
 }
 
 void TableDelegate::Put(const std::vector<Param*> &params) {
-  if(GlobalContext::Get()->standalone())return;
   for(auto* param: params)
     Put(param);
 }
 
 void TableDelegate::Get(const std::vector<Param*> &params, int step){
-  if(GlobalContext::Get()->standalone())return;
   for(auto* param : params)
     Get(param, step);
   return;
 }
 void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
-  if(GlobalContext::Get()->standalone())return;
   for(auto* param : params)
     AsyncGet(param, step);
   return;

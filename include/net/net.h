@@ -29,38 +29,30 @@ class Net {
    * construct the net structure, i.e., how edges and layers are connected
    */
   explicit Net(const NetProto &net_proto);
-  void TimeOneBatch(int runs=50);
-  void Forward();
-  void Backward();
-  void topology_sort(std::vector<Layer *> *layers) ;
-  void topology_sort_inner(Layer *layer,
-                         const std::map<Layer *,
-                         std::vector<Layer *>> &adjacent_list,
-                         std::map<Layer *, bool> *visited,
-                         std::stack<Layer *> *stack) ;
   std::string ShapeInfo();
   /**
-   * setup the net by init dary shapes,
-   * then allocate memory(optional) and init parameters (optional)
+   * setup the net shape, i.e., the shapes of layers and parameters (Darys)
+   * no memory is allocated
+   * @shapes shapes for the input layers
    */
-  void InitDAryShape();
-  void InitDAryShape(const vector<vector<int>>& shapes);
-  void Setup() ;
-  void Setup(const vector<vector<int>>& input_shapes) ;
+  void SetNetShape(const vector<vector<int>>& shapes);
   /**
-   * set shapes of DArrays
+   * setup the net shape, i.e., the shapes of layers and parameters (Darys)
+   * no memory is allocated
+   * @batchsize shapes for the input layers
+   * @record input record to the net, used to set the shapes of input layers
    */
-  void SetShape(const int batchsize, const Record &record);
+  void SetNetShape(const int batchsize, const Record &record);
   /**
-   * allocate memory for DArys, assume no partition
+   * allocate memory for DArys
+  void AllocMemory();
    */
-  void SetupDAry();
   /**
    * init parameters, must be called after InitDArrayShape
    * if memory of parameters are not allocated, do memory allocation before
    * init parameters
-   */
   void InitParameters();
+   */
   void ToProto(NetProto *net_proto, bool copyData=false);
   const std::vector<InputLayer *> &input_layer() {
     return input_layer_;
@@ -80,6 +72,16 @@ class Net {
     return params_;
   }
   ~Net();
+ protected:
+  // called after the input layer's shape has been set
+  void SetNetShape();
+  void topology_sort(std::vector<Layer *> *layers) ;
+  void topology_sort_inner(Layer *layer,
+                         const std::map<Layer *,
+                         std::vector<Layer *>> &adjacent_list,
+                         std::map<Layer *, bool> *visited,
+                         std::stack<Layer *> *stack) ;
+
  private:
   std::vector<Layer *> layers_;
   std::vector<OutputLayer *> output_layer_;

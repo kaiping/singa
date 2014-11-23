@@ -5,7 +5,7 @@
 #include <gflags/gflags.h>
 #include <mpi.h>
 #include "datasource/data_source.h"
-#include "datasource/shard.h"
+#include "utils/shard.h"
 
 #include "utils/timer.h"
 

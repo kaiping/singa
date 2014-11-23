@@ -70,8 +70,7 @@ void Layer::ToProto(LayerProto *proto, bool copyData) {
   }
 }
 
-void Layer::InitDAryShape(const vector<vector<int>>& shapes){ }
-void Layer::InitDAryShape(){}
+void Layer::SetShape(){}
 void Layer::SetPartition(int pdim){
   data_.SetPartition(pdim);
   grad_.SetPartition(pdim);
@@ -137,7 +136,7 @@ void SplitLayer::ToProto(LayerProto *proto, bool copyData) {
   proto->set_split_dim(split_dim_);
   proto->set_split_size(split_size_);
 }
-void SplitLayer::InitDAryShape(){
+void SplitLayer::SetShape(){
   CHECK_EQ(in_edges_.size(), 1);
   CHECK_EQ(out_edges_.size(), 2);
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -223,7 +222,7 @@ void ConcatLayer::ToProto(LayerProto *proto, bool copyData) {
   Layer::ToProto(proto, copyData);
   proto->set_concat_dim(concat_dim_);
 }
-void ConcatLayer::InitDAryShape(){
+void ConcatLayer::SetShape(){
   CHECK_EQ(in_edges_.size(), 2);
   CHECK_EQ(out_edges_.size(), 1);
   const DAry& bottom0=in_edges_[0]->GetData(this);
@@ -326,7 +325,7 @@ void ImgColLayer::ToProto(LayerProto *proto, bool copyData) {
   proto->set_pad(pad_);
 }
 
-void ImgColLayer::InitDAryShape(){
+void ImgColLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_ = bottom.shape(0);
   channels_ = bottom.shape(1);
@@ -452,7 +451,7 @@ vector<Param*> ConvProductLayer::GetParams() {
   return ret;
 }
 
-void ConvProductLayer::InitDAryShape(){
+void ConvProductLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_=bottom.shape(0);
   channels_=bottom.shape(1);
@@ -592,7 +591,7 @@ void ConvLayer::ToProto(LayerProto *proto, bool copyData) {
   col_data_.ToProto(coldata, false);
 }
 
-void ConvLayer::InitDAryShape(){
+void ConvLayer::SetShape(){
   CHECK_EQ(in_edges_.size(), 1);
   CHECK_EQ(out_edges_.size(), 1);
   const DAry& bottom=in_edges_[0]->GetData(this);
@@ -704,7 +703,7 @@ void ConvLayer::ComputeGradient() {
 /*****************************************************************************
  * Implementation for ReLULayer
  *****************************************************************************/
-void ReLULayer::InitDAryShape(){
+void ReLULayer::SetShape(){
   CHECK_EQ(in_edges_.size(),1);
   const DAry& bottom=in_edges_[0]->GetData(this);
   data_.SetShape(bottom.shape());
@@ -735,7 +734,7 @@ void DropoutLayer::ToProto(LayerProto *proto, bool copyData) {
   proto->set_drop_prob(drop_prob_);
 }
 
-void DropoutLayer::InitDAryShape(){
+void DropoutLayer::SetShape(){
   CHECK_EQ(in_edges_.size(),1);
   const DAry& bottom=in_edges_[0]->GetData(this);
   data_.SetShape(bottom.shape());
@@ -781,7 +780,7 @@ void PoolingLayer::ToProto(LayerProto *proto, bool copyData) {
   proto->set_stride(stride_);
   proto->set_pooling_method(pooling_method_);
 }
-void PoolingLayer::InitDAryShape(){
+void PoolingLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_ = bottom.shape(0);
   channels_ = bottom.shape(1);
@@ -906,7 +905,7 @@ void LRNLayer::ToProto(LayerProto* proto, bool copyData) {
   proto->set_knorm(knorm_);
 }
 
-void LRNLayer::InitDAryShape(){
+void LRNLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_=bottom.shape(0);
   channels_=bottom.shape(1);
@@ -1023,7 +1022,7 @@ vector<Param*> FCLayer::GetParams() {
   return ret;
 }
 
-void FCLayer::InitDAryShape(){
+void FCLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_=bottom.shape(0);
   vdim_=bottom.shape().size/num_;
@@ -1139,7 +1138,7 @@ void SoftmaxLossLayer::SetPartition(int pdim) {
   }
 }
 
-void SoftmaxLossLayer::InitDAryShape(){
+void SoftmaxLossLayer::SetShape(){
   const DAry& bottom=in_edges_[0]->GetData(this);
   num_=bottom.shape(0);
   CHECK_EQ(bottom.shape().size%num_,0);
@@ -1249,7 +1248,7 @@ void ImageLayer::ToProto(LayerProto* proto, bool copyData) {
   proto->set_cropsize(cropsize_);
   proto->set_mirror(mirror_);
 }
-void ImageLayer::InitDAryShape(const vector<vector<int>>& shapes){
+void ImageLayer::SetShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes[0].size(),4);
   vector<int> shape=shapes[0];
 
@@ -1260,6 +1259,17 @@ void ImageLayer::InitDAryShape(const vector<vector<int>>& shapes){
   data_.SetShape(shape);
   grad_.SetShape(shape);
 }
+void ImageLayer::SetShape(const int batchsize, const Record & record){
+  const DAryProto& image=record.image();
+  vector<int> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
+  if(cropsize_>0){
+    shape[2]=cropsize_;
+    shape[3]=cropsize_;
+  }
+  data_.SetShape(shape);
+  grad_.SetShape(shape);
+}
+
 void ImageLayer::AddInputRecord(const Record &record){
   Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
@@ -1320,11 +1330,15 @@ void ImageLayer::AddInputRecord(const Record &record){
 /*****************************************************************************
  * Implementation for LabelLayer
  *****************************************************************************/
-void LabelLayer::InitDAryShape(const vector<vector<int>>& shapes){
+void LabelLayer::SetShape(const vector<vector<int>>& shapes){
   CHECK_EQ(shapes.size(),2);
   CHECK_EQ(shapes[1].size(),2);
   data_.SetShape(shapes[1]);
   grad_.SetShape(shapes[1]);
+}
+void LabelLayer::SetShape(const int batchsize, const Record& record){
+  data_.SetShape(vector<int>{batchsize,1});
+  grad_.SetShape(vector<int>{batchsize,1});
 }
 
 void LabelLayer::AddInputRecord(const Record &record){

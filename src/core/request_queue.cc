@@ -43,6 +43,9 @@ void ASyncRequestQueue::Enqueue(int tag, string &data) {
       key_locks_.push_back(new boost::recursive_mutex());
       // queue index of this key
       key_map_[key] = request_queues_.size() - 1;
+      if(GlobalContext::Get()->rank()==17)
+        LOG(ERROR)<<"increase num request queues "<<request_queues_.size()
+          <<" by key "<<key;
     }
   }
   Queue &key_queue = request_queues_[key_map_[key]];
@@ -60,6 +63,10 @@ void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
+    if(GlobalContext::Get()->rank()==17)
+      LOG(ERROR)<<"num key locks "<<key_locks_.size()
+        <<" num request queues "<<request_queues_.size();
+
     while (key_locks_.empty() && request_queues_.empty()){
       Sleep(FLAGS_sleep_time);
     }
@@ -214,6 +221,9 @@ void SyncRequestQueue::NextRequest(TaggedMessage *message) {
   //get lock of the current key;
   bool success = false;
   while (!success) {
+    if(GlobalContext::Get()->rank()==17)
+      LOG(ERROR)<<"num key locks "<<key_locks_.size()
+        <<" num put queues "<<put_queues_.size();
     while (key_locks_.empty() && put_queues_.empty())
       Sleep(FLAGS_sleep_time);
     //Queue& key_queue = request_queues_[key_index_];

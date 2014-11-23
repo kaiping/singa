@@ -43,27 +43,16 @@ typedef struct WorkerState_{
 
 class Coordinator {
  public:
-  explicit Coordinator(const shared_ptr<GlobalContext>& gc);
-  void Start(const ModelProto& model);
-  void Resume(const ModelProto& model );
+  void Run(const Model& model);
   void Shutdown();
   ~Coordinator();
  private:
-  void Init(const ModelProto& mdoel) ;
-  void Run();
   void InitTableServers(const std::map<int, GlobalTable*>& tables);
-  /**
-    * setup net, shape of darys are set, but not allocate mem
-    */
-  Net* SetupNetShape(const ModelProto& model);
-
   /**
     * insert parameters into table; the tuple is prepared with
     * parameter vector and sgd/adagrad meta info from solver
     * @threshold if sync mode, it is the group size; for async ,0
     */
-  void DistributePartition(const NetProto & protos);
-  const NetProto PartitionNet(Net* net);
  private:
   //  keep track of the table assignments, only to the memory servers
   std::vector<ServerState *> server_states_;

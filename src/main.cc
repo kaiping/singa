@@ -11,22 +11,14 @@
 #include "utils/global_context.h"
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
-#include "proto/system.pb.h"
+#include "proto/cluster.pb.h"
 #include "coordinator.h"
-#include "datasource/data_loader.h"
 #include "worker.h"
 #include "da/gary.h"
-#include "utils/common.h"
 
-DEFINE_int32(checkpoint_frequency, 5000, "frequency for cp");
-DEFINE_int32(checkpoint_after, 1, "cp after this steps");
-DEFINE_string(checkpoint_dir,"/data1/wangwei/lapis","check point dir");
 DEFINE_string(par_mode, "hybrid",  "time training algorithm");
-DEFINE_string(db_backend, "lmdb", "database backend");
-DEFINE_string(system_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
+DEFINE_string(cluster_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
-DEFINE_bool(load, false, "Load data to distributed tables");
-DEFINE_bool(run, true,  "Run training algorithm");
 DEFINE_bool(restore, false, "restore from checkpoint file");
 DEFINE_bool(time, true,  "time training algorithm");
 // for debugging use
@@ -34,50 +26,22 @@ DEFINE_bool(time, true,  "time training algorithm");
   DEFINE_int32(v, 3, "vlog controller");
 #endif
 
-// for debugging use
 int main(int argc, char **argv) {
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   //FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  LOG(ERROR)<<"mpi thread level provided: "<<provided;
-  LOG(ERROR)<<"load data "<<FLAGS_load<<" run "<<FLAGS_run;
-
-  // Note you can register you own layer/edge/datasource here
 
   // Init GlobalContext
-  auto nt=lapis::NetworkThread::Get();
-  auto gc=lapis::GlobalContext::Get(FLAGS_system_conf);
-  LOG(ERROR)<<"group id"<<gc->group_id();
-  lapis::ModelProto model;
+  lapis::Cluster cluster;
+  lapis::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &cluster);
+  auto gc=lapis::GlobalContext::Get(cluster);
+  lapis::Model model;
   lapis::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
-  if(FLAGS_load) {
-    LOG(ERROR)<<"Loading Data...";
-    lapis::DataLoader loader(gc);
-    if(gc->AmICoordinator())
-      loader.ShardData(model.data());
-    else if(gc->AmIWorker())
-      loader.CreateLocalShards(model.data());
-    else {
-      LOG(ERROR)<<" Neither worker nor coordinator, nothing todo";
-    }
-  }
-  if(FLAGS_run){
-    lapis::GAry::Init(gc->rank(), gc->groups());
-    if(gc->AmICoordinator()) {
-      lapis::Coordinator coordinator(gc);
-      coordinator.Start(model);
-    }else {
-      // worker or table server
-      lapis::Worker worker(gc);
-      worker.Start(model.data(), model.solver());
-    }
-    //lapis::Debug();
-    lapis::GAry::Finalize();
-  }
+  lapis::GAry::Init(gc->rank(), gc->groups());
   if(FLAGS_restore){
-    lapis::GAry::Init(gc->rank(), gc->groups());
+    /*
      if(gc->AmICoordinator()) {
       lapis::Coordinator coordinator(gc);
       coordinator.Resume(model);
@@ -85,9 +49,20 @@ int main(int argc, char **argv) {
       lapis::Worker worker(gc);
       worker.Start(model.data(), model.solver());
     }
-    lapis::GAry::Finalize();
+    */
+  }else{
+    if(gc->AmICoordinator()) {
+      lapis::Coordinator coordinator;
+      coordinator.Run(model);
+    }else {
+      // worker or table server
+      lapis::Worker worker(gc);
+      worker.Start(model);
+    }
   }
-  gc->Shutdown();
+  lapis::GAry::Finalize();
+  gc->Finalize();
+  MPI_Finalize();
   LOG(ERROR)<<"shutdown";
   return 0;
 }

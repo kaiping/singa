@@ -23,7 +23,7 @@ namespace lapis {
 class Worker {
  public:
   Worker(const shared_ptr<GlobalContext>& gc);
-  void Start(const DataProto& proto, const SolverProto& sp);
+  void Start(const Model& model);
   void Resume();
   void Shutdown();
   ~Worker();

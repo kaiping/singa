@@ -14,16 +14,12 @@
 namespace lapis {
 Worker::Worker(const std::shared_ptr<GlobalContext>& gc){
   LOG(INFO) << "starting Worker...";
-  mpi_=NetworkThread::Get();
   context_=gc;
-  table_server_=nullptr;
 }
 
 Worker::~Worker() {
-  //Shutdown();
-  if(table_server_!=nullptr)
-    delete table_server_;
 }
+
 void Worker::Shutdown() {
 }
 
@@ -54,43 +50,32 @@ void Worker::Resume() {
    */
 
 }
-void Worker::Start(const DataProto& dp, const SolverProto& sp){
-  TableDelegate* delegate=CreateTableDelegate(sp);
+void Worker::Start(const Model& model){
+  TableDelegate* delegate=CreateTableDelegate(model.solver());
   if(context_->AmITableServer()){
     table_server_=new TableServer();
     table_server_->StartTableServer(delegate->tables());
     LOG(ERROR)<<"table server tarted";
   }
-  int src, cdntor=GlobalContext::kCoordinator;
-  EmptyMessage dummy_msg;
 
   if(context_->AmIWorker()){
-    NetProto np;
-    mpi_->Read(cdntor, MTYPE_NET_PARTITION, &np);
-    Solver solver(sp);
-    solver.Setup(delegate, dp, np);
-
-    while(true){
-      if(mpi_->TryRead(cdntor, MTYPE_INIT_PARAMS, &dummy_msg, &src)){
-        solver.InitParams();
-        mpi_->Send(cdntor, MTYPE_FINISH_INIT_PARAMS, dummy_msg);
-      }
-      if(mpi_->TryRead(cdntor, MTYPE_WORKER_START, &dummy_msg, &src)){
-        LOG(ERROR)<<"Worker starting...";
-        // read start step from coordinator's msg
-        //solver.Train();
-        solver.TimeOneBatch();
-        break;
-      }
-      sleep(0.01);
-    }
-    LOG(ERROR)<<"Worker Finish Training";
-    mpi_->Flush();
-    mpi_->Send(cdntor, MTYPE_WORKER_END, dummy_msg);
-    mpi_->Read(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src);
+    Solver solver(model.solver());
+    solver.Setup(delegate, model.net());
+    if(context_->group_id()==0)
+      solver.InitParams();
+    // TODO, two ways to syn all workers
+    // 1. create MPI communicator for all workers, and call MPI_Barrier for
+    // this communicator
+    // 2. handle_get returns false if the key of get() is not found in the
+    // table, i.e., parameters have not been inserted
+    LOG(ERROR)<<"Worker starting...";
+    //solver.Train();
+    solver.TimeOneBatch();
   }else{
+    int src, cdntor=GlobalContext::kCoordinator;
+    EmptyMessage dummy_msg;
     while(true){
-      if(mpi_->TryRead(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src))
+      if(NetworkThread::Get()->TryRead(cdntor, MTYPE_SHUTDOWN, &dummy_msg, &src))
         break;
       else
         sleep(0.01);

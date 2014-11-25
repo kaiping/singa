@@ -16,264 +16,187 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-
+/**
+ * @file file.h
+ * Declaration of file-related classes and methods.
+ *
+ * The File class captures generic C++ system files. LogFile is used for
+ * checkpointing table content. RecordFile was also used for storing table data,
+ * but operates on Google ProtoBuf Message object level (as opposed to string types
+ * in LogFile)
+ */
 
 using google::protobuf::Message;
+
 namespace lapis {
 
+/**
+ * Generic C++ random-access file and the associated methods for accessing file content.
+ */
 class File {
- public:
-  virtual ~File() {}
-  virtual int read(char *buffer, int len) = 0;
-  virtual bool read_line(string *out) = 0;
-  virtual bool eof() = 0;
-  virtual void seek(int64_t pos) = 0;
-  virtual uint64_t tell() = 0;
-  virtual const char *name() {
-    return "";
-  }
-  virtual void sync() = 0;
+public:
+	virtual ~File() {
+	}
+	virtual int read(char *buffer, int len) = 0;
+	virtual bool read_line(string *out) = 0;
+	virtual bool eof() = 0;
+	virtual void seek(int64_t pos) = 0;
+	virtual uint64_t tell() = 0;
+	virtual const char *name() {
+		return "";
+	}
+	virtual void sync() = 0;
 
-  int write_string(const string &buffer) {
-    return write(buffer.data(), buffer.size());
-  }
+	int write_string(const string &buffer) {
+		return write(buffer.data(), buffer.size());
+	}
 
-  virtual int write(const char *buffer, int len) = 0;
+	virtual int write(const char *buffer, int len) = 0;
 
-  string readLine() {
-    string out;
-    read_line(&out);
-    return out;
-  }
+	string readLine() {
+		string out;
+		read_line(&out);
+		return out;
+	}
 
-  struct Info {
-    string name;
-    struct stat stat;
-  };
+	/**
+	 * File's system information. This is result of execute "stat" commands.
+	 */
+	struct Info {
+		string name;
+		struct stat stat;
+	};
 
-  static string Slurp(const string &file);
-  static void Dump(const string &file, StringPiece data);
-  static void Mkdirs(string path);
-  static vector<string> MatchingFilenames(StringPiece glob);
-  static vector<Info> MatchingFileinfo(StringPiece glob);
+	/**
+	 * Read the entire file content in one go.
+	 */
+	static string Slurp(const string &file);
 
-  static bool Exists(const string &path);
-  static void Move(const string &src, const string &dst);
+	static void Dump(const string &file, StringPiece data);
+	static void Mkdirs(string path);
 
- private:
-};
+	/**
+	 * Find files whose names match the given pattern.
+	 * @param glob the regular expression of file name.
+	 */
+	static vector<string> MatchingFilenames(StringPiece glob);
 
-class LocalFile : public File {
- public:
-  LocalFile(FILE *fp);
-  LocalFile(const string &path, const string &mode);
-  virtual ~LocalFile() {
-    if (close_on_delete) {
-      fflush(fp);
-      fclose(fp);
-    }
-  }
-
-  void sync() {
-	  fflush(fp);
-    fsync(fileno(fp));
-  }
-
-  bool read_line(string *out);
-  int read(char *buffer, int len);
-  int write(const char *buffer, int len);
-  void seek(int64_t pos) {
-    fseek(fp, pos, SEEK_SET);
-  }
-  uint64_t tell() {
-    return ftell(fp);
-  }
-
-  void Printf(const char *p, ...);
-  virtual FILE *filePointer() {
-    return fp;
-  }
-
-  const char *name() {
-    return path.c_str();
-  }
-
-  bool eof();
-
- private:
-  FILE *fp;
-  string path;
-  bool close_on_delete;
-};
-
-class Encoder {
- public:
-  Encoder(string *s) : out_(s), out_f_(NULL) {}
-  Encoder(File *f) : out_(NULL), out_f_(f) {}
-
-  template <class T>
-  void write(const T &v);
-
-  void write_string(StringPiece v);
-  void write_bytes(StringPiece s);
-  void write_bytes(const char *a, int len);
-
-  string *data() {
-    return out_;
-  }
-
-  size_t pos() {
-    if (out_) {
-      return out_->size();
-    }
-    return out_f_->tell();
-  }
-
- private:
-  string *out_;
-  File *out_f_;
-};
-
-class Decoder {
- private:
-  const string *src_;
-  const char *src_p_;
-  File *f_src_;
-
-  size_t pos_;
- public:
-  Decoder(const string &data) : src_(&data), src_p_(data.data()), f_src_(NULL),
-    pos_(0) {}
-  Decoder(File *f) : src_(NULL), src_p_(NULL), f_src_(f), pos_(0) {}
-
-  template <class V> void read(V *t) {
-    if (src_) {
-      memcpy(t, src_p_ + pos_, sizeof(V));
-      pos_ += sizeof(V);
-    } else {
-      f_src_->read((char *)t, sizeof(t));
-    }
-  }
-
-  template <class V> V read() {
-    V v;
-    read<V>(&v);
-    return v;
-  }
-
-  void read_bytes(char *b, int len) {
-    if (src_p_) {
-      memcpy(b, src_p_ + pos_, len);
-    } else {
-      f_src_->read(b, len);
-    }
-    pos_ += len;
-  }
-
-  void read_string(string *v) {
-    uint32_t len;
-    read<uint32_t>(&len);
-    v->resize(len);
-    read_bytes(&(*v)[0], len);
-  }
-
-  bool done() {
-    if (src_) {
-      return pos_ == src_->size();
-    } else {
-      return f_src_->eof();
-    }
-  }
-
-  size_t pos() {
-    if (src_) {
-      return pos_;
-    }
-    return f_src_->tell();
-  }
-
-  void seek(int p) {
-    if (src_) {
-      pos_ = p;
-    } else {
-      pos_ = p;
-      f_src_->seek(pos_);
-    }
-  }
+	static bool Exists(const string &path);
+	static void Move(const string &src, const string &dst);
 };
 
 
-// format of the LogFile is:
-// [<key length><key><val><current table size><total length>]
-class LogFile{
-	public:
-		LogFile(const string &path, const string &mode, int shard_id);
+/**
+ * Log structured files for storing check-pointed table content.
+ * The file content is as follows:
+ * 1. 4-byte shard ID
+ * 2. List of key-value records, each record is laid out as follows:
+ * 2.a. 4-byte key length
+ * 2.b. key content
+ * 2.c. value content
+ * 2.d. 4-byte size (of the current table)
+ * 2.e. 4-byte total length of the record
+ *
+ * This layout facilitate backward scanning of records.
+ */
+class LogFile {
+public:
+	LogFile(const string &path, const string &mode, int shard_id);
 
-		~LogFile(){
-			if (fp_){
-				fflush(fp_);
-				fclose(fp_);
-			}
+	/**
+	 * Destructor. Flush and close the file content.
+	 */
+	~LogFile() {
+		if (fp_) {
+			fflush(fp_);
+			fclose(fp_);
 		}
+	}
 
-		void append(const string &key, const string &value, const int size);
-		//void previous_entry(string *key, string *val, int *size);
-		void previous_entry(Message *key, Message *val, int *size);
+	/**
+	 * Append a new record to the file.
+	 * @param key key
+	 * @param value value
+	 * @param size current table size
+	 */
+	void append(const string &key, const string &value, const int size);
 
-		int current_offset(){ return current_offset_; }
-		int read_shard_id();
-		int read_latest_table_size();
-		string file_name(){return path_;}
+	/**
+	 * Read the preceding entry in the log file.
+	 * @param key key read
+	 * @param val value read
+	 * @param size table size read
+	 */
+	void previous_entry(Message *key, Message *val, int *size);
 
-    double tseek=0.0, tread=0.0, tcopy, tresize;
-    int total_value_size=0;
-	private:
-		string path_;
-		int test_val_;
-		FILE *fp_;
-		int current_offset_; //from SEEK_END
+	int current_offset() {return current_offset_;} /**< current read pointer */
+
+	int read_shard_id(); /**< the file first 4 byte */
+
+	int read_latest_table_size(); /**< table size value of the last entry */
+
+	string file_name() {return path_;}
+
+private:
+	string path_;
+	FILE *fp_; /**< the file */
+	int current_offset_; /**< current read pointer, set to SEEK_END */
 };
 
+/**
+ * File for writing Google ProtoBuf Message objects. It is used for writing and
+ * accessing disktable. This operates at higher level than LogFile.
+ *
+ * For consistency, when writting to file F, the content is first written to F.tmp and
+ * the temporary file is re-named back to F only upon destruction of the object.
+ */
 class RecordFile {
- public:
-  enum CompressionType {
-    NONE = 0,
-    LZO = 1
-  };
+public:
+	/**
+	 * Compression options. Deafult is NONE.
+	 */
+	enum CompressionType {
+		NONE = 0, LZO = 1
+	};
 
-  RecordFile() : fp(NULL) {}
+	RecordFile() :
+			fp(NULL) {
+	}
 
-  RecordFile(const string &path, const string &mode, int compression = NONE);
-  virtual ~RecordFile();
+	RecordFile(const string &path, const string &mode, int compression = NONE);
+	virtual ~RecordFile();
 
-  virtual void write(const google::protobuf::Message &m);
-  virtual bool read(google::protobuf::Message *m);
+	virtual void write(const google::protobuf::Message &m);
+	virtual bool read(google::protobuf::Message *m);
 
-  const char *name() {
-    return fp->name();
-  }
+	const char *name() {
+		return fp->name();
+	}
 
-  bool eof() {
-    return fp->eof();
-  }
-  void sync() {
-    fp->sync();
-  }
+	bool eof() {return fp->eof();} /**< is end of file? */
 
-  void seek(uint64_t pos);
+	void sync() {fp->sync();}
 
-  void writeChunk(StringPiece data);
-  bool readChunk(string *s);
+	void seek(uint64_t pos);
 
-  File *fp;
+	/**
+	 * Helper method for write().
+	 */
+	void writeChunk(StringPiece data);
 
- private:
-  string buf_;
-  string decomp_buf_;
-  string decomp_scratch_;
-  string path_;
-  string mode_;
+	/**
+	 * Helper method for read().
+	 */
+	bool readChunk(string *s);
+
+	File *fp; /**< pointer to the actual file */
+
+private:
+	string buf_; /**< read buffer */
+	string path_;
+	string mode_;
 };
+
 }  // namespace lapis
 
 #endif  // INCLUDE_CORE_FILE_H_

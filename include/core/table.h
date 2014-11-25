@@ -62,11 +62,11 @@ public:
 	int shard;
 	int default_shard_size;
 
-	void *accum;
-	void *sharder;
-	void *key_marshal;
-	void *value_marshal;
-	TableFactory *partition_factory;
+	void *accum; /**< user-defined accumulator (BaseUpdateHandler) */
+	void *sharder; /**< mapping of key to shard ID */
+	void *key_marshal; /**< struct for marshalling key type */
+	void *value_marshal; /**< struct for marhsalling value type */
+	TableFactory *partition_factory; /** struct for creating local table for storing shard content */
 };
 
 

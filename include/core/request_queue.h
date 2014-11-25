@@ -1,15 +1,5 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 
-/*
- * Maintaining the queue for *remote* requests, local put/get are handled
- * differently.
- *
- * There are two operation modes: synchronous and asynchronous.
- * + In asynchronous mode, requests for each key are processed in FIFO order.
- * + In synchronous mode, for each key there must be N gets before N puts.
- */
-
-
 #ifndef INCLUDE_CORE_REQUEST_QUEUE_H_
 #define INCLUDE_CORE_REQUEST_QUEUE_H_
 

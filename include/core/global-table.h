@@ -25,6 +25,9 @@ class TableServer;
  *
  * Given a key K, the global table knows if it is stored in one of its local shards. It invokes
  * the local table directly if yes, or sends the request over the network if no.
+ *
+ * The current implementation assumes that table servers are different to workers, i.e.
+ * put/get will be remote requests.
  */
 class GlobalTable: public TableBase {
 public:
@@ -62,7 +65,8 @@ public:
 
 
 	/**
-	 * apply the put and get request from another process
+	 * Apply the put and get request from another process.
+	 *
 	 * return true if the operation is applied successfully
 	 * return false means the request should be re-processed
 	 */
@@ -81,7 +85,7 @@ public:
 		return &checkpoint_files_;
 	}
 
-	// clear the partition
+	// clear the local partition
 	void clear(int shard);
 	bool empty();
 
@@ -107,10 +111,11 @@ protected:
 
 	void set_worker(TableServer *w);
 
-	// fetch key k from the node owning it.  Returns true if the key exists (always).
+	// synchronous fetch of key k from the node owning it.  Returns true
+	// if the key exists (always).
 	bool get_remote(int shard, const StringPiece &k, string *v);
 
-	// send get request to the remote machine.
+	// send get request to the remote machine then return
 	void async_get_remote(int shard, const StringPiece &k);
 
 	//  true if there're responses to GET request
@@ -119,17 +124,6 @@ protected:
 	// true if the response is of the specified key
 	bool async_get_remote_collect_key(int shard, const string &k, string *v);
 
-	/**
-	 * send tables update and puts. This is done by first inserting it to the remote
-	 * partition (locally), then serializing the entire parition to TableData.
-	 *
-	 * Finally TableData object is sent over.
-	 *
-	 * TODO: removing the first step, constructing TableData objects and sending them
-	 * directly.
-	 */
-	void send_updates();
-	void send_put();
 };
 
 
@@ -294,7 +288,6 @@ bool TypedGlobalTable<K, V>::async_get(const K &k, V* v) {
 	int shard = this->get_shard(k);
 
 	//ALL going through Networkthread messages, including local get
-
 	async_get_remote(shard,
 			marshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 	return false;
@@ -314,7 +307,6 @@ template<class K, class V>
 bool TypedGlobalTable<K, V>::async_get_collect(K* k, V* v) {
 
 	//ALWAYS remote
-
 	string tk, tv;
 	bool succeed = async_get_remote_collect(&tk, &tv);
 	if (succeed) {
@@ -326,11 +318,12 @@ bool TypedGlobalTable<K, V>::async_get_collect(K* k, V* v) {
 }
 
 
+//  check if the table contains a specific key.
+//  Rarely used.
 template<class K, class V>
 bool TypedGlobalTable<K, V>::contains(const K &k) {
 	int shard = this->get_shard(k);
 	if (is_local_shard(shard)) {
-		//    boost::recursive_mutex::scoped_lock sl(mutex());
 		return partition(shard)->contains(k);
 	}
 	string v_str;
@@ -338,7 +331,8 @@ bool TypedGlobalTable<K, V>::contains(const K &k) {
 			marshal(static_cast<Marshal<K>*>(info_->key_marshal), k), &v_str);
 }
 
-
+//  initialize local partition.
+//  User-specified factory to create a new LocalTable
 template<class K, class V>
 LocalTable *TypedGlobalTable<K, V>::create_local(int shard) {
 	TableDescriptor *linfo = new TableDescriptor(info());

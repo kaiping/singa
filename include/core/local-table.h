@@ -9,7 +9,11 @@
 
 namespace lapis {
 
-// Represents a single shard of a partitioned global table.
+/**
+ * A single shard of a partitioned global table. Each global table maintains
+ * a number of typed local table for accessing typed key-value tuples.
+ * @see sparse-table.h
+ */
 class LocalTable: public TableBase, public UntypedTable, public Serializable {
 public:
 	LocalTable() :

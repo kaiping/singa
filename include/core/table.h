@@ -122,22 +122,35 @@ class Serializable {
 
 
 // Key/value typed interface.
-template <class K, class V>
+template<class K, class V>
 class TypedTable {
- public:
-  virtual bool contains(const K &k) = 0;
-  virtual V get(const K &k) = 0;
-  virtual void put(const K &k, const V &v) = 0;
-  virtual bool update(const K &k, const V &v) = 0;
-  virtual void remove(const K &k) = 0;
+public:
+	virtual bool contains(const K &k) = 0;
+	virtual V get(const K &k) = 0;
+	virtual void put(const K &k, const V &v) = 0;
+	virtual bool update(const K &k, const V &v) = 0;
+	virtual void remove(const K &k) = 0;
 };
 
-// global, untyped table
+/**
+ * A generic table in which key and value are of type string.
+ *
+ * The GlobalTable works with get/update methods of this class. The get and put
+ * method also invokes user-define get/update handler --- for customizing
+ * consistency model.
+ *
+ * Typed tables (@see sparse-table.h) override these method to convert to/from
+ * correct types.
+ */
 class UntypedTable {
- public:
-  virtual bool contains_str(const StringPiece &k) = 0;
-  virtual string get_str(const StringPiece &k) = 0;
-  virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
+public:
+
+	// return empty string if the value is not ready to be return
+	// use this to implement consistency models
+	virtual string get_str(const StringPiece &k) = 0;
+
+	// not used yet
+	virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
 };
 
 class TableData;
@@ -153,16 +166,6 @@ struct NetworkTableCoder : public TableCoder {
   TableData *t_;
 };
 
-// encoding local table (to serialize to disk)
-struct LocalTableCoder : public TableCoder {
-  LocalTableCoder(const string &f, const string &mode);
-  virtual ~LocalTableCoder();
-
-  virtual void WriteEntry(StringPiece k, StringPiece v);
-  virtual bool ReadEntry(string *k, string *v);
-
-  RecordFile *f_;
-};
 }  // namespace lapis
 
 

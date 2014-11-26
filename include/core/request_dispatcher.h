@@ -30,7 +30,6 @@ using std::string;
  * The singleton for queueing and disptaching put/get requests. It connects NetworkThread to the
  * GlobalTable: NetworkThread gets access to the queue, and the put/get requests access
  * the GlobalTable (via TableServer dispatch). In particular:
- *
  * 1. NetworkThread puts remote requests to the request queue.
  * 2. TableServer registers callbacks and handlers.
  * 3. Dispatch thread loops through the queue (infinite loop) and invokes corresponding callbacks.
@@ -72,7 +71,10 @@ public:
 		return instance_;
 	}
 
-	bool active(); /**< is there oustanding request in the queue */
+	/**
+	 * true if there is outstanding request.
+	 */
+	bool active(){ return num_outstanding_request_ > 0;}
 
 private:
 	RequestDispatcher();

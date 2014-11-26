@@ -7,12 +7,17 @@
 #include "core/table.h"
 #include "core/file.h"
 
+/**
+ * @file local-table.h
+ * A single shard of the global table. Each global table maintains
+ * a number of typed local tables for accessing typed key-value tuples.
+ * @see sparse-table.h, global-table.h
+ *
+ */
 namespace lapis {
 
 /**
- * A single shard of a partitioned global table. Each global table maintains
- * a number of typed local table for accessing typed key-value tuples.
- * @see sparse-table.h
+ * A simple LocalTable class. Typed local tables extend this class.
  */
 class LocalTable: public TableBase, public UntypedTable, public Serializable {
 public:
@@ -34,8 +39,8 @@ public:
 	}
 protected:
 	friend class GlobalTable;
-	TableCoder *delta_file_;
-	Stats stats_;
+	TableCoder *delta_file_; /**< checkpointing */
+	Stats stats_; /**< table stats */
 };
 
 }  // namespace lapis

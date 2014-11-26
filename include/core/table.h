@@ -9,41 +9,28 @@
 #include "core/file.h"
 #include "proto/worker.pb.h"
 
+/**
+ * @file table.h
+ * Common interfaces for table classes.
+ */
 namespace lapis {
 
+struct TableBase; /**< type declaration */
 
-struct TableBase;
-
-//  differnt mappings of a key to a shard
-struct Sharding {
-	struct String: public Sharder<string> {
-		int operator()(const string &k, int shards) {
-			return StringPiece(k).hash() % shards;
-		}
-	};
-
-	struct Mod: public Sharder<int> {
-		int operator()(const int &key, int shards) {
-			return key % shards;
-		}
-	};
-
-	struct UintMod: public Sharder<uint32_t> {
-		int operator()(const uint32_t &key, int shards) {
-			return key % shards;
-		}
-	};
-};
-
-//  create new local table with this facotry
+/**
+ * Struct for creating local shard. User implements this struct and passes it
+ * as argument during table initialization.
+ */
 struct TableFactory {
 	virtual TableBase *New() = 0;
 };
 
 
-//  global information of the table, containing the number of shards
-//  and the table ID
-//  also the helper objects for marshalling/unmarshalling data
+/**
+ * Global information of table. It contains the table ID, the number of shards in the table,
+ * and helper structs for accumulating updates, for mapping key to shard, for creating local shards,
+ * and for data marshalling.
+ */
 struct TableDescriptor {
 public:
 	TableDescriptor(int id, int shards) {
@@ -55,12 +42,8 @@ public:
 		memcpy(this, &t, sizeof(t));
 	}
 
-	int table_id;
+	int table_id; /**< unique table ID */
 	int num_shards;
-
-	// For local tables, the shard of the global table they represent.
-	int shard;
-	int default_shard_size;
 
 	void *accum; /**< user-defined accumulator (BaseUpdateHandler) */
 	void *sharder; /**< mapping of key to shard ID */
@@ -70,7 +53,9 @@ public:
 };
 
 
-// Methods common to both global table views and local shards
+/**
+ * Common methods for initializing and accessing table information.
+ */
 class TableBase {
 public:
 	virtual void Init(const TableDescriptor *info) {
@@ -101,7 +86,9 @@ protected:
 };
 
 
-// Interface for serializing tables, either to disk or for transmitting over the network.
+/**
+ * Struct for serializing tables, either to disk or for transmitting over the network.
+ */
 struct TableCoder {
 	virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
 	virtual bool ReadEntry(string *k, string *v) = 0;
@@ -110,7 +97,9 @@ struct TableCoder {
 	}
 };
 
-// serializable interface
+/**
+ * Serializable table interface.
+ */
 class Serializable {
  public:
   virtual bool ApplyUpdates(TableCoder *in, LogFile *logfile) = 0;
@@ -121,7 +110,9 @@ class Serializable {
 
 
 
-// Key/value typed interface.
+/**
+ * Template for typed table classes whose data and operations are of specific types.s
+ */
 template<class K, class V>
 class TypedTable {
 public:
@@ -145,18 +136,23 @@ public:
 class UntypedTable {
 public:
 
-	// return empty string if the value is not ready to be return
-	// use this to implement consistency models
+	/**
+	 * Return empty string if the value is not ready to be returned.
+	 */
 	virtual string get_str(const StringPiece &k) = 0;
 
-	// not used yet
+	/**
+	 * Not yet implemented!
+	 */
 	virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
 };
 
 class TableData;
 
 
-// encoding network table
+/**
+ * Specific encoding of table data, to be transmitted over the network.
+ */
 struct NetworkTableCoder : public TableCoder {
 	NetworkTableCoder(const TableData *in);
   virtual void WriteEntry(StringPiece k, StringPiece v);

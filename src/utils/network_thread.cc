@@ -17,11 +17,14 @@
 // sleep duration between reading messages off the network.
 DEFINE_double(sleep_time, 0.0001, "");
 
+/**
+ * @file network_thread.cc
+ * Implementation of NetworkThread class.
+ * @see network_thread.h
+ */
 namespace lapis {
 
-/**
- * network-related stats
- */
+
 string FIRST_BYTE_RECEIVED="first byte received";
 string LAST_BYTE_RECEIVED="last byte received";
 string TOTAL_BYTE_RECEIVED="total byte received";
@@ -73,14 +76,12 @@ NetworkThread::NetworkThread() {
 					network_thread_stats_[TOTAL_BYTE_RECEIVED] = 0;
 }
 
-//  blocking read for the given source and message type.
 void NetworkThread::Read(int desired_src, int type, Message *data,
 		int *source) {
 	while (!TryRead(desired_src, type, data, source))
 		Sleep (FLAGS_sleep_time);
 }
 
-//  non-blocking read
 bool NetworkThread::TryRead(int src, int type, Message *data, int *source) {
 	if (src == MPI::ANY_SOURCE) {
 		for (int i = 0; i < world_->Get_size(); ++i)
@@ -96,7 +97,6 @@ bool NetworkThread::TryRead(int src, int type, Message *data, int *source) {
 	return false;
 }
 
-//  responses + control messages go to this queue
 bool NetworkThread::check_queue(int src, int type, Message *data) {
 	Queue &q = receive_queue_[type][src];
 	if (!q.empty()) {
@@ -123,7 +123,6 @@ void NetworkThread::Send(int dst, int method, const Message &msg) {
 		pending_sends_.push_back(r);
 }
 
-// when data is not used, it can be put back again
 void NetworkThread::send_to_local_rx_queue(int src, int method,
 		const Message &msg) {
 	NetworkMessage *r = new NetworkMessage(src, method, msg);
@@ -132,7 +131,6 @@ void NetworkThread::send_to_local_rx_queue(int src, int method,
 	delete r;
 }
 
-//  broadcast to all non-coordinator servers: 0-(size-1)
 void NetworkThread::Broadcast(int method, const Message &msg) {
 	for (int i = 0; i < size() - 1; ++i)
 		Send(i, method, msg);
@@ -151,7 +149,9 @@ void NetworkThread::WaitForSync(int reply, int count) {
 	}
 }
 
-//  wait for the message queue to clear
+/**
+ * Wait for the send queue to clear.
+ */
 void NetworkThread::Flush() {
 	while (active())
 		Sleep (FLAGS_sleep_time);
@@ -172,6 +172,14 @@ void NetworkThread::PrintStats() {
 							- network_thread_stats_[FIRST_BYTE_RECEIVED]);
 }
 
+/**
+ * If the process is the coordinator, it broadcasts the barrier requests and waits for all
+ * other processes to reply. After that, it broadcasts another message indicating that the barrier
+ * is cleared.
+ *
+ * If the process is non-coordinator, it waits for the barrier request from the coordinator, replies
+ * to it, and then waits for the barrier-clear meassage from the coordinator.
+ */
 void NetworkThread::barrier() {
 	if (GlobalContext::Get()->AmICoordinator()) {
 		SyncBroadcast(MTYPE_BARRIER_REQUEST, MTYPE_BARRIER_REPLY,
@@ -197,8 +205,14 @@ bool NetworkThread::active() const {
 			|| RequestDispatcher::Get()->active();
 }
 
-// read messages off MPI and put to queues
-// single-threaded only.
+
+/**
+ * Read messages of the MPI queue and put to the corresponding queues. It continues doing that
+ * until Shutdown() is called.
+ *
+ * Note: for now, sending and receiving operations alternate in one thread. Separating them into
+ * two threads may help improve performance.
+ */
 void NetworkThread::NetworkLoop() {
 	while (running_) {
 		MPI::Status st;
@@ -208,20 +222,12 @@ void NetworkThread::NetworkLoop() {
 			int bytes = st.Get_count(MPI::BYTE);
 			string data;
 			data.resize(bytes);
-			if (tag == MTYPE_DATA_PUT_REQUEST
-					&& network_thread_stats_[FIRST_BYTE_RECEIVED] == 0)
-				network_thread_stats_[FIRST_BYTE_RECEIVED] = Now();
 
 			world_->Recv(&data[0], bytes, MPI::BYTE, source, tag, st);
-			if (tag == MTYPE_DATA_PUT_REQUEST) {
-				network_thread_stats_[LAST_BYTE_RECEIVED] = Now();
-				network_thread_stats_[TOTAL_BYTE_RECEIVED] += bytes;
-			}
 
 			//  put request to the RequestQueue
 			if (tag == MTYPE_PUT_REQUEST || tag == MTYPE_UPDATE_REQUEST
-					|| tag == MTYPE_GET_REQUEST || tag == MTYPE_DATA_PUT_REQUEST
-					|| tag == MTYPE_DATA_PUT_REQUEST_FINISH) {
+					|| tag == MTYPE_GET_REQUEST ) {
 				RequestDispatcher::Get()->Enqueue(tag, data);
 			} else {
 				boost::recursive_mutex::scoped_lock sl(
@@ -249,7 +255,6 @@ void NetworkThread::NetworkLoop() {
 	}
 }
 
-// clean up memory
 void NetworkThread::CollectActive() {
 	if (active_sends_.empty())
 		return;
@@ -265,6 +270,5 @@ void NetworkThread::CollectActive() {
 		++i;
 	}
 }
-
 
 }  // namespace lapis

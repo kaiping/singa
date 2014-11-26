@@ -5,16 +5,24 @@
 #define INCLUDE_CORE_TIMER_H_
 #include <time.h>
 
+/**
+ * @file timer.h
+ * Provide access to nano-second clock. Taken from piccolo codebase.
+ */
 namespace lapis {
 
-//  read timestamp counter
+/**
+ * Read CPU timestamp counter.
+ */
 static uint64_t rdtsc() {
 	uint32_t hi, lo;
 	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
 	return (((uint64_t) hi) << 32) | ((uint64_t) lo);
 }
 
-//  current time counter
+/**
+ * Get current time in nano second.
+ */
 inline double Now() {
 	timespec tp;
 	clock_gettime(CLOCK_MONOTONIC, &tp);
@@ -22,7 +30,9 @@ inline double Now() {
 }
 
 
-// helper class for getting time at nano second level
+/**
+ * Wrapper class for measuring time in nano second and in CPU cycles.
+ */
 class Timer {
 public:
 	Timer() {

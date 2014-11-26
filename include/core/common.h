@@ -97,6 +97,28 @@ struct Sharder {
 	virtual int operator()(const K &k, int shards) = 0;
 };
 
+/**
+ * Implementation of Sharder struct for simple types.
+ */
+struct Sharding {
+	struct String: public Sharder<string> {
+		int operator()(const string &k, int shards) {
+			return StringPiece(k).hash() % shards;
+		}
+	};
+
+	struct Mod: public Sharder<int> {
+		int operator()(const int &key, int shards) {
+			return key % shards;
+		}
+	};
+
+	struct UintMod: public Sharder<uint32_t> {
+		int operator()(const uint32_t &key, int shards) {
+			return key % shards;
+		}
+	};
+};
 
 template<class T, class Enable = void>
 struct Marshal {

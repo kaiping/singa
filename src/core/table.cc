@@ -1,5 +1,10 @@
 #include "core/table.h"
 
+/**
+ * @file table.cc
+ * Implement the table encoding (NetworkTableCoder).
+ * @see table.h
+ */
 namespace lapis {
 
 // Encoding of network message containing the table (TableData)

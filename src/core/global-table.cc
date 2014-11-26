@@ -4,12 +4,22 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-//  checkpoint flag. true = checkpoint the table's content
+/**
+ * @file global-table.cc
+ * Implement generic, string table. @see global-table.h.
+ */
+
+/**
+ * Checkpointing flag. True if checkpoint is enabled.
+ */
 DEFINE_bool(checkpoint_enabled, true, "enabling checkpoint");
+
 
 namespace lapis {
 
-// delete local paritions
+/**
+ * Delete the local shards upon destruction.
+ */
 GlobalTable::~GlobalTable() {
 	for (size_t i = 0; i < partitions_.size(); ++i) {
 		delete partitions_[i];
@@ -124,7 +134,7 @@ bool GlobalTable::HandleGet(const HashGet &get_req, TableData *get_resp) {
 	Arg *kv = get_resp->add_kv_data();
 	string value = t->get_str(get_req.key());
 
-	// empy value means that the data is not ready to be returned
+	// empty value means that the data is not ready to be returned
 	if (!value.empty()) {
 		kv->set_key(get_req.key());
 		kv->set_value(value);

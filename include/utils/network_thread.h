@@ -16,17 +16,19 @@
 using google::protobuf::Message;
 
 /**
- * Network communication utilities. We use Google ProtoBuffer for message communication.
- * Once serialized to string, the message is wrapped to NetworkMessage.
+ * @file network_thread.h
  *
- * When received, they can be insert to a general receiving queue or to a
- * dedicated RequestQueue (in which the messages are turned into tagged message)
+ * Network communication utilities, using Google ProtoBuf messages for communication.
+ * Once serialized to string, the message is wrapped in a NetworkMessage object.
+ *
+ * When received, the message is inserted to a general receiving queue or to a
+ * dedicated RequestQueue (in which the messages are turned into TaggedMessage).
+ * @see request_queue.h
  */
 namespace lapis {
 
 /**
- * Used by RequestQueue to process get/put requests.
- * The tag represents type of message
+ * Raw messages inserted in the request queue. The tag represents type of message.
  */
 struct TaggedMessage : private boost::noncopyable {
   int tag;
@@ -38,135 +40,148 @@ struct TaggedMessage : private boost::noncopyable {
 
 
 /**
- * Used to transmit messages between MPI process
- * type represents the message type
- * payload is the message content
+ * Messages sent between MPI processes. It contains a message type, its payload and other
+ * MPI related fields.
  */
 struct NetworkMessage : private boost::noncopyable {
-  int target;
-  int type;
+  int target; /**< destination process */
+  int type; /**< message type */
 
-  string payload;
+  string payload; /**< message content */
+
   MPI::Request mpi_req;
   MPI::Status status;
 
   NetworkMessage(int target, int method, const Message &msg);
   ~NetworkMessage();
 
-  //  if message has been sent successfully
+  /**
+   * Return true if the message is sent successfully.
+   */
   bool finished() {
     return mpi_req.Test(status);
   }
 };
 
-// sleep for t seconds
-void Sleep(double t) ;
+void Sleep(double t); /**< sleep for t seconds */
 
 
 /**
- * A singleton serving as the starting point of each MPI process.
- * Launch a receiving thread that adds message to one of 2 queues:
- * + Put/Get requests added to RequestQueue
- * + Other messages: response + control messages added to ReceiveQueue
+ * A singleton for communicating between MPI processes. It consists of
+ * a receiving thread that adds received messages to one of 2 queues:
+ * + Put/Get requests added to request queue and dispatched via a RequestDispatcher.
+ * + Other messages: response + control messages added to general receiving queue and processed
+ * 		right away.
+ *
  */
 class NetworkThread {
- public:
+public:
 
-  // Blocking read for the given source and message type.
-  void Read(int desired_src, int type, Message *data, int *source = NULL);
-  // Non-blocking read, true if successfull (data filled with content), false otherwise
-  bool TryRead(int desired_src, int type, Message *data, int *source = NULL);
+	/**
+	 * Blocking read for the given source and message type.
+	 */
+	void Read(int desired_src, int type, Message *data, int *source = NULL);
 
-  // Enqueue the given request for transmission.
-  void Send(int dst, int method, const Message &msg);
-  // local message also go through the ReceiveQueue
-  void send_to_local_rx_queue(int dst, int method, const Message &msg);
+	/**
+	 * Non-blocking read, true if successfull (data filled with content), false otherwise.
+	 */
+	bool TryRead(int desired_src, int type, Message *data, int *source = NULL);
 
-  // Broadcast a message to all nodes ranking 0..N-2
-  void Broadcast(int method, const Message &msg);
-  // Broadcast and wait for response from all nodes ranking 0..N-2
-  void SyncBroadcast(int method, int reply, const Message &msg);
-  // helper method for SyncBroadcast
-  void WaitForSync(int method, int count);
+	/**
+	 * Enqueue the given message for transmission. Note that sending is not immediate.
+	 */
+	void Send(int dst, int method, const Message &msg);
 
-  // Wait for the sending queue to clear (no more message to send after this returns)
-  void Flush();
-  // Stop the receiving thread
-  void Shutdown();
+	/**
+	 * When the received message cannot be processed right away, it must be added back
+	 * to the receiving queue with this method.
+	 */
+	void send_to_local_rx_queue(int dst, int method, const Message &msg);
 
-  // current rank
-  int id() {
-    return id_;
-  }
+	/**
+	 * Broadcast a message to all nodes ranking 0..N-2.
+	 */
+	void Broadcast(int method, const Message &msg);
 
-  // number of MPI processes
-  int size() const {
-    return world_->Get_size();
-  }
+	/**
+	 * Broadcast and wait for response from all nodes ranking 0..N-2.
+	 */
+	void SyncBroadcast(int method, int reply, const Message &msg);
+	void WaitForSync(int method, int count); /**< helper method */
 
-  static std::shared_ptr<NetworkThread> Get();
+	/**
+	 * Wait for the sending queue to clear (no more message to send after this returns).
+	 */
+	void Flush();
 
+	/**
+	 * Stop the receiving thread.
+	 */
+	void Shutdown();
 
-  // Callback for handling control & response messages.
-  typedef boost::function<void ()> Callback;
+	int id() {return id_;} /**< this process's rank. */
 
-  void RegisterCallback(int message_type, Callback cb) {
+	int size() const {return world_->Get_size();} /**< total number of MPI processes. */
+
+	static std::shared_ptr<NetworkThread> Get();
+
+	typedef boost::function<void()> Callback; /**< type definition for callback functions */
+
+	/**
+	 * Register callback functions to process specific message types. These callbacks are
+	 * only for messages other than put/get/update requests.
+	 */
+	void RegisterCallback(int message_type, Callback cb) {
 		callbacks_[message_type] = cb;
-   }
+	}
 
-  void PrintStats();
+	void PrintStats();
 
-  // set the barrier. wait for other to reach the barrier before proceeding.
-  void barrier();
+	/**
+	 * Set the barrier. wait for other to reach the barrier before proceeding.
+	 */
+	void barrier();
 
- private:
-  // max size of the response queue = kMaxHosts.kMaxMethods
-  static const int kMaxHosts = 512;
-  static const int kMaxMethods = 36;
+private:
+	static const int kMaxHosts = 512; /**< max number of processes. */
+	static const int kMaxMethods = 36;/**< max number of message types. */
 
-  typedef deque<string> Queue;
+	typedef deque<string> Queue;
 
-  static std::shared_ptr<NetworkThread> instance_;
+	static std::shared_ptr<NetworkThread> instance_;
 
-  Callback callbacks_[kMaxMethods];
+	Callback callbacks_[kMaxMethods];
 
-  // set to false when receiving MTYPE_WORKER_SHUTDOWN from the manager
-  // shared by the receiving thread and processing thread.
-  volatile bool running_;
-  int id_;
-  MPI::Comm *world_;
+	volatile bool running_; /**< if the receiving thread is still running. */
+	int id_;
+	MPI::Comm *world_;
 
-
-  Stats network_thread_stats_;
-  mutable boost::thread *sender_and_reciever_thread_;
-
-  // send and receive queues. Each has a lock
-
-  // send queue
-  mutable boost::recursive_mutex send_lock;
-  deque<NetworkMessage *> pending_sends_;
-  std::unordered_set<NetworkMessage *> active_sends_;
-
-  // receive queue. Messages are indexed by their types and source ranks.
-  boost::recursive_mutex receive_queue_locks_[kMaxMethods];
-  Queue receive_queue_[kMaxMethods][kMaxHosts];
+	Stats network_thread_stats_;
+	mutable boost::thread *sender_and_reciever_thread_; /**< receiver thread. */
 
 
-  // helper method for TryRead
-  bool check_queue(int src, int type, Message *data);
+	mutable boost::recursive_mutex send_lock; /**< lock of the send queue. */
+	deque<NetworkMessage *> pending_sends_; /**< queue for sending. */
+	std::unordered_set<NetworkMessage *> active_sends_;/**< queue for sent messages to be cleared. */
 
-  //  if there're still messages to send
-  bool active() const;
+	boost::recursive_mutex receive_queue_locks_[kMaxMethods]; /**< locks on the receiving queue. */
+	Queue receive_queue_[kMaxMethods][kMaxHosts]; /**< receiving queue. */
 
-  //  reclaim memory of the send queue
-  void CollectActive();
+	/**
+	 * Helper method for TryRead().
+	 */
+	bool check_queue(int src, int type, Message *data);
 
-  // the thread that receives and send messages from the queues
-  void NetworkLoop();
+	bool active() const; /**< if there're still messages to send. */
 
+	void CollectActive(); /**< reclaim memory from the send queue. */
 
-  // private constructor
-  NetworkThread();
+	/**
+	 * The loop running in the receiver thread to receive and send messages.
+	 */
+	void NetworkLoop();
+
+	NetworkThread(); /**< private constructor. */
 
 };
 }  // namespace lapis

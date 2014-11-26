@@ -9,42 +9,57 @@
 #include "core/file.h"
 #include "core/request_dispatcher.h"
 
-namespace lapis {
-
-class TableServer;
-
 /**
- * This class represent the global view of the table, i.e. each process treats it as a
- * local table to which it can put/get data.
+ * @file global-table.h
+ * A generic GlobalTable class represents the global view of the table, i.e. each process
+ * treats it as a local table to which it can put/get data. Each table maintains #shards
+ * partitions which are typed table. It has the mapping of which process "owns" which partition.
+ * Given a key, the table knows if it is stored in one of its local shards. It invokes the
+ * local table directly if yes, or sends the request over the network if no.
  *
- * Each table maintains #shards partitions which are typed local table. It has the mapping
- * of which process "owns" which partition.
- *
- * The global table provides common put/get operations over string/byte streams, with
- * which the typed tables can use to convert to specific key/value types.
- *
- * Given a key K, the global table knows if it is stored in one of its local shards. It invokes
- * the local table directly if yes, or sends the request over the network if no.
+ * A typed GlobalTable restrict data and operations to specific types.
  *
  * The current implementation assumes that table servers are different to workers, i.e.
  * put/get will be remote requests.
  */
+namespace lapis {
+
+class TableServer;
+
+
+/**
+ * Generic table operating on string key-value tuples.
+ */
 class GlobalTable: public TableBase {
 public:
-	virtual void Init(const TableDescriptor *tinfo);
 	virtual ~GlobalTable();
 
-	// each partition has an owner which may not be the current process
+	/**
+	 * Initialize the table.
+	 * @param *tinfo the table descriptor. @see table.h
+	 */
+	virtual void Init(const TableDescriptor *tinfo);
+
+	/**
+	 * Information of a shard: in which process is the shard stored.
+	 * Tables at all processes share the same shard information. They use this
+	 * to decide where to send the request.
+	 */
 	struct PartitionInfo {
 		PartitionInfo() :owner(-1) {}
 		int owner;
 	};
 
+	/**
+	 * Get the shard information of a given shard.
+	 */
 	virtual PartitionInfo *get_partition_info(int shard) {
 		return &partinfo_[shard];
 	}
 
-	//  the process which owns the shard
+	/**
+	 * Get the process ID (rank) where the shard is maintained.
+	 */
 	int owner(int shard) {
 		return get_partition_info(shard)->owner;
 	}
@@ -54,7 +69,7 @@ public:
 
 
 	/**
-	 * handle remote get request from another process
+	 * Handle remote get request from another process. There are 3 steps:
 	 * (1) check that the request is for the local shard
 	 * (2) invoke user-define handle-get at the local shard
 	 * (3) return true + TableData if the data can be returned right away
@@ -65,79 +80,111 @@ public:
 
 
 	/**
-	 * Apply the put and get request from another process.
+	 * Apply update requests from another process.
 	 *
-	 * return true if the operation is applied successfully
-	 * return false means the request should be re-processed
+	 * @return true if the operation is applied successfully.
 	 */
 	bool ApplyUpdates(const TableData &req);
+
+	/**
+	 * Apply put requests from another process. Always return true.
+	 */
 	bool ApplyPut(const TableData &req);
 
-	// restore the local shard from checkpoint file
+	/**
+	 * Restore content of the specified (local) shard from the checkpoint file.
+	 * The file is scanned backward and tuples are inserted back to the shard.
+	 */
 	void Restore(int shard);
 
-	//  table stats, obtained by merging stats of the local shards
-	Stats stats();
 
+	Stats stats(); /**< table stats, merged from local shards' stats */
 
-	//  checkpoint files, one for each shard
+	/**
+	 * Get checkpoint files of the local shards (one file per shard).
+	 */
 	map<int, LogFile*>* checkpoint_files() {
 		return &checkpoint_files_;
 	}
 
-	// clear the local partition
-	void clear(int shard);
-	bool empty();
+	void clear(int shard); /**< clear the partition. */
+	bool empty(); /**< is the shard empty. */
 
-	// resize paritions to the new size
+	/**
+	 * Resize all local shards to the new size.
+	 */
 	void resize(int64_t new_size);
 
-	int worker_id_;
+	int worker_id_; /**< rank of the current process.*/
 
-	virtual int64_t shard_size(int shard);
+	virtual int64_t shard_size(int shard); /**< number of tuples in the shard. */
 
-	// returns the shard of the string key. Typed tables overrides
-	// this by marshalling the key to string
+	/**
+	 * Returns the shard ID of the given string key. Typed tables override
+	 * this by marshalling string to the correct type.
+	 */
 	virtual int get_shard_str(StringPiece k) = 0;
 
 protected:
-	vector<PartitionInfo> partinfo_;
+	vector<PartitionInfo> partinfo_; /**< shard information */
 
-	vector<LocalTable *> partitions_;
+	vector<LocalTable *> partitions_; /**< actual shards */
 
 	map<int, LogFile*> checkpoint_files_;
 
 	friend class TableServer;
 
+	/**
+	 * Set the associated TableServer class which processes table requests.
+	 * Essentially, this sets the MPI rank of the process that maintains
+	 * this table (and its local shards).
+	 */
 	void set_worker(TableServer *w);
 
-	// synchronous fetch of key k from the node owning it.  Returns true
-	// if the key exists (always).
+	/*
+	 * Synchronous fetch of the given key stored in the given shard.
+	 * @return true if the key exists.
+	 */
 	bool get_remote(int shard, const StringPiece &k, string *v);
 
-	// send get request to the remote machine then return
+	/**
+	 * Send get request to the remote shard and return immediately.
+	 */
 	void async_get_remote(int shard, const StringPiece &k);
 
-	//  true if there're responses to GET request
+
+	/**
+	 * Collect responses of the get requests into the specified placeholders.
+	 * @return true if there is a response.
+	 */
 	bool async_get_remote_collect(string *k, string *v);
 
-	// true if the response is of the specified key
+	/**
+	 * Collect response of the get request for a specific key.
+	 * @return false if the response has not arrived.
+	 */
 	bool async_get_remote_collect_key(int shard, const string &k, string *v);
 
 };
 
 
 /**
- * Typed tables. Its main job is to marshall/unmarshall between user data types
+ * A template for GlobalTable of specific types.
+ *
+ * Its main job is to marshall/unmarshall between user data types
  * and the generic string type of GlobalTable.
  *
- * Workers use this interface directly to put/get data
  */
 template<class K, class V>
 class TypedGlobalTable: public GlobalTable,
 		public TypedTable<K, V>,
 		private boost::noncopyable {
 public:
+	/**
+	 * Initialize the table. First, it performs normal initialization as with
+	 * a generic table. Then it instantiates the local shards which are also
+	 * typed tables, from a user-given factory.
+	 */
 	virtual void Init(const TableDescriptor *tinfo) {
 		GlobalTable::Init(tinfo);
 		for (size_t i = 0; i < partitions_.size(); ++i) {
@@ -145,36 +192,53 @@ public:
 		}
 	}
 
-	// return shard ID for the given key
-	int get_shard(const K &k);
-	int get_shard_str(StringPiece k);
+	int get_shard(const K &k); /**< returns ID of the shard storing k */
+	int get_shard_str(StringPiece k); /**< override generic table's method */
 
-	// put and update (K,V)
+	/**
+	 * Insert new tuple to the table.
+	 */
 	void put(const K &k, const V &v);
+
+	/**
+	 * Update table with a new tuple.
+	 */
 	bool update(const K &k, const V &v);
 
-	// synchronous get: block until receiving V for K
+	/**
+	 * Synchronous get. Block until V is received.
+	 */
 	V get(const K &k);
 
-	//  asynchronous get. if true then V contains the value
-	//  if false, user has to call async_collect() until there's data (returning true)
+	/**
+	 * Asynchronous get. Sending the request for key K then returning.
+	 */
 	bool async_get(const K &k, V* v);
+
+	/**
+	 * Collect responses of the get requests.
+	 */
 	bool async_get_collect(K* k, V* v);
 
-	// if the table contains K
-	bool contains(const K &k);
+	bool contains(const K &k); /** if the table contains K */
 
+	/**
+	 * Return the local shard (a typed table) of the given index.
+	 */
 	TypedTable<K, V> *partition(int idx) {
 		return dynamic_cast<TypedTable<K, V>*>(partitions_[idx]);
 	}
 
 protected:
 
-	// create shards (Sparse Table)
-	LocalTable *create_local(int shard);
+	LocalTable *create_local(int shard); /**< instantiates a local shard (SparseTable). */
 };
 
 
+/**
+ * Return shard ID for a given key. The mapping is provided by the user
+ * via a Sharder struct (@see common.h).
+ */
 template<class K, class V>
 int TypedGlobalTable<K, V>::get_shard(const K &k) {
 	DCHECK(this != NULL);
@@ -192,7 +256,10 @@ int TypedGlobalTable<K, V>::get_shard_str(StringPiece k) {
 			unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 }
 
-//  prepares the TableData object and sends off to the shard containing K
+/**
+ * Insert new tuple to the table. It first prepares TableData message containing
+ * the tuple, then sends it off to the remote shard.
+ */
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	int shard = this->get_shard(k);
@@ -216,14 +283,14 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	a->set_value(value.data, value.len);
 	put.set_done(true);
 
-	// send over the network
-	if (is_local_shard(shard))
-		NetworkThread::Get()->Send(local_rank, MTYPE_PUT_REQUEST, put); //send locally
-	else
-		NetworkThread::Get()->Send(onwer(shard), MTYPE_PUT_REQUEST, put); //send remote
+	// send over the network. No local put.
+	NetworkThread::Get()->Send(onwer(shard), MTYPE_PUT_REQUEST, put); //send remote
 }
 
 
+/**
+ * Update the table with new tuple. @see put().
+ */
 template<class K, class V>
 bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	int shard = this->get_shard(k);
@@ -249,15 +316,11 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	put.set_done(true);
 
 	// send via the network
-	if (is_local_shard(shard))
-		NetworkThread::Get()->Send(local_rank, MTYPE_UPDATE_REQUEST, put); //send locally
-	else
-		NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put); //send remotely
+	NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put); //send remotely
 	return true;
 }
 
 
-// synchronous get
 template<class K, class V>
 V TypedGlobalTable<K, V>::get(const K &k) {
 	int shard = this->get_shard(k);
@@ -276,13 +339,6 @@ V TypedGlobalTable<K, V>::get(const K &k) {
 			v_str);
 }
 
-/*
- * asynchronous get, returns right away. use async_get_collect to wait on the
- * content.
- *
- * if the key is local, return
- * else send send (get_remote without waiting).
- */
 template<class K, class V>
 bool TypedGlobalTable<K, V>::async_get(const K &k, V* v) {
 	int shard = this->get_shard(k);
@@ -294,15 +350,6 @@ bool TypedGlobalTable<K, V>::async_get(const K &k, V* v) {
 
 }
 
-/*
- * wait on the content. The upper layer repeatedly invokes this function until
- * it returns true, then the value can be used.
- *
- * K k;
- * V v;
- * if (async_get_collect(&k,&v))
- *     do_some_thing(k,v);
- */
 template<class K, class V>
 bool TypedGlobalTable<K, V>::async_get_collect(K* k, V* v) {
 
@@ -318,8 +365,6 @@ bool TypedGlobalTable<K, V>::async_get_collect(K* k, V* v) {
 }
 
 
-//  check if the table contains a specific key.
-//  Rarely used.
 template<class K, class V>
 bool TypedGlobalTable<K, V>::contains(const K &k) {
 	int shard = this->get_shard(k);
@@ -331,8 +376,6 @@ bool TypedGlobalTable<K, V>::contains(const K &k) {
 			marshal(static_cast<Marshal<K>*>(info_->key_marshal), k), &v_str);
 }
 
-//  initialize local partition.
-//  User-specified factory to create a new LocalTable
 template<class K, class V>
 LocalTable *TypedGlobalTable<K, V>::create_local(int shard) {
 	TableDescriptor *linfo = new TableDescriptor(info());

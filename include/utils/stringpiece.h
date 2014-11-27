@@ -11,33 +11,39 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+/**
+ * @file stringpiece.h
+ * Common methods for handling strings. Taken from piccolo codebase.
+ */
 namespace lapis {
 
 using std::string;
 
+/**
+ * Wrapper for C++ strings.
+ */
 class StringPiece {
- public:
-  StringPiece();
-  StringPiece(const StringPiece &s);
-  StringPiece(const string &s);
-  StringPiece(const string &s, int len);
-  StringPiece(const char *c);
-  StringPiece(const char *c, int len);
+public:
+	StringPiece();
+	StringPiece(const StringPiece &s);
+	StringPiece(const string &s);
+	StringPiece(const string &s, int len);
+	StringPiece(const char *c);
+	StringPiece(const char *c, int len);
 
-  // Remove whitespace from either side
-  void strip();
+	void strip();/**< remove whitespace from either side. */
 
-  uint32_t hash() const;
-  string AsString() const;
+	uint32_t hash() const;
+	string AsString() const;
 
-  int size() const {
-    return len;
-  }
+	int size() const {
+		return len;
+	}
 
-  const char *data;
-  int len;
+	const char *data;
+	int len;
 
-  static std::vector<StringPiece> split(StringPiece sp, StringPiece delim);
+	static std::vector<StringPiece> split(StringPiece sp, StringPiece delim);
 };
 
 #ifndef SWIG

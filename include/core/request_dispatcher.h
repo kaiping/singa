@@ -25,21 +25,44 @@
 
 using std::string;
 
+/**
+ * @file request_dispatcher.h
+ * The singleton for queueing and disptaching put/get requests. It connects NetworkThread to the
+ * GlobalTable: NetworkThread gets access to the queue, and the put/get requests access
+ * the GlobalTable (via TableServer dispatch). In particular:
+ * 1. NetworkThread puts remote requests to the request queue.
+ * 2. TableServer registers callbacks and handlers.
+ * 3. Dispatch thread loops through the queue (infinite loop) and invokes corresponding callbacks.
+ * (Note that local requests - if any - are not enqueued, but will be synced up with the remote queue.
+ * But for now, as we assume requests are remote, the logic stays simple.)
+ *
+ */
 namespace lapis {
 
+/**
+ * Singleton providing access to the request queue. It also dispatches requests to the
+ * registered callbacks.
+ */
 class RequestDispatcher {
- public:
-	//  callback to handle put/get requests
-	typedef boost::function<bool (const Message *)> Callback;
+public:
+	typedef boost::function<bool(const Message *)> Callback; /**< type definition for put/get callback */
 
-	void RegisterTableCallback(int message_type, Callback callback){
+	/**
+	 * Register a callback to a message type (either put/update or get).
+	 * @param message_type message type. Could be put, update or get.
+	 * @param callback callback function.
+	 */
+	void RegisterTableCallback(int message_type, Callback callback) {
 		callbacks_[message_type] = callback;
 	}
 
-	void RegisterDiskCallback(Callback callback){
-			disk_write_callback_ = callback;
-	}
-
+	/**
+	 * Enqueue a raw network message to the queue. This raw message will be parsed to correct
+	 * type before inserting by RequestQueue.
+	 *
+	 * @param tag message type
+	 * @param data message content.
+	 */
 	void Enqueue(int tag, string &data);
 
 	static RequestDispatcher* Get() {
@@ -48,32 +71,28 @@ class RequestDispatcher {
 		return instance_;
 	}
 
-	bool active();
+	/**
+	 * true if there is outstanding request.
+	 */
+	bool active(){ return num_outstanding_request_ > 0;}
 
-	//  block on local get/put to ensure the synchronous semantics.
-	void sync_local_get(string &key);
-	void sync_local_put(string &key);
-
-	void event_complete(string &key);
-
-	RequestQueue* table_queue(){return table_queue_;}
- private:
+private:
 	RequestDispatcher();
+
+	/**
+	 * The infinite loop that dispatch requests.
+	 */
 	void table_dispatch_loop();
-	void disk_dispatch_loop();
 
-	int num_outstanding_request_;
+	int num_outstanding_request_; /**< number of requests not yet processed */
 
-	static const int kMaxMethods = 100;
+	static const int kMaxMethods = 100; /**< maximum number of callbacks */
 
-	RequestQueue* table_queue_;
-	deque<string> disk_queue_;
+	RequestQueue* table_queue_; /**< requeust queue */
 
-	Callback callbacks_[kMaxMethods], disk_write_callback_;
+	Callback callbacks_[kMaxMethods];
 
-	boost::thread *table_dispatch_thread_, *disk_dispatch_thread_;
-
-	mutable boost::recursive_mutex disk_lock_;
+	boost::thread *table_dispatch_thread_;/**< the thread that runs the dispatch loop */
 
 	static RequestDispatcher* instance_;
 };

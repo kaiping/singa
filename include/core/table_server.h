@@ -1,9 +1,4 @@
 //  Copyright © 2014 Anh Dinh. All Rights Reserved.
-
-//  handle operations of the memory server.
-//  similar to Worker in Piccolo
-//  its methods are registered as callbacks to the NetworkThread
-
 #ifndef INCLUDE_CORE_MEMORY_SERVER_H_
 #define INCLUDE_CORE_MEMORY_SERVER_H_
 
@@ -14,58 +9,58 @@
 #include "proto/worker.pb.h"
 #include "utils/network_thread.h"
 
+/**
+ * @file table_server.h
+ * Process table requests. It contains callback implementation for multiple request types.
+ */
 namespace lapis {
 
-class TableServer : private boost::noncopyable {
- public:
-	TableServer();
+/**
+ * The class that processes put/get/update requests to the in-memory tables.
+ */
+class TableServer: private boost::noncopyable {
+public:
+	TableServer(){}
+	~TableServer() {}
 
-  ~TableServer() {}
+	/**
+	 * Initialize the class with the newly created tables. The tables contain no data.
+	 *
+	 * @param tables int->GlobalTable map created by the main thread.
+	 */
+	void StartTableServer(const std::map<int, GlobalTable*> &tables);
 
-  void StartTableServer(const std::map<int, GlobalTable*> &tables);
+	/**
+	 * Shutdown the service gracefully. Make sure the table checkpointing is completed
+	 * successfully (if checkpointing is enabled).
+	 */
+	void ShutdownTableServer();
 
-  //  sends signals to the manager and ends gracefully
-  void ShutdownTableServer();
+	/**
+	 * Process remote put request. Simply invoke ApplyPut on the requested table.
+	 * Always return true.
+	 */
+	bool HandlePutRequest(const Message *message);
 
-  int id() {
-    return server_id_;
-  }
+	/**
+	 * Process remote update requests. Invoke ApplyPut on the requested table, which
+	 * may return false indicating that the update cannot be applied and the
+	 * request must be re-processed later.
+	 */
+	bool HandleUpdateRequest(const Message *message);
 
-  //  update ownership of the partition. Only memory server
-  //  storing the data will received this
-  //  assignment happens only once at the beginning
-  void HandleShardAssignment();
+	/**
+	 * Process remote get request. Invoke HandleGet on the requested table, which
+	 * may return false indicating the request cannot be fulfilled and must be
+	 * re-processed later.
+	 */
+	bool HandleGetRequest(const Message *message);
 
-  bool HandleDisk(const Message *message);
-
-  //  shutdown gracefully
-  void HandleServerShutdown();
-
-  bool HandleUpdateRequest(const Message *message);
-  bool HandlePutRequest(const Message *message);
-  bool HandleGetRequest(const Message *message);
-
-  //  id of the peer responsible for storing the partition
-  int peer_for_partition(int table, int shard);
-
- private:
-
-  //  read DiskData and dump to file
-   void HandleDataPut(const DiskData* data);
-
-   //  get notified from the coordinator that there's no more data
-   void FinishDataPut(const DiskData* data);
-
-  int server_id_;
-  mutable boost::recursive_mutex state_lock_;
-  std::shared_ptr<NetworkThread> net_;
-  std::map<int, GlobalTable*> tables_;
-  boost::thread *disk_write_thread_;
+private:
+	int server_id_; /**< the process MPI rank */
+	std::shared_ptr<NetworkThread> net_; /**< NetworkThread */
+	std::map<int, GlobalTable*> tables_; /**< tables */
 };
-
-//  start memory server, only if rank < size()-1
-// bool StartTableServer();
-
 }  //  namespace lapis
 
 #endif //  INCLUDE_CORE_MEMORY_SERVER_H_

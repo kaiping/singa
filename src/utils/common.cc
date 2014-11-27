@@ -1,3 +1,4 @@
+// Copyright © 2014 Wei Wang. All Rights Reserved.
 #include "utils/common.h"
 namespace lapis {
 

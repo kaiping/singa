@@ -1,3 +1,6 @@
+// Copyright © 2014 Anh Dinh. All Rights Reserved.
+// piccolo/table.h
+
 #ifndef INCLUDE_CORE_TABLE_H_
 #define INCLUDE_CORE_TABLE_H_
 #include <glog/logging.h>
@@ -6,128 +9,97 @@
 #include "core/file.h"
 #include "proto/worker.pb.h"
 
+/**
+ * @file table.h
+ * Common interfaces for table classes.
+ */
 namespace lapis {
 
+struct TableBase; /**< type declaration */
 
-struct TableBase;
-
-template <class V>
-struct Accumulators {
-  /*
-  struct Min : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = std::min(*a, b);
-    }
-  };
-
-  struct Max : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = std::max(*a, b);
-    }
-  };
-
-  struct Sum : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = *a + b;
-    }
-  };
-
-  struct Replace : public Accumulator<V> {
-    void Accumulate(V *a, const V &b) {
-      *a = b;
-    }
-  };
-  */
-};
-
-struct Sharding {
-  struct String  : public Sharder<string> {
-    int operator()(const string &k, int shards) {
-      return StringPiece(k).hash() % shards;
-    }
-  };
-
-  struct Mod : public Sharder<int> {
-    int operator()(const int &key, int shards) {
-      return key % shards;
-    }
-  };
-
-  struct UintMod : public Sharder<uint32_t> {
-    int operator()(const uint32_t &key, int shards) {
-      return key % shards;
-    }
-  };
-};
-
+/**
+ * Struct for creating local shard. User implements this struct and passes it
+ * as argument during table initialization.
+ */
 struct TableFactory {
-  virtual TableBase *New() = 0;
+	virtual TableBase *New() = 0;
 };
 
+
+/**
+ * Global information of table. It contains the table ID, the number of shards in the table,
+ * and helper structs for accumulating updates, for mapping key to shard, for creating local shards,
+ * and for data marshalling.
+ */
 struct TableDescriptor {
- public:
-  TableDescriptor(int id, int shards) {
-    table_id = id;
-    num_shards = shards;
-  }
+public:
+	TableDescriptor(int id, int shards) {
+		table_id = id;
+		num_shards = shards;
+	}
 
-  TableDescriptor(const TableDescriptor &t) {
-    memcpy(this, &t, sizeof(t));
-  }
+	TableDescriptor(const TableDescriptor &t) {
+		memcpy(this, &t, sizeof(t));
+	}
 
-  int table_id;
-  int num_shards;
+	int table_id; /**< unique table ID */
+	int num_shards;
 
-  // For local tables, the shard of the global table they represent.
-  int shard;
-  int default_shard_size;
-
-  void *accum;
-  void *sharder;
-  void *key_marshal;
-  void *value_marshal;
-  TableFactory *partition_factory;
+	void *accum; /**< user-defined accumulator (BaseUpdateHandler) */
+	void *sharder; /**< mapping of key to shard ID */
+	void *key_marshal; /**< struct for marshalling key type */
+	void *value_marshal; /**< struct for marhsalling value type */
+	TableFactory *partition_factory; /** struct for creating local table for storing shard content */
 };
 
 
-// Methods common to both global table views and local shards
+/**
+ * Common methods for initializing and accessing table information.
+ */
 class TableBase {
- public:
-  virtual void Init(const TableDescriptor *info) {
-    info_ = new TableDescriptor(*info);
-    //CHECK(info_->accum != NULL);
-    CHECK(info_->key_marshal != NULL);
-    CHECK(info_->value_marshal != NULL);
-  }
+public:
+	virtual void Init(const TableDescriptor *info) {
+		info_ = new TableDescriptor(*info);
+		CHECK(info_->key_marshal != NULL);
+		CHECK(info_->value_marshal != NULL);
+	}
 
-  const TableDescriptor &info() const {
-    return *info_;
-  }
+	const TableDescriptor &info() const {
+		return *info_;
+	}
 
-  virtual int id() {
-    return info().table_id;
-  }
+	virtual int id() {
+		return info().table_id;
+	}
 
-  int shard() const {
-    return info().shard;
-  }
-  virtual int num_shards() const {
-    return info().num_shards;
-  }
+	// current shard ID
+	int shard() const {
+		return info().shard;
+	}
 
- protected:
-  TableDescriptor *info_;
+	virtual int num_shards() const {
+		return info().num_shards;
+	}
+
+protected:
+	TableDescriptor *info_;
 };
 
 
-// Interface for serializing tables, either to disk or for transmitting via RPC.
+/**
+ * Struct for serializing tables, either to disk or for transmitting over the network.
+ */
 struct TableCoder {
-  virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
-  virtual bool ReadEntry(string *k, string *v) = 0;
+	virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
+	virtual bool ReadEntry(string *k, string *v) = 0;
 
-  virtual ~TableCoder() {}
+	virtual ~TableCoder() {
+	}
 };
 
+/**
+ * Serializable table interface.
+ */
 class Serializable {
  public:
   virtual bool ApplyUpdates(TableCoder *in, LogFile *logfile) = 0;
@@ -138,29 +110,51 @@ class Serializable {
 
 
 
-// Key/value typed interface.
-template <class K, class V>
+/**
+ * Template for typed table classes whose data and operations are of specific types.s
+ */
+template<class K, class V>
 class TypedTable {
- public:
-  virtual bool contains(const K &k) = 0;
-  virtual V get(const K &k) = 0;
-  virtual void put(const K &k, const V &v) = 0;
-  virtual bool update(const K &k, const V &v) = 0;
-  virtual void remove(const K &k) = 0;
+public:
+	virtual bool contains(const K &k) = 0;
+	virtual V get(const K &k) = 0;
+	virtual void put(const K &k, const V &v) = 0;
+	virtual bool update(const K &k, const V &v) = 0;
+	virtual void remove(const K &k) = 0;
 };
 
+/**
+ * A generic table in which key and value are of type string.
+ *
+ * The GlobalTable works with get/update methods of this class. The get and put
+ * method also invokes user-define get/update handler --- for customizing
+ * consistency model.
+ *
+ * Typed tables (@see sparse-table.h) override these method to convert to/from
+ * correct types.
+ */
 class UntypedTable {
- public:
-  virtual bool contains_str(const StringPiece &k) = 0;
-  virtual string get_str(const StringPiece &k) = 0;
-  virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
+public:
+
+	/**
+	 * Return empty string if the value is not ready to be returned.
+	 */
+	virtual string get_str(const StringPiece &k) = 0;
+
+	/**
+	 * Not yet implemented!
+	 */
+	virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
 };
 
 class TableData;
 
 
-struct RPCTableCoder : public TableCoder {
-  RPCTableCoder(const TableData *in);
+/**
+ * Specific encoding of table data, to be transmitted over the network.
+ */
+struct NetworkTableCoder : public TableCoder {
+	NetworkTableCoder(const TableData *in);
   virtual void WriteEntry(StringPiece k, StringPiece v);
   virtual bool ReadEntry(string *k, string *v);
 
@@ -168,15 +162,6 @@ struct RPCTableCoder : public TableCoder {
   TableData *t_;
 };
 
-struct LocalTableCoder : public TableCoder {
-  LocalTableCoder(const string &f, const string &mode);
-  virtual ~LocalTableCoder();
-
-  virtual void WriteEntry(StringPiece k, StringPiece v);
-  virtual bool ReadEntry(string *k, string *v);
-
-  RecordFile *f_;
-};
 }  // namespace lapis
 
 

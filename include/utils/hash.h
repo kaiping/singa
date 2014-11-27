@@ -6,7 +6,11 @@
 
 #include <stdint.h>
 
-// Code from: http://www.azillionmonkeys.com/qed/hash.html
+/**
+ * @file hash.h
+ *
+ * Provide fast hash computation on string inputs. Taken from piccolo codebase.
+ */
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
   || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)

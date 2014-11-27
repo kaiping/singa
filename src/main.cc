@@ -17,7 +17,7 @@
 #include "da/gary.h"
 
 DEFINE_string(par_mode, "hybrid",  "time training algorithm");
-DEFINE_string(cluster_conf, "examples/imagenet12/system.conf", "configuration file for node roles");
+DEFINE_string(cluster_conf, "examples/imagenet12/cluster.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(restore, false, "restore from checkpoint file");
 DEFINE_bool(time, true,  "time training algorithm");

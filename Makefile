@@ -12,7 +12,7 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./inc
 	/home/wangwei/install/jdk1.7.0_67/include\
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
-CXXFLAGS := -O3  -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -O3 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -52,17 +52,14 @@ LAPIS_SRCS :=$(shell find src/ -path "src/test" -prune\
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 
-TABLE_TEST_SRCS := src/test/test_disk_table.cc
-TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
-
 MEMORY_TEST_SRCS := src/test/test_core.cc
 MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
 
 SPLIT_TEST_SRCS := src/test/test_split.cc
 SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
 
-CONST_SRCS := src/test/test_consistency.cc
-CONST_OBJS = $(CONST_SRCS:.cc=.o)
+TABLE_SRCS := src/test/test_table_server.cc
+TABLE_OBJS = $(TABLE_SRCS:.cc=.o)
 
 run_load: lapis.bin
 	mpirun -np 41 -hostfile examples/imagenet12/rack0 \
@@ -95,26 +92,11 @@ run_test_split: lapis.test.split
 		-model_conf=examples/imagenet12/model.conf --v=3 --data_dir=tmp \
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
-run_test_const: lapis.test.const
-	mpirun -np 5 -hostfile examples/imagenet12/tmp \
+run_test_table: lapis.test.table
+	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin -system_conf=examples/imagenet12/multigroup.conf \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
-		--table_buffer=20 --block_size=10 --restore_mode=true  --threshold=5000000
-
-run_test_disk_load: lapis.test.disk
-	rm -rf tmp/*
-	sync
-	mpirun --prefix /users/dinhtta/local -np 4 -hostfile examples/imagenet12/hostfile -nooversubscribe \
-		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=1000 --block_size=1000 --table_size=20000 --table_buffer=1000 --io_buffer_size=10 --data_dir=tmp
-
-run_test_get: lapis.test.disk
-	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe \
-		./lapis_test.bin -system_conf=examples/imagenet12/system.conf \
-		-model_conf=examples/imagenet12/model.conf --v=3 \
-		 --record_size=10000 --block_size=5000 --table_size=20000 --table_buffer=1000 --nois_testing_put
-
+		--restore_mode=true  --threshold=5000000
 
 debug:
 	mpirun -np 2 -hostfile examples/imagenet12/hostfile -nooversubscribe xterm -hold -e gdb ./lapis.bin
@@ -123,9 +105,10 @@ lapis.bin: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis.test.const: $(CONST_OBJS)
-	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(CONST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+lapis.test.table: $(TABLE_OBJS) lapis.bin
+	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
+
 #lapis.test.disk: lapis.bin $(TABLE_TEST_OBJS)
 #	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 #	@echo

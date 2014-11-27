@@ -12,7 +12,7 @@
 /**
  * Checkpointing flag. True if checkpoint is enabled.
  */
-DEFINE_bool(checkpoint_enabled, true, "enabling checkpoint");
+DEFINE_bool(checkpoint_enabled, false, "enabling checkpoint");
 
 
 namespace lapis {
@@ -33,10 +33,6 @@ void GlobalTable::Init(const lapis::TableDescriptor *info) {
 	partinfo_.resize(info->num_shards);
 }
 
-void GlobalTable::set_worker(TableServer *w) {
-	worker_id_ = w->id();
-}
-
 bool GlobalTable::is_local_shard(int shard) {
 	return owner(shard) == worker_id_;
 }
@@ -47,7 +43,7 @@ bool GlobalTable::is_local_key(const StringPiece &k) {
 
 
 int64_t GlobalTable::shard_size(int shard) {
-	return is_local_shard(shard) ? partitions_[shard]->size : 0;
+	return is_local_shard(shard) ? partitions_[shard]->size() : 0;
 }
 
 void GlobalTable::clear(int shard) {
@@ -152,7 +148,6 @@ bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
 }
 
 bool GlobalTable::ApplyPut(const lapis::TableData &req) {
-	boost::recursive_mutex::scoped_lock sl(mutex());
 	NetworkTableCoder c(&req);
 	bool ret = partitions_[req.shard()]->ApplyPut(&c,
 			checkpoint_files_[req.shard()]);

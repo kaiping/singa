@@ -72,11 +72,6 @@ public:
 		return info().table_id;
 	}
 
-	// current shard ID
-	int shard() const {
-		return info().shard;
-	}
-
 	virtual int num_shards() const {
 		return info().num_shards;
 	}
@@ -120,7 +115,7 @@ public:
 	virtual V get(const K &k) = 0;
 	virtual void put(const K &k, const V &v) = 0;
 	virtual bool update(const K &k, const V &v) = 0;
-	virtual void remove(const K &k) = 0;
+	void remove(const K &k);
 };
 
 /**

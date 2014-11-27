@@ -3,7 +3,6 @@
 #include "core/table_server.h"
 #include "utils/global_context.h"
 #include "utils/network_thread.h"
-#include "core/disk-table.h"
 #include "core/request_dispatcher.h"
 
 DECLARE_double(sleep_time);
@@ -17,10 +16,8 @@ namespace lapis {
 
 /**
  * Initialize TableServer.
- * First, it sets itself as the process for handling requests of the given tables
- * (i.e. its owner, but ownership will change after the shard assignment by the coordinator).
  *
- * Next, it initializes the request dispatcher (@see RequestDispatcher) and registers
+ * First, it initializes the request dispatcher (@see RequestDispatcher) and registers
  * its methods as callback to the request queue.
  *
  * Finally, it notifies the coordinator that it is ready to process requests.
@@ -31,9 +28,6 @@ void TableServer::StartTableServer(const std::map<int, GlobalTable*>& tables) {
 	tables_ = tables;
 	net_ = NetworkThread::Get();
 	server_id_ = net_->id();
-	for (auto& i : tables) {
-		i.second->set_worker(this);
-	}
 
 	// start dispatcher and register callbacks.
 	RequestDispatcher *dispatcher = RequestDispatcher::Get();
@@ -81,7 +75,7 @@ bool TableServer::HandleGetRequest(const Message *message) {
 bool TableServer::HandlePutRequest(const Message *message) {
 	const TableData *put = static_cast<const TableData *>(message);
 	GlobalTable *t = tables_.at(put->table());
-	bool ret = t->ApplyPut(*put);
+	t->ApplyPut(*put);
 	return true;
 }
 

@@ -15,13 +15,12 @@
 #include <glog/logging.h>
 
 #include "proto/common.pb.h"
-#include "utils/hash.h"
-#include "core/static-initializers.h"
 #include "utils/stringpiece.h"
 #include "utils/timer.h"
 
 #include <unordered_map>
 #include <unordered_set>
+#include <deque>
 
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -33,6 +32,7 @@ using std::pair;
 using std::make_pair;
 using std::unordered_map;
 using std::unordered_set;
+using std::deque;
 
 /**
  * @file common.h

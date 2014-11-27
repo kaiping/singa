@@ -8,7 +8,6 @@
 #include "core/table.h"
 #include "proto/model.pb.h"
 
-#include "utils/tuple.h"
 #include "local-table.h"
 #include <boost/noncopyable.hpp>
 

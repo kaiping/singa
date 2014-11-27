@@ -26,7 +26,7 @@ RequestDispatcher* RequestDispatcher::instance_;
  * Initialize the request queue and start the dispatch loop.
  */
 RequestDispatcher::RequestDispatcher() {
-	table_queue_ = new ASyncRequestQueue(gc->num_table_servers());
+	table_queue_ = new ASyncRequestQueue();
 	num_outstanding_request_ = 0;
 
 	//start the thread running dispatch loop

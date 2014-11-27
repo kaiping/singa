@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "core/table_delegate.h"
-#include "core/disk-table.h"
 #include "core/table.h"
 #include "proto/model.pb.h"
 #include "net/solver.h"

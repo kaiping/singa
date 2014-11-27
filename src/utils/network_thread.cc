@@ -8,7 +8,6 @@
 #include "utils/global_context.h"
 #include "core/request_dispatcher.h"
 
-#include "utils/tuple.h"
 #include "utils/stringpiece.h"
 #include "utils/timer.h"
 

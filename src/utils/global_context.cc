@@ -17,7 +17,7 @@ GlobalContext::GlobalContext(const std::string &system_conf):system_conf_(system
   standalone_=proto.standalone();
   synchronous_= proto.synchronous();
   table_server_start_=proto.cluster().server_start();
-  table_server_end_=proto.cluster().server_end();;
+  table_server_end_=proto.cluster().server_end();
   for(auto& group: proto.cluster().group()){
     vector<int> workers;
     for(int i=group.start();i<group.end();i++){

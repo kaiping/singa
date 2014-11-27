@@ -132,15 +132,6 @@ protected:
 
 	map<int, LogFile*> checkpoint_files_;
 
-	friend class TableServer;
-
-	/**
-	 * Set the associated TableServer class which processes table requests.
-	 * Essentially, this sets the MPI rank of the process that maintains
-	 * this table (and its local shards).
-	 */
-	void set_worker(TableServer *w);
-
 	/*
 	 * Synchronous fetch of the given key stored in the given shard.
 	 * @return true if the key exists.
@@ -284,7 +275,7 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	put.set_done(true);
 
 	// send over the network. No local put.
-	NetworkThread::Get()->Send(onwer(shard), MTYPE_PUT_REQUEST, put); //send remote
+	NetworkThread::Get()->Send(owner(shard), MTYPE_PUT_REQUEST, put); //send remote
 }
 
 
@@ -316,7 +307,7 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	put.set_done(true);
 
 	// send via the network
-	NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put); //send remotely
+	NetworkThread::Get()->Send(owner(shard), MTYPE_UPDATE_REQUEST, put); //send remotely
 	return true;
 }
 
@@ -379,7 +370,6 @@ bool TypedGlobalTable<K, V>::contains(const K &k) {
 template<class K, class V>
 LocalTable *TypedGlobalTable<K, V>::create_local(int shard) {
 	TableDescriptor *linfo = new TableDescriptor(info());
-	linfo->shard = shard;
 	LocalTable *t = (LocalTable *) info_->partition_factory->New();
 	t->Init(linfo);
 	return t;

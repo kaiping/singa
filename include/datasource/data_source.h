@@ -15,74 +15,75 @@
 using std::shared_ptr;
 using std::vector;
 using std::string;
-/**
- * Base class of data source which specify the APIs for generating key-record
- * tuples by paring raw data (e.g., images). It is used in preparing data
- * shards.
- */
 namespace lapis {
 
+/**
+ * Base class for data sources.
+ * It defines the APIs for generating key-value tuples by paring raw data
+ * (e.g., images). It is used in creating data Shards.
+ */
 class DataSource {
  public:
   DataSource() : size_(0), offset_(0), name_("unknown"){}
   /**
-   * fetch/parse next record
+   * Fetch/parse next record.
    * @key pointer to key string, exist content will be overwrite
    * @pointer to Record, exist content will be overwrite
    * @return true if read succ, false otherwise
    */
   virtual bool NextRecord(string* key, Record *record)=0;
   /**
-   * Return name of this data source
+   * @return name of this data source
    */
   const string &name() {
     return name_;
   }
   /**
-   * Return number of instances of this data source
+   * @return number of instances of this data source
    */
   const int size() {
     return size_;
   }
   /**
-   * Return the offset (or id) of current record to the first record.
+   * @return the offset (or id) of current record to the first record.
    */
   int offset() {
     return offset_;
   }
   /**
-   * Check end of parsing
+   * @return true if reaches the end of parsing
    */
   bool eof() {
     return offset_>=size_;
   }
 
  protected:
-  //! total number of instances/images
+  //!< total number of instances/images
   int size_;
-  //! offset from current record to the first record
+  //!< offset from current record to the first record
   int offset_;
-  //! identifier of the data source
+  //!< identifier of the data source
   string name_;
 };
 /**
- * ImageNet dataset specific source
+ * ImageNet dataset specific source.
  */
 class ImageNetSource : public DataSource {
  public:
   /**
-   * @folder local shard folder, it has subdir/file: img/ for original images;
-   * rid.txt for record meta info (image path and label pair); shard.dat,
-   * storing parsed records;
+   * @folder local shard folder for train/validation/test.It's subdirs/files
+   * include img/ for original images; rid.txt for record meta info (image path
+   * and label pair); shard.dat, storing parsed records;
    * @meanfile, mean google protobuf file for the imagenet images
    * @width, resize images to this width
    * @height, resize images to this height
    */
   void Init(const string& folder, const string& meanfile,
       const int width, const int height);
+
   virtual bool NextRecord(string* key, Record *record);
 
-  // class identifier
+  //!< class identifier
   static const std::string type;
  protected:
   /**

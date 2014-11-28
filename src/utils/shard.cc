@@ -42,16 +42,16 @@ Shard:: ~Shard(){
   fdat_.close();
 }
 
-bool Shard::Insert(const std::string& key, const Message& tuple) {
+bool Shard::Insert(const std::string& key, const Message& val) {
   std::string str;
-  tuple.SerializeToString(&str);
+  val.SerializeToString(&str);
   return Insert(key, str);
 }
 // insert one complete tuple
-bool Shard::Insert(const std::string& key, const std::string& tuple) {
-  if(keys_.find(key)!=keys_.end()||tuple.size()==0)
+bool Shard::Insert(const std::string& key, const std::string& val) {
+  if(keys_.find(key)!=keys_.end()||val.size()==0)
     return false;
-  int size=key.size()+tuple.size()+2*sizeof(size_t);
+  int size=key.size()+val.size()+2*sizeof(size_t);
   if(offset_+size>capacity_){
     fdat_.write(buf_, offset_);
     offset_=0;
@@ -62,10 +62,10 @@ bool Shard::Insert(const std::string& key, const std::string& tuple) {
   offset_+=sizeof(size_t);
   memcpy(buf_+offset_, key.data(), key.size());
   offset_+=key.size();
-  *reinterpret_cast<size_t*>(buf_+offset_)=tuple.size();
+  *reinterpret_cast<size_t*>(buf_+offset_)=val.size();
   offset_+=sizeof(size_t);
-  memcpy(buf_+offset_, tuple.data(), tuple.size());
-  offset_+=tuple.size();
+  memcpy(buf_+offset_, val.data(), val.size());
+  offset_+=val.size();
   return true;
 }
 
@@ -94,33 +94,33 @@ int Shard::Next(std::string *key){
   if(!PrepareNextField(ssize))
     return 0;
   CHECK_LE(offset_+ssize, bufsize_);
-  int tuplelen=*reinterpret_cast<size_t*>(buf_+offset_);
+  int vallen=*reinterpret_cast<size_t*>(buf_+offset_);
   offset_+=ssize;
 
-  if(!PrepareNextField(tuplelen))
+  if(!PrepareNextField(vallen))
     return 0;
-  CHECK_LE(offset_+tuplelen, bufsize_);
-  return tuplelen;
+  CHECK_LE(offset_+vallen, bufsize_);
+  return vallen;
 }
 
-bool Shard::Next(std::string *key, Message* tuple) {
-  int tuplelen=Next(key);
-  if(tuplelen==0)
+bool Shard::Next(std::string *key, Message* val) {
+  int vallen=Next(key);
+  if(vallen==0)
     return false;
-  tuple->ParseFromArray(buf_+offset_, tuplelen);
-  offset_+=tuplelen;
+  val->ParseFromArray(buf_+offset_, vallen);
+  offset_+=vallen;
   return true;
 }
 
 
-bool Shard::Next(std::string *key, std::string* tuple) {
-  int tuplelen=Next(key);
-  if(tuplelen==0)
+bool Shard::Next(std::string *key, std::string* val) {
+  int vallen=Next(key);
+  if(vallen==0)
     return false;
-  tuple->clear();
-  for(int i=0;i<tuplelen;i++)
-    tuple->push_back(buf_[offset_+i]);
-  offset_+=tuplelen;
+  val->clear();
+  for(int i=0;i<vallen;i++)
+    val->push_back(buf_[offset_+i]);
+  offset_+=vallen;
   return true;
 }
 

@@ -7,7 +7,6 @@
 #include "proto/worker.pb.h"
 #include "core/table.h"
 #include "proto/model.pb.h"
-
 #include "local-table.h"
 #include <boost/noncopyable.hpp>
 

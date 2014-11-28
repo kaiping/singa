@@ -12,57 +12,105 @@
 using google::protobuf::Message;
 
 /**
- * Every node has a shard storing training records/tuples;
- * There are two files, one is shard.key storing keys of all tuples to avoid
- * redundant tuples; the other file is shard.dat storing the tuple data, in the
- * form of [key_len key tuple_len tuple] (key_len and tuple_len are of type
+ * Data shard stores training/validation/test records.
+ * Every worker node should have a training shard (validation/test shard
+ * is optional). The shard file for training is
+ * lapis::Cluster::data_folder()/train/shard.dat; The shard file for validation
+ * is lapis::Cluster::data_folder()/train/shard.dat; Similar path for test.
+ *
+ * shard.dat consists of a set of unordered records/tuples. The tuple is
+ * encoded as [key_len key tuple_len tuple] (key_len and tuple_len are of type
  * uint32, which indicate the bytes of key and tuple respectively.
  *
- * Every insert writes the shard.key firstly; When Shard obj
- * is created, it will remove the last key if the tuple size and key size do
- * not match because the last write of tuple crashed.
+ * When Shard obj is created, it will remove the last key if the tuple size and
+ * key size do not match because the last write of tuple crashed.
  *
  */
 class Shard {
  public:
-  // read only mode used in training
+  //!< read only mode used in training
   static const char kRead=0;
-  // write mode used in creating shard (will overwrite previous one)
+  //!< write mode used in creating shard (will overwrite previous one)
   static const char kCreate=1;
-  // append mode, e.g. used when previous creating crashes
+  //!< append mode, e.g. used when previous creating crashes
   static const char kAppend=2;
 
  public:
-  /*
-   * init the shard obj
-   * @folder shard folder on worker node, need large disk space
-   * @mode either kRead, kWrite or kAppend
+  /**
+   * Init the shard obj.
+   * @folder shard folder (path except shard.dat) on worker node
+   * @mode shard open mode, Shard::kRead, Shard::kWrite or Shard::kAppend
    * @bufsize batch bufsize bytes data for every disk op (read or write),
    * default is 32MB
    */
   Shard(std::string folder, char mode, int capacity=33554432);
   ~Shard();
 
-  // read next tuple
-  bool Next(std::string *key, Message* tuple);
-  bool Next(std::string *key, std::string* tuple);
+  /**
+   * read next tuple from the shard.
+   * @key key tuple key
+   * @param val tuple value of type Message
+   * @return true if read success otherwise false, e.g., the tuple was not
+   * inserted completely.
+   */
+  bool Next(std::string *key, Message* val);
+  /**
+   * read next tuple from the shard.
+   * @key key tuple key
+   * @param val tuple value of type string
+   * @return true if read success otherwise false, e.g., the tuple was not
+   * inserted completely.
+   */
+  bool Next(std::string *key, std::string* val);
 
-  // insert tuple; if inserted before, then return false
+  /**
+   * Append one tuple to the shard.
+   * @param key tuple string, e.g., image path
+   * @param val
+   * @return reture if sucess, otherwise false, e.g., inserted before
+   */
   bool Insert(const std::string& key, const Message& tuple);
+  /**
+   * Append one tuple to the shard.
+   * @param key tuple string, e.g., image path
+   * @param val
+   * @return reture if sucess, otherwise false, e.g., inserted before
+   */
   bool Insert(const std::string& key, const std::string& tuple);
 
-  // valid only for kRead mode
+  /**
+   * Move the read pointer to the head of the shard file.
+   * Used for repeated reading.
+   */
   void SeekToFirst();
-  // valid only for kRead mode
+  /**
+   * Flush buffered data to disk.
+   * Used only for kCreate or kAppend.
+   */
   void Flush() ;
   /**
-   * return num of tuples
+   * @return num of tuples
    */
   const int Count();
 
  protected:
+  /**
+   * Read the next key and prepare buffer for reading value.
+   * @param key
+   * @return length (i.e., bytes) of value field.
+   */
   int Next(std::string *key);
+  /**
+   * Setup the disk pointer to the right position for append in case that
+   * the pervious write crashes.
+   * @param path shard path.
+   * @return offset (end pos) of the last success written tuple.
+   */
   int PrepareForAppend(std::string path);
+  /**
+   * Read data from disk if the current data in the buffer is not a full field.
+   * @param size size of the next field.
+   */
   bool PrepareNextField(int size);
 
  private:

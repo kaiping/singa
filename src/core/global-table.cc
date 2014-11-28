@@ -37,7 +37,7 @@ bool GlobalTable::is_local_shard(int shard) {
 	return owner(shard) == worker_id_;
 }
 
-bool GlobalTable::is_local_key(const StringPiece &k) {
+bool GlobalTable::is_local_key(const string &k) {
 	return is_local_shard(get_shard_str(k));
 }
 
@@ -65,10 +65,10 @@ void GlobalTable::resize(int64_t new_size) {
 }
 
 
-bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
+bool GlobalTable::get_remote(int shard, const string &k, string *v) {
 	HashGet req;
 	TableData resp;
-	req.set_key(k.AsString());
+	req.set_key(k);
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);
@@ -82,9 +82,9 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
 	return true;
 }
 
-void GlobalTable::async_get_remote(int shard, const StringPiece &k) {
+void GlobalTable::async_get_remote(int shard, const string &k) {
 	HashGet req;
-	req.set_key(k.AsString());
+	req.set_key(k);
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);

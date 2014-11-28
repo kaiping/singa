@@ -71,6 +71,8 @@ public:
 		return instance_;
 	}
 
+	void PrintStats();
+
 	/**
 	 * true if there is outstanding request.
 	 */

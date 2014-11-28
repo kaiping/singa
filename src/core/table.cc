@@ -24,11 +24,11 @@ bool NetworkTableCoder::ReadEntry(string *k, string *v) {
 }
 
 //  write (k,v) to TableData message
-void NetworkTableCoder::WriteEntry(StringPiece k, StringPiece v) {
-	t_->set_key(k.AsString());
+void NetworkTableCoder::WriteEntry(string k, string v) {
+	t_->set_key(k);
 	Arg *a = t_->add_kv_data();
-	a->set_key(k.data, k.len);
-	a->set_value(v.data, v.len);
+	a->set_key(k);
+	a->set_value(v);
 }
 
 }

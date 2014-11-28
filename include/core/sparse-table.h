@@ -190,7 +190,7 @@ public:
 	 *
 	 * @see table.h
 	 */
-	string get_str(const StringPiece &s) {
+	string get_str(const string &s) {
 		K k;
 		V v;
 		((Marshal<K> *) info_->key_marshal)->unmarshal(s, &k);
@@ -205,7 +205,7 @@ public:
 	}
 
 	// not implemented
-	void update_str(const StringPiece &kstr, const StringPiece &vstr) {}
+	void update_str(const string &kstr, const string &vstr) {}
 
 private:
 

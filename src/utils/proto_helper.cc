@@ -13,7 +13,6 @@
 
 
 #include "proto/common.pb.h"
-#include "utils/stringpiece.h"
 #include "utils/proto_helper.h"
 
 using std::fstream;

@@ -12,7 +12,7 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./inc
 	/home/wangwei/install/jdk1.7.0_67/include\
 	/home/wangwei/install/jdk1.7.0_67/include/linux
 
-CXXFLAGS := -O3 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -93,8 +93,8 @@ run_test_split: lapis.test.split
 		--table_buffer=20 --block_size=10 --workers=1 --threshold=50000 --iterations=5
 
 run_test_table: lapis.test.table
-	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
-		./lapis_test.bin -system_conf=examples/imagenet12/multigroup.conf \
+	mpirun -np 4 -hostfile examples/imagenet12/hostfile \
+		./lapis_test.bin \
 		-model_conf=examples/imagenet12/model.conf --v=3 \
 		--restore_mode=true  --threshold=5000000
 

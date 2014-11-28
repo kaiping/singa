@@ -64,4 +64,8 @@ void RequestDispatcher::table_dispatch_loop() {
 	}
 }
 
+void RequestDispatcher::PrintStats(){
+	Stats stat = table_queue_->stats();
+	VLOG(3) << "average queue length = " << stat["request_queue_length"]/stat["request_queue_access_count"];
+}
 }  // namespace lapis

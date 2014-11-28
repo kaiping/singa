@@ -85,7 +85,7 @@ protected:
  * Struct for serializing tables, either to disk or for transmitting over the network.
  */
 struct TableCoder {
-	virtual void WriteEntry(StringPiece k, StringPiece v) = 0;
+	virtual void WriteEntry(string k, string v) = 0;
 	virtual bool ReadEntry(string *k, string *v) = 0;
 
 	virtual ~TableCoder() {
@@ -134,12 +134,12 @@ public:
 	/**
 	 * Return empty string if the value is not ready to be returned.
 	 */
-	virtual string get_str(const StringPiece &k) = 0;
+	virtual string get_str(const string &k) = 0;
 
 	/**
 	 * Not yet implemented!
 	 */
-	virtual void update_str(const StringPiece &k, const StringPiece &v) = 0;
+	virtual void update_str(const string &k, const string &v) = 0;
 };
 
 class TableData;
@@ -150,7 +150,7 @@ class TableData;
  */
 struct NetworkTableCoder : public TableCoder {
 	NetworkTableCoder(const TableData *in);
-  virtual void WriteEntry(StringPiece k, StringPiece v);
+  virtual void WriteEntry(string k, string v);
   virtual bool ReadEntry(string *k, string *v);
 
   int read_pos_;

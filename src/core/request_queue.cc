@@ -26,6 +26,8 @@ namespace lapis {
 void ASyncRequestQueue::Enqueue(int tag, string &data) {
 	boost::recursive_mutex::scoped_lock sl(whole_queue_lock_);
 	request_queue_.push_back(new TaggedMessage(tag,data));
+	stats_["request_queue_length"]+=request_queue_.size();
+	stats_["request_queue_access_count"]++;
 }
 
 
@@ -34,10 +36,10 @@ void ASyncRequestQueue::Enqueue(int tag, string &data) {
  * is still empty.
  */
 void ASyncRequestQueue::NextRequest(TaggedMessage *message) {
-	boost::recursive_mutex::scoped_lock sl(whole_queue_lock_);
-
 	while (request_queue_.empty())
 		Sleep(FLAGS_sleep_time);
+
+	boost::recursive_mutex::scoped_lock sl(whole_queue_lock_);
 
 	TaggedMessage *q_msg = request_queue_.front();
 	message->tag = q_msg->tag;

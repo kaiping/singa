@@ -5,6 +5,7 @@
 #include "core/table.h"
 #include "core/table_server.h"
 #include "utils/global_context.h"
+#include "utils/common.h"
 #include <gflags/gflags.h>
 #include "proto/model.pb.h"
 #include "proto/common.pb.h"
@@ -47,20 +48,25 @@ DECLARE_bool(checkpoint_enabled);
 /**
  * Get and update handler for VKey.
  */
-struct AnhUpdateHandler: BaseUpdateHandler<VKey,VKey>{
-	bool Update(VKey *a, const VKey &b){
-		a->set_key(a->key()+b.key());
+struct AnhUpdateHandler: BaseUpdateHandler<VKey, SGDValue> {
+	bool Update(SGDValue *a, const SGDValue &b) {
+
+		float * adptr = a->mutable_data()->mutable_value()->mutable_data();
+		const float*bdptr = b.grad(0).value().data();
+		for (int i = 0; i < b.grad(0).value_size(); i++)
+			adptr[i] += bdptr[i];
+
 		return true;
 	}
 
-  bool Get(const VKey k, const VKey &val, VKey *ret){
-      ret->set_key(val.key());
-      return true;
-  }
+	bool Get(const VKey k, const SGDValue &val, SGDValue *ret) {
+		*ret = val;
+		return true;
+	}
 
-  bool is_checkpointable(const VKey k, const VKey v){
-  	return false; //no checkpointing
-  }
+	bool is_checkpointable(const VKey k, const SGDValue v) {
+		return false; //always checkpoint
+	}
 };
 
 typedef map<int, GlobalTable*> Map;
@@ -70,6 +76,9 @@ shared_ptr<GlobalContext> context;
 std::vector<ServerState*> server_states;
 TableServer *table_server;
 
+#define SIZE 16
+int tuple_sizes[SIZE] = {27448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
+
 /**
  * Initialize tables.
  */
@@ -77,11 +86,11 @@ void create_mem_table(int id, int num_shards){
 
 	TableDescriptor *info = new TableDescriptor(id, num_shards);
 	  info->key_marshal = new Marshal<VKey>();
-	  info->value_marshal = new Marshal<VKey>();
+	  info->value_marshal = new Marshal<SGDValue>();
 	  info->sharder = new VKeySharder;
 	  info->accum = new AnhUpdateHandler;
-	  info->partition_factory = new typename SparseTable<VKey, VKey>::Factory;
-	  auto table=new TypedGlobalTable<VKey, VKey>();
+	  info->partition_factory = new typename SparseTable<VKey, SGDValue>::Factory;
+	  auto table=new TypedGlobalTable<VKey, SGDValue>();
 	  table->Init(info);
 	  tables[id] = table;
 }
@@ -92,7 +101,6 @@ void create_mem_table(int id, int num_shards){
  */
 void coordinator_assign_tables(int id) {
 
-	VLOG(3) << "Coordinator assigns shard to " << context->num_procs() << " processes";
 	// wait for the servers to be up.
 	for (int i = 0; i < context->num_procs(); i++) {
 		RegisterWorkerRequest req;
@@ -150,55 +158,69 @@ void table_init(){
  * Coordinator loads data to the table.
  * @param size number of tuples.
  */
-void coordinator_load_data(int size){
-  auto table = static_cast<TypedGlobalTable<VKey,VKey>*>(tables[0]);
-  for (int i=0; i<size; i++){
-	  VKey key;
-	  key.set_key(i);
-	  table->put(key,key);
-  }
-  VLOG(3) << "Done loading "<<size << " tuples ...";
+void coordinator_load_data() {
+	auto table = static_cast<TypedGlobalTable<VKey, SGDValue>*>(tables[0]);
+	for (int i = 0; i < SIZE; i++) {
+		VKey key;
+		SGDValue x;
+		DAryProto *data = x.mutable_data();
+		DAryProto *grad = x.add_grad();
+		for (int j = 0; j < tuple_sizes[i]; j++) {
+			data->add_value(j * 1.0f);
+			grad->add_value(j * 1.0f);
+		}
+		key.set_key(i);
+		table->put(key, x);
+	}
+	VLOG(3) << "Done loading " << SIZE << " tuples ...";
 }
 
 /**
  * Worker gets tuples from the server.
  * @param size number of tuples to be requested.
  */
-void get(int size) {
-	auto table = static_cast<TypedGlobalTable<VKey,VKey>*>(tables[0]);
-	VKey value;
-	for (int i = 0; i < size; i++) {
+void get() {
+	auto table = static_cast<TypedGlobalTable<VKey,SGDValue>*>(tables[0]);
+	SGDValue value;
+	for (int i = 0; i < SIZE; i++) {
 		VKey key;
 		key.set_key(i);
 		table->async_get(key, &value);
 	}
 	VLOG(3) << "Done sending get requests ...";
 
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < SIZE; i++) {
 		VKey key;
 		while (!table->async_get_collect(&key, &value))
-			Sleep(0.001);
-		VLOG(3)<<"collected "<<key.key()<<","<<value.key();
+			Sleep(0.0001);
 	}
 }
 
 /**
  * Worker updates tuples.
  */
-void update(int size) {
-	auto table = static_cast<TypedGlobalTable<VKey,VKey>*>(tables[0]);
-	for (int i=0; i<size; i++){
+void update() {
+	auto table = static_cast<TypedGlobalTable<VKey, SGDValue>*>(tables[0]);
+	for (int i = 0; i < SIZE; i++) {
 		VKey key;
 		key.set_key(i);
-		table->update(key,key);
+
+		SGDValue x;
+		DAryProto *grad = x.add_grad();
+		for (int j = 0; j < tuple_sizes[i]; j++)
+			grad->add_value(j * 1.0f);
+
+		table->update(key, x);
 	}
-	VLOG(3) << "Done updating " << size << " tuples ...";
+	VLOG(3) << "Done updating " << SIZE << " tuples ...";
 }
 
 
-void worker_test_data(int size) {
-	get(size);
-
+void worker_test_data() {
+	//get(size);
+	update();
+	update();
+	get();
 	/*
 	update(table, tuples);
 	update(table, tuples);
@@ -219,17 +241,19 @@ void shutdown() {
 		for (int i = 0; i < network->size() - 1; i++) {
 			network->Send(i, MTYPE_SHUTDOWN, shutdown_msg);
 		}
-		network->Flush();
+		//network->Flush();
 		network->Shutdown();
 	} else {
-		network->Flush();
+		//network->Flush();
 		network->Send(context->num_procs() - 1, MTYPE_WORKER_END,
 				EmptyMessage());
 		EmptyMessage msg;
 		network->Read(context->num_procs() - 1, MTYPE_SHUTDOWN, &msg);
 
-		if (context->AmITableServer())
+		if (context->AmITableServer()){
+			RequestDispatcher::Get()->PrintStats();
 			table_server->ShutdownTableServer();
+		}
 
 		network->Shutdown();
 	}
@@ -308,12 +332,9 @@ int main(int argc, char **argv) {
 
 	create_mem_table(0, context->num_table_servers());
 
-	int table_size = 10;
-
 	if (context->AmICoordinator()) {
-		VLOG(3)<< "Testing ... "<<context->IsTableServer(1);
 		coordinator_assign_tables(0);
-		coordinator_load_data (table_size);
+		coordinator_load_data();
 		network->barrier();
 	} else {
 		if (context->AmITableServer()) {
@@ -323,7 +344,9 @@ int main(int argc, char **argv) {
 		} else {
 			HandleShardAssignment();
 			network->barrier();
-			worker_test_data(table_size);
+			Sleep(1);
+			VLOG(3) << "Worker cleared the barrier ...";
+			worker_test_data();
 		}
 	}
 

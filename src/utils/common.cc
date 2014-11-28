@@ -1,5 +1,6 @@
 // Copyright © 2014 Wei Wang. All Rights Reserved.
 #include "utils/common.h"
+#include <stdarg.h>
 namespace lapis {
 
 void Debug() {
@@ -12,4 +13,17 @@ void Debug() {
     sleep(5);
 }
 
+string StringPrintf(string fmt, ...) {
+  va_list l;
+  va_start(l, fmt); //fmt.AsString().c_str());
+  string result = VStringPrintf(fmt, l);
+  va_end(l);
+  return result;
+}
+
+string VStringPrintf(string fmt, va_list l) {
+  char buffer[32768];
+  vsnprintf(buffer, 32768, fmt.c_str(), l);
+  return string(buffer);
+}
 }  // namespace lapis

@@ -12,7 +12,7 @@
 /**
  * Checkpointing flag. True if checkpoint is enabled.
  */
-DEFINE_bool(checkpoint_enabled, true, "enabling checkpoint");
+DEFINE_bool(checkpoint_enabled, false, "enabling checkpoint");
 
 
 namespace lapis {
@@ -33,21 +33,17 @@ void GlobalTable::Init(const lapis::TableDescriptor *info) {
 	partinfo_.resize(info->num_shards);
 }
 
-void GlobalTable::set_worker(TableServer *w) {
-	worker_id_ = w->id();
-}
-
 bool GlobalTable::is_local_shard(int shard) {
 	return owner(shard) == worker_id_;
 }
 
-bool GlobalTable::is_local_key(const StringPiece &k) {
+bool GlobalTable::is_local_key(const string &k) {
 	return is_local_shard(get_shard_str(k));
 }
 
 
 int64_t GlobalTable::shard_size(int shard) {
-	return is_local_shard(shard) ? partitions_[shard]->size : 0;
+	return is_local_shard(shard) ? partitions_[shard]->size() : 0;
 }
 
 void GlobalTable::clear(int shard) {
@@ -69,10 +65,10 @@ void GlobalTable::resize(int64_t new_size) {
 }
 
 
-bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
+bool GlobalTable::get_remote(int shard, const string &k, string *v) {
 	HashGet req;
 	TableData resp;
-	req.set_key(k.AsString());
+	req.set_key(k);
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);
@@ -86,9 +82,9 @@ bool GlobalTable::get_remote(int shard, const StringPiece &k, string *v) {
 	return true;
 }
 
-void GlobalTable::async_get_remote(int shard, const StringPiece &k) {
+void GlobalTable::async_get_remote(int shard, const string &k) {
 	HashGet req;
-	req.set_key(k.AsString());
+	req.set_key(k);
 	req.set_table(info().table_id);
 	req.set_shard(shard);
 	req.set_source(worker_id_);
@@ -152,7 +148,6 @@ bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
 }
 
 bool GlobalTable::ApplyPut(const lapis::TableData &req) {
-	boost::recursive_mutex::scoped_lock sl(mutex());
 	NetworkTableCoder c(&req);
 	bool ret = partitions_[req.shard()]->ApplyPut(&c,
 			checkpoint_files_[req.shard()]);

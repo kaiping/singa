@@ -8,8 +8,6 @@
 #include "utils/global_context.h"
 #include "core/request_dispatcher.h"
 
-#include "utils/tuple.h"
-#include "utils/stringpiece.h"
 #include "utils/timer.h"
 
 #include "proto/worker.pb.h"
@@ -132,8 +130,9 @@ void NetworkThread::send_to_local_rx_queue(int src, int method,
 }
 
 void NetworkThread::Broadcast(int method, const Message &msg) {
-	for (int i = 0; i < size() - 1; ++i)
+	for (int i = 0; i < size() - 1; ++i){
 		Send(i, method, msg);
+	}
 }
 
 void NetworkThread::SyncBroadcast(int method, int reply, const Message &msg) {
@@ -189,8 +188,7 @@ void NetworkThread::barrier() {
 
 		EmptyMessage msg;
 		Read(GlobalContext::kCoordinator, MTYPE_BARRIER_REQUEST, &msg);
-
-		Flush();
+		//Flush();
 
 		Send(GlobalContext::kCoordinator, MTYPE_BARRIER_REPLY, msg);
 

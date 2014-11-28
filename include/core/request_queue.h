@@ -44,8 +44,9 @@ public:
 	virtual void NextRequest(TaggedMessage *msg) {}
 	virtual void Enqueue(int tag, string &data) {}
 
+	Stats stats(){ return stats_;}
 protected:
-	boost::recursive_mutex whole_queue_lock_;
+	Stats stats_; /**< queue statistic */
 };
 
 /**
@@ -61,6 +62,7 @@ public:
 
 private:
 	deque<TaggedMessage*> request_queue_; /**< FIFO queues of raw messages */
+	mutable boost::recursive_mutex whole_queue_lock_;
 };
 
 }  // namespace lapis

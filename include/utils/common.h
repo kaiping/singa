@@ -104,6 +104,16 @@ class Performance: public PerformanceProto{
 };
 
 
+/**
+ * Formatted string.
+ */
+string StringPrintf(string fmt, ...);
+
+/**
+ * Formatted string.
+ */
+string VStringPrintf(string fmt, va_list args);
+
 void Debug();
 }  // namespace lapis
 

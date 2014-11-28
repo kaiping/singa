@@ -10,7 +10,7 @@ CXX := g++
 
 INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include/da ./include\
 
-CXXFLAGS := -g  -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -42,13 +42,21 @@ PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
 # each lapis src file will generate a .o file
 LAPIS_SRCS :=$(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
-								-o \( -name "*.cc" -type f \) -print )
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 
 SHARD_SRCS :=$(shell find src/datasource/ -name "*.cc") src/utils/proto_helper.cc src/utils/shard.cc
 SHARD_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(SHARD_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(SHARD_OBJS:%.o=%.P)
+
+MEMORY_TEST_SRCS := src/test/test_core.cc
+MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
+
+SPLIT_TEST_SRCS := src/test/test_split.cc
+SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
+
+TABLE_SRCS := src/test/test_table_server.cc
+TABLE_OBJS = $(TABLE_SRCS:.cc=.o)
 
 OBJS := $(sort $(LAPIS_OBJS) $(SHARD_OBJS) )
 

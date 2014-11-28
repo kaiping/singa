@@ -16,7 +16,6 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs_);
   kCoordinator=num_procs_-1;
-
   gid_=id_=-1;
   int start=cluster.worker_start();
   int end=cluster.worker_end();

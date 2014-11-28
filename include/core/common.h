@@ -15,13 +15,11 @@
 #include <glog/logging.h>
 
 #include "proto/common.pb.h"
-#include "utils/hash.h"
-//#include "core/static-initializers.h"
-#include "utils/stringpiece.h"
 #include "utils/timer.h"
 
 #include <unordered_map>
 #include <unordered_set>
+#include <deque>
 
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -33,6 +31,7 @@ using std::pair;
 using std::make_pair;
 using std::unordered_map;
 using std::unordered_set;
+using std::deque;
 
 /**
  * @file common.h
@@ -56,13 +55,17 @@ struct Stats {
 		return p_[key];
 	}
 
+	/**
+	 * Not implemented.
+	 */
 	string ToString(string prefix) {
-		string out;
+		string out="";
+		/*
 		for (unordered_map<string, double>::iterator i = p_.begin();
 				i != p_.end(); ++i) {
 			out += StringPrintf("%s -- %s : %.2f\n", prefix.c_str(),
 					i->first.c_str(), i->second);
-		}
+		}*/
 		return out;
 	}
 
@@ -103,7 +106,8 @@ struct Sharder {
 struct Sharding {
 	struct String: public Sharder<string> {
 		int operator()(const string &k, int shards) {
-			return StringPiece(k).hash() % shards;
+			std::hash<std::string> hash_fn;
+			return hash_fn(k)%shards;
 		}
 	};
 
@@ -126,8 +130,8 @@ struct Marshal {
 		out->assign(reinterpret_cast<const char *>(&t), sizeof(t));
 	}
 
-	virtual void unmarshal(const StringPiece &s, T *t) {
-		*t = *reinterpret_cast<const T *>(s.data);
+	virtual void unmarshal(const string &s, T *t) {
+		*t = *reinterpret_cast<const T *>(s.data());
 	}
 };
 
@@ -136,8 +140,8 @@ struct Marshal<T, typename boost::enable_if<boost::is_base_of<string, T>>::type>
 	void marshal(const string &t, string *out) {
 		*out = t;
 	}
-	void unmarshal(const StringPiece &s, string *t) {
-		t->assign(s.data, s.len);
+	void unmarshal(const string &s, string *t) {
+		t->assign(s.data(), s.size());
 	}
 };
 
@@ -147,10 +151,10 @@ struct Marshal<T,
 		typename boost::enable_if<
 				boost::is_base_of<google::protobuf::Message, T>>::type> {
 	void marshal(const google::protobuf::Message &t, string *out) {
-		t.SerializePartialToString(out);
+		t.SerializeToString(out);
 	}
-	void unmarshal(const StringPiece &s, google::protobuf::Message *t) {
-		t->ParseFromArray(s.data, s.len);
+	void unmarshal(const string &s, google::protobuf::Message *t) {
+		t->ParseFromArray(s.data(), s.size());
 	}
 };
 
@@ -172,7 +176,7 @@ string marshal(Marshal<T> *m, const T &t) {
  * @see marshall().
  */
 template<class T>
-T unmarshal(Marshal<T> *m, const StringPiece &s) {
+T unmarshal(Marshal<T> *m, const string &s) {
 	T out;
 	m->unmarshal(s, &out);
 	return out;

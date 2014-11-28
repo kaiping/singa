@@ -8,6 +8,7 @@
 #include "core/local-table.h"
 #include "core/file.h"
 #include "core/request_dispatcher.h"
+#include "utils/common.h"
 
 /**
  * @file global-table.h
@@ -65,7 +66,7 @@ public:
 	}
 
 	bool is_local_shard(int shard);
-	bool is_local_key(const StringPiece &k);
+	bool is_local_key(const string &k);
 
 
 	/**
@@ -123,7 +124,7 @@ public:
 	 * Returns the shard ID of the given string key. Typed tables override
 	 * this by marshalling string to the correct type.
 	 */
-	virtual int get_shard_str(StringPiece k) = 0;
+	virtual int get_shard_str(string k) = 0;
 
 protected:
 	vector<PartitionInfo> partinfo_; /**< shard information */
@@ -132,25 +133,16 @@ protected:
 
 	map<int, LogFile*> checkpoint_files_;
 
-	friend class TableServer;
-
-	/**
-	 * Set the associated TableServer class which processes table requests.
-	 * Essentially, this sets the MPI rank of the process that maintains
-	 * this table (and its local shards).
-	 */
-	void set_worker(TableServer *w);
-
 	/*
 	 * Synchronous fetch of the given key stored in the given shard.
 	 * @return true if the key exists.
 	 */
-	bool get_remote(int shard, const StringPiece &k, string *v);
+	bool get_remote(int shard, const string &k, string *v);
 
 	/**
 	 * Send get request to the remote shard and return immediately.
 	 */
-	void async_get_remote(int shard, const StringPiece &k);
+	void async_get_remote(int shard, const string &k);
 
 
 	/**
@@ -193,7 +185,7 @@ public:
 	}
 
 	int get_shard(const K &k); /**< returns ID of the shard storing k */
-	int get_shard_str(StringPiece k); /**< override generic table's method */
+	int get_shard_str(string k); /**< override generic table's method */
 
 	/**
 	 * Insert new tuple to the table.
@@ -251,7 +243,7 @@ int TypedGlobalTable<K, V>::get_shard(const K &k) {
 }
 
 template<class K, class V>
-int TypedGlobalTable<K, V>::get_shard_str(StringPiece k) {
+int TypedGlobalTable<K, V>::get_shard_str(string k) {
 	return get_shard(
 			unmarshal(static_cast<Marshal<K>*>(this->info().key_marshal), k));
 }
@@ -263,7 +255,7 @@ int TypedGlobalTable<K, V>::get_shard_str(StringPiece k) {
 template<class K, class V>
 void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	int shard = this->get_shard(k);
-	StringPiece key = marshal(
+	string key = marshal(
 			static_cast<Marshal<K>*>(this->info().key_marshal), k);
 
 	int local_rank = NetworkThread::Get()->id();
@@ -274,17 +266,18 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 	put.set_source(local_rank);
 	put.set_table(this->id());
 
-	StringPiece value = marshal(
+	string value = marshal(
 			static_cast<Marshal<V>*>(this->info().value_marshal), v);
 
-	put.set_key(key.AsString());
+
+	put.set_key(key.data());
 	Arg *a = put.add_kv_data();
-	a->set_key(key.data, key.len);
-	a->set_value(value.data, value.len);
+	a->set_key(key);
+	a->set_value(value);
 	put.set_done(true);
 
 	// send over the network. No local put.
-	NetworkThread::Get()->Send(onwer(shard), MTYPE_PUT_REQUEST, put); //send remote
+	NetworkThread::Get()->Send(owner(shard), MTYPE_PUT_REQUEST, put); //send remote
 }
 
 
@@ -294,7 +287,7 @@ void TypedGlobalTable<K, V>::put(const K &k, const V &v) {
 template<class K, class V>
 bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	int shard = this->get_shard(k);
-	StringPiece key = marshal(
+	string key = marshal(
 			static_cast<Marshal<K>*>(this->info().key_marshal), k);
 
 
@@ -306,17 +299,17 @@ bool TypedGlobalTable<K, V>::update(const K &k, const V &v) {
 	put.set_source(local_rank);
 	put.set_table(this->id());
 
-	StringPiece value = marshal(
+	string value = marshal(
 			static_cast<Marshal<V>*>(this->info().value_marshal), v);
 
-	put.set_key(key.AsString());
+	put.set_key(key);
 	Arg *a = put.add_kv_data();
-	a->set_key(key.data, key.len);
-	a->set_value(value.data, value.len);
+	a->set_key(key);
+	a->set_value(value);
 	put.set_done(true);
 
 	// send via the network
-	NetworkThread::Get()->Send(owner(i), MTYPE_UPDATE_REQUEST, put); //send remotely
+	NetworkThread::Get()->Send(owner(shard), MTYPE_UPDATE_REQUEST, put); //send remotely
 	return true;
 }
 
@@ -379,7 +372,6 @@ bool TypedGlobalTable<K, V>::contains(const K &k) {
 template<class K, class V>
 LocalTable *TypedGlobalTable<K, V>::create_local(int shard) {
 	TableDescriptor *linfo = new TableDescriptor(info());
-	linfo->shard = shard;
 	LocalTable *t = (LocalTable *) info_->partition_factory->New();
 	t->Init(linfo);
 	return t;

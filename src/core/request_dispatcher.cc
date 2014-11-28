@@ -108,7 +108,7 @@ RequestDispatcher* RequestDispatcher::instance_;
  * Initialize the request queue and start the dispatch loop.
  */
 RequestDispatcher::RequestDispatcher() {
-	table_queue_ = new ASyncRequestQueue(gc->num_table_servers());
+	table_queue_ = new ASyncRequestQueue();
 	num_outstanding_request_ = 0;
 
 	//start the thread running dispatch loop
@@ -146,4 +146,8 @@ void RequestDispatcher::table_dispatch_loop() {
 	}
 }
 
+void RequestDispatcher::PrintStats(){
+	Stats stat = table_queue_->stats();
+	VLOG(3) << "average queue length = " << stat["request_queue_length"]/stat["request_queue_access_count"];
+}
 }  // namespace lapis

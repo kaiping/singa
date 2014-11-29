@@ -26,366 +26,66 @@
 namespace lapis {
 using std::string;
 
-template<typename V>
-class UpdateHandler: public BaseUpdateHandler<VKey, V>{
- public:
-  explicit UpdateHandler(const SolverProto& solver);
-  virtual bool Update(V* data, const V& update);
-  virtual bool Get(const VKey& key, const V &val, V* ret);
-  virtual bool is_checkpointable(const VKey& key, const V& val);
-};
 
-template<>
-class UpdateHandler<AdaGradValue>{
- public:
-  explicit UpdateHandler(const SolverProto& solver);
-  virtual bool Update(AdaGradValue* data, const AdaGradValue& update);
-  virtual bool Get(const VKey& key, const AdaGradValue &val, AdaGradValue* ret);
-  virtual bool is_checkpointable(const VKey& key, const AdaGradValue& val);
-};
-
-template<>
-class UpdateHandler<SGDValue>{
- public:
-  explicit UpdateHandler(const SolverProto& solver);
-  virtual bool Update(SGDValue* data, const SGDValue& update);
-  virtual bool Get(const VKey& key, const SGDValue &val, SGDValue* ret);
-  virtual bool is_checkpointable(const VKey& key, const SGDValue& val);
-  void UpdateHyperParams(const int step);
- private:
-  int step_;
-  float learning_rate_,  base_learning_rate_, gamma_;
-  int learning_rate_change_steps_;
-  float momentum_, weight_decay_;
-  SGDValue::ChangeProto learning_rate_change_;
-};
-
-
-/***************************************************************************
- * Table Delegate
- **************************************************************************/
+/**
+ * Table Delegate is a proxy for the distributed parameter table.
+ * Table Delegate works as a bridge between the workers and the table servers.
+ * It redirects the Put, Get, Update requests for the parameters to the
+ * TableServer, and collects/handles the responses from the Tableserver.
+ */
 class TableDelegate {
  public:
   virtual ~TableDelegate(){};
-  /**
-   * create disk tables for train, val, test;
-   * create parameter table
-   */
-  virtual void Update(Param *param, int step)=0;
-  virtual void Get(Param * param, int step)=0;
-  virtual void Put(Param * param)=0;
+  explicit TableDelegate(const SolverProto& proto);
+  void Update(Param *param, int step);
+  void Get(Param * param, int step);
+  void Put(Param * param, int step);
 
-  virtual void AsyncGet(Param * param, int step)=0;
-  virtual void AsyncCollect(Param * param, int step)=0;
+  void AsyncGet(Param * param, int step)=0;
+  void AsyncCollect(Param * param, int step)=0;
 
-  virtual void Collect(Param * param, int step)=0;
-  virtual void StopCollectThread()=0;
-  virtual void StartCollectThread()=0;
+  void Collect(Param * param, int step);
+  void StopCollectThread();
+  void StartCollectThread();
 
-  virtual void SplitParams(const std::vector<Param *> &params, int wid)=0;
+  void SplitParams(const std::vector<Param *> &params, int wid);
 
-  virtual const std::map<int, GlobalTable*> tables()=0;
   void HandleShardAssignment() ;
-
-  void Update(const std::vector<Param *> &params, int step);
-  void Get(const std::vector<Param *> &params, int step);
-  void Put(const std::vector<Param *> &params);
-  void AsyncGet(const std::vector<Param *> &params, int step);
-};
-
-template <typename K, typename V>
-class TypedTableDelegate:public TableDelegate {
- public:
-  explicit TypedTableDelegate(const SolverProto& proto);
-
-  virtual void Update(Param *param, int step);
-  virtual void Get(Param * param , int step);
-  virtual void Put(Param * param);
-  virtual void AsyncGet(Param * param, int step);
-  virtual void AsyncCollect(Param * param, int step);
-  virtual void Collect(Param * param, int step);
-
-  virtual void SplitParams(const std::vector<Param *> &params, int wid);
-  virtual const std::map<int, GlobalTable*> tables(){
+  const std::map<int, GlobalTable*> tables(){
     std::map<int, GlobalTable*> ret;
-    ret[0]=param_table_;
-    return  ret;
+    ret[0]=table_;
+    return ret;
   }
-  virtual void StartCollectThread();
-  virtual void StopCollectThread() {
-    collect_flag_=false;
-    collect_thread_.join();
-  }
-  void set_example(const V& example){ example_=example; }
-  virtual ~TypedTableDelegate();
  private:
-  TypedGlobalTable<K, V>* CreateParamTable( const int id, int num_shards,
-      UpdateHandler<V> *update, Sharder<K> *skey,
-      Marshal<K> *mkey, Marshal<V> *mval) ;
-  virtual void CollectThread();
+  TypedGlobalTable<TKey, TVal>* CreateParamTable(
+      const int id, int num_shards,
+      UpdateHandler<TVal> *update, Sharder<TKey> *skey,
+      Marshal<TKey> *mkey, Marshal<TVal> *mval) ;
+
  private:
   int kMaxSplits_;
   V example_;
-  TypedGlobalTable<K,V> * param_table_;
+  TypedGlobalTable<TKey,TVal> * table_;
   // map param id to splits (id, len)
-  std::vector<std::vector<std::pair<int, int>>> param_splits_;
+  std::vector<std::vector<std::pair<int, int>>> splits_;
   // map split id to param* and offset (to local partition start)
-  std::map<int, std::pair<Param*, int>> split_param_map_;
+  std::map<int, std::pair<Param*, int>> split_map_;
   // async get marker
   std::map<int, bool> asyncget_split_;
   std::atomic<int>* collect_counter_;
   std::atomic<bool> collect_flag_;
   std::thread collect_thread_;
 };
-template<class K, class V>
-void TypedTableDelegate<K,V>::StartCollectThread() {
-  collect_thread_=std::thread([this] {CollectThread();});
-}
 
-template<class K, class V>
-TypedTableDelegate<K,V>::~TypedTableDelegate(){
-  delete param_table_;
-}
-
-struct VKeySharder :public Sharder<VKey> {
-  int operator() (const VKey& k, int shards) {
-    return k.key()%shards;
+struct KeySharder :public Sharder<TKey> {
+  int operator() (const TKey& k, int shards) {
+    return k.id()%shards;
   }
 };
 
 inline bool operator==(const VKey& k1, const VKey& k2) {
   return k1.key()==k2.key();
 }
-
-template<>
-TypedTableDelegate<VKey,SGDValue>::TypedTableDelegate(const SolverProto& proto);
-template<>
-TypedTableDelegate<VKey,AdaGradValue>::TypedTableDelegate(const SolverProto& proto);
-
-
-TableDelegate* CreateTableDelegate(const SolverProto& proto);
-template<class K, class V>
-TypedGlobalTable<K, V>* TypedTableDelegate<K,V>::CreateParamTable(
-    const int id, int num_shards, UpdateHandler<V>* update, Sharder<K> *skey,
-    Marshal<K> *mkey, Marshal<V> *mval) {
-  TableDescriptor *info = new TableDescriptor(id, num_shards);
-  info->key_marshal = mkey;
-  info->value_marshal = mval;
-  info->sharder = skey;
-  // TODO update accum
-  info->accum = update;
-  info->partition_factory = new typename SparseTable<K, V>::Factory;
-  auto table=new TypedGlobalTable<K, V>();
-  table->Init(info);
-  //LOG(INFO)<<"table shards num "<<table->num_shards();
-  return table;
-}
-template<class K, class V>
-void TypedTableDelegate<K, V>::SplitParams(const vector<Param *>& params, int wid) {
-  int total_splits=0;
-  int group_size=GlobalContext::Get()->group_size();
-  collect_counter_=new std::atomic<int>[params.size()];
-  for(auto param: params){
-    const DAry& dary=param->data();
-    int id=param->id()*group_size;
-    if(param->partition())
-      id+=wid;
-    int local_size=dary.local_size();
-    int splitsize=param->split_threshold();
-    /*
-    //int splitsize=std::max(param->split_threshold(), local_size/num_servers);
-    if(splitsize==local_size/num_servers&&local_size%num_servers!=0)
-    splitsize+=1;
-    */
-    if(splitsize>=16777216){
-      LOG(WARNING)<<"split of size "<<splitsize
-        <<"  exceeds the size of max google protobuf message, i.e., 64MB"
-        <<" param length is "<<local_size
-        <<", reset the split threshold to 4000,000 Bytes";
-      splitsize = 1000000;
-    }
-    int nsplits=local_size/splitsize+(local_size%splitsize!=0);
-    CHECK_LE(nsplits,kMaxSplits_)<<"total splits for one param partition "
-      <<" exceeds kMaxSplits, raise kMaxSplits in solver config";
-    vector<std::pair<int, int>> splits;
-    for(auto j = 0, pos=0; j < nsplits; j++) {
-      int len=(pos+splitsize)<local_size?splitsize:local_size-pos;
-      int splitid=id*kMaxSplits_+j;
-      splits.push_back(std::make_pair(splitid,len));
-      split_param_map_[splitid]=std::make_pair(param, pos);
-      asyncget_split_[splitid]=false;
-      pos+=len;
-    }
-    CHECK_EQ(param_splits_.size(), param->id());
-    param_splits_.push_back(splits);
-    collect_counter_[param->id()]=0;
-    total_splits+=splits.size();
-    // for debug
-    for(auto& split: splits){
-      char tmpbuf[1024];
-      sprintf(tmpbuf, "%4d %5d %5d", param->id(), split.first, split.second);
-      LOG(INFO)<<string(tmpbuf);
-    }
-  }
-  LOG(INFO)<<"Total splits for this worker "<<total_splits;
-}
-
-template<class K, class V>
-void TypedTableDelegate<K, V>::Update(Param *param, int step){
-  int offset = 0;
-  const float * dptr = param->grad().dptr();
-  K key;
-  V v(example_);
-  v.set_version(step);
-  v.set_gid(GlobalContext::Get()->group_id());
-  DAryProto* grad=v.add_grad();
-  for(auto& entry: param_splits_[param->id()]) {
-    // sgd related hyper-parameters
-    grad->clear_value();
-    for(int k = 0; k < entry.second; k++){
-      grad->add_value(dptr[offset]);
-      offset++;
-    }
-    key.set_key(entry.first);
-    param_table_->update(key, v);
-  }
-}
-
-template<class K, class V>
-void TypedTableDelegate<K, V>::Get(Param * param, int step){
-  float* dptr=param->mutable_data()->dptr();
-  K key;
-  key.set_version(step);
-  int offset=0;
-  for(auto entry: param_splits_[param->id()]) {
-    key.set_key(entry.first);
-    V v=param_table_->get(key);
-    for(auto x: v.data().value()){
-      dptr[offset++]=x;
-    }
-    CHECK_EQ(v.data().value_size(), entry.second);
-  }
-  CHECK_EQ(offset, param->data().local_size());
-}
-
-template<class K, class V>
-void TypedTableDelegate<K, V>::AsyncGet(Param * param, int step){
-  CHECK_EQ(collect_counter_[param->id()],0);
-  auto splits=param_splits_[param->id()];
-  K key;
-  key.set_version(step);
-  key.set_gid(GlobalContext::Get()->group_id());
-  V v;
-  for(auto entry: splits) {
-    key.set_key(entry.first);
-    param_table_->async_get(key, &v);
-    asyncget_split_.at(entry.first)=false;
-    //LOG(INFO)<<"get "<<entry.first;
-  }
-}
-/**
- * collect splits returned from PS, in parallel with training
- */
-template<typename K, typename V>
-void TypedTableDelegate<K, V>::CollectThread(){
-  collect_flag_=true;
-  while(collect_flag_){
-    K key;
-    V val;
-    // may collect splits of other params used later
-    if(param_table_->async_get_collect(&key,&val)){
-      int splitid=key.key();
-      //LOG(INFO)<<"collected "<<splitid;
-      auto& split=split_param_map_.at(splitid);
-      Param* p=split.first;
-      int offset=split.second;
-      float * dptr = p->mutable_data()->dptr();
-      for(auto v: val.data().value())
-        dptr[offset++]=v;
-      // check this split is complete, i.e. offset is the start of next split
-      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
-        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
-      asyncget_split_[splitid]=true;
-      collect_counter_[p->id()]+=1;
-    }else{
-      //std::this_thread::yield();
-      sleep(0.0001);
-    }
-  }
-}
-
-
-template<class K, class V>
-void TypedTableDelegate<K, V>::Collect(Param * param, int step){
-  auto& splits=param_splits_[param->id()];
-  int nsplits=splits.size();
-  while(true){
-    int ncollect=collect_counter_[param->id()];
-    CHECK_LE(ncollect, nsplits);
-    if(ncollect==nsplits){
-      for(auto& split:splits){
-        CHECK(asyncget_split_[split.first]);
-        asyncget_split_[split.first]=false;
-      }
-      collect_counter_[param->id()]=0;
-      break;
-    }
-    else{
-      sleep(0.0001);
-      //std::this_thread::yield();
-    }
-  }
-}
-
-
-template<class K, class V>
-void TypedTableDelegate<K, V>::AsyncCollect(Param * param, int step){
-  auto& splits=param_splits_[param->id()];
-  unsigned int nget=0;
-  int start_split_id=splits.front().first;
-  int end_split_id=splits.back().first;
-  // check num of splits collected before
-  for(auto& split: splits){
-    if(asyncget_split_.at(split.first))
-      nget++;
-  }
-  K key;
-  V val;
-  while(nget<splits.size()){
-   // may collect splits of other params used later
-    if(param_table_->async_get_collect(&key,&val)){
-      int splitid=key.key();
-      //LOG(INFO)<<"collected "<<splitid;
-      auto& split=split_param_map_.at(splitid);
-      Param* p=split.first;
-      int offset=split.second;
-      float * dptr = p->mutable_data()->dptr();
-      for(auto v: val.data().value())
-        dptr[offset++]=v;
-      //val.mutable_data()->clear_value();
-      // check this split is complete, i.e. offset is the start of next split
-      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
-        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
-      asyncget_split_[splitid]=true;
-      if(splitid>=start_split_id&&splitid<=end_split_id)
-        nget++;
-    }else{
-      sleep(0.0001);
-    }
-  }
-
-  // check all splits have been collected, reset async get markers,
-  for(auto& split:splits){
-    CHECK(asyncget_split_[split.first]);
-    asyncget_split_[split.first]=false;
-  }
-}
-
-
-template<>
-void TypedTableDelegate<VKey, SGDValue>::Put(Param * param);
-template<>
-void TypedTableDelegate<VKey ,AdaGradValue>::Put(Param * param);
 
 }  // namespace lapis
 #endif  // INCLUDE_CORE_TABLE_DELEGATE_H_

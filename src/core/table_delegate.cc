@@ -13,163 +13,255 @@
 
 DECLARE_bool(restore);
 namespace lapis {
-UpdateHandler<AdaGradValue>::UpdateHandler(const SolverProto& solver){
+TableDelegate::~TableDelegate(){
+  delete table_;
 }
-bool UpdateHandler<AdaGradValue>::Update(AdaGradValue* data,
-    const AdaGradValue& update){
-  int gid=update.gid();
-  CHECK_GE(gid,0);
-  int threshold=data->threshold();
-  int n_update=data->n_update(gid);
-  int len=data->data().value_size();
-  if(data->grad_size()==0){
-    for(int i=0;i<GlobalContext::Get()->num_groups();i++){
-      DAryProto* grad=data->add_grad();
-      for(int j=0;j<len;j++)
-        grad->add_value(0.0f);
-    }
-  }
-  if(data->history().value_size()==0){
-    DAryProto* hist=data->mutable_history();
-    for(int i=0;i<len;i++)
-      hist->add_value(data->kinit());
-  }
 
+TypedGlobalTable<Tkey, TVal>* TableDelegate::CreateParamTable(){
+  auto *info = new TableDescriptor(0, GlobalContext::Get()->num_servers());
+  info->key_marshal = new Marshal<TKey>;
+  info->value_marshal = new Marshal<TVal>;
+  info->sharder = TKeySharder;
+  // TODO remove accum
+  info->accum = nullptr;
+  info->partition_factory = new typename SparseTable<K, V>::Factory;
+  auto table=new TypedGlobalTable<TKey, TVal>();
+  table->Init(info);
+  //LOG(INFO)<<"table shards num "<<table->num_shards();
+  return table;
+}
+
+void TableDelegate::SplitParams(const vector<Param *>& params) {
+  int total_splits=0;
+  collect_counter_=new std::atomic<int>[params.size()];
+  for(auto param: params){
+    SplitParam(param, GlobalContext::Get()->id());
+  }
+  LOG(INFO)<<"Total splits for this worker "<<total_splits;
+}
+
+void TableDelegate::SplitParam(const Param & param, int worker_id){
+  int group_size=GlobalContext::Get()->group_size();
+  const DAry& dary=param->data();
+  int id=param->id()*group_size;
+  if(param->partition())
+    id+=worker_id;
+  int local_size=dary.local_size();
+  int splitsize=param->split_threshold();
+  if(splitsize>=16777216){
+    LOG(WARNING)<<"split of size "<<splitsize
+      <<"  exceeds the size of max google protobuf message, i.e., 64MB"
+      <<" param length is "<<local_size
+      <<", reset the split threshold to 4000,000 Bytes";
+    splitsize = 1000000;
+  }
+  int nsplits=local_size/splitsize+(local_size%splitsize!=0);
+  CHECK_LE(nsplits,kMaxSplits_)<<"total splits for one param partition "
+    <<" exceeds kMaxSplits, raise kMaxSplits in solver config";
+  vector<std::pair<int, int>> splits;
+  for(auto j = 0, pos=0; j < nsplits; j++) {
+    int len=(pos+splitsize)<local_size?splitsize:local_size-pos;
+    int splitid=id*kMaxSplits_+j;
+    splits.push_back(std::make_pair(splitid,len));
+    split_map_[splitid]=std::make_pair(param, pos);
+    asyncget_split_[splitid]=false;
+    pos+=len;
+  }
+  CHECK_EQ(param_splits_.size(), param->id());
+  splits_.push_back(splits);
+  total_splits+=splits.size();
+  // for debug
+  for(auto& split: splits){
+    char tmpbuf[1024];
+    sprintf(tmpbuf, "%4d %5d %5d", param->id(), split.first, split.second);
+    LOG(INFO)<<string(tmpbuf);
+  }
+}
+void TableDelegate::Update(const std::vector<Param*> &params, int step) {
+  for(auto* param: params)
+    Update(param,step);
+  return;
+}
+
+void TableDelegate::Update(Param *param, int step){
+  TKey key;
+  TVal val;
+  val.set_version(step);
+  int offset = 0;
+  DAryProto* grad=val.mutable_grad();
+  const float * dptr = param->grad().dptr();
+  for(auto& entry: splits_[param->id()]) {
+    // sgd related hyper-parameters
+    for(int k = 0; k < entry.second; k++){
+      grad->add_value(dptr[offset++]);
+    }
+    key.set_id(entry.first);
+    table_->update(key, val);
+  }
+}
+
+
+void TableDelegate::Get(const std::vector<Param*> &params, int step){
+  for(auto* param : params)
+    Get(param, step);
+  return;
+}
+
+
+void TableDelegate::Get(Param * param, int step){
+  float* dptr=param->mutable_data()->dptr();
+  TKey key;
+  key.set_version(step);
   int offset=0;
-  float* graddptr=data->mutable_grad(gid)->mutable_value()->mutable_data();
-  //threshold is the num of workers in one group contributing to this grad
-  if(n_update<threshold){
-    for(auto v: update.grad(0).value())
-      graddptr[offset++]+=v;
-    CHECK_EQ(offset, len);
-  }
-
-  data->set_n_update(gid, n_update+1);
-  if(data->n_update(gid)==threshold){
-    //basic adagrad
-    float * history=data->mutable_history()->mutable_value()->mutable_data();
-    float * dptr=data->mutable_data()->mutable_value()->mutable_data();
-    float lr=data->learning_rate();
-    for(int i=0;i<len;i++){
-      history[i]+=graddptr[i]*graddptr[i];
-      dptr[i]-=graddptr[i]*lr/sqrt(history[i]);
-      graddptr[i]=0.f;
+  for(auto entry: splits_[param->id()]) {
+    key.set_id(entry.first);
+    TVal v=table_->get(key);
+    for(auto x: val.data().value()){
+      dptr[offset++]=x;
     }
-    data->set_n_update(gid, 0);
-    data->set_version(data->version()+1);
+    CHECK_EQ(val.data().value_size(), entry.second);
   }
-  return true;
+  CHECK_EQ(offset, param->data().local_size());
 }
-bool UpdateHandler<AdaGradValue>::Get(const VKey& key,
-    const AdaGradValue &val, AdaGradValue* ret) {
-  //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
-  int gid=key.gid();
-  CHECK_GE(gid,0);
-  if(key.version()<=val.version()&&val.n_update(gid)==0){
-    DAryProto* retdat=ret->mutable_data();
-    retdat->clear_value();
-    for(auto x: val.data().value())
-      retdat->add_value(x);
-    return true;
-  }else
-    return false;
+void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
+  for(auto* param : params)
+    AsyncGet(param, step);
+  return;
 }
-
-bool UpdateHandler<AdaGradValue>::is_checkpointable(const VKey& key,
-    const AdaGradValue& val) {
-  /*
-  if(val.version()>FLAGS_checkpoint_after&&
-      val.version()%FLAGS_checkpoint_frequency==0)
-    return true;
-  else
-    */
-    return false;
+void TableDelegate::Put(const std::vector<Param*> &params) {
+  for(auto* param: params)
+    Put(param);
 }
-
-/*********************************************************************
- * SGDValue
- **********************************************************************/
-bool UpdateHandler<SGDValue>::is_checkpointable(const VKey& key, const SGDValue& val) {
-  /*
-  if(val.version()>FLAGS_checkpoint_after&&
-      val.version()%FLAGS_checkpoint_frequency==0)
-    return true;
-  else
-  */
-    return false;
-}
-
-bool UpdateHandler<SGDValue>::Get(const VKey& key, const SGDValue &val, SGDValue* ret) {
-  //LOG(INFO)<<"key version "<<key.version()<<" val version "<<val.version();
-  if(key.version()<=val.version()){
-    DAryProto* retdat=ret->mutable_data();
-    retdat->clear_value();
-    for(auto x: val.data().value())
-      retdat->add_value(x);
-    return true;
+void TableDelegate::Put(Param * param){
+  int offset = 0;
+  int nworkers=GlobalContext::Get()->num_workers();
+  const float * data_addr = param->data().dptr();
+  for(auto& entry: param_splits_[param->id()]) {
+    TVal val;
+    // sgd related hyper-parameters
+    val.set_learning_rate_multiplier(param->learning_rate_multiplier());
+    val.set_weight_decay_multiplier(param->weight_decay_multiplier());
+    val.set_param_id(param->id());
+    val.set_splitid(entry.first);
+    val.set_splitoffset(split_map_[entry.first]);
+    DAryProto* dary=val.mutable_data();
+    for(int k = 0; k < entry.second; k++){
+      dary->add_value(data_addr[offset]);
+      offset++;
+    }
+    TKey key;
+    key.set_version(0);
+    key.set_id(entry.first);
+    table_->put(key, v);
   }
-  return false;
 }
 
-
-UpdateHandler<SGDValue>::UpdateHandler(const SolverProto& solver){
-  step_=0;
-  base_learning_rate_=solver.sgd().base_learning_rate();
-  gamma_=solver.sgd().gamma();
-  learning_rate_change_=solver.sgd().learning_rate_change();
-  learning_rate_change_steps_=solver.sgd().learning_rate_change_steps();
-  momentum_=solver.sgd().momentum();
-  weight_decay_=solver.sgd().weight_decay();
-}
-
-bool UpdateHandler<SGDValue>::Update(SGDValue* data, const SGDValue& update){
-  CHECK_EQ(data->version(), update.version())<<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
-  int len=data->data().value_size();
-  if(data->history().value_size()==0){
-    DAryProto* hist=data->mutable_history();
-    for(int i=0;i<len;i++)
-      hist->add_value(0.0f);
+void TableDelegate::AsyncGet(Param * param, int step){
+  TKey key;
+  key.set_version(step);
+  for(auto entry: splits_[param->id()]) {
+    key.set_id(entry.first);
+    table_->async_get(key);
+    asyncget_split_.at(entry.first)=false;
+    //LOG(INFO)<<"get "<<entry.first;
   }
-
-  CHECK_EQ(len, update.grad(0).value_size());
-  CHECK_EQ(len, data->history().value_size());
-
-  float* history=data->mutable_history()->mutable_value()->mutable_data();
-  const float* grad=update.grad(0).value().data();
-  float* dptr=data->mutable_data()->mutable_value()->mutable_data();
-  float lr=learning_rate_*data->learning_rate_multiplier();
-  float w=weight_decay_*data->weight_decay_multiplier();
-  // hist=hist-lr*grad
-  DAry::arymath().madd(history, lr, grad, history, len);
-  // hist=hist-lr*weight*param
-  if(w>0)
-    DAry::arymath().madd(history, lr*w, dptr, history, len);
-
-  data->set_n_update(data->n_update()+1);
-  if(data->n_update()==data->threshold()){
-    // param+=history/n, /data->n_update()
-    //DAry::arymath().sub(dptr, dptr, history, len);
-    float factor=-1.0/GlobalContext::Get()->num_groups();
-    DAry::arymath().madd(dptr, factor, history, dptr, len);
-    // hist=hist*mom
-    DAry::arymath().mul(history, momentum_, history, len);
-    data->set_n_update(0);
-    data->set_version(update.version()+1);
-    UpdateHyperParams(data->version());
+}
+void TableDelegate::AsyncCollect(Param * param, int step){
+  auto& splits=param_splits_[param->id()];
+  unsigned int nget=0;
+  int start_split_id=splits.front().first;
+  int end_split_id=splits.back().first;
+  // check num of splits collected before
+  for(auto& split: splits){
+    if(asyncget_split_.at(split.first))
+      nget++;
   }
-  return true;
+  TKey key;
+  TVal val;
+  while(nget<splits.size()){
+   // may collect splits of other params used later
+    if(table_->async_get_collect(&key,&val)){
+      int splitid=key.id();
+      //LOG(INFO)<<"collected "<<splitid;
+      auto& split=split_map_.at(splitid);
+      Param* p=split.first;
+      int offset=split.second;
+      float * dptr = p->mutable_data()->dptr();
+      for(auto v: val.data().value())
+        dptr[offset++]=v;
+      //val.mutable_data()->clear_value();
+      // check this split is complete, i.e. offset is the start of next split
+      if(split_map_.find(key.key()+1)!=split_map_.end())
+        CHECK_EQ(offset, split_map_.at(key.key()+1).second);
+      asyncget_split_[splitid]=true;
+      if(splitid>=start_split_id&&splitid<=end_split_id)
+        nget++;
+    }else{
+      sleep(0.0001);
+    }
+  }
+  // check all splits have been collected, reset async get markers,
+  for(auto& split:splits){
+    CHECK(asyncget_split_[split.first]);
+    asyncget_split_[split.first]=false;
+  }
 }
 
-void UpdateHandler<SGDValue>::UpdateHyperParams(const int step) {
-  learning_rate_ = Solver::UpdateHyperParam(step, learning_rate_change_,
-      learning_rate_change_steps_,
-      base_learning_rate_,
-      gamma_);
+
+/*
+void TableDelegate::StartCollectThread() {
+  collect_thread_=std::thread([this] {CollectThread();});
+}
+void TableDelegate::CollectThread(){
+  collect_flag_=true;
+  while(collect_flag_){
+    K key;
+    V val;
+    // may collect splits of other params used later
+    if(table_->async_get_collect(&key,&val)){
+      int splitid=key.key();
+      //LOG(INFO)<<"collected "<<splitid;
+      auto& split=split_param_map_.at(splitid);
+      Param* p=split.first;
+      int offset=split.second;
+      float * dptr = p->mutable_data()->dptr();
+      for(auto v: val.data().value())
+        dptr[offset++]=v;
+      // check this split is complete, i.e. offset is the start of next split
+      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
+        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
+      asyncget_split_[splitid]=true;
+      collect_counter_[p->id()]+=1;
+    }else{
+      //std::this_thread::yield();
+      sleep(0.0001);
+    }
+  }
 }
 
-/********************************************************************
- * Table Delegate
- * *************************************************************/
+
+void TableDelegate::Collect(Param * param, int step){
+  auto& splits=param_splits_[param->id()];
+  int nsplits=splits.size();
+  while(true){
+    int ncollect=collect_counter_[param->id()];
+    CHECK_LE(ncollect, nsplits);
+    if(ncollect==nsplits){
+      for(auto& split:splits){
+        CHECK(asyncget_split_[split.first]);
+        asyncget_split_[split.first]=false;
+      }
+      collect_counter_[param->id()]=0;
+      break;
+    }
+    else{
+      sleep(0.0001);
+      //std::this_thread::yield();
+    }
+  }
+}
+*/
+
 void TableDelegate::HandleShardAssignment() {
   LOG(INFO) << "Handle Shard Assignment";
   ShardAssignmentRequest shard_req;
@@ -207,7 +299,6 @@ void TableDelegate::HandleShardAssignment() {
         (*cp)[a.shard()] = new LogFile(checkpoint_file,"w",a.shard());
         VLOG(3) << "Added to new checkpoint files for shard "<< a.shard();
       }
-
     }
   }
   EmptyMessage empty;
@@ -215,128 +306,7 @@ void TableDelegate::HandleShardAssignment() {
   LOG(ERROR)<<"Finish handle shard assignment";
 }
 
-TableDelegate* CreateTableDelegate(const SolverProto& proto){
-/**
- * need to know the tuple type to create parameter table
- */
-  TableDelegate *delegate;
-  if(proto.method()==lapis::SolverProto::kSGD){
-     delegate=new lapis::TypedTableDelegate<VKey, lapis::SGDValue>(proto);
-  }
-  else{
-    delegate= new lapis::TypedTableDelegate<VKey, lapis::AdaGradValue>(proto);
-  }
-  NetworkThread::Get()->RegisterCallback(MTYPE_SHARD_ASSIGNMENT,
-                         boost::bind(&TableDelegate::HandleShardAssignment, delegate));
 
-  return delegate;
-}
-
-
-template<>
-TypedTableDelegate<VKey,AdaGradValue>::TypedTableDelegate (const SolverProto& proto){
-  auto* update_handler=new UpdateHandler<AdaGradValue>(proto);
-  param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
-      update_handler,new VKeySharder, new Marshal<VKey>, new Marshal<AdaGradValue>);
-
-  example_=proto.adagrad();
-  kMaxSplits_=proto.max_splits();
-}
-
-
-template<>
-TypedTableDelegate<VKey,SGDValue>::TypedTableDelegate (const SolverProto& proto){
-  auto* update_handler=new UpdateHandler<SGDValue>(proto);
-  param_table_= CreateParamTable(0, GlobalContext::Get()->num_table_servers(),
-      update_handler,new VKeySharder, new Marshal<VKey>, new Marshal<SGDValue>);
-
-  example_=proto.sgd();
-  kMaxSplits_=proto.max_splits();
-}
-
-void TableDelegate::Update(const std::vector<Param*> &params, int step) {
-  for(auto* param: params)
-    Update(param,step);
-  return;
-}
-
-void TableDelegate::Put(const std::vector<Param*> &params) {
-  for(auto* param: params)
-    Put(param);
-}
-
-void TableDelegate::Get(const std::vector<Param*> &params, int step){
-  for(auto* param : params)
-    Get(param, step);
-  return;
-}
-void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
-  for(auto* param : params)
-    AsyncGet(param, step);
-  return;
-}
-
-template<>
-void TypedTableDelegate<VKey, SGDValue>::Put(Param * param){
-  int offset = 0;
-  int nworkers=GlobalContext::Get()->num_workers();
-  int ngroups=GlobalContext::Get()->num_groups();
-  const float * data_addr = param->data().dptr();
-  for(auto& entry: param_splits_[param->id()]) {
-    SGDValue v(example_);
-    // sgd related hyper-parameters
-    v.set_learning_rate_multiplier(param->learning_rate_multiplier());
-    v.set_weight_decay_multiplier(param->weight_decay_multiplier());
-    v.set_version(0);
-    v.set_n_update(0);
-    v.set_id(param->id());
-    if(!param->partition())
-      v.set_threshold(nworkers);
-    else
-      v.set_threshold(ngroups);
-    LOG(INFO)<<"param "<<v.id()<<" threshold "<<v.threshold()<<" "<<nworkers<<" "<<ngroups;
-    DAryProto* dary=v.mutable_data();
-    dary->clear_value();
-    for(int k = 0; k < entry.second; k++){
-      dary->add_value(data_addr[offset]);
-      offset++;
-    }
-    VKey key;
-    key.set_version(0);
-    key.set_key(entry.first);
-    param_table_->put(key, v);
-  }
-}
-
-template<>
-void TypedTableDelegate<VKey, AdaGradValue>::Put(Param * param){
-  int offset = 0;
-  const float * data_addr = param->data().dptr();
-  int groupsize=GlobalContext::Get()->group_size();
-  int ngroups=GlobalContext::Get()->num_groups();
-  for(auto& entry: param_splits_[param->id()]) {
-    AdaGradValue v(example_);
-    // sgd related hyper-parameters
-    v.set_version(0);
-    if(!param->partition())
-      v.set_threshold(groupsize);
-    else
-      v.set_threshold(1);
-    for(int i=0;i<ngroups;i++)
-      v.add_n_update(0);
-    DAryProto* dary=v.mutable_data();
-    dary->clear_value();
-    for(int k = 0; k < entry.second; k++){
-      dary->add_value(data_addr[offset]);
-      offset++;
-    }
-    VKey key;
-    key.set_version(0);
-    key.set_key(entry.first);
-    param_table_->put(key, v);
-  }
-}
 
 
 }  // namespace lapis
-

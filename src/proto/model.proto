@@ -132,13 +132,6 @@ message PerformanceProto {
 }
 
 message SolverProto {
-  // start the checkpoint operation after this num steps
-  optional int32 checkpoint_after_steps = 2 [default = 0];
-  // frequency of checkpoint
-  optional int32 checkpoint_every_steps = 3 [default = 0];
-  // the time of checkpoint
-  //optional int32 checkpoint_step = 5 [default = 0];
-
   // start display after this num steps
   optional int32 display_after_steps = 6 [default = 0];
   // frequency of display
@@ -221,7 +214,10 @@ message SGD {
   optional bool synchronous=7 [default=false];
   // table server handler class identifier
   optional string handler=8 [default="SGDHandler"];
-
+  // start the checkpoint operation after this num steps
+  optional int32 checkpoint_after_steps = 9 [default = 0];
+  // frequency of checkpoint
+  optional int32 checkpoint_every_steps = 10 [default = 0];
   // leave for further extension
   extensions 100 to max;
 }

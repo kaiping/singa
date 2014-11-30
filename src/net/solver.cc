@@ -15,11 +15,9 @@ namespace lapis {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
-  step_ = proto.checkpoint_step();
-  checkpoint_after_steps_ = proto.checkpoint_after_steps();
-  checkpoint_every_steps_ = proto.checkpoint_every_steps();
-  //! last checkpoint step
-  checkpoint_step_ = proto.checkpoint_step();
+  step_ = proto.step();
+  proto_=proto;
+  /*
   display_after_steps_ = proto.display_after_steps();
   display_every_steps_ = proto.display_every_steps();
   validation_after_steps_ = proto.validation_after_steps();
@@ -31,50 +29,21 @@ Solver::Solver(const SolverProto &proto) {
   train_steps_=proto.train_steps();
   test_steps_=proto.test_steps();
   validation_steps_=proto.validation_steps();
-
   sgd_=proto.sgd();
+  */
   context_=GlobalContext::Get();
-  mpi_=NetworkThread::Get();
 
   string data_folder=GlobalContext::Get()->data_folder();
   train_shard_=data_folder+"/train";
   val_shard_=data_folder+"/validation";
   test_shard_=data_folder+"/test";
 }
-
-float Solver::UpdateHyperParam(int step, SGDValue::ChangeProto change,
-    int change_steps, float a, float b) {
-  float ret = 0., r = 0.;
-  switch (change) {
-    case SGDValue::kFixed:
-      ret = a;
-      break;
-    case SGDValue::kLinear:
-      // a is init, b is the final
-      r = step * 1.0  / change_steps;
-      ret = (1.0 - r) * a + r * b;
-      break;
-    case SGDValue::kExponential:
-      // a is init, b is the final, from convnet
-      CHECK_EQ(a, 2 * b) << "final value should be the half";
-      ret = a / pow(2, step * 1. / change_steps);
-      break;
-    case SGDValue::kInverse_t:
-      // a is init, b is the final, from convnet
-      CHECK_EQ(a, 2 * b) << "final value should be the half";
-      ret = a / (1. + step * 1. / b);
-      break;
-    case SGDValue::kStep:
-      // a is the base learning rate, b is gamma, from caffe
-      // notice it is step/change_steps, not step*1.0/change_steps
-      ret = a * pow(b, step / change_steps);
-      break;
-    default:
-      LOG(ERROR) << "Wrong hyper-parameter update method";
-  }
-  return ret;
+Solver::~Solver() {
+  delete net_;
+  delete table_delegate_;
 }
 
+/*
 void Solver::LocalUpdate(Param* param, int step) {
   float lr=UpdateHyperParam(step, sgd_.learning_rate_change(),
       sgd_.learning_rate_change_steps(),sgd_.base_learning_rate(), sgd_.gamma());
@@ -97,13 +66,13 @@ void Solver::LocalUpdate(Param* param, int step) {
   // hist=hist*mom
   DAry::arymath().mul(history->dptr(), sgd_.momentum(), history->dptr(), len);
 }
+*/
 
-
-void Solver::Setup(TableDelegate* delegate,  const NetProto& np){
+void Solver::Setup(const NetProto& np){
   net_=SetupNeuralNet(np);
   auto params=net_->params();
   auto grp_rank=context_->worker_id();
-  delegate_=delegate;
+  delegate_=new TableDelegate();
   delegate_->SplitParams(params, grp_rank);
 }
 
@@ -116,7 +85,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   // setup the net, init parameters
   net->SetNetShape(batchsize_, record);
 
-  if(FLAGS_par_mode==string("hybrid")){
+  if(proto_.partition()==string("hybrid")){
     int pdim=0;
     for(Layer* layer: net->layers()){
       if(layer->name()=="fc6")
@@ -125,7 +94,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
         pdim=0;
       layer->SetupDAry(pdim);
     }
-  }else if (FLAGS_par_mode==string("data")){
+  }else if (proto_.partition()==string("data")){
     for(Layer* layer: net->layers())
       layer->SetupDAry(0);
   }else{
@@ -149,16 +118,13 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
 void Solver::InitParams(){
   for(auto* param: net_->params()){
     param->Fill();
-    LOG(INFO)<<"param "<<param->name()<<" "<<param->data().Norm1();
   }
   for(auto* param: net_->params())
-    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
+    if(!param->partition()||context_->num_groups()>1)
       delegate_->Put(param);
 }
-Solver::~Solver() {
-  delete net_;
-}
 void Solver::ToProto(SolverProto *proto) {
+  /*
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
   proto->set_checkpoint_every_steps(checkpoint_every_steps_);
   proto->set_checkpoint_step(checkpoint_step_);
@@ -171,37 +137,26 @@ void Solver::ToProto(SolverProto *proto) {
 
   proto->set_test_after_steps(test_after_steps_);
   proto->set_test_every_steps(test_every_steps_);
+  */
+  proto->MergeFrom(proto_);
+  proto->set_step(step_);
 }
 void debug_mem(string prefix){
   char buf[1024];
   sprintf(buf, "%30s, %12lu", prefix.c_str(), getCurrentRSS());
   LOG(INFO)<<string(buf);
 }
-void Solver::Test(){
-  Performance perf;
-  while(!HasFinished()){
-    if(ValidateNow()){
-      perf=Test(Phase::kValidation);
-      ReportPerformance("Validation", perf);
-    }
-    if(TestNow()){
-      perf=Test(Phase::kTest);
-      ReportPerformance("Test", perf);
-    }
-    IncStep();
-    sleep(1);
-  }
-}
+
 Performance Solver::Test(const Phase& phase){
   string shard;
   int nsteps;
   if(phase==Phase::kValidation){
     shard=val_shard_;
-    nsteps=validation_steps_;
+    nsteps=proto_.validation_steps();
   }
   else if(phase==Phase::kTest){
     shard=test_shard_;
-    nsteps=test_steps_;
+    nsteps=proto_.test_steps();
   }
   else
     LOG(ERROR)<<"Phase must be kValidation or kTest";
@@ -271,6 +226,7 @@ void Solver::Train(int start_step){
   thd->join();
   delete thd;
 }
+/*
 void Solver::DoLocalCheckpoint(Net* net){
   for(auto* param: net->params()){
     if(param->partition()&&GlobalContext::Get()->num_groups()==1){
@@ -288,6 +244,7 @@ void Solver::DoLocalCheckpoint(Net* net){
     }
   }
 }
+*/
 void Solver::DebugInfo(Net* net){
   char display[4096];
   auto layers=net->layers();
@@ -318,13 +275,11 @@ Performance Solver::TrainOneBatch(Net *net, int step){
   auto layers=net->layers();
   if(step==0){
     for(auto* param: net->params()){
-      if(!param->partition()||GlobalContext::Get()->num_groups()>1)
         delegate_->AsyncGet(param,step);
     }
   }
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
-      if(!param->partition()||GlobalContext::Get()->num_groups()>1)
         delegate_->AsyncCollect(param, step);
     }
     if(layer->PreSyncF())
@@ -339,12 +294,8 @@ Performance Solver::TrainOneBatch(Net *net, int step){
       MPI_Barrier(context_->mpicomm());
     (*layer)->ComputeGradient();
     for(auto* param: (*layer)->GetParams()){
-      if(!param->partition()||GlobalContext::Get()->num_groups()>1){
         delegate_->Update(param, step);
         delegate_->AsyncGet(param,step+1);
-      }else{
-        LocalUpdate(param, step);
-      }
     }
     if((*layer)->PostSyncG())
       MPI_Barrier(context_->mpicomm());
@@ -364,9 +315,6 @@ Performance Solver::TestOneBatch(Net *net, int step){
   return net->output_layer(0)->CalcPerf(true, true);
 }
 
-void Solver::TimeTableServer(int runs){
-
-}
 void Solver::TimeOneBatch(int runs) {
   phase=Phase::kTrain;
   Prefetcher prefetcher(train_shard_, net_);
@@ -393,7 +341,6 @@ void Solver::TimeOneBatch(int runs) {
   double sync_start, refresh_start, comp_start;
   //delegate_->StartCollectThread();
   for(auto* param: net_->params()){
-    if(!param->partition()||GlobalContext::Get()->num_groups()>1)
       delegate_->AsyncGet(param,step_);
   }
 
@@ -404,7 +351,6 @@ void Solver::TimeOneBatch(int runs) {
     for(auto* layer: layers){
       refresh_start=Now();
       for(auto* param: layer->GetParams()){
-        if(!param->partition()||GlobalContext::Get()->num_groups()>1)
           delegate_->AsyncCollect(param, step_);
       }
       sync_start=Now();
@@ -434,7 +380,6 @@ void Solver::TimeOneBatch(int runs) {
       backward[layerid]+=refresh_start-comp_start;
 
       for(auto* param: (*layer)->GetParams()){
-        if(!param->partition()||GlobalContext::Get()->num_groups()>1){
           delegate_->Update(param, step_);
           delegate_->AsyncGet(param, step_+1);
         }
@@ -477,13 +422,6 @@ void Solver::TimeOneBatch(int runs) {
   //DebugInfo(net_);
 }
 
-//Performance Solver::Test(Net *net) { }
-bool Solver::HasFinished(){
-  if (step_ >= train_steps_)
-    return true;
-  else
-    return false;
-}
 /***********************************************************************
  * Prefetcher Implementation
  ***********************************************************************/
@@ -503,7 +441,6 @@ void Prefetcher::NextRecord(Record* record){
     CHECK(shard_->Next(&key, record));
   }
 }
-
 
 void Prefetcher::operator()(){
   const DAry& input= net_->input_layer(0)->GetData(nullptr);

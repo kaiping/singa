@@ -18,8 +18,7 @@
 DEFINE_string(cluster_conf, "examples/imagenet12/cluster.conf", "configuration file for node roles");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf", "DL model configuration file");
 DEFINE_bool(restore, false, "restore from checkpoint file");
-DEFINE_string(mode, "hybrid",  "partition mode");
-// for debugging use
+// for debug use
 #ifndef FLAGS_v
   DEFINE_int32(v, 3, "vlog controller");
 #endif
@@ -27,7 +26,6 @@ DEFINE_string(mode, "hybrid",  "partition mode");
 
 int main(int argc, char **argv) {
   int provided;
-  // TODO input args check and display usage.
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   //FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
@@ -39,28 +37,20 @@ int main(int argc, char **argv) {
   auto gc=lapis::GlobalContext::Get(cluster);
   lapis::Model model;
   lapis::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
-  lapis::GAry::Init(gc->rank(), gc->groups());
-  if(FLAGS_restore){
-    /*
-     if(gc->AmICoordinator()) {
-      lapis::Coordinator coordinator(gc);
-      coordinator.Resume(model);
+  if(!FLAGS_restore){
+    if(gc->AmITableServer()) {
+      lapis::TableServer server;
+      server.Start(model.solver().sgd());
     }else {
-      lapis::Worker worker(gc);
-      worker.Start(model.data(), model.solver());
-    }
-    */
-  }else{
-    if(gc->AmICoordinator()) {
-      lapis::Coordinator coordinator;
-      coordinator.Run(model);
-    }else {
+      lapis::GAry::Init(gc->rank(), gc->groups());
       // worker or table server
-      lapis::Worker worker(gc);
+      lapis::Worker worker();
       worker.Start(model);
+      lapis::GAry::Finalize();
     }
+  }else{
+    // restore
   }
-  lapis::GAry::Finalize();
   gc->Finalize();
   MPI_Finalize();
   LOG(ERROR)<<"shutdown";

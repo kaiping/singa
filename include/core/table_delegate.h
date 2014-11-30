@@ -61,13 +61,12 @@ class TableDelegate {
     ret[0]=table_;
     return ret;
   }
-  */
  private:
   TypedGlobalTable<TKey, TVal>* CreateParamTable(
       const int id, int num_shards,
       UpdateHandler<TVal> *update, Sharder<TKey> *skey,
       Marshal<TKey> *mkey, Marshal<TVal> *mval) ;
-
+  */
  private:
   int kMaxSplits_;
   V example_;
@@ -78,9 +77,9 @@ class TableDelegate {
   std::map<int, std::pair<Param*, int>> split_map_;
   // async get marker
   std::map<int, bool> asyncget_split_;
-  std::atomic<int>* collect_counter_;
-  std::atomic<bool> collect_flag_;
-  std::thread collect_thread_;
+  //std::atomic<int>* collect_counter_;
+  //std::atomic<bool> collect_flag_;
+  //std::thread collect_thread_;
 };
 
 struct KeySharder :public Sharder<TKey> {

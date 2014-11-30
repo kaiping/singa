@@ -5,7 +5,16 @@
 #include "server.h"
 
 namespace lapis {
-
+void TableServer::Start(const SGDProto& sgd){
+  TableServerHandler *tshandler=TSHandlerFactory::Get()->Create(sgd.handler());
+  tshandler->Setup(sgd);
+  while(true){
+    // todo handle requests;
+  }
+}
+/**************************************************************************
+ * Implementation for base table server handlers
+ *************************************************************************/
 void TableServerHandler::Setup(const SGDProto& sgd) {
   checkpoint_after_=sgd.checkpoint_after();
   checkpoint_frequency_=sgd.checkpoint_frequency();
@@ -33,6 +42,7 @@ bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
   }else
     return false;
 }
+
 /*************************************************************************
  * Implementation for SGD handlers
  ************************************************************************/
@@ -46,6 +56,39 @@ void TSHandlerForSGD::Setup(const SGDProto& sgd) {
   learning_rate_change_=sgd.learning_rate_change();
 }
 
+float TSHandlerForSGD::UpdateHyperParam(
+    int step, SGDValue::ChangeProto change,
+    int change_steps, float a, float b) {
+  float ret = 0., r = 0.;
+  switch (change) {
+    case SGDValue::kFixed:
+      ret = a;
+      break;
+    case SGDValue::kLinear:
+      // a is init, b is the final
+      r = step * 1.0  / change_steps;
+      ret = (1.0 - r) * a + r * b;
+      break;
+    case SGDValue::kExponential:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / pow(2, step * 1. / change_steps);
+      break;
+    case SGDValue::kInverse_t:
+      // a is init, b is the final, from convnet
+      CHECK_EQ(a, 2 * b) << "final value should be the half";
+      ret = a / (1. + step * 1. / b);
+      break;
+    case SGDValue::kStep:
+      // a is the base learning rate, b is gamma, from caffe
+      // notice it is step/change_steps, not step*1.0/change_steps
+      ret = a * pow(b, step / change_steps);
+      break;
+    default:
+      LOG(ERROR) << "Wrong hyper-parameter update method";
+  }
+  return ret;
+}
 bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   //should be equal for syn sgd
   //CHECK_EQ(origin->version(), update.version())
@@ -60,7 +103,7 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   int version=origin->version();
   float lr=GetLearningRate(version, origin->learning_rate_multiplier());
   float wd=GetWeightDcay(version, origin->weight_decay_multiplier());
-  float mo=GetMomentum(version);
+  float mo=GetMomentum(version,1.0f);
   // hist=hist+lr*grad
   Math::mAdd(len, history, lr, grad, history);
   // hist=hist+lr*weight*param
@@ -140,16 +183,16 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
 #define CreateTSHandler(Handler) \
   [](void)->TableServerHandler* {return new Handler();}
 std::shared_ptr<TSHandlerFactory> TSHandlerFactory::instance_;
-std::shared_ptr<TSHandlerFactory> TSHandlerFactory::Instance() {
+std::shared_ptr<TSHandlerFactory> TSHandlerFactory::Get() {
   if (!instance_.get()) {
-    instance_.reset(new  TSHandlerFactory());
+    instance_.reset(new TSHandlerFactory());
   }
   return instance_;
 }
 
 TSHandlerFactory::TSHandlerFactory() {
-  RegisterCreateFunction("SGDHandler", CreateTSHandler(TSHandlerForSGD));
-  RegisterCreateFunction("AdaHandler", CreateTSHandler(TSHandlerForAda));
+  RegisterCreateFunction("SGD", CreateTSHandler(TSHandlerForSGD));
+  RegisterCreateFunction("AdaGrad", CreateTSHandler(TSHandlerForAda));
 }
 
 void TSHandlerFactory::RegisterCreateFunction(

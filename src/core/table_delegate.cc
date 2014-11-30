@@ -4,17 +4,11 @@
 #include <vector>
 
 #include "core/table_delegate.h"
-#include "core/table.h"
 #include "proto/model.pb.h"
-#include "net/solver.h"
-
-
 #include "da/dary.h"
+#include "util/network_thread.h"
 
-DECLARE_bool(restore);
 namespace lapis {
-TableDelegate::~TableDelegate(){
-}
 
 void TableDelegate::SplitParams(const vector<Param *>& params) {
   int total_splits=0;

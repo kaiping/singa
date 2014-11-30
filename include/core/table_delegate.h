@@ -16,10 +16,10 @@
 #include "net/param.h"
 #include "utils/global_context.h"
 #include "utils/common.h"
-#include "core/global-table.h"
-#include "core/common.h"
-#include "core/sparse-table.h"
-#include "core/table.h"
+//#include "core/global-table.h"
+//#include "core/common.h"
+//#include "core/sparse-table.h"
+//#include "core/table.h"
 #include "proto/model.pb.h"
 
 
@@ -51,11 +51,17 @@ class TableDelegate {
   void SplitParams(const std::vector<Param *> &params, int wid);
 
   void HandleShardAssignment() ;
+  int Shard(int id, int num_servers) {
+    return id % num_servers;
+  }
+
+  /*
   const std::map<int, GlobalTable*> tables(){
     std::map<int, GlobalTable*> ret;
     ret[0]=table_;
     return ret;
   }
+  */
  private:
   TypedGlobalTable<TKey, TVal>* CreateParamTable(
       const int id, int num_shards,
@@ -65,7 +71,7 @@ class TableDelegate {
  private:
   int kMaxSplits_;
   V example_;
-  TypedGlobalTable<TKey,TVal> * table_;
+  //TypedGlobalTable<TKey,TVal> * table_;
   // map param id to splits (id, len)
   std::vector<std::vector<std::pair<int, int>>> splits_;
   // map split id to param* and offset (to local partition start)

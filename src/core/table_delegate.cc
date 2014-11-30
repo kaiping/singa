@@ -1,4 +1,4 @@
-// Copyright © 2014 Jinyang Gao. All Rights Reserved.
+// Copyright © 2014 Wei Wang & Jinyang Gao. All Rights Reserved.
 // 2014-07-18 16:33
 
 #include <vector>
@@ -14,21 +14,6 @@
 DECLARE_bool(restore);
 namespace lapis {
 TableDelegate::~TableDelegate(){
-  delete table_;
-}
-
-TypedGlobalTable<Tkey, TVal>* TableDelegate::CreateParamTable(){
-  auto *info = new TableDescriptor(0, GlobalContext::Get()->num_servers());
-  info->key_marshal = new Marshal<TKey>;
-  info->value_marshal = new Marshal<TVal>;
-  info->sharder = TKeySharder;
-  // TODO remove accum
-  info->accum = nullptr;
-  info->partition_factory = new typename SparseTable<K, V>::Factory;
-  auto table=new TypedGlobalTable<TKey, TVal>();
-  table->Init(info);
-  //LOG(INFO)<<"table shards num "<<table->num_shards();
-  return table;
 }
 
 void TableDelegate::SplitParams(const vector<Param *>& params) {
@@ -85,18 +70,30 @@ void TableDelegate::Update(const std::vector<Param*> &params, int step) {
 
 void TableDelegate::Update(Param *param, int step){
   TKey key;
-  TVal val;
-  val.set_version(step);
+  key.set_version(step);
   int offset = 0;
-  DAryProto* grad=val.mutable_grad();
   const float * dptr = param->grad().dptr();
   for(auto& entry: splits_[param->id()]) {
+    TVal val;
+    DAryProto* grad=val.mutable_grad();
+
     // sgd related hyper-parameters
     for(int k = 0; k < entry.second; k++){
       grad->add_value(dptr[offset++]);
     }
+
     key.set_id(entry.first);
-    table_->update(key, val);
+    std::string valstr=val.SerializeToString();
+    TableData tuple;
+    tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
+    tuple.set_source(GlobalContext::Get()->rank());
+    tuple.set_table(0);
+    Arg *arg=tuple.add_kv_data();
+    arg->set_key(key.SerializeToString());
+    arg->set_allocated_value(&valstr);
+    tuple.set_done(true);
+    NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
+    //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
   }
 }
 
@@ -107,7 +104,7 @@ void TableDelegate::Get(const std::vector<Param*> &params, int step){
   return;
 }
 
-
+/*
 void TableDelegate::Get(Param * param, int step){
   float* dptr=param->mutable_data()->dptr();
   TKey key;
@@ -123,6 +120,7 @@ void TableDelegate::Get(Param * param, int step){
   }
   CHECK_EQ(offset, param->data().local_size());
 }
+*/
 void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
   for(auto* param : params)
     AsyncGet(param, step);
@@ -152,7 +150,17 @@ void TableDelegate::Put(Param * param){
     TKey key;
     key.set_version(0);
     key.set_id(entry.first);
-    table_->put(key, v);
+    std::string valstr=val.SerializeToString();
+    TableData tuple;
+    tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
+    tuple.set_source(GlobalContext::Get()->rank());
+    tuple.set_table(0);
+    Arg *arg=tuple.add_kv_data();
+    arg->set_key(key.SerializeToString());
+    arg->set_allocated_value(&valstr);
+    tuple.set_done(true);
+    NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
+    //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
   }
 }
 
@@ -161,7 +169,12 @@ void TableDelegate::AsyncGet(Param * param, int step){
   key.set_version(step);
   for(auto entry: splits_[param->id()]) {
     key.set_id(entry.first);
-    table_->async_get(key);
+    HashGet req;
+    req.set_key(key.SerializeToString());
+    req.set_table(0);
+    req.set_shard(Shard(entry.first, GlobalContext::Get()->num_servers()));
+    req.set_source(GlobalContext::Get()->rank());
+    NetworkThread::Get()->Send(req.shard(), MTYPE_GET_REQUEST, req);
     asyncget_split_.at(entry.first)=false;
     //LOG(INFO)<<"get "<<entry.first;
   }
@@ -180,7 +193,10 @@ void TableDelegate::AsyncCollect(Param * param, int step){
   TVal val;
   while(nget<splits.size()){
    // may collect splits of other params used later
-    if(table_->async_get_collect(&key,&val)){
+    TableData tuple;
+    if(NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE, &tuple)){
+      key.ParseFromString(tuple.kv_data(0).key());
+      val.ParseFromString(tuple.kv_data(0).value());
       int splitid=key.id();
       //LOG(INFO)<<"collected "<<splitid;
       auto& split=split_map_.at(splitid);
@@ -260,7 +276,6 @@ void TableDelegate::Collect(Param * param, int step){
     }
   }
 }
-*/
 
 void TableDelegate::HandleShardAssignment() {
   LOG(INFO) << "Handle Shard Assignment";
@@ -306,6 +321,21 @@ void TableDelegate::HandleShardAssignment() {
   LOG(ERROR)<<"Finish handle shard assignment";
 }
 
+TypedGlobalTable<Tkey, TVal>* TableDelegate::CreateParamTable(){
+  auto *info = new TableDescriptor(0, GlobalContext::Get()->num_servers());
+  info->key_marshal = new Marshal<TKey>;
+  info->value_marshal = new Marshal<TVal>;
+  info->sharder = TKeySharder;
+  // TODO remove accum
+  info->accum = nullptr;
+  info->partition_factory = new typename SparseTable<K, V>::Factory;
+  auto table=new TypedGlobalTable<TKey, TVal>();
+  table->Init(info);
+  //LOG(INFO)<<"table shards num "<<table->num_shards();
+  return table;
+}
+
+*/
 
 
 

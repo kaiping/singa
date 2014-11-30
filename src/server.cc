@@ -9,7 +9,7 @@ void TableServer::Start(const SGDProto& sgd){
   TableServerHandler *tshandler=TSHandlerFactory::Get()->Create(sgd.handler());
   tshandler->Setup(sgd);
   while(true){
-    // todo handle requests;
+    // todo (Anh) handle requests;
   }
 }
 /**************************************************************************

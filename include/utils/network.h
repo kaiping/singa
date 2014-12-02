@@ -44,11 +44,12 @@ class Network {
   virtual bool Send(int dst, int tag, const Message& msg)=0;
   /**
    * Receive google protobuf message.
-   * @param tag, message tag, only receive message with this tag.
-   * @param msg, pointer to the message to be received.
-   * @return sending process ID.
+   * @param tag, the message tag.
+   * @parm src, the sending process.
+   * @param msg, the message to be received.
+   * @return true if the the message is received successfully.
    */
-  virtual int Recv(int tag, Message* msg)=0;
+  virtual bool Recv(int *tag, int *src, Message* msg)=0;
 
  protected:
   Network(){}
@@ -60,7 +61,7 @@ class Network {
 class MPINetwork: public Network{
  public:
   virtual bool Send(int dst, int tag, const Message& msg);
-  virtual int Recv(int tag, Message* msg);
+  virtual bool Recv(int *tag, int *src, Message* msg)=0;
 };
 } /* lapis  */
 

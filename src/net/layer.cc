@@ -4,6 +4,7 @@
 #include <glog/logging.h>
 #include <memory>
 #include <cfloat>
+#include <math.h>
 #include "net/solver.h"
 #include "net/layer.h"
 namespace lapis {
@@ -1161,7 +1162,7 @@ void SoftmaxLossLayer::ComputeFeature() {
     DAry lbottom1=lbottom[n];
     float mmax = lbottom1.Max();
     DAry data=data_[n];
-    data.Map([mmax](float v){return std::exp(v-mmax);}, lbottom1);
+    data.Map([mmax](float v){return exp(v-mmax);}, lbottom1);
     float sum=data.Sum();
     data.Div(data, sum);
   }

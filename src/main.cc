@@ -7,7 +7,7 @@
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "proto/cluster.pb.h"
-#include "coordinator.h"
+#include "server.h"
 #include "worker.h"
 #include "da/gary.h"
 
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     }else {
       lapis::GAry::Init(gc->rank(), gc->groups());
       // worker or table server
-      lapis::Worker worker();
+      lapis::Worker worker;
       worker.Start(model);
       lapis::GAry::Finalize();
     }

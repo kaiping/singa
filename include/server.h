@@ -4,6 +4,7 @@
 #ifndef INCLUDE_SERVER_H_
 #define INCLUDE_SERVER_H_
 
+#include "core/sparse-table.h"
 #include "proto/model.pb.h"
 namespace lapis {
 /**
@@ -28,14 +29,15 @@ class TableServer{
 class TableServerHandler: public BaseUpdateHandler<TKey, TVal>{
  public:
   virtual void Setup(const SGDProto& sgd);
-  virtual bool CheckpointNow(const VKey& key, const TVal& val);
+  virtual bool CheckpointNow(const TKey& key, const TVal& val);
 
   virtual bool Update(TVal* origin, const TVal& update)=0;
-  virtual bool Get(const TKey& key, const TVal &from, TVal* to)=0;
-  virtual bool Put(const TKey& key, TVal* to, const TVal& from)=0;
+  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
+  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
 
  protected:
   int checkpoint_after_, checkpoint_frequency_;
+  bool synchronous_;
 };
 
 /**
@@ -44,10 +46,8 @@ class TableServerHandler: public BaseUpdateHandler<TKey, TVal>{
  */
 class TSHandlerForSGD: public TableServerHandler {
  public:
-  virtual void Setup(const SGDProto& sgd)=0;
+  virtual void Setup(const SGDProto& sgd);
   virtual bool Update(TVal* origin, const TVal& update);
-  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
-  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
 
  protected:
   float GetLearningRate(int step, float multiplier){
@@ -66,7 +66,7 @@ class TSHandlerForSGD: public TableServerHandler {
   }
 
   float UpdateHyperParam(
-      int step, SGDValue::ChangeProto change,
+      int step, SGDProto::ChangeProto change,
       int change_steps, float a, float b);
 
  protected:
@@ -80,11 +80,12 @@ class TSHandlerForSGD: public TableServerHandler {
  */
 class TSHandlerForAda: public TableServerHandler {
  public:
-  virtual void Setup(const SGDProto& sgd)=0;
+  virtual void Setup(const SGDProto& sgd);
   virtual bool Update(TVal* origin, const TVal& update);
-  virtual bool Get(const TKey& key, const TVal &val, TVal* ret);
-  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
   virtual bool Put(const TKey& key, TVal* to, const TVal& from);
+
+ protected:
+   float learning_rate_;
 };
 
 /****************************************************************************/
@@ -94,7 +95,7 @@ class TSHandlerForAda: public TableServerHandler {
  * @param handler the child layer class
  */
 #define REGISTER_TSHandler(type, handler) TSHandlerFactory::Instance()->\
-  RegisterCreateFunction(type,
+  RegisterCreateFunction(type,\
                         [](void)-> TableServerHandler* {return new handler();})
 
 /**
@@ -110,16 +111,17 @@ class TSHandlerFactory {
   /**
    * static method to get instance of this factory
    */
-  static std::shared_ptr<TSHandlerFactory> Instance();
+  static std::shared_ptr<TSHandlerFactory> Get();
   /**
-   * Register user defined layer, i.e., add the layer type/identifier and a
-   * function which creats an instance of the layer. This function is called by
-   * the REGISTER_LAYER macro.
-   * @param id identifier of the layer, every layer has a type to identify it
-   * @param create_function a function that creates a layer instance
+   * Register user defined handler.
+   * It adds the handler type/identifier and a function which creats an
+   * instance of this. This function is called by the REGISTER_TSHandler macro.
+   * @param id identifier of the handler
+   * @param create_function a function that creates a handler instance
    */
-  void RegisterCreateFunction(const std::string id,
-                              std::function<Layer*(void)> create_function);
+  void RegisterCreateFunction(
+      const std::string id,
+      std::function<TableServerHandler*(void)> create_function);
   /**
    * create a layer  instance by providing its type
    * @param type the identifier of the layer to be created
@@ -129,7 +131,7 @@ class TSHandlerFactory {
  private:
   //! To avoid creating multiple instances of this factory in the program
   TSHandlerFactory();
-  //! Map that stores the registered Layers
+  //! Map that stores the registered handlers
   std::map<std::string, std::function<TableServerHandler*(void)>> map_;
   static std::shared_ptr<TSHandlerFactory> instance_;
 };

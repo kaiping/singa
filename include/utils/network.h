@@ -50,7 +50,7 @@ class Network {
    */
   virtual int Recv(int tag, Message* msg)=0;
 
- private:
+ protected:
   Network(){}
 
  private:

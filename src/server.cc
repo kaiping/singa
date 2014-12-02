@@ -3,6 +3,8 @@
 
 #include "proto/model.pb.h"
 #include "server.h"
+#include "utils/math.h"
+#include "utils/global_context.h"
 
 namespace lapis {
 void TableServer::Start(const SGDProto& sgd){
@@ -16,11 +18,12 @@ void TableServer::Start(const SGDProto& sgd){
  * Implementation for base table server handlers
  *************************************************************************/
 void TableServerHandler::Setup(const SGDProto& sgd) {
-  checkpoint_after_=sgd.checkpoint_after();
-  checkpoint_frequency_=sgd.checkpoint_frequency();
+  checkpoint_after_=sgd.checkpoint_after_steps();
+  checkpoint_frequency_=sgd.checkpoint_every_steps();
+  synchronous_=sgd.synchronous();
 }
 
-bool TableServerHandler::CheckpointNow(const VKey& key, const TVal& val){
+bool TableServerHandler::CheckpointNow(const TKey& key, const TVal& val){
   if(key.version()>checkpoint_after_&&
       (key.version()-checkpoint_after_)%checkpoint_frequency_==0)
     return true;
@@ -33,10 +36,11 @@ bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
     for(int i=0;i<to->data().value_size();i++)
       to->mutable_history()->add_value(0.0f);
   }
+  return true;
 }
 
 bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
-  if(key.version()<=val.version()&&val.num_aggregate()==0){
+  if(key.version()<=from.version()&&from.num_aggregate()==0){
     to->mutable_data()->CopyFrom(from.data());
     return true;
   }else
@@ -57,29 +61,29 @@ void TSHandlerForSGD::Setup(const SGDProto& sgd) {
 }
 
 float TSHandlerForSGD::UpdateHyperParam(
-    int step, SGDValue::ChangeProto change,
+    int step, SGDProto::ChangeProto change,
     int change_steps, float a, float b) {
   float ret = 0., r = 0.;
   switch (change) {
-    case SGDValue::kFixed:
+    case SGDProto::kFixed:
       ret = a;
       break;
-    case SGDValue::kLinear:
+    case SGDProto::kLinear:
       // a is init, b is the final
       r = step * 1.0  / change_steps;
       ret = (1.0 - r) * a + r * b;
       break;
-    case SGDValue::kExponential:
+    case SGDProto::kExponential:
       // a is init, b is the final, from convnet
       CHECK_EQ(a, 2 * b) << "final value should be the half";
       ret = a / pow(2, step * 1. / change_steps);
       break;
-    case SGDValue::kInverse_t:
+    case SGDProto::kInverse_t:
       // a is init, b is the final, from convnet
       CHECK_EQ(a, 2 * b) << "final value should be the half";
       ret = a / (1. + step * 1. / b);
       break;
-    case SGDValue::kStep:
+    case SGDProto::kStep:
       // a is the base learning rate, b is gamma, from caffe
       // notice it is step/change_steps, not step*1.0/change_steps
       ret = a * pow(b, step / change_steps);
@@ -97,12 +101,12 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   int len=origin->data().value_size();
   CHECK_EQ(len, update.grad().value_size());
 
-  float* history=origin->mutable_history()->mutable_value();
-  const float* grad=update.grad().value();
-  float* dptr=origin->mutable_data()->mutable_value();
+  float* history=origin->mutable_history()->mutable_value()->mutable_data();
+  const float* grad=update.grad().value().data();
+  float* dptr=origin->mutable_data()->mutable_value()->mutable_data();
   int version=origin->version();
   float lr=GetLearningRate(version, origin->learning_rate_multiplier());
-  float wd=GetWeightDcay(version, origin->weight_decay_multiplier());
+  float wd=GetWeightDecay(version, origin->weight_decay_multiplier());
   float mo=GetMomentum(version,1.0f);
   // hist=hist+lr*grad
   Math::mAdd(len, history, lr, grad, history);
@@ -114,12 +118,12 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   if(num+1==GlobalContext::Get()->num_groups()){
     // param+=history/n, /data->n_update()
     //DAry::arymath().sub(dptr, dptr, history, len);
-    float factor=-1.0/oigin->threshold();
+    float factor=-1.0/(num+1);
     Math::mAdd(len, dptr, factor, history, dptr);
     // hist=hist*mom
-    Math::mAdd(len, history, mo, history);
-    data->set_num_aggregate(0);
-    data->set_version(update.version()+1);
+    Math::Mult(len, history, mo, history);
+    origin->set_num_aggregate(0);
+    origin->set_version(update.version()+1);
   }else
     origin->set_num_aggregate(num+1);
 
@@ -136,9 +140,12 @@ void TSHandlerForAda::Setup(const SGDProto& sgd) {
 }
 
 bool TSHandlerForAda::Put(const TKey& key, TVal* to, const TVal& from){
-  if(syn_&&GlobalContext::Get()->num_groups()>1&&to->grad().value_size()==0)
+  TableServerHandler::Put(key, to, from);
+  if(synchronous_&&GlobalContext::Get()->num_groups()>1
+      &&to->grad().value_size()==0)
     for(int i=0;i<to->data().value_size();i++)
       to->mutable_grad()->add_value(0.0f);
+  return true;
 }
 bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
   //should be equal for syn sgd
@@ -146,8 +153,8 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
   float* grad=nullptr;
-  if(synchronous&&GlobalContext::Get()->num_groups()>1){
-    grad=origin->mutable_grad()->mutable_value();
+  if(synchronous_&&GlobalContext::Get()->num_groups()>1){
+    grad=origin->mutable_grad()->mutable_value()->mutable_data();
     int k=0;
     for(auto v: update.grad().value())
       grad[k++]+=v;
@@ -158,16 +165,16 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
       return true;
     }
   }else{
-    grad=update.grad().value();
+    grad=const_cast<float*>(update.grad().value().data());
   }
-  float * history=origin->mutable_history()->mutable_value();
-  float * dptr=data->mutable_data()->mutable_value();
+  float * history=origin->mutable_history()->mutable_value()->mutable_data();
+  float * dptr=origin->mutable_data()->mutable_value()->mutable_data();
 
   for(int i=0;i<origin->data().value_size();i++){
     history[i]+=grad[i]*grad[i];
-    dptr[i]-=learning_rate_*graddptr[i]/sqrt(history[i]);
+    dptr[i]-=learning_rate_*grad[i]/sqrt(history[i]);
   }
-  data->set_version(origin->version()+1);
+  origin->set_version(origin->version()+1);
   if(synchronous_&&GlobalContext::Get()->num_groups()>1){
     for(int i=0;i<origin->data().value_size();i++){
       grad[i]=0.f;
@@ -182,6 +189,7 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
  ****************************************************************************/
 #define CreateTSHandler(Handler) \
   [](void)->TableServerHandler* {return new Handler();}
+
 std::shared_ptr<TSHandlerFactory> TSHandlerFactory::instance_;
 std::shared_ptr<TSHandlerFactory> TSHandlerFactory::Get() {
   if (!instance_.get()) {
@@ -197,12 +205,12 @@ TSHandlerFactory::TSHandlerFactory() {
 
 void TSHandlerFactory::RegisterCreateFunction(
   const std::string id,
-  std::function<TSHandler*(void)> create_function) {
+  std::function<TableServerHandler*(void)> create_function) {
   map_[id] = create_function;
 }
 
 TableServerHandler *TSHandlerFactory::Create(const std::string id) {
-  CHECK(layer_map_.find(id) != layer_map_.end())
+  CHECK(map_.find(id) != map_.end())
       << "The TSHandler" << id << " has not been registered";
   return map_[id]();
 }

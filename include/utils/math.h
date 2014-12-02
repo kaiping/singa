@@ -6,25 +6,6 @@
 namespace lapis {
 
 namespace Math {
-
-inline void Add(int len, float* ret, const float* ary, const float x){
-  Map([x](float v) {return x+v;});
-}
-inline void Add(int len, float* ret, const float* a, const float *b){
-  Map([](const float p, const float q) {return p+q;});
-}
-
-/**
- * ret[i]=x*a[i]+b[i].
- */
-inline void mAdd(int len, float*ret, const float x, const float*a, const float*b){
-  Map([x](const float p, const float q) {return x*p+q;});
-}
-
-inline void Minus(int len, float*ret, const float* a, const float *b){
-  Map([](const float x, const float y) {return x-y;});
-}
-
 inline void Map(std::function<float(float)> func, int len,
     float *ret, const float* dptr){
   for (int i = 0; i < len; i++) {
@@ -45,6 +26,28 @@ inline void Map(std::function<float(float, float, float)> func, int len,
     ret[i]=func(dptr1[i], dptr2[i], dptr3[i]);
   }
 }
+
+inline void Mult(int len, float* ret, const float x, const float* ary){
+  Map([x](float v) {return x*v;}, len, ret, ary);
+}
+inline void Add(int len, float* ret, const float* ary, const float x){
+  Map([x](float v) {return x+v;}, len, ret, ary);
+}
+inline void Add(int len, float* ret, const float* a, const float *b){
+  Map([](const float p, const float q) {return p+q;}, len, ret, a, b);
+}
+
+/**
+ * ret[i]=x*a[i]+b[i].
+ */
+inline void mAdd(int len, float*ret, const float x, const float*a, const float*b){
+  Map([x](const float p, const float q) {return x*p+q;}, len ,ret, a, b);
+}
+
+inline void Minus(int len, float*ret, const float* a, const float *b){
+  Map([](const float x, const float y) {return x-y;}, len ,ret, a,b);
+}
+
 } /* Math */
 } /* lapis  */
 #endif

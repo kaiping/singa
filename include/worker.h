@@ -4,7 +4,6 @@
 #ifndef INCLUDE_WORKER_H_
 #define INCLUDE_WORKER_H_
 #include <map>
-#include <memory>
 #include <pthread.h>
 
 #include "net/net.h"
@@ -21,7 +20,6 @@ class Worker {
  public:
   void Start(const Model& model);
   void Resume();
-  ~Worker();
 };
 }  // namespace lapis
 

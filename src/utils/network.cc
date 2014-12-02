@@ -2,6 +2,8 @@
 // 2014-11-30 14:16
 
 #include <mpi.h>
+#include <glog/logging.h>
+
 #include "utils/network.h"
 
 namespace lapis {
@@ -17,23 +19,24 @@ std::shared_ptr<Network> Network::Get(Impl impl){
   return instance_;
 }
 
-
 bool MPINetwork::Send(int dst, int tag, const Message& msg) {
-  std::string buf=msg.SerializeToString();
+  std::string buf;
+  msg.SerializeToString(&buf);
   MPI_Request req;
-  MPI_ISend(buf.data(), buf.size(), MPI::BYTE, dst, tag, MPI_COMM_WORLD, &req);
+  MPI_Isend(const_cast<char*>(buf.data()), buf.size(), MPI::BYTE, dst, tag, MPI_COMM_WORLD, &req);
   return true;
 }
 
 int MPINetwork::Recv(int tag, Message* msg){
   MPI_Status status;
   MPI_Message mpi_msg;
-  MPI_MProbe(MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, mpi_msg, &status);
+  MPI_Mprobe(MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, &mpi_msg, &status);
   int count;
-  MPI_Get_count(&status, MPI::BYTE, count);
+  MPI_Get_count(&status, MPI::BYTE, &count);
   std::string buf;
   buf.resize(count);
-  MPI_Mrecv(buf.data(), count, MPI::BYTE, mpi_msg, &status);
+  MPI_Mrecv(const_cast<char*>(buf.data()), count, MPI::BYTE, &mpi_msg, &status);
+  msg->ParseFromString(buf);
   return status.MPI_SOURCE;
 }
 } /* lapis  */

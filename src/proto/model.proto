@@ -132,6 +132,7 @@ message PerformanceProto {
 }
 
 message SolverProto {
+  optional int32 step=1 [default=0];
   // start display after this num steps
   optional int32 display_after_steps = 6 [default = 0];
   // frequency of display
@@ -162,7 +163,7 @@ message SolverProto {
   // max number of tuples; 3571 is the 500-th prime number
   optional int32 max_splits=23 [default = 3571];
   // SGD parameters
-  optional SGD sgd=24;
+  optional SGDProto sgd=24;
   // There are two basic algorithms for calculating gradients.
   // Different deep learning models use different algorithms.
   enum GradCalcAlg{
@@ -196,7 +197,7 @@ message Record {
   optional string id=3;
 }
 
-message SGD {
+message SGDProto {
   optional float learning_rate=1;
   optional float momentum=2;
   optional float weight_decay=3;
@@ -238,10 +239,6 @@ message TKey{
 message TVal{
   // Identifier string, e.g., type for SGDVal is "SGDVal", "AdaVal" for AdaVal.
   optional string type=1;
-  // content of the parameter split (i.e., the tuple).
-  optional DAryProto data=2;
-  // gradient history
-  optional DAryProto history=3;
   // num of workers whose gradients have been aggregated.
   optional int32 num_aggregate = 4;
   // tuple version the same to that in TKey.
@@ -255,6 +252,14 @@ message TVal{
   // split offset, position (num of floats) of the start of this split to the
   // pos of the first split.
   optional int32 split_offset=9;
+  optional float learning_rate_multiplier=10 [default=1.0];
+  optional float weight_decay_multiplier=11 [default=1.0];
+   // content of the parameter split (i.e., the tuple).
+  optional DAryProto data=12;
+  // gradient
+  optional DAryProto grad = 13;
+  // gradient history
+  optional DAryProto history=14;
   // extensions used by Child message, e.g., SGDValue
   extensions 100 to max;
 }
@@ -262,16 +267,13 @@ message TVal{
 // Tuple value class used in normal SGD algorithm.
 message SGDVal{
   extend TVal {
-    optional SGDVal=101;
+    optional SGDVal sgd=101;
   }
-  optional float learning_rate_multiplier=7 [default=1.0];
-  optional float weight_decay_multiplier=8 [default=1.0];
 }
 
 // Tuple value class used in AdaGrad SGD algorithm.
 message AdaVal{
   extend TVal{
-    optional AdaVal =102;
+    optional AdaVal ada=102;
   }
-  repeated DAryProto grad = 9;
 }

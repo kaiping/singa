@@ -35,20 +35,28 @@ using std::string;
  */
 class TableDelegate {
  public:
-  virtual ~TableDelegate(){};
-  explicit TableDelegate(const SolverProto& proto);
-  void Update(Param *param, int step);
-  void Get(Param * param, int step);
-  void Put(Param * param, int step);
+  void Update(const std::vector<Param*> &params, int step);
+  //void Get(const std::vector<Param*> &params, int step);
+  void Put(const std::vector<Param*> &params, int step=0);
+  void AsyncGet(const std::vector<Param *>&params, int step);
 
-  void AsyncGet(Param * param, int step)=0;
-  void AsyncCollect(Param * param, int step)=0;
+  void Update(Param *param, int step);
+  //void Get(Param * param, int step);
+  void Put(Param * param, int step=0);
+  void AsyncGet(Param * param, int step);
+  void AsyncCollect(Param * param, int step);
 
   void Collect(Param * param, int step);
   void StopCollectThread();
   void StartCollectThread();
 
-  void SplitParams(const std::vector<Param *> &params, int wid);
+  void SplitParams(const std::vector<Param *> &params, int worker_id);
+  /**
+   * Split one parameter object into multiple splits.
+   * @param param
+   * @worker_id id of the worker within one group, GlobalContext::worker_id().
+   */
+  int SplitParam(Param * param, int worker_id);
 
   void HandleShardAssignment() ;
   int Shard(int id, int num_servers) {
@@ -69,7 +77,6 @@ class TableDelegate {
   */
  private:
   int kMaxSplits_;
-  V example_;
   //TypedGlobalTable<TKey,TVal> * table_;
   // map param id to splits (id, len)
   std::vector<std::vector<std::pair<int, int>>> splits_;
@@ -81,16 +88,6 @@ class TableDelegate {
   //std::atomic<bool> collect_flag_;
   //std::thread collect_thread_;
 };
-
-struct KeySharder :public Sharder<TKey> {
-  int operator() (const TKey& k, int shards) {
-    return k.id()%shards;
-  }
-};
-
-inline bool operator==(const VKey& k1, const VKey& k2) {
-  return k1.key()==k2.key();
-}
 
 }  // namespace lapis
 #endif  // INCLUDE_CORE_TABLE_DELEGATE_H_

@@ -16,7 +16,7 @@
  * maintained by global-table which invokes put/get/update methods on the specific types.
  *
  * The sparse table is a hash table (hash is computed on the keys, and can be specified by
- * user - example of VKey hash below).The table automatically expands to accommodate new tuples.
+ * user - example of TKey hash below).The table automatically expands to accommodate new tuples.
  *
  * When data is put/get/update, it first invokes the user-specified handler (BaseUpdateHandler),
  * and only proceeds when the handler returns true. This mechanism is used for
@@ -30,19 +30,19 @@
 namespace std {
 
 /**
- * Definition of hash value for VKey. This override the std::hash<VKey> method
+ * Definition of hash value for TKey. This override the std::hash<TKey> method
  */
 template<>
-struct hash<lapis::VKey> {
-	size_t operator()(const lapis::VKey& k) const {
+struct hash<lapis::TKey> {
+	size_t operator()(const lapis::TKey& k) const {
 		hash<int> hashint;
-		return hashint(k.key());
+		return hashint(k.id());
 	}
 };
 }  // namespace std
 
 
-DECLARE_bool(checkpoint_enabled);
+//DECLARE_bool(checkpoint_enabled);
 
 namespace lapis {
 
@@ -277,7 +277,7 @@ bool SparseTable<K, V>::ApplyUpdates(TableCoder *in, LogFile *logfile) {
 		((Marshal<K> *) info_->key_marshal)->unmarshal(kt, &k);
 		((Marshal<V> *) info_->value_marshal)->unmarshal(vt, &v);
 		bool ret = update(k, v);
-		if (ret && FLAGS_checkpoint_enabled)
+		//if (ret && FLAGS_checkpoint_enabled)
 			if (((BaseUpdateHandler<K, V> *) info_->accum)->is_checkpointable(k,
 					v)) {
 				V ret_v = get(k);
@@ -304,7 +304,7 @@ bool SparseTable<K, V>::ApplyPut(TableCoder *in, LogFile *logfile) {
     ((Marshal<K> *)info_->key_marshal)->unmarshal(kt, &k);
     ((Marshal<V> *)info_->value_marshal)->unmarshal(vt, &v);
     put(k, v);
-    if (FLAGS_checkpoint_enabled)
+    //if (FLAGS_checkpoint_enabled)
       if (((BaseUpdateHandler<K, V> *)info_->accum)->is_checkpointable(k, v)){
         logfile->append(kt, vt, size());
       }

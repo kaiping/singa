@@ -9,11 +9,10 @@
 #include "net/net.h"
 
 namespace lapis {
-void Worker::Shutdown() {
-}
-void Worker::Resume() {
-  /* todo get solverproto from hdfs or local disk
 
+void Worker::Resume() {
+
+/* todo get solverproto from hdfs or local disk
   ModelProto model;
   model.mutable_data()->CopyFrom(dp);
   model.mutable_solver()->CopyFrom(sp);
@@ -25,12 +24,12 @@ void Worker::Resume() {
   Solver solver(model.solver());
   LOG(ERROR)<<"setup solver";
   solver.Setup(model.data(), model.net());
-   */
+  */
 }
 void Worker::Start(const Model& model){
     Solver solver(model.solver());
     solver.Setup(model.net());
-    if(context_->group_id()==0)
+    if(GlobalContext::Get()->group_id()==0)
       solver.InitParams();
     // todo, two ways to syn all workers
     // 1. create MPI communicator for all workers, and call MPI_Barrier for

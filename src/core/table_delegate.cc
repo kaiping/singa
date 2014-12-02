@@ -6,20 +6,20 @@
 #include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "da/dary.h"
-#include "util/network_thread.h"
+#include "utils/network_thread.h"
+#include "proto/worker.pb.h"
 
 namespace lapis {
 
-void TableDelegate::SplitParams(const vector<Param *>& params) {
+void TableDelegate::SplitParams(const vector<Param *>& params, int worker_id) {
   int total_splits=0;
-  collect_counter_=new std::atomic<int>[params.size()];
   for(auto param: params){
-    SplitParam(param, GlobalContext::Get()->id());
+    total_splits+=SplitParam(param, worker_id);
   }
   LOG(INFO)<<"Total splits for this worker "<<total_splits;
 }
 
-void TableDelegate::SplitParam(const Param & param, int worker_id){
+int TableDelegate::SplitParam(Param * param, int worker_id){
   int group_size=GlobalContext::Get()->group_size();
   const DAry& dary=param->data();
   int id=param->id()*group_size;
@@ -46,15 +46,15 @@ void TableDelegate::SplitParam(const Param & param, int worker_id){
     asyncget_split_[splitid]=false;
     pos+=len;
   }
-  CHECK_EQ(param_splits_.size(), param->id());
+  CHECK_EQ(splits_.size(), param->id());
   splits_.push_back(splits);
-  total_splits+=splits.size();
   // for debug
   for(auto& split: splits){
     char tmpbuf[1024];
     sprintf(tmpbuf, "%4d %5d %5d", param->id(), split.first, split.second);
     LOG(INFO)<<string(tmpbuf);
   }
+  return splits.size();
 }
 void TableDelegate::Update(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
@@ -69,22 +69,22 @@ void TableDelegate::Update(Param *param, int step){
   const float * dptr = param->grad().dptr();
   for(auto& entry: splits_[param->id()]) {
     TVal val;
-    DAryProto* grad=val.mutable_grad();
+    DAryProto* data=val.mutable_data();
 
-    // sgd related hyper-parameters
     for(int k = 0; k < entry.second; k++){
-      grad->add_value(dptr[offset++]);
+      data->add_value(dptr[offset++]);
     }
 
     key.set_id(entry.first);
-    std::string valstr=val.SerializeToString();
     TableData tuple;
     tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
     tuple.set_source(GlobalContext::Get()->rank());
     tuple.set_table(0);
     Arg *arg=tuple.add_kv_data();
-    arg->set_key(key.SerializeToString());
-    arg->set_allocated_value(&valstr);
+    std::string *keystr=arg->mutable_key();
+    key.SerializeToString(keystr);
+    std::string *valstr=arg->mutable_value();
+    val.SerializeToString(valstr);
     tuple.set_done(true);
     NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
     //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
@@ -92,13 +92,13 @@ void TableDelegate::Update(Param *param, int step){
 }
 
 
+/*
 void TableDelegate::Get(const std::vector<Param*> &params, int step){
   for(auto* param : params)
     Get(param, step);
   return;
 }
 
-/*
 void TableDelegate::Get(Param * param, int step){
   float* dptr=param->mutable_data()->dptr();
   TKey key;
@@ -120,22 +120,21 @@ void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
     AsyncGet(param, step);
   return;
 }
-void TableDelegate::Put(const std::vector<Param*> &params) {
+void TableDelegate::Put(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
-    Put(param);
+    Put(param, step);
 }
-void TableDelegate::Put(Param * param){
+void TableDelegate::Put(Param * param, int step){
   int offset = 0;
-  int nworkers=GlobalContext::Get()->num_workers();
   const float * data_addr = param->data().dptr();
-  for(auto& entry: param_splits_[param->id()]) {
+  for(auto& entry: splits_[param->id()]) {
     TVal val;
     // sgd related hyper-parameters
     val.set_learning_rate_multiplier(param->learning_rate_multiplier());
     val.set_weight_decay_multiplier(param->weight_decay_multiplier());
     val.set_param_id(param->id());
-    val.set_splitid(entry.first);
-    val.set_splitoffset(split_map_[entry.first]);
+    val.set_split_id(entry.first);
+    val.set_split_offset(split_map_[entry.first].second);
     DAryProto* dary=val.mutable_data();
     for(int k = 0; k < entry.second; k++){
       dary->add_value(data_addr[offset]);
@@ -144,15 +143,17 @@ void TableDelegate::Put(Param * param){
     TKey key;
     key.set_version(0);
     key.set_id(entry.first);
-    std::string valstr=val.SerializeToString();
     TableData tuple;
     tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
     tuple.set_source(GlobalContext::Get()->rank());
     tuple.set_table(0);
     Arg *arg=tuple.add_kv_data();
-    arg->set_key(key.SerializeToString());
-    arg->set_allocated_value(&valstr);
+    std::string *keystr=arg->mutable_key();
+    key.SerializeToString(keystr);
+    std::string *valstr=arg->mutable_value();
+    val.SerializeToString(valstr);
     tuple.set_done(true);
+
     NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
     //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
   }
@@ -164,7 +165,8 @@ void TableDelegate::AsyncGet(Param * param, int step){
   for(auto entry: splits_[param->id()]) {
     key.set_id(entry.first);
     HashGet req;
-    req.set_key(key.SerializeToString());
+    std::string *keystr=req.mutable_key();
+    key.SerializeToString(keystr);
     req.set_table(0);
     req.set_shard(Shard(entry.first, GlobalContext::Get()->num_servers()));
     req.set_source(GlobalContext::Get()->rank());
@@ -174,7 +176,7 @@ void TableDelegate::AsyncGet(Param * param, int step){
   }
 }
 void TableDelegate::AsyncCollect(Param * param, int step){
-  auto& splits=param_splits_[param->id()];
+  auto& splits=splits_[param->id()];
   unsigned int nget=0;
   int start_split_id=splits.front().first;
   int end_split_id=splits.back().first;
@@ -201,8 +203,8 @@ void TableDelegate::AsyncCollect(Param * param, int step){
         dptr[offset++]=v;
       //val.mutable_data()->clear_value();
       // check this split is complete, i.e. offset is the start of next split
-      if(split_map_.find(key.key()+1)!=split_map_.end())
-        CHECK_EQ(offset, split_map_.at(key.key()+1).second);
+      if(split_map_.find(key.id()+1)!=split_map_.end())
+        CHECK_EQ(offset, split_map_.at(key.id()+1).second);
       asyncget_split_[splitid]=true;
       if(splitid>=start_split_id&&splitid<=end_split_id)
         nget++;
@@ -251,7 +253,7 @@ void TableDelegate::CollectThread(){
 
 
 void TableDelegate::Collect(Param * param, int step){
-  auto& splits=param_splits_[param->id()];
+  auto& splits=splits_[param->id()];
   int nsplits=splits.size();
   while(true){
     int ncollect=collect_counter_[param->id()];

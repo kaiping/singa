@@ -94,6 +94,7 @@ class Solver {
     const int step() {
       return step_;
     }
+  static Phase phase;
  protected:
   void DebugInfo(Net* net);
   //void LocalUpdate(Param* param, int step);
@@ -124,8 +125,8 @@ class Solver {
   }
 
   const bool DisplayNow(const int step) {
-    if (proto_.display_after_steps() > 0 && step >= proto.display_after_steps()) {
-      if ((step - proto_.display_after_steps()) % proto.display_every_steps() == 0)
+    if (proto_.display_after_steps() > 0 && step >= proto_.display_after_steps()) {
+      if ((step - proto_.display_after_steps()) % proto_.display_every_steps() == 0)
         return true;
     }
     return false;
@@ -163,7 +164,6 @@ class Solver {
     step_++;
   }
 
-  static Phase phase;
 
  protected:
   Net* SetupNeuralNet(const NetProto& proto) ;
@@ -202,9 +202,8 @@ class Solver {
   pthread_t prefetch_thread_;
   Net* net_;
   TableDelegate* delegate_;
-  std::shard_ptr<GlobalContext> context_;
+  std::shared_ptr<GlobalContext> context_;
 };
 
 }  // namespace lapis
 #endif  // INCLUDE_NET_SOLVER_H_
-

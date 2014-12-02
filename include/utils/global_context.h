@@ -40,6 +40,9 @@ class GlobalContext {
   const int server_end() {
     return cluster_.server_end();
   }
+  const int num_servers(){
+    return cluster_.server_end()-cluster_.server_start();
+  }
   const int num_procs() {
     return num_procs_;
   }
@@ -58,6 +61,9 @@ class GlobalContext {
   bool AmIWorker() {
     return rank_>=cluster_.worker_start()&&rank_<cluster_.worker_end();
   }
+  /**
+   * Return the id of the worker within his group.
+   */
   int worker_id() {return id_;}
   int group_id() {return gid_;}
   int num_groups() {return groups_.size();}

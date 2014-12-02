@@ -10,7 +10,6 @@
 #include "da/gary.h"
 #include "utils/debug.h"
 
-DECLARE_string(par_mode);
 namespace lapis {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
@@ -40,7 +39,7 @@ Solver::Solver(const SolverProto &proto) {
 }
 Solver::~Solver() {
   delete net_;
-  delete table_delegate_;
+  delete delegate_;
 }
 
 /*
@@ -83,9 +82,9 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   string key;
   shard.Next(&key, &record);
   // setup the net, init parameters
-  net->SetNetShape(batchsize_, record);
+  net->SetNetShape(proto_.batchsize(), record);
 
-  if(proto_.partition()==string("hybrid")){
+  if(proto_.partition()==SolverProto::kHybrid){
     int pdim=0;
     for(Layer* layer: net->layers()){
       if(layer->name()=="fc6")
@@ -94,7 +93,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
         pdim=0;
       layer->SetupDAry(pdim);
     }
-  }else if (proto_.partition()==string("data")){
+  }else if (proto_.partition()==SolverProto::kData){
     for(Layer* layer: net->layers())
       layer->SetupDAry(0);
   }else{
@@ -215,9 +214,6 @@ void Solver::Train(int start_step){
     if(TestNow()){
       Performance perf=Test(Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
-    }
-    if(CheckpointNow()){
-      DoLocalCheckpoint(net_);
     }
     if(ValidateNow()||TestNow())
       thd=new std::thread(std::ref(prefetcher));
@@ -383,7 +379,6 @@ void Solver::TimeOneBatch(int runs) {
           delegate_->Update(param, step_);
           delegate_->AsyncGet(param, step_+1);
         }
-      }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if((*layer)->PostSyncG())
@@ -418,7 +413,6 @@ void Solver::TimeOneBatch(int runs) {
   delete backward;
   delete sync;
   delete refresh;
-  DoLocalCheckpoint(net_);
   //DebugInfo(net_);
 }
 

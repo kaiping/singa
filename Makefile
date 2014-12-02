@@ -41,7 +41,8 @@ PROTO_HDRS :=$(patsubst src%, include%, $(PROTOS:.proto=.pb.h))
 PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
 # each lapis src file will generate a .o file
-LAPIS_SRCS :=$(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
+LAPIS_SRCS := $(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
+	-o \( -name "*.cc" -type f \) -print )
 LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LAPIS_OBJS:%.o=%.P)
 

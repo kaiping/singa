@@ -36,6 +36,7 @@ void protobuf_ShutdownFile_model_2eproto();
 
 class ParamProto;
 class LayerProto;
+class EdgeProto;
 class MeanProto;
 class DAryProto;
 class NetProto;
@@ -43,9 +44,11 @@ class PerformanceProto;
 class SolverProto;
 class Model;
 class Record;
-class AdaGradValue;
-class SGDValue;
-class VKey;
+class SGDProto;
+class TKey;
+class TVal;
+class SGDVal;
+class AdaVal;
 
 enum ParamProto_InitMethod {
   ParamProto_InitMethod_kConstant = 0,
@@ -90,65 +93,66 @@ inline bool LayerProto_PoolingMethod_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<LayerProto_PoolingMethod>(
     LayerProto_PoolingMethod_descriptor(), name, value);
 }
-enum SolverProto_Method {
-  SolverProto_Method_kSGD = 1,
-  SolverProto_Method_kAdaGrad = 2
+enum SolverProto_GradCalcAlg {
+  SolverProto_GradCalcAlg_kBackPropagation = 1,
+  SolverProto_GradCalcAlg_kContrastiveDivergence = 2
 };
-bool SolverProto_Method_IsValid(int value);
-const SolverProto_Method SolverProto_Method_Method_MIN = SolverProto_Method_kSGD;
-const SolverProto_Method SolverProto_Method_Method_MAX = SolverProto_Method_kAdaGrad;
-const int SolverProto_Method_Method_ARRAYSIZE = SolverProto_Method_Method_MAX + 1;
+bool SolverProto_GradCalcAlg_IsValid(int value);
+const SolverProto_GradCalcAlg SolverProto_GradCalcAlg_GradCalcAlg_MIN = SolverProto_GradCalcAlg_kBackPropagation;
+const SolverProto_GradCalcAlg SolverProto_GradCalcAlg_GradCalcAlg_MAX = SolverProto_GradCalcAlg_kContrastiveDivergence;
+const int SolverProto_GradCalcAlg_GradCalcAlg_ARRAYSIZE = SolverProto_GradCalcAlg_GradCalcAlg_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* SolverProto_Method_descriptor();
-inline const ::std::string& SolverProto_Method_Name(SolverProto_Method value) {
+const ::google::protobuf::EnumDescriptor* SolverProto_GradCalcAlg_descriptor();
+inline const ::std::string& SolverProto_GradCalcAlg_Name(SolverProto_GradCalcAlg value) {
   return ::google::protobuf::internal::NameOfEnum(
-    SolverProto_Method_descriptor(), value);
+    SolverProto_GradCalcAlg_descriptor(), value);
 }
-inline bool SolverProto_Method_Parse(
-    const ::std::string& name, SolverProto_Method* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<SolverProto_Method>(
-    SolverProto_Method_descriptor(), name, value);
+inline bool SolverProto_GradCalcAlg_Parse(
+    const ::std::string& name, SolverProto_GradCalcAlg* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<SolverProto_GradCalcAlg>(
+    SolverProto_GradCalcAlg_descriptor(), name, value);
 }
-enum SolverProto_GradAlg {
-  SolverProto_GradAlg_kBackPropagation = 1,
-  SolverProto_GradAlg_kContrastiveDivergence = 2
+enum SolverProto_Partition {
+  SolverProto_Partition_kData = 1,
+  SolverProto_Partition_kModel = 2,
+  SolverProto_Partition_kHybrid = 3
 };
-bool SolverProto_GradAlg_IsValid(int value);
-const SolverProto_GradAlg SolverProto_GradAlg_GradAlg_MIN = SolverProto_GradAlg_kBackPropagation;
-const SolverProto_GradAlg SolverProto_GradAlg_GradAlg_MAX = SolverProto_GradAlg_kContrastiveDivergence;
-const int SolverProto_GradAlg_GradAlg_ARRAYSIZE = SolverProto_GradAlg_GradAlg_MAX + 1;
+bool SolverProto_Partition_IsValid(int value);
+const SolverProto_Partition SolverProto_Partition_Partition_MIN = SolverProto_Partition_kData;
+const SolverProto_Partition SolverProto_Partition_Partition_MAX = SolverProto_Partition_kHybrid;
+const int SolverProto_Partition_Partition_ARRAYSIZE = SolverProto_Partition_Partition_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* SolverProto_GradAlg_descriptor();
-inline const ::std::string& SolverProto_GradAlg_Name(SolverProto_GradAlg value) {
+const ::google::protobuf::EnumDescriptor* SolverProto_Partition_descriptor();
+inline const ::std::string& SolverProto_Partition_Name(SolverProto_Partition value) {
   return ::google::protobuf::internal::NameOfEnum(
-    SolverProto_GradAlg_descriptor(), value);
+    SolverProto_Partition_descriptor(), value);
 }
-inline bool SolverProto_GradAlg_Parse(
-    const ::std::string& name, SolverProto_GradAlg* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<SolverProto_GradAlg>(
-    SolverProto_GradAlg_descriptor(), name, value);
+inline bool SolverProto_Partition_Parse(
+    const ::std::string& name, SolverProto_Partition* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<SolverProto_Partition>(
+    SolverProto_Partition_descriptor(), name, value);
 }
-enum SGDValue_ChangeProto {
-  SGDValue_ChangeProto_kFixed = 0,
-  SGDValue_ChangeProto_kInverse_t = 1,
-  SGDValue_ChangeProto_kExponential = 2,
-  SGDValue_ChangeProto_kLinear = 3,
-  SGDValue_ChangeProto_kStep = 4
+enum SGDProto_ChangeProto {
+  SGDProto_ChangeProto_kFixed = 0,
+  SGDProto_ChangeProto_kInverse_t = 1,
+  SGDProto_ChangeProto_kExponential = 2,
+  SGDProto_ChangeProto_kLinear = 3,
+  SGDProto_ChangeProto_kStep = 4
 };
-bool SGDValue_ChangeProto_IsValid(int value);
-const SGDValue_ChangeProto SGDValue_ChangeProto_ChangeProto_MIN = SGDValue_ChangeProto_kFixed;
-const SGDValue_ChangeProto SGDValue_ChangeProto_ChangeProto_MAX = SGDValue_ChangeProto_kStep;
-const int SGDValue_ChangeProto_ChangeProto_ARRAYSIZE = SGDValue_ChangeProto_ChangeProto_MAX + 1;
+bool SGDProto_ChangeProto_IsValid(int value);
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MIN = SGDProto_ChangeProto_kFixed;
+const SGDProto_ChangeProto SGDProto_ChangeProto_ChangeProto_MAX = SGDProto_ChangeProto_kStep;
+const int SGDProto_ChangeProto_ChangeProto_ARRAYSIZE = SGDProto_ChangeProto_ChangeProto_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* SGDValue_ChangeProto_descriptor();
-inline const ::std::string& SGDValue_ChangeProto_Name(SGDValue_ChangeProto value) {
+const ::google::protobuf::EnumDescriptor* SGDProto_ChangeProto_descriptor();
+inline const ::std::string& SGDProto_ChangeProto_Name(SGDProto_ChangeProto value) {
   return ::google::protobuf::internal::NameOfEnum(
-    SGDValue_ChangeProto_descriptor(), value);
+    SGDProto_ChangeProto_descriptor(), value);
 }
-inline bool SGDValue_ChangeProto_Parse(
-    const ::std::string& name, SGDValue_ChangeProto* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<SGDValue_ChangeProto>(
-    SGDValue_ChangeProto_descriptor(), name, value);
+inline bool SGDProto_ChangeProto_Parse(
+    const ::std::string& name, SGDProto_ChangeProto* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<SGDProto_ChangeProto>(
+    SGDProto_ChangeProto_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -790,6 +794,115 @@ class LayerProto : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
+class EdgeProto : public ::google::protobuf::Message {
+ public:
+  EdgeProto();
+  virtual ~EdgeProto();
+
+  EdgeProto(const EdgeProto& from);
+
+  inline EdgeProto& operator=(const EdgeProto& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const EdgeProto& default_instance();
+
+  void Swap(EdgeProto* other);
+
+  // implements Message ----------------------------------------------
+
+  EdgeProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const EdgeProto& from);
+  void MergeFrom(const EdgeProto& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional bool directed = 1 [default = true];
+  inline bool has_directed() const;
+  inline void clear_directed();
+  static const int kDirectedFieldNumber = 1;
+  inline bool directed() const;
+  inline void set_directed(bool value);
+
+  // optional string layer1 = 2;
+  inline bool has_layer1() const;
+  inline void clear_layer1();
+  static const int kLayer1FieldNumber = 2;
+  inline const ::std::string& layer1() const;
+  inline void set_layer1(const ::std::string& value);
+  inline void set_layer1(const char* value);
+  inline void set_layer1(const char* value, size_t size);
+  inline ::std::string* mutable_layer1();
+  inline ::std::string* release_layer1();
+  inline void set_allocated_layer1(::std::string* layer1);
+
+  // optional string layer2 = 3;
+  inline bool has_layer2() const;
+  inline void clear_layer2();
+  static const int kLayer2FieldNumber = 3;
+  inline const ::std::string& layer2() const;
+  inline void set_layer2(const ::std::string& value);
+  inline void set_layer2(const char* value);
+  inline void set_layer2(const char* value, size_t size);
+  inline ::std::string* mutable_layer2();
+  inline ::std::string* release_layer2();
+  inline void set_allocated_layer2(::std::string* layer2);
+
+  // @@protoc_insertion_point(class_scope:lapis.EdgeProto)
+ private:
+  inline void set_has_directed();
+  inline void clear_has_directed();
+  inline void set_has_layer1();
+  inline void clear_has_layer1();
+  inline void set_has_layer2();
+  inline void clear_has_layer2();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::std::string* layer1_;
+  ::std::string* layer2_;
+  bool directed_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static EdgeProto* default_instance_;
+};
+// -------------------------------------------------------------------
+
 class MeanProto : public ::google::protobuf::Message {
  public:
   MeanProto();
@@ -1098,6 +1211,18 @@ class NetProto : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto >*
       mutable_layer();
 
+  // repeated .lapis.EdgeProto edge = 3;
+  inline int edge_size() const;
+  inline void clear_edge();
+  static const int kEdgeFieldNumber = 3;
+  inline const ::lapis::EdgeProto& edge(int index) const;
+  inline ::lapis::EdgeProto* mutable_edge(int index);
+  inline ::lapis::EdgeProto* add_edge();
+  inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
+      edge() const;
+  inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
+      mutable_edge();
+
   // @@protoc_insertion_point(class_scope:lapis.NetProto)
  private:
 
@@ -1106,6 +1231,7 @@ class NetProto : public ::google::protobuf::Message {
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
   ::google::protobuf::RepeatedPtrField< ::lapis::LayerProto > layer_;
+  ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto > edge_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -1285,95 +1411,63 @@ class SolverProto : public ::google::protobuf::Message {
 
   // nested types ----------------------------------------------------
 
-  typedef SolverProto_Method Method;
-  static const Method kSGD = SolverProto_Method_kSGD;
-  static const Method kAdaGrad = SolverProto_Method_kAdaGrad;
-  static inline bool Method_IsValid(int value) {
-    return SolverProto_Method_IsValid(value);
+  typedef SolverProto_GradCalcAlg GradCalcAlg;
+  static const GradCalcAlg kBackPropagation = SolverProto_GradCalcAlg_kBackPropagation;
+  static const GradCalcAlg kContrastiveDivergence = SolverProto_GradCalcAlg_kContrastiveDivergence;
+  static inline bool GradCalcAlg_IsValid(int value) {
+    return SolverProto_GradCalcAlg_IsValid(value);
   }
-  static const Method Method_MIN =
-    SolverProto_Method_Method_MIN;
-  static const Method Method_MAX =
-    SolverProto_Method_Method_MAX;
-  static const int Method_ARRAYSIZE =
-    SolverProto_Method_Method_ARRAYSIZE;
+  static const GradCalcAlg GradCalcAlg_MIN =
+    SolverProto_GradCalcAlg_GradCalcAlg_MIN;
+  static const GradCalcAlg GradCalcAlg_MAX =
+    SolverProto_GradCalcAlg_GradCalcAlg_MAX;
+  static const int GradCalcAlg_ARRAYSIZE =
+    SolverProto_GradCalcAlg_GradCalcAlg_ARRAYSIZE;
   static inline const ::google::protobuf::EnumDescriptor*
-  Method_descriptor() {
-    return SolverProto_Method_descriptor();
+  GradCalcAlg_descriptor() {
+    return SolverProto_GradCalcAlg_descriptor();
   }
-  static inline const ::std::string& Method_Name(Method value) {
-    return SolverProto_Method_Name(value);
+  static inline const ::std::string& GradCalcAlg_Name(GradCalcAlg value) {
+    return SolverProto_GradCalcAlg_Name(value);
   }
-  static inline bool Method_Parse(const ::std::string& name,
-      Method* value) {
-    return SolverProto_Method_Parse(name, value);
+  static inline bool GradCalcAlg_Parse(const ::std::string& name,
+      GradCalcAlg* value) {
+    return SolverProto_GradCalcAlg_Parse(name, value);
   }
 
-  typedef SolverProto_GradAlg GradAlg;
-  static const GradAlg kBackPropagation = SolverProto_GradAlg_kBackPropagation;
-  static const GradAlg kContrastiveDivergence = SolverProto_GradAlg_kContrastiveDivergence;
-  static inline bool GradAlg_IsValid(int value) {
-    return SolverProto_GradAlg_IsValid(value);
+  typedef SolverProto_Partition Partition;
+  static const Partition kData = SolverProto_Partition_kData;
+  static const Partition kModel = SolverProto_Partition_kModel;
+  static const Partition kHybrid = SolverProto_Partition_kHybrid;
+  static inline bool Partition_IsValid(int value) {
+    return SolverProto_Partition_IsValid(value);
   }
-  static const GradAlg GradAlg_MIN =
-    SolverProto_GradAlg_GradAlg_MIN;
-  static const GradAlg GradAlg_MAX =
-    SolverProto_GradAlg_GradAlg_MAX;
-  static const int GradAlg_ARRAYSIZE =
-    SolverProto_GradAlg_GradAlg_ARRAYSIZE;
+  static const Partition Partition_MIN =
+    SolverProto_Partition_Partition_MIN;
+  static const Partition Partition_MAX =
+    SolverProto_Partition_Partition_MAX;
+  static const int Partition_ARRAYSIZE =
+    SolverProto_Partition_Partition_ARRAYSIZE;
   static inline const ::google::protobuf::EnumDescriptor*
-  GradAlg_descriptor() {
-    return SolverProto_GradAlg_descriptor();
+  Partition_descriptor() {
+    return SolverProto_Partition_descriptor();
   }
-  static inline const ::std::string& GradAlg_Name(GradAlg value) {
-    return SolverProto_GradAlg_Name(value);
+  static inline const ::std::string& Partition_Name(Partition value) {
+    return SolverProto_Partition_Name(value);
   }
-  static inline bool GradAlg_Parse(const ::std::string& name,
-      GradAlg* value) {
-    return SolverProto_GradAlg_Parse(name, value);
+  static inline bool Partition_Parse(const ::std::string& name,
+      Partition* value) {
+    return SolverProto_Partition_Parse(name, value);
   }
 
   // accessors -------------------------------------------------------
 
-  // optional .lapis.SolverProto.Method method = 1 [default = kSGD];
-  inline bool has_method() const;
-  inline void clear_method();
-  static const int kMethodFieldNumber = 1;
-  inline ::lapis::SolverProto_Method method() const;
-  inline void set_method(::lapis::SolverProto_Method value);
-
-  // optional int32 checkpoint_after_steps = 2 [default = 0];
-  inline bool has_checkpoint_after_steps() const;
-  inline void clear_checkpoint_after_steps();
-  static const int kCheckpointAfterStepsFieldNumber = 2;
-  inline ::google::protobuf::int32 checkpoint_after_steps() const;
-  inline void set_checkpoint_after_steps(::google::protobuf::int32 value);
-
-  // optional int32 checkpoint_every_steps = 3 [default = 0];
-  inline bool has_checkpoint_every_steps() const;
-  inline void clear_checkpoint_every_steps();
-  static const int kCheckpointEveryStepsFieldNumber = 3;
-  inline ::google::protobuf::int32 checkpoint_every_steps() const;
-  inline void set_checkpoint_every_steps(::google::protobuf::int32 value);
-
-  // optional string checkpoint_prefix = 4 [default = "tmp/checkpoint"];
-  inline bool has_checkpoint_prefix() const;
-  inline void clear_checkpoint_prefix();
-  static const int kCheckpointPrefixFieldNumber = 4;
-  inline const ::std::string& checkpoint_prefix() const;
-  inline void set_checkpoint_prefix(const ::std::string& value);
-  inline void set_checkpoint_prefix(const char* value);
-  inline void set_checkpoint_prefix(const char* value, size_t size);
-  inline ::std::string* mutable_checkpoint_prefix();
-  inline ::std::string* release_checkpoint_prefix();
-  inline void set_allocated_checkpoint_prefix(::std::string* checkpoint_prefix);
-
-  // optional int32 checkpoint_step = 5 [default = 0];
-  inline bool has_checkpoint_step() const;
-  inline void clear_checkpoint_step();
-  static const int kCheckpointStepFieldNumber = 5;
-  inline ::google::protobuf::int32 checkpoint_step() const;
-  inline void set_checkpoint_step(::google::protobuf::int32 value);
+  // optional int32 step = 1 [default = 0];
+  inline bool has_step() const;
+  inline void clear_step();
+  static const int kStepFieldNumber = 1;
+  inline ::google::protobuf::int32 step() const;
+  inline void set_step(::google::protobuf::int32 value);
 
   // optional int32 display_after_steps = 6 [default = 0];
   inline bool has_display_after_steps() const;
@@ -1389,25 +1483,6 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 display_every_steps() const;
   inline void set_display_every_steps(::google::protobuf::int32 value);
 
-  // optional string display_prefix = 8 [default = "tmp/display"];
-  inline bool has_display_prefix() const;
-  inline void clear_display_prefix();
-  static const int kDisplayPrefixFieldNumber = 8;
-  inline const ::std::string& display_prefix() const;
-  inline void set_display_prefix(const ::std::string& value);
-  inline void set_display_prefix(const char* value);
-  inline void set_display_prefix(const char* value, size_t size);
-  inline ::std::string* mutable_display_prefix();
-  inline ::std::string* release_display_prefix();
-  inline void set_allocated_display_prefix(::std::string* display_prefix);
-
-  // optional int32 validation_step = 9 [default = 0];
-  inline bool has_validation_step() const;
-  inline void clear_validation_step();
-  static const int kValidationStepFieldNumber = 9;
-  inline ::google::protobuf::int32 validation_step() const;
-  inline void set_validation_step(::google::protobuf::int32 value);
-
   // optional int32 validation_after_steps = 10 [default = 0];
   inline bool has_validation_after_steps() const;
   inline void clear_validation_after_steps();
@@ -1422,13 +1497,6 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 validation_every_steps() const;
   inline void set_validation_every_steps(::google::protobuf::int32 value);
 
-  // optional int32 test_step = 12 [default = 0];
-  inline bool has_test_step() const;
-  inline void clear_test_step();
-  static const int kTestStepFieldNumber = 12;
-  inline ::google::protobuf::int32 test_step() const;
-  inline void set_test_step(::google::protobuf::int32 value);
-
   // optional int32 test_after_steps = 13 [default = 0];
   inline bool has_test_after_steps() const;
   inline void clear_test_after_steps();
@@ -1442,25 +1510,6 @@ class SolverProto : public ::google::protobuf::Message {
   static const int kTestEveryStepsFieldNumber = 14;
   inline ::google::protobuf::int32 test_every_steps() const;
   inline void set_test_every_steps(::google::protobuf::int32 value);
-
-  // optional string perf_prefix = 15 [default = "tmp/performance"];
-  inline bool has_perf_prefix() const;
-  inline void clear_perf_prefix();
-  static const int kPerfPrefixFieldNumber = 15;
-  inline const ::std::string& perf_prefix() const;
-  inline void set_perf_prefix(const ::std::string& value);
-  inline void set_perf_prefix(const char* value);
-  inline void set_perf_prefix(const char* value, size_t size);
-  inline ::std::string* mutable_perf_prefix();
-  inline ::std::string* release_perf_prefix();
-  inline void set_allocated_perf_prefix(::std::string* perf_prefix);
-
-  // optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
-  inline bool has_alg() const;
-  inline void clear_alg();
-  static const int kAlgFieldNumber = 16;
-  inline ::lapis::SolverProto_GradAlg alg() const;
-  inline void set_alg(::lapis::SolverProto_GradAlg value);
 
   // optional int32 batchsize = 19;
   inline bool has_batchsize() const;
@@ -1497,58 +1546,45 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 max_splits() const;
   inline void set_max_splits(::google::protobuf::int32 value);
 
-  // optional .lapis.SGDValue sgd = 24;
+  // optional .lapis.SGDProto sgd = 24;
   inline bool has_sgd() const;
   inline void clear_sgd();
   static const int kSgdFieldNumber = 24;
-  inline const ::lapis::SGDValue& sgd() const;
-  inline ::lapis::SGDValue* mutable_sgd();
-  inline ::lapis::SGDValue* release_sgd();
-  inline void set_allocated_sgd(::lapis::SGDValue* sgd);
+  inline const ::lapis::SGDProto& sgd() const;
+  inline ::lapis::SGDProto* mutable_sgd();
+  inline ::lapis::SGDProto* release_sgd();
+  inline void set_allocated_sgd(::lapis::SGDProto* sgd);
 
-  // optional .lapis.AdaGradValue adagrad = 25;
-  inline bool has_adagrad() const;
-  inline void clear_adagrad();
-  static const int kAdagradFieldNumber = 25;
-  inline const ::lapis::AdaGradValue& adagrad() const;
-  inline ::lapis::AdaGradValue* mutable_adagrad();
-  inline ::lapis::AdaGradValue* release_adagrad();
-  inline void set_allocated_adagrad(::lapis::AdaGradValue* adagrad);
+  // optional .lapis.SolverProto.GradCalcAlg alg = 26 [default = kBackPropagation];
+  inline bool has_alg() const;
+  inline void clear_alg();
+  static const int kAlgFieldNumber = 26;
+  inline ::lapis::SolverProto_GradCalcAlg alg() const;
+  inline void set_alg(::lapis::SolverProto_GradCalcAlg value);
+
+  // optional .lapis.SolverProto.Partition partition = 27;
+  inline bool has_partition() const;
+  inline void clear_partition();
+  static const int kPartitionFieldNumber = 27;
+  inline ::lapis::SolverProto_Partition partition() const;
+  inline void set_partition(::lapis::SolverProto_Partition value);
 
   // @@protoc_insertion_point(class_scope:lapis.SolverProto)
  private:
-  inline void set_has_method();
-  inline void clear_has_method();
-  inline void set_has_checkpoint_after_steps();
-  inline void clear_has_checkpoint_after_steps();
-  inline void set_has_checkpoint_every_steps();
-  inline void clear_has_checkpoint_every_steps();
-  inline void set_has_checkpoint_prefix();
-  inline void clear_has_checkpoint_prefix();
-  inline void set_has_checkpoint_step();
-  inline void clear_has_checkpoint_step();
+  inline void set_has_step();
+  inline void clear_has_step();
   inline void set_has_display_after_steps();
   inline void clear_has_display_after_steps();
   inline void set_has_display_every_steps();
   inline void clear_has_display_every_steps();
-  inline void set_has_display_prefix();
-  inline void clear_has_display_prefix();
-  inline void set_has_validation_step();
-  inline void clear_has_validation_step();
   inline void set_has_validation_after_steps();
   inline void clear_has_validation_after_steps();
   inline void set_has_validation_every_steps();
   inline void clear_has_validation_every_steps();
-  inline void set_has_test_step();
-  inline void clear_has_test_step();
   inline void set_has_test_after_steps();
   inline void clear_has_test_after_steps();
   inline void set_has_test_every_steps();
   inline void clear_has_test_every_steps();
-  inline void set_has_perf_prefix();
-  inline void clear_has_perf_prefix();
-  inline void set_has_alg();
-  inline void clear_has_alg();
   inline void set_has_batchsize();
   inline void clear_has_batchsize();
   inline void set_has_train_steps();
@@ -1561,39 +1597,30 @@ class SolverProto : public ::google::protobuf::Message {
   inline void clear_has_max_splits();
   inline void set_has_sgd();
   inline void clear_has_sgd();
-  inline void set_has_adagrad();
-  inline void clear_has_adagrad();
+  inline void set_has_alg();
+  inline void clear_has_alg();
+  inline void set_has_partition();
+  inline void clear_has_partition();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  int method_;
-  ::google::protobuf::int32 checkpoint_after_steps_;
-  static ::std::string* _default_checkpoint_prefix_;
-  ::std::string* checkpoint_prefix_;
-  ::google::protobuf::int32 checkpoint_every_steps_;
-  ::google::protobuf::int32 checkpoint_step_;
+  ::google::protobuf::int32 step_;
   ::google::protobuf::int32 display_after_steps_;
   ::google::protobuf::int32 display_every_steps_;
-  static ::std::string* _default_display_prefix_;
-  ::std::string* display_prefix_;
-  ::google::protobuf::int32 validation_step_;
   ::google::protobuf::int32 validation_after_steps_;
   ::google::protobuf::int32 validation_every_steps_;
-  ::google::protobuf::int32 test_step_;
   ::google::protobuf::int32 test_after_steps_;
   ::google::protobuf::int32 test_every_steps_;
-  static ::std::string* _default_perf_prefix_;
-  ::std::string* perf_prefix_;
-  int alg_;
   ::google::protobuf::int32 batchsize_;
   ::google::protobuf::int32 train_steps_;
   ::google::protobuf::int32 validation_steps_;
   ::google::protobuf::int32 test_steps_;
   ::google::protobuf::int32 max_splits_;
-  ::lapis::SGDValue* sgd_;
-  ::lapis::AdaGradValue* adagrad_;
+  ::lapis::SGDProto* sgd_;
+  int alg_;
+  int partition_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
@@ -1817,14 +1844,14 @@ class Record : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class AdaGradValue : public ::google::protobuf::Message {
+class SGDProto : public ::google::protobuf::Message {
  public:
-  AdaGradValue();
-  virtual ~AdaGradValue();
+  SGDProto();
+  virtual ~SGDProto();
 
-  AdaGradValue(const AdaGradValue& from);
+  SGDProto(const SGDProto& from);
 
-  inline AdaGradValue& operator=(const AdaGradValue& from) {
+  inline SGDProto& operator=(const SGDProto& from) {
     CopyFrom(from);
     return *this;
   }
@@ -1838,17 +1865,17 @@ class AdaGradValue : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const AdaGradValue& default_instance();
+  static const SGDProto& default_instance();
 
-  void Swap(AdaGradValue* other);
+  void Swap(SGDProto* other);
 
   // implements Message ----------------------------------------------
 
-  AdaGradValue* New() const;
+  SGDProto* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const AdaGradValue& from);
-  void MergeFrom(const AdaGradValue& from);
+  void CopyFrom(const SGDProto& from);
+  void MergeFrom(const SGDProto& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -1868,219 +1895,50 @@ class AdaGradValue : public ::google::protobuf::Message {
 
   // nested types ----------------------------------------------------
 
-  // accessors -------------------------------------------------------
-
-  // repeated int32 n_update = 1;
-  inline int n_update_size() const;
-  inline void clear_n_update();
-  static const int kNUpdateFieldNumber = 1;
-  inline ::google::protobuf::int32 n_update(int index) const;
-  inline void set_n_update(int index, ::google::protobuf::int32 value);
-  inline void add_n_update(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-      n_update() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-      mutable_n_update();
-
-  // optional int32 version = 2 [default = 0];
-  inline bool has_version() const;
-  inline void clear_version();
-  static const int kVersionFieldNumber = 2;
-  inline ::google::protobuf::int32 version() const;
-  inline void set_version(::google::protobuf::int32 value);
-
-  // optional float learning_rate = 3 [default = 0.1];
-  inline bool has_learning_rate() const;
-  inline void clear_learning_rate();
-  static const int kLearningRateFieldNumber = 3;
-  inline float learning_rate() const;
-  inline void set_learning_rate(float value);
-
-  // optional float kinit = 4 [default = 1];
-  inline bool has_kinit() const;
-  inline void clear_kinit();
-  static const int kKinitFieldNumber = 4;
-  inline float kinit() const;
-  inline void set_kinit(float value);
-
-  // optional int32 threshold = 5;
-  inline bool has_threshold() const;
-  inline void clear_threshold();
-  static const int kThresholdFieldNumber = 5;
-  inline ::google::protobuf::int32 threshold() const;
-  inline void set_threshold(::google::protobuf::int32 value);
-
-  // optional int32 gid = 6;
-  inline bool has_gid() const;
-  inline void clear_gid();
-  static const int kGidFieldNumber = 6;
-  inline ::google::protobuf::int32 gid() const;
-  inline void set_gid(::google::protobuf::int32 value);
-
-  // optional .lapis.DAryProto history = 7;
-  inline bool has_history() const;
-  inline void clear_history();
-  static const int kHistoryFieldNumber = 7;
-  inline const ::lapis::DAryProto& history() const;
-  inline ::lapis::DAryProto* mutable_history();
-  inline ::lapis::DAryProto* release_history();
-  inline void set_allocated_history(::lapis::DAryProto* history);
-
-  // optional .lapis.DAryProto data = 8;
-  inline bool has_data() const;
-  inline void clear_data();
-  static const int kDataFieldNumber = 8;
-  inline const ::lapis::DAryProto& data() const;
-  inline ::lapis::DAryProto* mutable_data();
-  inline ::lapis::DAryProto* release_data();
-  inline void set_allocated_data(::lapis::DAryProto* data);
-
-  // repeated .lapis.DAryProto grad = 9;
-  inline int grad_size() const;
-  inline void clear_grad();
-  static const int kGradFieldNumber = 9;
-  inline const ::lapis::DAryProto& grad(int index) const;
-  inline ::lapis::DAryProto* mutable_grad(int index);
-  inline ::lapis::DAryProto* add_grad();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >&
-      grad() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
-      mutable_grad();
-
-  // @@protoc_insertion_point(class_scope:lapis.AdaGradValue)
- private:
-  inline void set_has_version();
-  inline void clear_has_version();
-  inline void set_has_learning_rate();
-  inline void clear_has_learning_rate();
-  inline void set_has_kinit();
-  inline void clear_has_kinit();
-  inline void set_has_threshold();
-  inline void clear_has_threshold();
-  inline void set_has_gid();
-  inline void clear_has_gid();
-  inline void set_has_history();
-  inline void clear_has_history();
-  inline void set_has_data();
-  inline void clear_has_data();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > n_update_;
-  ::google::protobuf::int32 version_;
-  float learning_rate_;
-  float kinit_;
-  ::google::protobuf::int32 threshold_;
-  ::lapis::DAryProto* history_;
-  ::lapis::DAryProto* data_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto > grad_;
-  ::google::protobuf::int32 gid_;
-  friend void  protobuf_AddDesc_model_2eproto();
-  friend void protobuf_AssignDesc_model_2eproto();
-  friend void protobuf_ShutdownFile_model_2eproto();
-
-  void InitAsDefaultInstance();
-  static AdaGradValue* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class SGDValue : public ::google::protobuf::Message {
- public:
-  SGDValue();
-  virtual ~SGDValue();
-
-  SGDValue(const SGDValue& from);
-
-  inline SGDValue& operator=(const SGDValue& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const SGDValue& default_instance();
-
-  void Swap(SGDValue* other);
-
-  // implements Message ----------------------------------------------
-
-  SGDValue* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const SGDValue& from);
-  void MergeFrom(const SGDValue& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  typedef SGDValue_ChangeProto ChangeProto;
-  static const ChangeProto kFixed = SGDValue_ChangeProto_kFixed;
-  static const ChangeProto kInverse_t = SGDValue_ChangeProto_kInverse_t;
-  static const ChangeProto kExponential = SGDValue_ChangeProto_kExponential;
-  static const ChangeProto kLinear = SGDValue_ChangeProto_kLinear;
-  static const ChangeProto kStep = SGDValue_ChangeProto_kStep;
+  typedef SGDProto_ChangeProto ChangeProto;
+  static const ChangeProto kFixed = SGDProto_ChangeProto_kFixed;
+  static const ChangeProto kInverse_t = SGDProto_ChangeProto_kInverse_t;
+  static const ChangeProto kExponential = SGDProto_ChangeProto_kExponential;
+  static const ChangeProto kLinear = SGDProto_ChangeProto_kLinear;
+  static const ChangeProto kStep = SGDProto_ChangeProto_kStep;
   static inline bool ChangeProto_IsValid(int value) {
-    return SGDValue_ChangeProto_IsValid(value);
+    return SGDProto_ChangeProto_IsValid(value);
   }
   static const ChangeProto ChangeProto_MIN =
-    SGDValue_ChangeProto_ChangeProto_MIN;
+    SGDProto_ChangeProto_ChangeProto_MIN;
   static const ChangeProto ChangeProto_MAX =
-    SGDValue_ChangeProto_ChangeProto_MAX;
+    SGDProto_ChangeProto_ChangeProto_MAX;
   static const int ChangeProto_ARRAYSIZE =
-    SGDValue_ChangeProto_ChangeProto_ARRAYSIZE;
+    SGDProto_ChangeProto_ChangeProto_ARRAYSIZE;
   static inline const ::google::protobuf::EnumDescriptor*
   ChangeProto_descriptor() {
-    return SGDValue_ChangeProto_descriptor();
+    return SGDProto_ChangeProto_descriptor();
   }
   static inline const ::std::string& ChangeProto_Name(ChangeProto value) {
-    return SGDValue_ChangeProto_Name(value);
+    return SGDProto_ChangeProto_Name(value);
   }
   static inline bool ChangeProto_Parse(const ::std::string& name,
       ChangeProto* value) {
-    return SGDValue_ChangeProto_Parse(name, value);
+    return SGDProto_ChangeProto_Parse(name, value);
   }
 
   // accessors -------------------------------------------------------
 
-  // optional float base_learning_rate = 1;
-  inline bool has_base_learning_rate() const;
-  inline void clear_base_learning_rate();
-  static const int kBaseLearningRateFieldNumber = 1;
-  inline float base_learning_rate() const;
-  inline void set_base_learning_rate(float value);
+  // optional float learning_rate = 1;
+  inline bool has_learning_rate() const;
+  inline void clear_learning_rate();
+  static const int kLearningRateFieldNumber = 1;
+  inline float learning_rate() const;
+  inline void set_learning_rate(float value);
 
-  // optional float momentum = 2 [default = 0];
+  // optional float momentum = 2;
   inline bool has_momentum() const;
   inline void clear_momentum();
   static const int kMomentumFieldNumber = 2;
   inline float momentum() const;
   inline void set_momentum(float value);
 
-  // optional float weight_decay = 3 [default = 0];
+  // optional float weight_decay = 3;
   inline bool has_weight_decay() const;
   inline void clear_weight_decay();
   static const int kWeightDecayFieldNumber = 3;
@@ -2101,96 +1959,51 @@ class SGDValue : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 learning_rate_change_steps() const;
   inline void set_learning_rate_change_steps(::google::protobuf::int32 value);
 
-  // optional .lapis.SGDValue.ChangeProto learning_rate_change = 6 [default = kInverse_t];
+  // optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kInverse_t];
   inline bool has_learning_rate_change() const;
   inline void clear_learning_rate_change();
   static const int kLearningRateChangeFieldNumber = 6;
-  inline ::lapis::SGDValue_ChangeProto learning_rate_change() const;
-  inline void set_learning_rate_change(::lapis::SGDValue_ChangeProto value);
+  inline ::lapis::SGDProto_ChangeProto learning_rate_change() const;
+  inline void set_learning_rate_change(::lapis::SGDProto_ChangeProto value);
 
-  // optional float learning_rate_multiplier = 7 [default = 1];
-  inline bool has_learning_rate_multiplier() const;
-  inline void clear_learning_rate_multiplier();
-  static const int kLearningRateMultiplierFieldNumber = 7;
-  inline float learning_rate_multiplier() const;
-  inline void set_learning_rate_multiplier(float value);
+  // optional bool synchronous = 7 [default = false];
+  inline bool has_synchronous() const;
+  inline void clear_synchronous();
+  static const int kSynchronousFieldNumber = 7;
+  inline bool synchronous() const;
+  inline void set_synchronous(bool value);
 
-  // optional float weight_decay_multiplier = 8 [default = 1];
-  inline bool has_weight_decay_multiplier() const;
-  inline void clear_weight_decay_multiplier();
-  static const int kWeightDecayMultiplierFieldNumber = 8;
-  inline float weight_decay_multiplier() const;
-  inline void set_weight_decay_multiplier(float value);
+  // optional string handler = 8 [default = "SGDHandler"];
+  inline bool has_handler() const;
+  inline void clear_handler();
+  static const int kHandlerFieldNumber = 8;
+  inline const ::std::string& handler() const;
+  inline void set_handler(const ::std::string& value);
+  inline void set_handler(const char* value);
+  inline void set_handler(const char* value, size_t size);
+  inline ::std::string* mutable_handler();
+  inline ::std::string* release_handler();
+  inline void set_allocated_handler(::std::string* handler);
 
-  // optional int32 n_update = 9 [default = 0];
-  inline bool has_n_update() const;
-  inline void clear_n_update();
-  static const int kNUpdateFieldNumber = 9;
-  inline ::google::protobuf::int32 n_update() const;
-  inline void set_n_update(::google::protobuf::int32 value);
+  // optional int32 checkpoint_after_steps = 9 [default = 0];
+  inline bool has_checkpoint_after_steps() const;
+  inline void clear_checkpoint_after_steps();
+  static const int kCheckpointAfterStepsFieldNumber = 9;
+  inline ::google::protobuf::int32 checkpoint_after_steps() const;
+  inline void set_checkpoint_after_steps(::google::protobuf::int32 value);
 
-  // optional int32 version = 10 [default = 0];
-  inline bool has_version() const;
-  inline void clear_version();
-  static const int kVersionFieldNumber = 10;
-  inline ::google::protobuf::int32 version() const;
-  inline void set_version(::google::protobuf::int32 value);
+  // optional int32 checkpoint_every_steps = 10 [default = 0];
+  inline bool has_checkpoint_every_steps() const;
+  inline void clear_checkpoint_every_steps();
+  static const int kCheckpointEveryStepsFieldNumber = 10;
+  inline ::google::protobuf::int32 checkpoint_every_steps() const;
+  inline void set_checkpoint_every_steps(::google::protobuf::int32 value);
 
-  // optional int32 threshold = 11;
-  inline bool has_threshold() const;
-  inline void clear_threshold();
-  static const int kThresholdFieldNumber = 11;
-  inline ::google::protobuf::int32 threshold() const;
-  inline void set_threshold(::google::protobuf::int32 value);
-
-  // optional int32 id = 12;
-  inline bool has_id() const;
-  inline void clear_id();
-  static const int kIdFieldNumber = 12;
-  inline ::google::protobuf::int32 id() const;
-  inline void set_id(::google::protobuf::int32 value);
-
-  // optional int32 gid = 13;
-  inline bool has_gid() const;
-  inline void clear_gid();
-  static const int kGidFieldNumber = 13;
-  inline ::google::protobuf::int32 gid() const;
-  inline void set_gid(::google::protobuf::int32 value);
-
-  // optional .lapis.DAryProto data = 14;
-  inline bool has_data() const;
-  inline void clear_data();
-  static const int kDataFieldNumber = 14;
-  inline const ::lapis::DAryProto& data() const;
-  inline ::lapis::DAryProto* mutable_data();
-  inline ::lapis::DAryProto* release_data();
-  inline void set_allocated_data(::lapis::DAryProto* data);
-
-  // repeated .lapis.DAryProto grad = 15;
-  inline int grad_size() const;
-  inline void clear_grad();
-  static const int kGradFieldNumber = 15;
-  inline const ::lapis::DAryProto& grad(int index) const;
-  inline ::lapis::DAryProto* mutable_grad(int index);
-  inline ::lapis::DAryProto* add_grad();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >&
-      grad() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
-      mutable_grad();
-
-  // optional .lapis.DAryProto history = 16;
-  inline bool has_history() const;
-  inline void clear_history();
-  static const int kHistoryFieldNumber = 16;
-  inline const ::lapis::DAryProto& history() const;
-  inline ::lapis::DAryProto* mutable_history();
-  inline ::lapis::DAryProto* release_history();
-  inline void set_allocated_history(::lapis::DAryProto* history);
-
-  // @@protoc_insertion_point(class_scope:lapis.SGDValue)
+  GOOGLE_PROTOBUF_EXTENSION_ACCESSORS(SGDProto)
+  // @@protoc_insertion_point(class_scope:lapis.SGDProto)
  private:
-  inline void set_has_base_learning_rate();
-  inline void clear_has_base_learning_rate();
+  inline void set_has_learning_rate();
+  inline void clear_has_learning_rate();
   inline void set_has_momentum();
   inline void clear_has_momentum();
   inline void set_has_weight_decay();
@@ -2201,62 +2014,49 @@ class SGDValue : public ::google::protobuf::Message {
   inline void clear_has_learning_rate_change_steps();
   inline void set_has_learning_rate_change();
   inline void clear_has_learning_rate_change();
-  inline void set_has_learning_rate_multiplier();
-  inline void clear_has_learning_rate_multiplier();
-  inline void set_has_weight_decay_multiplier();
-  inline void clear_has_weight_decay_multiplier();
-  inline void set_has_n_update();
-  inline void clear_has_n_update();
-  inline void set_has_version();
-  inline void clear_has_version();
-  inline void set_has_threshold();
-  inline void clear_has_threshold();
-  inline void set_has_id();
-  inline void clear_has_id();
-  inline void set_has_gid();
-  inline void clear_has_gid();
-  inline void set_has_data();
-  inline void clear_has_data();
-  inline void set_has_history();
-  inline void clear_has_history();
+  inline void set_has_synchronous();
+  inline void clear_has_synchronous();
+  inline void set_has_handler();
+  inline void clear_has_handler();
+  inline void set_has_checkpoint_after_steps();
+  inline void clear_has_checkpoint_after_steps();
+  inline void set_has_checkpoint_every_steps();
+  inline void clear_has_checkpoint_every_steps();
+
+  ::google::protobuf::internal::ExtensionSet _extensions_;
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  float base_learning_rate_;
+  float learning_rate_;
   float momentum_;
   float weight_decay_;
   float gamma_;
   ::google::protobuf::int32 learning_rate_change_steps_;
   int learning_rate_change_;
-  float learning_rate_multiplier_;
-  float weight_decay_multiplier_;
-  ::google::protobuf::int32 n_update_;
-  ::google::protobuf::int32 version_;
-  ::google::protobuf::int32 threshold_;
-  ::google::protobuf::int32 id_;
-  ::lapis::DAryProto* data_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto > grad_;
-  ::lapis::DAryProto* history_;
-  ::google::protobuf::int32 gid_;
+  static ::std::string* _default_handler_;
+  ::std::string* handler_;
+  bool synchronous_;
+  ::google::protobuf::int32 checkpoint_after_steps_;
+  ::google::protobuf::int32 checkpoint_every_steps_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static SGDValue* default_instance_;
+  static SGDProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
-class VKey : public ::google::protobuf::Message {
+class TKey : public ::google::protobuf::Message {
  public:
-  VKey();
-  virtual ~VKey();
+  TKey();
+  virtual ~TKey();
 
-  VKey(const VKey& from);
+  TKey(const TKey& from);
 
-  inline VKey& operator=(const VKey& from) {
+  inline TKey& operator=(const TKey& from) {
     CopyFrom(from);
     return *this;
   }
@@ -2270,17 +2070,17 @@ class VKey : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const VKey& default_instance();
+  static const TKey& default_instance();
 
-  void Swap(VKey* other);
+  void Swap(TKey* other);
 
   // implements Message ----------------------------------------------
 
-  VKey* New() const;
+  TKey* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const VKey& from);
-  void MergeFrom(const VKey& from);
+  void CopyFrom(const TKey& from);
+  void MergeFrom(const TKey& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -2302,12 +2102,12 @@ class VKey : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional int32 key = 1;
-  inline bool has_key() const;
-  inline void clear_key();
-  static const int kKeyFieldNumber = 1;
-  inline ::google::protobuf::int32 key() const;
-  inline void set_key(::google::protobuf::int32 value);
+  // optional int32 id = 1;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 1;
+  inline ::google::protobuf::int32 id() const;
+  inline void set_id(::google::protobuf::int32 value);
 
   // optional int32 version = 2;
   inline bool has_version() const;
@@ -2316,35 +2116,387 @@ class VKey : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 version() const;
   inline void set_version(::google::protobuf::int32 value);
 
-  // optional int32 gid = 3;
-  inline bool has_gid() const;
-  inline void clear_gid();
-  static const int kGidFieldNumber = 3;
-  inline ::google::protobuf::int32 gid() const;
-  inline void set_gid(::google::protobuf::int32 value);
+  // optional int32 rank = 3;
+  inline bool has_rank() const;
+  inline void clear_rank();
+  static const int kRankFieldNumber = 3;
+  inline ::google::protobuf::int32 rank() const;
+  inline void set_rank(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:lapis.VKey)
+  GOOGLE_PROTOBUF_EXTENSION_ACCESSORS(TKey)
+  // @@protoc_insertion_point(class_scope:lapis.TKey)
  private:
-  inline void set_has_key();
-  inline void clear_has_key();
+  inline void set_has_id();
+  inline void clear_has_id();
   inline void set_has_version();
   inline void clear_has_version();
-  inline void set_has_gid();
-  inline void clear_has_gid();
+  inline void set_has_rank();
+  inline void clear_has_rank();
+
+  ::google::protobuf::internal::ExtensionSet _extensions_;
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  ::google::protobuf::int32 key_;
+  ::google::protobuf::int32 id_;
   ::google::protobuf::int32 version_;
-  ::google::protobuf::int32 gid_;
+  ::google::protobuf::int32 rank_;
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
   friend void protobuf_ShutdownFile_model_2eproto();
 
   void InitAsDefaultInstance();
-  static VKey* default_instance_;
+  static TKey* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TVal : public ::google::protobuf::Message {
+ public:
+  TVal();
+  virtual ~TVal();
+
+  TVal(const TVal& from);
+
+  inline TVal& operator=(const TVal& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TVal& default_instance();
+
+  void Swap(TVal* other);
+
+  // implements Message ----------------------------------------------
+
+  TVal* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TVal& from);
+  void MergeFrom(const TVal& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string type = 1;
+  inline bool has_type() const;
+  inline void clear_type();
+  static const int kTypeFieldNumber = 1;
+  inline const ::std::string& type() const;
+  inline void set_type(const ::std::string& value);
+  inline void set_type(const char* value);
+  inline void set_type(const char* value, size_t size);
+  inline ::std::string* mutable_type();
+  inline ::std::string* release_type();
+  inline void set_allocated_type(::std::string* type);
+
+  // optional int32 num_aggregate = 4;
+  inline bool has_num_aggregate() const;
+  inline void clear_num_aggregate();
+  static const int kNumAggregateFieldNumber = 4;
+  inline ::google::protobuf::int32 num_aggregate() const;
+  inline void set_num_aggregate(::google::protobuf::int32 value);
+
+  // optional int32 version = 5;
+  inline bool has_version() const;
+  inline void clear_version();
+  static const int kVersionFieldNumber = 5;
+  inline ::google::protobuf::int32 version() const;
+  inline void set_version(::google::protobuf::int32 value);
+
+  // optional int32 rank = 6;
+  inline bool has_rank() const;
+  inline void clear_rank();
+  static const int kRankFieldNumber = 6;
+  inline ::google::protobuf::int32 rank() const;
+  inline void set_rank(::google::protobuf::int32 value);
+
+  // optional int32 param_id = 7;
+  inline bool has_param_id() const;
+  inline void clear_param_id();
+  static const int kParamIdFieldNumber = 7;
+  inline ::google::protobuf::int32 param_id() const;
+  inline void set_param_id(::google::protobuf::int32 value);
+
+  // optional int32 split_id = 8;
+  inline bool has_split_id() const;
+  inline void clear_split_id();
+  static const int kSplitIdFieldNumber = 8;
+  inline ::google::protobuf::int32 split_id() const;
+  inline void set_split_id(::google::protobuf::int32 value);
+
+  // optional int32 split_offset = 9;
+  inline bool has_split_offset() const;
+  inline void clear_split_offset();
+  static const int kSplitOffsetFieldNumber = 9;
+  inline ::google::protobuf::int32 split_offset() const;
+  inline void set_split_offset(::google::protobuf::int32 value);
+
+  // optional float learning_rate_multiplier = 10 [default = 1];
+  inline bool has_learning_rate_multiplier() const;
+  inline void clear_learning_rate_multiplier();
+  static const int kLearningRateMultiplierFieldNumber = 10;
+  inline float learning_rate_multiplier() const;
+  inline void set_learning_rate_multiplier(float value);
+
+  // optional float weight_decay_multiplier = 11 [default = 1];
+  inline bool has_weight_decay_multiplier() const;
+  inline void clear_weight_decay_multiplier();
+  static const int kWeightDecayMultiplierFieldNumber = 11;
+  inline float weight_decay_multiplier() const;
+  inline void set_weight_decay_multiplier(float value);
+
+  // optional .lapis.DAryProto data = 12;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 12;
+  inline const ::lapis::DAryProto& data() const;
+  inline ::lapis::DAryProto* mutable_data();
+  inline ::lapis::DAryProto* release_data();
+  inline void set_allocated_data(::lapis::DAryProto* data);
+
+  // optional .lapis.DAryProto grad = 13;
+  inline bool has_grad() const;
+  inline void clear_grad();
+  static const int kGradFieldNumber = 13;
+  inline const ::lapis::DAryProto& grad() const;
+  inline ::lapis::DAryProto* mutable_grad();
+  inline ::lapis::DAryProto* release_grad();
+  inline void set_allocated_grad(::lapis::DAryProto* grad);
+
+  // optional .lapis.DAryProto history = 14;
+  inline bool has_history() const;
+  inline void clear_history();
+  static const int kHistoryFieldNumber = 14;
+  inline const ::lapis::DAryProto& history() const;
+  inline ::lapis::DAryProto* mutable_history();
+  inline ::lapis::DAryProto* release_history();
+  inline void set_allocated_history(::lapis::DAryProto* history);
+
+  GOOGLE_PROTOBUF_EXTENSION_ACCESSORS(TVal)
+  // @@protoc_insertion_point(class_scope:lapis.TVal)
+ private:
+  inline void set_has_type();
+  inline void clear_has_type();
+  inline void set_has_num_aggregate();
+  inline void clear_has_num_aggregate();
+  inline void set_has_version();
+  inline void clear_has_version();
+  inline void set_has_rank();
+  inline void clear_has_rank();
+  inline void set_has_param_id();
+  inline void clear_has_param_id();
+  inline void set_has_split_id();
+  inline void clear_has_split_id();
+  inline void set_has_split_offset();
+  inline void clear_has_split_offset();
+  inline void set_has_learning_rate_multiplier();
+  inline void clear_has_learning_rate_multiplier();
+  inline void set_has_weight_decay_multiplier();
+  inline void clear_has_weight_decay_multiplier();
+  inline void set_has_data();
+  inline void clear_has_data();
+  inline void set_has_grad();
+  inline void clear_has_grad();
+  inline void set_has_history();
+  inline void clear_has_history();
+
+  ::google::protobuf::internal::ExtensionSet _extensions_;
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::std::string* type_;
+  ::google::protobuf::int32 num_aggregate_;
+  ::google::protobuf::int32 version_;
+  ::google::protobuf::int32 rank_;
+  ::google::protobuf::int32 param_id_;
+  ::google::protobuf::int32 split_id_;
+  ::google::protobuf::int32 split_offset_;
+  float learning_rate_multiplier_;
+  float weight_decay_multiplier_;
+  ::lapis::DAryProto* data_;
+  ::lapis::DAryProto* grad_;
+  ::lapis::DAryProto* history_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static TVal* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class SGDVal : public ::google::protobuf::Message {
+ public:
+  SGDVal();
+  virtual ~SGDVal();
+
+  SGDVal(const SGDVal& from);
+
+  inline SGDVal& operator=(const SGDVal& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SGDVal& default_instance();
+
+  void Swap(SGDVal* other);
+
+  // implements Message ----------------------------------------------
+
+  SGDVal* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const SGDVal& from);
+  void MergeFrom(const SGDVal& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  static const int kSgdFieldNumber = 101;
+  static ::google::protobuf::internal::ExtensionIdentifier< ::lapis::TVal,
+      ::google::protobuf::internal::MessageTypeTraits< ::lapis::SGDVal >, 11, false >
+    sgd;
+  // @@protoc_insertion_point(class_scope:lapis.SGDVal)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static SGDVal* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class AdaVal : public ::google::protobuf::Message {
+ public:
+  AdaVal();
+  virtual ~AdaVal();
+
+  AdaVal(const AdaVal& from);
+
+  inline AdaVal& operator=(const AdaVal& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const AdaVal& default_instance();
+
+  void Swap(AdaVal* other);
+
+  // implements Message ----------------------------------------------
+
+  AdaVal* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const AdaVal& from);
+  void MergeFrom(const AdaVal& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  static const int kAdaFieldNumber = 102;
+  static ::google::protobuf::internal::ExtensionIdentifier< ::lapis::TVal,
+      ::google::protobuf::internal::MessageTypeTraits< ::lapis::AdaVal >, 11, false >
+    ada;
+  // @@protoc_insertion_point(class_scope:lapis.AdaVal)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static AdaVal* default_instance_;
 };
 // ===================================================================
 
@@ -3651,6 +3803,186 @@ LayerProto::mutable_bottom() {
 
 // -------------------------------------------------------------------
 
+// EdgeProto
+
+// optional bool directed = 1 [default = true];
+inline bool EdgeProto::has_directed() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void EdgeProto::set_has_directed() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void EdgeProto::clear_has_directed() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void EdgeProto::clear_directed() {
+  directed_ = true;
+  clear_has_directed();
+}
+inline bool EdgeProto::directed() const {
+  // @@protoc_insertion_point(field_get:lapis.EdgeProto.directed)
+  return directed_;
+}
+inline void EdgeProto::set_directed(bool value) {
+  set_has_directed();
+  directed_ = value;
+  // @@protoc_insertion_point(field_set:lapis.EdgeProto.directed)
+}
+
+// optional string layer1 = 2;
+inline bool EdgeProto::has_layer1() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void EdgeProto::set_has_layer1() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void EdgeProto::clear_has_layer1() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void EdgeProto::clear_layer1() {
+  if (layer1_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer1_->clear();
+  }
+  clear_has_layer1();
+}
+inline const ::std::string& EdgeProto::layer1() const {
+  // @@protoc_insertion_point(field_get:lapis.EdgeProto.layer1)
+  return *layer1_;
+}
+inline void EdgeProto::set_layer1(const ::std::string& value) {
+  set_has_layer1();
+  if (layer1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer1_ = new ::std::string;
+  }
+  layer1_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.EdgeProto.layer1)
+}
+inline void EdgeProto::set_layer1(const char* value) {
+  set_has_layer1();
+  if (layer1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer1_ = new ::std::string;
+  }
+  layer1_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.layer1)
+}
+inline void EdgeProto::set_layer1(const char* value, size_t size) {
+  set_has_layer1();
+  if (layer1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer1_ = new ::std::string;
+  }
+  layer1_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.layer1)
+}
+inline ::std::string* EdgeProto::mutable_layer1() {
+  set_has_layer1();
+  if (layer1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer1_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.layer1)
+  return layer1_;
+}
+inline ::std::string* EdgeProto::release_layer1() {
+  clear_has_layer1();
+  if (layer1_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = layer1_;
+    layer1_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void EdgeProto::set_allocated_layer1(::std::string* layer1) {
+  if (layer1_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete layer1_;
+  }
+  if (layer1) {
+    set_has_layer1();
+    layer1_ = layer1;
+  } else {
+    clear_has_layer1();
+    layer1_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.layer1)
+}
+
+// optional string layer2 = 3;
+inline bool EdgeProto::has_layer2() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void EdgeProto::set_has_layer2() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void EdgeProto::clear_has_layer2() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void EdgeProto::clear_layer2() {
+  if (layer2_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer2_->clear();
+  }
+  clear_has_layer2();
+}
+inline const ::std::string& EdgeProto::layer2() const {
+  // @@protoc_insertion_point(field_get:lapis.EdgeProto.layer2)
+  return *layer2_;
+}
+inline void EdgeProto::set_layer2(const ::std::string& value) {
+  set_has_layer2();
+  if (layer2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer2_ = new ::std::string;
+  }
+  layer2_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.EdgeProto.layer2)
+}
+inline void EdgeProto::set_layer2(const char* value) {
+  set_has_layer2();
+  if (layer2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer2_ = new ::std::string;
+  }
+  layer2_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.EdgeProto.layer2)
+}
+inline void EdgeProto::set_layer2(const char* value, size_t size) {
+  set_has_layer2();
+  if (layer2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer2_ = new ::std::string;
+  }
+  layer2_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.EdgeProto.layer2)
+}
+inline ::std::string* EdgeProto::mutable_layer2() {
+  set_has_layer2();
+  if (layer2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    layer2_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.EdgeProto.layer2)
+  return layer2_;
+}
+inline ::std::string* EdgeProto::release_layer2() {
+  clear_has_layer2();
+  if (layer2_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = layer2_;
+    layer2_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void EdgeProto::set_allocated_layer2(::std::string* layer2) {
+  if (layer2_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete layer2_;
+  }
+  if (layer2) {
+    set_has_layer2();
+    layer2_ = layer2;
+  } else {
+    clear_has_layer2();
+    layer2_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.EdgeProto.layer2)
+}
+
+// -------------------------------------------------------------------
+
 // MeanProto
 
 // optional int32 num = 1 [default = 0];
@@ -3931,6 +4263,36 @@ NetProto::mutable_layer() {
   return &layer_;
 }
 
+// repeated .lapis.EdgeProto edge = 3;
+inline int NetProto::edge_size() const {
+  return edge_.size();
+}
+inline void NetProto::clear_edge() {
+  edge_.Clear();
+}
+inline const ::lapis::EdgeProto& NetProto::edge(int index) const {
+  // @@protoc_insertion_point(field_get:lapis.NetProto.edge)
+  return edge_.Get(index);
+}
+inline ::lapis::EdgeProto* NetProto::mutable_edge(int index) {
+  // @@protoc_insertion_point(field_mutable:lapis.NetProto.edge)
+  return edge_.Mutable(index);
+}
+inline ::lapis::EdgeProto* NetProto::add_edge() {
+  // @@protoc_insertion_point(field_add:lapis.NetProto.edge)
+  return edge_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >&
+NetProto::edge() const {
+  // @@protoc_insertion_point(field_list:lapis.NetProto.edge)
+  return edge_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::lapis::EdgeProto >*
+NetProto::mutable_edge() {
+  // @@protoc_insertion_point(field_mutable_list:lapis.NetProto.edge)
+  return &edge_;
+}
+
 // -------------------------------------------------------------------
 
 // PerformanceProto
@@ -4059,188 +4421,39 @@ inline void PerformanceProto::set_step(::google::protobuf::int32 value) {
 
 // SolverProto
 
-// optional .lapis.SolverProto.Method method = 1 [default = kSGD];
-inline bool SolverProto::has_method() const {
+// optional int32 step = 1 [default = 0];
+inline bool SolverProto::has_step() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void SolverProto::set_has_method() {
+inline void SolverProto::set_has_step() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void SolverProto::clear_has_method() {
+inline void SolverProto::clear_has_step() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void SolverProto::clear_method() {
-  method_ = 1;
-  clear_has_method();
+inline void SolverProto::clear_step() {
+  step_ = 0;
+  clear_has_step();
 }
-inline ::lapis::SolverProto_Method SolverProto::method() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.method)
-  return static_cast< ::lapis::SolverProto_Method >(method_);
+inline ::google::protobuf::int32 SolverProto::step() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.step)
+  return step_;
 }
-inline void SolverProto::set_method(::lapis::SolverProto_Method value) {
-  assert(::lapis::SolverProto_Method_IsValid(value));
-  set_has_method();
-  method_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.method)
-}
-
-// optional int32 checkpoint_after_steps = 2 [default = 0];
-inline bool SolverProto::has_checkpoint_after_steps() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void SolverProto::set_has_checkpoint_after_steps() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void SolverProto::clear_has_checkpoint_after_steps() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void SolverProto::clear_checkpoint_after_steps() {
-  checkpoint_after_steps_ = 0;
-  clear_has_checkpoint_after_steps();
-}
-inline ::google::protobuf::int32 SolverProto::checkpoint_after_steps() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.checkpoint_after_steps)
-  return checkpoint_after_steps_;
-}
-inline void SolverProto::set_checkpoint_after_steps(::google::protobuf::int32 value) {
-  set_has_checkpoint_after_steps();
-  checkpoint_after_steps_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.checkpoint_after_steps)
-}
-
-// optional int32 checkpoint_every_steps = 3 [default = 0];
-inline bool SolverProto::has_checkpoint_every_steps() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void SolverProto::set_has_checkpoint_every_steps() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void SolverProto::clear_has_checkpoint_every_steps() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void SolverProto::clear_checkpoint_every_steps() {
-  checkpoint_every_steps_ = 0;
-  clear_has_checkpoint_every_steps();
-}
-inline ::google::protobuf::int32 SolverProto::checkpoint_every_steps() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.checkpoint_every_steps)
-  return checkpoint_every_steps_;
-}
-inline void SolverProto::set_checkpoint_every_steps(::google::protobuf::int32 value) {
-  set_has_checkpoint_every_steps();
-  checkpoint_every_steps_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.checkpoint_every_steps)
-}
-
-// optional string checkpoint_prefix = 4 [default = "tmp/checkpoint"];
-inline bool SolverProto::has_checkpoint_prefix() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void SolverProto::set_has_checkpoint_prefix() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void SolverProto::clear_has_checkpoint_prefix() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void SolverProto::clear_checkpoint_prefix() {
-  if (checkpoint_prefix_ != _default_checkpoint_prefix_) {
-    checkpoint_prefix_->assign(*_default_checkpoint_prefix_);
-  }
-  clear_has_checkpoint_prefix();
-}
-inline const ::std::string& SolverProto::checkpoint_prefix() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.checkpoint_prefix)
-  return *checkpoint_prefix_;
-}
-inline void SolverProto::set_checkpoint_prefix(const ::std::string& value) {
-  set_has_checkpoint_prefix();
-  if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
-    checkpoint_prefix_ = new ::std::string;
-  }
-  checkpoint_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.checkpoint_prefix)
-}
-inline void SolverProto::set_checkpoint_prefix(const char* value) {
-  set_has_checkpoint_prefix();
-  if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
-    checkpoint_prefix_ = new ::std::string;
-  }
-  checkpoint_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.SolverProto.checkpoint_prefix)
-}
-inline void SolverProto::set_checkpoint_prefix(const char* value, size_t size) {
-  set_has_checkpoint_prefix();
-  if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
-    checkpoint_prefix_ = new ::std::string;
-  }
-  checkpoint_prefix_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.SolverProto.checkpoint_prefix)
-}
-inline ::std::string* SolverProto::mutable_checkpoint_prefix() {
-  set_has_checkpoint_prefix();
-  if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
-    checkpoint_prefix_ = new ::std::string(*_default_checkpoint_prefix_);
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.SolverProto.checkpoint_prefix)
-  return checkpoint_prefix_;
-}
-inline ::std::string* SolverProto::release_checkpoint_prefix() {
-  clear_has_checkpoint_prefix();
-  if (checkpoint_prefix_ == _default_checkpoint_prefix_) {
-    return NULL;
-  } else {
-    ::std::string* temp = checkpoint_prefix_;
-    checkpoint_prefix_ = const_cast< ::std::string*>(_default_checkpoint_prefix_);
-    return temp;
-  }
-}
-inline void SolverProto::set_allocated_checkpoint_prefix(::std::string* checkpoint_prefix) {
-  if (checkpoint_prefix_ != _default_checkpoint_prefix_) {
-    delete checkpoint_prefix_;
-  }
-  if (checkpoint_prefix) {
-    set_has_checkpoint_prefix();
-    checkpoint_prefix_ = checkpoint_prefix;
-  } else {
-    clear_has_checkpoint_prefix();
-    checkpoint_prefix_ = const_cast< ::std::string*>(_default_checkpoint_prefix_);
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.checkpoint_prefix)
-}
-
-// optional int32 checkpoint_step = 5 [default = 0];
-inline bool SolverProto::has_checkpoint_step() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void SolverProto::set_has_checkpoint_step() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void SolverProto::clear_has_checkpoint_step() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void SolverProto::clear_checkpoint_step() {
-  checkpoint_step_ = 0;
-  clear_has_checkpoint_step();
-}
-inline ::google::protobuf::int32 SolverProto::checkpoint_step() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.checkpoint_step)
-  return checkpoint_step_;
-}
-inline void SolverProto::set_checkpoint_step(::google::protobuf::int32 value) {
-  set_has_checkpoint_step();
-  checkpoint_step_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.checkpoint_step)
+inline void SolverProto::set_step(::google::protobuf::int32 value) {
+  set_has_step();
+  step_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.step)
 }
 
 // optional int32 display_after_steps = 6 [default = 0];
 inline bool SolverProto::has_display_after_steps() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void SolverProto::set_has_display_after_steps() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void SolverProto::clear_has_display_after_steps() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void SolverProto::clear_display_after_steps() {
   display_after_steps_ = 0;
@@ -4258,13 +4471,13 @@ inline void SolverProto::set_display_after_steps(::google::protobuf::int32 value
 
 // optional int32 display_every_steps = 7 [default = 0];
 inline bool SolverProto::has_display_every_steps() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void SolverProto::set_has_display_every_steps() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void SolverProto::clear_has_display_every_steps() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void SolverProto::clear_display_every_steps() {
   display_every_steps_ = 0;
@@ -4280,115 +4493,15 @@ inline void SolverProto::set_display_every_steps(::google::protobuf::int32 value
   // @@protoc_insertion_point(field_set:lapis.SolverProto.display_every_steps)
 }
 
-// optional string display_prefix = 8 [default = "tmp/display"];
-inline bool SolverProto::has_display_prefix() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void SolverProto::set_has_display_prefix() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void SolverProto::clear_has_display_prefix() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void SolverProto::clear_display_prefix() {
-  if (display_prefix_ != _default_display_prefix_) {
-    display_prefix_->assign(*_default_display_prefix_);
-  }
-  clear_has_display_prefix();
-}
-inline const ::std::string& SolverProto::display_prefix() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.display_prefix)
-  return *display_prefix_;
-}
-inline void SolverProto::set_display_prefix(const ::std::string& value) {
-  set_has_display_prefix();
-  if (display_prefix_ == _default_display_prefix_) {
-    display_prefix_ = new ::std::string;
-  }
-  display_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.display_prefix)
-}
-inline void SolverProto::set_display_prefix(const char* value) {
-  set_has_display_prefix();
-  if (display_prefix_ == _default_display_prefix_) {
-    display_prefix_ = new ::std::string;
-  }
-  display_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.SolverProto.display_prefix)
-}
-inline void SolverProto::set_display_prefix(const char* value, size_t size) {
-  set_has_display_prefix();
-  if (display_prefix_ == _default_display_prefix_) {
-    display_prefix_ = new ::std::string;
-  }
-  display_prefix_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.SolverProto.display_prefix)
-}
-inline ::std::string* SolverProto::mutable_display_prefix() {
-  set_has_display_prefix();
-  if (display_prefix_ == _default_display_prefix_) {
-    display_prefix_ = new ::std::string(*_default_display_prefix_);
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.SolverProto.display_prefix)
-  return display_prefix_;
-}
-inline ::std::string* SolverProto::release_display_prefix() {
-  clear_has_display_prefix();
-  if (display_prefix_ == _default_display_prefix_) {
-    return NULL;
-  } else {
-    ::std::string* temp = display_prefix_;
-    display_prefix_ = const_cast< ::std::string*>(_default_display_prefix_);
-    return temp;
-  }
-}
-inline void SolverProto::set_allocated_display_prefix(::std::string* display_prefix) {
-  if (display_prefix_ != _default_display_prefix_) {
-    delete display_prefix_;
-  }
-  if (display_prefix) {
-    set_has_display_prefix();
-    display_prefix_ = display_prefix;
-  } else {
-    clear_has_display_prefix();
-    display_prefix_ = const_cast< ::std::string*>(_default_display_prefix_);
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.display_prefix)
-}
-
-// optional int32 validation_step = 9 [default = 0];
-inline bool SolverProto::has_validation_step() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
-}
-inline void SolverProto::set_has_validation_step() {
-  _has_bits_[0] |= 0x00000100u;
-}
-inline void SolverProto::clear_has_validation_step() {
-  _has_bits_[0] &= ~0x00000100u;
-}
-inline void SolverProto::clear_validation_step() {
-  validation_step_ = 0;
-  clear_has_validation_step();
-}
-inline ::google::protobuf::int32 SolverProto::validation_step() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.validation_step)
-  return validation_step_;
-}
-inline void SolverProto::set_validation_step(::google::protobuf::int32 value) {
-  set_has_validation_step();
-  validation_step_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_step)
-}
-
 // optional int32 validation_after_steps = 10 [default = 0];
 inline bool SolverProto::has_validation_after_steps() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void SolverProto::set_has_validation_after_steps() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void SolverProto::clear_has_validation_after_steps() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void SolverProto::clear_validation_after_steps() {
   validation_after_steps_ = 0;
@@ -4406,13 +4519,13 @@ inline void SolverProto::set_validation_after_steps(::google::protobuf::int32 va
 
 // optional int32 validation_every_steps = 11 [default = 0];
 inline bool SolverProto::has_validation_every_steps() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void SolverProto::set_has_validation_every_steps() {
-  _has_bits_[0] |= 0x00000400u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void SolverProto::clear_has_validation_every_steps() {
-  _has_bits_[0] &= ~0x00000400u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void SolverProto::clear_validation_every_steps() {
   validation_every_steps_ = 0;
@@ -4428,39 +4541,15 @@ inline void SolverProto::set_validation_every_steps(::google::protobuf::int32 va
   // @@protoc_insertion_point(field_set:lapis.SolverProto.validation_every_steps)
 }
 
-// optional int32 test_step = 12 [default = 0];
-inline bool SolverProto::has_test_step() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
-}
-inline void SolverProto::set_has_test_step() {
-  _has_bits_[0] |= 0x00000800u;
-}
-inline void SolverProto::clear_has_test_step() {
-  _has_bits_[0] &= ~0x00000800u;
-}
-inline void SolverProto::clear_test_step() {
-  test_step_ = 0;
-  clear_has_test_step();
-}
-inline ::google::protobuf::int32 SolverProto::test_step() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.test_step)
-  return test_step_;
-}
-inline void SolverProto::set_test_step(::google::protobuf::int32 value) {
-  set_has_test_step();
-  test_step_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.test_step)
-}
-
 // optional int32 test_after_steps = 13 [default = 0];
 inline bool SolverProto::has_test_after_steps() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void SolverProto::set_has_test_after_steps() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void SolverProto::clear_has_test_after_steps() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void SolverProto::clear_test_after_steps() {
   test_after_steps_ = 0;
@@ -4478,13 +4567,13 @@ inline void SolverProto::set_test_after_steps(::google::protobuf::int32 value) {
 
 // optional int32 test_every_steps = 14 [default = 0];
 inline bool SolverProto::has_test_every_steps() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void SolverProto::set_has_test_every_steps() {
-  _has_bits_[0] |= 0x00002000u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void SolverProto::clear_has_test_every_steps() {
-  _has_bits_[0] &= ~0x00002000u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void SolverProto::clear_test_every_steps() {
   test_every_steps_ = 0;
@@ -4500,116 +4589,15 @@ inline void SolverProto::set_test_every_steps(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.test_every_steps)
 }
 
-// optional string perf_prefix = 15 [default = "tmp/performance"];
-inline bool SolverProto::has_perf_prefix() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void SolverProto::set_has_perf_prefix() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void SolverProto::clear_has_perf_prefix() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void SolverProto::clear_perf_prefix() {
-  if (perf_prefix_ != _default_perf_prefix_) {
-    perf_prefix_->assign(*_default_perf_prefix_);
-  }
-  clear_has_perf_prefix();
-}
-inline const ::std::string& SolverProto::perf_prefix() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.perf_prefix)
-  return *perf_prefix_;
-}
-inline void SolverProto::set_perf_prefix(const ::std::string& value) {
-  set_has_perf_prefix();
-  if (perf_prefix_ == _default_perf_prefix_) {
-    perf_prefix_ = new ::std::string;
-  }
-  perf_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.perf_prefix)
-}
-inline void SolverProto::set_perf_prefix(const char* value) {
-  set_has_perf_prefix();
-  if (perf_prefix_ == _default_perf_prefix_) {
-    perf_prefix_ = new ::std::string;
-  }
-  perf_prefix_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.SolverProto.perf_prefix)
-}
-inline void SolverProto::set_perf_prefix(const char* value, size_t size) {
-  set_has_perf_prefix();
-  if (perf_prefix_ == _default_perf_prefix_) {
-    perf_prefix_ = new ::std::string;
-  }
-  perf_prefix_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.SolverProto.perf_prefix)
-}
-inline ::std::string* SolverProto::mutable_perf_prefix() {
-  set_has_perf_prefix();
-  if (perf_prefix_ == _default_perf_prefix_) {
-    perf_prefix_ = new ::std::string(*_default_perf_prefix_);
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.SolverProto.perf_prefix)
-  return perf_prefix_;
-}
-inline ::std::string* SolverProto::release_perf_prefix() {
-  clear_has_perf_prefix();
-  if (perf_prefix_ == _default_perf_prefix_) {
-    return NULL;
-  } else {
-    ::std::string* temp = perf_prefix_;
-    perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
-    return temp;
-  }
-}
-inline void SolverProto::set_allocated_perf_prefix(::std::string* perf_prefix) {
-  if (perf_prefix_ != _default_perf_prefix_) {
-    delete perf_prefix_;
-  }
-  if (perf_prefix) {
-    set_has_perf_prefix();
-    perf_prefix_ = perf_prefix;
-  } else {
-    clear_has_perf_prefix();
-    perf_prefix_ = const_cast< ::std::string*>(_default_perf_prefix_);
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.perf_prefix)
-}
-
-// optional .lapis.SolverProto.GradAlg alg = 16 [default = kBackPropagation];
-inline bool SolverProto::has_alg() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
-}
-inline void SolverProto::set_has_alg() {
-  _has_bits_[0] |= 0x00008000u;
-}
-inline void SolverProto::clear_has_alg() {
-  _has_bits_[0] &= ~0x00008000u;
-}
-inline void SolverProto::clear_alg() {
-  alg_ = 1;
-  clear_has_alg();
-}
-inline ::lapis::SolverProto_GradAlg SolverProto::alg() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.alg)
-  return static_cast< ::lapis::SolverProto_GradAlg >(alg_);
-}
-inline void SolverProto::set_alg(::lapis::SolverProto_GradAlg value) {
-  assert(::lapis::SolverProto_GradAlg_IsValid(value));
-  set_has_alg();
-  alg_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SolverProto.alg)
-}
-
 // optional int32 batchsize = 19;
 inline bool SolverProto::has_batchsize() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void SolverProto::set_has_batchsize() {
-  _has_bits_[0] |= 0x00010000u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void SolverProto::clear_has_batchsize() {
-  _has_bits_[0] &= ~0x00010000u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void SolverProto::clear_batchsize() {
   batchsize_ = 0;
@@ -4627,13 +4615,13 @@ inline void SolverProto::set_batchsize(::google::protobuf::int32 value) {
 
 // optional int32 train_steps = 20;
 inline bool SolverProto::has_train_steps() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void SolverProto::set_has_train_steps() {
-  _has_bits_[0] |= 0x00020000u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void SolverProto::clear_has_train_steps() {
-  _has_bits_[0] &= ~0x00020000u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void SolverProto::clear_train_steps() {
   train_steps_ = 0;
@@ -4651,13 +4639,13 @@ inline void SolverProto::set_train_steps(::google::protobuf::int32 value) {
 
 // optional int32 validation_steps = 21;
 inline bool SolverProto::has_validation_steps() const {
-  return (_has_bits_[0] & 0x00040000u) != 0;
+  return (_has_bits_[0] & 0x00000200u) != 0;
 }
 inline void SolverProto::set_has_validation_steps() {
-  _has_bits_[0] |= 0x00040000u;
+  _has_bits_[0] |= 0x00000200u;
 }
 inline void SolverProto::clear_has_validation_steps() {
-  _has_bits_[0] &= ~0x00040000u;
+  _has_bits_[0] &= ~0x00000200u;
 }
 inline void SolverProto::clear_validation_steps() {
   validation_steps_ = 0;
@@ -4675,13 +4663,13 @@ inline void SolverProto::set_validation_steps(::google::protobuf::int32 value) {
 
 // optional int32 test_steps = 22;
 inline bool SolverProto::has_test_steps() const {
-  return (_has_bits_[0] & 0x00080000u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void SolverProto::set_has_test_steps() {
-  _has_bits_[0] |= 0x00080000u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void SolverProto::clear_has_test_steps() {
-  _has_bits_[0] &= ~0x00080000u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void SolverProto::clear_test_steps() {
   test_steps_ = 0;
@@ -4699,13 +4687,13 @@ inline void SolverProto::set_test_steps(::google::protobuf::int32 value) {
 
 // optional int32 max_splits = 23 [default = 3571];
 inline bool SolverProto::has_max_splits() const {
-  return (_has_bits_[0] & 0x00100000u) != 0;
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
 inline void SolverProto::set_has_max_splits() {
-  _has_bits_[0] |= 0x00100000u;
+  _has_bits_[0] |= 0x00000800u;
 }
 inline void SolverProto::clear_has_max_splits() {
-  _has_bits_[0] &= ~0x00100000u;
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void SolverProto::clear_max_splits() {
   max_splits_ = 3571;
@@ -4721,37 +4709,37 @@ inline void SolverProto::set_max_splits(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:lapis.SolverProto.max_splits)
 }
 
-// optional .lapis.SGDValue sgd = 24;
+// optional .lapis.SGDProto sgd = 24;
 inline bool SolverProto::has_sgd() const {
-  return (_has_bits_[0] & 0x00200000u) != 0;
+  return (_has_bits_[0] & 0x00001000u) != 0;
 }
 inline void SolverProto::set_has_sgd() {
-  _has_bits_[0] |= 0x00200000u;
+  _has_bits_[0] |= 0x00001000u;
 }
 inline void SolverProto::clear_has_sgd() {
-  _has_bits_[0] &= ~0x00200000u;
+  _has_bits_[0] &= ~0x00001000u;
 }
 inline void SolverProto::clear_sgd() {
-  if (sgd_ != NULL) sgd_->::lapis::SGDValue::Clear();
+  if (sgd_ != NULL) sgd_->::lapis::SGDProto::Clear();
   clear_has_sgd();
 }
-inline const ::lapis::SGDValue& SolverProto::sgd() const {
+inline const ::lapis::SGDProto& SolverProto::sgd() const {
   // @@protoc_insertion_point(field_get:lapis.SolverProto.sgd)
   return sgd_ != NULL ? *sgd_ : *default_instance_->sgd_;
 }
-inline ::lapis::SGDValue* SolverProto::mutable_sgd() {
+inline ::lapis::SGDProto* SolverProto::mutable_sgd() {
   set_has_sgd();
-  if (sgd_ == NULL) sgd_ = new ::lapis::SGDValue;
+  if (sgd_ == NULL) sgd_ = new ::lapis::SGDProto;
   // @@protoc_insertion_point(field_mutable:lapis.SolverProto.sgd)
   return sgd_;
 }
-inline ::lapis::SGDValue* SolverProto::release_sgd() {
+inline ::lapis::SGDProto* SolverProto::release_sgd() {
   clear_has_sgd();
-  ::lapis::SGDValue* temp = sgd_;
+  ::lapis::SGDProto* temp = sgd_;
   sgd_ = NULL;
   return temp;
 }
-inline void SolverProto::set_allocated_sgd(::lapis::SGDValue* sgd) {
+inline void SolverProto::set_allocated_sgd(::lapis::SGDProto* sgd) {
   delete sgd_;
   sgd_ = sgd;
   if (sgd) {
@@ -4762,45 +4750,54 @@ inline void SolverProto::set_allocated_sgd(::lapis::SGDValue* sgd) {
   // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.sgd)
 }
 
-// optional .lapis.AdaGradValue adagrad = 25;
-inline bool SolverProto::has_adagrad() const {
-  return (_has_bits_[0] & 0x00400000u) != 0;
+// optional .lapis.SolverProto.GradCalcAlg alg = 26 [default = kBackPropagation];
+inline bool SolverProto::has_alg() const {
+  return (_has_bits_[0] & 0x00002000u) != 0;
 }
-inline void SolverProto::set_has_adagrad() {
-  _has_bits_[0] |= 0x00400000u;
+inline void SolverProto::set_has_alg() {
+  _has_bits_[0] |= 0x00002000u;
 }
-inline void SolverProto::clear_has_adagrad() {
-  _has_bits_[0] &= ~0x00400000u;
+inline void SolverProto::clear_has_alg() {
+  _has_bits_[0] &= ~0x00002000u;
 }
-inline void SolverProto::clear_adagrad() {
-  if (adagrad_ != NULL) adagrad_->::lapis::AdaGradValue::Clear();
-  clear_has_adagrad();
+inline void SolverProto::clear_alg() {
+  alg_ = 1;
+  clear_has_alg();
 }
-inline const ::lapis::AdaGradValue& SolverProto::adagrad() const {
-  // @@protoc_insertion_point(field_get:lapis.SolverProto.adagrad)
-  return adagrad_ != NULL ? *adagrad_ : *default_instance_->adagrad_;
+inline ::lapis::SolverProto_GradCalcAlg SolverProto::alg() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.alg)
+  return static_cast< ::lapis::SolverProto_GradCalcAlg >(alg_);
 }
-inline ::lapis::AdaGradValue* SolverProto::mutable_adagrad() {
-  set_has_adagrad();
-  if (adagrad_ == NULL) adagrad_ = new ::lapis::AdaGradValue;
-  // @@protoc_insertion_point(field_mutable:lapis.SolverProto.adagrad)
-  return adagrad_;
+inline void SolverProto::set_alg(::lapis::SolverProto_GradCalcAlg value) {
+  assert(::lapis::SolverProto_GradCalcAlg_IsValid(value));
+  set_has_alg();
+  alg_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.alg)
 }
-inline ::lapis::AdaGradValue* SolverProto::release_adagrad() {
-  clear_has_adagrad();
-  ::lapis::AdaGradValue* temp = adagrad_;
-  adagrad_ = NULL;
-  return temp;
+
+// optional .lapis.SolverProto.Partition partition = 27;
+inline bool SolverProto::has_partition() const {
+  return (_has_bits_[0] & 0x00004000u) != 0;
 }
-inline void SolverProto::set_allocated_adagrad(::lapis::AdaGradValue* adagrad) {
-  delete adagrad_;
-  adagrad_ = adagrad;
-  if (adagrad) {
-    set_has_adagrad();
-  } else {
-    clear_has_adagrad();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SolverProto.adagrad)
+inline void SolverProto::set_has_partition() {
+  _has_bits_[0] |= 0x00004000u;
+}
+inline void SolverProto::clear_has_partition() {
+  _has_bits_[0] &= ~0x00004000u;
+}
+inline void SolverProto::clear_partition() {
+  partition_ = 1;
+  clear_has_partition();
+}
+inline ::lapis::SolverProto_Partition SolverProto::partition() const {
+  // @@protoc_insertion_point(field_get:lapis.SolverProto.partition)
+  return static_cast< ::lapis::SolverProto_Partition >(partition_);
+}
+inline void SolverProto::set_partition(::lapis::SolverProto_Partition value) {
+  assert(::lapis::SolverProto_Partition_IsValid(value));
+  set_has_partition();
+  partition_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SolverProto.partition)
 }
 
 // -------------------------------------------------------------------
@@ -5112,618 +5109,680 @@ inline void Record::set_allocated_id(::std::string* id) {
 
 // -------------------------------------------------------------------
 
-// AdaGradValue
+// SGDProto
 
-// repeated int32 n_update = 1;
-inline int AdaGradValue::n_update_size() const {
-  return n_update_.size();
-}
-inline void AdaGradValue::clear_n_update() {
-  n_update_.Clear();
-}
-inline ::google::protobuf::int32 AdaGradValue::n_update(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.n_update)
-  return n_update_.Get(index);
-}
-inline void AdaGradValue::set_n_update(int index, ::google::protobuf::int32 value) {
-  n_update_.Set(index, value);
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.n_update)
-}
-inline void AdaGradValue::add_n_update(::google::protobuf::int32 value) {
-  n_update_.Add(value);
-  // @@protoc_insertion_point(field_add:lapis.AdaGradValue.n_update)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
-AdaGradValue::n_update() const {
-  // @@protoc_insertion_point(field_list:lapis.AdaGradValue.n_update)
-  return n_update_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
-AdaGradValue::mutable_n_update() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.AdaGradValue.n_update)
-  return &n_update_;
-}
-
-// optional int32 version = 2 [default = 0];
-inline bool AdaGradValue::has_version() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void AdaGradValue::set_has_version() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void AdaGradValue::clear_has_version() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void AdaGradValue::clear_version() {
-  version_ = 0;
-  clear_has_version();
-}
-inline ::google::protobuf::int32 AdaGradValue::version() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.version)
-  return version_;
-}
-inline void AdaGradValue::set_version(::google::protobuf::int32 value) {
-  set_has_version();
-  version_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.version)
-}
-
-// optional float learning_rate = 3 [default = 0.1];
-inline bool AdaGradValue::has_learning_rate() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void AdaGradValue::set_has_learning_rate() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void AdaGradValue::clear_has_learning_rate() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void AdaGradValue::clear_learning_rate() {
-  learning_rate_ = 0.1f;
-  clear_has_learning_rate();
-}
-inline float AdaGradValue::learning_rate() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.learning_rate)
-  return learning_rate_;
-}
-inline void AdaGradValue::set_learning_rate(float value) {
-  set_has_learning_rate();
-  learning_rate_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.learning_rate)
-}
-
-// optional float kinit = 4 [default = 1];
-inline bool AdaGradValue::has_kinit() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void AdaGradValue::set_has_kinit() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void AdaGradValue::clear_has_kinit() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void AdaGradValue::clear_kinit() {
-  kinit_ = 1;
-  clear_has_kinit();
-}
-inline float AdaGradValue::kinit() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.kinit)
-  return kinit_;
-}
-inline void AdaGradValue::set_kinit(float value) {
-  set_has_kinit();
-  kinit_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.kinit)
-}
-
-// optional int32 threshold = 5;
-inline bool AdaGradValue::has_threshold() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void AdaGradValue::set_has_threshold() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void AdaGradValue::clear_has_threshold() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void AdaGradValue::clear_threshold() {
-  threshold_ = 0;
-  clear_has_threshold();
-}
-inline ::google::protobuf::int32 AdaGradValue::threshold() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.threshold)
-  return threshold_;
-}
-inline void AdaGradValue::set_threshold(::google::protobuf::int32 value) {
-  set_has_threshold();
-  threshold_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.threshold)
-}
-
-// optional int32 gid = 6;
-inline bool AdaGradValue::has_gid() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void AdaGradValue::set_has_gid() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void AdaGradValue::clear_has_gid() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void AdaGradValue::clear_gid() {
-  gid_ = 0;
-  clear_has_gid();
-}
-inline ::google::protobuf::int32 AdaGradValue::gid() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.gid)
-  return gid_;
-}
-inline void AdaGradValue::set_gid(::google::protobuf::int32 value) {
-  set_has_gid();
-  gid_ = value;
-  // @@protoc_insertion_point(field_set:lapis.AdaGradValue.gid)
-}
-
-// optional .lapis.DAryProto history = 7;
-inline bool AdaGradValue::has_history() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void AdaGradValue::set_has_history() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void AdaGradValue::clear_has_history() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void AdaGradValue::clear_history() {
-  if (history_ != NULL) history_->::lapis::DAryProto::Clear();
-  clear_has_history();
-}
-inline const ::lapis::DAryProto& AdaGradValue::history() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.history)
-  return history_ != NULL ? *history_ : *default_instance_->history_;
-}
-inline ::lapis::DAryProto* AdaGradValue::mutable_history() {
-  set_has_history();
-  if (history_ == NULL) history_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.AdaGradValue.history)
-  return history_;
-}
-inline ::lapis::DAryProto* AdaGradValue::release_history() {
-  clear_has_history();
-  ::lapis::DAryProto* temp = history_;
-  history_ = NULL;
-  return temp;
-}
-inline void AdaGradValue::set_allocated_history(::lapis::DAryProto* history) {
-  delete history_;
-  history_ = history;
-  if (history) {
-    set_has_history();
-  } else {
-    clear_has_history();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.AdaGradValue.history)
-}
-
-// optional .lapis.DAryProto data = 8;
-inline bool AdaGradValue::has_data() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void AdaGradValue::set_has_data() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void AdaGradValue::clear_has_data() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void AdaGradValue::clear_data() {
-  if (data_ != NULL) data_->::lapis::DAryProto::Clear();
-  clear_has_data();
-}
-inline const ::lapis::DAryProto& AdaGradValue::data() const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.data)
-  return data_ != NULL ? *data_ : *default_instance_->data_;
-}
-inline ::lapis::DAryProto* AdaGradValue::mutable_data() {
-  set_has_data();
-  if (data_ == NULL) data_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.AdaGradValue.data)
-  return data_;
-}
-inline ::lapis::DAryProto* AdaGradValue::release_data() {
-  clear_has_data();
-  ::lapis::DAryProto* temp = data_;
-  data_ = NULL;
-  return temp;
-}
-inline void AdaGradValue::set_allocated_data(::lapis::DAryProto* data) {
-  delete data_;
-  data_ = data;
-  if (data) {
-    set_has_data();
-  } else {
-    clear_has_data();
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.AdaGradValue.data)
-}
-
-// repeated .lapis.DAryProto grad = 9;
-inline int AdaGradValue::grad_size() const {
-  return grad_.size();
-}
-inline void AdaGradValue::clear_grad() {
-  grad_.Clear();
-}
-inline const ::lapis::DAryProto& AdaGradValue::grad(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.AdaGradValue.grad)
-  return grad_.Get(index);
-}
-inline ::lapis::DAryProto* AdaGradValue::mutable_grad(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.AdaGradValue.grad)
-  return grad_.Mutable(index);
-}
-inline ::lapis::DAryProto* AdaGradValue::add_grad() {
-  // @@protoc_insertion_point(field_add:lapis.AdaGradValue.grad)
-  return grad_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >&
-AdaGradValue::grad() const {
-  // @@protoc_insertion_point(field_list:lapis.AdaGradValue.grad)
-  return grad_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
-AdaGradValue::mutable_grad() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.AdaGradValue.grad)
-  return &grad_;
-}
-
-// -------------------------------------------------------------------
-
-// SGDValue
-
-// optional float base_learning_rate = 1;
-inline bool SGDValue::has_base_learning_rate() const {
+// optional float learning_rate = 1;
+inline bool SGDProto::has_learning_rate() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void SGDValue::set_has_base_learning_rate() {
+inline void SGDProto::set_has_learning_rate() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void SGDValue::clear_has_base_learning_rate() {
+inline void SGDProto::clear_has_learning_rate() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void SGDValue::clear_base_learning_rate() {
-  base_learning_rate_ = 0;
-  clear_has_base_learning_rate();
+inline void SGDProto::clear_learning_rate() {
+  learning_rate_ = 0;
+  clear_has_learning_rate();
 }
-inline float SGDValue::base_learning_rate() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.base_learning_rate)
-  return base_learning_rate_;
+inline float SGDProto::learning_rate() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.learning_rate)
+  return learning_rate_;
 }
-inline void SGDValue::set_base_learning_rate(float value) {
-  set_has_base_learning_rate();
-  base_learning_rate_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.base_learning_rate)
+inline void SGDProto::set_learning_rate(float value) {
+  set_has_learning_rate();
+  learning_rate_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.learning_rate)
 }
 
-// optional float momentum = 2 [default = 0];
-inline bool SGDValue::has_momentum() const {
+// optional float momentum = 2;
+inline bool SGDProto::has_momentum() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void SGDValue::set_has_momentum() {
+inline void SGDProto::set_has_momentum() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void SGDValue::clear_has_momentum() {
+inline void SGDProto::clear_has_momentum() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void SGDValue::clear_momentum() {
+inline void SGDProto::clear_momentum() {
   momentum_ = 0;
   clear_has_momentum();
 }
-inline float SGDValue::momentum() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.momentum)
+inline float SGDProto::momentum() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.momentum)
   return momentum_;
 }
-inline void SGDValue::set_momentum(float value) {
+inline void SGDProto::set_momentum(float value) {
   set_has_momentum();
   momentum_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.momentum)
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.momentum)
 }
 
-// optional float weight_decay = 3 [default = 0];
-inline bool SGDValue::has_weight_decay() const {
+// optional float weight_decay = 3;
+inline bool SGDProto::has_weight_decay() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void SGDValue::set_has_weight_decay() {
+inline void SGDProto::set_has_weight_decay() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void SGDValue::clear_has_weight_decay() {
+inline void SGDProto::clear_has_weight_decay() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void SGDValue::clear_weight_decay() {
+inline void SGDProto::clear_weight_decay() {
   weight_decay_ = 0;
   clear_has_weight_decay();
 }
-inline float SGDValue::weight_decay() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.weight_decay)
+inline float SGDProto::weight_decay() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.weight_decay)
   return weight_decay_;
 }
-inline void SGDValue::set_weight_decay(float value) {
+inline void SGDProto::set_weight_decay(float value) {
   set_has_weight_decay();
   weight_decay_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.weight_decay)
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.weight_decay)
 }
 
 // optional float gamma = 4;
-inline bool SGDValue::has_gamma() const {
+inline bool SGDProto::has_gamma() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void SGDValue::set_has_gamma() {
+inline void SGDProto::set_has_gamma() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void SGDValue::clear_has_gamma() {
+inline void SGDProto::clear_has_gamma() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void SGDValue::clear_gamma() {
+inline void SGDProto::clear_gamma() {
   gamma_ = 0;
   clear_has_gamma();
 }
-inline float SGDValue::gamma() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.gamma)
+inline float SGDProto::gamma() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.gamma)
   return gamma_;
 }
-inline void SGDValue::set_gamma(float value) {
+inline void SGDProto::set_gamma(float value) {
   set_has_gamma();
   gamma_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.gamma)
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.gamma)
 }
 
 // optional int32 learning_rate_change_steps = 5;
-inline bool SGDValue::has_learning_rate_change_steps() const {
+inline bool SGDProto::has_learning_rate_change_steps() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void SGDValue::set_has_learning_rate_change_steps() {
+inline void SGDProto::set_has_learning_rate_change_steps() {
   _has_bits_[0] |= 0x00000010u;
 }
-inline void SGDValue::clear_has_learning_rate_change_steps() {
+inline void SGDProto::clear_has_learning_rate_change_steps() {
   _has_bits_[0] &= ~0x00000010u;
 }
-inline void SGDValue::clear_learning_rate_change_steps() {
+inline void SGDProto::clear_learning_rate_change_steps() {
   learning_rate_change_steps_ = 0;
   clear_has_learning_rate_change_steps();
 }
-inline ::google::protobuf::int32 SGDValue::learning_rate_change_steps() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.learning_rate_change_steps)
+inline ::google::protobuf::int32 SGDProto::learning_rate_change_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.learning_rate_change_steps)
   return learning_rate_change_steps_;
 }
-inline void SGDValue::set_learning_rate_change_steps(::google::protobuf::int32 value) {
+inline void SGDProto::set_learning_rate_change_steps(::google::protobuf::int32 value) {
   set_has_learning_rate_change_steps();
   learning_rate_change_steps_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_change_steps)
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.learning_rate_change_steps)
 }
 
-// optional .lapis.SGDValue.ChangeProto learning_rate_change = 6 [default = kInverse_t];
-inline bool SGDValue::has_learning_rate_change() const {
+// optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kInverse_t];
+inline bool SGDProto::has_learning_rate_change() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void SGDValue::set_has_learning_rate_change() {
+inline void SGDProto::set_has_learning_rate_change() {
   _has_bits_[0] |= 0x00000020u;
 }
-inline void SGDValue::clear_has_learning_rate_change() {
+inline void SGDProto::clear_has_learning_rate_change() {
   _has_bits_[0] &= ~0x00000020u;
 }
-inline void SGDValue::clear_learning_rate_change() {
+inline void SGDProto::clear_learning_rate_change() {
   learning_rate_change_ = 1;
   clear_has_learning_rate_change();
 }
-inline ::lapis::SGDValue_ChangeProto SGDValue::learning_rate_change() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.learning_rate_change)
-  return static_cast< ::lapis::SGDValue_ChangeProto >(learning_rate_change_);
+inline ::lapis::SGDProto_ChangeProto SGDProto::learning_rate_change() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.learning_rate_change)
+  return static_cast< ::lapis::SGDProto_ChangeProto >(learning_rate_change_);
 }
-inline void SGDValue::set_learning_rate_change(::lapis::SGDValue_ChangeProto value) {
-  assert(::lapis::SGDValue_ChangeProto_IsValid(value));
+inline void SGDProto::set_learning_rate_change(::lapis::SGDProto_ChangeProto value) {
+  assert(::lapis::SGDProto_ChangeProto_IsValid(value));
   set_has_learning_rate_change();
   learning_rate_change_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_change)
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.learning_rate_change)
 }
 
-// optional float learning_rate_multiplier = 7 [default = 1];
-inline bool SGDValue::has_learning_rate_multiplier() const {
+// optional bool synchronous = 7 [default = false];
+inline bool SGDProto::has_synchronous() const {
   return (_has_bits_[0] & 0x00000040u) != 0;
 }
-inline void SGDValue::set_has_learning_rate_multiplier() {
+inline void SGDProto::set_has_synchronous() {
   _has_bits_[0] |= 0x00000040u;
 }
-inline void SGDValue::clear_has_learning_rate_multiplier() {
+inline void SGDProto::clear_has_synchronous() {
   _has_bits_[0] &= ~0x00000040u;
 }
-inline void SGDValue::clear_learning_rate_multiplier() {
-  learning_rate_multiplier_ = 1;
-  clear_has_learning_rate_multiplier();
+inline void SGDProto::clear_synchronous() {
+  synchronous_ = false;
+  clear_has_synchronous();
 }
-inline float SGDValue::learning_rate_multiplier() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.learning_rate_multiplier)
-  return learning_rate_multiplier_;
+inline bool SGDProto::synchronous() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.synchronous)
+  return synchronous_;
 }
-inline void SGDValue::set_learning_rate_multiplier(float value) {
-  set_has_learning_rate_multiplier();
-  learning_rate_multiplier_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.learning_rate_multiplier)
+inline void SGDProto::set_synchronous(bool value) {
+  set_has_synchronous();
+  synchronous_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.synchronous)
 }
 
-// optional float weight_decay_multiplier = 8 [default = 1];
-inline bool SGDValue::has_weight_decay_multiplier() const {
+// optional string handler = 8 [default = "SGDHandler"];
+inline bool SGDProto::has_handler() const {
   return (_has_bits_[0] & 0x00000080u) != 0;
 }
-inline void SGDValue::set_has_weight_decay_multiplier() {
+inline void SGDProto::set_has_handler() {
   _has_bits_[0] |= 0x00000080u;
 }
-inline void SGDValue::clear_has_weight_decay_multiplier() {
+inline void SGDProto::clear_has_handler() {
   _has_bits_[0] &= ~0x00000080u;
 }
-inline void SGDValue::clear_weight_decay_multiplier() {
-  weight_decay_multiplier_ = 1;
-  clear_has_weight_decay_multiplier();
+inline void SGDProto::clear_handler() {
+  if (handler_ != _default_handler_) {
+    handler_->assign(*_default_handler_);
+  }
+  clear_has_handler();
 }
-inline float SGDValue::weight_decay_multiplier() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.weight_decay_multiplier)
-  return weight_decay_multiplier_;
+inline const ::std::string& SGDProto::handler() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.handler)
+  return *handler_;
 }
-inline void SGDValue::set_weight_decay_multiplier(float value) {
-  set_has_weight_decay_multiplier();
-  weight_decay_multiplier_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.weight_decay_multiplier)
+inline void SGDProto::set_handler(const ::std::string& value) {
+  set_has_handler();
+  if (handler_ == _default_handler_) {
+    handler_ = new ::std::string;
+  }
+  handler_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.handler)
+}
+inline void SGDProto::set_handler(const char* value) {
+  set_has_handler();
+  if (handler_ == _default_handler_) {
+    handler_ = new ::std::string;
+  }
+  handler_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.SGDProto.handler)
+}
+inline void SGDProto::set_handler(const char* value, size_t size) {
+  set_has_handler();
+  if (handler_ == _default_handler_) {
+    handler_ = new ::std::string;
+  }
+  handler_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.SGDProto.handler)
+}
+inline ::std::string* SGDProto::mutable_handler() {
+  set_has_handler();
+  if (handler_ == _default_handler_) {
+    handler_ = new ::std::string(*_default_handler_);
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.SGDProto.handler)
+  return handler_;
+}
+inline ::std::string* SGDProto::release_handler() {
+  clear_has_handler();
+  if (handler_ == _default_handler_) {
+    return NULL;
+  } else {
+    ::std::string* temp = handler_;
+    handler_ = const_cast< ::std::string*>(_default_handler_);
+    return temp;
+  }
+}
+inline void SGDProto::set_allocated_handler(::std::string* handler) {
+  if (handler_ != _default_handler_) {
+    delete handler_;
+  }
+  if (handler) {
+    set_has_handler();
+    handler_ = handler;
+  } else {
+    clear_has_handler();
+    handler_ = const_cast< ::std::string*>(_default_handler_);
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.SGDProto.handler)
 }
 
-// optional int32 n_update = 9 [default = 0];
-inline bool SGDValue::has_n_update() const {
+// optional int32 checkpoint_after_steps = 9 [default = 0];
+inline bool SGDProto::has_checkpoint_after_steps() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
-inline void SGDValue::set_has_n_update() {
+inline void SGDProto::set_has_checkpoint_after_steps() {
   _has_bits_[0] |= 0x00000100u;
 }
-inline void SGDValue::clear_has_n_update() {
+inline void SGDProto::clear_has_checkpoint_after_steps() {
   _has_bits_[0] &= ~0x00000100u;
 }
-inline void SGDValue::clear_n_update() {
-  n_update_ = 0;
-  clear_has_n_update();
+inline void SGDProto::clear_checkpoint_after_steps() {
+  checkpoint_after_steps_ = 0;
+  clear_has_checkpoint_after_steps();
 }
-inline ::google::protobuf::int32 SGDValue::n_update() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.n_update)
-  return n_update_;
+inline ::google::protobuf::int32 SGDProto::checkpoint_after_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.checkpoint_after_steps)
+  return checkpoint_after_steps_;
 }
-inline void SGDValue::set_n_update(::google::protobuf::int32 value) {
-  set_has_n_update();
-  n_update_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.n_update)
+inline void SGDProto::set_checkpoint_after_steps(::google::protobuf::int32 value) {
+  set_has_checkpoint_after_steps();
+  checkpoint_after_steps_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.checkpoint_after_steps)
 }
 
-// optional int32 version = 10 [default = 0];
-inline bool SGDValue::has_version() const {
+// optional int32 checkpoint_every_steps = 10 [default = 0];
+inline bool SGDProto::has_checkpoint_every_steps() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
-inline void SGDValue::set_has_version() {
+inline void SGDProto::set_has_checkpoint_every_steps() {
   _has_bits_[0] |= 0x00000200u;
 }
-inline void SGDValue::clear_has_version() {
+inline void SGDProto::clear_has_checkpoint_every_steps() {
   _has_bits_[0] &= ~0x00000200u;
 }
-inline void SGDValue::clear_version() {
-  version_ = 0;
-  clear_has_version();
+inline void SGDProto::clear_checkpoint_every_steps() {
+  checkpoint_every_steps_ = 0;
+  clear_has_checkpoint_every_steps();
 }
-inline ::google::protobuf::int32 SGDValue::version() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.version)
-  return version_;
+inline ::google::protobuf::int32 SGDProto::checkpoint_every_steps() const {
+  // @@protoc_insertion_point(field_get:lapis.SGDProto.checkpoint_every_steps)
+  return checkpoint_every_steps_;
 }
-inline void SGDValue::set_version(::google::protobuf::int32 value) {
-  set_has_version();
-  version_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.version)
-}
-
-// optional int32 threshold = 11;
-inline bool SGDValue::has_threshold() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
-}
-inline void SGDValue::set_has_threshold() {
-  _has_bits_[0] |= 0x00000400u;
-}
-inline void SGDValue::clear_has_threshold() {
-  _has_bits_[0] &= ~0x00000400u;
-}
-inline void SGDValue::clear_threshold() {
-  threshold_ = 0;
-  clear_has_threshold();
-}
-inline ::google::protobuf::int32 SGDValue::threshold() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.threshold)
-  return threshold_;
-}
-inline void SGDValue::set_threshold(::google::protobuf::int32 value) {
-  set_has_threshold();
-  threshold_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.threshold)
+inline void SGDProto::set_checkpoint_every_steps(::google::protobuf::int32 value) {
+  set_has_checkpoint_every_steps();
+  checkpoint_every_steps_ = value;
+  // @@protoc_insertion_point(field_set:lapis.SGDProto.checkpoint_every_steps)
 }
 
-// optional int32 id = 12;
-inline bool SGDValue::has_id() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
+// -------------------------------------------------------------------
+
+// TKey
+
+// optional int32 id = 1;
+inline bool TKey::has_id() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void SGDValue::set_has_id() {
-  _has_bits_[0] |= 0x00000800u;
+inline void TKey::set_has_id() {
+  _has_bits_[0] |= 0x00000001u;
 }
-inline void SGDValue::clear_has_id() {
-  _has_bits_[0] &= ~0x00000800u;
+inline void TKey::clear_has_id() {
+  _has_bits_[0] &= ~0x00000001u;
 }
-inline void SGDValue::clear_id() {
+inline void TKey::clear_id() {
   id_ = 0;
   clear_has_id();
 }
-inline ::google::protobuf::int32 SGDValue::id() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.id)
+inline ::google::protobuf::int32 TKey::id() const {
+  // @@protoc_insertion_point(field_get:lapis.TKey.id)
   return id_;
 }
-inline void SGDValue::set_id(::google::protobuf::int32 value) {
+inline void TKey::set_id(::google::protobuf::int32 value) {
   set_has_id();
   id_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.id)
+  // @@protoc_insertion_point(field_set:lapis.TKey.id)
 }
 
-// optional int32 gid = 13;
-inline bool SGDValue::has_gid() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+// optional int32 version = 2;
+inline bool TKey::has_version() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void SGDValue::set_has_gid() {
-  _has_bits_[0] |= 0x00001000u;
+inline void TKey::set_has_version() {
+  _has_bits_[0] |= 0x00000002u;
 }
-inline void SGDValue::clear_has_gid() {
-  _has_bits_[0] &= ~0x00001000u;
+inline void TKey::clear_has_version() {
+  _has_bits_[0] &= ~0x00000002u;
 }
-inline void SGDValue::clear_gid() {
-  gid_ = 0;
-  clear_has_gid();
+inline void TKey::clear_version() {
+  version_ = 0;
+  clear_has_version();
 }
-inline ::google::protobuf::int32 SGDValue::gid() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.gid)
-  return gid_;
+inline ::google::protobuf::int32 TKey::version() const {
+  // @@protoc_insertion_point(field_get:lapis.TKey.version)
+  return version_;
 }
-inline void SGDValue::set_gid(::google::protobuf::int32 value) {
-  set_has_gid();
-  gid_ = value;
-  // @@protoc_insertion_point(field_set:lapis.SGDValue.gid)
+inline void TKey::set_version(::google::protobuf::int32 value) {
+  set_has_version();
+  version_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TKey.version)
 }
 
-// optional .lapis.DAryProto data = 14;
-inline bool SGDValue::has_data() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
+// optional int32 rank = 3;
+inline bool TKey::has_rank() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void SGDValue::set_has_data() {
-  _has_bits_[0] |= 0x00002000u;
+inline void TKey::set_has_rank() {
+  _has_bits_[0] |= 0x00000004u;
 }
-inline void SGDValue::clear_has_data() {
-  _has_bits_[0] &= ~0x00002000u;
+inline void TKey::clear_has_rank() {
+  _has_bits_[0] &= ~0x00000004u;
 }
-inline void SGDValue::clear_data() {
+inline void TKey::clear_rank() {
+  rank_ = 0;
+  clear_has_rank();
+}
+inline ::google::protobuf::int32 TKey::rank() const {
+  // @@protoc_insertion_point(field_get:lapis.TKey.rank)
+  return rank_;
+}
+inline void TKey::set_rank(::google::protobuf::int32 value) {
+  set_has_rank();
+  rank_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TKey.rank)
+}
+
+// -------------------------------------------------------------------
+
+// TVal
+
+// optional string type = 1;
+inline bool TVal::has_type() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void TVal::set_has_type() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void TVal::clear_has_type() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void TVal::clear_type() {
+  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    type_->clear();
+  }
+  clear_has_type();
+}
+inline const ::std::string& TVal::type() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.type)
+  return *type_;
+}
+inline void TVal::set_type(const ::std::string& value) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    type_ = new ::std::string;
+  }
+  type_->assign(value);
+  // @@protoc_insertion_point(field_set:lapis.TVal.type)
+}
+inline void TVal::set_type(const char* value) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    type_ = new ::std::string;
+  }
+  type_->assign(value);
+  // @@protoc_insertion_point(field_set_char:lapis.TVal.type)
+}
+inline void TVal::set_type(const char* value, size_t size) {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    type_ = new ::std::string;
+  }
+  type_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:lapis.TVal.type)
+}
+inline ::std::string* TVal::mutable_type() {
+  set_has_type();
+  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    type_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:lapis.TVal.type)
+  return type_;
+}
+inline ::std::string* TVal::release_type() {
+  clear_has_type();
+  if (type_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = type_;
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void TVal::set_allocated_type(::std::string* type) {
+  if (type_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete type_;
+  }
+  if (type) {
+    set_has_type();
+    type_ = type;
+  } else {
+    clear_has_type();
+    type_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.TVal.type)
+}
+
+// optional int32 num_aggregate = 4;
+inline bool TVal::has_num_aggregate() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void TVal::set_has_num_aggregate() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void TVal::clear_has_num_aggregate() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void TVal::clear_num_aggregate() {
+  num_aggregate_ = 0;
+  clear_has_num_aggregate();
+}
+inline ::google::protobuf::int32 TVal::num_aggregate() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.num_aggregate)
+  return num_aggregate_;
+}
+inline void TVal::set_num_aggregate(::google::protobuf::int32 value) {
+  set_has_num_aggregate();
+  num_aggregate_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.num_aggregate)
+}
+
+// optional int32 version = 5;
+inline bool TVal::has_version() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void TVal::set_has_version() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void TVal::clear_has_version() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void TVal::clear_version() {
+  version_ = 0;
+  clear_has_version();
+}
+inline ::google::protobuf::int32 TVal::version() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.version)
+  return version_;
+}
+inline void TVal::set_version(::google::protobuf::int32 value) {
+  set_has_version();
+  version_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.version)
+}
+
+// optional int32 rank = 6;
+inline bool TVal::has_rank() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void TVal::set_has_rank() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void TVal::clear_has_rank() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void TVal::clear_rank() {
+  rank_ = 0;
+  clear_has_rank();
+}
+inline ::google::protobuf::int32 TVal::rank() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.rank)
+  return rank_;
+}
+inline void TVal::set_rank(::google::protobuf::int32 value) {
+  set_has_rank();
+  rank_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.rank)
+}
+
+// optional int32 param_id = 7;
+inline bool TVal::has_param_id() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void TVal::set_has_param_id() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void TVal::clear_has_param_id() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void TVal::clear_param_id() {
+  param_id_ = 0;
+  clear_has_param_id();
+}
+inline ::google::protobuf::int32 TVal::param_id() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.param_id)
+  return param_id_;
+}
+inline void TVal::set_param_id(::google::protobuf::int32 value) {
+  set_has_param_id();
+  param_id_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.param_id)
+}
+
+// optional int32 split_id = 8;
+inline bool TVal::has_split_id() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void TVal::set_has_split_id() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void TVal::clear_has_split_id() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void TVal::clear_split_id() {
+  split_id_ = 0;
+  clear_has_split_id();
+}
+inline ::google::protobuf::int32 TVal::split_id() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.split_id)
+  return split_id_;
+}
+inline void TVal::set_split_id(::google::protobuf::int32 value) {
+  set_has_split_id();
+  split_id_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.split_id)
+}
+
+// optional int32 split_offset = 9;
+inline bool TVal::has_split_offset() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void TVal::set_has_split_offset() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void TVal::clear_has_split_offset() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void TVal::clear_split_offset() {
+  split_offset_ = 0;
+  clear_has_split_offset();
+}
+inline ::google::protobuf::int32 TVal::split_offset() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.split_offset)
+  return split_offset_;
+}
+inline void TVal::set_split_offset(::google::protobuf::int32 value) {
+  set_has_split_offset();
+  split_offset_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.split_offset)
+}
+
+// optional float learning_rate_multiplier = 10 [default = 1];
+inline bool TVal::has_learning_rate_multiplier() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void TVal::set_has_learning_rate_multiplier() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void TVal::clear_has_learning_rate_multiplier() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void TVal::clear_learning_rate_multiplier() {
+  learning_rate_multiplier_ = 1;
+  clear_has_learning_rate_multiplier();
+}
+inline float TVal::learning_rate_multiplier() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.learning_rate_multiplier)
+  return learning_rate_multiplier_;
+}
+inline void TVal::set_learning_rate_multiplier(float value) {
+  set_has_learning_rate_multiplier();
+  learning_rate_multiplier_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.learning_rate_multiplier)
+}
+
+// optional float weight_decay_multiplier = 11 [default = 1];
+inline bool TVal::has_weight_decay_multiplier() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void TVal::set_has_weight_decay_multiplier() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void TVal::clear_has_weight_decay_multiplier() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void TVal::clear_weight_decay_multiplier() {
+  weight_decay_multiplier_ = 1;
+  clear_has_weight_decay_multiplier();
+}
+inline float TVal::weight_decay_multiplier() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.weight_decay_multiplier)
+  return weight_decay_multiplier_;
+}
+inline void TVal::set_weight_decay_multiplier(float value) {
+  set_has_weight_decay_multiplier();
+  weight_decay_multiplier_ = value;
+  // @@protoc_insertion_point(field_set:lapis.TVal.weight_decay_multiplier)
+}
+
+// optional .lapis.DAryProto data = 12;
+inline bool TVal::has_data() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void TVal::set_has_data() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void TVal::clear_has_data() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void TVal::clear_data() {
   if (data_ != NULL) data_->::lapis::DAryProto::Clear();
   clear_has_data();
 }
-inline const ::lapis::DAryProto& SGDValue::data() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.data)
+inline const ::lapis::DAryProto& TVal::data() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.data)
   return data_ != NULL ? *data_ : *default_instance_->data_;
 }
-inline ::lapis::DAryProto* SGDValue::mutable_data() {
+inline ::lapis::DAryProto* TVal::mutable_data() {
   set_has_data();
   if (data_ == NULL) data_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.data)
+  // @@protoc_insertion_point(field_mutable:lapis.TVal.data)
   return data_;
 }
-inline ::lapis::DAryProto* SGDValue::release_data() {
+inline ::lapis::DAryProto* TVal::release_data() {
   clear_has_data();
   ::lapis::DAryProto* temp = data_;
   data_ = NULL;
   return temp;
 }
-inline void SGDValue::set_allocated_data(::lapis::DAryProto* data) {
+inline void TVal::set_allocated_data(::lapis::DAryProto* data) {
   delete data_;
   data_ = data;
   if (data) {
@@ -5731,70 +5790,81 @@ inline void SGDValue::set_allocated_data(::lapis::DAryProto* data) {
   } else {
     clear_has_data();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.data)
+  // @@protoc_insertion_point(field_set_allocated:lapis.TVal.data)
 }
 
-// repeated .lapis.DAryProto grad = 15;
-inline int SGDValue::grad_size() const {
-  return grad_.size();
+// optional .lapis.DAryProto grad = 13;
+inline bool TVal::has_grad() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void SGDValue::clear_grad() {
-  grad_.Clear();
+inline void TVal::set_has_grad() {
+  _has_bits_[0] |= 0x00000400u;
 }
-inline const ::lapis::DAryProto& SGDValue::grad(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.grad)
-  return grad_.Get(index);
+inline void TVal::clear_has_grad() {
+  _has_bits_[0] &= ~0x00000400u;
 }
-inline ::lapis::DAryProto* SGDValue::mutable_grad(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.grad)
-  return grad_.Mutable(index);
+inline void TVal::clear_grad() {
+  if (grad_ != NULL) grad_->::lapis::DAryProto::Clear();
+  clear_has_grad();
 }
-inline ::lapis::DAryProto* SGDValue::add_grad() {
-  // @@protoc_insertion_point(field_add:lapis.SGDValue.grad)
-  return grad_.Add();
+inline const ::lapis::DAryProto& TVal::grad() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.grad)
+  return grad_ != NULL ? *grad_ : *default_instance_->grad_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >&
-SGDValue::grad() const {
-  // @@protoc_insertion_point(field_list:lapis.SGDValue.grad)
+inline ::lapis::DAryProto* TVal::mutable_grad() {
+  set_has_grad();
+  if (grad_ == NULL) grad_ = new ::lapis::DAryProto;
+  // @@protoc_insertion_point(field_mutable:lapis.TVal.grad)
   return grad_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::lapis::DAryProto >*
-SGDValue::mutable_grad() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.SGDValue.grad)
-  return &grad_;
+inline ::lapis::DAryProto* TVal::release_grad() {
+  clear_has_grad();
+  ::lapis::DAryProto* temp = grad_;
+  grad_ = NULL;
+  return temp;
+}
+inline void TVal::set_allocated_grad(::lapis::DAryProto* grad) {
+  delete grad_;
+  grad_ = grad;
+  if (grad) {
+    set_has_grad();
+  } else {
+    clear_has_grad();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.TVal.grad)
 }
 
-// optional .lapis.DAryProto history = 16;
-inline bool SGDValue::has_history() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
+// optional .lapis.DAryProto history = 14;
+inline bool TVal::has_history() const {
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
-inline void SGDValue::set_has_history() {
-  _has_bits_[0] |= 0x00008000u;
+inline void TVal::set_has_history() {
+  _has_bits_[0] |= 0x00000800u;
 }
-inline void SGDValue::clear_has_history() {
-  _has_bits_[0] &= ~0x00008000u;
+inline void TVal::clear_has_history() {
+  _has_bits_[0] &= ~0x00000800u;
 }
-inline void SGDValue::clear_history() {
+inline void TVal::clear_history() {
   if (history_ != NULL) history_->::lapis::DAryProto::Clear();
   clear_has_history();
 }
-inline const ::lapis::DAryProto& SGDValue::history() const {
-  // @@protoc_insertion_point(field_get:lapis.SGDValue.history)
+inline const ::lapis::DAryProto& TVal::history() const {
+  // @@protoc_insertion_point(field_get:lapis.TVal.history)
   return history_ != NULL ? *history_ : *default_instance_->history_;
 }
-inline ::lapis::DAryProto* SGDValue::mutable_history() {
+inline ::lapis::DAryProto* TVal::mutable_history() {
   set_has_history();
   if (history_ == NULL) history_ = new ::lapis::DAryProto;
-  // @@protoc_insertion_point(field_mutable:lapis.SGDValue.history)
+  // @@protoc_insertion_point(field_mutable:lapis.TVal.history)
   return history_;
 }
-inline ::lapis::DAryProto* SGDValue::release_history() {
+inline ::lapis::DAryProto* TVal::release_history() {
   clear_has_history();
   ::lapis::DAryProto* temp = history_;
   history_ = NULL;
   return temp;
 }
-inline void SGDValue::set_allocated_history(::lapis::DAryProto* history) {
+inline void TVal::set_allocated_history(::lapis::DAryProto* history) {
   delete history_;
   history_ = history;
   if (history) {
@@ -5802,84 +5872,16 @@ inline void SGDValue::set_allocated_history(::lapis::DAryProto* history) {
   } else {
     clear_has_history();
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.SGDValue.history)
+  // @@protoc_insertion_point(field_set_allocated:lapis.TVal.history)
 }
 
 // -------------------------------------------------------------------
 
-// VKey
+// SGDVal
 
-// optional int32 key = 1;
-inline bool VKey::has_key() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void VKey::set_has_key() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void VKey::clear_has_key() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void VKey::clear_key() {
-  key_ = 0;
-  clear_has_key();
-}
-inline ::google::protobuf::int32 VKey::key() const {
-  // @@protoc_insertion_point(field_get:lapis.VKey.key)
-  return key_;
-}
-inline void VKey::set_key(::google::protobuf::int32 value) {
-  set_has_key();
-  key_ = value;
-  // @@protoc_insertion_point(field_set:lapis.VKey.key)
-}
+// -------------------------------------------------------------------
 
-// optional int32 version = 2;
-inline bool VKey::has_version() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void VKey::set_has_version() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void VKey::clear_has_version() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void VKey::clear_version() {
-  version_ = 0;
-  clear_has_version();
-}
-inline ::google::protobuf::int32 VKey::version() const {
-  // @@protoc_insertion_point(field_get:lapis.VKey.version)
-  return version_;
-}
-inline void VKey::set_version(::google::protobuf::int32 value) {
-  set_has_version();
-  version_ = value;
-  // @@protoc_insertion_point(field_set:lapis.VKey.version)
-}
-
-// optional int32 gid = 3;
-inline bool VKey::has_gid() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void VKey::set_has_gid() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void VKey::clear_has_gid() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void VKey::clear_gid() {
-  gid_ = 0;
-  clear_has_gid();
-}
-inline ::google::protobuf::int32 VKey::gid() const {
-  // @@protoc_insertion_point(field_get:lapis.VKey.gid)
-  return gid_;
-}
-inline void VKey::set_gid(::google::protobuf::int32 value) {
-  set_has_gid();
-  gid_ = value;
-  // @@protoc_insertion_point(field_set:lapis.VKey.gid)
-}
+// AdaVal
 
 
 // @@protoc_insertion_point(namespace_scope)
@@ -5900,20 +5902,20 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::lapis::LayerProto_PoolingMethod>() {
   return ::lapis::LayerProto_PoolingMethod_descriptor();
 }
-template <> struct is_proto_enum< ::lapis::SolverProto_Method> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::lapis::SolverProto_GradCalcAlg> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SolverProto_Method>() {
-  return ::lapis::SolverProto_Method_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SolverProto_GradCalcAlg>() {
+  return ::lapis::SolverProto_GradCalcAlg_descriptor();
 }
-template <> struct is_proto_enum< ::lapis::SolverProto_GradAlg> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::lapis::SolverProto_Partition> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SolverProto_GradAlg>() {
-  return ::lapis::SolverProto_GradAlg_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SolverProto_Partition>() {
+  return ::lapis::SolverProto_Partition_descriptor();
 }
-template <> struct is_proto_enum< ::lapis::SGDValue_ChangeProto> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::lapis::SGDProto_ChangeProto> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SGDValue_ChangeProto>() {
-  return ::lapis::SGDValue_ChangeProto_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::lapis::SGDProto_ChangeProto>() {
+  return ::lapis::SGDProto_ChangeProto_descriptor();
 }
 
 }  // namespace google

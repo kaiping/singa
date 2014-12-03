@@ -18,9 +18,31 @@ namespace lapis {
  * There are three requests, Put, Get and Update. Every Table is associated
  * with a the \class Tableserverhandler (e.g., \class TSHandlerForSGD).
  */
-class TableServer{
- public:
-  void Start(const SGDProto & sgd);
+class TableServer {
+public:
+	/**
+	 * Start the table server. There are several steps:
+	 * 1. Create the table of type <TKey, TVal>
+	 * 2. Init and start NetworkService.
+	 * 3. Register callback for handling requests.
+	 * 4. Start the dispatch loop.
+	 */
+	void Start(const SGDProto & sgd);
+
+	void create_table(const SGDProto &sgd);
+
+	bool handle_put_request(const Message *msg);
+	bool handle_get_request(const Message *msg);
+	bool handle_update_request(const Message *msg);
+
+	/**
+	 * Stop the dispatch loop in the main thread. Exit MPI.
+	 */
+	void handle_shutdown();
+private:
+	NetworkService *network_service_;
+	GlobalTable *table_;
+	RequestDispatcher *dispatcher_;
 };
 
 /**

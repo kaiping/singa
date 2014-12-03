@@ -5,15 +5,66 @@
 #include "server.h"
 #include "utils/math.h"
 #include "utils/global_context.h"
+#include "utils/network_service.h"
+#include "core/network_queue.h"
+
+DECLARE_double(sleep_time);
 
 namespace lapis {
-void TableServer::Start(const SGDProto& sgd){
-  TableServerHandler *tshandler=TSHandlerFactory::Get()->Create(sgd.handler());
-  tshandler->Setup(sgd);
-  while(true){
-    // todo (Anh) handle requests;
-  }
+void TableServer::Start(const SGDProto& sgd) {
+	create_table(sgd);
+
+	// init network service
+	network_service_ = NetworkService::Get();
+	network_service_->Init(GlobalContext::Get()->rank(), Network::Get()->get(),
+			new SimpleQueue());
+	network_service_->RegisterShutdownCb(
+			boost::bind(&TableServer::handle_shutdown, this));
+	network_service_->StartNetworkService();
+
+
+	// init dispatcher and register handler
+	dispatcher_ = new RequestDispatcher();
+	dispatcher_->RegisterTableCb(MTYPE_PUT_REQUEST,
+			boost::bind(&TableServer::handle_put_request, this, _1));
+	dispatcher_->RegisterTableCb(MTYPE_UPDATE_REQUEST,
+			boost::bind(&TableServer::handle_update_request, this, _1));
+	dispatcher_->RegisterTableCb(MTYPE_GET_REQUEST,
+			boost::bind(&TableServer::handle_get_request, this, _1));
+	dispatcher_->StartDispatchLoop();
 }
+
+void TableServer::create_table(const SGDProto &sgd) {
+	TableServerHandler *tshandler = TSHandlerFactory::Get()->Create(
+			sgd.handler());
+	tshandler->Setup(sgd);
+
+	TableDescriptor info = new TableDescriptor(0,
+			GlobalContext::Get()->num_table_servers());
+
+	info->key_marshal = new Marshal<TKey>();
+	info->value_marshal = new Marshal<TVal>();
+	info->accum = tshandler;
+	info->partition_factory = new typename SparseTable<TKey, TVal>::Factory;
+	table_ = new TypedGlobalTable<TKey, TVal>();
+	table_->Init(info);
+}
+
+void TableServer::handle_shutdown(){
+	while (network_service_->is_active())
+		Sleep(FLAGS_sleep_time);
+	dispatcher_->StopDispatchLoop();
+}
+
+//TODO: turns Message into RequestBase, then to PutRequest, then extract
+// TableData and updates
+bool TableServer::handle_put_request(const Message *msg) {
+	const TableData *put = static_cast<const TableData *>(message);
+	GlobalTable *t = tables_.at(put->table());
+	t->ApplyPut(*put);
+	return true;
+}
+
 /**************************************************************************
  * Implementation for base table server handlers
  *************************************************************************/

@@ -38,7 +38,6 @@ message MethodStats {
 message RequestBase {
 	required uint32 table = 1;
 	required uint32 source = 2; 
-	required TKey key = 3; 
 	extensions 100 to 199; 
 }
 
@@ -46,25 +45,27 @@ message GetRequest {
 	extend RequestBase{
 		optional GetRequest name = 101; 
 	}  	
+	optional unit32 shard = 1; 
+	optional TKey key = 2; 
 }
 
 message PutRequest {
 	extend RequestBase{
 		optional PutRequest name = 102; 
-	}  	
-	optional TVal value;     
+	}  
+	optional unit32 shard = 1; 
+	optional TableData data=2; 	
 }
 
 message UpdateRequest {
 	extend RequestBase{
 		optional PutRequest name = 103; 
-	}  	
-	optional TVal value;     
+	}  
+	optional unit32 shard = 1; 
+	optional TableData data=2; 
 }
 
 message TableData {
-	extend RequestBase{
-		optional TableData name = 104; 
-	}
-  	optional TVal value;     
+	optional TKey key = 1; 
+  	optional TVal value =2;     
 }

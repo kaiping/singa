@@ -124,64 +124,6 @@ struct Sharding {
 	};
 };
 
-template<class T, class Enable = void>
-struct Marshal {
-	virtual void marshal(const T &t, string *out) {
-		out->assign(reinterpret_cast<const char *>(&t), sizeof(t));
-	}
-
-	virtual void unmarshal(const string &s, T *t) {
-		*t = *reinterpret_cast<const T *>(s.data());
-	}
-};
-
-template<class T>
-struct Marshal<T, typename boost::enable_if<boost::is_base_of<string, T>>::type> {
-	void marshal(const string &t, string *out) {
-		*out = t;
-	}
-	void unmarshal(const string &s, string *t) {
-		t->assign(s.data(), s.size());
-	}
-};
-
-
-template<class T>
-struct Marshal<T,
-		typename boost::enable_if<
-				boost::is_base_of<google::protobuf::Message, T>>::type> {
-	void marshal(const google::protobuf::Message &t, string *out) {
-		t.SerializeToString(out);
-	}
-	void unmarshal(const string &s, google::protobuf::Message *t) {
-		t->ParseFromArray(s.data(), s.size());
-	}
-};
-
-/**
- * Convert type T to string.
- * @param *m marshall struct.
- * @param t value of type T to be convert
- * @return string representation of t
- */
-template<class T>
-string marshal(Marshal<T> *m, const T &t) {
-	string out;
-	m->marshal(t, &out);
-	return out;
-}
-
-/**
- * Convert string to type T.
- * @see marshall().
- */
-template<class T>
-T unmarshal(Marshal<T> *m, const string &s) {
-	T out;
-	m->unmarshal(s, &out);
-	return out;
-}
-
 } // namespace lapis
 
 #endif  // INCLUDE_CORE_COMMON_H_

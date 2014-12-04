@@ -5,9 +5,6 @@
 #define INCLUDE_CORE_TABLE_H_
 #include <glog/logging.h>
 #include <boost/thread.hpp>
-#include "core/common.h"
-#include "core/file.h"
-#include "proto/worker.pb.h"
 
 /**
  * @file table.h
@@ -16,6 +13,7 @@
 namespace lapis {
 
 struct TableBase; /**< type declaration */
+class TableData; /**< type declaration */
 
 /**
  * Struct for creating local shard. User implements this struct and passes it
@@ -45,10 +43,7 @@ public:
 	int table_id; /**< unique table ID */
 	int num_shards;
 
-	void *accum; /**< user-defined accumulator (BaseUpdateHandler) */
-	void *sharder; /**< mapping of key to shard ID */
-	void *key_marshal; /**< struct for marshalling key type */
-	void *value_marshal; /**< struct for marhsalling value type */
+	void *handler; /**< user-defined handler on table operations */
 	TableFactory *partition_factory; /** struct for creating local table for storing shard content */
 };
 
@@ -60,8 +55,6 @@ class TableBase {
 public:
 	virtual void Init(const TableDescriptor *info) {
 		info_ = new TableDescriptor(*info);
-		CHECK(info_->key_marshal != NULL);
-		CHECK(info_->value_marshal != NULL);
 	}
 
 	const TableDescriptor &info() const {
@@ -80,30 +73,7 @@ protected:
 	TableDescriptor *info_;
 };
 
-
-/**
- * Struct for serializing tables, either to disk or for transmitting over the network.
- */
-struct TableCoder {
-	virtual void WriteEntry(string k, string v) = 0;
-	virtual bool ReadEntry(string *k, string *v) = 0;
-
-	virtual ~TableCoder() {
-	}
-};
-
-/**
- * Serializable table interface.
- */
-class Serializable {
- public:
-  virtual bool ApplyUpdates(TableCoder *in, LogFile *logfile) = 0;
-  virtual bool ApplyPut(TableCoder *in, LogFile *logfile) = 0;
-  virtual void restore(LogFile *logfile, int desired_size)=0; 
-  virtual void Serialize(TableCoder *out) = 0;
-};
-
-
+class LogFile;
 
 /**
  * Template for typed table classes whose data and operations are of specific types.s
@@ -115,48 +85,11 @@ public:
 	virtual V get(const K &k) = 0;
 	virtual void put(const K &k, const V &v) = 0;
 	virtual bool update(const K &k, const V &v) = 0;
+
+	virtual bool ApplyUpdates(TableData *in, LogFile *logfile) = 0;
+	virtual bool ApplyPut(TableData *in, LogFile *logfile) = 0;
 	void remove(const K &k);
 };
-
-/**
- * A generic table in which key and value are of type string.
- *
- * The GlobalTable works with get/update methods of this class. The get and put
- * method also invokes user-define get/update handler --- for customizing
- * consistency model.
- *
- * Typed tables (@see sparse-table.h) override these method to convert to/from
- * correct types.
- */
-class UntypedTable {
-public:
-
-	/**
-	 * Return empty string if the value is not ready to be returned.
-	 */
-	virtual string get_str(const string &k) = 0;
-
-	/**
-	 * Not yet implemented!
-	 */
-	virtual void update_str(const string &k, const string &v) = 0;
-};
-
-class TableData;
-
-
-/**
- * Specific encoding of table data, to be transmitted over the network.
- */
-struct NetworkTableCoder : public TableCoder {
-	NetworkTableCoder(const TableData *in);
-  virtual void WriteEntry(string k, string v);
-  virtual bool ReadEntry(string *k, string *v);
-
-  int read_pos_;
-  TableData *t_;
-};
-
 }  // namespace lapis
 
 

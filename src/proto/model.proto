@@ -268,7 +268,7 @@ message TVal{
 message SGDVal{
   extend TVal {
     optional SGDVal sgd=101;
-  }
+  }	
 }
 
 // Tuple value class used in AdaGrad SGD algorithm.

@@ -42,11 +42,9 @@ void TableServer::create_table(const SGDProto &sgd) {
 	TableDescriptor info = new TableDescriptor(0,
 			GlobalContext::Get()->num_table_servers());
 
-	info->key_marshal = new Marshal<TKey>();
-	info->value_marshal = new Marshal<TVal>();
-	info->accum = tshandler;
-	info->partition_factory = new typename SparseTable<TKey, TVal>::Factory;
-	table_ = new TypedGlobalTable<TKey, TVal>();
+	info->handler = tshandler;
+	info->partition_factory = new typename Shard::Factory;
+	table_ = new GlobalTable();
 	table_->Init(info);
 }
 
@@ -56,15 +54,39 @@ void TableServer::handle_shutdown(){
 	dispatcher_->StopDispatchLoop();
 }
 
-//TODO: turns Message into RequestBase, then to PutRequest, then extract
-// TableData and updates
 bool TableServer::handle_put_request(const Message *msg) {
-	const TableData *put = static_cast<const TableData *>(message);
-	GlobalTable *t = tables_.at(put->table());
-	t->ApplyPut(*put);
+	PutRequest* put_req =
+			static_cast<const RequestBase *>(msg)->MutableExtension(
+					PutRequest::name);
+	TableData *put = put_req->mutable_data();
+	table_->ApplyPut(*put);
 	return true;
 }
 
+bool TableServer::handle_update_request(const Message *msg) {
+	UpdateRequest* update_req =
+			static_cast<const RequestBase *>(msg)->MutableExtension(
+					UpdateRequest::name);
+	TableData *put = update_req->mutable_data();
+	bool ret = table_->ApplyUpdates(*put);
+	return ret;
+}
+
+bool TableServer::handle_get_request(const Message *msg) {
+	const RequestBase *req_base = static_cast<const RequestBase*>(msg);
+	int dest = req_base->source();
+
+	GetRequest* get_req =
+			static_cast<const RequestBase *>(msg)->MutableExtension(
+					GetRequest::name);
+	TableData get_resp;
+
+	if (table_->HandleGet(*get_req, &get_resp)) {
+		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
+		return true;
+	} else
+		return false;
+}
 /**************************************************************************
  * Implementation for base table server handlers
  *************************************************************************/

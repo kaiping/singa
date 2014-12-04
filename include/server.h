@@ -29,10 +29,21 @@ public:
 	 */
 	void Start(const SGDProto & sgd);
 
-	void create_table(const SGDProto &sgd);
 
+	/**
+	 * Convert message to PutRequest and invoke table's operation to insert TableData
+	 * object to the table.
+	 */
 	bool handle_put_request(const Message *msg);
+
+	/**
+	 * Convert message to GetRequest and invoke table's operation to return TableData object.
+	 */
 	bool handle_get_request(const Message *msg);
+
+	/**
+	 * Convert message to UpdateRequest and invoke table's operation to update the table.
+	 */
 	bool handle_update_request(const Message *msg);
 
 	/**
@@ -43,6 +54,8 @@ private:
 	NetworkService *network_service_;
 	GlobalTable *table_;
 	RequestDispatcher *dispatcher_;
+
+	void create_table(const SGDProto &sgd);
 };
 
 /**

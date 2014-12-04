@@ -16,9 +16,4 @@ message Cluster{
 
   // local data folder , train/val/test shards, checkpoint files
   required string data_folder=6;
-
-  optional bool synchronous=7 [default=false];
-  optional bool checkpoint_enabled=8 [default=false];
-  optional int32 checkpoint_freq=9;
-  optional int32 checkpoint_after=10;
 }

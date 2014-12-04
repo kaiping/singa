@@ -47,6 +47,7 @@ class Record;
 class SGDProto;
 class TKey;
 class TVal;
+class Tuple;
 class SGDVal;
 class AdaVal;
 
@@ -2351,6 +2352,99 @@ class TVal : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static TVal* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Tuple : public ::google::protobuf::Message {
+ public:
+  Tuple();
+  virtual ~Tuple();
+
+  Tuple(const Tuple& from);
+
+  inline Tuple& operator=(const Tuple& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Tuple& default_instance();
+
+  void Swap(Tuple* other);
+
+  // implements Message ----------------------------------------------
+
+  Tuple* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Tuple& from);
+  void MergeFrom(const Tuple& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional .lapis.TKey key = 1;
+  inline bool has_key() const;
+  inline void clear_key();
+  static const int kKeyFieldNumber = 1;
+  inline const ::lapis::TKey& key() const;
+  inline ::lapis::TKey* mutable_key();
+  inline ::lapis::TKey* release_key();
+  inline void set_allocated_key(::lapis::TKey* key);
+
+  // optional .lapis.TVal val = 2;
+  inline bool has_val() const;
+  inline void clear_val();
+  static const int kValFieldNumber = 2;
+  inline const ::lapis::TVal& val() const;
+  inline ::lapis::TVal* mutable_val();
+  inline ::lapis::TVal* release_val();
+  inline void set_allocated_val(::lapis::TVal* val);
+
+  // @@protoc_insertion_point(class_scope:lapis.Tuple)
+ private:
+  inline void set_has_key();
+  inline void clear_has_key();
+  inline void set_has_val();
+  inline void clear_has_val();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::lapis::TKey* key_;
+  ::lapis::TVal* val_;
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static Tuple* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -5873,6 +5967,92 @@ inline void TVal::set_allocated_history(::lapis::DAryProto* history) {
     clear_has_history();
   }
   // @@protoc_insertion_point(field_set_allocated:lapis.TVal.history)
+}
+
+// -------------------------------------------------------------------
+
+// Tuple
+
+// optional .lapis.TKey key = 1;
+inline bool Tuple::has_key() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Tuple::set_has_key() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Tuple::clear_has_key() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Tuple::clear_key() {
+  if (key_ != NULL) key_->::lapis::TKey::Clear();
+  clear_has_key();
+}
+inline const ::lapis::TKey& Tuple::key() const {
+  // @@protoc_insertion_point(field_get:lapis.Tuple.key)
+  return key_ != NULL ? *key_ : *default_instance_->key_;
+}
+inline ::lapis::TKey* Tuple::mutable_key() {
+  set_has_key();
+  if (key_ == NULL) key_ = new ::lapis::TKey;
+  // @@protoc_insertion_point(field_mutable:lapis.Tuple.key)
+  return key_;
+}
+inline ::lapis::TKey* Tuple::release_key() {
+  clear_has_key();
+  ::lapis::TKey* temp = key_;
+  key_ = NULL;
+  return temp;
+}
+inline void Tuple::set_allocated_key(::lapis::TKey* key) {
+  delete key_;
+  key_ = key;
+  if (key) {
+    set_has_key();
+  } else {
+    clear_has_key();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.Tuple.key)
+}
+
+// optional .lapis.TVal val = 2;
+inline bool Tuple::has_val() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Tuple::set_has_val() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Tuple::clear_has_val() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Tuple::clear_val() {
+  if (val_ != NULL) val_->::lapis::TVal::Clear();
+  clear_has_val();
+}
+inline const ::lapis::TVal& Tuple::val() const {
+  // @@protoc_insertion_point(field_get:lapis.Tuple.val)
+  return val_ != NULL ? *val_ : *default_instance_->val_;
+}
+inline ::lapis::TVal* Tuple::mutable_val() {
+  set_has_val();
+  if (val_ == NULL) val_ = new ::lapis::TVal;
+  // @@protoc_insertion_point(field_mutable:lapis.Tuple.val)
+  return val_;
+}
+inline ::lapis::TVal* Tuple::release_val() {
+  clear_has_val();
+  ::lapis::TVal* temp = val_;
+  val_ = NULL;
+  return temp;
+}
+inline void Tuple::set_allocated_val(::lapis::TVal* val) {
+  delete val_;
+  val_ = val;
+  if (val) {
+    set_has_val();
+  } else {
+    clear_has_val();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.Tuple.val)
 }
 
 // -------------------------------------------------------------------

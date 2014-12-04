@@ -68,11 +68,11 @@ class GlobalContext {
   int group_id() {return gid_;}
   int num_groups() {return groups_.size();}
   int group_size() {return cluster_.group_size();}
-  bool synchronous() {return cluster_.synchronous();}
+  //bool synchronous() {return cluster_.synchronous();}
   int rank() {return rank_;}
-  bool checkpoint_enabled() {return cluster_.checkpoint_enabled();}
-  int checkpoint_freq() {return cluster_.checkpoint_freq();}
-  int checkpoint_after() {return cluster_.checkpoint_after();}
+  //bool checkpoint_enabled() {return cluster_.checkpoint_enabled();}
+  //int checkpoint_freq() {return cluster_.checkpoint_freq();}
+  //int checkpoint_after() {return cluster_.checkpoint_after();}
   const string data_folder() {return cluster_.data_folder();}
   const MPI_Comm& mpicomm() {return mpicomm_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}

@@ -59,7 +59,10 @@ SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
 TABLE_SRCS := src/test/test_table_server.cc
 TABLE_OBJS = $(TABLE_SRCS:.cc=.o)
 
-OBJS := $(sort $(LAPIS_OBJS) $(SHARD_OBJS) )
+TUPLE_SRCS := src/test/test_tuple.cc
+TUPLE_OBJS := $(addprefix $(BUILD_DIR)/, $(TUPLE_SRCS:.cc=.o))
+
+OBJS := $(sort $(LAPIS_OBJS) $(SHARD_OBJS) $(TUPLE_OBJS))
 
 run_hybrid: lapis
 	mpirun  -np 21 -hostfile examples/imagenet12/hostfile ./lapis.bin \
@@ -70,9 +73,12 @@ loader: init proto $(SHARD_OBJS)
 	$(CXX) $(SHARD_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis: init proto $(LAPIS_OBJS)
+lapis: init proto  $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis $(CXXFLAGS) $(LDFLAGS)
 	@echo
+
+test_tuple: init proto $(TUPLE_OBJS) $(LAPIS_OBJS)
+	$(CXX) $(LAPIS_OBJS) $(TUPLE_OBJS) -o test $(CXXFLAGS) $(LDFLAGS)
 
 $(OBJS):$(BUILD_DIR)/%.o : %.cc
 	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@

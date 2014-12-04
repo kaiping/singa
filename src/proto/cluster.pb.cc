@@ -34,17 +34,13 @@ void protobuf_AssignDesc_cluster_2eproto() {
       "cluster.proto");
   GOOGLE_CHECK(file != NULL);
   Cluster_descriptor_ = file->message_type(0);
-  static const int Cluster_offsets_[10] = {
+  static const int Cluster_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, server_start_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, server_end_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, worker_start_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, worker_end_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, group_size_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, data_folder_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, synchronous_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, checkpoint_enabled_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, checkpoint_freq_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Cluster, checkpoint_after_),
   };
   Cluster_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -87,13 +83,10 @@ void protobuf_AddDesc_cluster_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\rcluster.proto\022\005lapis\"\370\001\n\007Cluster\022\024\n\014se"
+    "\n\rcluster.proto\022\005lapis\"\206\001\n\007Cluster\022\024\n\014se"
     "rver_start\030\001 \002(\005\022\022\n\nserver_end\030\002 \002(\005\022\024\n\014"
     "worker_start\030\003 \002(\005\022\022\n\nworker_end\030\004 \002(\005\022\022"
-    "\n\ngroup_size\030\005 \002(\005\022\023\n\013data_folder\030\006 \002(\t\022"
-    "\032\n\013synchronous\030\007 \001(\010:\005false\022!\n\022checkpoin"
-    "t_enabled\030\010 \001(\010:\005false\022\027\n\017checkpoint_fre"
-    "q\030\t \001(\005\022\030\n\020checkpoint_after\030\n \001(\005", 273);
+    "\n\ngroup_size\030\005 \002(\005\022\023\n\013data_folder\030\006 \002(\t", 159);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "cluster.proto", &protobuf_RegisterTypes);
   Cluster::default_instance_ = new Cluster();
@@ -117,10 +110,6 @@ const int Cluster::kWorkerStartFieldNumber;
 const int Cluster::kWorkerEndFieldNumber;
 const int Cluster::kGroupSizeFieldNumber;
 const int Cluster::kDataFolderFieldNumber;
-const int Cluster::kSynchronousFieldNumber;
-const int Cluster::kCheckpointEnabledFieldNumber;
-const int Cluster::kCheckpointFreqFieldNumber;
-const int Cluster::kCheckpointAfterFieldNumber;
 #endif  // !_MSC_VER
 
 Cluster::Cluster()
@@ -148,10 +137,6 @@ void Cluster::SharedCtor() {
   worker_end_ = 0;
   group_size_ = 0;
   data_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  synchronous_ = false;
-  checkpoint_enabled_ = false;
-  checkpoint_freq_ = 0;
-  checkpoint_after_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -200,16 +185,15 @@ void Cluster::Clear() {
     ::memset(&first, 0, n);                                \
   } while (0)
 
-  if (_has_bits_[0 / 32] & 255) {
+  if (_has_bits_[0 / 32] & 63) {
     ZR_(server_start_, worker_end_);
-    ZR_(group_size_, checkpoint_enabled_);
+    group_size_ = 0;
     if (has_data_folder()) {
       if (data_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         data_folder_->clear();
       }
     }
   }
-  ZR_(checkpoint_freq_, checkpoint_after_);
 
 #undef OFFSET_OF_FIELD_
 #undef ZR_
@@ -315,66 +299,6 @@ bool Cluster::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(56)) goto parse_synchronous;
-        break;
-      }
-
-      // optional bool synchronous = 7 [default = false];
-      case 7: {
-        if (tag == 56) {
-         parse_synchronous:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &synchronous_)));
-          set_has_synchronous();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(64)) goto parse_checkpoint_enabled;
-        break;
-      }
-
-      // optional bool checkpoint_enabled = 8 [default = false];
-      case 8: {
-        if (tag == 64) {
-         parse_checkpoint_enabled:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &checkpoint_enabled_)));
-          set_has_checkpoint_enabled();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(72)) goto parse_checkpoint_freq;
-        break;
-      }
-
-      // optional int32 checkpoint_freq = 9;
-      case 9: {
-        if (tag == 72) {
-         parse_checkpoint_freq:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &checkpoint_freq_)));
-          set_has_checkpoint_freq();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(80)) goto parse_checkpoint_after;
-        break;
-      }
-
-      // optional int32 checkpoint_after = 10;
-      case 10: {
-        if (tag == 80) {
-         parse_checkpoint_after:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &checkpoint_after_)));
-          set_has_checkpoint_after();
-        } else {
-          goto handle_unusual;
-        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -439,26 +363,6 @@ void Cluster::SerializeWithCachedSizes(
       6, this->data_folder(), output);
   }
 
-  // optional bool synchronous = 7 [default = false];
-  if (has_synchronous()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(7, this->synchronous(), output);
-  }
-
-  // optional bool checkpoint_enabled = 8 [default = false];
-  if (has_checkpoint_enabled()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(8, this->checkpoint_enabled(), output);
-  }
-
-  // optional int32 checkpoint_freq = 9;
-  if (has_checkpoint_freq()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->checkpoint_freq(), output);
-  }
-
-  // optional int32 checkpoint_after = 10;
-  if (has_checkpoint_after()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(10, this->checkpoint_after(), output);
-  }
-
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -503,26 +407,6 @@ void Cluster::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         6, this->data_folder(), target);
-  }
-
-  // optional bool synchronous = 7 [default = false];
-  if (has_synchronous()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(7, this->synchronous(), target);
-  }
-
-  // optional bool checkpoint_enabled = 8 [default = false];
-  if (has_checkpoint_enabled()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(8, this->checkpoint_enabled(), target);
-  }
-
-  // optional int32 checkpoint_freq = 9;
-  if (has_checkpoint_freq()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->checkpoint_freq(), target);
-  }
-
-  // optional int32 checkpoint_after = 10;
-  if (has_checkpoint_after()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(10, this->checkpoint_after(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -579,32 +463,6 @@ int Cluster::ByteSize() const {
           this->data_folder());
     }
 
-    // optional bool synchronous = 7 [default = false];
-    if (has_synchronous()) {
-      total_size += 1 + 1;
-    }
-
-    // optional bool checkpoint_enabled = 8 [default = false];
-    if (has_checkpoint_enabled()) {
-      total_size += 1 + 1;
-    }
-
-  }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    // optional int32 checkpoint_freq = 9;
-    if (has_checkpoint_freq()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->checkpoint_freq());
-    }
-
-    // optional int32 checkpoint_after = 10;
-    if (has_checkpoint_after()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->checkpoint_after());
-    }
-
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -650,20 +508,6 @@ void Cluster::MergeFrom(const Cluster& from) {
     if (from.has_data_folder()) {
       set_data_folder(from.data_folder());
     }
-    if (from.has_synchronous()) {
-      set_synchronous(from.synchronous());
-    }
-    if (from.has_checkpoint_enabled()) {
-      set_checkpoint_enabled(from.checkpoint_enabled());
-    }
-  }
-  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    if (from.has_checkpoint_freq()) {
-      set_checkpoint_freq(from.checkpoint_freq());
-    }
-    if (from.has_checkpoint_after()) {
-      set_checkpoint_after(from.checkpoint_after());
-    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -694,10 +538,6 @@ void Cluster::Swap(Cluster* other) {
     std::swap(worker_end_, other->worker_end_);
     std::swap(group_size_, other->group_size_);
     std::swap(data_folder_, other->data_folder_);
-    std::swap(synchronous_, other->synchronous_);
-    std::swap(checkpoint_enabled_, other->checkpoint_enabled_);
-    std::swap(checkpoint_freq_, other->checkpoint_freq_);
-    std::swap(checkpoint_after_, other->checkpoint_after_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

@@ -64,6 +64,9 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* TVal_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   TVal_reflection_ = NULL;
+const ::google::protobuf::Descriptor* Tuple_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  Tuple_reflection_ = NULL;
 const ::google::protobuf::Descriptor* SGDVal_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   SGDVal_reflection_ = NULL;
@@ -372,7 +375,23 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(TVal));
-  SGDVal_descriptor_ = file->message_type(13);
+  Tuple_descriptor_ = file->message_type(13);
+  static const int Tuple_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Tuple, key_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Tuple, val_),
+  };
+  Tuple_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      Tuple_descriptor_,
+      Tuple::default_instance_,
+      Tuple_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Tuple, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Tuple, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(Tuple));
+  SGDVal_descriptor_ = file->message_type(14);
   static const int SGDVal_offsets_[1] = {
   };
   SGDVal_reflection_ =
@@ -386,7 +405,7 @@ void protobuf_AssignDesc_model_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(SGDVal));
-  AdaVal_descriptor_ = file->message_type(14);
+  AdaVal_descriptor_ = file->message_type(15);
   static const int AdaVal_offsets_[1] = {
   };
   AdaVal_reflection_ =
@@ -439,6 +458,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     TVal_descriptor_, &TVal::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    Tuple_descriptor_, &Tuple::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     SGDVal_descriptor_, &SGDVal::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     AdaVal_descriptor_, &AdaVal::default_instance());
@@ -474,6 +495,8 @@ void protobuf_ShutdownFile_model_2eproto() {
   delete TKey_reflection_;
   delete TVal::default_instance_;
   delete TVal_reflection_;
+  delete Tuple::default_instance_;
+  delete Tuple_reflection_;
   delete SGDVal::default_instance_;
   delete SGDVal_reflection_;
   delete AdaVal::default_instance_;
@@ -568,9 +591,11 @@ void protobuf_AddDesc_model_2eproto() {
     "lier\030\013 \001(\002:\0011\022\036\n\004data\030\014 \001(\0132\020.lapis.DAry"
     "Proto\022\036\n\004grad\030\r \001(\0132\020.lapis.DAryProto\022!\n"
     "\007history\030\016 \001(\0132\020.lapis.DAryProto*\010\010d\020\200\200\200"
-    "\200\002\"1\n\006SGDVal2\'\n\003sgd\022\013.lapis.TVal\030e \001(\0132\r"
-    ".lapis.SGDVal\"1\n\006AdaVal2\'\n\003ada\022\013.lapis.T"
-    "Val\030f \001(\0132\r.lapis.AdaVal", 3344);
+    "\200\002\";\n\005Tuple\022\030\n\003key\030\001 \001(\0132\013.lapis.TKey\022\030\n"
+    "\003val\030\002 \001(\0132\013.lapis.TVal\"1\n\006SGDVal2\'\n\003sgd"
+    "\022\013.lapis.TVal\030e \001(\0132\r.lapis.SGDVal\"1\n\006Ad"
+    "aVal2\'\n\003ada\022\013.lapis.TVal\030f \001(\0132\r.lapis.A"
+    "daVal", 3405);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   ParamProto::default_instance_ = new ParamProto();
@@ -588,6 +613,7 @@ void protobuf_AddDesc_model_2eproto() {
   SGDProto::default_instance_ = new SGDProto();
   TKey::default_instance_ = new TKey();
   TVal::default_instance_ = new TVal();
+  Tuple::default_instance_ = new Tuple();
   SGDVal::default_instance_ = new SGDVal();
   AdaVal::default_instance_ = new AdaVal();
   ParamProto::default_instance_->InitAsDefaultInstance();
@@ -603,6 +629,7 @@ void protobuf_AddDesc_model_2eproto() {
   SGDProto::default_instance_->InitAsDefaultInstance();
   TKey::default_instance_->InitAsDefaultInstance();
   TVal::default_instance_->InitAsDefaultInstance();
+  Tuple::default_instance_->InitAsDefaultInstance();
   SGDVal::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::ExtensionSet::RegisterMessageExtension(
     &::lapis::TVal::default_instance(),
@@ -7732,6 +7759,285 @@ void TVal::Swap(TVal* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = TVal_descriptor_;
   metadata.reflection = TVal_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int Tuple::kKeyFieldNumber;
+const int Tuple::kValFieldNumber;
+#endif  // !_MSC_VER
+
+Tuple::Tuple()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.Tuple)
+}
+
+void Tuple::InitAsDefaultInstance() {
+  key_ = const_cast< ::lapis::TKey*>(&::lapis::TKey::default_instance());
+  val_ = const_cast< ::lapis::TVal*>(&::lapis::TVal::default_instance());
+}
+
+Tuple::Tuple(const Tuple& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.Tuple)
+}
+
+void Tuple::SharedCtor() {
+  _cached_size_ = 0;
+  key_ = NULL;
+  val_ = NULL;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+Tuple::~Tuple() {
+  // @@protoc_insertion_point(destructor:lapis.Tuple)
+  SharedDtor();
+}
+
+void Tuple::SharedDtor() {
+  if (this != default_instance_) {
+    delete key_;
+    delete val_;
+  }
+}
+
+void Tuple::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* Tuple::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return Tuple_descriptor_;
+}
+
+const Tuple& Tuple::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_model_2eproto();
+  return *default_instance_;
+}
+
+Tuple* Tuple::default_instance_ = NULL;
+
+Tuple* Tuple::New() const {
+  return new Tuple;
+}
+
+void Tuple::Clear() {
+  if (_has_bits_[0 / 32] & 3) {
+    if (has_key()) {
+      if (key_ != NULL) key_->::lapis::TKey::Clear();
+    }
+    if (has_val()) {
+      if (val_ != NULL) val_->::lapis::TVal::Clear();
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool Tuple::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:lapis.Tuple)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional .lapis.TKey key = 1;
+      case 1: {
+        if (tag == 10) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_key()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(18)) goto parse_val;
+        break;
+      }
+
+      // optional .lapis.TVal val = 2;
+      case 2: {
+        if (tag == 18) {
+         parse_val:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_val()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.Tuple)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.Tuple)
+  return false;
+#undef DO_
+}
+
+void Tuple::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.Tuple)
+  // optional .lapis.TKey key = 1;
+  if (has_key()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->key(), output);
+  }
+
+  // optional .lapis.TVal val = 2;
+  if (has_val()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->val(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:lapis.Tuple)
+}
+
+::google::protobuf::uint8* Tuple::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.Tuple)
+  // optional .lapis.TKey key = 1;
+  if (has_key()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        1, this->key(), target);
+  }
+
+  // optional .lapis.TVal val = 2;
+  if (has_val()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->val(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.Tuple)
+  return target;
+}
+
+int Tuple::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional .lapis.TKey key = 1;
+    if (has_key()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->key());
+    }
+
+    // optional .lapis.TVal val = 2;
+    if (has_val()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->val());
+    }
+
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void Tuple::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const Tuple* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const Tuple*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void Tuple::MergeFrom(const Tuple& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_key()) {
+      mutable_key()->::lapis::TKey::MergeFrom(from.key());
+    }
+    if (from.has_val()) {
+      mutable_val()->::lapis::TVal::MergeFrom(from.val());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void Tuple::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Tuple::CopyFrom(const Tuple& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Tuple::IsInitialized() const {
+
+  if (has_key()) {
+    if (!this->key().IsInitialized()) return false;
+  }
+  if (has_val()) {
+    if (!this->val().IsInitialized()) return false;
+  }
+  return true;
+}
+
+void Tuple::Swap(Tuple* other) {
+  if (other != this) {
+    std::swap(key_, other->key_);
+    std::swap(val_, other->val_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata Tuple::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = Tuple_descriptor_;
+  metadata.reflection = Tuple_reflection_;
   return metadata;
 }
 

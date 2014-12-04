@@ -264,6 +264,11 @@ message TVal{
   extensions 100 to max;
 }
 
+message Tuple{
+  optional TKey key=1;;
+  optional TVal val=2;
+}
+
 // Tuple value class used in normal SGD algorithm.
 message SGDVal{
   extend TVal {

@@ -137,34 +137,6 @@ class Cluster : public ::google::protobuf::Message {
   inline ::std::string* release_data_folder();
   inline void set_allocated_data_folder(::std::string* data_folder);
 
-  // optional bool synchronous = 7 [default = false];
-  inline bool has_synchronous() const;
-  inline void clear_synchronous();
-  static const int kSynchronousFieldNumber = 7;
-  inline bool synchronous() const;
-  inline void set_synchronous(bool value);
-
-  // optional bool checkpoint_enabled = 8 [default = false];
-  inline bool has_checkpoint_enabled() const;
-  inline void clear_checkpoint_enabled();
-  static const int kCheckpointEnabledFieldNumber = 8;
-  inline bool checkpoint_enabled() const;
-  inline void set_checkpoint_enabled(bool value);
-
-  // optional int32 checkpoint_freq = 9;
-  inline bool has_checkpoint_freq() const;
-  inline void clear_checkpoint_freq();
-  static const int kCheckpointFreqFieldNumber = 9;
-  inline ::google::protobuf::int32 checkpoint_freq() const;
-  inline void set_checkpoint_freq(::google::protobuf::int32 value);
-
-  // optional int32 checkpoint_after = 10;
-  inline bool has_checkpoint_after() const;
-  inline void clear_checkpoint_after();
-  static const int kCheckpointAfterFieldNumber = 10;
-  inline ::google::protobuf::int32 checkpoint_after() const;
-  inline void set_checkpoint_after(::google::protobuf::int32 value);
-
   // @@protoc_insertion_point(class_scope:lapis.Cluster)
  private:
   inline void set_has_server_start();
@@ -179,14 +151,6 @@ class Cluster : public ::google::protobuf::Message {
   inline void clear_has_group_size();
   inline void set_has_data_folder();
   inline void clear_has_data_folder();
-  inline void set_has_synchronous();
-  inline void clear_has_synchronous();
-  inline void set_has_checkpoint_enabled();
-  inline void clear_has_checkpoint_enabled();
-  inline void set_has_checkpoint_freq();
-  inline void clear_has_checkpoint_freq();
-  inline void set_has_checkpoint_after();
-  inline void clear_has_checkpoint_after();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -198,10 +162,6 @@ class Cluster : public ::google::protobuf::Message {
   ::google::protobuf::int32 worker_end_;
   ::std::string* data_folder_;
   ::google::protobuf::int32 group_size_;
-  bool synchronous_;
-  bool checkpoint_enabled_;
-  ::google::protobuf::int32 checkpoint_freq_;
-  ::google::protobuf::int32 checkpoint_after_;
   friend void  protobuf_AddDesc_cluster_2eproto();
   friend void protobuf_AssignDesc_cluster_2eproto();
   friend void protobuf_ShutdownFile_cluster_2eproto();
@@ -410,102 +370,6 @@ inline void Cluster::set_allocated_data_folder(::std::string* data_folder) {
     data_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
   // @@protoc_insertion_point(field_set_allocated:lapis.Cluster.data_folder)
-}
-
-// optional bool synchronous = 7 [default = false];
-inline bool Cluster::has_synchronous() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void Cluster::set_has_synchronous() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void Cluster::clear_has_synchronous() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void Cluster::clear_synchronous() {
-  synchronous_ = false;
-  clear_has_synchronous();
-}
-inline bool Cluster::synchronous() const {
-  // @@protoc_insertion_point(field_get:lapis.Cluster.synchronous)
-  return synchronous_;
-}
-inline void Cluster::set_synchronous(bool value) {
-  set_has_synchronous();
-  synchronous_ = value;
-  // @@protoc_insertion_point(field_set:lapis.Cluster.synchronous)
-}
-
-// optional bool checkpoint_enabled = 8 [default = false];
-inline bool Cluster::has_checkpoint_enabled() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void Cluster::set_has_checkpoint_enabled() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void Cluster::clear_has_checkpoint_enabled() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void Cluster::clear_checkpoint_enabled() {
-  checkpoint_enabled_ = false;
-  clear_has_checkpoint_enabled();
-}
-inline bool Cluster::checkpoint_enabled() const {
-  // @@protoc_insertion_point(field_get:lapis.Cluster.checkpoint_enabled)
-  return checkpoint_enabled_;
-}
-inline void Cluster::set_checkpoint_enabled(bool value) {
-  set_has_checkpoint_enabled();
-  checkpoint_enabled_ = value;
-  // @@protoc_insertion_point(field_set:lapis.Cluster.checkpoint_enabled)
-}
-
-// optional int32 checkpoint_freq = 9;
-inline bool Cluster::has_checkpoint_freq() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
-}
-inline void Cluster::set_has_checkpoint_freq() {
-  _has_bits_[0] |= 0x00000100u;
-}
-inline void Cluster::clear_has_checkpoint_freq() {
-  _has_bits_[0] &= ~0x00000100u;
-}
-inline void Cluster::clear_checkpoint_freq() {
-  checkpoint_freq_ = 0;
-  clear_has_checkpoint_freq();
-}
-inline ::google::protobuf::int32 Cluster::checkpoint_freq() const {
-  // @@protoc_insertion_point(field_get:lapis.Cluster.checkpoint_freq)
-  return checkpoint_freq_;
-}
-inline void Cluster::set_checkpoint_freq(::google::protobuf::int32 value) {
-  set_has_checkpoint_freq();
-  checkpoint_freq_ = value;
-  // @@protoc_insertion_point(field_set:lapis.Cluster.checkpoint_freq)
-}
-
-// optional int32 checkpoint_after = 10;
-inline bool Cluster::has_checkpoint_after() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
-}
-inline void Cluster::set_has_checkpoint_after() {
-  _has_bits_[0] |= 0x00000200u;
-}
-inline void Cluster::clear_has_checkpoint_after() {
-  _has_bits_[0] &= ~0x00000200u;
-}
-inline void Cluster::clear_checkpoint_after() {
-  checkpoint_after_ = 0;
-  clear_has_checkpoint_after();
-}
-inline ::google::protobuf::int32 Cluster::checkpoint_after() const {
-  // @@protoc_insertion_point(field_get:lapis.Cluster.checkpoint_after)
-  return checkpoint_after_;
-}
-inline void Cluster::set_checkpoint_after(::google::protobuf::int32 value) {
-  set_has_checkpoint_after();
-  checkpoint_after_ = value;
-  // @@protoc_insertion_point(field_set:lapis.Cluster.checkpoint_after)
 }
 
 

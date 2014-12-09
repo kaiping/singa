@@ -42,11 +42,17 @@ int main(int argc, char **argv) {
       lapis::TableServer server;
       server.Start(model.solver().sgd());
     }else {
+    	// TODO: comment out the below to execute training at the workers.
+    	// for now, this is not necessary to test table servers
+    	// (use test_tuple.cc instead).
+
+    	/*
       lapis::GAry::Init(gc->rank(), gc->groups());
       // worker or table server
       lapis::Worker worker;
       worker.Start(model);
       lapis::GAry::Finalize();
+      */
     }
   }else{
     // restore

@@ -20,7 +20,7 @@ class TableData; /**< type declaration */
  * as argument during table initialization.
  */
 struct TableFactory {
-	virtual TableBase *New() = 0;
+	virtual Shard *New() = 0;
 };
 
 
@@ -71,24 +71,6 @@ public:
 
 protected:
 	TableDescriptor *info_;
-};
-
-class LogFile;
-
-/**
- * Template for typed table classes whose data and operations are of specific types.s
- */
-template<class K, class V>
-class TypedTable {
-public:
-	virtual bool contains(const K &k) = 0;
-	virtual V get(const K &k) = 0;
-	virtual void put(const K &k, const V &v) = 0;
-	virtual bool update(const K &k, const V &v) = 0;
-
-	virtual bool ApplyUpdates(TableData *in, LogFile *logfile) = 0;
-	virtual bool ApplyPut(TableData *in, LogFile *logfile) = 0;
-	void remove(const K &k);
 };
 }  // namespace lapis
 

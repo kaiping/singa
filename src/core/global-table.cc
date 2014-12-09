@@ -33,17 +33,14 @@ void GlobalTable::Init(const lapis::TableDescriptor *info) {
 	partinfo_.resize(info->num_shards);
 
 	for (size_t i = 0; i < info->num_shards; ++i) {
-		TableBase *t =
-				(TableBase *) info->partition_factory->New();
+		Shard *t =
+				(Shard *) info->partition_factory->New();
 		t->Init(info);
 		partitions_[i] = t;
+		partinfo_[i] = i;
 	}
 }
 
-
-bool GlobalTable::is_local_shard(int shard) {
-	return owner(shard) == worker_id_;
-}
 
 int64_t GlobalTable::shard_size(int shard) {
 	return is_local_shard(shard) ? partitions_[shard]->size() : 0;
@@ -70,7 +67,7 @@ void GlobalTable::resize(int64_t new_size) {
 
 bool GlobalTable::HandleGet(const GetRequest &get_req, TableData *get_resp) {
 	int shard = get_req.shard();
-	TypedTable<TVal,TKey> *t = partitions_[shard];
+	Shard *t = partitions_[shard];
 
 	TKey *key = get_req.mutable_key();
 	TVal val = t->get(*key);

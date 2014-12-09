@@ -27,12 +27,18 @@ std::shared_ptr<NetworkService> NetworkService::Get() {
 	return instance_;
 }
 
+void NetworkService::Init(int id, Network *net, NetworkQueue *queue){
+	id_=id;
+	network_ = net;
+	network_queue_ = queue;
+}
+
 void NetworkService::StartNetworkService(){
 	new boost::thread(&NetworkService::read_loop, this);
 }
 
 void NetworkService::Send(int dst, int method, const Message &msg){
-	if (dst==id){//local send, simply enqueue.
+	if (dst==id_){//local send, simply enqueue.
 		network_queue_->Enqueue(&msg);
 		return;
 	}

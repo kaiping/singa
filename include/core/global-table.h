@@ -1,33 +1,30 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
-// piccolo/global-table.cc
 #ifndef INCLUDE_CORE_GLOBAL_TABLE_H_
 #define INCLUDE_CORE_GLOBAL_TABLE_H_
 
 #include <glog/logging.h>
 
 #include "core/table.h"
+#include "core/shard.h"
 #include "core/file.h"
 #include "core/request_dispatcher.h"
 #include "utils/common.h"
 
 /**
  * @file global-table.h
- * A generic GlobalTable class represents the global view of the table, i.e. each process
- * treats it as a local table to which it can put/get data. Each table maintains #shards
- * partitions which are typed table. It has the mapping of which process "owns" which partition.
- * Given a key, the table knows if it is stored in one of its local shards. It invokes the
- * local table directly if yes, or sends the request over the network if no.
+ * The GlobalTable class Represents global view of the table, i.e. each table server process
+ * treats it as a local table to which it can put/get/update data. Locally, each table maintains
+ * a number of partitions of Shard objects. The worker can determine by the key which shard the key
+ * belongs.
  *
- * A typed GlobalTable restrict data and operations to specific types.
- *
- * The current implementation assumes that table servers are different to workers, i.e.
- * put/get will be remote requests.
+ * The table maintains a lists of key-value tuples where key is of type TKey and value of TVal.
+ * The current implementation assumes table servers run on different processes to workers, hence
+ * table access requests will be remote.
  */
 namespace lapis {
 
-
 /**
- * Generic table operating on string key-value tuples.
+ * The GlobalTable class for implementing table interface.
  */
 class GlobalTable: public TableBase {
 public:
@@ -42,7 +39,10 @@ public:
 	/**
 	 * Information of a shard: in which process is the shard stored.
 	 * Tables at all processes share the same shard information. They use this
-	 * to decide where to send the request.
+	 * to decide where to forward the request.
+	 *
+	 * For now, this is not used because the request will be send to the correct owner
+	 * by simply hashing the key take modulo M (where M is the number of table servers).
 	 */
 	struct PartitionInfo {
 		PartitionInfo() :owner(-1) {}
@@ -50,29 +50,22 @@ public:
 	};
 
 	/**
-	 * Get the shard information of a given shard.
-	 */
-	virtual PartitionInfo *get_partition_info(int shard) {
-		return &partinfo_[shard];
-	}
-
-	/**
 	 * Get the process ID (rank) where the shard is maintained.
 	 */
 	int owner(int shard) {
-		return get_partition_info(shard)->owner;
+		return partinfo_[shard]->owner;
 	}
 
-	bool is_local_shard(int shard);
+	bool is_local_shard(int shard) {return owner(shard) == worker_id_;}
 
 
 	/**
 	 * Handle remote get request from another process. There are 3 steps:
-	 * (1) check that the request is for the local shard
-	 * (2) invoke user-define handle-get at the local shard
-	 * (3) return true + TableData if the data can be returned right away
+	 * (1) get value from the local shard.
+	 * (2) invoke user-define handle-get on the returned value.
+	 * (3) return true + TableData if the data can be returned right away.
 	 *     return false -> data is not ready to be sent back (the request
-	 *                       is to be re-processed)
+	 *                       is to be re-processed).
 	 */
 	bool HandleGet(const GetRequest &req, TableData *resp);
 
@@ -121,7 +114,7 @@ public:
 protected:
 	vector<PartitionInfo> partinfo_; /**< shard information */
 
-	vector<TableBase*> partitions_; /**< actual shards */
+	vector<Shard*> partitions_; /**< actual shards */
 
 	map<int, LogFile*> checkpoint_files_;
 };

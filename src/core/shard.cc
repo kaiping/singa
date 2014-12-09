@@ -13,16 +13,6 @@ Shard::Shard(int size) :
 }
 
 
-/**
- * Update the table with content from the TableData message.
- *
- * It first extracts TKey and TVal objects, then performs the update.
- * If successful, it also checkpoints the new content if the user-specific
- * checkpoint handler returns true.
- *
- * @return true if the update is successfull. On returning false, the update
- * request should be re-processed.
- */
 bool Shard::ApplyUpdates(TableData &in, LogFile *logfile) {
 	TKey *key = in.mutable_key();
 	TVal *val = in.mutable_val();
@@ -41,9 +31,6 @@ bool Shard::ApplyUpdates(TableData &in, LogFile *logfile) {
 }
 
 
-/**
- * Insert data to the table. @see ApplyUpdates
- */
 bool Shard::ApplyPut(TableData &in, LogFile *logfile) {
 	TKey *key = in.mutable_key();
 	TVal *val = in.mutable_value();
@@ -60,7 +47,6 @@ bool Shard::ApplyPut(TableData &in, LogFile *logfile) {
 }
 
 /**
- * Restore the table with content from the checkpoint file.
  * The checkpoint file is scanned backward and elements are inserted to the table.
  * This process ends when the certain number of tuples is reached.
  */
@@ -77,8 +63,7 @@ void Shard::restore(LogFile *logfile, int desired_size) {
 }
 
 /**
- * Resize the current table. Simply copy content of the old table
- * to the new table.
+ * Simply copy content of the old table to the new table.
  */
 void Shard::resize(int64_t size) {
 	if (size_ == size)

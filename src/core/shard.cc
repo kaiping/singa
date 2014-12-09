@@ -15,7 +15,7 @@ Shard::Shard(int size) :
 
 bool Shard::ApplyUpdates(TableData &in, LogFile *logfile) {
 	TKey *key = in.mutable_key();
-	TVal *val = in.mutable_val();
+	TVal *val = in.mutable_value();
 	bool ret = update(*key, *val);
 
 	if (ret
@@ -36,7 +36,8 @@ bool Shard::ApplyPut(TableData &in, LogFile *logfile) {
 	TVal *val = in.mutable_value();
 	put(*key, *val);
 
-	if (((BaseUpdateHandler<TKey, TVal> *) info_->handler)->is_checkpointable(
+
+	if (((BaseUpdateHandler<TKey, TVal> *) info_->handler)->CheckpointNow(
 			*key, *val)) {
 		string kt, vt;
 		key->SerializeToString(&kt);
@@ -69,7 +70,6 @@ void Shard::resize(int64_t size) {
 	if (size_ == size)
 		return;
 	std::vector < Bucket > old_b = buckets_;
-	int old_entries = entries_;
 	buckets_.resize(size);
 	size_ = size;
 	clear();
@@ -125,7 +125,7 @@ void Shard::put(const TKey &k, const TVal &v) {
 		if (!buckets_[b].in_use) {
 			break;
 		}
-		if (buckets_[b].k == k) {
+		if (buckets_[b].k.id() == k.id()) {
 			found = true;
 			break;
 		}
@@ -149,5 +149,4 @@ void Shard::put(const TKey &k, const TVal &v) {
 		buckets_[b].v = v;
 	}
 }
-
 } //namespace lapis

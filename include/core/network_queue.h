@@ -2,7 +2,7 @@
 #ifndef INCLUDE_CORE_NETWORK_QUEUE_H_
 #define INCLUDE_CORE_NETWORK_QUEUE_H_
 
-#include <boots/thread.hpp>
+#include <boost/thread.hpp>
 #include <google/protobuf/message.h>
 #include <deque>
 
@@ -10,7 +10,6 @@
 #include "core/common.h"
 
 using std::deque;
-
 
 /**
  * @file network_queue.h

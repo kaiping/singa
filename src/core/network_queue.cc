@@ -29,7 +29,7 @@ void SimpleQueue::Enqueue(Message *message) {
  * Get the request from the front of the queue. Return NULL if the queue
  * is empty.
  */
-Message* SimpleQueue::NextRequest() {
+Message* SimpleQueue::NextMessage() {
 	boost::recursive_mutex::scoped_lock sl(queue_lock_);
 	if (receive_queue_.empty())
 		return NULL;

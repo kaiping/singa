@@ -45,7 +45,7 @@ message GetRequest {
 	extend RequestBase{
 		optional GetRequest name = 101; 
 	}  	
-	optional unit32 shard = 1; 
+	optional uint32 shard = 1; 
 	optional TKey key = 2; 
 }
 
@@ -53,7 +53,7 @@ message PutRequest {
 	extend RequestBase{
 		optional PutRequest name = 102; 
 	}  
-	optional unit32 shard = 1; 
+	optional uint32 shard = 1; 
 	optional TableData data=2; 	
 }
 
@@ -61,7 +61,7 @@ message UpdateRequest {
 	extend RequestBase{
 		optional PutRequest name = 103; 
 	}  
-	optional unit32 shard = 1; 
+	optional uint32 shard = 1; 
 	optional TableData data=2; 
 }
 

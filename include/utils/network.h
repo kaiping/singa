@@ -6,8 +6,10 @@
 
 #include <google/protobuf/message.h>
 #include <memory>
+#include <string>
 using google::protobuf::Message;
 
+using std::string;
 namespace lapis {
 
 /**

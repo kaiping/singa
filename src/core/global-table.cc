@@ -1,6 +1,6 @@
 #include "core/global-table.h"
-#include "core/table_server.h"
 #include "utils/network_service.h"
+#include "core/shard.h"
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
@@ -32,12 +32,12 @@ void GlobalTable::Init(const lapis::TableDescriptor *info) {
 	partitions_.resize(info->num_shards);
 	partinfo_.resize(info->num_shards);
 
-	for (size_t i = 0; i < info->num_shards; ++i) {
+	for (int i = 0; i < info->num_shards; ++i) {
 		Shard *t =
 				(Shard *) info->partition_factory->New();
 		t->Init(info);
 		partitions_[i] = t;
-		partinfo_[i] = i;
+		partinfo_[i].owner = i;
 	}
 }
 
@@ -65,14 +65,14 @@ void GlobalTable::resize(int64_t new_size) {
 }
 
 
-bool GlobalTable::HandleGet(const GetRequest &get_req, TableData *get_resp) {
+bool GlobalTable::HandleGet(GetRequest &get_req, TableData *get_resp) {
 	int shard = get_req.shard();
 	Shard *t = partitions_[shard];
 
 	TKey *key = get_req.mutable_key();
 	TVal val = t->get(*key);
 
-	V ret;
+	TVal ret;
 	if (((BaseUpdateHandler<TKey, TVal> *) info_->handler)->Get(*key, val, &ret)) {
 		(get_resp->mutable_key())->CopyFrom(*key);
 		(get_resp->mutable_value())->CopyFrom(ret);
@@ -82,15 +82,15 @@ bool GlobalTable::HandleGet(const GetRequest &get_req, TableData *get_resp) {
 }
 
 
-bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
-	bool ret = partitions_[req.shard()]->ApplyUpdates(req,
-			checkpoint_files_[req.shard()]);
+bool GlobalTable::ApplyUpdates(int shard, lapis::TableData &req) {
+	bool ret = partitions_[shard]->ApplyUpdates(req,
+			checkpoint_files_[shard]);
 	return ret;
 }
 
-bool GlobalTable::ApplyPut(const lapis::TableData &req) {
-	bool ret = partitions_[req.shard()]->ApplyPut(req,
-			checkpoint_files_[req.shard()]);
+bool GlobalTable::ApplyPut(int shard, lapis::TableData &req) {
+	bool ret = partitions_[shard]->ApplyPut(req,
+			checkpoint_files_[shard]);
 
 	return ret;
 }

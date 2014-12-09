@@ -5,10 +5,10 @@
 #include <glog/logging.h>
 
 #include "core/table.h"
-#include "core/shard.h"
 #include "core/file.h"
 #include "core/request_dispatcher.h"
 #include "utils/common.h"
+#include "proto/worker.pb.h"
 
 /**
  * @file global-table.h
@@ -22,6 +22,8 @@
  * table access requests will be remote.
  */
 namespace lapis {
+
+class Shard;
 
 /**
  * The GlobalTable class for implementing table interface.
@@ -53,7 +55,7 @@ public:
 	 * Get the process ID (rank) where the shard is maintained.
 	 */
 	int owner(int shard) {
-		return partinfo_[shard]->owner;
+		return partinfo_[shard].owner;
 	}
 
 	bool is_local_shard(int shard) {return owner(shard) == worker_id_;}
@@ -67,7 +69,7 @@ public:
 	 *     return false -> data is not ready to be sent back (the request
 	 *                       is to be re-processed).
 	 */
-	bool HandleGet(const GetRequest &req, TableData *resp);
+	bool HandleGet(GetRequest &req, TableData *resp);
 
 
 
@@ -76,12 +78,12 @@ public:
 	 *
 	 * @return true if the operation is applied successfully.
 	 */
-	bool ApplyUpdates(const TableData &req);
+	bool ApplyUpdates(int shard, TableData &req);
 
 	/**
 	 * Apply put requests from another process. Always return true.
 	 */
-	bool ApplyPut(const TableData &req);
+	bool ApplyPut(int shard, TableData &req);
 
 	/**
 	 * Restore content of the specified (local) shard from the checkpoint file.

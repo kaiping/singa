@@ -14,6 +14,7 @@ namespace lapis {
 
 struct TableBase; /**< type declaration */
 class TableData; /**< type declaration */
+class Shard;
 
 /**
  * Struct for creating local shard. User implements this struct and passes it

@@ -3,8 +3,8 @@
 #define INCLUDE_CORE_SPARSE_TABLE_H_
 #include <functional>
 #include "core/common.h"
-#include "proto/worker.pb.h"
 #include "core/global-table.h"
+#include "proto/worker.pb.h"
 #include "proto/model.pb.h"
 #include <boost/noncopyable.hpp>
 #include "core/file.h"
@@ -32,7 +32,7 @@ struct hash<lapis::TKey> {
 namespace lapis {
 
 class Shard: public GlobalTable,
-		private boost::noncopyable {
+			 private boost::noncopyable {
 private:
 	/**
 	 * A bucket/slot in the hash table.
@@ -49,7 +49,7 @@ public:
 	 * @see global-table.h
 	 */
 	struct Factory: public TableFactory {
-		TableBase *New() {
+		Shard *New() {
 			return new Shard();
 		}
 	};
@@ -112,6 +112,8 @@ public:
 	 */
 	virtual void restore(LogFile *logfile, int desired_size);
 
+	Stats& stats(){ return stats_;}
+
 private:
 
 	/**
@@ -132,7 +134,7 @@ private:
 		int b = start;
 		do {
 			if (buckets_[b].in_use) {
-				if (buckets_[b].k == k) {
+				if (buckets_[b].k.id() == k.id()) {
 					return b;
 				}
 			} else {
@@ -149,6 +151,7 @@ private:
 	int64_t size_; /**< table's size */
 
 	double kLoadFactor;
+	Stats stats_;
 
 	std::hash<TKey> hashobj_; /**< hash function for the key type K */
 };

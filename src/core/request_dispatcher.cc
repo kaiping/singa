@@ -17,7 +17,7 @@ namespace lapis {
 
 
 void RequestDispatcher::StartDispatchLoop(){
-	NetworkService *network = NetworkService::Get();
+	NetworkService *network = NetworkService::Get().get();
 	int tag;
 	while (is_running_) {
 		Message *msg = network->Receive();

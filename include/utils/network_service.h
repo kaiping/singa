@@ -79,7 +79,7 @@ public:
 	}
 
 	bool is_active(){ return network_queue_->is_active();}  /**< if there are messages to process.  */
-	static std::shared_ptr<NetworkThread> Get();
+	static std::shared_ptr<NetworkService> Get();
 
 	int id(){ return id_;}
 
@@ -90,7 +90,7 @@ private:
 
 	boost::function<void()> shutdown_callback_;
 
-	static std::shared_ptr<NetworkThread> instance_;
+	static std::shared_ptr<NetworkService> instance_;
 
 	void read_loop(); /**< the reading thread. */
 

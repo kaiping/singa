@@ -59,7 +59,7 @@ bool TableServer::handle_put_request(const Message *msg) {
 			static_cast<const RequestBase *>(msg)->MutableExtension(
 					PutRequest::name);
 	TableData *put = put_req->mutable_data();
-	table_->ApplyPut(*put);
+	table_->ApplyPut(put_req->shard(), *put);
 	return true;
 }
 
@@ -68,7 +68,7 @@ bool TableServer::handle_update_request(const Message *msg) {
 			static_cast<const RequestBase *>(msg)->MutableExtension(
 					UpdateRequest::name);
 	TableData *put = update_req->mutable_data();
-	bool ret = table_->ApplyUpdates(*put);
+	bool ret = table_->ApplyUpdates(update_req->shard(), *put);
 	return ret;
 }
 

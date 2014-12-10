@@ -2,6 +2,7 @@
 #include "utils/network_service.h"
 #include "utils/timer.h"
 #include "proto/worker.pb.h"
+#include <glog/logging.h>
 // sleep duration between reading messages off the network.
 DEFINE_double(sleep_time, 0.0001, "");
 
@@ -31,6 +32,8 @@ void NetworkService::Init(int id, Network *net, NetworkQueue *queue){
 	id_=id;
 	network_ = net;
 	network_queue_ = queue;
+	is_running_ = true;
+	is_complete_ = false;
 }
 
 void NetworkService::StartNetworkService(){
@@ -52,9 +55,14 @@ Message* NetworkService::Receive(){
 	return network_queue_->NextMessage();
 }
 
+void NetworkService::Shutdown(){
+	is_running_ = false;
+	while (!is_complete_)
+		Sleep(FLAGS_sleep_time);
+}
+
 void NetworkService::read_loop(){
-	bool running = true;
-	while(running){
+	while(is_running_){
 		string msg;
 		int tag, src;
 		if (network_->Recv(&tag, &src, &msg)){
@@ -69,13 +77,17 @@ void NetworkService::read_loop(){
 				network_queue_->Enqueue(response);
 			}
 			else if (tag==MTYPE_SHUTDOWN){
-				running = false;
+				VLOG(3) << "got SHUTDOWN message .. SHUTTING DOWN NOW!!";
+				is_running_ = false;
 				break;
 			}
 		}
 		else
 			Sleep(FLAGS_sleep_time);
 	}
-	shutdown_callback_();
+	VLOG(3) << "to be SHUTTING DOWN NOW!!";
+	is_complete_ = true;
+	if (shutdown_callback_)
+		shutdown_callback_();
 }
 }  // namespace lapis

@@ -85,6 +85,7 @@ void Get(int tid, int version) {
 		else
 			break;
 	}
+	VLOG(3) << "Got RESULT ...";
 }
 
 /**
@@ -129,11 +130,12 @@ int main(int argc, char **argv) {
 	cluster.set_server_start(0);
 	cluster.set_server_end(1);
 	cluster.set_worker_start(1);
-	cluster.set_worker_end(2);
-	cluster.set_group_size(1);
+	cluster.set_worker_end(3);
+	cluster.set_group_size(2);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);
+
 
 	// worker or table server
 	if (gc->AmITableServer()) {
@@ -151,10 +153,13 @@ int main(int argc, char **argv) {
 		Put(0,0);
 		Get(0,0);
 		worker_send_shutdown(cluster.worker_start());
+		NetworkService::Get()->Shutdown();
 	}
+	VLOG(3) << "Finalizing GC, process " << gc->rank();
 	gc->Finalize();
+	VLOG(3) << "Finalizing MPI, process "<< gc->rank();
 	MPI_Finalize();
-	LOG(ERROR) << "shutdown";
+	VLOG(3) << "done, process "<< gc->rank();
 	return 0;
 }
 

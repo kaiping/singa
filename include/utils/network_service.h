@@ -78,6 +78,12 @@ public:
 		shutdown_callback_=callback;
 	}
 
+	/**
+	 * Shutdown the service from another thread. This is used by the worker. Table servers shut down
+	 * the service by register callback, which is invoked upon receiving SHUTDOWN message.
+	 */
+	void Shutdown();
+
 	bool is_active(){ return network_queue_->is_active();}  /**< if there are messages to process.  */
 	static std::shared_ptr<NetworkService> Get();
 
@@ -88,6 +94,7 @@ private:
 	NetworkQueue* network_queue_;
 	Network* network_; /**< access to the network implementation (MPI or 0MQ). */
 
+	volatile bool is_running_, is_complete_;
 	boost::function<void()> shutdown_callback_;
 
 	static std::shared_ptr<NetworkService> instance_;

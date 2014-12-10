@@ -63,8 +63,10 @@ shared_ptr<GlobalContext> GlobalContext::Get(const Cluster& cluster){
 }
 void GlobalContext::Finalize() {
   if(gid_!=-1){
+	  VLOG(3) << "free group and handle";
+	MPI_Comm_free(&mpicomm_);
     MPI_Group_free(&mpigroup_);
-    MPI_Comm_free(&mpicomm_);
+
   }
 }
 shared_ptr<GlobalContext> GlobalContext::Get() {

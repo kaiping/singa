@@ -23,7 +23,7 @@ void TableServer::Start(const SGDProto& sgd) {
 			boost::bind(&TableServer::handle_shutdown, this));
 	network_service_->StartNetworkService();
 
-
+	VLOG(3) << "Started network service ...";
 	// init dispatcher and register handler
 	dispatcher_ = new RequestDispatcher();
 	dispatcher_->RegisterTableCb(MTYPE_PUT_REQUEST,
@@ -50,8 +50,10 @@ void TableServer::create_table(const SGDProto &sgd) {
 }
 
 void TableServer::handle_shutdown(){
+	VLOG(3) << " in handle-shutdown";
 	while (network_service_->is_active())
 		Sleep(FLAGS_sleep_time);
+	VLOG(3) << " Calling STOP DISPATCH LOOP ()";
 	dispatcher_->StopDispatchLoop();
 }
 

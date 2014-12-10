@@ -41,7 +41,7 @@ Message* SimpleQueue::NextMessage() {
 
 bool SimpleQueue::is_active(){
 	boost::recursive_mutex::scoped_lock sl(queue_lock_);
-	return receive_queue_.empty();
+	return !receive_queue_.empty();
 }
 
 } //  namespace lapis

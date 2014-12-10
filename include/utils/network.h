@@ -62,8 +62,9 @@ class Network {
 
 class MPINetwork: public Network{
  public:
-  virtual bool Send(int dst, int tag, const string& msg);
-  virtual bool Recv(int *tag, int *src, string* msg)=0;
+	MPINetwork(){}
+  bool Send(int dst, int tag, const string& msg);
+  bool Recv(int *tag, int *src, string* msg);
 };
 } /* lapis  */
 

@@ -35,18 +35,21 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* MethodStats_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   MethodStats_reflection_ = NULL;
-const ::google::protobuf::Descriptor* HashGet_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* RequestBase_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  HashGet_reflection_ = NULL;
+  RequestBase_reflection_ = NULL;
+const ::google::protobuf::Descriptor* GetRequest_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  GetRequest_reflection_ = NULL;
+const ::google::protobuf::Descriptor* PutRequest_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  PutRequest_reflection_ = NULL;
+const ::google::protobuf::Descriptor* UpdateRequest_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  UpdateRequest_reflection_ = NULL;
 const ::google::protobuf::Descriptor* TableData_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   TableData_reflection_ = NULL;
-const ::google::protobuf::Descriptor* DiskData_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-  DiskData_reflection_ = NULL;
-const ::google::protobuf::Descriptor* FlushDiskTable_descriptor_ = NULL;
-const ::google::protobuf::internal::GeneratedMessageReflection*
-  FlushDiskTable_reflection_ = NULL;
 
 }  // namespace
 
@@ -141,35 +144,74 @@ void protobuf_AssignDesc_worker_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(MethodStats));
-  HashGet_descriptor_ = file->message_type(5);
-  static const int HashGet_offsets_[5] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, table_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, shard_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, source_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, key_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, index_),
+  RequestBase_descriptor_ = file->message_type(5);
+  static const int RequestBase_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RequestBase, table_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RequestBase, source_),
   };
-  HashGet_reflection_ =
+  RequestBase_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
-      HashGet_descriptor_,
-      HashGet::default_instance_,
-      HashGet_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(HashGet, _unknown_fields_),
+      RequestBase_descriptor_,
+      RequestBase::default_instance_,
+      RequestBase_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RequestBase, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RequestBase, _unknown_fields_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RequestBase, _extensions_),
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(RequestBase));
+  GetRequest_descriptor_ = file->message_type(6);
+  static const int GetRequest_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRequest, shard_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRequest, key_),
+  };
+  GetRequest_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      GetRequest_descriptor_,
+      GetRequest::default_instance_,
+      GetRequest_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRequest, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetRequest, _unknown_fields_),
       -1,
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(HashGet));
-  TableData_descriptor_ = file->message_type(6);
-  static const int TableData_offsets_[8] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, source_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, table_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, shard_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, done_),
+      sizeof(GetRequest));
+  PutRequest_descriptor_ = file->message_type(7);
+  static const int PutRequest_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PutRequest, shard_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PutRequest, data_),
+  };
+  PutRequest_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      PutRequest_descriptor_,
+      PutRequest::default_instance_,
+      PutRequest_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PutRequest, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PutRequest, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(PutRequest));
+  UpdateRequest_descriptor_ = file->message_type(8);
+  static const int UpdateRequest_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, shard_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, data_),
+  };
+  UpdateRequest_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      UpdateRequest_descriptor_,
+      UpdateRequest::default_instance_,
+      UpdateRequest_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(UpdateRequest));
+  TableData_descriptor_ = file->message_type(9);
+  static const int TableData_offsets_[2] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, key_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, table_data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, kv_data_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, missing_key_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TableData, value_),
   };
   TableData_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -182,39 +224,6 @@ void protobuf_AssignDesc_worker_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(TableData));
-  DiskData_descriptor_ = file->message_type(7);
-  static const int DiskData_offsets_[4] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, block_number_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, table_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, is_empty_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, records_),
-  };
-  DiskData_reflection_ =
-    new ::google::protobuf::internal::GeneratedMessageReflection(
-      DiskData_descriptor_,
-      DiskData::default_instance_,
-      DiskData_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DiskData, _unknown_fields_),
-      -1,
-      ::google::protobuf::DescriptorPool::generated_pool(),
-      ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(DiskData));
-  FlushDiskTable_descriptor_ = file->message_type(8);
-  static const int FlushDiskTable_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, table_),
-  };
-  FlushDiskTable_reflection_ =
-    new ::google::protobuf::internal::GeneratedMessageReflection(
-      FlushDiskTable_descriptor_,
-      FlushDiskTable::default_instance_,
-      FlushDiskTable_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(FlushDiskTable, _unknown_fields_),
-      -1,
-      ::google::protobuf::DescriptorPool::generated_pool(),
-      ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(FlushDiskTable));
 }
 
 namespace {
@@ -238,13 +247,15 @@ void protobuf_RegisterTypes(const ::std::string&) {
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     MethodStats_descriptor_, &MethodStats::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    HashGet_descriptor_, &HashGet::default_instance());
+    RequestBase_descriptor_, &RequestBase::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    GetRequest_descriptor_, &GetRequest::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    PutRequest_descriptor_, &PutRequest::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    UpdateRequest_descriptor_, &UpdateRequest::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     TableData_descriptor_, &TableData::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    DiskData_descriptor_, &DiskData::default_instance());
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    FlushDiskTable_descriptor_, &FlushDiskTable::default_instance());
 }
 
 }  // namespace
@@ -260,14 +271,16 @@ void protobuf_ShutdownFile_worker_2eproto() {
   delete ShardInfo_reflection_;
   delete MethodStats::default_instance_;
   delete MethodStats_reflection_;
-  delete HashGet::default_instance_;
-  delete HashGet_reflection_;
+  delete RequestBase::default_instance_;
+  delete RequestBase_reflection_;
+  delete GetRequest::default_instance_;
+  delete GetRequest_reflection_;
+  delete PutRequest::default_instance_;
+  delete PutRequest_reflection_;
+  delete UpdateRequest::default_instance_;
+  delete UpdateRequest_reflection_;
   delete TableData::default_instance_;
   delete TableData_reflection_;
-  delete DiskData::default_instance_;
-  delete DiskData_reflection_;
-  delete FlushDiskTable::default_instance_;
-  delete FlushDiskTable_reflection_;
 }
 
 void protobuf_AddDesc_worker_2eproto() {
@@ -277,27 +290,30 @@ void protobuf_AddDesc_worker_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::lapis::protobuf_AddDesc_common_2eproto();
+  ::lapis::protobuf_AddDesc_model_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\014worker.proto\022\005lapis\032\014common.proto\"#\n\025R"
-    "egisterWorkerRequest\022\n\n\002id\030\001 \002(\005\"C\n\017Shar"
-    "dAssignment\022\r\n\005table\030\001 \002(\005\022\r\n\005shard\030\002 \002("
-    "\005\022\022\n\nnew_worker\030\004 \002(\005\"@\n\026ShardAssignment"
-    "Request\022&\n\006assign\030\001 \003(\0132\026.lapis.ShardAss"
-    "ignment\"W\n\tShardInfo\022\r\n\005table\030\001 \002(\r\022\r\n\005s"
-    "hard\030\002 \002(\r\022\017\n\007entries\030\003 \002(\004\022\r\n\005owner\030\004 \002"
-    "(\r\022\014\n\004type\030\005 \002(\005\"Y\n\013MethodStats\022\022\n\ntotal"
-    "_time\030\001 \002(\001\022\022\n\nshard_time\030\002 \002(\001\022\r\n\005calls"
-    "\030\003 \002(\005\022\023\n\013shard_calls\030\004 \002(\005\"S\n\007HashGet\022\r"
-    "\n\005table\030\001 \002(\r\022\r\n\005shard\030\002 \002(\r\022\016\n\006source\030\003"
-    " \002(\r\022\013\n\003key\030\004 \001(\014\022\r\n\005index\030\005 \001(\r\"\232\001\n\tTab"
-    "leData\022\016\n\006source\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\r\n"
-    "\005shard\030\003 \002(\r\022\014\n\004done\030\004 \002(\010\022\013\n\003key\030\005 \002(\014\022"
-    "\022\n\ntable_data\030\006 \001(\014\022\033\n\007kv_data\030\007 \003(\0132\n.l"
-    "apis.Arg\022\023\n\013missing_key\030\010 \001(\010\"^\n\010DiskDat"
-    "a\022\024\n\014block_number\030\001 \002(\r\022\r\n\005table\030\002 \002(\r\022\020"
-    "\n\010is_empty\030\003 \001(\010\022\033\n\007records\030\004 \003(\0132\n.lapi"
-    "s.Arg\"\037\n\016FlushDiskTable\022\r\n\005table\030\001 \002(\rB\002"
-    "H\001", 762);
+    "\n\014worker.proto\022\005lapis\032\014common.proto\032\013mod"
+    "el.proto\"#\n\025RegisterWorkerRequest\022\n\n\002id\030"
+    "\001 \002(\005\"C\n\017ShardAssignment\022\r\n\005table\030\001 \002(\005\022"
+    "\r\n\005shard\030\002 \002(\005\022\022\n\nnew_worker\030\004 \002(\005\"@\n\026Sh"
+    "ardAssignmentRequest\022&\n\006assign\030\001 \003(\0132\026.l"
+    "apis.ShardAssignment\"W\n\tShardInfo\022\r\n\005tab"
+    "le\030\001 \002(\r\022\r\n\005shard\030\002 \002(\r\022\017\n\007entries\030\003 \002(\004"
+    "\022\r\n\005owner\030\004 \002(\r\022\014\n\004type\030\005 \002(\005\"Y\n\013MethodS"
+    "tats\022\022\n\ntotal_time\030\001 \002(\001\022\022\n\nshard_time\030\002"
+    " \002(\001\022\r\n\005calls\030\003 \002(\005\022\023\n\013shard_calls\030\004 \002(\005"
+    "\"3\n\013RequestBase\022\r\n\005table\030\001 \002(\005\022\016\n\006source"
+    "\030\002 \002(\005*\005\010d\020\310\001\"j\n\nGetRequest\022\r\n\005shard\030\001 \001"
+    "(\005\022\030\n\003key\030\002 \001(\0132\013.lapis.TKey23\n\004name\022\022.l"
+    "apis.RequestBase\030e \001(\0132\021.lapis.GetReques"
+    "t\"p\n\nPutRequest\022\r\n\005shard\030\001 \001(\005\022\036\n\004data\030\002"
+    " \001(\0132\020.lapis.TableData23\n\004name\022\022.lapis.R"
+    "equestBase\030f \001(\0132\021.lapis.PutRequest\"s\n\rU"
+    "pdateRequest\022\r\n\005shard\030\001 \001(\005\022\036\n\004data\030\002 \001("
+    "\0132\020.lapis.TableData23\n\004name\022\022.lapis.Requ"
+    "estBase\030g \001(\0132\021.lapis.PutRequest\"A\n\tTabl"
+    "eData\022\030\n\003key\030\001 \001(\0132\013.lapis.TKey\022\032\n\005value"
+    "\030\002 \001(\0132\013.lapis.TValB\002H\001", 863);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "worker.proto", &protobuf_RegisterTypes);
   RegisterWorkerRequest::default_instance_ = new RegisterWorkerRequest();
@@ -305,19 +321,33 @@ void protobuf_AddDesc_worker_2eproto() {
   ShardAssignmentRequest::default_instance_ = new ShardAssignmentRequest();
   ShardInfo::default_instance_ = new ShardInfo();
   MethodStats::default_instance_ = new MethodStats();
-  HashGet::default_instance_ = new HashGet();
+  RequestBase::default_instance_ = new RequestBase();
+  GetRequest::default_instance_ = new GetRequest();
+  PutRequest::default_instance_ = new PutRequest();
+  UpdateRequest::default_instance_ = new UpdateRequest();
   TableData::default_instance_ = new TableData();
-  DiskData::default_instance_ = new DiskData();
-  FlushDiskTable::default_instance_ = new FlushDiskTable();
   RegisterWorkerRequest::default_instance_->InitAsDefaultInstance();
   ShardAssignment::default_instance_->InitAsDefaultInstance();
   ShardAssignmentRequest::default_instance_->InitAsDefaultInstance();
   ShardInfo::default_instance_->InitAsDefaultInstance();
   MethodStats::default_instance_->InitAsDefaultInstance();
-  HashGet::default_instance_->InitAsDefaultInstance();
+  RequestBase::default_instance_->InitAsDefaultInstance();
+  GetRequest::default_instance_->InitAsDefaultInstance();
+  ::google::protobuf::internal::ExtensionSet::RegisterMessageExtension(
+    &::lapis::RequestBase::default_instance(),
+    101, 11, false, false,
+    &::lapis::GetRequest::default_instance());
+  PutRequest::default_instance_->InitAsDefaultInstance();
+  ::google::protobuf::internal::ExtensionSet::RegisterMessageExtension(
+    &::lapis::RequestBase::default_instance(),
+    102, 11, false, false,
+    &::lapis::PutRequest::default_instance());
+  UpdateRequest::default_instance_->InitAsDefaultInstance();
+  ::google::protobuf::internal::ExtensionSet::RegisterMessageExtension(
+    &::lapis::RequestBase::default_instance(),
+    103, 11, false, false,
+    &::lapis::PutRequest::default_instance());
   TableData::default_instance_->InitAsDefaultInstance();
-  DiskData::default_instance_->InitAsDefaultInstance();
-  FlushDiskTable::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_worker_2eproto);
 }
 
@@ -337,7 +367,6 @@ const int RegisterWorkerRequest::kIdFieldNumber;
 RegisterWorkerRequest::RegisterWorkerRequest()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.RegisterWorkerRequest)
 }
 
 void RegisterWorkerRequest::InitAsDefaultInstance() {
@@ -347,7 +376,6 @@ RegisterWorkerRequest::RegisterWorkerRequest(const RegisterWorkerRequest& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.RegisterWorkerRequest)
 }
 
 void RegisterWorkerRequest::SharedCtor() {
@@ -357,7 +385,6 @@ void RegisterWorkerRequest::SharedCtor() {
 }
 
 RegisterWorkerRequest::~RegisterWorkerRequest() {
-  // @@protoc_insertion_point(destructor:lapis.RegisterWorkerRequest)
   SharedDtor();
 }
 
@@ -388,41 +415,39 @@ RegisterWorkerRequest* RegisterWorkerRequest::New() const {
 }
 
 void RegisterWorkerRequest::Clear() {
-  id_ = 0;
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    id_ = 0;
+  }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool RegisterWorkerRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.RegisterWorkerRequest)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required int32 id = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &id_)));
           set_has_id();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -430,18 +455,12 @@ bool RegisterWorkerRequest::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.RegisterWorkerRequest)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.RegisterWorkerRequest)
-  return false;
 #undef DO_
 }
 
 void RegisterWorkerRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.RegisterWorkerRequest)
   // required int32 id = 1;
   if (has_id()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->id(), output);
@@ -451,12 +470,10 @@ void RegisterWorkerRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.RegisterWorkerRequest)
 }
 
 ::google::protobuf::uint8* RegisterWorkerRequest::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.RegisterWorkerRequest)
   // required int32 id = 1;
   if (has_id()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->id(), target);
@@ -466,7 +483,6 @@ void RegisterWorkerRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.RegisterWorkerRequest)
   return target;
 }
 
@@ -562,7 +578,6 @@ const int ShardAssignment::kNewWorkerFieldNumber;
 ShardAssignment::ShardAssignment()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.ShardAssignment)
 }
 
 void ShardAssignment::InitAsDefaultInstance() {
@@ -572,7 +587,6 @@ ShardAssignment::ShardAssignment(const ShardAssignment& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.ShardAssignment)
 }
 
 void ShardAssignment::SharedCtor() {
@@ -584,7 +598,6 @@ void ShardAssignment::SharedCtor() {
 }
 
 ShardAssignment::~ShardAssignment() {
-  // @@protoc_insertion_point(destructor:lapis.ShardAssignment)
   SharedDtor();
 }
 
@@ -615,44 +628,31 @@ ShardAssignment* ShardAssignment::New() const {
 }
 
 void ShardAssignment::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<ShardAssignment*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  ZR_(table_, new_worker_);
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    table_ = 0;
+    shard_ = 0;
+    new_worker_ = 0;
+  }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool ShardAssignment::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.ShardAssignment)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required int32 table = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &table_)));
           set_has_table();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(16)) goto parse_shard;
         break;
@@ -660,14 +660,15 @@ bool ShardAssignment::MergePartialFromCodedStream(
 
       // required int32 shard = 2;
       case 2: {
-        if (tag == 16) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_shard:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &shard_)));
           set_has_shard();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(32)) goto parse_new_worker;
         break;
@@ -675,25 +676,25 @@ bool ShardAssignment::MergePartialFromCodedStream(
 
       // required int32 new_worker = 4;
       case 4: {
-        if (tag == 32) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_new_worker:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &new_worker_)));
           set_has_new_worker();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -701,18 +702,12 @@ bool ShardAssignment::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.ShardAssignment)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.ShardAssignment)
-  return false;
 #undef DO_
 }
 
 void ShardAssignment::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.ShardAssignment)
   // required int32 table = 1;
   if (has_table()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->table(), output);
@@ -732,12 +727,10 @@ void ShardAssignment::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.ShardAssignment)
 }
 
 ::google::protobuf::uint8* ShardAssignment::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.ShardAssignment)
   // required int32 table = 1;
   if (has_table()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->table(), target);
@@ -757,7 +750,6 @@ void ShardAssignment::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.ShardAssignment)
   return target;
 }
 
@@ -873,7 +865,6 @@ const int ShardAssignmentRequest::kAssignFieldNumber;
 ShardAssignmentRequest::ShardAssignmentRequest()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.ShardAssignmentRequest)
 }
 
 void ShardAssignmentRequest::InitAsDefaultInstance() {
@@ -883,7 +874,6 @@ ShardAssignmentRequest::ShardAssignmentRequest(const ShardAssignmentRequest& fro
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.ShardAssignmentRequest)
 }
 
 void ShardAssignmentRequest::SharedCtor() {
@@ -892,7 +882,6 @@ void ShardAssignmentRequest::SharedCtor() {
 }
 
 ShardAssignmentRequest::~ShardAssignmentRequest() {
-  // @@protoc_insertion_point(destructor:lapis.ShardAssignmentRequest)
   SharedDtor();
 }
 
@@ -930,34 +919,30 @@ void ShardAssignmentRequest::Clear() {
 
 bool ShardAssignmentRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.ShardAssignmentRequest)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // repeated .lapis.ShardAssignment assign = 1;
       case 1: {
-        if (tag == 10) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_assign:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_assign()));
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(10)) goto parse_assign;
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -965,18 +950,12 @@ bool ShardAssignmentRequest::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.ShardAssignmentRequest)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.ShardAssignmentRequest)
-  return false;
 #undef DO_
 }
 
 void ShardAssignmentRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.ShardAssignmentRequest)
   // repeated .lapis.ShardAssignment assign = 1;
   for (int i = 0; i < this->assign_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -987,12 +966,10 @@ void ShardAssignmentRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.ShardAssignmentRequest)
 }
 
 ::google::protobuf::uint8* ShardAssignmentRequest::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.ShardAssignmentRequest)
   // repeated .lapis.ShardAssignment assign = 1;
   for (int i = 0; i < this->assign_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -1004,7 +981,6 @@ void ShardAssignmentRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.ShardAssignmentRequest)
   return target;
 }
 
@@ -1062,7 +1038,9 @@ void ShardAssignmentRequest::CopyFrom(const ShardAssignmentRequest& from) {
 
 bool ShardAssignmentRequest::IsInitialized() const {
 
-  if (!::google::protobuf::internal::AllAreInitialized(this->assign())) return false;
+  for (int i = 0; i < assign_size(); i++) {
+    if (!this->assign(i).IsInitialized()) return false;
+  }
   return true;
 }
 
@@ -1097,7 +1075,6 @@ const int ShardInfo::kTypeFieldNumber;
 ShardInfo::ShardInfo()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.ShardInfo)
 }
 
 void ShardInfo::InitAsDefaultInstance() {
@@ -1107,7 +1084,6 @@ ShardInfo::ShardInfo(const ShardInfo& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.ShardInfo)
 }
 
 void ShardInfo::SharedCtor() {
@@ -1121,7 +1097,6 @@ void ShardInfo::SharedCtor() {
 }
 
 ShardInfo::~ShardInfo() {
-  // @@protoc_insertion_point(destructor:lapis.ShardInfo)
   SharedDtor();
 }
 
@@ -1152,46 +1127,33 @@ ShardInfo* ShardInfo::New() const {
 }
 
 void ShardInfo::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<ShardInfo*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 31) {
-    ZR_(table_, type_);
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    table_ = 0u;
+    shard_ = 0u;
+    entries_ = GOOGLE_ULONGLONG(0);
+    owner_ = 0u;
+    type_ = 0;
   }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool ShardInfo::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.ShardInfo)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required uint32 table = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &table_)));
           set_has_table();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(16)) goto parse_shard;
         break;
@@ -1199,14 +1161,15 @@ bool ShardInfo::MergePartialFromCodedStream(
 
       // required uint32 shard = 2;
       case 2: {
-        if (tag == 16) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_shard:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &shard_)));
           set_has_shard();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(24)) goto parse_entries;
         break;
@@ -1214,14 +1177,15 @@ bool ShardInfo::MergePartialFromCodedStream(
 
       // required uint64 entries = 3;
       case 3: {
-        if (tag == 24) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_entries:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &entries_)));
           set_has_entries();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(32)) goto parse_owner;
         break;
@@ -1229,14 +1193,15 @@ bool ShardInfo::MergePartialFromCodedStream(
 
       // required uint32 owner = 4;
       case 4: {
-        if (tag == 32) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_owner:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &owner_)));
           set_has_owner();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(40)) goto parse_type;
         break;
@@ -1244,25 +1209,25 @@ bool ShardInfo::MergePartialFromCodedStream(
 
       // required int32 type = 5;
       case 5: {
-        if (tag == 40) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_type:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &type_)));
           set_has_type();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -1270,18 +1235,12 @@ bool ShardInfo::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.ShardInfo)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.ShardInfo)
-  return false;
 #undef DO_
 }
 
 void ShardInfo::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.ShardInfo)
   // required uint32 table = 1;
   if (has_table()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->table(), output);
@@ -1311,12 +1270,10 @@ void ShardInfo::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.ShardInfo)
 }
 
 ::google::protobuf::uint8* ShardInfo::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.ShardInfo)
   // required uint32 table = 1;
   if (has_table()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->table(), target);
@@ -1346,7 +1303,6 @@ void ShardInfo::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.ShardInfo)
   return target;
 }
 
@@ -1487,7 +1443,6 @@ const int MethodStats::kShardCallsFieldNumber;
 MethodStats::MethodStats()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.MethodStats)
 }
 
 void MethodStats::InitAsDefaultInstance() {
@@ -1497,7 +1452,6 @@ MethodStats::MethodStats(const MethodStats& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.MethodStats)
 }
 
 void MethodStats::SharedCtor() {
@@ -1510,7 +1464,6 @@ void MethodStats::SharedCtor() {
 }
 
 MethodStats::~MethodStats() {
-  // @@protoc_insertion_point(destructor:lapis.MethodStats)
   SharedDtor();
 }
 
@@ -1541,44 +1494,32 @@ MethodStats* MethodStats::New() const {
 }
 
 void MethodStats::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<MethodStats*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  ZR_(total_time_, shard_calls_);
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    total_time_ = 0;
+    shard_time_ = 0;
+    calls_ = 0;
+    shard_calls_ = 0;
+  }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool MethodStats::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.MethodStats)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required double total_time = 1;
       case 1: {
-        if (tag == 9) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED64) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
                  input, &total_time_)));
           set_has_total_time();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(17)) goto parse_shard_time;
         break;
@@ -1586,14 +1527,15 @@ bool MethodStats::MergePartialFromCodedStream(
 
       // required double shard_time = 2;
       case 2: {
-        if (tag == 17) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED64) {
          parse_shard_time:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
                  input, &shard_time_)));
           set_has_shard_time();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(24)) goto parse_calls;
         break;
@@ -1601,14 +1543,15 @@ bool MethodStats::MergePartialFromCodedStream(
 
       // required int32 calls = 3;
       case 3: {
-        if (tag == 24) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_calls:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &calls_)));
           set_has_calls();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
         if (input->ExpectTag(32)) goto parse_shard_calls;
         break;
@@ -1616,25 +1559,25 @@ bool MethodStats::MergePartialFromCodedStream(
 
       // required int32 shard_calls = 4;
       case 4: {
-        if (tag == 32) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_shard_calls:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &shard_calls_)));
           set_has_shard_calls();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -1642,18 +1585,12 @@ bool MethodStats::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.MethodStats)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.MethodStats)
-  return false;
 #undef DO_
 }
 
 void MethodStats::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.MethodStats)
   // required double total_time = 1;
   if (has_total_time()) {
     ::google::protobuf::internal::WireFormatLite::WriteDouble(1, this->total_time(), output);
@@ -1678,12 +1615,10 @@ void MethodStats::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.MethodStats)
 }
 
 ::google::protobuf::uint8* MethodStats::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.MethodStats)
   // required double total_time = 1;
   if (has_total_time()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(1, this->total_time(), target);
@@ -1708,7 +1643,6 @@ void MethodStats::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.MethodStats)
   return target;
 }
 
@@ -1825,190 +1759,118 @@ void MethodStats::Swap(MethodStats* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int HashGet::kTableFieldNumber;
-const int HashGet::kShardFieldNumber;
-const int HashGet::kSourceFieldNumber;
-const int HashGet::kKeyFieldNumber;
-const int HashGet::kIndexFieldNumber;
+const int RequestBase::kTableFieldNumber;
+const int RequestBase::kSourceFieldNumber;
 #endif  // !_MSC_VER
 
-HashGet::HashGet()
+RequestBase::RequestBase()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.HashGet)
 }
 
-void HashGet::InitAsDefaultInstance() {
+void RequestBase::InitAsDefaultInstance() {
 }
 
-HashGet::HashGet(const HashGet& from)
+RequestBase::RequestBase(const RequestBase& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.HashGet)
 }
 
-void HashGet::SharedCtor() {
-  ::google::protobuf::internal::GetEmptyString();
+void RequestBase::SharedCtor() {
   _cached_size_ = 0;
-  table_ = 0u;
-  shard_ = 0u;
-  source_ = 0u;
-  key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  index_ = 0u;
+  table_ = 0;
+  source_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
-HashGet::~HashGet() {
-  // @@protoc_insertion_point(destructor:lapis.HashGet)
+RequestBase::~RequestBase() {
   SharedDtor();
 }
 
-void HashGet::SharedDtor() {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete key_;
-  }
+void RequestBase::SharedDtor() {
   if (this != default_instance_) {
   }
 }
 
-void HashGet::SetCachedSize(int size) const {
+void RequestBase::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* HashGet::descriptor() {
+const ::google::protobuf::Descriptor* RequestBase::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return HashGet_descriptor_;
+  return RequestBase_descriptor_;
 }
 
-const HashGet& HashGet::default_instance() {
+const RequestBase& RequestBase::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
   return *default_instance_;
 }
 
-HashGet* HashGet::default_instance_ = NULL;
+RequestBase* RequestBase::default_instance_ = NULL;
 
-HashGet* HashGet::New() const {
-  return new HashGet;
+RequestBase* RequestBase::New() const {
+  return new RequestBase;
 }
 
-void HashGet::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<HashGet*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 31) {
-    ZR_(table_, shard_);
-    ZR_(source_, index_);
-    if (has_key()) {
-      if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        key_->clear();
-      }
-    }
+void RequestBase::Clear() {
+  _extensions_.Clear();
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    table_ = 0;
+    source_ = 0;
   }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
-bool HashGet::MergePartialFromCodedStream(
+bool RequestBase::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.HashGet)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required uint32 table = 1;
+      // required int32 table = 1;
       case 1: {
-        if (tag == 8) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &table_)));
           set_has_table();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectTag(16)) goto parse_shard;
+        if (input->ExpectTag(16)) goto parse_source;
         break;
       }
 
-      // required uint32 shard = 2;
+      // required int32 source = 2;
       case 2: {
-        if (tag == 16) {
-         parse_shard:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &shard_)));
-          set_has_shard();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(24)) goto parse_source;
-        break;
-      }
-
-      // required uint32 source = 3;
-      case 3: {
-        if (tag == 24) {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
          parse_source:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &source_)));
           set_has_source();
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectTag(34)) goto parse_key;
-        break;
-      }
-
-      // optional bytes key = 4;
-      case 4: {
-        if (tag == 34) {
-         parse_key:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_key()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(40)) goto parse_index;
-        break;
-      }
-
-      // optional uint32 index = 5;
-      case 5: {
-        if (tag == 40) {
-         parse_index:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &index_)));
-          set_has_index();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
+        }
+        if ((800u <= tag && tag < 1600u)) {
+          DO_(_extensions_.ParseField(tag, input, default_instance_,
+                                      mutable_unknown_fields()));
+          continue;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -2016,126 +1878,336 @@ bool HashGet::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.HashGet)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.HashGet)
-  return false;
 #undef DO_
 }
 
-void HashGet::SerializeWithCachedSizes(
+void RequestBase::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.HashGet)
-  // required uint32 table = 1;
+  // required int32 table = 1;
   if (has_table()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->table(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->table(), output);
   }
 
-  // required uint32 shard = 2;
-  if (has_shard()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->shard(), output);
-  }
-
-  // required uint32 source = 3;
+  // required int32 source = 2;
   if (has_source()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->source(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->source(), output);
   }
 
-  // optional bytes key = 4;
+  // Extension range [100, 200)
+  _extensions_.SerializeWithCachedSizes(
+      100, 200, output);
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* RequestBase::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // required int32 table = 1;
+  if (has_table()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->table(), target);
+  }
+
+  // required int32 source = 2;
+  if (has_source()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->source(), target);
+  }
+
+  // Extension range [100, 200)
+  target = _extensions_.SerializeWithCachedSizesToArray(
+      100, 200, target);
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int RequestBase::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // required int32 table = 1;
+    if (has_table()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->table());
+    }
+
+    // required int32 source = 2;
+    if (has_source()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->source());
+    }
+
+  }
+  total_size += _extensions_.ByteSize();
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void RequestBase::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const RequestBase* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const RequestBase*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void RequestBase::MergeFrom(const RequestBase& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_table()) {
+      set_table(from.table());
+    }
+    if (from.has_source()) {
+      set_source(from.source());
+    }
+  }
+  _extensions_.MergeFrom(from._extensions_);
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void RequestBase::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void RequestBase::CopyFrom(const RequestBase& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool RequestBase::IsInitialized() const {
+  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+
+
+  if (!_extensions_.IsInitialized()) return false;  return true;
+}
+
+void RequestBase::Swap(RequestBase* other) {
+  if (other != this) {
+    std::swap(table_, other->table_);
+    std::swap(source_, other->source_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+    _extensions_.Swap(&other->_extensions_);
+  }
+}
+
+::google::protobuf::Metadata RequestBase::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = RequestBase_descriptor_;
+  metadata.reflection = RequestBase_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int GetRequest::kShardFieldNumber;
+const int GetRequest::kKeyFieldNumber;
+#endif  // !_MSC_VER
+
+#ifndef _MSC_VER
+const int GetRequest::kNameFieldNumber;
+#endif
+::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+    ::google::protobuf::internal::MessageTypeTraits< ::lapis::GetRequest >, 11, false >
+  GetRequest::name(kNameFieldNumber, ::lapis::GetRequest::default_instance());
+GetRequest::GetRequest()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void GetRequest::InitAsDefaultInstance() {
+  key_ = const_cast< ::lapis::TKey*>(&::lapis::TKey::default_instance());
+}
+
+GetRequest::GetRequest(const GetRequest& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void GetRequest::SharedCtor() {
+  _cached_size_ = 0;
+  shard_ = 0;
+  key_ = NULL;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+GetRequest::~GetRequest() {
+  SharedDtor();
+}
+
+void GetRequest::SharedDtor() {
+  if (this != default_instance_) {
+    delete key_;
+  }
+}
+
+void GetRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* GetRequest::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return GetRequest_descriptor_;
+}
+
+const GetRequest& GetRequest::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
+  return *default_instance_;
+}
+
+GetRequest* GetRequest::default_instance_ = NULL;
+
+GetRequest* GetRequest::New() const {
+  return new GetRequest;
+}
+
+void GetRequest::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    shard_ = 0;
+    if (has_key()) {
+      if (key_ != NULL) key_->::lapis::TKey::Clear();
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool GetRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 shard = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &shard_)));
+          set_has_shard();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_key;
+        break;
+      }
+
+      // optional .lapis.TKey key = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_key:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_key()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void GetRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // optional int32 shard = 1;
+  if (has_shard()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->shard(), output);
+  }
+
+  // optional .lapis.TKey key = 2;
   if (has_key()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->key(), output);
-  }
-
-  // optional uint32 index = 5;
-  if (has_index()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->index(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->key(), output);
   }
 
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.HashGet)
 }
 
-::google::protobuf::uint8* HashGet::SerializeWithCachedSizesToArray(
+::google::protobuf::uint8* GetRequest::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.HashGet)
-  // required uint32 table = 1;
-  if (has_table()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->table(), target);
-  }
-
-  // required uint32 shard = 2;
+  // optional int32 shard = 1;
   if (has_shard()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->shard(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->shard(), target);
   }
 
-  // required uint32 source = 3;
-  if (has_source()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->source(), target);
-  }
-
-  // optional bytes key = 4;
+  // optional .lapis.TKey key = 2;
   if (has_key()) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->key(), target);
-  }
-
-  // optional uint32 index = 5;
-  if (has_index()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->index(), target);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->key(), target);
   }
 
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.HashGet)
   return target;
 }
 
-int HashGet::ByteSize() const {
+int GetRequest::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required uint32 table = 1;
-    if (has_table()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->table());
-    }
-
-    // required uint32 shard = 2;
+    // optional int32 shard = 1;
     if (has_shard()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->shard());
     }
 
-    // required uint32 source = 3;
-    if (has_source()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->source());
-    }
-
-    // optional bytes key = 4;
+    // optional .lapis.TKey key = 2;
     if (has_key()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->key());
-    }
-
-    // optional uint32 index = 5;
-    if (has_index()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->index());
     }
 
   }
@@ -2150,10 +2222,10 @@ int HashGet::ByteSize() const {
   return total_size;
 }
 
-void HashGet::MergeFrom(const ::google::protobuf::Message& from) {
+void GetRequest::MergeFrom(const ::google::protobuf::Message& from) {
   GOOGLE_CHECK_NE(&from, this);
-  const HashGet* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const HashGet*>(
+  const GetRequest* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const GetRequest*>(
       &from);
   if (source == NULL) {
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
@@ -2162,64 +2234,54 @@ void HashGet::MergeFrom(const ::google::protobuf::Message& from) {
   }
 }
 
-void HashGet::MergeFrom(const HashGet& from) {
+void GetRequest::MergeFrom(const GetRequest& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_table()) {
-      set_table(from.table());
-    }
     if (from.has_shard()) {
       set_shard(from.shard());
     }
-    if (from.has_source()) {
-      set_source(from.source());
-    }
     if (from.has_key()) {
-      set_key(from.key());
-    }
-    if (from.has_index()) {
-      set_index(from.index());
+      mutable_key()->::lapis::TKey::MergeFrom(from.key());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
-void HashGet::CopyFrom(const ::google::protobuf::Message& from) {
+void GetRequest::CopyFrom(const ::google::protobuf::Message& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void HashGet::CopyFrom(const HashGet& from) {
+void GetRequest::CopyFrom(const GetRequest& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool HashGet::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
+bool GetRequest::IsInitialized() const {
 
+  if (has_key()) {
+    if (!this->key().IsInitialized()) return false;
+  }
   return true;
 }
 
-void HashGet::Swap(HashGet* other) {
+void GetRequest::Swap(GetRequest* other) {
   if (other != this) {
-    std::swap(table_, other->table_);
     std::swap(shard_, other->shard_);
-    std::swap(source_, other->source_);
     std::swap(key_, other->key_);
-    std::swap(index_, other->index_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
   }
 }
 
-::google::protobuf::Metadata HashGet::GetMetadata() const {
+::google::protobuf::Metadata GetRequest::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = HashGet_descriptor_;
-  metadata.reflection = HashGet_reflection_;
+  metadata.descriptor = GetRequest_descriptor_;
+  metadata.reflection = GetRequest_reflection_;
   return metadata;
 }
 
@@ -2227,58 +2289,565 @@ void HashGet::Swap(HashGet* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int TableData::kSourceFieldNumber;
-const int TableData::kTableFieldNumber;
-const int TableData::kShardFieldNumber;
-const int TableData::kDoneFieldNumber;
+const int PutRequest::kShardFieldNumber;
+const int PutRequest::kDataFieldNumber;
+#endif  // !_MSC_VER
+
+#ifndef _MSC_VER
+const int PutRequest::kNameFieldNumber;
+#endif
+::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+    ::google::protobuf::internal::MessageTypeTraits< ::lapis::PutRequest >, 11, false >
+  PutRequest::name(kNameFieldNumber, ::lapis::PutRequest::default_instance());
+PutRequest::PutRequest()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void PutRequest::InitAsDefaultInstance() {
+  data_ = const_cast< ::lapis::TableData*>(&::lapis::TableData::default_instance());
+}
+
+PutRequest::PutRequest(const PutRequest& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void PutRequest::SharedCtor() {
+  _cached_size_ = 0;
+  shard_ = 0;
+  data_ = NULL;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+PutRequest::~PutRequest() {
+  SharedDtor();
+}
+
+void PutRequest::SharedDtor() {
+  if (this != default_instance_) {
+    delete data_;
+  }
+}
+
+void PutRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* PutRequest::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return PutRequest_descriptor_;
+}
+
+const PutRequest& PutRequest::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
+  return *default_instance_;
+}
+
+PutRequest* PutRequest::default_instance_ = NULL;
+
+PutRequest* PutRequest::New() const {
+  return new PutRequest;
+}
+
+void PutRequest::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    shard_ = 0;
+    if (has_data()) {
+      if (data_ != NULL) data_->::lapis::TableData::Clear();
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool PutRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 shard = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &shard_)));
+          set_has_shard();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_data;
+        break;
+      }
+
+      // optional .lapis.TableData data = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_data:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_data()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void PutRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // optional int32 shard = 1;
+  if (has_shard()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->shard(), output);
+  }
+
+  // optional .lapis.TableData data = 2;
+  if (has_data()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->data(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* PutRequest::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // optional int32 shard = 1;
+  if (has_shard()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->shard(), target);
+  }
+
+  // optional .lapis.TableData data = 2;
+  if (has_data()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->data(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int PutRequest::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional int32 shard = 1;
+    if (has_shard()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->shard());
+    }
+
+    // optional .lapis.TableData data = 2;
+    if (has_data()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->data());
+    }
+
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void PutRequest::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const PutRequest* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const PutRequest*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void PutRequest::MergeFrom(const PutRequest& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_shard()) {
+      set_shard(from.shard());
+    }
+    if (from.has_data()) {
+      mutable_data()->::lapis::TableData::MergeFrom(from.data());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void PutRequest::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void PutRequest::CopyFrom(const PutRequest& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PutRequest::IsInitialized() const {
+
+  if (has_data()) {
+    if (!this->data().IsInitialized()) return false;
+  }
+  return true;
+}
+
+void PutRequest::Swap(PutRequest* other) {
+  if (other != this) {
+    std::swap(shard_, other->shard_);
+    std::swap(data_, other->data_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata PutRequest::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = PutRequest_descriptor_;
+  metadata.reflection = PutRequest_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int UpdateRequest::kShardFieldNumber;
+const int UpdateRequest::kDataFieldNumber;
+#endif  // !_MSC_VER
+
+#ifndef _MSC_VER
+const int UpdateRequest::kNameFieldNumber;
+#endif
+::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+    ::google::protobuf::internal::MessageTypeTraits< ::lapis::PutRequest >, 11, false >
+  UpdateRequest::name(kNameFieldNumber, ::lapis::PutRequest::default_instance());
+UpdateRequest::UpdateRequest()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void UpdateRequest::InitAsDefaultInstance() {
+  data_ = const_cast< ::lapis::TableData*>(&::lapis::TableData::default_instance());
+}
+
+UpdateRequest::UpdateRequest(const UpdateRequest& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void UpdateRequest::SharedCtor() {
+  _cached_size_ = 0;
+  shard_ = 0;
+  data_ = NULL;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+UpdateRequest::~UpdateRequest() {
+  SharedDtor();
+}
+
+void UpdateRequest::SharedDtor() {
+  if (this != default_instance_) {
+    delete data_;
+  }
+}
+
+void UpdateRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* UpdateRequest::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return UpdateRequest_descriptor_;
+}
+
+const UpdateRequest& UpdateRequest::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
+  return *default_instance_;
+}
+
+UpdateRequest* UpdateRequest::default_instance_ = NULL;
+
+UpdateRequest* UpdateRequest::New() const {
+  return new UpdateRequest;
+}
+
+void UpdateRequest::Clear() {
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    shard_ = 0;
+    if (has_data()) {
+      if (data_ != NULL) data_->::lapis::TableData::Clear();
+    }
+  }
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool UpdateRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional int32 shard = 1;
+      case 1: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &shard_)));
+          set_has_shard();
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(18)) goto parse_data;
+        break;
+      }
+
+      // optional .lapis.TableData data = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_data:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_data()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectAtEnd()) return true;
+        break;
+      }
+
+      default: {
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          return true;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+  return true;
+#undef DO_
+}
+
+void UpdateRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // optional int32 shard = 1;
+  if (has_shard()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->shard(), output);
+  }
+
+  // optional .lapis.TableData data = 2;
+  if (has_data()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->data(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* UpdateRequest::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // optional int32 shard = 1;
+  if (has_shard()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->shard(), target);
+  }
+
+  // optional .lapis.TableData data = 2;
+  if (has_data()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->data(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int UpdateRequest::ByteSize() const {
+  int total_size = 0;
+
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    // optional int32 shard = 1;
+    if (has_shard()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+          this->shard());
+    }
+
+    // optional .lapis.TableData data = 2;
+    if (has_data()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->data());
+    }
+
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void UpdateRequest::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const UpdateRequest* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const UpdateRequest*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void UpdateRequest::MergeFrom(const UpdateRequest& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+    if (from.has_shard()) {
+      set_shard(from.shard());
+    }
+    if (from.has_data()) {
+      mutable_data()->::lapis::TableData::MergeFrom(from.data());
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void UpdateRequest::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void UpdateRequest::CopyFrom(const UpdateRequest& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool UpdateRequest::IsInitialized() const {
+
+  if (has_data()) {
+    if (!this->data().IsInitialized()) return false;
+  }
+  return true;
+}
+
+void UpdateRequest::Swap(UpdateRequest* other) {
+  if (other != this) {
+    std::swap(shard_, other->shard_);
+    std::swap(data_, other->data_);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata UpdateRequest::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = UpdateRequest_descriptor_;
+  metadata.reflection = UpdateRequest_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
 const int TableData::kKeyFieldNumber;
-const int TableData::kTableDataFieldNumber;
-const int TableData::kKvDataFieldNumber;
-const int TableData::kMissingKeyFieldNumber;
+const int TableData::kValueFieldNumber;
 #endif  // !_MSC_VER
 
 TableData::TableData()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.TableData)
 }
 
 void TableData::InitAsDefaultInstance() {
+  key_ = const_cast< ::lapis::TKey*>(&::lapis::TKey::default_instance());
+  value_ = const_cast< ::lapis::TVal*>(&::lapis::TVal::default_instance());
 }
 
 TableData::TableData(const TableData& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.TableData)
 }
 
 void TableData::SharedCtor() {
-  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
-  source_ = 0u;
-  table_ = 0u;
-  shard_ = 0u;
-  done_ = false;
-  key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  table_data_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  missing_key_ = false;
+  key_ = NULL;
+  value_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
 TableData::~TableData() {
-  // @@protoc_insertion_point(destructor:lapis.TableData)
   SharedDtor();
 }
 
 void TableData::SharedDtor() {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete key_;
-  }
-  if (table_data_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete table_data_;
-  }
   if (this != default_instance_) {
+    delete key_;
+    delete value_;
   }
 }
 
@@ -2304,169 +2873,56 @@ TableData* TableData::New() const {
 }
 
 void TableData::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<TableData*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 191) {
-    ZR_(source_, table_);
-    ZR_(shard_, missing_key_);
+  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (has_key()) {
-      if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        key_->clear();
-      }
+      if (key_ != NULL) key_->::lapis::TKey::Clear();
     }
-    if (has_table_data()) {
-      if (table_data_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-        table_data_->clear();
-      }
+    if (has_value()) {
+      if (value_ != NULL) value_->::lapis::TVal::Clear();
     }
   }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
-  kv_data_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool TableData::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.TableData)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
+  while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required uint32 source = 1;
+      // optional .lapis.TKey key = 1;
       case 1: {
-        if (tag == 8) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &source_)));
-          set_has_source();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(16)) goto parse_table;
-        break;
-      }
-
-      // required uint32 table = 2;
-      case 2: {
-        if (tag == 16) {
-         parse_table:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &table_)));
-          set_has_table();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(24)) goto parse_shard;
-        break;
-      }
-
-      // required uint32 shard = 3;
-      case 3: {
-        if (tag == 24) {
-         parse_shard:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &shard_)));
-          set_has_shard();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(32)) goto parse_done;
-        break;
-      }
-
-      // required bool done = 4;
-      case 4: {
-        if (tag == 32) {
-         parse_done:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &done_)));
-          set_has_done();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(42)) goto parse_key;
-        break;
-      }
-
-      // required bytes key = 5;
-      case 5: {
-        if (tag == 42) {
-         parse_key:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_key()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(50)) goto parse_table_data;
-        break;
-      }
-
-      // optional bytes table_data = 6;
-      case 6: {
-        if (tag == 50) {
-         parse_table_data:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_table_data()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(58)) goto parse_kv_data;
-        break;
-      }
-
-      // repeated .lapis.Arg kv_data = 7;
-      case 7: {
-        if (tag == 58) {
-         parse_kv_data:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_kv_data()));
+               input, mutable_key()));
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectTag(58)) goto parse_kv_data;
-        if (input->ExpectTag(64)) goto parse_missing_key;
+        if (input->ExpectTag(18)) goto parse_value;
         break;
       }
 
-      // optional bool missing_key = 8;
-      case 8: {
-        if (tag == 64) {
-         parse_missing_key:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &missing_key_)));
-          set_has_missing_key();
+      // optional .lapis.TVal value = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_value:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_value()));
         } else {
-          goto handle_unusual;
+          goto handle_uninterpreted;
         }
-        if (input->ExpectAtEnd()) goto success;
+        if (input->ExpectAtEnd()) return true;
         break;
       }
 
       default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_uninterpreted:
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
+          return true;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -2474,122 +2930,50 @@ bool TableData::MergePartialFromCodedStream(
       }
     }
   }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.TableData)
   return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.TableData)
-  return false;
 #undef DO_
 }
 
 void TableData::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.TableData)
-  // required uint32 source = 1;
-  if (has_source()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->source(), output);
-  }
-
-  // required uint32 table = 2;
-  if (has_table()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->table(), output);
-  }
-
-  // required uint32 shard = 3;
-  if (has_shard()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->shard(), output);
-  }
-
-  // required bool done = 4;
-  if (has_done()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->done(), output);
-  }
-
-  // required bytes key = 5;
+  // optional .lapis.TKey key = 1;
   if (has_key()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      5, this->key(), output);
-  }
-
-  // optional bytes table_data = 6;
-  if (has_table_data()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      6, this->table_data(), output);
-  }
-
-  // repeated .lapis.Arg kv_data = 7;
-  for (int i = 0; i < this->kv_data_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      7, this->kv_data(i), output);
+      1, this->key(), output);
   }
 
-  // optional bool missing_key = 8;
-  if (has_missing_key()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(8, this->missing_key(), output);
+  // optional .lapis.TVal value = 2;
+  if (has_value()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->value(), output);
   }
 
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:lapis.TableData)
 }
 
 ::google::protobuf::uint8* TableData::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.TableData)
-  // required uint32 source = 1;
-  if (has_source()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->source(), target);
-  }
-
-  // required uint32 table = 2;
-  if (has_table()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->table(), target);
-  }
-
-  // required uint32 shard = 3;
-  if (has_shard()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->shard(), target);
-  }
-
-  // required bool done = 4;
-  if (has_done()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->done(), target);
-  }
-
-  // required bytes key = 5;
+  // optional .lapis.TKey key = 1;
   if (has_key()) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        5, this->key(), target);
-  }
-
-  // optional bytes table_data = 6;
-  if (has_table_data()) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        6, this->table_data(), target);
-  }
-
-  // repeated .lapis.Arg kv_data = 7;
-  for (int i = 0; i < this->kv_data_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        7, this->kv_data(i), target);
+        1, this->key(), target);
   }
 
-  // optional bool missing_key = 8;
-  if (has_missing_key()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(8, this->missing_key(), target);
+  // optional .lapis.TVal value = 2;
+  if (has_value()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->value(), target);
   }
 
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.TableData)
   return target;
 }
 
@@ -2597,60 +2981,21 @@ int TableData::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required uint32 source = 1;
-    if (has_source()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->source());
-    }
-
-    // required uint32 table = 2;
-    if (has_table()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->table());
-    }
-
-    // required uint32 shard = 3;
-    if (has_shard()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->shard());
-    }
-
-    // required bool done = 4;
-    if (has_done()) {
-      total_size += 1 + 1;
-    }
-
-    // required bytes key = 5;
+    // optional .lapis.TKey key = 1;
     if (has_key()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->key());
     }
 
-    // optional bytes table_data = 6;
-    if (has_table_data()) {
+    // optional .lapis.TVal value = 2;
+    if (has_value()) {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->table_data());
-    }
-
-    // optional bool missing_key = 8;
-    if (has_missing_key()) {
-      total_size += 1 + 1;
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->value());
     }
 
   }
-  // repeated .lapis.Arg kv_data = 7;
-  total_size += 1 * this->kv_data_size();
-  for (int i = 0; i < this->kv_data_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->kv_data(i));
-  }
-
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -2676,28 +3021,12 @@ void TableData::MergeFrom(const ::google::protobuf::Message& from) {
 
 void TableData::MergeFrom(const TableData& from) {
   GOOGLE_CHECK_NE(&from, this);
-  kv_data_.MergeFrom(from.kv_data_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_source()) {
-      set_source(from.source());
-    }
-    if (from.has_table()) {
-      set_table(from.table());
-    }
-    if (from.has_shard()) {
-      set_shard(from.shard());
-    }
-    if (from.has_done()) {
-      set_done(from.done());
-    }
     if (from.has_key()) {
-      set_key(from.key());
+      mutable_key()->::lapis::TKey::MergeFrom(from.key());
     }
-    if (from.has_table_data()) {
-      set_table_data(from.table_data());
-    }
-    if (from.has_missing_key()) {
-      set_missing_key(from.missing_key());
+    if (from.has_value()) {
+      mutable_value()->::lapis::TVal::MergeFrom(from.value());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -2716,22 +3045,20 @@ void TableData::CopyFrom(const TableData& from) {
 }
 
 bool TableData::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000001f) != 0x0000001f) return false;
 
-  if (!::google::protobuf::internal::AllAreInitialized(this->kv_data())) return false;
+  if (has_key()) {
+    if (!this->key().IsInitialized()) return false;
+  }
+  if (has_value()) {
+    if (!this->value().IsInitialized()) return false;
+  }
   return true;
 }
 
 void TableData::Swap(TableData* other) {
   if (other != this) {
-    std::swap(source_, other->source_);
-    std::swap(table_, other->table_);
-    std::swap(shard_, other->shard_);
-    std::swap(done_, other->done_);
     std::swap(key_, other->key_);
-    std::swap(table_data_, other->table_data_);
-    kv_data_.Swap(&other->kv_data_);
-    std::swap(missing_key_, other->missing_key_);
+    std::swap(value_, other->value_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -2743,583 +3070,6 @@ void TableData::Swap(TableData* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = TableData_descriptor_;
   metadata.reflection = TableData_reflection_;
-  return metadata;
-}
-
-
-// ===================================================================
-
-#ifndef _MSC_VER
-const int DiskData::kBlockNumberFieldNumber;
-const int DiskData::kTableFieldNumber;
-const int DiskData::kIsEmptyFieldNumber;
-const int DiskData::kRecordsFieldNumber;
-#endif  // !_MSC_VER
-
-DiskData::DiskData()
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.DiskData)
-}
-
-void DiskData::InitAsDefaultInstance() {
-}
-
-DiskData::DiskData(const DiskData& from)
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.DiskData)
-}
-
-void DiskData::SharedCtor() {
-  _cached_size_ = 0;
-  block_number_ = 0u;
-  table_ = 0u;
-  is_empty_ = false;
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-}
-
-DiskData::~DiskData() {
-  // @@protoc_insertion_point(destructor:lapis.DiskData)
-  SharedDtor();
-}
-
-void DiskData::SharedDtor() {
-  if (this != default_instance_) {
-  }
-}
-
-void DiskData::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* DiskData::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return DiskData_descriptor_;
-}
-
-const DiskData& DiskData::default_instance() {
-  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
-  return *default_instance_;
-}
-
-DiskData* DiskData::default_instance_ = NULL;
-
-DiskData* DiskData::New() const {
-  return new DiskData;
-}
-
-void DiskData::Clear() {
-#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
-  &reinterpret_cast<DiskData*>(16)->f) - \
-   reinterpret_cast<char*>(16))
-
-#define ZR_(first, last) do {                              \
-    size_t f = OFFSET_OF_FIELD_(first);                    \
-    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
-    ::memset(&first, 0, n);                                \
-  } while (0)
-
-  if (_has_bits_[0 / 32] & 7) {
-    ZR_(block_number_, table_);
-    is_empty_ = false;
-  }
-
-#undef OFFSET_OF_FIELD_
-#undef ZR_
-
-  records_.Clear();
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-  mutable_unknown_fields()->Clear();
-}
-
-bool DiskData::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.DiskData)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required uint32 block_number = 1;
-      case 1: {
-        if (tag == 8) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &block_number_)));
-          set_has_block_number();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(16)) goto parse_table;
-        break;
-      }
-
-      // required uint32 table = 2;
-      case 2: {
-        if (tag == 16) {
-         parse_table:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &table_)));
-          set_has_table();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(24)) goto parse_is_empty;
-        break;
-      }
-
-      // optional bool is_empty = 3;
-      case 3: {
-        if (tag == 24) {
-         parse_is_empty:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &is_empty_)));
-          set_has_is_empty();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(34)) goto parse_records;
-        break;
-      }
-
-      // repeated .lapis.Arg records = 4;
-      case 4: {
-        if (tag == 34) {
-         parse_records:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_records()));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(34)) goto parse_records;
-        if (input->ExpectAtEnd()) goto success;
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.DiskData)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.DiskData)
-  return false;
-#undef DO_
-}
-
-void DiskData::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.DiskData)
-  // required uint32 block_number = 1;
-  if (has_block_number()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->block_number(), output);
-  }
-
-  // required uint32 table = 2;
-  if (has_table()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->table(), output);
-  }
-
-  // optional bool is_empty = 3;
-  if (has_is_empty()) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->is_empty(), output);
-  }
-
-  // repeated .lapis.Arg records = 4;
-  for (int i = 0; i < this->records_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->records(i), output);
-  }
-
-  if (!unknown_fields().empty()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:lapis.DiskData)
-}
-
-::google::protobuf::uint8* DiskData::SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.DiskData)
-  // required uint32 block_number = 1;
-  if (has_block_number()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->block_number(), target);
-  }
-
-  // required uint32 table = 2;
-  if (has_table()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->table(), target);
-  }
-
-  // optional bool is_empty = 3;
-  if (has_is_empty()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(3, this->is_empty(), target);
-  }
-
-  // repeated .lapis.Arg records = 4;
-  for (int i = 0; i < this->records_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteMessageNoVirtualToArray(
-        4, this->records(i), target);
-  }
-
-  if (!unknown_fields().empty()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.DiskData)
-  return target;
-}
-
-int DiskData::ByteSize() const {
-  int total_size = 0;
-
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required uint32 block_number = 1;
-    if (has_block_number()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->block_number());
-    }
-
-    // required uint32 table = 2;
-    if (has_table()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->table());
-    }
-
-    // optional bool is_empty = 3;
-    if (has_is_empty()) {
-      total_size += 1 + 1;
-    }
-
-  }
-  // repeated .lapis.Arg records = 4;
-  total_size += 1 * this->records_size();
-  for (int i = 0; i < this->records_size(); i++) {
-    total_size +=
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->records(i));
-  }
-
-  if (!unknown_fields().empty()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        unknown_fields());
-  }
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void DiskData::MergeFrom(const ::google::protobuf::Message& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  const DiskData* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const DiskData*>(
-      &from);
-  if (source == NULL) {
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    MergeFrom(*source);
-  }
-}
-
-void DiskData::MergeFrom(const DiskData& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  records_.MergeFrom(from.records_);
-  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_block_number()) {
-      set_block_number(from.block_number());
-    }
-    if (from.has_table()) {
-      set_table(from.table());
-    }
-    if (from.has_is_empty()) {
-      set_is_empty(from.is_empty());
-    }
-  }
-  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
-}
-
-void DiskData::CopyFrom(const ::google::protobuf::Message& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void DiskData::CopyFrom(const DiskData& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool DiskData::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
-
-  if (!::google::protobuf::internal::AllAreInitialized(this->records())) return false;
-  return true;
-}
-
-void DiskData::Swap(DiskData* other) {
-  if (other != this) {
-    std::swap(block_number_, other->block_number_);
-    std::swap(table_, other->table_);
-    std::swap(is_empty_, other->is_empty_);
-    records_.Swap(&other->records_);
-    std::swap(_has_bits_[0], other->_has_bits_[0]);
-    _unknown_fields_.Swap(&other->_unknown_fields_);
-    std::swap(_cached_size_, other->_cached_size_);
-  }
-}
-
-::google::protobuf::Metadata DiskData::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = DiskData_descriptor_;
-  metadata.reflection = DiskData_reflection_;
-  return metadata;
-}
-
-
-// ===================================================================
-
-#ifndef _MSC_VER
-const int FlushDiskTable::kTableFieldNumber;
-#endif  // !_MSC_VER
-
-FlushDiskTable::FlushDiskTable()
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:lapis.FlushDiskTable)
-}
-
-void FlushDiskTable::InitAsDefaultInstance() {
-}
-
-FlushDiskTable::FlushDiskTable(const FlushDiskTable& from)
-  : ::google::protobuf::Message() {
-  SharedCtor();
-  MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:lapis.FlushDiskTable)
-}
-
-void FlushDiskTable::SharedCtor() {
-  _cached_size_ = 0;
-  table_ = 0u;
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-}
-
-FlushDiskTable::~FlushDiskTable() {
-  // @@protoc_insertion_point(destructor:lapis.FlushDiskTable)
-  SharedDtor();
-}
-
-void FlushDiskTable::SharedDtor() {
-  if (this != default_instance_) {
-  }
-}
-
-void FlushDiskTable::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* FlushDiskTable::descriptor() {
-  protobuf_AssignDescriptorsOnce();
-  return FlushDiskTable_descriptor_;
-}
-
-const FlushDiskTable& FlushDiskTable::default_instance() {
-  if (default_instance_ == NULL) protobuf_AddDesc_worker_2eproto();
-  return *default_instance_;
-}
-
-FlushDiskTable* FlushDiskTable::default_instance_ = NULL;
-
-FlushDiskTable* FlushDiskTable::New() const {
-  return new FlushDiskTable;
-}
-
-void FlushDiskTable::Clear() {
-  table_ = 0u;
-  ::memset(_has_bits_, 0, sizeof(_has_bits_));
-  mutable_unknown_fields()->Clear();
-}
-
-bool FlushDiskTable::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:lapis.FlushDiskTable)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required uint32 table = 1;
-      case 1: {
-        if (tag == 8) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &table_)));
-          set_has_table();
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectAtEnd()) goto success;
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0 ||
-            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:lapis.FlushDiskTable)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:lapis.FlushDiskTable)
-  return false;
-#undef DO_
-}
-
-void FlushDiskTable::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:lapis.FlushDiskTable)
-  // required uint32 table = 1;
-  if (has_table()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->table(), output);
-  }
-
-  if (!unknown_fields().empty()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:lapis.FlushDiskTable)
-}
-
-::google::protobuf::uint8* FlushDiskTable::SerializeWithCachedSizesToArray(
-    ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:lapis.FlushDiskTable)
-  // required uint32 table = 1;
-  if (has_table()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->table(), target);
-  }
-
-  if (!unknown_fields().empty()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:lapis.FlushDiskTable)
-  return target;
-}
-
-int FlushDiskTable::ByteSize() const {
-  int total_size = 0;
-
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required uint32 table = 1;
-    if (has_table()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->table());
-    }
-
-  }
-  if (!unknown_fields().empty()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        unknown_fields());
-  }
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = total_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void FlushDiskTable::MergeFrom(const ::google::protobuf::Message& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  const FlushDiskTable* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const FlushDiskTable*>(
-      &from);
-  if (source == NULL) {
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-    MergeFrom(*source);
-  }
-}
-
-void FlushDiskTable::MergeFrom(const FlushDiskTable& from) {
-  GOOGLE_CHECK_NE(&from, this);
-  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_table()) {
-      set_table(from.table());
-    }
-  }
-  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
-}
-
-void FlushDiskTable::CopyFrom(const ::google::protobuf::Message& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void FlushDiskTable::CopyFrom(const FlushDiskTable& from) {
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool FlushDiskTable::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
-
-  return true;
-}
-
-void FlushDiskTable::Swap(FlushDiskTable* other) {
-  if (other != this) {
-    std::swap(table_, other->table_);
-    std::swap(_has_bits_[0], other->_has_bits_[0]);
-    _unknown_fields_.Swap(&other->_unknown_fields_);
-    std::swap(_cached_size_, other->_cached_size_);
-  }
-}
-
-::google::protobuf::Metadata FlushDiskTable::GetMetadata() const {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::Metadata metadata;
-  metadata.descriptor = FlushDiskTable_descriptor_;
-  metadata.reflection = FlushDiskTable_reflection_;
   return metadata;
 }
 

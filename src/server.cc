@@ -7,6 +7,7 @@
 #include "utils/global_context.h"
 #include "utils/network_service.h"
 #include "core/network_queue.h"
+#include "core/shard.h"
 
 DECLARE_double(sleep_time);
 
@@ -15,8 +16,8 @@ void TableServer::Start(const SGDProto& sgd) {
 	create_table(sgd);
 
 	// init network service
-	network_service_ = NetworkService::Get();
-	network_service_->Init(GlobalContext::Get()->rank(), Network::Get()->get(),
+	network_service_ = NetworkService::Get().get();
+	network_service_->Init(GlobalContext::Get()->rank(), Network::Get().get(),
 			new SimpleQueue());
 	network_service_->RegisterShutdownCb(
 			boost::bind(&TableServer::handle_shutdown, this));
@@ -35,11 +36,11 @@ void TableServer::Start(const SGDProto& sgd) {
 }
 
 void TableServer::create_table(const SGDProto &sgd) {
-	TableServerHandler *tshandler = TSHandlerFactory::Get()->Create(
-			sgd.handler());
+	TableServerHandler *tshandler = TSHandlerFactory::Get()->Create("SGD");
+			//sgd.handler());
 	tshandler->Setup(sgd);
 
-	TableDescriptor info = new TableDescriptor(0,
+	TableDescriptor *info = new TableDescriptor(0,
 			GlobalContext::Get()->num_table_servers());
 
 	info->handler = tshandler;
@@ -54,30 +55,29 @@ void TableServer::handle_shutdown(){
 	dispatcher_->StopDispatchLoop();
 }
 
-bool TableServer::handle_put_request(const Message *msg) {
+bool TableServer::handle_put_request(Message *msg) {
 	PutRequest* put_req =
-			static_cast<const RequestBase *>(msg)->MutableExtension(
+			(static_cast<RequestBase *>(msg))->MutableExtension(
 					PutRequest::name);
 	TableData *put = put_req->mutable_data();
 	table_->ApplyPut(put_req->shard(), *put);
 	return true;
 }
 
-bool TableServer::handle_update_request(const Message *msg) {
+bool TableServer::handle_update_request(Message *msg) {
 	UpdateRequest* update_req =
-			static_cast<const RequestBase *>(msg)->MutableExtension(
-					UpdateRequest::name);
+			static_cast<RequestBase *>(msg)->MutableExtension(UpdateRequest::name);
 	TableData *put = update_req->mutable_data();
 	bool ret = table_->ApplyUpdates(update_req->shard(), *put);
 	return ret;
 }
 
-bool TableServer::handle_get_request(const Message *msg) {
-	const RequestBase *req_base = static_cast<const RequestBase*>(msg);
+bool TableServer::handle_get_request(Message *msg) {
+	const RequestBase *req_base = static_cast<RequestBase*>(msg);
 	int dest = req_base->source();
 
 	GetRequest* get_req =
-			static_cast<const RequestBase *>(msg)->MutableExtension(
+			(static_cast<RequestBase *>(msg))->MutableExtension(
 					GetRequest::name);
 	TableData get_resp;
 

@@ -36,8 +36,8 @@ message MethodStats {
 };
 
 message RequestBase {
-	required uint32 table = 1;
-	required uint32 source = 2; 
+	required int32 table = 1;
+	required int32 source = 2; 
 	extensions 100 to 199; 
 }
 
@@ -59,7 +59,7 @@ message PutRequest {
 
 message UpdateRequest {
 	extend RequestBase{
-		optional PutRequest name = 103; 
+		optional UpdateRequest name = 103; 
 	}  
 	optional uint32 shard = 1; 
 	optional TableData data=2; 

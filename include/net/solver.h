@@ -10,13 +10,15 @@
 #include <vector>
 #include <memory>
 
-#include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "net/net.h"
 #include "utils/common.h"
 #include "utils/shard.h"
-
+#include "utils/global_context.h"
+#include "core/table_delegate.h"
 namespace lapis {
+
+
 /**
  * Prefech one batch of data/records from local shard (\class Shard) into the
  * input layers of the neural network.

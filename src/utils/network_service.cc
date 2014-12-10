@@ -1,7 +1,7 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 #include "utils/network_service.h"
 #include "utils/timer.h"
-
+#include "proto/worker.pb.h"
 // sleep duration between reading messages off the network.
 DEFINE_double(sleep_time, 0.0001, "");
 
@@ -37,7 +37,7 @@ void NetworkService::StartNetworkService(){
 	new boost::thread(&NetworkService::read_loop, this);
 }
 
-void NetworkService::Send(int dst, int method, const Message &msg){
+void NetworkService::Send(int dst, int method, Message &msg){
 	if (dst==id_){//local send, simply enqueue.
 		network_queue_->Enqueue(&msg);
 		return;
@@ -45,7 +45,7 @@ void NetworkService::Send(int dst, int method, const Message &msg){
 
 	std::string buf;
 	msg.SerializeToString(&buf);
-	network_->Send(dst,method,msg);
+	network_->Send(dst,method,buf);
 }
 
 Message* NetworkService::Receive(){

@@ -4,7 +4,8 @@
 #ifndef INCLUDE_SERVER_H_
 #define INCLUDE_SERVER_H_
 
-#include "core/sparse-table.h"
+#include "utils/network_service.h"
+#include "core/global-table.h"
 #include "proto/model.pb.h"
 namespace lapis {
 /**
@@ -34,17 +35,17 @@ public:
 	 * Convert message to PutRequest and invoke table's operation to insert TableData
 	 * object to the table.
 	 */
-	bool handle_put_request(const Message *msg);
+	bool handle_put_request(Message *msg);
 
 	/**
 	 * Convert message to GetRequest and invoke table's operation to return TableData object.
 	 */
-	bool handle_get_request(const Message *msg);
+	bool handle_get_request(Message *msg);
 
 	/**
 	 * Convert message to UpdateRequest and invoke table's operation to update the table.
 	 */
-	bool handle_update_request(const Message *msg);
+	bool handle_update_request(Message *msg);
 
 	/**
 	 * Stop the dispatch loop in the main thread. Exit MPI.

@@ -17,7 +17,7 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath armci
+							opencv_core blas arraymath armci
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 #$(HOME_DIR)/atlas/lib
@@ -50,14 +50,8 @@ SHARD_SRCS :=$(shell find src/datasource/ -name "*.cc") src/utils/proto_helper.c
 SHARD_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(SHARD_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(SHARD_OBJS:%.o=%.P)
 
-MEMORY_TEST_SRCS := src/test/test_core.cc
-MEMORY_TEST_OBJS = $(MEMORY_TEST_SRCS:.cc=.o)
-
-SPLIT_TEST_SRCS := src/test/test_split.cc
-SPLIT_TEST_OBJS = $(SPLIT_TEST_SRCS:.cc=.o)
-
-TABLE_SRCS := src/test/test_table_server.cc
-TABLE_OBJS = $(TABLE_SRCS:.cc=.o)
+TABLE_TEST_SRCS := src/test/test_tuple.cc
+TABLE_TEST_OBJS = $(TABLE_TEST_SRCS:.cc=.o)
 
 OBJS := $(sort $(LAPIS_OBJS) $(SHARD_OBJS) )
 
@@ -66,12 +60,20 @@ run_hybrid: lapis
 	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
 	--v=0  --restore=false --table_buffer=20 --block_size=10 -par_mode=hybrid
 
+run_test_table: lapis.test
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
+		./lapis_test.bin --v=3
+
 loader: init proto $(SHARD_OBJS)
 	$(CXX) $(SHARD_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 lapis: init proto $(LAPIS_OBJS)
 	$(CXX) $(LAPIS_OBJS) -o lapis $(CXXFLAGS) $(LDFLAGS)
+	@echo
+
+lapis.test: lapis $(TABLE_TEST_OBJS)
+	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 $(OBJS):$(BUILD_DIR)/%.o : %.cc

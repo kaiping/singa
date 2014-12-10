@@ -27,7 +27,7 @@ namespace lapis {
  */
 class RequestDispatcher {
 public:
-	typedef boost::function<bool(const Message *)> Callback; /**< type definition for put/get callback */
+	typedef boost::function<bool(Message *)> Callback; /**< type definition for put/get callback */
 
 	RequestDispatcher(): is_running_(true){}
 

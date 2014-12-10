@@ -56,7 +56,7 @@ public:
 	 * @param method message tag.
 	 * @param message the message to be sent.
 	 */
-	void Send(int dest, int method, const Message &message);
+	void Send(int dest, int method, Message &message);
 
 	/**
 	 * Reads the next message from the receive queue.
@@ -94,7 +94,7 @@ private:
 
 	void read_loop(); /**< the reading thread. */
 
-	NetworkService(); /**< private constructor */
+	NetworkService(){} /**< private constructor */
 };
 }  // namespace lapis
 #endif  // INCLUDE_UTILS_NETWORK_SERVICE_H_

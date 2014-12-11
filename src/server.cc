@@ -23,7 +23,6 @@ void TableServer::Start(const SGDProto& sgd) {
 			boost::bind(&TableServer::handle_shutdown, this));
 	network_service_->StartNetworkService();
 
-	VLOG(3) << "Started network service ...";
 	// init dispatcher and register handler
 	dispatcher_ = new RequestDispatcher();
 	dispatcher_->RegisterTableCb(MTYPE_PUT_REQUEST,
@@ -50,10 +49,8 @@ void TableServer::create_table(const SGDProto &sgd) {
 }
 
 void TableServer::handle_shutdown(){
-	VLOG(3) << " in handle-shutdown";
 	while (network_service_->is_active())
 		Sleep(FLAGS_sleep_time);
-	VLOG(3) << " Calling STOP DISPATCH LOOP ()";
 	dispatcher_->StopDispatchLoop();
 }
 
@@ -77,7 +74,6 @@ bool TableServer::handle_update_request(Message *msg) {
 bool TableServer::handle_get_request(Message *msg) {
 	const RequestBase *req_base = static_cast<RequestBase*>(msg);
 	int dest = req_base->source();
-
 	GetRequest* get_req =
 			(static_cast<RequestBase *>(msg))->MutableExtension(
 					GetRequest::name);
@@ -186,10 +182,11 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   // hist=hist+lr*grad
   Math::mAdd(len, history, lr, grad, history);
   // hist=hist+lr*weight*param
-  if(wd>0)
+  if(wd>0){
     Math::mAdd(len, history, lr*wd, dptr, history);
+  }
 
-  int num=origin->num_aggregate()+1;
+  int num=origin->num_aggregate();
   if(num+1==GlobalContext::Get()->num_groups()){
     // param+=history/n, /data->n_update()
     //DAry::arymath().sub(dptr, dptr, history, len);
@@ -202,7 +199,7 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   }else
     origin->set_num_aggregate(num+1);
 
-  return true;
+ return true;
 }
 
 

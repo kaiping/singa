@@ -5,13 +5,21 @@
 #include <glog/logging.h>
 
 #include "utils/network.h"
+#include <cstdio>
 
 namespace lapis {
 
 bool MPINetwork::Send(int dst, int tag, const string& msg) {
 	MPI_Request req;
-	MPI_Isend(const_cast<char*>(msg.data()), msg.size(), MPI::BYTE, dst, tag,
-			MPI_COMM_WORLD, &req);
+	if (tag==32 && msg.size()==15){
+		for (int i=0; i<msg.size(); i++)
+			std::printf("%02x ",msg[i]);
+		std::printf("\n");
+	}
+	/*MPI_Isend(const_cast<char*>(msg.data()), msg.size(), MPI::BYTE, dst, tag,
+			MPI_COMM_WORLD, &req);*/
+	MPI_Send(const_cast<char*>(msg.data()), msg.size(), MPI::BYTE, dst, tag,
+				MPI_COMM_WORLD);
 	return true;
 }
 

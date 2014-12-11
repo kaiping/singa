@@ -6,6 +6,10 @@
 #include "utils/network_service.h"
 #include "core/common.h"
 #include "core/network_queue.h"
+#include <cstdio>
+#include <iostream>
+#include <sstream>
+#include <string>
 /**
  * @file test_tuple.cc
  *
@@ -14,8 +18,11 @@
 DECLARE_double(sleep_time);
 
 using namespace lapis;
+using namespace std;
 
-const int kTupleSize = 100;
+
+#define NKEYS 500
+#define TUPLE_SIZE 1000
 
 void Put(int tid, int version) {
 	RequestBase request;
@@ -33,7 +40,7 @@ void Put(int tid, int version) {
 	key->set_version(version);
 
 	DAryProto *data = val->mutable_data();
-	for (int i = 0; i < kTupleSize; i++)
+	for (int i = 0; i < TUPLE_SIZE; i++)
 		data->add_value(0.0f);
 
 	// TODO check the msg type
@@ -55,15 +62,25 @@ void Update(int tid, int version) {
 	key->set_id(tid);
 	key->set_version(version);
 
-	DAryProto *data = val->mutable_data();
-	for (int i = 0; i < kTupleSize; i++)
+	DAryProto *data = val->mutable_grad();
+	for (int i = 0; i < TUPLE_SIZE; i++)
 		data->add_value(1.0f);
-
 	// TODO check the msg type
 	NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
 }
 
-void Get(int tid, int version) {
+void print_result(TableData *data){
+	TKey *key = data->mutable_key();
+	TVal *val = data->mutable_value();
+	int k = key->id();
+	VLOG(3) << "key = " << k;
+	string s;
+	for (int i=0; i<TUPLE_SIZE; i++)
+		s.append(to_string(val->mutable_data()->value(i))).append(" ");
+	VLOG(3) << "val = " <<s;
+}
+
+void AsyncGet(int tid, int version) {
 	RequestBase request;
 	request.set_table(0);
 	request.set_source(NetworkService::Get()->id());
@@ -74,18 +91,22 @@ void Get(int tid, int version) {
 	TKey *key = get_req->mutable_key();
 	key->set_id(tid);
 	key->set_version(version);
-
 	NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
 
-	Message *resp;
-	while (true) {
-		resp = NetworkService::Get()->Receive();
-		if (!resp)
-			Sleep(FLAGS_sleep_time);
-		else
-			break;
+}
+
+void Collect(){
+	int count = NKEYS;
+	while (count){
+		while (true) {
+				Message *resp = NetworkService::Get()->Receive();
+				if (!resp)
+					Sleep(FLAGS_sleep_time);
+				else
+					break;
+			}
+		count--;
 	}
-	VLOG(3) << "Got RESULT ...";
 }
 
 /**
@@ -105,6 +126,33 @@ void worker_send_shutdown(int id){
 	}
 }
 
+/**
+ * One worker with the specific ID puts, others wait.
+ */
+void worker_load_data(int id){
+	auto gc = lapis::GlobalContext::Get();
+	if (gc->rank()==id)
+		for (int i=0; i<NKEYS; i++)
+			Put(i,0);
+	MPI_Barrier(gc->mpicomm());
+}
+
+void worker_update_data(){
+	for (int i=0; i<NKEYS; i++)
+		Update(i,0);
+	VLOG(3) << "Done update ...";
+}
+
+/*
+ * Async get.
+ */
+void worker_get_data(){
+	for (int i=0; i<NKEYS; i++)
+		AsyncGet(i,0);
+	VLOG(3) << "Done send get request ...";
+	Collect();
+	VLOG(3) << "Done collect ...";
+}
 
 void start_network_service_for_worker(){
 	NetworkService *network_service_ = NetworkService::Get().get();
@@ -130,8 +178,8 @@ int main(int argc, char **argv) {
 	cluster.set_server_start(0);
 	cluster.set_server_end(1);
 	cluster.set_worker_start(1);
-	cluster.set_worker_end(3);
-	cluster.set_group_size(2);
+	cluster.set_worker_end(2);
+	cluster.set_group_size(1);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);
@@ -149,17 +197,16 @@ int main(int argc, char **argv) {
 		server.Start(sgd);
 	} else {
 		start_network_service_for_worker();
-		VLOG(3) << "Started network service ...";
-		Put(0,0);
-		Get(0,0);
+		worker_load_data(cluster.worker_start());
+		worker_update_data();
+		worker_get_data();
+		worker_update_data();
 		worker_send_shutdown(cluster.worker_start());
 		NetworkService::Get()->Shutdown();
 	}
-	VLOG(3) << "Finalizing GC, process " << gc->rank();
 	gc->Finalize();
-	VLOG(3) << "Finalizing MPI, process "<< gc->rank();
 	MPI_Finalize();
-	VLOG(3) << "done, process "<< gc->rank();
+	VLOG(3) << "End, process "<< gc->rank();
 	return 0;
 }
 

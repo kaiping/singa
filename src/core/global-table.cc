@@ -73,7 +73,7 @@ bool GlobalTable::HandleGet(GetRequest &get_req, TableData *get_resp) {
 	TVal val = t->get(*key);
 
 	TVal ret;
-	if (((BaseUpdateHandler<TKey, TVal> *) info_->handler)->Get(*key, val, &ret)) {
+	if (((TableServerHandler*) info_->handler)->Get(*key, val, &ret)) {
 		(get_resp->mutable_key())->CopyFrom(*key);
 		(get_resp->mutable_value())->CopyFrom(ret);
 		return true;

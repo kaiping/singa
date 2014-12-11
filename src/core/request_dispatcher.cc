@@ -19,7 +19,6 @@ namespace lapis {
 void RequestDispatcher::StartDispatchLoop(){
 	NetworkService *network = NetworkService::Get().get();
 	int tag;
-	VLOG(3) << "inside dispatch loop ..";
 	while (is_running_) {
 		Message *msg = network->Receive();
 		if (msg){
@@ -31,7 +30,6 @@ void RequestDispatcher::StartDispatchLoop(){
 				tag = MTYPE_PUT_REQUEST;
 			else if (request->HasExtension(UpdateRequest::name))
 				tag = MTYPE_UPDATE_REQUEST;
-			VLOG(3) << "GOT MESSAGE of type ... " << tag;
 			// if successful, re-claim memory
 			if (callbacks_[tag](msg))
 				delete msg;

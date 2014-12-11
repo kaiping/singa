@@ -3,6 +3,7 @@
 #include "utils/timer.h"
 #include "proto/worker.pb.h"
 #include <glog/logging.h>
+#include <cstdio>
 // sleep duration between reading messages off the network.
 DEFINE_double(sleep_time, 0.0001, "");
 
@@ -48,6 +49,7 @@ void NetworkService::Send(int dst, int method, Message &msg){
 
 	std::string buf;
 	msg.SerializeToString(&buf);
+	VLOG(3) << "Send message of type " << method << " size " << buf.size();
 	network_->Send(dst,method,buf);
 }
 
@@ -68,7 +70,14 @@ void NetworkService::read_loop(){
 		if (network_->Recv(&tag, &src, &msg)){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
+				VLOG(3) << "Parsing request from string msg, size " << msg.size() << " from " << src << " tag = "<<tag;
 				request->ParseFromString(msg);
+				if (request->source()==0){
+					for (int i=0; i<msg.size(); i++)
+						std::printf("%02x ",msg[i]);
+					std::printf("\n");
+				}
+				//VLOG(3) << "enqueue,  table "<<request->table() << " source " << request->source() << " tag " <<tag;
 				network_queue_->Enqueue(request);
 			}
 			else if (tag==MTYPE_RESPONSE){
@@ -77,7 +86,6 @@ void NetworkService::read_loop(){
 				network_queue_->Enqueue(response);
 			}
 			else if (tag==MTYPE_SHUTDOWN){
-				VLOG(3) << "got SHUTDOWN message .. SHUTTING DOWN NOW!!";
 				is_running_ = false;
 				break;
 			}
@@ -85,7 +93,6 @@ void NetworkService::read_loop(){
 		else
 			Sleep(FLAGS_sleep_time);
 	}
-	VLOG(3) << "to be SHUTTING DOWN NOW!!";
 	is_complete_ = true;
 	if (shutdown_callback_)
 		shutdown_callback_();

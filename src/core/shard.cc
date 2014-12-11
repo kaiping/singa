@@ -17,9 +17,8 @@ bool Shard::ApplyUpdates(TableData &in, LogFile *logfile) {
 	TKey *key = in.mutable_key();
 	TVal *val = in.mutable_value();
 	bool ret = update(*key, *val);
-
 	if (ret
-			&& ((BaseUpdateHandler<TKey, TVal> *) info_->handler)->CheckpointNow(
+			&& ((TableServerHandler *) info_->handler)->CheckpointNow(
 					*key, *val)) {
 		TVal new_val = get(*key);
 		string kt, vt;
@@ -37,7 +36,7 @@ bool Shard::ApplyPut(TableData &in, LogFile *logfile) {
 	put(*key, *val);
 
 
-	if (((BaseUpdateHandler<TKey, TVal> *) info_->handler)->CheckpointNow(
+	if (((TableServerHandler*) info_->handler)->CheckpointNow(
 			*key, *val)) {
 		string kt, vt;
 		key->SerializeToString(&kt);
@@ -101,7 +100,7 @@ TVal Shard::get(const TKey &k) {
 bool Shard::update(const TKey &k, const TVal &v) {
 	int b = bucket_for_key(k);
 	if (b != -1) {
-		return ((BaseUpdateHandler<TKey, TVal> *) info_->handler)->Update(
+		return ((TableServerHandler *) info_->handler)->Update(
 				&buckets_[b].v, v);
 	} else {
 		put(k, v);
@@ -148,5 +147,6 @@ void Shard::put(const TKey &k, const TVal &v) {
 		// Replacing an existing entry
 		buckets_[b].v = v;
 	}
+	((TableServerHandler *) info_->handler)->Put(k, &buckets_[b].v, v);
 }
 } //namespace lapis

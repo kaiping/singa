@@ -15,6 +15,7 @@
 #include <glog/logging.h>
 
 #include "proto/common.pb.h"
+#include "proto/worker.pb.h"
 #include "utils/timer.h"
 
 #include <unordered_map>
@@ -122,6 +123,23 @@ struct Sharding {
 			return key % shards;
 		}
 	};
+};
+
+/**
+ * Base class, specifies the interface of request handlers of table server.
+ */
+class TableServerHandler{
+ public:
+  virtual void Setup(const SGDProto& sgd);
+  virtual bool CheckpointNow(const TKey& key, const TVal& val);
+
+  virtual bool Update(TVal* origin, const TVal& update)=0;
+  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
+  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
+
+ protected:
+  int checkpoint_after_, checkpoint_frequency_;
+  bool synchronous_;
 };
 
 } // namespace lapis

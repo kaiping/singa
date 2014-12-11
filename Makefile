@@ -61,7 +61,7 @@ run_hybrid: lapis
 	--v=0  --restore=false --table_buffer=20 --block_size=10 -par_mode=hybrid
 
 run_test_table: lapis.test 
-	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin --v=3
 
 loader: init proto $(SHARD_OBJS)

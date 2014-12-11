@@ -211,7 +211,7 @@ message SGDProto {
     kLinear = 3;
     kStep = 4;
   }
-  optional ChangeProto learning_rate_change = 6 [default = kInverse_t];
+  optional ChangeProto learning_rate_change = 6 [default = kStep];
   optional bool synchronous=7 [default=false];
   // table server handler class identifier
   optional string handler=8 [default="SGDHandler"];

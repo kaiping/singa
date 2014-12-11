@@ -63,8 +63,8 @@ class Network {
 class MPINetwork: public Network{
  public:
 	MPINetwork(){}
-  bool Send(int dst, int tag, const string& msg);
-  bool Recv(int *tag, int *src, string* msg);
+	bool Send(int dst, int tag, const string& msg);
+	bool Recv(int *tag, int *src, string* msg);
 };
 } /* lapis  */
 

@@ -6,8 +6,10 @@
 #include <boost/thread.hpp>
 #include <gflags/gflags.h>
 #include "utils/network.h"
+#include <deque>
 
 using google::protobuf::Message;
+using std::deque;
 
 /**
  * @file network_service.h
@@ -19,6 +21,9 @@ using google::protobuf::Message;
  *
  * This service contains a thread the reads raw message off the network (@see network.h) and
  * put it to the corresponding queue. All queue elements are of type Message.
+ *
+ * It also has another thread for sending messages. We found that using non-blocking communication,
+ * i.e. MPI_ISend() is buggy, thus we use blocking communication and create a new thread for that.
  *
  * A call to Send() to a remote process sends the message directly using the network implementation,
  * or enqueues it again if the message is local.
@@ -42,6 +47,11 @@ public:
 	virtual bool is_active() = 0;
 };
 
+struct NetworkMessage{
+	int dst, method;
+	Message *msg;
+	NetworkMessage(int d, int m, Message *ms): dst(d), method(m), msg(ms){}
+};
 
 /**
  * Singelton to access network service functionalities: sending and receiving messages.
@@ -52,11 +62,14 @@ class NetworkService {
 public:
 	/**
 	 * Send message. If the destination if local, the message is enqueued again.
+	 * The message is held at a queue before sending out. The caller of this method
+	 * does not have to clear memory of the message.
+	 *
 	 * @param dest rank of the receiving process. Could be local.
 	 * @param method message tag.
 	 * @param message the message to be sent.
 	 */
-	void Send(int dest, int method, Message &message);
+	void Send(int dest, int method, Message *message);
 
 	/**
 	 * Reads the next message from the receive queue.
@@ -84,7 +97,7 @@ public:
 	 */
 	void Shutdown();
 
-	bool is_active(){ return network_queue_->is_active();}  /**< if there are messages to process.  */
+	bool is_active(){ return receive_done_ && send_done_ && network_queue_->is_active();}  /**< if there are messages to process.  */
 	static std::shared_ptr<NetworkService> Get();
 
 	int id(){ return id_;}
@@ -94,12 +107,17 @@ private:
 	NetworkQueue* network_queue_;
 	Network* network_; /**< access to the network implementation (MPI or 0MQ). */
 
-	volatile bool is_running_, is_complete_;
+	volatile bool is_running_, receive_done_, send_done_;
 	boost::function<void()> shutdown_callback_;
 
 	static std::shared_ptr<NetworkService> instance_;
+	deque<NetworkMessage*> send_queue_;
+	mutable boost::recursive_mutex send_lock_;
 
-	void read_loop(); /**< the reading thread. */
+	void receive_loop(); /**< the reading thread. */
+	void send_loop();
+
+	bool more_to_send(); /**< true if there's message in the send queue */
 
 	NetworkService(){} /**< private constructor */
 };

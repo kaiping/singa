@@ -4,6 +4,7 @@
 #include "proto/worker.pb.h"
 #include <glog/logging.h>
 #include <cstdio>
+#include "utils/common.h"
 // sleep duration between reading messages off the network.
 DEFINE_double(sleep_time, 0.0001, "");
 
@@ -34,23 +35,24 @@ void NetworkService::Init(int id, Network *net, NetworkQueue *queue){
 	network_ = net;
 	network_queue_ = queue;
 	is_running_ = true;
-	is_complete_ = false;
+	receive_done_ = send_done_ = false;
 }
 
 void NetworkService::StartNetworkService(){
-	new boost::thread(&NetworkService::read_loop, this);
+	new boost::thread(&NetworkService::receive_loop, this);
+	new boost::thread(&NetworkService::send_loop,this);
 }
 
-void NetworkService::Send(int dst, int method, Message &msg){
-	if (dst==id_){//local send, simply enqueue.
-		network_queue_->Enqueue(&msg);
+void NetworkService::Send(int dst, int method, Message *msg){
+	if (dst == id_) { //local send, simply enqueue.
+		network_queue_->Enqueue(msg);
 		return;
 	}
 
-	std::string buf;
-	msg.SerializeToString(&buf);
-	VLOG(3) << "Send message of type " << method << " size " << buf.size();
-	network_->Send(dst,method,buf);
+	{
+		boost::recursive_mutex::scoped_lock sl(send_lock_);
+		send_queue_.push_back(new NetworkMessage(dst,method,msg));
+	}
 }
 
 Message* NetworkService::Receive(){
@@ -59,25 +61,18 @@ Message* NetworkService::Receive(){
 
 void NetworkService::Shutdown(){
 	is_running_ = false;
-	while (!is_complete_)
+	while (!send_done_ || !receive_done_)
 		Sleep(FLAGS_sleep_time);
 }
 
-void NetworkService::read_loop(){
+void NetworkService::receive_loop(){
 	while(is_running_){
 		string msg;
 		int tag, src;
 		if (network_->Recv(&tag, &src, &msg)){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
-				VLOG(3) << "Parsing request from string msg, size " << msg.size() << " from " << src << " tag = "<<tag;
 				request->ParseFromString(msg);
-				if (request->source()==0){
-					for (int i=0; i<msg.size(); i++)
-						std::printf("%02x ",msg[i]);
-					std::printf("\n");
-				}
-				//VLOG(3) << "enqueue,  table "<<request->table() << " source " << request->source() << " tag " <<tag;
 				network_queue_->Enqueue(request);
 			}
 			else if (tag==MTYPE_RESPONSE){
@@ -86,15 +81,41 @@ void NetworkService::read_loop(){
 				network_queue_->Enqueue(response);
 			}
 			else if (tag==MTYPE_SHUTDOWN){
-				is_running_ = false;
 				break;
 			}
 		}
 		else
 			Sleep(FLAGS_sleep_time);
 	}
-	is_complete_ = true;
+	receive_done_ = true;
 	if (shutdown_callback_)
 		shutdown_callback_();
 }
+
+void NetworkService::send_loop() {
+	while (true) {
+		if (more_to_send()) {
+			boost::recursive_mutex::scoped_lock sl(send_lock_);
+			NetworkMessage *message = send_queue_.front();
+
+			std::string buf;
+			(message->msg)->SerializeToString(&buf);
+			network_->Send(message->dst, message->method, buf);
+
+			delete message->msg;
+			send_queue_.pop_front();
+		}
+		else if (!receive_done_)
+			Sleep(FLAGS_sleep_time);
+		else
+			break;
+	}
+	send_done_ = true;
+}
+
+bool NetworkService::more_to_send(){
+	boost::recursive_mutex::scoped_lock sl(send_lock_);
+	return send_queue_.size() > 0;
+}
+
 }  // namespace lapis

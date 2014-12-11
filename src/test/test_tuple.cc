@@ -21,14 +21,14 @@ using namespace lapis;
 using namespace std;
 
 
-#define NKEYS 500
-#define TUPLE_SIZE 1000
+#define NKEYS 1000
+#define TUPLE_SIZE 5000
 
 void Put(int tid, int version) {
-	RequestBase request;
-	request.set_table(0);
-	request.set_source(NetworkService::Get()->id());
-	PutRequest *put_req = request.MutableExtension(PutRequest::name);
+	RequestBase *request = new RequestBase();
+	request->set_table(0);
+	request->set_source(NetworkService::Get()->id());
+	PutRequest *put_req = request->MutableExtension(PutRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	put_req->set_shard(shard);
 	TableData *tuple = put_req->mutable_data();
@@ -48,10 +48,10 @@ void Put(int tid, int version) {
 }
 
 void Update(int tid, int version) {
-	RequestBase request;
-	request.set_table(0);
-	request.set_source(NetworkService::Get()->id());
-	UpdateRequest *update_req = request.MutableExtension(UpdateRequest::name);
+	RequestBase *request = new RequestBase();
+	request->set_table(0);
+	request->set_source(NetworkService::Get()->id());
+	UpdateRequest *update_req = request->MutableExtension(UpdateRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	update_req->set_shard(shard);
 	TableData *tuple = update_req->mutable_data();
@@ -81,10 +81,10 @@ void print_result(TableData *data){
 }
 
 void AsyncGet(int tid, int version) {
-	RequestBase request;
-	request.set_table(0);
-	request.set_source(NetworkService::Get()->id());
-	GetRequest *get_req = request.MutableExtension(GetRequest::name);
+	RequestBase *request = new RequestBase();
+	request->set_table(0);
+	request->set_source(NetworkService::Get()->id());
+	GetRequest *get_req = request->MutableExtension(GetRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	get_req->set_shard(shard);
 
@@ -116,12 +116,13 @@ void Collect(){
 void worker_send_shutdown(int id){
 	auto gc = lapis::GlobalContext::Get();
 	NetworkService *network_service_ = NetworkService::Get().get();
-	EmptyMessage msg;
 	MPI_Barrier(gc->mpicomm());
 	if (gc->rank()==id){
 		for (int i=0; i<gc->num_procs(); i++){
-			if (gc->IsTableServer(i))
-				network_service_->Send(0, MTYPE_SHUTDOWN,msg);
+			if (gc->IsTableServer(i)){
+				EmptyMessage *msg = new EmptyMessage();
+				network_service_->Send(i, MTYPE_SHUTDOWN,msg);
+			}
 		}
 	}
 }
@@ -176,10 +177,10 @@ int main(int argc, char **argv) {
 	// Init GlobalContext
 	Cluster cluster;
 	cluster.set_server_start(0);
-	cluster.set_server_end(1);
-	cluster.set_worker_start(1);
-	cluster.set_worker_end(2);
-	cluster.set_group_size(1);
+	cluster.set_server_end(2);
+	cluster.set_worker_start(2);
+	cluster.set_worker_end(4);
+	cluster.set_group_size(2);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);

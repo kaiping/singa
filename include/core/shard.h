@@ -65,7 +65,7 @@ public:
 		TableBase::Init(td);
 	}
 
-	virtual TVal get(const TKey &k);
+	virtual TVal& get(const TKey &k);
 	virtual bool contains(const TKey &k);
 	virtual void put(const TKey &k, const TVal &v);
 	virtual bool update(const TKey &k, const TVal &v);

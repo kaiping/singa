@@ -70,12 +70,10 @@ bool GlobalTable::HandleGet(GetRequest &get_req, TableData *get_resp) {
 	Shard *t = partitions_[shard];
 
 	TKey *key = get_req.mutable_key();
-	TVal val = t->get(*key);
+	TVal &val = t->get(*key);
 
-	TVal ret;
-	if (((TableServerHandler*) info_->handler)->Get(*key, val, &ret)) {
+	if (((TableServerHandler*) info_->handler)->Get(*key, val, get_resp->mutable_value())) {
 		(get_resp->mutable_key())->CopyFrom(*key);
-		(get_resp->mutable_value())->CopyFrom(ret);
 		return true;
 	} else
 		return false;

@@ -77,9 +77,9 @@ bool TableServer::handle_get_request(Message *msg) {
 	GetRequest* get_req =
 			(static_cast<RequestBase *>(msg))->MutableExtension(
 					GetRequest::name);
-	TableData *get_resp = new TableData();
+	TableData get_resp;
 
-	if (table_->HandleGet(*get_req, get_resp)) {
+	if (table_->HandleGet(*get_req, &get_resp)) {
 		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
 		return true;
 	} else
@@ -95,11 +95,13 @@ void TableServerHandler::Setup(const SGDProto& sgd) {
 }
 
 bool TableServerHandler::CheckpointNow(const TKey& key, const TVal& val){
+	/*
   if(key.version()>checkpoint_after_&&
       (key.version()-checkpoint_after_)%checkpoint_frequency_==0)
     return true;
   else
-    return false;
+    return false;*/
+	return false;
 }
 bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
   to->CopyFrom(from);

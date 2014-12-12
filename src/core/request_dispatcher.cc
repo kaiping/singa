@@ -34,7 +34,7 @@ void RequestDispatcher::StartDispatchLoop(){
 			if (callbacks_[tag](msg))
 				delete msg;
 			else{ // re-enqueue the request
-				network->Send(network->id(), tag, msg);
+				network->Send(network->id(), tag, *msg);
 			}
 		}
 		else

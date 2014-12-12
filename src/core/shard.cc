@@ -83,7 +83,7 @@ bool Shard::contains(const TKey &k) {
 	return bucket_for_key(k) != -1;
 }
 
-TVal Shard::get(const TKey &k) {
+TVal& Shard::get(const TKey &k) {
 	int b = bucket_for_key(k);
 	return buckets_[b].v;
 }
@@ -138,15 +138,15 @@ void Shard::put(const TKey &k, const TVal &v) {
 			resize((int) (1 + size_ * 2));
 			put(k, v);
 		} else {
+			((TableServerHandler *) info_->handler)->Put(k, &buckets_[b].v, v);
 			buckets_[b].in_use = 1;
 			buckets_[b].k = k;
-			buckets_[b].v = v;
+			//buckets_[b].v = v;
 			++entries_;
 		}
 	} else {
 		// Replacing an existing entry
 		buckets_[b].v = v;
 	}
-	((TableServerHandler *) info_->handler)->Put(k, &buckets_[b].v, v);
 }
 } //namespace lapis

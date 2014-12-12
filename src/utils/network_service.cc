@@ -43,9 +43,9 @@ void NetworkService::StartNetworkService(){
 	new boost::thread(&NetworkService::send_loop,this);
 }
 
-void NetworkService::Send(int dst, int method, Message *msg){
+void NetworkService::Send(int dst, int method, Message &msg){
 	if (dst == id_) { //local send, simply enqueue.
-		network_queue_->Enqueue(msg);
+		network_queue_->Enqueue(&msg);
 		return;
 	}
 
@@ -81,6 +81,7 @@ void NetworkService::receive_loop(){
 				network_queue_->Enqueue(response);
 			}
 			else if (tag==MTYPE_SHUTDOWN){
+				VLOG(3) << "Table server received SHUTDOWN ...";
 				break;
 			}
 		}
@@ -98,11 +99,7 @@ void NetworkService::send_loop() {
 			boost::recursive_mutex::scoped_lock sl(send_lock_);
 			NetworkMessage *message = send_queue_.front();
 
-			std::string buf;
-			(message->msg)->SerializeToString(&buf);
-			network_->Send(message->dst, message->method, buf);
-
-			delete message->msg;
+			network_->Send(message->dst, message->method, message->msg);
 			send_queue_.pop_front();
 		}
 		else if (!receive_done_)

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 /**
  * @file test_tuple.cc
  *
@@ -19,16 +20,21 @@ DECLARE_double(sleep_time);
 
 using namespace lapis;
 using namespace std;
-
+using std::vector;
 
 #define NKEYS 1000
 #define TUPLE_SIZE 5000
 
-void Put(int tid, int version) {
-	RequestBase *request = new RequestBase();
-	request->set_table(0);
-	request->set_source(NetworkService::Get()->id());
-	PutRequest *put_req = request->MutableExtension(PutRequest::name);
+#define SIZE 16
+#define THRESHOLD 10000000
+int tuple_sizes[SIZE] = {27448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
+vector<int> valsizes;
+
+void Put(int tid, int size, int version) {
+	RequestBase request;
+	request.set_table(0);
+	request.set_source(NetworkService::Get()->id());
+	PutRequest *put_req = request.MutableExtension(PutRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	put_req->set_shard(shard);
 	TableData *tuple = put_req->mutable_data();
@@ -40,18 +46,19 @@ void Put(int tid, int version) {
 	key->set_version(version);
 
 	DAryProto *data = val->mutable_data();
-	for (int i = 0; i < TUPLE_SIZE; i++)
+	for (int i = 0; i < size; i++){
 		data->add_value(0.0f);
+	}
 
 	// TODO check the msg type
 	NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
 }
 
-void Update(int tid, int version) {
-	RequestBase *request = new RequestBase();
-	request->set_table(0);
-	request->set_source(NetworkService::Get()->id());
-	UpdateRequest *update_req = request->MutableExtension(UpdateRequest::name);
+void Update(int tid, int size, int version) {
+	RequestBase request;
+	request.set_table(0);
+	request.set_source(NetworkService::Get()->id());
+	UpdateRequest *update_req = request.MutableExtension(UpdateRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	update_req->set_shard(shard);
 	TableData *tuple = update_req->mutable_data();
@@ -63,7 +70,7 @@ void Update(int tid, int version) {
 	key->set_version(version);
 
 	DAryProto *data = val->mutable_grad();
-	for (int i = 0; i < TUPLE_SIZE; i++)
+	for (int i = 0; i < size; i++)
 		data->add_value(1.0f);
 	// TODO check the msg type
 	NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
@@ -81,10 +88,10 @@ void print_result(TableData *data){
 }
 
 void AsyncGet(int tid, int version) {
-	RequestBase *request = new RequestBase();
-	request->set_table(0);
-	request->set_source(NetworkService::Get()->id());
-	GetRequest *get_req = request->MutableExtension(GetRequest::name);
+	RequestBase request;
+	request.set_table(0);
+	request.set_source(NetworkService::Get()->id());
+	GetRequest *get_req = request.MutableExtension(GetRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	get_req->set_shard(shard);
 
@@ -96,17 +103,20 @@ void AsyncGet(int tid, int version) {
 }
 
 void Collect(){
-	int count = NKEYS;
+	int count = valsizes.size();
 	while (count){
 		while (true) {
 				Message *resp = NetworkService::Get()->Receive();
 				if (!resp)
 					Sleep(FLAGS_sleep_time);
-				else
+				else{
+					delete resp;
 					break;
+				}
 			}
 		count--;
 	}
+	VLOG(3) << "Collected " << valsizes.size();
 }
 
 /**
@@ -120,7 +130,7 @@ void worker_send_shutdown(int id){
 	if (gc->rank()==id){
 		for (int i=0; i<gc->num_procs(); i++){
 			if (gc->IsTableServer(i)){
-				EmptyMessage *msg = new EmptyMessage();
+				EmptyMessage msg;
 				network_service_->Send(i, MTYPE_SHUTDOWN,msg);
 			}
 		}
@@ -132,15 +142,30 @@ void worker_send_shutdown(int id){
  */
 void worker_load_data(int id){
 	auto gc = lapis::GlobalContext::Get();
+	for (int i = 0; i < SIZE; i++) {
+		int m = tuple_sizes[i];
+		if (m < THRESHOLD)
+			valsizes.push_back(m);
+		else {
+			for (int j = 0; j < m / THRESHOLD; j++)
+				valsizes.push_back(THRESHOLD);
+			if (m % THRESHOLD)
+				valsizes.push_back(m);
+		}
+	}
+
 	if (gc->rank()==id)
-		for (int i=0; i<NKEYS; i++)
-			Put(i,0);
+		for (size_t i=0; i<valsizes.size(); i++)
+			Put(i,valsizes[i],0);
+
 	MPI_Barrier(gc->mpicomm());
+	VLOG(3) << "Done loading data, num_keys = "<<valsizes.size();
 }
 
-void worker_update_data(){
-	for (int i=0; i<NKEYS; i++)
-		Update(i,0);
+void worker_update_data() {
+	for (size_t i = 0; i < valsizes.size(); i++)
+		Update(i,valsizes[i],0);
+
 	VLOG(3) << "Done update ...";
 }
 
@@ -148,9 +173,10 @@ void worker_update_data(){
  * Async get.
  */
 void worker_get_data(){
-	for (int i=0; i<NKEYS; i++)
+	for (size_t i=0; i<valsizes.size(); i++)
 		AsyncGet(i,0);
-	VLOG(3) << "Done send get request ...";
+	VLOG(3) << "Done send get request, num_keys = "<<valsizes.size();
+
 	Collect();
 	VLOG(3) << "Done collect ...";
 }
@@ -179,12 +205,11 @@ int main(int argc, char **argv) {
 	cluster.set_server_start(0);
 	cluster.set_server_end(2);
 	cluster.set_worker_start(2);
-	cluster.set_worker_end(4);
-	cluster.set_group_size(2);
+	cluster.set_worker_end(3);
+	cluster.set_group_size(1);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);
-
 
 	// worker or table server
 	if (gc->AmITableServer()) {
@@ -201,7 +226,6 @@ int main(int argc, char **argv) {
 		worker_load_data(cluster.worker_start());
 		worker_update_data();
 		worker_get_data();
-		worker_update_data();
 		worker_send_shutdown(cluster.worker_start());
 		NetworkService::Get()->Shutdown();
 	}

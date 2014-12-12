@@ -17,7 +17,7 @@ using std::deque;
  * Contain subclasses implementing NetworkQueue interface. The current
  * implementation supports simple FIFO queues used by both workers and table server.
  * One can implement a more complex queue (for example, priority queue) for the table server
- * to discrimate different types of messages.
+ * to discriminate different types of messages.
  *
  * @see network_service.h
  */

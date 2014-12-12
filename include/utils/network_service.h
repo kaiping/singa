@@ -49,8 +49,12 @@ public:
 
 struct NetworkMessage{
 	int dst, method;
-	Message *msg;
-	NetworkMessage(int d, int m, Message *ms): dst(d), method(m), msg(ms){}
+	string msg;
+	NetworkMessage(int d, int m, Message &ms){
+		dst = d;
+		method = m;
+		ms.SerializeToString(&msg);
+	}
 };
 
 /**
@@ -69,7 +73,7 @@ public:
 	 * @param method message tag.
 	 * @param message the message to be sent.
 	 */
-	void Send(int dest, int method, Message *message);
+	void Send(int dest, int method, Message &message);
 
 	/**
 	 * Reads the next message from the receive queue.

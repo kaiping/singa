@@ -100,6 +100,7 @@ void NetworkService::send_loop() {
 			NetworkMessage *message = send_queue_.front();
 
 			network_->Send(message->dst, message->method, message->msg);
+			delete message; 
 			send_queue_.pop_front();
 		}
 		else if (!receive_done_)

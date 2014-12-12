@@ -25,9 +25,14 @@ using std::vector;
 #define NKEYS 1000
 #define TUPLE_SIZE 5000
 
+#ifndef FLAGS_v
+  DEFINE_int32(v, 3, "vlog controller");
+#endif
+
+
 #define SIZE 16
-#define THRESHOLD 10000000
-int tuple_sizes[SIZE] = {27448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
+#define THRESHOLD 500000
+int tuple_sizes[SIZE] = {37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
 vector<int> valsizes;
 
 void Put(int tid, int size, int version) {
@@ -104,6 +109,7 @@ void AsyncGet(int tid, int version) {
 
 void Collect(){
 	int count = valsizes.size();
+	double start_collect = Now(); 
 	while (count){
 		while (true) {
 				Message *resp = NetworkService::Get()->Receive();
@@ -116,7 +122,8 @@ void Collect(){
 			}
 		count--;
 	}
-	VLOG(3) << "Collected " << valsizes.size();
+	double end_collect = Now(); 
+	VLOG(3) << "Collected " << valsizes.size() << " tuples in " << (end_collect-start_collect);
 }
 
 /**
@@ -150,14 +157,13 @@ void worker_load_data(int id){
 			for (int j = 0; j < m / THRESHOLD; j++)
 				valsizes.push_back(THRESHOLD);
 			if (m % THRESHOLD)
-				valsizes.push_back(m);
+				valsizes.push_back(m%THRESHOLD);
 		}
 	}
 
 	if (gc->rank()==id)
 		for (size_t i=0; i<valsizes.size(); i++)
 			Put(i,valsizes[i],0);
-
 	MPI_Barrier(gc->mpicomm());
 	VLOG(3) << "Done loading data, num_keys = "<<valsizes.size();
 }
@@ -203,9 +209,9 @@ int main(int argc, char **argv) {
 	// Init GlobalContext
 	Cluster cluster;
 	cluster.set_server_start(0);
-	cluster.set_server_end(2);
-	cluster.set_worker_start(2);
-	cluster.set_worker_end(3);
+	cluster.set_server_end(1);
+	cluster.set_worker_start(1);
+	cluster.set_worker_end(2);
 	cluster.set_group_size(1);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
@@ -224,8 +230,10 @@ int main(int argc, char **argv) {
 	} else {
 		start_network_service_for_worker();
 		worker_load_data(cluster.worker_start());
-		worker_update_data();
-		worker_get_data();
+		for (int i=0; i<100; i++){
+			worker_update_data();
+			worker_get_data();
+		}
 		worker_send_shutdown(cluster.worker_start());
 		NetworkService::Get()->Shutdown();
 	}

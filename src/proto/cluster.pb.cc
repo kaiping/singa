@@ -126,6 +126,7 @@ const int Cluster::kCheckpointAfterFieldNumber;
 Cluster::Cluster()
   : ::google::protobuf::Message() {
   SharedCtor();
+  // @@protoc_insertion_point(constructor:lapis.Cluster)
 }
 
 void Cluster::InitAsDefaultInstance() {
@@ -135,16 +136,18 @@ Cluster::Cluster(const Cluster& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:lapis.Cluster)
 }
 
 void Cluster::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   server_start_ = 0;
   server_end_ = 0;
   worker_start_ = 0;
   worker_end_ = 0;
   group_size_ = 0;
-  data_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  data_folder_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   synchronous_ = false;
   checkpoint_enabled_ = false;
   checkpoint_freq_ = 0;
@@ -153,11 +156,12 @@ void Cluster::SharedCtor() {
 }
 
 Cluster::~Cluster() {
+  // @@protoc_insertion_point(destructor:lapis.Cluster)
   SharedDtor();
 }
 
 void Cluster::SharedDtor() {
-  if (data_folder_ != &::google::protobuf::internal::kEmptyString) {
+  if (data_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete data_folder_;
   }
   if (this != default_instance_) {
@@ -186,44 +190,53 @@ Cluster* Cluster::New() const {
 }
 
 void Cluster::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    server_start_ = 0;
-    server_end_ = 0;
-    worker_start_ = 0;
-    worker_end_ = 0;
-    group_size_ = 0;
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<Cluster*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  if (_has_bits_[0 / 32] & 255) {
+    ZR_(server_start_, worker_end_);
+    ZR_(group_size_, checkpoint_enabled_);
     if (has_data_folder()) {
-      if (data_folder_ != &::google::protobuf::internal::kEmptyString) {
+      if (data_folder_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         data_folder_->clear();
       }
     }
-    synchronous_ = false;
-    checkpoint_enabled_ = false;
   }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    checkpoint_freq_ = 0;
-    checkpoint_after_ = 0;
-  }
+  ZR_(checkpoint_freq_, checkpoint_after_);
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
 bool Cluster::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
+  // @@protoc_insertion_point(parse_start:lapis.Cluster)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required int32 server_start = 1;
       case 1: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 8) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &server_start_)));
           set_has_server_start();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(16)) goto parse_server_end;
         break;
@@ -231,15 +244,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // required int32 server_end = 2;
       case 2: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 16) {
          parse_server_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &server_end_)));
           set_has_server_end();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(24)) goto parse_worker_start;
         break;
@@ -247,15 +259,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // required int32 worker_start = 3;
       case 3: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 24) {
          parse_worker_start:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &worker_start_)));
           set_has_worker_start();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(32)) goto parse_worker_end;
         break;
@@ -263,15 +274,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // required int32 worker_end = 4;
       case 4: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 32) {
          parse_worker_end:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &worker_end_)));
           set_has_worker_end();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(40)) goto parse_group_size;
         break;
@@ -279,15 +289,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // required int32 group_size = 5;
       case 5: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 40) {
          parse_group_size:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &group_size_)));
           set_has_group_size();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(50)) goto parse_data_folder;
         break;
@@ -295,16 +304,16 @@ bool Cluster::MergePartialFromCodedStream(
 
       // required string data_folder = 6;
       case 6: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 50) {
          parse_data_folder:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_data_folder()));
-          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
             this->data_folder().data(), this->data_folder().length(),
-            ::google::protobuf::internal::WireFormat::PARSE);
+            ::google::protobuf::internal::WireFormat::PARSE,
+            "data_folder");
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(56)) goto parse_synchronous;
         break;
@@ -312,15 +321,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // optional bool synchronous = 7 [default = false];
       case 7: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 56) {
          parse_synchronous:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &synchronous_)));
           set_has_synchronous();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(64)) goto parse_checkpoint_enabled;
         break;
@@ -328,15 +336,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // optional bool checkpoint_enabled = 8 [default = false];
       case 8: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 64) {
          parse_checkpoint_enabled:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &checkpoint_enabled_)));
           set_has_checkpoint_enabled();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(72)) goto parse_checkpoint_freq;
         break;
@@ -344,15 +351,14 @@ bool Cluster::MergePartialFromCodedStream(
 
       // optional int32 checkpoint_freq = 9;
       case 9: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 72) {
          parse_checkpoint_freq:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &checkpoint_freq_)));
           set_has_checkpoint_freq();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(80)) goto parse_checkpoint_after;
         break;
@@ -360,25 +366,25 @@ bool Cluster::MergePartialFromCodedStream(
 
       // optional int32 checkpoint_after = 10;
       case 10: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+        if (tag == 80) {
          parse_checkpoint_after:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &checkpoint_after_)));
           set_has_checkpoint_after();
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
-        if (input->ExpectAtEnd()) return true;
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
       default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
+          goto success;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -386,12 +392,18 @@ bool Cluster::MergePartialFromCodedStream(
       }
     }
   }
+success:
+  // @@protoc_insertion_point(parse_success:lapis.Cluster)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:lapis.Cluster)
+  return false;
 #undef DO_
 }
 
 void Cluster::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:lapis.Cluster)
   // required int32 server_start = 1;
   if (has_server_start()) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->server_start(), output);
@@ -419,10 +431,11 @@ void Cluster::SerializeWithCachedSizes(
 
   // required string data_folder = 6;
   if (has_data_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->data_folder().data(), this->data_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
-    ::google::protobuf::internal::WireFormatLite::WriteString(
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "data_folder");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       6, this->data_folder(), output);
   }
 
@@ -450,10 +463,12 @@ void Cluster::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
+  // @@protoc_insertion_point(serialize_end:lapis.Cluster)
 }
 
 ::google::protobuf::uint8* Cluster::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:lapis.Cluster)
   // required int32 server_start = 1;
   if (has_server_start()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->server_start(), target);
@@ -481,9 +496,10 @@ void Cluster::SerializeWithCachedSizes(
 
   // required string data_folder = 6;
   if (has_data_folder()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->data_folder().data(), this->data_folder().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "data_folder");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         6, this->data_folder(), target);
@@ -513,6 +529,7 @@ void Cluster::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
+  // @@protoc_insertion_point(serialize_to_array_end:lapis.Cluster)
   return target;
 }
 

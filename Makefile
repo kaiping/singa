@@ -3,12 +3,12 @@
 # 	gflags, glog, gtest, google-protobuf, mpi, boost, opencv.
 ###############################################################################
 # Change this variable!! g++ location, should support c++11, tested with 4.8.1
-HOME_DIR := /home/wangwei
+HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
 
-INCLUDE_DIRS := $(HOME_DIR)/include ./include/da ./include\
+INCLUDE_DIRS := $(HOME_DIR)/include ./include/da ./include $(HOME_DIR)/mpich/include \
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
@@ -17,7 +17,7 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core blas arraymath armci
+							opencv_core openblas arraymath armci
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 #$(HOME_DIR)/atlas/lib
@@ -61,7 +61,7 @@ run_hybrid: lapis
 	--v=0  --restore=false --table_buffer=20 --block_size=10 -par_mode=hybrid
 
 run_test_table: lapis.test 
-	mpirun -np 3 -hostfile examples/imagenet12/hostfile \
+	mpirun -np 2 -hostfile examples/imagenet12/hostfile \
 		./lapis_test.bin --v=3
 
 loader: init proto $(SHARD_OBJS)

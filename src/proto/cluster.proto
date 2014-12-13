@@ -16,4 +16,6 @@ message Cluster{
 
   // local data folder , train/val/test shards, checkpoint files
   required string data_folder=6;
+
+  optional bool synchronous=7 [default=false];
 }

@@ -3,20 +3,21 @@
 
 #ifndef INCLUDE_NET_SOLVER_H_
 #define INCLUDE_NET_SOLVER_H_
-#include <pthread.h>
-
 #include <atomic>
+#include <thread>
 #include <string>
 #include <vector>
 #include <memory>
 
-#include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "net/net.h"
 #include "utils/common.h"
 #include "utils/shard.h"
-
+#include "utils/global_context.h"
+#include "core/table_delegate.h"
 namespace lapis {
+
+
 /**
  * Prefech one batch of data/records from local shard (\class Shard) into the
  * input layers of the neural network.
@@ -44,7 +45,7 @@ class Prefetcher {
   void NextRecord(Record* record);
 
  private:
-  Shard* shard_;
+  shard::Shard* shard_;
   Net* net_;
 };
 /**
@@ -199,7 +200,6 @@ class Solver {
   //!< path to the shard files
   string train_shard_, val_shard_, test_shard_;
 
-  pthread_t prefetch_thread_;
   Net* net_;
   TableDelegate* delegate_;
   std::shared_ptr<GlobalContext> context_;

@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 
   lapis::ImageNetSource source;
   source.Init(FLAGS_shard_folder, FLAGS_mean, FLAGS_width, FLAGS_height);
-  Shard shard(FLAGS_shard_folder, Shard::kAppend);
+  shard::Shard shard(FLAGS_shard_folder, shard::Shard::kAppend);
 
   std::string key, value;
   lapis::Record record;

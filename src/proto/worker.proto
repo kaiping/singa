@@ -1,6 +1,8 @@
 package lapis;
 
 import "common.proto";
+import "model.proto"; 
+
 option optimize_for = SPEED;
 
 message RegisterWorkerRequest {
@@ -33,35 +35,37 @@ message MethodStats {
   required int32 shard_calls = 4;
 };
 
+message RequestBase {
+	required int32 table = 1;
+	required int32 source = 2; 
+	extensions 100 to 199; 
+}
 
-message HashGet {
-  required uint32 table = 1;
-  required uint32 shard = 2;
-  required uint32 source = 3; 
-  optional bytes key = 4;
-  optional uint32 index = 5;
+message GetRequest {
+	extend RequestBase{
+		optional GetRequest name = 101; 
+	}  	
+	optional uint32 shard = 1; 
+	optional TKey key = 2; 
+}
+
+message PutRequest {
+	extend RequestBase{
+		optional PutRequest name = 102; 
+	}  
+	optional uint32 shard = 1; 
+	optional TableData data=2; 	
+}
+
+message UpdateRequest {
+	extend RequestBase{
+		optional UpdateRequest name = 103; 
+	}  
+	optional uint32 shard = 1; 
+	optional TableData data=2; 
 }
 
 message TableData {
-  required uint32 source = 1;
-  required uint32 table = 2;
-  required uint32 shard = 3;
-  required bool done = 4;
-  required bytes key = 5; 
-  
-  optional bytes table_data = 6;
-  repeated Arg kv_data = 7;
-   
-  optional bool missing_key = 8;
-}
-
-message DiskData{
-  required uint32 block_number = 1;
-  required uint32 table = 2;
-  optional bool is_empty = 3;   
-  repeated Arg records = 4; 
-}
-
-message FlushDiskTable{
-  required uint32 table = 1; 
+	optional TKey key = 1; 
+  	optional TVal value =2;     
 }

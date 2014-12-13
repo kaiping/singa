@@ -211,7 +211,7 @@ message SGDProto {
     kLinear = 3;
     kStep = 4;
   }
-  optional ChangeProto learning_rate_change = 6 [default = kInverse_t];
+  optional ChangeProto learning_rate_change = 6 [default = kStep];
   optional bool synchronous=7 [default=false];
   // table server handler class identifier
   optional string handler=8 [default="SGDHandler"];
@@ -260,6 +260,7 @@ message TVal{
   optional DAryProto grad = 13;
   // gradient history
   optional DAryProto history=14;
+  optional int32 threshold=15 [default=1];
   // extensions used by Child message, e.g., SGDValue
   extensions 100 to max;
 }

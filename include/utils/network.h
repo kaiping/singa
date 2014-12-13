@@ -6,8 +6,10 @@
 
 #include <google/protobuf/message.h>
 #include <memory>
+#include <string>
 using google::protobuf::Message;
 
+using std::string;
 namespace lapis {
 
 /**
@@ -38,17 +40,18 @@ class Network {
    * @param dst, ID of the remote process, its semantic depends on the
    * implementation library. E.g., in MPI, it is the rank of the remote process.
    * @param tag, message tag defined by the two communication sides.
-   * @param msg, google protobuf message.
+   * @param msg, sent data.
    * @return true if send successfully, otherwise false.
    */
-  virtual bool Send(int dst, int tag, const Message& msg)=0;
+  virtual bool Send(int dst, int tag, const string& msg)=0;
   /**
    * Receive google protobuf message.
-   * @param tag, message tag, only receive message with this tag.
-   * @param msg, pointer to the message to be received.
-   * @return sending process ID.
+   * @param tag, the message tag.
+   * @parm src, the sending process.
+   * @param msg, received data.
+   * @return true if the the message is received successfully.
    */
-  virtual int Recv(int tag, Message* msg)=0;
+  virtual bool Recv(int *tag, int *src, string* msg)=0;
 
  protected:
   Network(){}
@@ -59,8 +62,9 @@ class Network {
 
 class MPINetwork: public Network{
  public:
-  virtual bool Send(int dst, int tag, const Message& msg);
-  virtual int Recv(int tag, Message* msg);
+	MPINetwork(){}
+	bool Send(int dst, int tag, const string& msg);
+	bool Recv(int *tag, int *src, string* msg);
 };
 } /* lapis  */
 

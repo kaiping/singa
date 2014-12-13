@@ -4,7 +4,8 @@
 #ifndef INCLUDE_SERVER_H_
 #define INCLUDE_SERVER_H_
 
-#include "core/sparse-table.h"
+#include "utils/network_service.h"
+#include "core/global-table.h"
 #include "proto/model.pb.h"
 namespace lapis {
 /**
@@ -18,26 +19,44 @@ namespace lapis {
  * There are three requests, Put, Get and Update. Every Table is associated
  * with a the \class Tableserverhandler (e.g., \class TSHandlerForSGD).
  */
-class TableServer{
- public:
-  void Start(const SGDProto & sgd);
-};
+class TableServer {
+public:
+	/**
+	 * Start the table server. There are several steps:
+	 * 1. Create the table of type <TKey, TVal>
+	 * 2. Init and start NetworkService.
+	 * 3. Register callback for handling requests.
+	 * 4. Start the dispatch loop.
+	 */
+	void Start(const SGDProto & sgd);
 
-/**
- * Base class, specifies the interface of request handlers of table server.
- */
-class TableServerHandler: public BaseUpdateHandler<TKey, TVal>{
- public:
-  virtual void Setup(const SGDProto& sgd);
-  virtual bool CheckpointNow(const TKey& key, const TVal& val);
 
-  virtual bool Update(TVal* origin, const TVal& update)=0;
-  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
-  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
+	/**
+	 * Convert message to PutRequest and invoke table's operation to insert TableData
+	 * object to the table.
+	 */
+	bool handle_put_request(Message *msg);
 
- protected:
-  int checkpoint_after_, checkpoint_frequency_;
-  bool synchronous_;
+	/**
+	 * Convert message to GetRequest and invoke table's operation to return TableData object.
+	 */
+	bool handle_get_request(Message *msg);
+
+	/**
+	 * Convert message to UpdateRequest and invoke table's operation to update the table.
+	 */
+	bool handle_update_request(Message *msg);
+
+	/**
+	 * Stop the dispatch loop in the main thread. Exit MPI.
+	 */
+	void handle_shutdown();
+private:
+	NetworkService *network_service_;
+	GlobalTable *table_;
+	RequestDispatcher *dispatcher_;
+
+	void create_table(const SGDProto &sgd);
 };
 
 /**

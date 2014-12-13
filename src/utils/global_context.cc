@@ -9,6 +9,7 @@ namespace lapis {
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
 int GlobalContext::kCoordinator;
 GlobalContext::GlobalContext(const Cluster &cluster) {
+	cluster_ = cluster;
   char tmp[256];
   int len;
   MPI_Get_processor_name(tmp, &len);
@@ -21,7 +22,8 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   int end=cluster.worker_end();
   CHECK_LT(start, end);
   CHECK_LT(cluster.server_start(), cluster.server_end());
-  CHECK_LT(cluster.server_end(), start);
+
+  CHECK_LE(cluster.server_end(), start);
   CHECK(cluster.group_size());
   for(int k=start, gid=0;k<end;gid++){
     vector<int> workers;
@@ -35,7 +37,7 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
     groups_.push_back(workers);
   }
   CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer())
-    <<"gid "<<gid_<<" rank "<<rank_<<" istableserver "<<AmITableServer();
+    <<"gid "<<gid_<<" rank "<<rank_<< "start " << start << " end " << end << " istableserver "<<AmITableServer();
   // setup worker's mpi group to be used in Barrier
   if(gid_!=-1) {
     int gsize=cluster.group_size();
@@ -61,8 +63,9 @@ shared_ptr<GlobalContext> GlobalContext::Get(const Cluster& cluster){
 }
 void GlobalContext::Finalize() {
   if(gid_!=-1){
+	MPI_Comm_free(&mpicomm_);
     MPI_Group_free(&mpigroup_);
-    MPI_Comm_free(&mpicomm_);
+
   }
 }
 shared_ptr<GlobalContext> GlobalContext::Get() {

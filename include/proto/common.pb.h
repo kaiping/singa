@@ -70,11 +70,13 @@ enum MessageTypes {
   MTYPE_FINISH_INIT_PARAMS = 28,
   MTYPE_INIT_PARAMS = 29,
   MTYPE_UPDATE_REQUEST = 30,
-  MTYPE_SERVER_RESTORED = 31
+  MTYPE_SERVER_RESTORED = 31,
+  MTYPE_REQUEST = 32,
+  MTYPE_RESPONSE = 33
 };
 bool MessageTypes_IsValid(int value);
 const MessageTypes MessageTypes_MIN = MTYPE_PUT_REQUEST;
-const MessageTypes MessageTypes_MAX = MTYPE_SERVER_RESTORED;
+const MessageTypes MessageTypes_MAX = MTYPE_RESPONSE;
 const int MessageTypes_ARRAYSIZE = MessageTypes_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MessageTypes_descriptor();

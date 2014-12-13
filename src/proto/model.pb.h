@@ -1960,7 +1960,7 @@ class SGDProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 learning_rate_change_steps() const;
   inline void set_learning_rate_change_steps(::google::protobuf::int32 value);
 
-  // optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kInverse_t];
+  // optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kStep];
   inline bool has_learning_rate_change() const;
   inline void clear_learning_rate_change();
   static const int kLearningRateChangeFieldNumber = 6;
@@ -5325,7 +5325,7 @@ inline void SGDProto::set_learning_rate_change_steps(::google::protobuf::int32 v
   // @@protoc_insertion_point(field_set:lapis.SGDProto.learning_rate_change_steps)
 }
 
-// optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kInverse_t];
+// optional .lapis.SGDProto.ChangeProto learning_rate_change = 6 [default = kStep];
 inline bool SGDProto::has_learning_rate_change() const {
   return (_has_bits_[0] & 0x00000020u) != 0;
 }
@@ -5336,7 +5336,7 @@ inline void SGDProto::clear_has_learning_rate_change() {
   _has_bits_[0] &= ~0x00000020u;
 }
 inline void SGDProto::clear_learning_rate_change() {
-  learning_rate_change_ = 1;
+  learning_rate_change_ = 4;
   clear_has_learning_rate_change();
 }
 inline ::lapis::SGDProto_ChangeProto SGDProto::learning_rate_change() const {

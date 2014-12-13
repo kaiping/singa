@@ -1,102 +1,59 @@
 // Copyright © 2014 Anh Dinh. All Rights Reserved.
 
-/*
- * One place where the logic/consistency of put/get happens. This is a singleton
- *
- * + Remote requests are enqueued in the request queue
- * + Callbacks/Handler are registered.
- * + A dispatch thread loop through the queue and invoke corresponding callbacks
- *
- * + Local requests are not enqueued, but will be synced up with the remote queue.
- * For example, local put(k) will wait if !is_in_put_queue(k). Once processed, the local
- * put also update the queue state (increase the counter(k)).
- *
- * Thus, local operations must obtain the lock for the key queue.
- *
- * Disk write requests also happen here during DataPut operation.
- */
-
-
 #ifndef INCLUDE_CORE_REQUEST_DISPATCHER_QUEUE_H_
 #define INCLUDE_CORE_REQUEST_DISPATCHER_QUEUE_H_
 
-#include "core/request_queue.h"
+#include <google/protobuf/message.h>
+#include <boost/function.hpp>
 #include <string>
+#include <map>
+
 
 using std::string;
+using std::map;
 
 /**
  * @file request_dispatcher.h
- * The singleton for queueing and disptaching put/get requests. It connects NetworkThread to the
- * GlobalTable: NetworkThread gets access to the queue, and the put/get requests access
- * the GlobalTable (via TableServer dispatch). In particular:
- * 1. NetworkThread puts remote requests to the request queue.
- * 2. TableServer registers callbacks and handlers.
- * 3. Dispatch thread loops through the queue (infinite loop) and invokes corresponding callbacks.
- * (Note that local requests - if any - are not enqueued, but will be synced up with the remote queue.
- * But for now, as we assume requests are remote, the logic stays simple.)
+ * Read messages from the network queue and invokes the corresponding handler. This
+ * connects the network semantics and the table semantics.
  *
+ * This is used by table servers, hence assuming that messages are of type
+ * RequestBase
  */
 namespace lapis {
 
 /**
- * Singleton providing access to the request queue. It also dispatches requests to the
- * registered callbacks.
+ * Dispatch requests to the registered callbacks.
  */
 class RequestDispatcher {
 public:
-	typedef boost::function<bool(const Message *)> Callback; /**< type definition for put/get callback */
+	typedef boost::function<bool(Message *)> Callback; /**< type definition for put/get callback */
+
+	RequestDispatcher(): is_running_(true){}
 
 	/**
 	 * Register a callback to a message type (either put/update or get).
 	 * @param message_type message type. Could be put, update or get.
 	 * @param callback callback function.
 	 */
-	void RegisterTableCallback(int message_type, Callback callback) {
+	void RegisterTableCb(int message_type, Callback callback) {
 		callbacks_[message_type] = callback;
 	}
 
 	/**
-	 * Enqueue a raw network message to the queue. This raw message will be parsed to correct
-	 * type before inserting by RequestQueue.
-	 *
-	 * @param tag message type
-	 * @param data message content.
+	 * Dispatch loop. Get the next request from the queue, process it
+	 * and put it back to the queue if the processing fails (callback function
+	 * returns false).
 	 */
-	void Enqueue(int tag, string &data);
+	void StartDispatchLoop();
 
-	static RequestDispatcher* Get() {
-		if (!instance_)
-			instance_ = new RequestDispatcher();
-		return instance_;
-	}
-
-	void PrintStats();
-
-	/**
-	 * true if there is outstanding request.
-	 */
-	bool active(){ return num_outstanding_request_ > 0;}
+	void StopDispatchLoop(){is_running_ = false;} /**< stop the dispatch loop when receiving Shutdown message. */
 
 private:
-	RequestDispatcher();
 
-	/**
-	 * The infinite loop that dispatch requests.
-	 */
-	void table_dispatch_loop();
+	volatile bool is_running_;
 
-	int num_outstanding_request_; /**< number of requests not yet processed */
-
-	static const int kMaxMethods = 100; /**< maximum number of callbacks */
-
-	RequestQueue* table_queue_; /**< requeust queue */
-
-	Callback callbacks_[kMaxMethods];
-
-	boost::thread *table_dispatch_thread_;/**< the thread that runs the dispatch loop */
-
-	static RequestDispatcher* instance_;
+	map<int, Callback> callbacks_;
 };
 }  // namespace lapis
 

@@ -1,6 +1,6 @@
 #include "core/global-table.h"
-#include "core/table_server.h"
-#include "utils/network_thread.h"
+#include "utils/network_service.h"
+#include "core/shard.h"
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
@@ -28,17 +28,17 @@ GlobalTable::~GlobalTable() {
 
 void GlobalTable::Init(const lapis::TableDescriptor *info) {
 	TableBase::Init(info);
-	worker_id_ = NetworkThread::Get()->id();
+	worker_id_ = NetworkService::Get()->id();
 	partitions_.resize(info->num_shards);
 	partinfo_.resize(info->num_shards);
-}
 
-bool GlobalTable::is_local_shard(int shard) {
-	return owner(shard) == worker_id_;
-}
-
-bool GlobalTable::is_local_key(const string &k) {
-	return is_local_shard(get_shard_str(k));
+	for (int i = 0; i < info->num_shards; ++i) {
+		Shard *t =
+				(Shard *) info->partition_factory->New();
+		t->Init(info);
+		partitions_[i] = t;
+		partinfo_[i].owner = i;
+	}
 }
 
 
@@ -65,92 +65,30 @@ void GlobalTable::resize(int64_t new_size) {
 }
 
 
-bool GlobalTable::get_remote(int shard, const string &k, string *v) {
-	HashGet req;
-	TableData resp;
-	req.set_key(k);
-	req.set_table(info().table_id);
-	req.set_shard(shard);
-	req.set_source(worker_id_);
-	int peer = owner(shard);
-	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
-	NetworkThread::Get()->Read(peer, MTYPE_GET_RESPONSE, &resp);
-
-	if (resp.missing_key())
-		return false;
-	*v = resp.kv_data(0).value();
-	return true;
-}
-
-void GlobalTable::async_get_remote(int shard, const string &k) {
-	HashGet req;
-	req.set_key(k);
-	req.set_table(info().table_id);
-	req.set_shard(shard);
-	req.set_source(worker_id_);
-	int peer = owner(shard);
-	NetworkThread::Get()->Send(peer, MTYPE_GET_REQUEST, req);
-}
-
-bool GlobalTable::async_get_remote_collect(string *k, string *v) {
-	TableData resp;
-
-	if (NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE,
-			&resp)) {
-		*k = resp.kv_data(0).key();
-		*v = resp.kv_data(0).value();
-		return true;
-	} else	return false;
-}
-
-bool GlobalTable::async_get_remote_collect_key(int shard, const string &k,
-		string *v) {
-	TableData resp;
-	int source = owner(shard);
-
-	if (NetworkThread::Get()->TryRead(source, MTYPE_GET_RESPONSE, &resp)) {
-		if (k.compare(resp.kv_data(0).key()) == 0) {
-			*v = resp.kv_data(0).value();
-			return true;
-		} else {
-			//put back and return false
-			NetworkThread::Get()->send_to_local_rx_queue(source,
-					MTYPE_GET_RESPONSE, resp);
-			return false;
-		}
-	} else
-		return false;
-}
-
-
-bool GlobalTable::HandleGet(const HashGet &get_req, TableData *get_resp) {
+bool GlobalTable::HandleGet(GetRequest &get_req, TableData *get_resp) {
 	int shard = get_req.shard();
-	LocalTable *t = (LocalTable *) partitions_[shard];
+	Shard *t = partitions_[shard];
 
-	Arg *kv = get_resp->add_kv_data();
-	string value = t->get_str(get_req.key());
+	TKey *key = get_req.mutable_key();
+	TVal &val = t->get(*key);
 
-	// empty value means that the data is not ready to be returned
-	if (!value.empty()) {
-		kv->set_key(get_req.key());
-		kv->set_value(value);
+	if (((TableServerHandler*) info_->handler)->Get(*key, val, get_resp->mutable_value())) {
+		(get_resp->mutable_key())->CopyFrom(*key);
 		return true;
 	} else
 		return false;
 }
 
 
-bool GlobalTable::ApplyUpdates(const lapis::TableData &req) {
-	NetworkTableCoder c(&req);
-	bool ret = partitions_[req.shard()]->ApplyUpdates(&c,
-			checkpoint_files_[req.shard()]);
+bool GlobalTable::ApplyUpdates(int shard, lapis::TableData &req) {
+	bool ret = partitions_[shard]->ApplyUpdates(req,
+			checkpoint_files_[shard]);
 	return ret;
 }
 
-bool GlobalTable::ApplyPut(const lapis::TableData &req) {
-	NetworkTableCoder c(&req);
-	bool ret = partitions_[req.shard()]->ApplyPut(&c,
-			checkpoint_files_[req.shard()]);
+bool GlobalTable::ApplyPut(int shard, lapis::TableData &req) {
+	bool ret = partitions_[shard]->ApplyPut(req,
+			checkpoint_files_[shard]);
 
 	return ret;
 }

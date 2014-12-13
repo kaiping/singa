@@ -15,6 +15,7 @@
 #include <glog/logging.h>
 
 #include "proto/common.pb.h"
+#include "proto/worker.pb.h"
 #include "utils/timer.h"
 
 #include <unordered_map>
@@ -124,63 +125,22 @@ struct Sharding {
 	};
 };
 
-template<class T, class Enable = void>
-struct Marshal {
-	virtual void marshal(const T &t, string *out) {
-		out->assign(reinterpret_cast<const char *>(&t), sizeof(t));
-	}
-
-	virtual void unmarshal(const string &s, T *t) {
-		*t = *reinterpret_cast<const T *>(s.data());
-	}
-};
-
-template<class T>
-struct Marshal<T, typename boost::enable_if<boost::is_base_of<string, T>>::type> {
-	void marshal(const string &t, string *out) {
-		*out = t;
-	}
-	void unmarshal(const string &s, string *t) {
-		t->assign(s.data(), s.size());
-	}
-};
-
-
-template<class T>
-struct Marshal<T,
-		typename boost::enable_if<
-				boost::is_base_of<google::protobuf::Message, T>>::type> {
-	void marshal(const google::protobuf::Message &t, string *out) {
-		t.SerializeToString(out);
-	}
-	void unmarshal(const string &s, google::protobuf::Message *t) {
-		t->ParseFromArray(s.data(), s.size());
-	}
-};
-
 /**
- * Convert type T to string.
- * @param *m marshall struct.
- * @param t value of type T to be convert
- * @return string representation of t
+ * Base class, specifies the interface of request handlers of table server.
  */
-template<class T>
-string marshal(Marshal<T> *m, const T &t) {
-	string out;
-	m->marshal(t, &out);
-	return out;
-}
+class TableServerHandler{
+ public:
+  virtual void Setup(const SGDProto& sgd);
+  virtual bool CheckpointNow(const TKey& key, const TVal& val);
 
-/**
- * Convert string to type T.
- * @see marshall().
- */
-template<class T>
-T unmarshal(Marshal<T> *m, const string &s) {
-	T out;
-	m->unmarshal(s, &out);
-	return out;
-}
+  virtual bool Update(TVal* origin, const TVal& update)=0;
+  virtual bool Get(const TKey& key, const TVal &from, TVal* to);
+  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
+
+ protected:
+  int checkpoint_after_, checkpoint_frequency_;
+  bool synchronous_;
+};
 
 } // namespace lapis
 

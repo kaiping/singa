@@ -77,7 +77,7 @@ void Solver::Setup(const NetProto& np){
 
 Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Net *net=new Net(proto);
-  Shard shard(train_shard_, Shard::kRead);
+  shard::Shard shard(train_shard_, shard::Shard::kRead);
   Record record;
   string key;
   shard.Next(&key, &record);
@@ -421,7 +421,7 @@ void Solver::TimeOneBatch(int runs) {
  ***********************************************************************/
 Prefetcher::Prefetcher(string path, Net* _net) {
   net_=_net;
-  shard_=new Shard(path, Shard::kRead);
+  shard_=new shard::Shard(path, shard::Shard::kRead);
 }
 
 Prefetcher::~Prefetcher() {

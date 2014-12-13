@@ -5,14 +5,85 @@
 #include "server.h"
 #include "utils/math.h"
 #include "utils/global_context.h"
+#include "utils/network_service.h"
+#include "core/network_queue.h"
+#include "core/shard.h"
+
+DECLARE_double(sleep_time);
 
 namespace lapis {
-void TableServer::Start(const SGDProto& sgd){
-  TableServerHandler *tshandler=TSHandlerFactory::Get()->Create(sgd.handler());
-  tshandler->Setup(sgd);
-  while(true){
-    // todo (Anh) handle requests;
-  }
+void TableServer::Start(const SGDProto& sgd) {
+	create_table(sgd);
+
+	// init network service
+	network_service_ = NetworkService::Get().get();
+	network_service_->Init(GlobalContext::Get()->rank(), Network::Get().get(),
+			new SimpleQueue());
+	network_service_->RegisterShutdownCb(
+			boost::bind(&TableServer::handle_shutdown, this));
+	network_service_->StartNetworkService();
+
+	// init dispatcher and register handler
+	dispatcher_ = new RequestDispatcher();
+	dispatcher_->RegisterTableCb(MTYPE_PUT_REQUEST,
+			boost::bind(&TableServer::handle_put_request, this, _1));
+	dispatcher_->RegisterTableCb(MTYPE_UPDATE_REQUEST,
+			boost::bind(&TableServer::handle_update_request, this, _1));
+	dispatcher_->RegisterTableCb(MTYPE_GET_REQUEST,
+			boost::bind(&TableServer::handle_get_request, this, _1));
+	dispatcher_->StartDispatchLoop();
+}
+
+void TableServer::create_table(const SGDProto &sgd) {
+	TableServerHandler *tshandler = TSHandlerFactory::Get()->Create("SGD");
+			//sgd.handler());
+	tshandler->Setup(sgd);
+
+	TableDescriptor *info = new TableDescriptor(0,
+			GlobalContext::Get()->num_table_servers());
+
+	info->handler = tshandler;
+	info->partition_factory = new typename Shard::Factory;
+	table_ = new GlobalTable();
+	table_->Init(info);
+}
+
+void TableServer::handle_shutdown(){
+	while (network_service_->is_active())
+		Sleep(FLAGS_sleep_time);
+	dispatcher_->StopDispatchLoop();
+}
+
+bool TableServer::handle_put_request(Message *msg) {
+	PutRequest* put_req =
+			(static_cast<RequestBase *>(msg))->MutableExtension(
+					PutRequest::name);
+	TableData *put = put_req->mutable_data();
+	table_->ApplyPut(put_req->shard(), *put);
+	return true;
+}
+
+bool TableServer::handle_update_request(Message *msg) {
+	UpdateRequest* update_req =
+			static_cast<RequestBase *>(msg)->MutableExtension(UpdateRequest::name);
+	TableData *put = update_req->mutable_data();
+	bool ret = table_->ApplyUpdates(update_req->shard(), *put);
+	return ret;
+}
+
+bool TableServer::handle_get_request(Message *msg) {
+	const RequestBase *req_base = static_cast<RequestBase*>(msg);
+	int dest = req_base->source();
+	GetRequest* get_req =
+			(static_cast<RequestBase *>(msg))->MutableExtension(
+					GetRequest::name);
+	TableData get_resp;
+
+	if (table_->HandleGet(*get_req, &get_resp)) {
+		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
+		return true;
+	} else
+		return false;
 }
 /**************************************************************************
  * Implementation for base table server handlers
@@ -20,15 +91,17 @@ void TableServer::Start(const SGDProto& sgd){
 void TableServerHandler::Setup(const SGDProto& sgd) {
   checkpoint_after_=sgd.checkpoint_after_steps();
   checkpoint_frequency_=sgd.checkpoint_every_steps();
-  synchronous_=sgd.synchronous();
+  // use threshold field in TVal for synchronous checking
 }
 
 bool TableServerHandler::CheckpointNow(const TKey& key, const TVal& val){
+	/*
   if(key.version()>checkpoint_after_&&
       (key.version()-checkpoint_after_)%checkpoint_frequency_==0)
     return true;
   else
-    return false;
+    return false;*/
+	return false;
 }
 bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
   to->CopyFrom(from);
@@ -111,11 +184,12 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   // hist=hist+lr*grad
   Math::mAdd(len, history, lr, grad, history);
   // hist=hist+lr*weight*param
-  if(wd>0)
+  if(wd>0){
     Math::mAdd(len, history, lr*wd, dptr, history);
+  }
 
-  int num=origin->num_aggregate()+1;
-  if(num+1==GlobalContext::Get()->num_groups()){
+  int num=origin->num_aggregate();
+  if(num+1==origin->threshold()){
     // param+=history/n, /data->n_update()
     //DAry::arymath().sub(dptr, dptr, history, len);
     float factor=-1.0/(num+1);
@@ -127,7 +201,7 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   }else
     origin->set_num_aggregate(num+1);
 
-  return true;
+ return true;
 }
 
 
@@ -141,8 +215,8 @@ void TSHandlerForAda::Setup(const SGDProto& sgd) {
 
 bool TSHandlerForAda::Put(const TKey& key, TVal* to, const TVal& from){
   TableServerHandler::Put(key, to, from);
-  if(synchronous_&&GlobalContext::Get()->num_groups()>1
-      &&to->grad().value_size()==0)
+  //synchronous_&&GlobalContext::Get()->num_groups()>1
+  if(from.threshold()>1 && to->grad().value_size()==0)
     for(int i=0;i<to->data().value_size();i++)
       to->mutable_grad()->add_value(0.0f);
   return true;
@@ -153,7 +227,7 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
   float* grad=nullptr;
-  if(synchronous_&&GlobalContext::Get()->num_groups()>1){
+  if(origin->threshold()>1){
     grad=origin->mutable_grad()->mutable_value()->mutable_data();
     int k=0;
     for(auto v: update.grad().value())
@@ -175,7 +249,7 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
     dptr[i]-=learning_rate_*grad[i]/sqrt(history[i]);
   }
   origin->set_version(origin->version()+1);
-  if(synchronous_&&GlobalContext::Get()->num_groups()>1){
+  if(origin->threshold()){
     for(int i=0;i<origin->data().value_size();i++){
       grad[i]=0.f;
     }

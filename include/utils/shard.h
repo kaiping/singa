@@ -11,6 +11,8 @@
 
 using google::protobuf::Message;
 
+namespace shard {
+
 /**
  * Data shard stores training/validation/test records.
  * Every worker node should have a training shard (validation/test shard
@@ -129,4 +131,5 @@ class Shard {
   // bytes in buf_, used in reading
   int bufsize_;
 };
+} /* shard */
 #endif  // DATASOURCE_SHARD_H_

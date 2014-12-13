@@ -3,8 +3,6 @@
 #include <utility>
 #include <vector>
 
-
-
 #include "da/gary.h"
 #include "da/dary.h"
 #include "da/ary.h"

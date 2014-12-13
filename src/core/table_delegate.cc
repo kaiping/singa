@@ -1,15 +1,26 @@
-// Copyright © 2014 Wei Wang & Jinyang Gao. All Rights Reserved.
-// 2014-07-18 16:33
-
 #include <vector>
 
 #include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "da/dary.h"
-#include "utils/network_thread.h"
-#include "proto/worker.pb.h"
+#include "utils/network_service.h"
 
 namespace lapis {
+const int kMaxParamLen=1<30;
+
+void TableDelegate::Setup(const vector<Param*>& params,
+    TableServerHandler* handler){
+  // no table servers
+  if(GlobalContext::Get()->num_servers()==0){
+    for(auto param: params){
+      // one tuple per param
+      local_tuple_[param->id()];
+    }
+    CHECK(handler!=nullptr);
+    handler_=handler;
+  }
+  SplitParams(params, GlobalContext::Get()->worker_id());
+}
 
 void TableDelegate::SplitParams(const vector<Param *>& params, int worker_id) {
   int total_splits=0;
@@ -34,6 +45,11 @@ int TableDelegate::SplitParam(Param * param, int worker_id){
       <<", reset the split threshold to 4000,000 Bytes";
     splitsize = 1000000;
   }
+  // do not split if there is no table server, updates will be done locally
+  if(GlobalContext::Get()->num_table_servers()==0){
+    CHECK_LE(local_size, kMaxParamLen);
+    splitsize=kMaxParamLen;
+  }
   int nsplits=local_size/splitsize+(local_size%splitsize!=0);
   CHECK_LE(nsplits,kMaxSplits_)<<"total splits for one param partition "
     <<" exceeds kMaxSplits, raise kMaxSplits in solver config";
@@ -46,7 +62,6 @@ int TableDelegate::SplitParam(Param * param, int worker_id){
     asyncget_split_[splitid]=false;
     pos+=len;
   }
-  CHECK_EQ(splits_.size(), param->id());
   splits_.push_back(splits);
   // for debug
   for(auto& split: splits){
@@ -56,6 +71,7 @@ int TableDelegate::SplitParam(Param * param, int worker_id){
   }
   return splits.size();
 }
+
 void TableDelegate::Update(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
     Update(param,step);
@@ -63,31 +79,31 @@ void TableDelegate::Update(const std::vector<Param*> &params, int step) {
 }
 
 void TableDelegate::Update(Param *param, int step){
-  TKey key;
-  key.set_version(step);
-  int offset = 0;
+ int offset = 0;
   const float * dptr = param->grad().dptr();
   for(auto& entry: splits_[param->id()]) {
-    TVal val;
-    DAryProto* data=val.mutable_data();
-
+    TVal tval;
+    DAryProto* grad=tval.mutable_grad();
     for(int k = 0; k < entry.second; k++){
-      data->add_value(dptr[offset++]);
+      grad->add_value(dptr[offset++]);
     }
-
-    key.set_id(entry.first);
-    TableData tuple;
-    tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
-    tuple.set_source(GlobalContext::Get()->rank());
-    tuple.set_table(0);
-    Arg *arg=tuple.add_kv_data();
-    std::string *keystr=arg->mutable_key();
-    key.SerializeToString(keystr);
-    std::string *valstr=arg->mutable_value();
-    val.SerializeToString(valstr);
-    tuple.set_done(true);
-    NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
-    //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
+    if(GlobalContext::Get()->num_table_servers()==0){
+      CHECK_EQ(splits_[param->id()].size(), 1);
+      handler_->Update(&local_tuple_[entry.first], tval);
+    } else{
+      RequestBase request;
+      request.set_table(0);
+      request.set_source(NetworkService::Get()->id());
+      UpdateRequest *update_req = request.MutableExtension(UpdateRequest::name);
+      int shard= Sharding(entry.first, GlobalContext::Get()->num_servers());
+      update_req->set_shard(shard);
+      TableData *tuple=update_req->mutable_data();
+      TKey* key=tuple->mutable_key();
+      key->set_version(step);
+      key->set_id(entry.first);
+      tuple->set_allocated_value(&tval);
+      NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
+    }
   }
 }
 
@@ -115,64 +131,72 @@ void TableDelegate::Get(Param * param, int step){
   CHECK_EQ(offset, param->data().local_size());
 }
 */
-void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
-  for(auto* param : params)
-    AsyncGet(param, step);
-  return;
-}
 void TableDelegate::Put(const std::vector<Param*> &params, int step) {
   for(auto* param: params)
     Put(param, step);
 }
 void TableDelegate::Put(Param * param, int step){
-  int offset = 0;
+  int offset=0;
   const float * data_addr = param->data().dptr();
   for(auto& entry: splits_[param->id()]) {
-    TVal val;
+    TKey key;
+    key.set_id(entry.first);
+    key.set_version(step);
+
+    TVal tval;
     // sgd related hyper-parameters
-    val.set_learning_rate_multiplier(param->learning_rate_multiplier());
-    val.set_weight_decay_multiplier(param->weight_decay_multiplier());
-    val.set_param_id(param->id());
-    val.set_split_id(entry.first);
-    val.set_split_offset(split_map_[entry.first].second);
-    DAryProto* dary=val.mutable_data();
+    tval.set_learning_rate_multiplier(param->learning_rate_multiplier());
+    tval.set_weight_decay_multiplier(param->weight_decay_multiplier());
+    tval.set_param_id(param->id());
+    tval.set_split_id(entry.first);
+    tval.set_split_offset(split_map_[entry.first].second);
+    DAryProto* dary=tval.mutable_data();
     for(int k = 0; k < entry.second; k++){
       dary->add_value(data_addr[offset]);
       offset++;
     }
-    TKey key;
-    key.set_version(0);
-    key.set_id(entry.first);
-    TableData tuple;
-    tuple.set_shard(Shard(entry.first,GlobalContext::Get()->num_servers()));
-    tuple.set_source(GlobalContext::Get()->rank());
-    tuple.set_table(0);
-    Arg *arg=tuple.add_kv_data();
-    std::string *keystr=arg->mutable_key();
-    key.SerializeToString(keystr);
-    std::string *valstr=arg->mutable_value();
-    val.SerializeToString(valstr);
-    tuple.set_done(true);
-
-    NetworkThread::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
-    //Network::Get()->Send(tuple.shard(), MTYPE_UPDATE_REQUEST, tuple);
+    if(GlobalContext::Get()->num_servers()==0){
+      tval.set_threshold(1);
+      handler_->Put(key, &local_tuple_[entry.first], tval);
+    }else{
+      RequestBase request;
+      request.set_table(0);
+      request.set_source(NetworkService::Get()->id());
+      PutRequest *put_req = request.MutableExtension(PutRequest::name);
+      int shard=Sharding(entry.first, GlobalContext::Get()->num_servers());
+      put_req->set_shard(shard);
+      TableData* tuple=put_req->mutable_data();
+      if(GlobalContext::Get()->synchronous())
+        tval.set_threshold(GlobalContext::Get()->num_groups());
+      else
+        tval.set_threshold(1);
+      tuple->set_allocated_key(&key);
+      tuple->set_allocated_value(&tval);
+      NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
+    }
   }
+}
+void TableDelegate::AsyncGet(const std::vector<Param*> &params, int step){
+  for(auto* param : params)
+    AsyncGet(param, step);
+  return;
 }
 
 void TableDelegate::AsyncGet(Param * param, int step){
-  TKey key;
-  key.set_version(step);
+  if(GlobalContext::Get()->num_table_servers()==0)
+    return;
   for(auto entry: splits_[param->id()]) {
-    key.set_id(entry.first);
-    HashGet req;
-    std::string *keystr=req.mutable_key();
-    key.SerializeToString(keystr);
-    req.set_table(0);
-    req.set_shard(Shard(entry.first, GlobalContext::Get()->num_servers()));
-    req.set_source(GlobalContext::Get()->rank());
-    NetworkThread::Get()->Send(req.shard(), MTYPE_GET_REQUEST, req);
+    RequestBase request;
+    request.set_table(0);
+    request.set_source(NetworkService::Get()->id());
+    GetRequest *get_req = request.MutableExtension(GetRequest::name);
+    int shard= Sharding(entry.first, GlobalContext::Get()->num_servers());
+    get_req->set_shard(shard);
+    TKey *key = get_req->mutable_key();
+    key->set_id(entry.first);
+    key->set_version(step);
+    NetworkService::Get()->Send(shard, MTYPE_REQUEST, request);
     asyncget_split_.at(entry.first)=false;
-    //LOG(INFO)<<"get "<<entry.first;
   }
 }
 void TableDelegate::AsyncCollect(Param * param, int step){
@@ -185,26 +209,32 @@ void TableDelegate::AsyncCollect(Param * param, int step){
     if(asyncget_split_.at(split.first))
       nget++;
   }
-  TKey key;
-  TVal val;
   while(nget<splits.size()){
-   // may collect splits of other params used later
-    TableData tuple;
-    if(NetworkThread::Get()->TryRead(MPI::ANY_SOURCE, MTYPE_GET_RESPONSE, &tuple)){
-      key.ParseFromString(tuple.kv_data(0).key());
-      val.ParseFromString(tuple.kv_data(0).value());
-      int splitid=key.id();
-      //LOG(INFO)<<"collected "<<splitid;
+    // may collect splits of other params used later
+    TVal *tval;
+    int splitid;
+    if(GlobalContext::Get()->num_servers()==0){
+      CHECK_EQ(start_split_id, end_split_id);
+      tval=&local_tuple_[start_split_id];
+      splitid=start_split_id;
+    } else{
+      Message* resp=NetworkService::Get()->Receive();
+      if(resp!=nullptr){
+        // todo parse the resp msg to get TVal
+        splitid=0;
+        tval=NULL;
+      }
+    }
+    if(tval!=NULL){
       auto& split=split_map_.at(splitid);
       Param* p=split.first;
       int offset=split.second;
       float * dptr = p->mutable_data()->dptr();
-      for(auto v: val.data().value())
+      for(auto v: tval->data().value())
         dptr[offset++]=v;
-      //val.mutable_data()->clear_value();
       // check this split is complete, i.e. offset is the start of next split
-      if(split_map_.find(key.id()+1)!=split_map_.end())
-        CHECK_EQ(offset, split_map_.at(key.id()+1).second);
+      if(split_map_.find(splitid+1)!=split_map_.end())
+        CHECK_EQ(offset, split_map_.at(splitid+1).second);
       asyncget_split_[splitid]=true;
       if(splitid>=start_split_id&&splitid<=end_split_id)
         nget++;
@@ -218,121 +248,5 @@ void TableDelegate::AsyncCollect(Param * param, int step){
     asyncget_split_[split.first]=false;
   }
 }
-
-
-/*
-void TableDelegate::StartCollectThread() {
-  collect_thread_=std::thread([this] {CollectThread();});
-}
-void TableDelegate::CollectThread(){
-  collect_flag_=true;
-  while(collect_flag_){
-    K key;
-    V val;
-    // may collect splits of other params used later
-    if(table_->async_get_collect(&key,&val)){
-      int splitid=key.key();
-      //LOG(INFO)<<"collected "<<splitid;
-      auto& split=split_param_map_.at(splitid);
-      Param* p=split.first;
-      int offset=split.second;
-      float * dptr = p->mutable_data()->dptr();
-      for(auto v: val.data().value())
-        dptr[offset++]=v;
-      // check this split is complete, i.e. offset is the start of next split
-      if(split_param_map_.find(key.key()+1)!=split_param_map_.end())
-        CHECK_EQ(offset, split_param_map_.at(key.key()+1).second);
-      asyncget_split_[splitid]=true;
-      collect_counter_[p->id()]+=1;
-    }else{
-      //std::this_thread::yield();
-      sleep(0.0001);
-    }
-  }
-}
-
-
-void TableDelegate::Collect(Param * param, int step){
-  auto& splits=splits_[param->id()];
-  int nsplits=splits.size();
-  while(true){
-    int ncollect=collect_counter_[param->id()];
-    CHECK_LE(ncollect, nsplits);
-    if(ncollect==nsplits){
-      for(auto& split:splits){
-        CHECK(asyncget_split_[split.first]);
-        asyncget_split_[split.first]=false;
-      }
-      collect_counter_[param->id()]=0;
-      break;
-    }
-    else{
-      sleep(0.0001);
-      //std::this_thread::yield();
-    }
-  }
-}
-
-void TableDelegate::HandleShardAssignment() {
-  LOG(INFO) << "Handle Shard Assignment";
-  ShardAssignmentRequest shard_req;
-  auto mpi=NetworkThread::Get();
-  mpi->Read(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT, &shard_req);
-  auto context=GlobalContext::Get();
-  //  request read from coordinator
-  auto _tables=tables();
-  for (int i = 0; i < shard_req.assign_size(); i++) {
-    const ShardAssignment &a = shard_req.assign(i);
-    GlobalTable *t = _tables.at(a.table());
-    t->get_partition_info(a.shard())->owner = a.new_worker();
-    //if local shard, create check-point files
-    if (context->checkpoint_enabled() && t->is_local_shard(a.shard())){
-      string checkpoint_file = StringPrintf("%s/checkpoint_%d",context->data_folder().data(), a.shard());
-      FILE *tmp_file = fopen(checkpoint_file.c_str(), "r");
-      if (tmp_file){//exists -> open to reading and writing
-        fclose(tmp_file);
-        auto cp = t->checkpoint_files();
-
-        if (FLAGS_restore){//open in read mode to restore, then close
-          (*cp)[a.shard()] = new LogFile(checkpoint_file,"r",a.shard());
-          t->Restore(a.shard());
-          delete (*cp)[a.shard()];
-          EmptyMessage dummy;
-          mpi->Send(GlobalContext::kCoordinator, MTYPE_SERVER_RESTORED, dummy);
-          LOG(ERROR) << "Server restored";
-        }
-
-        VLOG(3) << "Open checkpoint file for writing";
-        (*cp)[a.shard()] = new LogFile(checkpoint_file,"a",a.shard());
-      }
-      else{// not exist -> open to writing first time
-        auto cp = t->checkpoint_files();
-        (*cp)[a.shard()] = new LogFile(checkpoint_file,"w",a.shard());
-        VLOG(3) << "Added to new checkpoint files for shard "<< a.shard();
-      }
-    }
-  }
-  EmptyMessage empty;
-  mpi->Send(GlobalContext::kCoordinator, MTYPE_SHARD_ASSIGNMENT_DONE, empty);
-  LOG(ERROR)<<"Finish handle shard assignment";
-}
-
-TypedGlobalTable<Tkey, TVal>* TableDelegate::CreateParamTable(){
-  auto *info = new TableDescriptor(0, GlobalContext::Get()->num_servers());
-  info->key_marshal = new Marshal<TKey>;
-  info->value_marshal = new Marshal<TVal>;
-  info->sharder = TKeySharder;
-  // TODO remove accum
-  info->accum = nullptr;
-  info->partition_factory = new typename SparseTable<K, V>::Factory;
-  auto table=new TypedGlobalTable<TKey, TVal>();
-  table->Init(info);
-  //LOG(INFO)<<"table shards num "<<table->num_shards();
-  return table;
-}
-
-*/
-
-
 
 }  // namespace lapis

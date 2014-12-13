@@ -25,6 +25,7 @@
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/unknown_field_set.h>
 #include "common.pb.h"
+#include "model.pb.h"
 // @@protoc_insertion_point(includes)
 
 namespace lapis {
@@ -39,10 +40,11 @@ class ShardAssignment;
 class ShardAssignmentRequest;
 class ShardInfo;
 class MethodStats;
-class HashGet;
+class RequestBase;
+class GetRequest;
+class PutRequest;
+class UpdateRequest;
 class TableData;
-class DiskData;
-class FlushDiskTable;
 
 // ===================================================================
 
@@ -534,14 +536,14 @@ class MethodStats : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class HashGet : public ::google::protobuf::Message {
+class RequestBase : public ::google::protobuf::Message {
  public:
-  HashGet();
-  virtual ~HashGet();
+  RequestBase();
+  virtual ~RequestBase();
 
-  HashGet(const HashGet& from);
+  RequestBase(const RequestBase& from);
 
-  inline HashGet& operator=(const HashGet& from) {
+  inline RequestBase& operator=(const RequestBase& from) {
     CopyFrom(from);
     return *this;
   }
@@ -555,17 +557,17 @@ class HashGet : public ::google::protobuf::Message {
   }
 
   static const ::google::protobuf::Descriptor* descriptor();
-  static const HashGet& default_instance();
+  static const RequestBase& default_instance();
 
-  void Swap(HashGet* other);
+  void Swap(RequestBase* other);
 
   // implements Message ----------------------------------------------
 
-  HashGet* New() const;
+  RequestBase* New() const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const HashGet& from);
-  void MergeFrom(const HashGet& from);
+  void CopyFrom(const RequestBase& from);
+  void MergeFrom(const RequestBase& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -587,74 +589,327 @@ class HashGet : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required uint32 table = 1;
+  // required int32 table = 1;
   inline bool has_table() const;
   inline void clear_table();
   static const int kTableFieldNumber = 1;
-  inline ::google::protobuf::uint32 table() const;
-  inline void set_table(::google::protobuf::uint32 value);
+  inline ::google::protobuf::int32 table() const;
+  inline void set_table(::google::protobuf::int32 value);
 
-  // required uint32 shard = 2;
-  inline bool has_shard() const;
-  inline void clear_shard();
-  static const int kShardFieldNumber = 2;
-  inline ::google::protobuf::uint32 shard() const;
-  inline void set_shard(::google::protobuf::uint32 value);
-
-  // required uint32 source = 3;
+  // required int32 source = 2;
   inline bool has_source() const;
   inline void clear_source();
-  static const int kSourceFieldNumber = 3;
-  inline ::google::protobuf::uint32 source() const;
-  inline void set_source(::google::protobuf::uint32 value);
+  static const int kSourceFieldNumber = 2;
+  inline ::google::protobuf::int32 source() const;
+  inline void set_source(::google::protobuf::int32 value);
 
-  // optional bytes key = 4;
-  inline bool has_key() const;
-  inline void clear_key();
-  static const int kKeyFieldNumber = 4;
-  inline const ::std::string& key() const;
-  inline void set_key(const ::std::string& value);
-  inline void set_key(const char* value);
-  inline void set_key(const void* value, size_t size);
-  inline ::std::string* mutable_key();
-  inline ::std::string* release_key();
-  inline void set_allocated_key(::std::string* key);
-
-  // optional uint32 index = 5;
-  inline bool has_index() const;
-  inline void clear_index();
-  static const int kIndexFieldNumber = 5;
-  inline ::google::protobuf::uint32 index() const;
-  inline void set_index(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:lapis.HashGet)
+  GOOGLE_PROTOBUF_EXTENSION_ACCESSORS(RequestBase)
+  // @@protoc_insertion_point(class_scope:lapis.RequestBase)
  private:
   inline void set_has_table();
   inline void clear_has_table();
-  inline void set_has_shard();
-  inline void clear_has_shard();
   inline void set_has_source();
   inline void clear_has_source();
-  inline void set_has_key();
-  inline void clear_has_key();
-  inline void set_has_index();
-  inline void clear_has_index();
+
+  ::google::protobuf::internal::ExtensionSet _extensions_;
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  ::google::protobuf::uint32 table_;
-  ::google::protobuf::uint32 shard_;
-  ::std::string* key_;
-  ::google::protobuf::uint32 source_;
-  ::google::protobuf::uint32 index_;
+  ::google::protobuf::int32 table_;
+  ::google::protobuf::int32 source_;
   friend void  protobuf_AddDesc_worker_2eproto();
   friend void protobuf_AssignDesc_worker_2eproto();
   friend void protobuf_ShutdownFile_worker_2eproto();
 
   void InitAsDefaultInstance();
-  static HashGet* default_instance_;
+  static RequestBase* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class GetRequest : public ::google::protobuf::Message {
+ public:
+  GetRequest();
+  virtual ~GetRequest();
+
+  GetRequest(const GetRequest& from);
+
+  inline GetRequest& operator=(const GetRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetRequest& default_instance();
+
+  void Swap(GetRequest* other);
+
+  // implements Message ----------------------------------------------
+
+  GetRequest* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const GetRequest& from);
+  void MergeFrom(const GetRequest& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional uint32 shard = 1;
+  inline bool has_shard() const;
+  inline void clear_shard();
+  static const int kShardFieldNumber = 1;
+  inline ::google::protobuf::uint32 shard() const;
+  inline void set_shard(::google::protobuf::uint32 value);
+
+  // optional .lapis.TKey key = 2;
+  inline bool has_key() const;
+  inline void clear_key();
+  static const int kKeyFieldNumber = 2;
+  inline const ::lapis::TKey& key() const;
+  inline ::lapis::TKey* mutable_key();
+  inline ::lapis::TKey* release_key();
+  inline void set_allocated_key(::lapis::TKey* key);
+
+  static const int kNameFieldNumber = 101;
+  static ::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+      ::google::protobuf::internal::MessageTypeTraits< ::lapis::GetRequest >, 11, false >
+    name;
+  // @@protoc_insertion_point(class_scope:lapis.GetRequest)
+ private:
+  inline void set_has_shard();
+  inline void clear_has_shard();
+  inline void set_has_key();
+  inline void clear_has_key();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::lapis::TKey* key_;
+  ::google::protobuf::uint32 shard_;
+  friend void  protobuf_AddDesc_worker_2eproto();
+  friend void protobuf_AssignDesc_worker_2eproto();
+  friend void protobuf_ShutdownFile_worker_2eproto();
+
+  void InitAsDefaultInstance();
+  static GetRequest* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class PutRequest : public ::google::protobuf::Message {
+ public:
+  PutRequest();
+  virtual ~PutRequest();
+
+  PutRequest(const PutRequest& from);
+
+  inline PutRequest& operator=(const PutRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PutRequest& default_instance();
+
+  void Swap(PutRequest* other);
+
+  // implements Message ----------------------------------------------
+
+  PutRequest* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const PutRequest& from);
+  void MergeFrom(const PutRequest& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional uint32 shard = 1;
+  inline bool has_shard() const;
+  inline void clear_shard();
+  static const int kShardFieldNumber = 1;
+  inline ::google::protobuf::uint32 shard() const;
+  inline void set_shard(::google::protobuf::uint32 value);
+
+  // optional .lapis.TableData data = 2;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 2;
+  inline const ::lapis::TableData& data() const;
+  inline ::lapis::TableData* mutable_data();
+  inline ::lapis::TableData* release_data();
+  inline void set_allocated_data(::lapis::TableData* data);
+
+  static const int kNameFieldNumber = 102;
+  static ::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+      ::google::protobuf::internal::MessageTypeTraits< ::lapis::PutRequest >, 11, false >
+    name;
+  // @@protoc_insertion_point(class_scope:lapis.PutRequest)
+ private:
+  inline void set_has_shard();
+  inline void clear_has_shard();
+  inline void set_has_data();
+  inline void clear_has_data();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::lapis::TableData* data_;
+  ::google::protobuf::uint32 shard_;
+  friend void  protobuf_AddDesc_worker_2eproto();
+  friend void protobuf_AssignDesc_worker_2eproto();
+  friend void protobuf_ShutdownFile_worker_2eproto();
+
+  void InitAsDefaultInstance();
+  static PutRequest* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class UpdateRequest : public ::google::protobuf::Message {
+ public:
+  UpdateRequest();
+  virtual ~UpdateRequest();
+
+  UpdateRequest(const UpdateRequest& from);
+
+  inline UpdateRequest& operator=(const UpdateRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const UpdateRequest& default_instance();
+
+  void Swap(UpdateRequest* other);
+
+  // implements Message ----------------------------------------------
+
+  UpdateRequest* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const UpdateRequest& from);
+  void MergeFrom(const UpdateRequest& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional uint32 shard = 1;
+  inline bool has_shard() const;
+  inline void clear_shard();
+  static const int kShardFieldNumber = 1;
+  inline ::google::protobuf::uint32 shard() const;
+  inline void set_shard(::google::protobuf::uint32 value);
+
+  // optional .lapis.TableData data = 2;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 2;
+  inline const ::lapis::TableData& data() const;
+  inline ::lapis::TableData* mutable_data();
+  inline ::lapis::TableData* release_data();
+  inline void set_allocated_data(::lapis::TableData* data);
+
+  static const int kNameFieldNumber = 103;
+  static ::google::protobuf::internal::ExtensionIdentifier< ::lapis::RequestBase,
+      ::google::protobuf::internal::MessageTypeTraits< ::lapis::UpdateRequest >, 11, false >
+    name;
+  // @@protoc_insertion_point(class_scope:lapis.UpdateRequest)
+ private:
+  inline void set_has_shard();
+  inline void clear_has_shard();
+  inline void set_has_data();
+  inline void clear_has_data();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::uint32 _has_bits_[1];
+  mutable int _cached_size_;
+  ::lapis::TableData* data_;
+  ::google::protobuf::uint32 shard_;
+  friend void  protobuf_AddDesc_worker_2eproto();
+  friend void protobuf_AssignDesc_worker_2eproto();
+  friend void protobuf_ShutdownFile_worker_2eproto();
+
+  void InitAsDefaultInstance();
+  static UpdateRequest* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -711,303 +966,43 @@ class TableData : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required uint32 source = 1;
-  inline bool has_source() const;
-  inline void clear_source();
-  static const int kSourceFieldNumber = 1;
-  inline ::google::protobuf::uint32 source() const;
-  inline void set_source(::google::protobuf::uint32 value);
-
-  // required uint32 table = 2;
-  inline bool has_table() const;
-  inline void clear_table();
-  static const int kTableFieldNumber = 2;
-  inline ::google::protobuf::uint32 table() const;
-  inline void set_table(::google::protobuf::uint32 value);
-
-  // required uint32 shard = 3;
-  inline bool has_shard() const;
-  inline void clear_shard();
-  static const int kShardFieldNumber = 3;
-  inline ::google::protobuf::uint32 shard() const;
-  inline void set_shard(::google::protobuf::uint32 value);
-
-  // required bool done = 4;
-  inline bool has_done() const;
-  inline void clear_done();
-  static const int kDoneFieldNumber = 4;
-  inline bool done() const;
-  inline void set_done(bool value);
-
-  // required bytes key = 5;
+  // optional .lapis.TKey key = 1;
   inline bool has_key() const;
   inline void clear_key();
-  static const int kKeyFieldNumber = 5;
-  inline const ::std::string& key() const;
-  inline void set_key(const ::std::string& value);
-  inline void set_key(const char* value);
-  inline void set_key(const void* value, size_t size);
-  inline ::std::string* mutable_key();
-  inline ::std::string* release_key();
-  inline void set_allocated_key(::std::string* key);
+  static const int kKeyFieldNumber = 1;
+  inline const ::lapis::TKey& key() const;
+  inline ::lapis::TKey* mutable_key();
+  inline ::lapis::TKey* release_key();
+  inline void set_allocated_key(::lapis::TKey* key);
 
-  // optional bytes table_data = 6;
-  inline bool has_table_data() const;
-  inline void clear_table_data();
-  static const int kTableDataFieldNumber = 6;
-  inline const ::std::string& table_data() const;
-  inline void set_table_data(const ::std::string& value);
-  inline void set_table_data(const char* value);
-  inline void set_table_data(const void* value, size_t size);
-  inline ::std::string* mutable_table_data();
-  inline ::std::string* release_table_data();
-  inline void set_allocated_table_data(::std::string* table_data);
-
-  // repeated .lapis.Arg kv_data = 7;
-  inline int kv_data_size() const;
-  inline void clear_kv_data();
-  static const int kKvDataFieldNumber = 7;
-  inline const ::lapis::Arg& kv_data(int index) const;
-  inline ::lapis::Arg* mutable_kv_data(int index);
-  inline ::lapis::Arg* add_kv_data();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
-      kv_data() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
-      mutable_kv_data();
-
-  // optional bool missing_key = 8;
-  inline bool has_missing_key() const;
-  inline void clear_missing_key();
-  static const int kMissingKeyFieldNumber = 8;
-  inline bool missing_key() const;
-  inline void set_missing_key(bool value);
+  // optional .lapis.TVal value = 2;
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 2;
+  inline const ::lapis::TVal& value() const;
+  inline ::lapis::TVal* mutable_value();
+  inline ::lapis::TVal* release_value();
+  inline void set_allocated_value(::lapis::TVal* value);
 
   // @@protoc_insertion_point(class_scope:lapis.TableData)
  private:
-  inline void set_has_source();
-  inline void clear_has_source();
-  inline void set_has_table();
-  inline void clear_has_table();
-  inline void set_has_shard();
-  inline void clear_has_shard();
-  inline void set_has_done();
-  inline void clear_has_done();
   inline void set_has_key();
   inline void clear_has_key();
-  inline void set_has_table_data();
-  inline void clear_has_table_data();
-  inline void set_has_missing_key();
-  inline void clear_has_missing_key();
+  inline void set_has_value();
+  inline void clear_has_value();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
-  ::google::protobuf::uint32 source_;
-  ::google::protobuf::uint32 table_;
-  ::std::string* key_;
-  ::google::protobuf::uint32 shard_;
-  bool done_;
-  bool missing_key_;
-  ::std::string* table_data_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::Arg > kv_data_;
+  ::lapis::TKey* key_;
+  ::lapis::TVal* value_;
   friend void  protobuf_AddDesc_worker_2eproto();
   friend void protobuf_AssignDesc_worker_2eproto();
   friend void protobuf_ShutdownFile_worker_2eproto();
 
   void InitAsDefaultInstance();
   static TableData* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class DiskData : public ::google::protobuf::Message {
- public:
-  DiskData();
-  virtual ~DiskData();
-
-  DiskData(const DiskData& from);
-
-  inline DiskData& operator=(const DiskData& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DiskData& default_instance();
-
-  void Swap(DiskData* other);
-
-  // implements Message ----------------------------------------------
-
-  DiskData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const DiskData& from);
-  void MergeFrom(const DiskData& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // required uint32 block_number = 1;
-  inline bool has_block_number() const;
-  inline void clear_block_number();
-  static const int kBlockNumberFieldNumber = 1;
-  inline ::google::protobuf::uint32 block_number() const;
-  inline void set_block_number(::google::protobuf::uint32 value);
-
-  // required uint32 table = 2;
-  inline bool has_table() const;
-  inline void clear_table();
-  static const int kTableFieldNumber = 2;
-  inline ::google::protobuf::uint32 table() const;
-  inline void set_table(::google::protobuf::uint32 value);
-
-  // optional bool is_empty = 3;
-  inline bool has_is_empty() const;
-  inline void clear_is_empty();
-  static const int kIsEmptyFieldNumber = 3;
-  inline bool is_empty() const;
-  inline void set_is_empty(bool value);
-
-  // repeated .lapis.Arg records = 4;
-  inline int records_size() const;
-  inline void clear_records();
-  static const int kRecordsFieldNumber = 4;
-  inline const ::lapis::Arg& records(int index) const;
-  inline ::lapis::Arg* mutable_records(int index);
-  inline ::lapis::Arg* add_records();
-  inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
-      records() const;
-  inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
-      mutable_records();
-
-  // @@protoc_insertion_point(class_scope:lapis.DiskData)
- private:
-  inline void set_has_block_number();
-  inline void clear_has_block_number();
-  inline void set_has_table();
-  inline void clear_has_table();
-  inline void set_has_is_empty();
-  inline void clear_has_is_empty();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::uint32 block_number_;
-  ::google::protobuf::uint32 table_;
-  ::google::protobuf::RepeatedPtrField< ::lapis::Arg > records_;
-  bool is_empty_;
-  friend void  protobuf_AddDesc_worker_2eproto();
-  friend void protobuf_AssignDesc_worker_2eproto();
-  friend void protobuf_ShutdownFile_worker_2eproto();
-
-  void InitAsDefaultInstance();
-  static DiskData* default_instance_;
-};
-// -------------------------------------------------------------------
-
-class FlushDiskTable : public ::google::protobuf::Message {
- public:
-  FlushDiskTable();
-  virtual ~FlushDiskTable();
-
-  FlushDiskTable(const FlushDiskTable& from);
-
-  inline FlushDiskTable& operator=(const FlushDiskTable& from) {
-    CopyFrom(from);
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _unknown_fields_;
-  }
-
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return &_unknown_fields_;
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const FlushDiskTable& default_instance();
-
-  void Swap(FlushDiskTable* other);
-
-  // implements Message ----------------------------------------------
-
-  FlushDiskTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const FlushDiskTable& from);
-  void MergeFrom(const FlushDiskTable& from);
-  void Clear();
-  bool IsInitialized() const;
-
-  int ByteSize() const;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
-  int GetCachedSize() const { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  public:
-  ::google::protobuf::Metadata GetMetadata() const;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // required uint32 table = 1;
-  inline bool has_table() const;
-  inline void clear_table();
-  static const int kTableFieldNumber = 1;
-  inline ::google::protobuf::uint32 table() const;
-  inline void set_table(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:lapis.FlushDiskTable)
- private:
-  inline void set_has_table();
-  inline void clear_has_table();
-
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
-
-  ::google::protobuf::uint32 _has_bits_[1];
-  mutable int _cached_size_;
-  ::google::protobuf::uint32 table_;
-  friend void  protobuf_AddDesc_worker_2eproto();
-  friend void protobuf_AssignDesc_worker_2eproto();
-  friend void protobuf_ShutdownFile_worker_2eproto();
-
-  void InitAsDefaultInstance();
-  static FlushDiskTable* default_instance_;
 };
 // ===================================================================
 
@@ -1376,618 +1371,347 @@ inline void MethodStats::set_shard_calls(::google::protobuf::int32 value) {
 
 // -------------------------------------------------------------------
 
-// HashGet
+// RequestBase
 
-// required uint32 table = 1;
-inline bool HashGet::has_table() const {
+// required int32 table = 1;
+inline bool RequestBase::has_table() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void HashGet::set_has_table() {
+inline void RequestBase::set_has_table() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void HashGet::clear_has_table() {
+inline void RequestBase::clear_has_table() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void HashGet::clear_table() {
-  table_ = 0u;
+inline void RequestBase::clear_table() {
+  table_ = 0;
   clear_has_table();
 }
-inline ::google::protobuf::uint32 HashGet::table() const {
-  // @@protoc_insertion_point(field_get:lapis.HashGet.table)
+inline ::google::protobuf::int32 RequestBase::table() const {
+  // @@protoc_insertion_point(field_get:lapis.RequestBase.table)
   return table_;
 }
-inline void HashGet::set_table(::google::protobuf::uint32 value) {
+inline void RequestBase::set_table(::google::protobuf::int32 value) {
   set_has_table();
   table_ = value;
-  // @@protoc_insertion_point(field_set:lapis.HashGet.table)
+  // @@protoc_insertion_point(field_set:lapis.RequestBase.table)
 }
 
-// required uint32 shard = 2;
-inline bool HashGet::has_shard() const {
+// required int32 source = 2;
+inline bool RequestBase::has_source() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void HashGet::set_has_shard() {
+inline void RequestBase::set_has_source() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void HashGet::clear_has_shard() {
+inline void RequestBase::clear_has_source() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void HashGet::clear_shard() {
+inline void RequestBase::clear_source() {
+  source_ = 0;
+  clear_has_source();
+}
+inline ::google::protobuf::int32 RequestBase::source() const {
+  // @@protoc_insertion_point(field_get:lapis.RequestBase.source)
+  return source_;
+}
+inline void RequestBase::set_source(::google::protobuf::int32 value) {
+  set_has_source();
+  source_ = value;
+  // @@protoc_insertion_point(field_set:lapis.RequestBase.source)
+}
+
+// -------------------------------------------------------------------
+
+// GetRequest
+
+// optional uint32 shard = 1;
+inline bool GetRequest::has_shard() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void GetRequest::set_has_shard() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void GetRequest::clear_has_shard() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void GetRequest::clear_shard() {
   shard_ = 0u;
   clear_has_shard();
 }
-inline ::google::protobuf::uint32 HashGet::shard() const {
-  // @@protoc_insertion_point(field_get:lapis.HashGet.shard)
+inline ::google::protobuf::uint32 GetRequest::shard() const {
+  // @@protoc_insertion_point(field_get:lapis.GetRequest.shard)
   return shard_;
 }
-inline void HashGet::set_shard(::google::protobuf::uint32 value) {
+inline void GetRequest::set_shard(::google::protobuf::uint32 value) {
   set_has_shard();
   shard_ = value;
-  // @@protoc_insertion_point(field_set:lapis.HashGet.shard)
+  // @@protoc_insertion_point(field_set:lapis.GetRequest.shard)
 }
 
-// required uint32 source = 3;
-inline bool HashGet::has_source() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+// optional .lapis.TKey key = 2;
+inline bool GetRequest::has_key() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void HashGet::set_has_source() {
-  _has_bits_[0] |= 0x00000004u;
+inline void GetRequest::set_has_key() {
+  _has_bits_[0] |= 0x00000002u;
 }
-inline void HashGet::clear_has_source() {
-  _has_bits_[0] &= ~0x00000004u;
+inline void GetRequest::clear_has_key() {
+  _has_bits_[0] &= ~0x00000002u;
 }
-inline void HashGet::clear_source() {
-  source_ = 0u;
-  clear_has_source();
-}
-inline ::google::protobuf::uint32 HashGet::source() const {
-  // @@protoc_insertion_point(field_get:lapis.HashGet.source)
-  return source_;
-}
-inline void HashGet::set_source(::google::protobuf::uint32 value) {
-  set_has_source();
-  source_ = value;
-  // @@protoc_insertion_point(field_set:lapis.HashGet.source)
-}
-
-// optional bytes key = 4;
-inline bool HashGet::has_key() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void HashGet::set_has_key() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void HashGet::clear_has_key() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void HashGet::clear_key() {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_->clear();
-  }
+inline void GetRequest::clear_key() {
+  if (key_ != NULL) key_->::lapis::TKey::Clear();
   clear_has_key();
 }
-inline const ::std::string& HashGet::key() const {
-  // @@protoc_insertion_point(field_get:lapis.HashGet.key)
-  return *key_;
+inline const ::lapis::TKey& GetRequest::key() const {
+  // @@protoc_insertion_point(field_get:lapis.GetRequest.key)
+  return key_ != NULL ? *key_ : *default_instance_->key_;
 }
-inline void HashGet::set_key(const ::std::string& value) {
+inline ::lapis::TKey* GetRequest::mutable_key() {
   set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.HashGet.key)
-}
-inline void HashGet::set_key(const char* value) {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.HashGet.key)
-}
-inline void HashGet::set_key(const void* value, size_t size) {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.HashGet.key)
-}
-inline ::std::string* HashGet::mutable_key() {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.HashGet.key)
+  if (key_ == NULL) key_ = new ::lapis::TKey;
+  // @@protoc_insertion_point(field_mutable:lapis.GetRequest.key)
   return key_;
 }
-inline ::std::string* HashGet::release_key() {
+inline ::lapis::TKey* GetRequest::release_key() {
   clear_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = key_;
-    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
+  ::lapis::TKey* temp = key_;
+  key_ = NULL;
+  return temp;
 }
-inline void HashGet::set_allocated_key(::std::string* key) {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete key_;
-  }
+inline void GetRequest::set_allocated_key(::lapis::TKey* key) {
+  delete key_;
+  key_ = key;
   if (key) {
     set_has_key();
-    key_ = key;
   } else {
     clear_has_key();
-    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  // @@protoc_insertion_point(field_set_allocated:lapis.HashGet.key)
+  // @@protoc_insertion_point(field_set_allocated:lapis.GetRequest.key)
 }
 
-// optional uint32 index = 5;
-inline bool HashGet::has_index() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+// -------------------------------------------------------------------
+
+// PutRequest
+
+// optional uint32 shard = 1;
+inline bool PutRequest::has_shard() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void HashGet::set_has_index() {
-  _has_bits_[0] |= 0x00000010u;
+inline void PutRequest::set_has_shard() {
+  _has_bits_[0] |= 0x00000001u;
 }
-inline void HashGet::clear_has_index() {
-  _has_bits_[0] &= ~0x00000010u;
+inline void PutRequest::clear_has_shard() {
+  _has_bits_[0] &= ~0x00000001u;
 }
-inline void HashGet::clear_index() {
-  index_ = 0u;
-  clear_has_index();
+inline void PutRequest::clear_shard() {
+  shard_ = 0u;
+  clear_has_shard();
 }
-inline ::google::protobuf::uint32 HashGet::index() const {
-  // @@protoc_insertion_point(field_get:lapis.HashGet.index)
-  return index_;
+inline ::google::protobuf::uint32 PutRequest::shard() const {
+  // @@protoc_insertion_point(field_get:lapis.PutRequest.shard)
+  return shard_;
 }
-inline void HashGet::set_index(::google::protobuf::uint32 value) {
-  set_has_index();
-  index_ = value;
-  // @@protoc_insertion_point(field_set:lapis.HashGet.index)
+inline void PutRequest::set_shard(::google::protobuf::uint32 value) {
+  set_has_shard();
+  shard_ = value;
+  // @@protoc_insertion_point(field_set:lapis.PutRequest.shard)
+}
+
+// optional .lapis.TableData data = 2;
+inline bool PutRequest::has_data() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void PutRequest::set_has_data() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void PutRequest::clear_has_data() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void PutRequest::clear_data() {
+  if (data_ != NULL) data_->::lapis::TableData::Clear();
+  clear_has_data();
+}
+inline const ::lapis::TableData& PutRequest::data() const {
+  // @@protoc_insertion_point(field_get:lapis.PutRequest.data)
+  return data_ != NULL ? *data_ : *default_instance_->data_;
+}
+inline ::lapis::TableData* PutRequest::mutable_data() {
+  set_has_data();
+  if (data_ == NULL) data_ = new ::lapis::TableData;
+  // @@protoc_insertion_point(field_mutable:lapis.PutRequest.data)
+  return data_;
+}
+inline ::lapis::TableData* PutRequest::release_data() {
+  clear_has_data();
+  ::lapis::TableData* temp = data_;
+  data_ = NULL;
+  return temp;
+}
+inline void PutRequest::set_allocated_data(::lapis::TableData* data) {
+  delete data_;
+  data_ = data;
+  if (data) {
+    set_has_data();
+  } else {
+    clear_has_data();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.PutRequest.data)
+}
+
+// -------------------------------------------------------------------
+
+// UpdateRequest
+
+// optional uint32 shard = 1;
+inline bool UpdateRequest::has_shard() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void UpdateRequest::set_has_shard() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void UpdateRequest::clear_has_shard() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void UpdateRequest::clear_shard() {
+  shard_ = 0u;
+  clear_has_shard();
+}
+inline ::google::protobuf::uint32 UpdateRequest::shard() const {
+  // @@protoc_insertion_point(field_get:lapis.UpdateRequest.shard)
+  return shard_;
+}
+inline void UpdateRequest::set_shard(::google::protobuf::uint32 value) {
+  set_has_shard();
+  shard_ = value;
+  // @@protoc_insertion_point(field_set:lapis.UpdateRequest.shard)
+}
+
+// optional .lapis.TableData data = 2;
+inline bool UpdateRequest::has_data() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void UpdateRequest::set_has_data() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void UpdateRequest::clear_has_data() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void UpdateRequest::clear_data() {
+  if (data_ != NULL) data_->::lapis::TableData::Clear();
+  clear_has_data();
+}
+inline const ::lapis::TableData& UpdateRequest::data() const {
+  // @@protoc_insertion_point(field_get:lapis.UpdateRequest.data)
+  return data_ != NULL ? *data_ : *default_instance_->data_;
+}
+inline ::lapis::TableData* UpdateRequest::mutable_data() {
+  set_has_data();
+  if (data_ == NULL) data_ = new ::lapis::TableData;
+  // @@protoc_insertion_point(field_mutable:lapis.UpdateRequest.data)
+  return data_;
+}
+inline ::lapis::TableData* UpdateRequest::release_data() {
+  clear_has_data();
+  ::lapis::TableData* temp = data_;
+  data_ = NULL;
+  return temp;
+}
+inline void UpdateRequest::set_allocated_data(::lapis::TableData* data) {
+  delete data_;
+  data_ = data;
+  if (data) {
+    set_has_data();
+  } else {
+    clear_has_data();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.UpdateRequest.data)
 }
 
 // -------------------------------------------------------------------
 
 // TableData
 
-// required uint32 source = 1;
-inline bool TableData::has_source() const {
+// optional .lapis.TKey key = 1;
+inline bool TableData::has_key() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void TableData::set_has_source() {
+inline void TableData::set_has_key() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void TableData::clear_has_source() {
+inline void TableData::clear_has_key() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void TableData::clear_source() {
-  source_ = 0u;
-  clear_has_source();
-}
-inline ::google::protobuf::uint32 TableData::source() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.source)
-  return source_;
-}
-inline void TableData::set_source(::google::protobuf::uint32 value) {
-  set_has_source();
-  source_ = value;
-  // @@protoc_insertion_point(field_set:lapis.TableData.source)
-}
-
-// required uint32 table = 2;
-inline bool TableData::has_table() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void TableData::set_has_table() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void TableData::clear_has_table() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void TableData::clear_table() {
-  table_ = 0u;
-  clear_has_table();
-}
-inline ::google::protobuf::uint32 TableData::table() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.table)
-  return table_;
-}
-inline void TableData::set_table(::google::protobuf::uint32 value) {
-  set_has_table();
-  table_ = value;
-  // @@protoc_insertion_point(field_set:lapis.TableData.table)
-}
-
-// required uint32 shard = 3;
-inline bool TableData::has_shard() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void TableData::set_has_shard() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void TableData::clear_has_shard() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void TableData::clear_shard() {
-  shard_ = 0u;
-  clear_has_shard();
-}
-inline ::google::protobuf::uint32 TableData::shard() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.shard)
-  return shard_;
-}
-inline void TableData::set_shard(::google::protobuf::uint32 value) {
-  set_has_shard();
-  shard_ = value;
-  // @@protoc_insertion_point(field_set:lapis.TableData.shard)
-}
-
-// required bool done = 4;
-inline bool TableData::has_done() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void TableData::set_has_done() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void TableData::clear_has_done() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void TableData::clear_done() {
-  done_ = false;
-  clear_has_done();
-}
-inline bool TableData::done() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.done)
-  return done_;
-}
-inline void TableData::set_done(bool value) {
-  set_has_done();
-  done_ = value;
-  // @@protoc_insertion_point(field_set:lapis.TableData.done)
-}
-
-// required bytes key = 5;
-inline bool TableData::has_key() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void TableData::set_has_key() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void TableData::clear_has_key() {
-  _has_bits_[0] &= ~0x00000010u;
-}
 inline void TableData::clear_key() {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_->clear();
-  }
+  if (key_ != NULL) key_->::lapis::TKey::Clear();
   clear_has_key();
 }
-inline const ::std::string& TableData::key() const {
+inline const ::lapis::TKey& TableData::key() const {
   // @@protoc_insertion_point(field_get:lapis.TableData.key)
-  return *key_;
+  return key_ != NULL ? *key_ : *default_instance_->key_;
 }
-inline void TableData::set_key(const ::std::string& value) {
+inline ::lapis::TKey* TableData::mutable_key() {
   set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.TableData.key)
-}
-inline void TableData::set_key(const char* value) {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.TableData.key)
-}
-inline void TableData::set_key(const void* value, size_t size) {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
-  key_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.TableData.key)
-}
-inline ::std::string* TableData::mutable_key() {
-  set_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    key_ = new ::std::string;
-  }
+  if (key_ == NULL) key_ = new ::lapis::TKey;
   // @@protoc_insertion_point(field_mutable:lapis.TableData.key)
   return key_;
 }
-inline ::std::string* TableData::release_key() {
+inline ::lapis::TKey* TableData::release_key() {
   clear_has_key();
-  if (key_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = key_;
-    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
+  ::lapis::TKey* temp = key_;
+  key_ = NULL;
+  return temp;
 }
-inline void TableData::set_allocated_key(::std::string* key) {
-  if (key_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete key_;
-  }
+inline void TableData::set_allocated_key(::lapis::TKey* key) {
+  delete key_;
+  key_ = key;
   if (key) {
     set_has_key();
-    key_ = key;
   } else {
     clear_has_key();
-    key_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
   // @@protoc_insertion_point(field_set_allocated:lapis.TableData.key)
 }
 
-// optional bytes table_data = 6;
-inline bool TableData::has_table_data() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void TableData::set_has_table_data() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void TableData::clear_has_table_data() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void TableData::clear_table_data() {
-  if (table_data_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    table_data_->clear();
-  }
-  clear_has_table_data();
-}
-inline const ::std::string& TableData::table_data() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.table_data)
-  return *table_data_;
-}
-inline void TableData::set_table_data(const ::std::string& value) {
-  set_has_table_data();
-  if (table_data_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    table_data_ = new ::std::string;
-  }
-  table_data_->assign(value);
-  // @@protoc_insertion_point(field_set:lapis.TableData.table_data)
-}
-inline void TableData::set_table_data(const char* value) {
-  set_has_table_data();
-  if (table_data_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    table_data_ = new ::std::string;
-  }
-  table_data_->assign(value);
-  // @@protoc_insertion_point(field_set_char:lapis.TableData.table_data)
-}
-inline void TableData::set_table_data(const void* value, size_t size) {
-  set_has_table_data();
-  if (table_data_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    table_data_ = new ::std::string;
-  }
-  table_data_->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:lapis.TableData.table_data)
-}
-inline ::std::string* TableData::mutable_table_data() {
-  set_has_table_data();
-  if (table_data_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    table_data_ = new ::std::string;
-  }
-  // @@protoc_insertion_point(field_mutable:lapis.TableData.table_data)
-  return table_data_;
-}
-inline ::std::string* TableData::release_table_data() {
-  clear_has_table_data();
-  if (table_data_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    return NULL;
-  } else {
-    ::std::string* temp = table_data_;
-    table_data_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-    return temp;
-  }
-}
-inline void TableData::set_allocated_table_data(::std::string* table_data) {
-  if (table_data_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
-    delete table_data_;
-  }
-  if (table_data) {
-    set_has_table_data();
-    table_data_ = table_data;
-  } else {
-    clear_has_table_data();
-    table_data_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  }
-  // @@protoc_insertion_point(field_set_allocated:lapis.TableData.table_data)
-}
-
-// repeated .lapis.Arg kv_data = 7;
-inline int TableData::kv_data_size() const {
-  return kv_data_.size();
-}
-inline void TableData::clear_kv_data() {
-  kv_data_.Clear();
-}
-inline const ::lapis::Arg& TableData::kv_data(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.kv_data)
-  return kv_data_.Get(index);
-}
-inline ::lapis::Arg* TableData::mutable_kv_data(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.TableData.kv_data)
-  return kv_data_.Mutable(index);
-}
-inline ::lapis::Arg* TableData::add_kv_data() {
-  // @@protoc_insertion_point(field_add:lapis.TableData.kv_data)
-  return kv_data_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
-TableData::kv_data() const {
-  // @@protoc_insertion_point(field_list:lapis.TableData.kv_data)
-  return kv_data_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
-TableData::mutable_kv_data() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.TableData.kv_data)
-  return &kv_data_;
-}
-
-// optional bool missing_key = 8;
-inline bool TableData::has_missing_key() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void TableData::set_has_missing_key() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void TableData::clear_has_missing_key() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void TableData::clear_missing_key() {
-  missing_key_ = false;
-  clear_has_missing_key();
-}
-inline bool TableData::missing_key() const {
-  // @@protoc_insertion_point(field_get:lapis.TableData.missing_key)
-  return missing_key_;
-}
-inline void TableData::set_missing_key(bool value) {
-  set_has_missing_key();
-  missing_key_ = value;
-  // @@protoc_insertion_point(field_set:lapis.TableData.missing_key)
-}
-
-// -------------------------------------------------------------------
-
-// DiskData
-
-// required uint32 block_number = 1;
-inline bool DiskData::has_block_number() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void DiskData::set_has_block_number() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void DiskData::clear_has_block_number() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void DiskData::clear_block_number() {
-  block_number_ = 0u;
-  clear_has_block_number();
-}
-inline ::google::protobuf::uint32 DiskData::block_number() const {
-  // @@protoc_insertion_point(field_get:lapis.DiskData.block_number)
-  return block_number_;
-}
-inline void DiskData::set_block_number(::google::protobuf::uint32 value) {
-  set_has_block_number();
-  block_number_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DiskData.block_number)
-}
-
-// required uint32 table = 2;
-inline bool DiskData::has_table() const {
+// optional .lapis.TVal value = 2;
+inline bool TableData::has_value() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void DiskData::set_has_table() {
+inline void TableData::set_has_value() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void DiskData::clear_has_table() {
+inline void TableData::clear_has_value() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void DiskData::clear_table() {
-  table_ = 0u;
-  clear_has_table();
+inline void TableData::clear_value() {
+  if (value_ != NULL) value_->::lapis::TVal::Clear();
+  clear_has_value();
 }
-inline ::google::protobuf::uint32 DiskData::table() const {
-  // @@protoc_insertion_point(field_get:lapis.DiskData.table)
-  return table_;
+inline const ::lapis::TVal& TableData::value() const {
+  // @@protoc_insertion_point(field_get:lapis.TableData.value)
+  return value_ != NULL ? *value_ : *default_instance_->value_;
 }
-inline void DiskData::set_table(::google::protobuf::uint32 value) {
-  set_has_table();
-  table_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DiskData.table)
+inline ::lapis::TVal* TableData::mutable_value() {
+  set_has_value();
+  if (value_ == NULL) value_ = new ::lapis::TVal;
+  // @@protoc_insertion_point(field_mutable:lapis.TableData.value)
+  return value_;
 }
-
-// optional bool is_empty = 3;
-inline bool DiskData::has_is_empty() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+inline ::lapis::TVal* TableData::release_value() {
+  clear_has_value();
+  ::lapis::TVal* temp = value_;
+  value_ = NULL;
+  return temp;
 }
-inline void DiskData::set_has_is_empty() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void DiskData::clear_has_is_empty() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void DiskData::clear_is_empty() {
-  is_empty_ = false;
-  clear_has_is_empty();
-}
-inline bool DiskData::is_empty() const {
-  // @@protoc_insertion_point(field_get:lapis.DiskData.is_empty)
-  return is_empty_;
-}
-inline void DiskData::set_is_empty(bool value) {
-  set_has_is_empty();
-  is_empty_ = value;
-  // @@protoc_insertion_point(field_set:lapis.DiskData.is_empty)
-}
-
-// repeated .lapis.Arg records = 4;
-inline int DiskData::records_size() const {
-  return records_.size();
-}
-inline void DiskData::clear_records() {
-  records_.Clear();
-}
-inline const ::lapis::Arg& DiskData::records(int index) const {
-  // @@protoc_insertion_point(field_get:lapis.DiskData.records)
-  return records_.Get(index);
-}
-inline ::lapis::Arg* DiskData::mutable_records(int index) {
-  // @@protoc_insertion_point(field_mutable:lapis.DiskData.records)
-  return records_.Mutable(index);
-}
-inline ::lapis::Arg* DiskData::add_records() {
-  // @@protoc_insertion_point(field_add:lapis.DiskData.records)
-  return records_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::lapis::Arg >&
-DiskData::records() const {
-  // @@protoc_insertion_point(field_list:lapis.DiskData.records)
-  return records_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::lapis::Arg >*
-DiskData::mutable_records() {
-  // @@protoc_insertion_point(field_mutable_list:lapis.DiskData.records)
-  return &records_;
-}
-
-// -------------------------------------------------------------------
-
-// FlushDiskTable
-
-// required uint32 table = 1;
-inline bool FlushDiskTable::has_table() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void FlushDiskTable::set_has_table() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void FlushDiskTable::clear_has_table() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void FlushDiskTable::clear_table() {
-  table_ = 0u;
-  clear_has_table();
-}
-inline ::google::protobuf::uint32 FlushDiskTable::table() const {
-  // @@protoc_insertion_point(field_get:lapis.FlushDiskTable.table)
-  return table_;
-}
-inline void FlushDiskTable::set_table(::google::protobuf::uint32 value) {
-  set_has_table();
-  table_ = value;
-  // @@protoc_insertion_point(field_set:lapis.FlushDiskTable.table)
+inline void TableData::set_allocated_value(::lapis::TVal* value) {
+  delete value_;
+  value_ = value;
+  if (value) {
+    set_has_value();
+  } else {
+    clear_has_value();
+  }
+  // @@protoc_insertion_point(field_set_allocated:lapis.TableData.value)
 }
 
 

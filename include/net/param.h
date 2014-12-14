@@ -60,6 +60,19 @@ class Param {
     return &history_;
   }
 
+  float* mutable_dptr(){
+    return data_.dptr();
+  }
+  const float* dptr(){
+    return data_.dptr();
+  }
+
+  const float* gptr(){
+    return grad_.dptr();
+  }
+  const int local_size(){
+    return data_.local_size();
+  }
   void SetShape(int h, int w);
   void SetShape(int l);
   void SetPartition(int k);

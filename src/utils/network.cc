@@ -32,6 +32,27 @@ bool MPINetwork::Recv(int *tag, int *src, string* msg){
 	return true;
 }
 
+bool MPINetwork::Send(int dst, int tag, const Message& msg) {
+  std::string buf;
+  msg.SerializeToString(&buf);
+  MPI_Request req;
+  MPI_Isend(buf.data(), buf.size(), MPI::BYTE, dst, tag, MPI_COMM_WORLD, &req);
+  return true;
+}
+
+int MPINetwork::Recv(int tag, Message* msg){
+  MPI_Status status;
+  MPI_Message mpi_msg;
+  MPI_Mprobe(MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, &mpi_msg, &status);
+  int count;
+  MPI_Get_count(&status, MPI::BYTE, &count);
+  std::string buf;
+  buf.resize(count);
+  MPI_Mrecv(const_cast<char*>(buf.data()), count, MPI::BYTE, &mpi_msg, &status);
+  msg->ParseFromString(buf);
+  return status.MPI_SOURCE;
+}
+
 std::shared_ptr<Network> Network::instance_;
 std::shared_ptr<Network> Network::Get(Impl impl) {
 	if (!instance_) {

@@ -1,7 +1,7 @@
 package lapis;
 
 import "common.proto";
-import "model.proto"; 
+import "model.proto";
 
 option optimize_for = SPEED;
 
@@ -25,7 +25,7 @@ message ShardInfo {
   required uint32 shard = 2;
   required uint64 entries = 3;
   required uint32 owner = 4;
-  required int32 type = 5; 
+  required int32 type = 5;
 }
 
 message MethodStats {
@@ -37,35 +37,36 @@ message MethodStats {
 
 message RequestBase {
 	required int32 table = 1;
-	required int32 source = 2; 
-	extensions 100 to 199; 
+	required int32 source = 2;
+  optional int32 shard =3;
+	extensions 100 to 199;
 }
 
 message GetRequest {
 	extend RequestBase{
-		optional GetRequest name = 101; 
-	}  	
-	optional uint32 shard = 1; 
-	optional TKey key = 2; 
+		optional GetRequest name = 101;
+	}
+	optional uint32 shard = 1;
+	optional TKey key = 2;
 }
 
 message PutRequest {
 	extend RequestBase{
-		optional PutRequest name = 102; 
-	}  
-	optional uint32 shard = 1; 
-	optional TableData data=2; 	
+		optional PutRequest name = 102;
+	}
+	optional uint32 shard = 1;
+	optional TableData data=2;
 }
 
 message UpdateRequest {
 	extend RequestBase{
-		optional UpdateRequest name = 103; 
-	}  
-	optional uint32 shard = 1; 
-	optional TableData data=2; 
+		optional UpdateRequest name = 103;
+	}
+	optional uint32 shard = 1;
+	optional TableData data=2;
 }
 
 message TableData {
-	optional TKey key = 1; 
-  	optional TVal value =2;     
+	optional TKey key = 1;
+  	optional TVal value =2;
 }

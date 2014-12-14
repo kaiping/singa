@@ -1,16 +1,14 @@
 #ifndef INCLUDE_CORE_TABLE_DELEGATE_H_
 #define INCLUDE_CORE_TABLE_DELEGATE_H_
-#include <stdlib.h>
 #include <glog/logging.h>
 #include <string>
-
+#include <memory>
 #include <vector>
 #include <map>
 
-#include "da/dary.h"
 #include "net/param.h"
-#include "utils/global_context.h"
 #include "utils/common.h"
+#include "utils/global_context.h"
 #include "proto/model.pb.h"
 #include "server.h"
 
@@ -18,6 +16,8 @@
 namespace lapis {
 using std::string;
 using std::vector;
+using std::shared_ptr;
+using std::make_shared;
 
 /**
  * Table Delegate is a proxy for the distributed parameter table.
@@ -29,6 +29,64 @@ using std::vector;
 class TableDelegate {
  public:
   /**
+   * Split represents meta info of a split of a Param object.
+   * Large Param objects are splitted for load balancing and to be under the
+   * limit from google protobuf message size. One split corresponds to one
+   * tuple stored in table server.
+   */
+  class Split{
+   public:
+    /**
+     * Constructor sets the internal meta info.
+     * @param _id split id, must ensure different splits have diff IDs, and
+     * the same split should have the same ID even though they are on
+     * different machines. It is created as :
+     * (param id*group_size+worker_id)*kMaxSplits+split_order, the split order
+     * is the local order of the split within the Param object, start from 0.
+     * @param _offset split start pos in terms of the local data
+     * address of the Param.
+     * @param _len length of this split in terms of num of floats
+     * @param _param pointer to the Param object.
+     */
+    Split(int _id, int _offset, int _len, Param* _param):
+      id(_id), offset(_offset), len(_len), param(_param){}
+    string ToString(){
+      char tmpbuf[1024];
+      sprintf(tmpbuf, "split id %3d, param id %3d, offset %5d, len %5d",
+          id, param->id(), offset, len);
+      return string(tmpbuf);
+    }
+    int id;
+    int offset;
+    int len;
+    int pid;
+    Param* param;
+  };
+ public:
+  /**
+   * Constructor.
+   * @param worker_id worker id within one group.
+   * @param rank id of the worker within the cluster
+   * @param num_servers number of table servers. if zero, then all
+   * put/get/update requests will be processed locally. TODO use a list of
+   * server identifiers (e.g., ip addresses) if servers are started separately
+   * (not using MPI).
+   * @param group_size num of workers within one group, used to construct tuple
+   * id.
+   * @param num_groups total num of groups in the cluster
+   * @param synchronous worker groups running mode
+   * @param handler must be provided to handle get/put/update requests locally,
+   * if there are no table servers.
+   */
+  TableDelegate(int worker_id, int rank, int num_servers, int group_size,
+      int num_groups, bool synchronous, TableServerHandler* handler=nullptr);
+  /**
+   * Constructor.
+   * @param gc, the GlobalContext which provides the cluster info numbers
+   */
+  TableDelegate(shared_ptr<GlobalContext> gc, TableServerHandler* handler=nullptr);
+
+  /**
    * Setup TableDelegate.
    * split parameters based on split threshold. if no table servers available,
    * set the threshold to infinity so that each split is a Param, and create
@@ -37,8 +95,8 @@ class TableDelegate {
    * @handler pointer to TableServerHandler, required for local updates, i.e.,
    * no table server available; can be nullptr if updates are conducted
    * on table server side.
+  void Setup(TableServerHandler* handler=nullptr);
    */
-  void Setup(const vector<Param*>& params, TableServerHandler* handler=nullptr);
   void Update(const std::vector<Param*> &params, int step);
   void Update(Param *param, int step);
   void Put(const std::vector<Param*> &params, int step=0);
@@ -67,39 +125,57 @@ class TableDelegate {
   void StartCollectThread();
   */
 
-  void SplitParams(const std::vector<Param *> &params, int worker_id);
+  //void SplitParams(const std::vector<Param *> &params, int worker_id);
   /**
    * Split one parameter object into multiple splits, which will be used to
    * construct tuples.
    * @param param
    * @worker_id id of the worker within one group, GlobalContext::worker_id().
    */
-  int SplitParam(Param * param, int worker_id);
+  void SplitParam(Param * param);
 
-  void HandleShardAssignment() ;
   int Sharding(int id, int num_servers) {
     return id % num_servers;
   }
 
+ protected:
+  /**
+   * start the internal thread if there are table servers.
+   */
+  void Start();
+  /**
+   * internal thread loops to recieve responses from table servers and send
+   * requests to table servers.
+   */
+  void InternalThread();
  private:
+  //!< max num of splits per parameter, used to create split id
   int kMaxSplits_;
-  //TypedGlobalTable<TKey,TVal> * table_;
-  //!< each param has a vector of splits (id, len)
-  std::vector<std::vector<std::pair<int, int>>> splits_;
-  // map split id to param* and offset (to local partition start)
-  std::map<int, std::pair<Param*, int>> split_map_;
-  // async get marker, split id to bool
-  std::map<int, bool> asyncget_split_;
+  //!< cluster info
+  int  worker_id_,rank_,  num_servers_, group_size_, num_groups_;
+  //!< true if all groups run synchronously, otherwise false.
+  bool synchronous_;
+  //!< each param has a vector of Splits
+  std::map<int, vector<shared_ptr<Split>>> paramid_to_splits_;
+  //!< map split id to Split
+  std::map<int, shared_ptr<Split>> id_to_split_;
+  //!< split id to bool, set to true if the split is collected.
+  std::map<int, bool> split_collected_;
   /**
    * map from param id to local tuple (i.e., TVal).
    * the local tuples are used do local update when there is no table server.
    */
   std::map<int, TVal> local_tuple_;
-  //!< used for local updates.
+  //!< to perform for local updates.
   TableServerHandler* handler_;
-  //std::atomic<int>* collect_counter_;
-  //std::atomic<bool> collect_flag_;
-  //std::thread collect_thread_;
+  /**
+   * requests from put/get/updates are pushed into this queue firstly, then
+   * send to servers by the internal thread, the queue operations (push, pop)
+   * are thread safe.
+   */
+  SafeQueue<shared_ptr<RequestBase>> sending_queue_;
+  //!< thread state controller, set to false to terminate the thread.
+  bool running_;
 };
 
 }  // namespace lapis

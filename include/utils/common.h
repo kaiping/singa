@@ -5,6 +5,8 @@
 #include <glog/logging.h>
 #include <string>
 #include <vector>
+#include <mutex>
+#include <queue>
 #include <sys/stat.h>
 
 #include <map>
@@ -26,6 +28,26 @@ inline bool check_exists(const std::string& name) {
     return (stat (name.c_str(), &buffer) == 0);
 }
 
+template<typename T>
+class SafeQueue{
+ public:
+  SafeQueue():q(),m(){}
+  void push(const T& e){
+    std::lock_guard<std::mutex> lock(m);
+    q.push(e);
+  }
+  void pop(T* e) {
+    std::unique_lock<std::mutex> lock(m);
+    if(q.size()>0){
+      *e = q.front();
+      q.pop();
+    }
+  }
+
+ private:
+  std::queue<T> q;
+  mutable std::mutex m;
+};
 template<typename T>
 class StateQueue {
  public:

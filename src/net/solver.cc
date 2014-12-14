@@ -70,9 +70,7 @@ void Solver::LocalUpdate(Param* param, int step) {
 void Solver::Setup(const NetProto& np){
   net_=SetupNeuralNet(np);
   auto params=net_->params();
-  auto grp_rank=context_->worker_id();
-  delegate_=new TableDelegate();
-  delegate_->SplitParams(params, grp_rank);
+  delegate_=new TableDelegate(GlobalContext::Get());
 }
 
 Net* Solver::SetupNeuralNet(const NetProto& proto) {

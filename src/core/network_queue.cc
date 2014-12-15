@@ -3,7 +3,7 @@
 #include <gflags/gflags.h>
 #include "core/network_queue.h"
 #include "proto/worker.pb.h"
-
+#include "utils/global_context.h"
 DECLARE_double(sleep_time);
 
 /**
@@ -23,6 +23,9 @@ void SimpleQueue::Enqueue(Message *message) {
 	receive_queue_.push_back(message);
 	stats_["request_queue_length"]+=receive_queue_.size();
 	stats_["request_queue_access_count"]++;
+	if ((GlobalContext::Get()->IsTableServer(NetworkService::Get()->id())))
+	if (((long)stats_["request_queue_access_count"])%100==0)
+		VLOG(3) << "average queue length = " << (stats_["request_queue_length"]/stats_["request_queue_access_count"]); 
 }
 
 /**

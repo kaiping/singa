@@ -82,8 +82,9 @@ bool TableServer::handle_get_request(Message *msg) {
 	if (table_->HandleGet(*get_req, &get_resp)) {
 		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
 		return true;
-	} else
+	} else{
 		return false;
+	}
 }
 /**************************************************************************
  * Implementation for base table server handlers

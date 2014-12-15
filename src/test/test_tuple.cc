@@ -34,6 +34,8 @@ using std::vector;
 #define THRESHOLD 500000
 int tuple_sizes[SIZE] = {37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
 vector<int> valsizes;
+int collect_size; 
+int num_tuples; 
 
 void Put(int tid, int size, int version) {
 	RequestBase request;
@@ -95,7 +97,7 @@ void print_result(TableData *data){
 void AsyncGet(int tid, int version) {
 	RequestBase request;
 	request.set_table(0);
-	request.set_source(NetworkService::Get()->id());
+	request.set_source(GlobalContext::Get()->rank()); //NetworkService::Get()->id());
 	GetRequest *get_req = request.MutableExtension(GetRequest::name);
 	int shard = tid % GlobalContext::Get()->num_servers();
 	get_req->set_shard(shard);
@@ -108,7 +110,7 @@ void AsyncGet(int tid, int version) {
 }
 
 void Collect(){
-	int count = valsizes.size();
+	int count = collect_size;  
 	double start_collect = Now(); 
 	while (count){
 		while (true) {
@@ -123,7 +125,7 @@ void Collect(){
 		count--;
 	}
 	double end_collect = Now(); 
-	VLOG(3) << "Collected " << valsizes.size() << " tuples in " << (end_collect-start_collect);
+	VLOG(3) << "Collected " << collect_size << " tuples in " << (end_collect-start_collect);
 }
 
 /**
@@ -133,7 +135,7 @@ void Collect(){
 void worker_send_shutdown(int id){
 	auto gc = lapis::GlobalContext::Get();
 	NetworkService *network_service_ = NetworkService::Get().get();
-	MPI_Barrier(gc->mpicomm());
+	MPI_Barrier(gc->workergroup_comm());
 	if (gc->rank()==id){
 		for (int i=0; i<gc->num_procs(); i++){
 			if (gc->IsTableServer(i)){
@@ -160,29 +162,38 @@ void worker_load_data(int id){
 				valsizes.push_back(m%THRESHOLD);
 		}
 	}
-
-	if (gc->rank()==id)
+	num_tuples = (int)valsizes.size(); 
+	collect_size = 0; 
+	for (int i=0; i<num_tuples; i++)
+		if (i%gc->group_size()==gc->worker_id())
+			collect_size++; 
+	
+	if (gc->rank()==id){
 		for (size_t i=0; i<valsizes.size(); i++)
 			Put(i,valsizes[i],0);
-	MPI_Barrier(gc->mpicomm());
-	VLOG(3) << "Done loading data, num_keys = "<<valsizes.size();
+		VLOG(3) << "Done loading data, num_keys = "<<valsizes.size() << " process " << id;
+	}
+	VLOG(3) << "Collect size = " << collect_size; 
+	MPI_Barrier(gc->workergroup_comm());
 }
 
 void worker_update_data() {
-	for (size_t i = 0; i < valsizes.size(); i++)
-		Update(i,valsizes[i],0);
+	auto gc = lapis::GlobalContext::Get(); 
+	for (int i = 0; i < num_tuples; i++)
+		if (i%gc->group_size()==gc->worker_id())
+			Update(i,valsizes[i],0);
 
-	VLOG(3) << "Done update ...";
+	VLOG(3) << "Done update ... for "<<collect_size << " tuples ";
 }
 
 /*
  * Async get.
  */
 void worker_get_data(){
-	for (size_t i=0; i<valsizes.size(); i++)
-		AsyncGet(i,0);
-	VLOG(3) << "Done send get request, num_keys = "<<valsizes.size();
-
+	auto gc = lapis::GlobalContext::Get(); 
+	for (int i=0; i<num_tuples; i++)
+		if (i%gc->group_size()==gc->worker_id())
+			AsyncGet(i,0);
 	Collect();
 	VLOG(3) << "Done collect ...";
 }
@@ -209,10 +220,10 @@ int main(int argc, char **argv) {
 	// Init GlobalContext
 	Cluster cluster;
 	cluster.set_server_start(0);
-	cluster.set_server_end(1);
-	cluster.set_worker_start(1);
-	cluster.set_worker_end(2);
-	cluster.set_group_size(1);
+	cluster.set_server_end(8);
+	cluster.set_worker_start(8);
+	cluster.set_worker_end(24);
+	cluster.set_group_size(8);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);

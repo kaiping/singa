@@ -243,12 +243,10 @@ void TableDelegate::InternalThread(){
       sleeping=false;
     }
     if(Network::Get()->Recv(&tag, &src, &msg)){
-      RequestBase request;
-      request.ParseFromString(msg);
-      GetRequest* get_req = request.MutableExtension(GetRequest::name);
-      /*
-      const TVal& tval=get_req.data().value();
-      const TKey& key=get_req.data().key();
+      TableData tuple;
+      tuple.ParseFromString(msg);
+      const TVal& tval=tuple.value();
+      const TKey& key=tuple.key();
       auto& split=id_to_split_[key.id()];
       Param* p=split->param;
       int offset=split->offset;
@@ -257,7 +255,6 @@ void TableDelegate::InternalThread(){
       for(auto v: tval.data().value())
         dptr[offset++]=v;
       split_collected_[key.id()]=true;
-      */
       sleeping=false;
     }
     if(sleeping)

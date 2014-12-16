@@ -98,9 +98,7 @@ void NetworkService::send_loop() {
 		if (more_to_send()) {
 			boost::recursive_mutex::scoped_lock sl(send_lock_);
 			NetworkMessage *message = send_queue_.front();
-
 			network_->Send(message->dst, message->method, message->msg);
-			if (message->method==MTYPE_REQUEST)
 			delete message; 
 			send_queue_.pop_front();
 		}

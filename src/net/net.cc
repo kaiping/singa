@@ -5,10 +5,30 @@
 #include "net/net.h"
 #include "utils/common.h"
 #include "utils/timer.h"
+#include "utils/singleton.h"
+#include "utils/factory.h"
 
+#define CreateLayer(ID) CreateInstance(ID, Layer)
 
 namespace lapis {
 Net::Net(const NetProto &net_proto) {
+  auto factory=Singleton<Factory<Layer>>::Instance();
+  factory->RegisterCreateFunction("ImageLayer", CreateLayer(ImageLayer));
+  factory->RegisterCreateFunction("LabelLayer", CreateLayer(LabelLayer));
+  factory->RegisterCreateFunction("ConcatLayer", CreateLayer(ConcatLayer));
+  factory->RegisterCreateFunction("SplitLayer", CreateLayer(SplitLayer));
+  factory->RegisterCreateFunction("ImgColLayer", CreateLayer(ImgColLayer));
+  factory->RegisterCreateFunction("ConvLayer", CreateLayer(ConvLayer));
+  factory->RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
+  factory->RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));
+  factory->RegisterCreateFunction("LRNLayer", CreateLayer(LRNLayer));
+  factory->RegisterCreateFunction("FCLayer", CreateLayer(FCLayer));
+  factory->RegisterCreateFunction("DropoutLayer", CreateLayer(DropoutLayer));
+  factory->RegisterCreateFunction("ConvProductLayer",
+                                  CreateLayer(ConvProductLayer));
+  factory->RegisterCreateFunction("SoftmaxLossLayer",
+                                  CreateLayer(SoftmaxLossLayer));
+
   LOG(INFO)<<"Construct Neural Net...";
   std::map<std::pair<string, string>, Edge *> edge_map;
   for (auto &layer_proto : net_proto.layer()) {

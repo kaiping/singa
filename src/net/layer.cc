@@ -1349,45 +1349,4 @@ void LabelLayer::AddInputRecord(const Record &record){
   grad_.at(n,0)=static_cast<int>(record.label());
   offset_++;
 }
-
-/*****************************************************************************
- * Implementation for LayerFactory
- ****************************************************************************/
-#define CreateLayer(LayerClass) [](void)->Layer* {return new LayerClass();}
-std::shared_ptr<LayerFactory> LayerFactory::instance_;
-std::shared_ptr<LayerFactory> LayerFactory::Instance() {
-  if (!instance_.get()) {
-    instance_.reset(new  LayerFactory());
-  }
-  return instance_;
-}
-
-LayerFactory::LayerFactory() {
-  RegisterCreateFunction("ImageLayer", CreateLayer(ImageLayer));
-  RegisterCreateFunction("LabelLayer", CreateLayer(LabelLayer));
-  RegisterCreateFunction("ConcatLayer", CreateLayer(ConcatLayer));
-  RegisterCreateFunction("SplitLayer", CreateLayer(SplitLayer));
-  RegisterCreateFunction("ImgColLayer", CreateLayer(ImgColLayer));
-  RegisterCreateFunction("ConvProductLayer", CreateLayer(ConvProductLayer));
-  RegisterCreateFunction("ConvLayer", CreateLayer(ConvLayer));
-  RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
-  RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));
-  RegisterCreateFunction("LRNLayer", CreateLayer(LRNLayer));
-  RegisterCreateFunction("FCLayer", CreateLayer(FCLayer));
-  RegisterCreateFunction("DropoutLayer", CreateLayer(DropoutLayer));
-  RegisterCreateFunction("SoftmaxLossLayer", CreateLayer(SoftmaxLossLayer));
-}
-
-void LayerFactory::RegisterCreateFunction(
-  const std::string id,
-  std::function<Layer*(void)> create_function) {
-  layer_map_[id] = create_function;
-}
-
-Layer *LayerFactory::Create(const std::string id) {
-  CHECK(layer_map_.find(id) != layer_map_.end())
-      << "The initialization function " << id << " has not been registered";
-  return layer_map_[id]();
-}
-
 }  // namespace lapis

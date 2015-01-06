@@ -1337,6 +1337,7 @@ void LabelLayer::SetShape(const vector<vector<int>>& shapes){
   data_.SetShape(shapes[1]);
   grad_.SetShape(shapes[1]);
 }
+
 void LabelLayer::SetShape(const int batchsize, const Record& record){
   data_.SetShape(vector<int>{batchsize,1});
   grad_.SetShape(vector<int>{batchsize,1});
@@ -1346,7 +1347,10 @@ void LabelLayer::AddInputRecord(const Record &record){
   Range nrng=grad_.IndexRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
-  grad_.at(n,0)=static_cast<int>(record.label());
+  if(record.type()==Record::kImageNet)
+    grad_.at(n,0)=static_cast<int>(record.imagenet().label());
+  else
+    LOG(FATAL)<<"Not supported record type";
   offset_++;
 }
 }  // namespace lapis

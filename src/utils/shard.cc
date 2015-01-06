@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-19 13:42
-
 #include <sys/stat.h>
 #include <glog/logging.h>
 
@@ -112,7 +109,6 @@ bool Shard::Next(std::string *key, Message* val) {
   offset_+=vallen;
   return true;
 }
-
 
 bool Shard::Next(std::string *key, std::string* val) {
   int vallen=Next(key);

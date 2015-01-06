@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-14 13:12
-
 #ifndef INCLUDE_NET_NET_H_
 #define INCLUDE_NET_NET_H_
 
@@ -12,48 +9,50 @@
 #include "proto/model.pb.h"
 #include "net/net.h"
 #include "net/layer.h"
-#include "net/edge.h"
-
-
 
 namespace lapis {
-/**
- * Forward declaration of Edge and Layer
- */
 /**
  * The neural network consists of Layers and Edges.
  */
 class Net {
  public:
   /**
-   * construct the net structure, i.e., how edges and layers are connected
+   * construct the net structure, init layers and sort layer orders
    */
   explicit Net(const NetProto &net_proto);
-  std::string ShapeInfo();
   /**
-   * setup the net shape, i.e., the shapes of layers and parameters (Darys)
-   * no memory is allocated
-   * @shapes shapes for the input layers
+   * desctruct the net.
+   * free layer objects.
    */
-  void SetNetShape(const vector<vector<int>>& shapes);
+  ~Net();
   /**
-   * setup the net shape, i.e., the shapes of layers and parameters (Darys)
-   * no memory is allocated
-   * @batchsize shapes for the input layers
+   * construct a string for describing the layers and parameters, including
+   * shape info.
+   */
+  std::string ToString();
+  /**
+   * setup the layers and parameters.
+   * shapes of layer data and parameters are infered from input records/shapes.
+   * DAry partition is set according to PartitionMode.
+   * parameters are initialized.
+   * Memory of DAry is allocated when first time used.
+   *
+   * @input_shapes shapes for the input layers
+   * @mode partition mode, namely, kHybrid, kModel, kData, kNone
+   */
+  void Setup(const vector<vector<int>>& input_shapes, PartitionMode mode=kNone);
+  /**
+   * @batchsize mini-batch size
    * @record input record to the net, used to set the shapes of input layers
+   * @mode partition mode, namely, kHybrid, kModel, kData, kNone
    */
-  void SetNetShape(const int batchsize, const Record &record);
+  void Setup(int batchsize, const Record &record,PartitionMode mode=kNone);
+
   /**
-   * allocate memory for DArys
-  void AllocMemory();
-   */
-  /**
-   * init parameters, must be called after InitDArrayShape
-   * if memory of parameters are not allocated, do memory allocation before
-   * init parameters
-  void InitParameters();
+   * serialize the net.
    */
   void ToProto(NetProto *net_proto, bool copyData=false);
+
   const std::vector<InputLayer *> &input_layer() {
     return input_layer_;
   }
@@ -65,29 +64,36 @@ class Net {
     CHECK_LT(k, output_layer_.size());
     return output_layer_[k];
   }
+
   const std::vector<Layer *>& layers() {
     return layers_;
   }
   const std::vector<Param *> &params() {
     return params_;
   }
-  ~Net();
  protected:
-  // called after the input layer's shape has been set
-  void SetNetShape();
-  void topology_sort(std::vector<Layer *> *layers) ;
+  // called internally to setup the net.
+  void Setup(PartitionMode mode);
+  // SortLayersForBP
+  void topology_sort(vector<Layer *> *layers,
+                     const map<string, vector<Layer*>& name2outlayers);
   void topology_sort_inner(Layer *layer,
                          const std::map<Layer *,
                          std::vector<Layer *>> &adjacent_list,
                          std::map<Layer *, bool> *visited,
                          std::stack<Layer *> *stack) ;
 
+  // TODO SortLayersForCD
  private:
   std::vector<Layer *> layers_;
-  std::vector<OutputLayer *> output_layer_;
-  std::vector<InputLayer *> input_layer_;
-  std::vector<Edge *> edges_;
+  std::vector<OutputLayer *> output_layers_;
+  std::vector<InputLayer *> input_layers_;
   std::vector<Param *> params_;
+
+  std::map<string, Layer*> name2layer_;
+  std::map<string, vector<Layer*>> name2outlayers_;;
+  // <src layer name, dst layer name>, 'Dummy' for dangling layer
+  std::unordered_set<std::pair<string,string>> edge_set_;
 };
 
 }  // namespace lapis

@@ -11,319 +11,199 @@ namespace lapis {
 /*****************************************************************************
  * Implementation for Layer
  *****************************************************************************/
-void Layer::Init(const LayerProto &proto, StrStrEdge *edge_map) {
-  name_ = proto.name();
-  type_=proto.type();
-  if(proto.has_data()){
-    data_.InitFromProto(proto.data());
-    grad_.InitFromProto(proto.data());
+void Layer::Init(const LayerProto &proto) {
+  proto_=proto;
+  if(proto.arys_size()==2){
+    data_.FromProto(proto.arys(0));
+    grad_.FromProto(proto.arys(1));
   }
-  for(auto& top: proto.top()){
-    auto p=std::make_pair(name_, top);
-    Edge *e=nullptr;
-    if(edge_map->find(p)!=edge_map->end()){
-      e=edge_map->at(p);
-      if(e->src()!=nullptr)
-        CHECK(e->src()==this);
-      else
-        e->set_src(this);
-    }else{
-      e=new Edge();
-      e->set_src(this);
-      (*edge_map)[p]=e;
-    }
-    out_edges_.push_back(e);
-  }
-  for(auto& bottom: proto.bottom()){
-    auto p=std::make_pair(bottom, name_);
-    Edge* e=nullptr;
-    if(edge_map->find(p)!=edge_map->end()){
-      e=edge_map->at(p);
-      if(e->dst()!=nullptr)
-        CHECK(e->dst()==this);
-      else
-        e->set_dst(this);
-    }else{
-      e=new Edge();
-      e->set_dst(this);
-      (*edge_map)[p]=e;
-    }
-    in_edges_.push_back(e);
-  }
+  proto_.clear_arys();
 }
-
 void Layer::ToProto(LayerProto *proto, bool copyData) {
-  proto->set_name(name_);
-  proto->set_type(type_);
-  DAryProto *data=proto->mutable_data();
-  data_.ToProto(data, copyData);
-  DAryProto *grad=proto->mutable_grad();
-  grad_.ToProto(grad, copyData);
-  proto->clear_bottom();
-  for(auto* edge: in_edges_) {
-    CHECK_EQ(edge->dst(), this);
-    proto->add_bottom(edge->src()->name());
-  }
-  proto->clear_top();
-  for(auto* edge: out_edges_) {
-    CHECK_EQ(edge->src(), this);
-    proto->add_top(edge->dst()->name());
-  }
+  proto->CopyFrom(proto_);
+  proto->clear_arys();
+  data_.ToProto(proto->add_arys(), copyData);
+  grad_.ToProto(proto->add_arys(), copyData);
 }
-
-void Layer::SetShape(){}
-void Layer::SetPartition(int pdim){
-  data_.SetPartition(pdim);
-  grad_.SetPartition(pdim);
-}
-void Layer::SetupDAry(int pdim){
-  data_.Setup(pdim);
-  grad_.Setup(pdim);
-}
-void Layer::ComputeFeature(){}
-void Layer::ComputeGradient(){}
-bool Layer::PreSyncF(){
-  if(in_edges_.size()==0)
+bool Layer::PreSyncF(const vector<Layer*>& src_layers){
+  if(src_layers.size()==0)
     return false;
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  if(bottom.GetPartition()==-1||bottom.GetPartition()==data_.GetPartition())
+  const DAry& src=src_layers[0]->data();
+  if(src.GetPartition()==-1||src.GetPartition()==data_.GetPartition())
     return false;
   else
     return true;
 }
-bool Layer::PreSyncG(){
-  if(in_edges_.size()==0)
-    return false;
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  if(data_.GetPartition()==-1||bottom.GetPartition()==data_.GetPartition())
-    return false;
-  else
-    return true;
+bool Layer::PreSyncG(const vector<Layer*>& src_layers){
+  PreSyncF(src_layers);
 }
 
 void Layer::CollectParams(vector<Param*> *params){}
 vector<Param*> Layer::GetParams(){
   return vector<Param*>();
-};
-/*****************************************************************************
- * Implementation for SplitLayer
- *****************************************************************************/
-void SplitLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
-  Layer::Init(proto, edge_map);
-  CHECK(in_edges_.size());
-  split_dim_=proto.split_dim();
-  split_size_=proto.split_size();
-  if(proto.has_split_data()){
-    data2_.InitFromProto(proto.split_data());
-    grad2_.InitFromProto(proto.split_data());
-  }
-}
-
-void SplitLayer::SetPartition(int pdim){
-  Layer::SetPartition(pdim);
-  data2_.SetPartition(pdim);
-  grad2_.SetPartition(pdim);
-}
-
-void SplitLayer::SetupDAry(int pdim){
-  Layer::SetupDAry(pdim);
-  data2_.Setup(pdim);
-  grad2_.Setup(pdim);
-}
-void SplitLayer::ToProto(LayerProto *proto, bool copyData) {
-  Layer::ToProto(proto, copyData);
-  DAryProto* dproto=proto->mutable_split_data();
-  data2_.ToProto(dproto, false);
-  proto->set_split_dim(split_dim_);
-  proto->set_split_size(split_size_);
-}
-void SplitLayer::SetShape(){
-  CHECK_EQ(in_edges_.size(), 1);
-  CHECK_EQ(out_edges_.size(), 2);
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  int num=0, height, width, first_split=split_size_, second_split=0;
-  if(split_dim_==0){
-    LOG(ERROR)<<"Not implemented";
-  } else{
-    num=bottom.shape(0);
-    second_split=bottom.shape(1)-first_split;
-  }
-  height = bottom.shape(2);
-  width = bottom.shape(3);
-
-  vector<int> shape1{num, first_split, height, width};
-  data_.SetShape(shape1);
-  grad_.SetShape(shape1);
-  vector<int> shape2{num, second_split, height, width};
-  data2_.SetShape(shape2);
-  grad2_.SetShape(shape2);
-}
-bool SplitLayer::PreSyncF(){
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
-    "Not supported for diff parallelism modes";
-  // bottom is replicated/local, or both are data parallel
-  if(bottom.GetPartition()==-1||
-      (bottom.GetPartition()==0&&data_.GetPartition()==0))
-    return false;
-  else
-    return true;
-}
-bool SplitLayer::PreSyncG(){
-  if(in_edges_.size()==0)
-    return false;
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
-    "Not supported for diff parallelism modes";
-  // bottom is replicated/local, or both are data parallel
-  if(data_.GetPartition()==-1||
-      (bottom.GetPartition()==0&&data_.GetPartition()==0))
-    return false;
-  else
-    return true;
-}
-
-void SplitLayer::ComputeFeature() {
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  if(split_dim_==0){
-    LOG(ERROR)<<"Not implemented";
-  }else{
-    const Shape& s0=data_.shape();
-    const Shape& s1=data2_.shape();
-    int a=s0.size/s0.s[0];
-    int b=a+s1.size/s1.s[0];
-    data_.CopyFromCols(0, a, bottom);
-    data2_.CopyFromCols(a, b, bottom);
-  }
-}
-
-void SplitLayer::ComputeGradient() {
-  DAry* gbottom=in_edges_[0]->GetMutableGrad(this);
-  if(split_dim_==0){
-    //data_.CopyToRows(0,top0.shape(0),top0);
-    //data_.CopyToRows(top0.shape(0),num_, top1);
-    LOG(ERROR)<<"Not implemented";
-  }else{
-    const Shape& s0=data_.shape();
-    const Shape& s1=data2_.shape();
-    int a=s0.size/s0.s[0];
-    int b=a+s1.size/s1.s[0];
-    gbottom->CopyToCols(0, a, grad_);
-    gbottom->CopyToCols(a, b, grad2_);
-  }
 }
 /*****************************************************************************
  * Implementation for ConcatLayer
  *****************************************************************************/
-void ConcatLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
-  Layer::Init(proto, edge_map);
-  concat_dim_=proto.concat_dim();
+void ConcatLayer::Init(const LayerProto &proto) {
+  Layer::Init(proto);
+  concat_dim_=proto.concat_param().concat_dim();
+  CHECK_LT(concat_dim_, 2)<<"only support concatenation on 0/1-dim";
 }
-void ConcatLayer::ToProto(LayerProto *proto, bool copyData) {
-  Layer::ToProto(proto, copyData);
-  proto->set_concat_dim(concat_dim_);
-}
-void ConcatLayer::SetShape(){
-  CHECK_EQ(in_edges_.size(), 2);
-  CHECK_EQ(out_edges_.size(), 1);
-  const DAry& bottom0=in_edges_[0]->GetData(this);
-  const DAry& bottom1=in_edges_[1]->GetData(this);
+
+void ConcatLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
+  CHECK_EQ(src_layers.size(), 2);
   int num, channels, height, width;
+  const DAry& src0=src_layers[0]->data();
+  const DAry& src1=src_layers[1]->data();
   if(concat_dim_==0){
-    num = bottom0.shape(0)+bottom1.shape(0);;
-    channels = bottom0.shape(1);
-    CHECK_EQ(channels, bottom1.shape(1));
+    num = src0.shape(0)+src1.shape(0);;
+    channels = src0.shape(1);
+    CHECK_EQ(channels, src1.shape(1));
   } else{
-    num=bottom0.shape(0);
-    CHECK_EQ(num, bottom1.shape(0));
-    channels=bottom0.shape(1)+bottom1.shape(1);
+    num=src0.shape(0);
+    CHECK_EQ(num, src1.shape(0));
+    channels=src0.shape(1)+src1.shape(1);
   }
-  height = bottom0.shape(2);
-  width = bottom0.shape(3);
-  CHECK_EQ(height, bottom1.shape(2));
-  CHECK_EQ(width, bottom1.shape(3));
+  height = src0.shape(2);
+  width = src0.shape(3);
+  CHECK_EQ(height, src1.shape(2));
+  CHECK_EQ(width, src1.shape(3));
 
   vector<int> shape{num, channels, height, width};
-  data_.SetShape(shape);
-  grad_.SetShape(shape);
+  data_.setup(shape, mode);
+  grad_.setup(shape,mode);
 }
-bool ConcatLayer::PreSyncF(){
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
-    "Not supported for diff parallelism modes";
-  // bottom is replicated/local, or both are data parallel
-  if(bottom.GetPartition()==-1||
-      (bottom.GetPartition()==0&&data_.GetPartition()==0))
+
+bool ConcatLayer::PreSyncF(const vector<Layer*>& src_layers){
+  const DAry& src0=src_layers[0]->data();
+  const DAry& src1=src_layers[1]->data();
+  CHECK_EQ(src0.GetPartition(),src1.GetPartition())<<
+    "Not supported for diff partition modes for "<<
+    src_layers[0]->name()<<", "<<src_layers[1]->name();
+  // srcs are replicated/local, or both are data parallel
+  if(src0.GetPartition()==-1||
+      (src0.GetPartition()==0&&data_.GetPartition()==0))
     return false;
   else
     return true;
 }
-bool ConcatLayer::PreSyncG(){
-  if(in_edges_.size()==0)
-    return false;
-  const DAry& bottom=in_edges_[0]->GetData(this);
-  CHECK_NE(bottom.GetPartition()+data_.GetPartition(),1)<<
-    "Not supported for diff parallelism modes";
-  // bottom is replicated/local, or both are data parallel
-  if(data_.GetPartition()==-1||
-      (bottom.GetPartition()==0&&data_.GetPartition()==0))
-    return false;
-  else
-    return true;
+bool ConcatLayer::PreSyncG(const vector<Layer*>& src_layers){
+  PreSyncF(src_layers);
 }
-void ConcatLayer::ComputeFeature() {
-  const DAry& bottom0=in_edges_[0]->GetData(this);
-  const DAry& bottom1=in_edges_[1]->GetData(this);
+void ConcatLayer::ComputeFeature(const vector<Layer*>& src_layers) {
+  const DAry& src0=src_layers[0]->data();
+  const DAry& src1=src_layers[1]->data();
 
   if(concat_dim_==0){
-    //data_.CopyToRows(0,bottom0.shape(0),bottom0);
-    //data_.CopyToRows(bottom0.shape(0),num_, bottom1);
+    //data_.CopyToRows(0,src0.shape(0),src0);
+    //data_.CopyToRows(src0.shape(0),num_, src1);
     LOG(ERROR)<<"Not implemented";
   }else{
-    const Shape& s0=bottom0.shape();
-    const Shape& s1=bottom1.shape();
+    const Shape& s0=src0.shape();
+    const Shape& s1=src1.shape();
     int a=s0.size/s0.s[0];
     int b=a+s1.size/s1.s[0];
-    data_.CopyToCols(0, a, bottom0);
-    data_.CopyToCols(a, b, bottom1);
+    data_.CopyToCols(0, a, src0);
+    data_.CopyToCols(a, b, src1);
   }
 }
 
-void ConcatLayer::ComputeGradient() {
-  DAry* gbottom0=in_edges_[0]->GetMutableGrad(this);
-  DAry* gbottom1=in_edges_[1]->GetMutableGrad(this);
+void ConcatLayer::ComputeGradient(const vector<Layer*>& src_layers) {
+  DAry* gsrc0=src_layers[0]->mutable_grad();
+  DAry* gsrc1=src_layers[1]->mutable_grad();
 
   if(concat_dim_==0){
-    //data_.CopyToRows(0,bottom0.shape(0),bottom0);
-    //data_.CopyToRows(bottom0.shape(0),num_, bottom1);
+    //data_.CopyToRows(0,src0.shape(0),src0);
+    //data_.CopyToRows(src0.shape(0),num_, src1);
     LOG(ERROR)<<"Not implemented";
   }else{
-    const Shape& s0=gbottom0->shape();
-    const Shape& s1=gbottom1->shape();
+    const Shape& s0=gsrc0->shape();
+    const Shape& s1=gsrc1->shape();
     int a=s0.size/s0.s[0];
     int b=a+s1.size/s1.s[0];
-    gbottom0->CopyFromCols(0, a, grad_);
-    gbottom1->CopyFromCols(a, b, grad_);
+    gsrc0->CopyFromCols(0, a, grad_);
+    gsrc1->CopyFromCols(a, b, grad_);
+  }
+}
+
+/*****************************************************************************
+ * Implementation for SplitLayer
+ *****************************************************************************/
+void SliceLayer::Init(const LayerProto &proto) {
+  Layer::Init(proto);
+  slice_dim_=proto.slice_param().split_dim();
+  CHECK_LT(slice_dim_,2)<<"Slice only on the first two dimensions";
+  slice_start_=proto.slice_param().slice_start();
+  slice_end_=proto.slice_param().split_end();
+}
+
+void SliceLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
+  Layer::Setup(src_layers, mode);
+  CHECK_EQ(src_layers.size(), 1);
+  const DAry& src=src_layers[0]->data();
+  vector<int> shape;
+  if(split_dim_==0){
+    LOG(ERROR)<<"Not implemented";
+  } else{
+    shape.push_back(src.shape(0));
+    CHECK_GE(slice_start_, 0);
+    CHECK_GE(src.shape().size(),2);
+    CHECK_LE(slice_end_, src.shape(1));
+    shape.push_back(slice_end_-slice_start_);
+    for(int i=2;i<src.shape().size();i++)
+      shape.push_back(src.shape(i));
+  }
+
+  data_.Setup(shape, mode);
+  grad_.Setup(shape, mode);
+}
+
+bool SliceLayer::PreSyncF(const vector<Layer*>& src_layers){
+  const DAry& src=src_layers[0]->data();
+  if(src.GetPartition()==-1||
+      (src.GetPartition()==0&&data_.GetPartition()==0))
+    return false;
+  else
+    return true;
+}
+bool SliceLayer::PreSyncG(const vector<Layer*>& src_layers){
+  PreSyncF(src_layers);
+}
+
+void SliceLayer::ComputeFeature(const vector<Layer*>& src_layers){
+  const DAry& src=src_layers[0]->data();
+  if(slice_dim_==0){
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& shape=src.shape();
+    int col_size=src.shape().size()/src.shape(0)/src.shape(1);
+    data_.CopyFromCols(slice_start_*col_size, slice_end_*col_size, bottom);
+  }
+}
+
+void SliceLayer::ComputeGradient(const vector<Layer*>& src_layers) {
+  DAry* gbottom=src_layers[0]->mutable_grad();
+  if(slice_dim_==0){
+    //data_.CopyToRows(0,top0.shape(0),top0);
+    //data_.CopyToRows(top0.shape(0),num_, top1);
+    LOG(ERROR)<<"Not implemented";
+  }else{
+    const Shape& shape=src.shape();
+    int col_size=src.shape().size()/src.shape(0)/src.shape(1);
+    gbottom->CopyToCols(slice_start_*col_size, slice_end_*col_size, grad_);
   }
 }
 
 /*****************************************************************************
  * Implementation for ImgColLayer
  *****************************************************************************/
-void ImgColLayer::Init(const LayerProto &proto,StrStrEdge *edge_map) {
-  Layer::Init(proto, edge_map);
-  CHECK_EQ(in_edges_.size(), 1);
-  CHECK_EQ(out_edges_.size(), 1);
+void Im2colLayer::Init(const LayerProto &proto) {
+  Layer::Init(proto);
   CHECK(proto.has_window_size());
   wsize_ = proto.window_size();
   stride_ = proto.stride();
   pad_ = proto.pad();
-}
-void ImgColLayer::ToProto(LayerProto *proto, bool copyData) {
-  Layer::ToProto(proto, copyData);
-  proto->set_window_size(wsize_);
-  proto->set_stride(stride_);
-  proto->set_pad(pad_);
 }
 
 void ImgColLayer::SetShape(){

@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-05 19:49
-
 #ifndef INCLUDE_NET_LAYER_H_
 #define INCLUDE_NET_LAYER_H_
 
@@ -19,27 +16,21 @@
 #include "utils/timer.h"
 
 /**
- * \file this file includes the declarations of both Layer and LayerFactory
+ * \file this file includes the declarations of Layer and its children classes
  */
 
 using std::vector;
 using std::string;
-namespace lapis {
-/**
- * forward declaration of Edge.
- */
-class Edge;
-using StrStrEdge=std::map<std::pair<string, string>, Edge*>;
+namespace singa {
 /**
  * Base layer class.
- * Child layers should implement the ::Forward(), ::Backward() functions for
+ * Children should implement the ::Forward(), ::Backward() functions for
  * backpropagation method;
  * TODO(wangwei) For layers that support contrastive convergence,
  * ::ComputeLayer() should be implemented.
- * Currently there are 3 layers of type LogisticLayer, DataLayer and
- * LinearLayer. The identifier of each layer is defined as id field in the
- * corresponding class
- */
+ * The identifier of each layer is the literal string of the class, which is
+ * used in net configuration and registration.
+ * */
 class Layer {
  public:
    Layer(){}
@@ -54,42 +45,64 @@ class Layer {
    * added to the layer. see LayerProto
    * @param edge_map a map from edge name to the edge object.
    */
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
+  virtual void Init(const LayerProto &proto);
+  /**
+   * Setup the layer data and parameters.
+   * setup the shapes of DArys according to configuration and shapes of DArys
+   * of the connected layer; partition them according to partition mode.
+   * @param src_layers layers connecting to this layes
+   * @param mode
+   */
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode)=0;
+  /**
+   * collect parameters associated with this layer.
+   * parameter id is set according in sequence order starting with 0.
+   * @param params parameters collected from previous layers.
+   */
   virtual void CollectParams(vector<Param*> *params);
+  /**
+   * @return parameters associated with this layer
+   */
   virtual vector<Param*> GetParams();
 
   /**
-   * partition the layer along k-th dimension starting from 0
-   * the parameters should be partitioned according to the
-   * partition of the layer; Called after SetShape;
+   * Compute features of this layer based on connected layers.
+   * Implement forward propagation for BP; Implement both postive phase and
+   * negative phase for CD.
+   * @param src_layers layers connecting to this layer
    */
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
+    virtual void ComputeFeature(const vector<Layer*>& src_layers)=0;
+    /**
+     * @return true if need to sync before ComptueFeature
+     */
+    virtual bool PreSyncF(const vector<Layer*>& src_layers);
+    /**
+     * @return true if need to sync after ComptueFeature
+     */
+    virtual bool PostSyncF(const vector<Layer*>& src_layers){return false;}
   /**
-   * Forward propagate features through the Net
-   * It aggregates activations from all incoming edges, and then apply the
-   * activation function
+   * Compute gradients for parameters and connecting layers.
+   * Implement backward propagation for BP; Calculate gradients for parameters
+   * for CD.
+   * @param src_layers layers connecting to this layer.
    */
-    virtual void ComputeFeature();
-    virtual bool PreSyncF();
-    virtual bool PreSyncG();
-  /**
-   * Backward propagate gradients through the Net
-   * It aggregates gradients from all outgoing edges, and then computes
-   * the gradient w.r.t the aggregated activation.
-   */
-    virtual void ComputeGradient();
-    virtual bool PostSyncF(){return false;}
-    virtual bool PostSyncG() {return false;}
+    virtual void ComputeGradient(const vector<Layer*>& src_layers)=0;
+    /**
+     * @return true if need to sync before ComptueGradient
+     */
+    virtual bool PreSyncG(const vector<Layer*>& src_layers);
+    /**
+     * @return true if need to sync before ComptueGradient
+     */
+    virtual bool PostSyncG(const vector<Layer*>& src_layers) {return false;}
  /**
    * Marshal layer properties and parameters into google protobuf object
-   * @param proto see LayerProto in lapis.proto
+   * @param layer_proto see LayerProto in lapis.proto
    */
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   /**
    * Return true for layers accept input data, e.g., DataLayer,
-   * false for all other layer; default is false;
+   * false for all other layer; default is false; TODO remove it.
    */
   virtual bool HasInput() {
     return false;
@@ -98,59 +111,32 @@ class Layer {
     return false;
   }
 
-  /**
-   * Return the output feature Blob of this layer connected to the edge
-   * @param edge which connects to the feature to be returned
-   */
-  /**
-   * Return the gradient Blob connected to the edge.
-   * Usually, it is the gradient of activations, which will be back propagated
-   * to lower layers. But for DataLayer, it returns the feature Blob, because
-   * the edge is an loss Edge, which computes the gradient by comparing
-   * prediction and the data (e.g., label).
-   * @param edge which connectes to the gradient
-   */
  /**
    * Return name of this layer
    */
   const std::string &name() {
-    return name_;
-  }
-
-  void add_in_edge(Edge *edge) {
-    in_edges_.push_back(edge);
-  }
-
-  void add_out_edge(Edge *edge) {
-    out_edges_.push_back(edge);
+    return proto_.name();
   }
 
   /**
-   * Return outgoing edges
+   * @return a const ref for DAry storing neuron values of this layer for BP
    */
-  const std::vector<Edge *> &out_edges() {
-    return out_edges_;
-  }
-  /**
-   * Return incoming edges
-   */
-  const std::vector<Edge *> &in_edges() {
-    return in_edges_;
-  }
-  virtual DAry * GetMutableGrad(Edge *edge=nullptr){ return &grad_; }
-  virtual DAry *GetMutableData(Edge *edge=nullptr){ return &data_; }
-
-  virtual const DAry& GetData(Edge* edge=nullptr) {return data_;}
-  virtual const DAry& GetGrad(Edge *edge=nullptr) {return grad_;}
   virtual const DAry& data() {return data_;}
+  /**
+   * @return a const ref for DAry storing neuron grads of this layer for BP
+   */
   virtual const DAry& grad() {return grad_;}
+  virtual DAry* mutable_data() {return &data_;}
+  virtual DAry* mutable_grad() {return &grad_;}
 
  protected:
-  std::string name_, type_;
-  std::vector<Edge *> out_edges_;
-  std::vector<Edge *> in_edges_;
   DAry data_, grad_;
+  LayerProto proto_;
 };
+
+/**
+ * Concate neurons from two layers into one single layer.
+ */
 class ConcatLayer: public Layer {
  public:
   virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
@@ -164,49 +150,19 @@ class ConcatLayer: public Layer {
   int concat_dim_;
   int num_, channels_, height_, width_;
 };
-class SplitLayer: public Layer {
+/**
+ * Split neurons from a single layer into two layers.
+ */
+class SliceLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual bool PreSyncF();
-  virtual bool PreSyncG();
+  virtual void Init(const LayerProto &proto);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual bool PreSyncF(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+  virtual bool PreSyncG(const vector<Layer*>& src_layers);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual DAry * GetMutableGrad(Edge *edge=nullptr){
-    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
-    if(edge==out_edges_[0])
-      return &grad_;
-    else
-      return &grad2_;
-  }
-  virtual const DAry& GetGrad(Edge *edge=nullptr){
-    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
-    if(edge==out_edges_[0])
-      return grad_;
-    else
-      return grad2_;
-  }
-  virtual DAry * GetMutableData(Edge *edge=nullptr){
-    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
-    if(edge==out_edges_[0])
-      return &data_;
-    else
-      return &data2_;
-  }
-  virtual const DAry& GetData(Edge *edge=nullptr){
-    CHECK(edge==out_edges_[0]||edge==out_edges_[1]);
-    if(edge==out_edges_[0])
-      return data_;
-    else
-      return data2_;
-  }
-
  private:
-  int split_dim_, split_size_;
-  DAry data2_, grad2_;
+  int slice_dim_, slice_start_, slice_end_;
 };
 
 

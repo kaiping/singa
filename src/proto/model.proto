@@ -92,23 +92,23 @@ message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
   repeated string connect_from=3;
-  // names of parameters shared from other layers
-  repeated string share_param=9;
-
   // can be pos/neg neuron value for CD, neuron value/grad for BP
-  repeated DAryProto data = 5;
+  repeated DAryProto ary = 5;
+  repeated string share_ary =6;
   // parameters, e.g., weight matrix or bias vector
-  repeated ParamProto Param = 6;
+  repeated ParamProto param = 7;
+  // names of parameters shared from other layers
+  repeated string share_param=8;
 
   // All layers are included in the net structure for training phase by default.
   // Layers, e.g., computing performance metrics for test phase, can be excluded
   // by this field which defines in which phase this layer should be excluded.
-  repeated Phase exclude = 6;
+  repeated Phase exclude = 9;
 
   // hyper-parameters for layers
-  optional AccuracyProto accuracy_param = 27;
-  optional ConcatProto concat_param = 9;
-  optional ConvolutionProto convolution_param = 10;
+  optional AccuracyProto accuracy_param = 10;
+  optional ConcatProto concat_param = 11;
+  optional ConvolutionProto convolution_param = 12;
   optional DataProto data_param = 11;
   optional DropoutProto dropout_param = 12;
   optional InnerProductProto inner_product_param = 17;

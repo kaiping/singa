@@ -1,8 +1,6 @@
 #include <queue>
 
 #include "net/net.h"
-#include "utils/common.h"
-#include "utils/timer.h"
 #include "utils/singleton.h"
 #include "utils/factory.h"
 
@@ -31,7 +29,7 @@ Net::Net(const NetProto &net_proto) {
   for (auto &layer_proto : net_proto.layer()) {
     Layer *layer = factory->Create(layer_proto.type());
     layer->Init(layer_proto);
-    if(layer->size_connect_from()){
+    if(layer->size_connect_to()){
       for(auto from: layer_proto.connect_from()){
         auto edge=make_pair(from, layer_proto.name());
         if(edge_set_.find(edge)==edge_set_.end()){
@@ -47,8 +45,7 @@ Net::Net(const NetProto &net_proto) {
   for(auto *layer: layers_)
     if(name2outlayers_.find(layer->name())==name2outlayers_.end())
       output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
-  // TODO draw network structure graph using edges
-
+  //TODO DLOG(INFO)<<ToDOT(edge_set_);
   DLOG(INFO)<<"layers inited";
 
   topology_sort(&layers_, outlayers_);
@@ -59,6 +56,7 @@ Net::Net(const NetProto &net_proto) {
   // the softmax loss layer
   LOG(ERROR)<<"Neural Net constructed";
 }
+
 Net::~Net() {
   for(auto* layer: layers_)
     delete layer;

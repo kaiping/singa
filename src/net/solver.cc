@@ -33,6 +33,7 @@ Solver::Solver(const SolverProto &proto) {
   train_shard_=data_folder+"/train";
   val_shard_=data_folder+"/validation";
   test_shard_=data_folder+"/test";
+  delegate_=new TableDelegate(GlobalContext::Get());
 }
 Solver::~Solver() {
   delete net_;
@@ -64,11 +65,6 @@ void Solver::LocalUpdate(Param* param, int step) {
 }
 */
 
-void Solver::Setup(const NetProto& np){
-  net_=SetupNeuralNet(np);
-  auto params=net_->params();
-  delegate_=new TableDelegate(GlobalContext::Get());
-}
 
 Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Net *net=new Net(proto);
@@ -76,21 +72,18 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Record record;
   string key;
   shard.Next(&key, &record);
-  // setup the net, init parameters
-  net->SetNetShape(proto_.batchsize(), record);
-
-
-  // net->AllocMemory();
+  // setup the net
+  net->Setup(proto_.batchsize(), record);
   return net;
 }
-void Solver::InitParams(){
-  for(auto* param: net_->params()){
+
+void Solver::PopulateTableServer(Net* net){
+  for(auto* param: net->params()){
     param->Fill();
+    delegate_->Put(param);
   }
-  for(auto* param: net_->params())
-    if(!param->partition()||context_->num_groups()>1)
-      delegate_->Put(param);
 }
+
 void Solver::ToProto(SolverProto *proto) {
   /*
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);

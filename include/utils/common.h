@@ -17,11 +17,6 @@ using std::string;
 using std::map;
 namespace lapis {
 const int kBufLen=1024;
-enum Phase{
-  kTrain=1,
-  kValidation,
-  kTest
-};
 
 inline bool check_exists(const std::string& name) {
     struct stat buffer;

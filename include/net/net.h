@@ -7,7 +7,6 @@
 #include <stack>
 #include "net/param.h"
 #include "proto/model.pb.h"
-#include "net/net.h"
 #include "net/layer.h"
 
 namespace lapis {
@@ -30,6 +29,12 @@ class Net {
    * shape info.
    */
   std::string ToString();
+
+  /**
+   * construct a DOT string for drawing network structure
+  std::string ToDOT();
+   */
+
   /**
    * setup the layers and parameters.
    * shapes of layer data and parameters are infered from input records/shapes.

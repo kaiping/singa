@@ -21,11 +21,13 @@ namespace lapis {
 void SimpleQueue::Enqueue(Message *message) {
 	boost::recursive_mutex::scoped_lock sl(queue_lock_);
 	receive_queue_.push_back(message);
+/*
 	stats_["request_queue_length"]+=receive_queue_.size();
 	stats_["request_queue_access_count"]++;
 	if ((GlobalContext::Get()->IsTableServer(NetworkService::Get()->id())))
 	if (((long)stats_["request_queue_access_count"])%100==0)
 		VLOG(3) << "process " << NetworkService::Get()->id() << " queue length = " << (stats_["request_queue_length"]/stats_["request_queue_access_count"]); 
+*/
 }
 
 /**

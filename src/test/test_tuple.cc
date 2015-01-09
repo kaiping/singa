@@ -31,7 +31,7 @@ using std::vector;
 
 
 #define SIZE 16
-#define THRESHOLD 5000000
+#define THRESHOLD 500000
 int tuple_sizes[SIZE] = {37448736, 16777216, 4096000, 1327104, 884736, 884736, 614400,14112,4096,4096,1000,384,384,256,256,96};
 vector<int> valsizes;
 int collect_size; 
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 	cluster.set_server_end(8);
 	cluster.set_worker_start(8);
 	cluster.set_worker_end(24);
-	cluster.set_group_size(2);
+	cluster.set_group_size(8);
 	cluster.set_data_folder("/data1/wangwei/lapis");
 
 	auto gc = lapis::GlobalContext::Get(cluster);
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
 	} else {
 		start_network_service_for_worker();
 		worker_load_data(cluster.worker_start());
-		for (int i=0; i<100; i++){
+		for (int i=0; i<10; i++){
 			worker_update_data();
 			worker_get_data();
 		}

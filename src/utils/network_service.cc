@@ -73,6 +73,7 @@ void NetworkService::receive_loop(){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
 				request->ParseFromString(msg);
+				request->set_start(Now()); 
 				network_queue_->Enqueue(request);
 			}
 			else if (tag==MTYPE_RESPONSE){

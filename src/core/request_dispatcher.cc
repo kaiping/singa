@@ -5,16 +5,14 @@
 #include "utils/network_service.h"
 #include "core/request_dispatcher.h"
 #include "proto/worker.pb.h"
-
+#include "utils/timer.h"
 /**
  * @file request_dispatcher.cc
  * Implementation of RequestDispatcher class.
  * @see request_dispatcher.h.
  */
 DECLARE_double(sleep_time);
-
 namespace lapis {
-
 
 void RequestDispatcher::StartDispatchLoop(){
 	NetworkService *network = NetworkService::Get().get();
@@ -31,8 +29,10 @@ void RequestDispatcher::StartDispatchLoop(){
 			else if (request->HasExtension(UpdateRequest::name))
 				tag = MTYPE_UPDATE_REQUEST;
 			// if successful, re-claim memory
-			if (callbacks_[tag](msg))
+			if (callbacks_[tag](msg)){
+				//VLOG(3) << "wait time = " << (Now() - request->start()); 
 				delete msg;
+			}
 			else{ // re-enqueue the request
 				network->Send(network->id(), tag, *msg);
 			}

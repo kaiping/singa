@@ -38,6 +38,7 @@ message MethodStats {
 message RequestBase {
 	required int32 table = 1;
 	required int32 source = 2; 
+	optional double start = 3; 
 	extensions 100 to 199; 
 }
 

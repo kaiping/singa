@@ -7,7 +7,7 @@
 
 #include "da/ary.h"
 using std::vector;
-namespace lapis {
+namespace singa {
 typedef float* FloatPtr;
 class GAry{
  public:

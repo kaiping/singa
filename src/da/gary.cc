@@ -8,7 +8,7 @@
 #include "utils/timer.h"
 
 #include "da/gary.h"
-namespace lapis {
+namespace singa {
 double GAry::comm_time=0.0;
 int GAry::grp_rank_=-1;
 int GAry::groupsize_=0;

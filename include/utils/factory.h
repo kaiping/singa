@@ -45,11 +45,11 @@ class Factory{
 template<typename T>
 void Factory<T>::RegisterCreateFunction(const std::string id,
                                         std::function<T*(void)> func) {
-  str2func_[id] = create_function;
+  str2func_[id] = func;
 }
 
 template<typename T>
-T *LayerFactory<T>::Create(const std::string id) {
+T *Factory<T>::Create(const std::string id) {
   CHECK(str2func_.find(id) != str2func_.end())
       << "The creation function for " << id << " has not been registered";
   return str2func_[id]();

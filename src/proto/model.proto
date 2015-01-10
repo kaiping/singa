@@ -1,4 +1,4 @@
-package lapis;
+package singa;
 message ModelProto{
   optional string name = 1;
   optional NetProto net = 2;
@@ -31,20 +31,19 @@ message ParamProto {
   // for the program to identify it and share among layers.
   // e.g., "conv1_weight","fc_bias"
   optional string name = 1;
+  optional int32 id=2;
   // in most situations, user do not need to config this,
   // the program will calculate it
-  repeated int32 shape = 2;
+  repeated int32 shape = 3;
 
   // split the parameter into multiple DAryProtos for serialzation and
   // transferring (Google Protobuf has size limit)
-  optional int32 split_threshold=3 [default=5000000];
+  optional int32 split_threshold=4 [default=5000000];
   // partition dimension, -1 for no partition
-  optional int32 partition_dim=4 [default =-1];
+  optional int32 partition_dim=5 [default =-1];
 
   // value of the parameter
-  optional DAryProto value = 5;
-  // (history) gradient of the parameter
-  optional DAryProto grad = 6;
+  repeated DAryProto ary = 6;
 
   enum InitMethod {
     kConstant = 0;
@@ -88,10 +87,22 @@ enum Phase {
   kTest= 2;
 }
 
+enum PartitionMode{
+  kData=0;
+  kModel=1;
+  kHybrid=2;
+  kNone=3;
+}
+
+enum PerformanceType{
+  kLoss=1;
+  kAccuracy=2;
+}
+
 message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
-  repeated string connect_from=3;
+  repeated string src_layer=3;
   // can be pos/neg neuron value for CD, neuron value/grad for BP
   repeated DAryProto ary = 5;
   repeated string share_ary =6;
@@ -106,31 +117,22 @@ message LayerProto {
   repeated Phase exclude = 9;
 
   // hyper-parameters for layers
-  optional AccuracyProto accuracy_param = 10;
-  optional ConcatProto concat_param = 11;
-  optional ConvolutionProto convolution_param = 12;
-  optional DataProto data_param = 11;
-  optional DropoutProto dropout_param = 12;
+  optional ConvolutionProto convolution_param = 11;
+  optional DataProto data_param = 12;
+  optional DropoutProto dropout_param = 13;
   optional InnerProductProto inner_product_param = 17;
   optional LRNProto lrn_param = 18;
   optional PoolingProto pooling_param = 19;
   optional ReLUProto relu_param = 30;
-  optional SliceProto slice_param = 31;
+  optional SoftmaxLossProto softmaxloss_param = 10;
 }
 
-// Message that stores parameters used by AccuracyLayer
-message AccuracyProto {
+// Message that stores parameters used by SoftmaxLossProto
+message SoftmaxLossProto {
   // When computing accuracy, count as correct by comparing the true label to
   // the top k scoring classes. By default, only compare to the top scoring
   // class (i.e. argmax).
   optional uint32 top_k = 1 [default = 1];
-}
-// Message that stores parameters used by ConcatLayer
-message ConcatProto {
-  // Concat Layer needs to specify the dimension along the concat will happen,
-  // the other dimensions must be the same for all the bottom blobs
-  // By default it will concatenate blobs along channels dimension
-  optional uint32 concat_dim = 1 [default = 1];
 }
 // Message that stores parameters used by ConvolutionLayer
 message ConvolutionProto {
@@ -148,10 +150,7 @@ message ConvolutionProto {
   optional uint32 stride = 6 [default = 1]; // The stride (equal in Y, X)
   optional uint32 stride_h = 13; // The stride height
   optional uint32 stride_w = 14; // The stride width
-  optional FillerProto weight_filler = 7; // The filler for the weight
-  optional FillerProto bias_filler = 8; // The filler for the bias
 }
-
 // Message that stores parameters used by DataLayer
 message DataProto {
   // Specify the data source.
@@ -181,8 +180,6 @@ message DropoutProto {
 message InnerProductProto {
   optional uint32 num_output = 1; // The number of outputs for the layer
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
-  optional FillerProto weight_filler = 3; // The filler for the weight
-  optional FillerProto bias_filler = 4; // The filler for the bias
 }
 
 // Message that stores parameters used by LRNLayer
@@ -195,6 +192,7 @@ message LRNProto {
     WITHIN_CHANNEL = 1;
   }
   optional NormRegion norm_region = 4 [default = ACROSS_CHANNELS];
+  optional float knorm =5 [default=1.0];
 }
 
 // Message that stores parameters used by PoolingLayer
@@ -202,7 +200,6 @@ message PoolingProto {
   enum PoolMethod {
     MAX = 0;
     AVE = 1;
-    STOCHASTIC = 2;
   }
   optional PoolMethod pool = 1 [default = MAX]; // The pooling method
   // Pad, kernel size, and stride are all given as a single value for equal
@@ -226,16 +223,6 @@ message ReLUProto {
   // improve neural network acoustic models. In ICML Workshop on Deep Learning
   // for Audio, Speech, and Language Processing.
   optional float negative_slope = 1 [default = 0];
-}
-
-// Message that stores parameters used by SliceLayer
-message SliceProto {
-  // SliceLayer needs to know which dimension to slice across.
-  // Currently, SliceLayer only supports slicing across num (dim 0)
-  // and channels (dim 1).
-  // By default, SliceLayer slices across channels.
-  optional uint32 slice_dim = 1 [default = 1];
-  repeated uint32 slice_point = 2;
 }
 
 message PerformanceProto {
@@ -301,7 +288,7 @@ message SolverProto {
 
 message Record {
   enum Type{
-    kImageNet
+    kImageNet=0;
   }
   optional Type type=1 [default=kImageNet];
   optional ImageNetRecord imagenet=2;

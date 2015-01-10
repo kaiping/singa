@@ -7,7 +7,7 @@
 #include "da/gary.h"
 #include "utils/debug.h"
 
-namespace lapis {
+namespace singa {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
@@ -412,4 +412,4 @@ void Prefetcher::operator()(){
   }
 }
 
-}  // namespace lapis
+}  // namespace singa

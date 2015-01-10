@@ -4,12 +4,13 @@
 #include <glog/logging.h>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <stack>
 #include "net/param.h"
 #include "proto/model.pb.h"
 #include "net/layer.h"
 
-namespace lapis {
+namespace singa {
 /**
  * The neural network consists of Layers and Edges.
  */
@@ -59,15 +60,15 @@ class Net {
   void ToProto(NetProto *net_proto, bool copyData=false);
 
   const std::vector<InputLayer *> &input_layer() {
-    return input_layer_;
+    return input_layers_;
   }
   InputLayer * input_layer(int k) {
-    CHECK_LT(k, input_layer_.size());
-    return input_layer_[k];
+    CHECK_LT(k, input_layers_.size());
+    return input_layers_[k];
   }
-  OutputLayer* output_layer(int k) {
-    CHECK_LT(k, output_layer_.size());
-    return output_layer_[k];
+  PerformanceLayer* performance_layer(int k) {
+    CHECK_LT(k, performance_layers_.size());
+    return performance_layers_[k];
   }
 
   const std::vector<Layer *>& layers() {
@@ -81,7 +82,7 @@ class Net {
   void Setup(PartitionMode mode);
   // SortLayersForBP
   void topology_sort(vector<Layer *> *layers,
-                     const map<string, vector<Layer*>& name2outlayers);
+                     const map<string, vector<Layer*>>& name2dstlayers);
   void topology_sort_inner(Layer *layer,
                          const std::map<Layer *,
                          std::vector<Layer *>> &adjacent_list,
@@ -91,15 +92,16 @@ class Net {
   // TODO SortLayersForCD
  private:
   std::vector<Layer *> layers_;
-  std::vector<OutputLayer *> output_layers_;
+  std::vector<PerformanceLayer *> performance_layers_;
   std::vector<InputLayer *> input_layers_;
   std::vector<Param *> params_;
 
   std::map<string, Layer*> name2layer_;
-  std::map<string, vector<Layer*>> name2outlayers_;;
+  std::map<string, vector<Layer*>> name2srclayers_;;
+  std::map<string, vector<Layer*>> name2dstlayers_;;
   // <src layer name, dst layer name>, 'Dummy' for dangling layer
-  std::unordered_set<std::pair<string,string>> edge_set_;
+  std::unordered_set<string> edge_set_;
 };
 
-}  // namespace lapis
+}  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

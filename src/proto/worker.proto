@@ -1,4 +1,4 @@
-package lapis;
+package singa;
 
 import "common.proto";
 import "model.proto";

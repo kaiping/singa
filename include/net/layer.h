@@ -9,14 +9,12 @@
 #include <memory>
 
 #include "proto/model.pb.h"
-#include "net/edge.h"
 #include "net/param.h"
 #include "da/dary.h"
 #include "utils/common.h"
-#include "utils/timer.h"
 
 /**
- * \file this file includes the declarations of Layer and its children classes
+ * \file this file includes the declarations of Layer and its children classes.
  */
 
 using std::vector;
@@ -24,98 +22,97 @@ using std::string;
 namespace singa {
 /**
  * Base layer class.
- * Children should implement the ::Forward(), ::Backward() functions for
- * backpropagation method;
- * TODO(wangwei) For layers that support contrastive convergence,
- * ::ComputeLayer() should be implemented.
- * The identifier of each layer is the literal string of the class, which is
- * used in net configuration and registration.
- * */
+ * Children should implement at least Layer::Setup, Layer::ComputeFeature(),
+ * Layer::ComputGradient() functions for backpropagation method;
+ * TODO(wangwei) implement children layers to support contrastive divergence,
+ * The identifier of each layer is the literal string of the class name, which
+ * is used in net configuration and registration.
+ */
 class Layer {
  public:
-   Layer(){}
-   virtual ~Layer(){}
+  Layer(){}
+  virtual ~Layer(){}
   /**
-   * Set layer properties, e.g., name and num_outputs(feature dimension for
-   * normal layer or num of filters for convolutional layer). Layers should be
-   * created after edges, then we can set the out going and incoming edges in
-   * this function.
-   * @param layer_proto user defined layer configuration, it has the names of
-   * out going and incoming edges, based on which the corresponding edges are
-   * added to the layer. see LayerProto
-   * @param edge_map a map from edge name to the edge object.
+   * initialize members, called after layer specific FromProto().
+   * simply copy the configuations and init DArys if available, most
+   * initializations are done by Setup().
+   * @param layer_proto user defined layer configuration
    */
-  virtual void Init(const LayerProto &proto);
+  virtual void FromProto(const LayerProto &proto);
   /**
-   * Setup the layer data and parameters.
+   * Marshal layer properties and DArys into google protobuf object
+   * (i.e., snapshot).
+   * Parameters are marshalled separately into another object (i.e., model).
+   * @param layer_proto
+   * @param copyData if true marshal data of DAry
+   */
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  /**
+   * Setup the DArys for data and parameters, also setup some properties.
    * setup the shapes of DArys according to configuration and shapes of DArys
    * of the connected layer; partition them according to partition mode.
-   * @param src_layers layers connecting to this layes
+   * @param src_layers layers connecting to this layer
    * @param mode
    */
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode)=0;
   /**
    * collect parameters associated with this layer.
-   * parameter id is set according in sequence order starting with 0.
+   * Layers that have paramters must overload this function.
+   * parameter id is set in sequence order starting with 0.
    * @param params parameters collected from previous layers.
    */
-  virtual void CollectParams(vector<Param*> *params);
+  virtual void CollectParams(vector<Param*> *params){};
   /**
+   * Layers that have paramters must overload this function.
    * @return parameters associated with this layer
    */
-  virtual vector<Param*> GetParams();
-
+  virtual vector<Param*> GetParams(){ return vector<Param*>(); }
   /**
    * Compute features of this layer based on connected layers.
-   * Implement forward propagation for BP; Implement both postive phase and
-   * negative phase for CD.
+   * Implement forward propagation for BP; TODO Implement both postive phase
+   * and negative phase for CD.
    * @param src_layers layers connecting to this layer
    */
-    virtual void ComputeFeature(const vector<Layer*>& src_layers)=0;
-    /**
-     * @return true if need to sync before ComptueFeature
-     */
-    virtual bool PreSyncF(const vector<Layer*>& src_layers);
-    /**
-     * @return true if need to sync after ComptueFeature
-     */
-    virtual bool PostSyncF(const vector<Layer*>& src_layers){return false;}
+  virtual void ComputeFeature(const vector<Layer*>& src_layers)=0;
+  /**
+   * default implementation returns false if the src layers are local
+   * (not partitioned) or both connected layers are in kData partition mode.
+   * @return true if need to sync DAry before ComptueFeature
+   */
+  virtual bool PreSyncF(const vector<Layer*>& src_layers);
+  /**
+   * return false by default.
+   * @return true if need to sync DAry after ComptueFeature
+   */
+  virtual bool PostSyncF(const vector<Layer*>& src_layers){return false;}
   /**
    * Compute gradients for parameters and connecting layers.
-   * Implement backward propagation for BP; Calculate gradients for parameters
-   * for CD.
+   * Implement backward propagation for BP; TODO Calculate gradients for
+   * parameters for CD.
    * @param src_layers layers connecting to this layer.
    */
-    virtual void ComputeGradient(const vector<Layer*>& src_layers)=0;
-    /**
-     * @return true if need to sync before ComptueGradient
-     */
-    virtual bool PreSyncG(const vector<Layer*>& src_layers);
-    /**
-     * @return true if need to sync before ComptueGradient
-     */
-    virtual bool PostSyncG(const vector<Layer*>& src_layers) {return false;}
- /**
-   * Marshal layer properties and parameters into google protobuf object
-   * @param layer_proto see LayerProto in lapis.proto
-   */
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers)=0;
   /**
-   * Return true for layers accept input data, e.g., DataLayer,
-   * false for all other layer; default is false; TODO remove it.
+   * \copybrief PreSyncF()
+   * @return true if need to sync DAry before ComptueGradient
    */
-  virtual bool HasInput() {
-    return false;
-  }
-  virtual bool HasOutput() {
-    return false;
-  }
-
- /**
+  virtual bool PreSyncG(const vector<Layer*>& src_layers);
+  /**
+   * return false by default;
+   * @return true if need to sync DAry after ComptueGradient
+   */
+  virtual bool PostSyncG(const vector<Layer*>& src_layers) {return false;}
+  /**
+   * decide on which dimension of DAry to do the partitioning.
+   * @mode kModel, kData, kHybrid, kNone (no partition)
+   * @return the partition dimension, -1 for no partition
+   */
+  int GetPartitionDimension(PartitionMode mode);
+  /**
    * Return name of this layer
    */
-  const std::string &name() {
-    return proto_.name();
+  const std::string &name() const {
+    return layer_proto_.name();
   }
 
   /**
@@ -129,134 +126,73 @@ class Layer {
   virtual DAry* mutable_data() {return &data_;}
   virtual DAry* mutable_grad() {return &grad_;}
 
- protected:
+protected:
   DAry data_, grad_;
-  LayerProto proto_;
+  // DAry pos_, neg_;//for CD
+  LayerProto layer_proto_;
 };
 
-/**
- * Concate neurons from two layers into one single layer.
- */
-class ConcatLayer: public Layer {
+class Im2colLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual bool PreSyncF();
-  virtual bool PreSyncG();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-  int concat_dim_;
-  int num_, channels_, height_, width_;
-};
-/**
- * Split neurons from a single layer into two layers.
- */
-class SliceLayer: public Layer {
- public:
-  virtual void Init(const LayerProto &proto);
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
   virtual void ComputeFeature(const vector<Layer*>& src_layers);
-  virtual bool PreSyncF(const vector<Layer*>& src_layers);
   virtual void ComputeGradient(const vector<Layer*>& src_layers);
-  virtual bool PreSyncG(const vector<Layer*>& src_layers);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-  int slice_dim_, slice_start_, slice_end_;
-};
-
-
-class ImgColLayer: public Layer {
- public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  void Img2Col(DAry* dst, const DAry& src);
-  void Col2Img(DAry* dst, const DAry& src);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  /**
+   * process one image
+   * @param data_im input local array
+   * @param data_col output local array
+   */
+  void im2col(const DAry& data_im, const int channels,
+      const int height, const int width, const int patch_h, const int patch_w,
+      const int pad_h, const int pad_w,
+      const int stride_h, const int stride_w,
+      DAry* data_col);
+  /**
+   * process one image
+   * @param data_col input local array
+   * @param data_im output local array
+   */
+  void col2im(const DAry& data_col, const int channels,
+      const int height, const int width, const int patch_h, const int patch_w,
+      const int pad_h, const int pad_w,
+      const int stride_h, const int stride_w,
+      DAry* data_im);
  protected:
-  int concat_dim_;
-  int num_, channels_, height_, width_;
-  //! shape for conv image
-  int cheight_, cwidth_;
-  //! height and width of the kernel/filter, assume the kernel is square
-  int wsize_;
-  //! length/width between to successive kernels/filters
-  int stride_;
-  //! padding size for boundary rows and cols
-  int pad_;
+  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
+  int channels_, height_, width_;
 };
 
+/**
+ * Multiply the col image with convolution weight, add bias to columns.
+ */
 class ConvProductLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual bool PreSyncF();
-  virtual bool PreSyncG();
-  virtual bool PostSyncF();
-  virtual bool PostSyncG();
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-  //! dimension of the hidden layer
-  int kernels_;
-  int num_, channels_, height_, width_;
+
+ protected:
+  Im2colLayer im2collayer_;
   Param weight_, bias_;
-};
-
-class ConvLayer: public ImgColLayer {
- public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual void CollectParams(vector<Param*> *params);
-  virtual vector<Param*> GetParams();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-   //! group weight height, width (col height), and col width
-  int M_, K_, N_;
-  //! num of groups, from caffe
-  int ngroups_;
-  //! number of kernels
-  int nkernels_;
-  //! one row per kernel; shape is num_kernels_*(channels_*kernel_size^2)
-  Param weight_ ;
-  //! the length is nkernels_
-  Param bias_;
-  //! store result of image to column, TODO create ColLayer
-  DAry col_data_, col_grad_;
-
-  Timer t;
- public:
-  float img2col, col2img, tdot, tadd;
 };
 
 class ReLULayer: public Layer {
  public:
-  virtual void SetShape();
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
 };
 
 class DropoutLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetPartition(int pdim);
-  virtual void SetupDAry(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
+  virtual void Init(const LayerProto &proto);
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
+ protected:
   float drop_prob_;
   /* record which neuron is dropped, required for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
@@ -266,21 +202,15 @@ class DropoutLayer: public Layer {
 
 class PoolingLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
+  virtual void FromProto(const LayerProto &proto);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-  //! pooling window size and stride
-  int wsize_, stride_;
-  //! shape for bottom layer feature
-  int channels_, height_, width_;
-  //! shape after pooling
-  int pheight_, pwidth_;
-  //! batchsize
-  int num_;
-  LayerProto::PoolingMethod pooling_method_;
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+ protected:
+  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
+  int channels_, height_, width_, pooled_height_, pooled_width_;
+  DAry mask_idx_;
 };
 
 class LRNLayer: public Layer {
@@ -294,19 +224,16 @@ class LRNLayer: public Layer {
  */
 
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
+  virtual void FromProto(const LayerProto &proto);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-
- private:
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+ protected:
   //! shape of the bottom layer feature
   int num_, channels_, height_, width_;
   //! size local response (neighbor) area and padding size
-  int wsize_, lpad_, rpad_;
+  int size_, lpad_, rpad_;
   //! hyper-parameter
   float alpha_, beta_, knorm_;
   DAry norm_, ratio_; //ratio : grad/(data*norm)
@@ -316,16 +243,14 @@ class FCLayer: public Layer {
    * fully connected layer
    */
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual bool PreSyncF();
-  virtual bool PreSyncG();
-  virtual bool PostSyncF();
-  virtual bool PostSyncG();
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+
+  virtual bool PreSyncF(const vector<Layer*>& src_layers);
+  virtual bool PreSyncG(const vector<Layer*>& src_layers);
+  virtual bool PostSyncF(const vector<Layer*>& src_layers);
+  virtual bool PostSyncG(const vector<Layer*>& src_layers);
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
@@ -336,121 +261,66 @@ class FCLayer: public Layer {
   int vdim_;
   int num_;
   Param weight_, bias_;
-  DAry cache_data_;
 };
 
-class OutputLayer: public Layer{
+class PerformanceLayer: public Layer{
  public:
-  virtual Performance CalcPerf(bool loss, bool accuracy);
+  virtual Performance ComputePerformance(const vector<Layer*>&src_layers,
+      PerformanceType type)=0;
 };
-class SoftmaxLossLayer: public OutputLayer {
+class SoftmaxLossLayer: public PerformanceLayer {
   /*
    * connected from the label layer and the last fc layer
    */
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
-  virtual bool HasOutput() {return true;}
-  virtual void SetShape();
-  virtual void SetupDAry(int pdim);
-  virtual void SetPartition(int pdim);
-  virtual void ComputeFeature();
-  virtual void ComputeGradient();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual Performance CalcPerf(bool loss, bool accuracy);
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+  virtual Performance ComputePerformance(const vector<Layer*>&src_layers,
+      PerformanceType type);
  private:
   int num_;
   int dim_;
-  int topk_;
+  int top_k_;
 };
 
 class InputLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual bool HasInput() { return true; }
-  virtual void AddInputRecord(const Record& record)=0;
+  virtual void AddInputRecord(const Record& record, Phase phase=kTrain)=0;
   virtual void SetInputData(DAry *data);
-  virtual void SetShape(const vector<vector<int>>& shapes)=0;
-  virtual void SetShape(const int batchsize, const Record & record)=0;
-  virtual const DAry& GetGrad(Edge* edge) {
-    LOG(ERROR)<<"input layer has no grad";
-    return grad_;
-  }
-  virtual DAry* GetMutableGrad(Edge* edge) {
-    return nullptr;
-  }
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode){};
+  virtual void ComputeFeature(const vector<Layer*>& src_layers){};
+  virtual void ComputeGradient(const vector<Layer*>& src_layers){};
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode)=0;
+  virtual void Setup(const int batchsize, const Record & record,
+      PartitionMode mode)=0;
+  DAry* mutable_prefetch_data(){return &(this->grad_);}
  protected:
   //DAry prefetch_data_; use the grad_ field for prefetch data
   int offset_;
 };
+
 class ImageLayer: public InputLayer {
  public:
-  virtual void Init(const LayerProto &proto, StrStrEdge *edge_map);
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void SetShape(const vector<vector<int>>& shapes);
-  virtual void SetShape(const int batchsize, const Record & record);
-  virtual void AddInputRecord(const Record& record);
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const int batchsize, const Record & record,
+      PartitionMode mode);
+  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
 
  private:
   bool mirror_;
   int cropsize_;
-  //int batchsize_, channels_, height_, width_;
 };
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void SetShape(const vector<vector<int>>& shapes);
-  virtual void SetShape(const int batchsize, const Record & record);
-  virtual void AddInputRecord(const Record& record);
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const int batchsize, const Record & record,
+      PartitionMode mode);
+  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
 };
-
-/****************************************************************************/
-/**
- * Register Layer with identifier ID
- * @param ID identifier of the layer e.g., Logistic, i.e., the type field
- * in LayerProto
- * @param LAYER the child layer class
- */
-#define REGISTER_LAYER(ID, LAYER) LayerFactory::Instance()->\
-  RegisterCreateFunction(ID, [](void)-> Layer* {return new LAYER();})
-
-/**
- * Factory for creating layer based on user provided layer type/identifier.
- * Users are required to register user-defined layers before creating instances
- * of them during runtime. For example, if you define a new Layer FooLayer with
- * identifier "Foo", then you can use it in your net by 1) configure your
- * layer proto with the type field to be "Foo". 2) register it (e.g., at the
- * start of the program). Then your FooLayer will be created by calling
- * LayerFactory::Instance()->Create("Foo");
- */
-class LayerFactory {
- public:
-  /**
-   * static method to get instance of this factory
-   */
-  static std::shared_ptr<LayerFactory> Instance();
-  /**
-   * Register user defined layer, i.e., add the layer type/identifier and a
-   * function which creats an instance of the layer. This function is called by
-   * the REGISTER_LAYER macro.
-   * @param id identifier of the layer, every layer has a type to identify it
-   * @param create_function a function that creates a layer instance
-   */
-  void RegisterCreateFunction(const std::string id,
-                              std::function<Layer*(void)> create_function);
-  /**
-   * create a layer  instance by providing its type
-   * @param type the identifier of the layer to be created
-   */
-  Layer *Create(const std::string id);
-
- private:
-  //! To avoid creating multiple instances of this factory in the program
-  LayerFactory();
-  //! Map that stores the registered Layers
-  std::map<std::string, std::function<Layer*(void)>> layer_map_;
-  static std::shared_ptr<LayerFactory> instance_;
-};
-
 
 }  // namespace lapis
 

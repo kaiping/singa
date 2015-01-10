@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-03 17:35
-
 #ifndef INCLUDE_NET_PARAM_H_
 #define INCLUDE_NET_PARAM_H_
 
@@ -12,16 +9,15 @@
 #include "proto/model.pb.h"
 
 // Base paramter class.
-// TODO(Jingyang) define split/partition function.
-namespace lapis {
+namespace singa {
 class Param {
  public:
   /**
    * Set properties of this parameter from ParamProto, allocate
-   * corresponding memory and initialize the parameter. Copy content and
-   * history from ParamProto if available.
+   * corresponding memory and initialize the parameter. Copy data, history and
+   * grad from ParamProto if available.
    */
-  void Init(const ParamProto &proto);
+  void FromProto(const ParamProto &proto);
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto
@@ -33,76 +29,73 @@ class Param {
   const DAry &data() {
     return data_;
   }
-  /**
-   * Return mem address for the content of this parameter
-   */
   DAry *mutable_data() {
     return &data_;
   }
   /**
-   * Return const mem address for the gradient of this parameter
+   * Return gradient of this parameter
    */
   const DAry &grad() {
     return grad_;
   }
+  /**
+   * Return gradient history of this parameter
+   */
   const DAry &history() {
     return history_;
   }
-
-  /**
-   * Return mem address for the gradient of this parameter
-   */
   DAry *mutable_grad() {
     return &grad_;
   }
-
+  /**
+   * Return mem address for the content of this parameter
+   */
   DAry *mutable_history() {
     return &history_;
   }
-
   float* mutable_dptr(){
     return data_.dptr();
   }
   const float* dptr(){
     return data_.dptr();
   }
-
   const float* gptr(){
     return grad_.dptr();
   }
+  float* mutable_gptr(){
+    return grad_.dptr();
+  }
+
   const int local_size(){
     return data_.local_size();
   }
-  void SetShape(int h, int w);
-  void SetShape(int l);
-  void SetPartition(int k);
-  void SetupDAry(int k);
+  void Setup(const vector<int>& shape, int partition_dim);
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */
-  void Fill();
+  void Init();
 
   const std::string& name() {
-    return name_;
+    return param_proto_.name();
   }
 
   int id() {
-    return id_;
+    return param_proto_.id();
   }
   void set_id(int id) {
-    id_ = id;
+    param_proto_.set_id(id);
   }
   float learning_rate_multiplier() {
-    return learning_rate_multiplier_;
+    return param_proto_.learning_rate_multiplier();
   }
   float weight_decay_multiplier() {
-    return weight_decay_multiplier_;
+    return param_proto_.weight_decay_multiplier();
   }
   const int split_threshold(){
-    return split_threshold_;
+    return param_proto_.split_threshold();
   }
-  const bool partition(){
-    return partition_;
+  const int partition(){
+    return param_proto_.partition_dim();
   }
  protected:
   /**
@@ -127,19 +120,13 @@ class Param {
   /**
    * identifier of this parameter, will be used by ModelController
    */
-  int id_;
-  //! scale factor for learning rate and weight decay for this parameter
-  float momentum_, learning_rate_multiplier_, weight_decay_multiplier_;
-  float low_, high_, mean_, std_, value_;
-  int split_threshold_;
-  bool partition_;
   //! content, gradient and history gradient of this parameter
   DAry data_, grad_, history_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.
    */
-  ParamProto::InitMethod init_method_;
+  ParamProto param_proto_;
 };
 
 }  // namespace lapis

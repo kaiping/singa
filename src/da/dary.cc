@@ -9,7 +9,7 @@
 #include <random>
 #include "da/dary.h"
 
-namespace lapis {
+namespace singa {
 using std::make_pair;
 arraymath::ArrayMath& DAry::arymath(){
   static arraymath::ArrayMath am=arraymath::ArrayMath();

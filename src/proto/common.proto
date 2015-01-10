@@ -1,4 +1,4 @@
-package lapis;
+package singa;
 enum MessageTypes {
   MTYPE_PUT_REQUEST = 1;
   MTYPE_GET_REQUEST = 2;
@@ -40,9 +40,9 @@ enum MessageTypes {
 
   MTYPE_UPDATE_REQUEST=30;
   MTYPE_SERVER_RESTORED=31;
-  
+
   MTYPE_REQUEST = 32;
-  MTYPE_RESPONSE = 33; 
+  MTYPE_RESPONSE = 33;
 };
 message EmptyMessage {}
 message ShortMsg {

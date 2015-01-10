@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-09-10 16:34
-
 #ifndef INCLUDE_DARRAY_DARY_H_
 #define INCLUDE_DARRAY_DARY_H_
 
@@ -13,24 +10,32 @@
 
 #include "da/arraymath.h"
 #include "da/gary.h"
+#include "da/ary.h"
 #include "proto/model.pb.h"
 using std::string;
-namespace lapis {
+namespace singa {
 class DAry {
  public:
   ~DAry();
   DAry();//alloc_size_(0),dptr_(nullptr){}
   // alloc local mem; set ga
   void Setup(int mode);
+  void Setup(const vector<int>& shape, int partition_dim);
+  void Setup(const Shape& shape, int partition_dim);
   int GetPartition() const {
     return part_.pdim;
   }
   void SetPartition(int pdim) {
     part_.pdim=pdim;
   }
+  int shape(int k) {
+    return shape_.s[k];
+  }
+  DAry SubArray(const std::pair<int, int>& range);
+  int partition() const;
   void SetShape(const Shape& shape){
     if(shape_==shape)
-      return;
+      return ;
     else{
       if(shape_.size>0)
         LOG(ERROR)<<"SetShape called twice with diff shape";
@@ -66,10 +71,12 @@ class DAry {
     * like Reshape();
     */
   DAry Reshape(const vector<int>& shape) const;
+  DAry Reshape(const Shape& shape) const;
   /**
     * set shape and partition from proto
     */
   void InitFromProto(const DAryProto& proto);
+  void FromProto(const DAryProto& proto);
   void ToProto(DAryProto* proto, bool copyData) const;
 
   void Allocate();

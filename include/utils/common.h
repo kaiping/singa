@@ -1,5 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-08-05 14:38
 #ifndef INCLUDE_UTILS_COMMON_H_
 #define INCLUDE_UTILS_COMMON_H_
 #include <glog/logging.h>
@@ -15,7 +13,7 @@
 using std::vector;
 using std::string;
 using std::map;
-namespace lapis {
+namespace singa {
 const int kBufLen=1024;
 
 inline bool check_exists(const std::string& name) {
@@ -95,6 +93,7 @@ class Performance: public PerformanceProto{
      set_top_precision(other.top_precision()+top_precision());
      set_count(count()+1);
    }
+
   void Reset() {
     set_count(0);
     set_loss(0.f);
@@ -132,6 +131,6 @@ string StringPrintf(string fmt, ...);
 string VStringPrintf(string fmt, va_list args);
 
 void Debug();
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_UTILS_COMMON_H_

@@ -1,4 +1,4 @@
-package lapis;
+package singa;
 
 message Cluster{
   // The following process ID refers to MPI rank which starts at 0

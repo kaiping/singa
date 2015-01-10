@@ -1,118 +1,84 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-03 18:02
-
 #include <glog/logging.h>
 #include <cmath>
-#include "utils/global_context.h"
 #include "net/param.h"
-#include "utils/common.h"
+#include "da/ary.h"
 
-namespace lapis {
-void Param::Init(const ParamProto &proto){
-  name_=proto.name();
-  //momentum_multiplier_ = proto.momentum_multiplier();
-  learning_rate_multiplier_ = proto.learning_rate_multiplier();
-  weight_decay_multiplier_ = proto.weight_decay_multiplier();
-  init_method_=proto.init_method();
-
-  low_=proto.low();
-  high_=proto.high();
-  mean_=proto.mean();
-  std_=proto.std();
-  value_=proto.value();
-  split_threshold_=proto.split_threshold();
-  if(proto.has_data()){
-    data_.InitFromProto(proto.data());
-    grad_.InitFromProto(proto.data());
+namespace singa {
+void Param::FromProto(const ParamProto &proto){
+  if(proto.ary_size()>=1){
+    data_.FromProto(proto.ary(0));
+    if(proto.ary_size()>=2){
+      grad_.FromProto(proto.ary(1));
+      if(proto.ary_size()>=3)
+        history_.FromProto(proto.ary(2));
+    }
   }
-  partition_=proto.partition();
-  if(partition_&&GlobalContext::Get()->num_groups()==1)
+  /*
+  if(proto.partition()!=-1&&GlobalContext::Get()->num_groups()==1)
     history_.InitFromProto(proto.data());
+  */
+  param_proto_=proto;
+  param_proto_.clear_ary();
 }
 
 void Param::ToProto(ParamProto *proto, bool copyData) {
-  // TODO(wangwei) store the proto as a member for easy ToProto.
-  proto->set_name(name_);
-  proto->set_learning_rate_multiplier(learning_rate_multiplier_);
-  proto->set_weight_decay_multiplier(weight_decay_multiplier_);
-  proto->set_init_method(init_method_);
-  proto->set_split_threshold(split_threshold_);
-  proto->set_mean(mean_);
-  proto->set_std(std_);
-  proto->set_low(low_);
-  proto->set_high(high_);
-  proto->set_value(value_);
-  proto->set_partition(partition_);
-
-  DAryProto* data=proto->mutable_data();
+  proto->CopyFrom(param_proto_);
+  DAryProto* data=proto->add_ary();
   data_.ToProto(data, copyData);
-  /*
-  DAryProto* grad=proto->mutable_grad();
+  DAryProto* grad=proto->add_ary();
   grad_.ToProto(grad, copyData);
-  */
+  DAryProto* history=proto->add_ary();
+  history_.ToProto(history, copyData);
 }
-void Param::SetShape(int len){
-  data_.SetShape({len});
-  grad_.SetShape({len});
+
+void Param::Setup(const vector<int>& shape, int partition_dim){
+  data_.Setup(shape, partition_dim);
+  grad_.Setup(shape, partition_dim);
+  history_.Setup(shape, partition_dim);
+  param_proto_.set_partition_dim(partition_dim);
 }
-void Param::SetShape(int h, int w){
-  data_.SetShape({h,w});
-  grad_.SetShape({h,w});
-}
-void Param::SetPartition(int k) {
-  data_.SetPartition(k);
-  grad_.SetPartition(k);
-  if(k!=-1)
-    partition_=true;
-}
-void Param::SetupDAry(int k) {
-  data_.Setup(k);
-  grad_.Setup(k);
-}
-void Param::Fill(){
+
+void Param::Init(){
   CHECK(data_.shape().size)<<"must set shape of param";
-  switch (init_method_) {
+  switch (param_proto_.init_method()) {
   case ParamProto::kConstant:
-    data_.Fill(value_);
+    data_.Fill(param_proto_.value());
     break;
   case ParamProto::kUniform:
-    FillUniformData(low_, high_, value_);
+    FillUniformData(param_proto_.low(), param_proto_.high(),
+        param_proto_.value());
     break;
   case ParamProto::kUniformSqrtFanIn:
-    CHECK_EQ(data_.shape().size, 2);
-    FillUniformData(low_ , high_, value_ / sqrt(data_.shape(0) / 3.0f));
+    FillUniformData(param_proto_.low(), param_proto_.high(),
+        param_proto_.value() / sqrt(data_.shape(0) / 3.0f));
     break;
   case ParamProto::kUniformSqrtFanInOut:
-    CHECK_EQ(data_.shape().size, 2);
-    FillUniformData(low_, high_, value_ / sqrt(data_.shape(0) + data_.shape(1)));
+    FillUniformData(param_proto_.low(), param_proto_.high(),
+        param_proto_.value() / sqrt(data_.shape(0) + data_.shape(1)));
     break;
   case ParamProto::kGaussain:
-    FillGaussainData(mean_, std_, value_);
+    FillGaussainData(param_proto_.mean(), param_proto_.std(),
+        param_proto_.value());
     break;
   case ParamProto::kGaussainSqrtFanIn:
-    CHECK_EQ(data_.shape().size, 2);
-    FillGaussainData(mean_,std_, value_ / sqrt(data_.shape(0)));
-    break;
-  case ParamProto::kPretrained:
-    LOG(ERROR)<<"Not implemented yet";
+    FillGaussainData(param_proto_.mean(), param_proto_.std(),
+        param_proto_.value() / sqrt(data_.shape(0)));
     break;
   default:
-    LOG(ERROR) << "Illegal parameter init method " << init_method_;
+    LOG(ERROR) << "Illegal parameter init method ";
     break;
   }
 }
-
-
 
 void Param::FillGaussainData(float mean, float std, float factor) {
   data_.SampleGaussian(mean, std);
   if (factor != 1.0f)
-    data_.Mult( data_,factor);
+    data_.Mult(data_,factor);
 }
 
 void Param::FillUniformData(float low, float high, float factor) {
   data_.SampleUniform(low, high);
   if (factor != 1.0f)
-    data_.Mult( data_,factor);
+    data_.Mult(data_,factor);
 }
-}  // namespace lapis
+}  // namespace singa

@@ -1,5 +1,3 @@
-//  Copyright © 2014 Anh Dinh. All Rights Reserved.
-//  piccolo/common.h
 #ifndef INCLUDE_CORE_COMMON_H_
 #define INCLUDE_CORE_COMMON_H_
 
@@ -45,7 +43,7 @@ using std::deque;
  * Marshall is the template for converting typed objects to and from string.
  *
  */
-namespace lapis {
+namespace singa {
 
 /**
  * Simple wrapper for collecting stats. It contains the mapping of string->double.
@@ -142,6 +140,6 @@ class TableServerHandler{
   bool synchronous_;
 };
 
-} // namespace lapis
+} // namespace singa
 
 #endif  // INCLUDE_CORE_COMMON_H_

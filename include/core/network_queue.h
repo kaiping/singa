@@ -1,4 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
 #ifndef INCLUDE_CORE_NETWORK_QUEUE_H_
 #define INCLUDE_CORE_NETWORK_QUEUE_H_
 
@@ -21,7 +20,7 @@ using std::deque;
  *
  * @see network_service.h
  */
-namespace lapis {
+namespace singa {
 
 /**
  * An interface for request queues, which methods for enqueueing and dequeueing
@@ -41,7 +40,7 @@ protected:
 	mutable boost::recursive_mutex queue_lock_;
 };
 
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_CORE_REQUEST_QUEUE_H_
 

@@ -1,5 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-06-28 14:58
 #ifndef INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 #define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 #include <glog/logging.h>
@@ -14,7 +12,7 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 
-namespace lapis {
+namespace singa {
 
 /**
  * Global Context is a singlton object, which provides cluster configuations,
@@ -102,12 +100,12 @@ class GlobalContext {
   // my mpi communicator, for MPI Barrier
   MPI_Comm mpicomm_;
 
-  MPI_Group worker_group_; 
-  MPI_Comm workergroup_comm_; 
+  MPI_Group worker_group_;
+  MPI_Comm workergroup_comm_;
 
   // make this class a singlton
   static shared_ptr<GlobalContext> instance_;
 };
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_UTILS_GLOBAL_CONTEXT_H_

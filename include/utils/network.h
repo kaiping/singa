@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-30 13:30
-
 #ifndef INCLUDE_UTILS_NETWORK_H_
 #define INCLUDE_UTILS_NETWORK_H_
 
@@ -10,7 +7,7 @@
 using google::protobuf::Message;
 
 using std::string;
-namespace lapis {
+namespace singa {
 
 /**
  * Network Singleton to transfer data between workers and table servers.
@@ -80,6 +77,6 @@ class MPINetwork: public Network{
   virtual bool Send(int dst, int tag, const string& msg);
   virtual	bool Recv(int *tag, int *src, string* msg);
 };
-} /* lapis  */
+}
 
 #endif

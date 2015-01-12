@@ -1,10 +1,8 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-06-28 14:40
 #include <glog/logging.h>
 #include "utils/global_context.h"
 #include "proto/cluster.pb.h"
 
-namespace lapis {
+namespace singa {
 
 std::shared_ptr<GlobalContext> GlobalContext::instance_;
 int GlobalContext::kCoordinator;
@@ -53,13 +51,13 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   }
 
   // setup the group containing all workers
-  int *members = new int[end-start]; 
+  int *members = new int[end-start];
   for (int i=start; i<end; i++)
-	members[i-start]=i; 
+	members[i-start]=i;
   MPI_Group world_group;
-  MPI_Comm_group(MPI_COMM_WORLD,&world_group); 
-  MPI_Group_incl(world_group, end-start, members, &worker_group_); 
-  MPI_Comm_create_group(MPI_COMM_WORLD, worker_group_,0, &workergroup_comm_); 
+  MPI_Comm_group(MPI_COMM_WORLD,&world_group);
+  MPI_Group_incl(world_group, end-start, members, &worker_group_);
+  MPI_Comm_create_group(MPI_COMM_WORLD, worker_group_,0, &workergroup_comm_);
 
   LOG(INFO)<<"GlobalContext Setup: "<<
     "Group id "<<gid_<<" rank "<<rank_<<" id within group "<<id_;
@@ -85,4 +83,4 @@ shared_ptr<GlobalContext> GlobalContext::Get() {
   }
   return instance_;
 }
-}  // namespace lapis
+}  // namespace singa

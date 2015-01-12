@@ -1,5 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-
 #ifndef INCLUDE_CORE_REQUEST_DISPATCHER_QUEUE_H_
 #define INCLUDE_CORE_REQUEST_DISPATCHER_QUEUE_H_
 
@@ -20,7 +18,7 @@ using std::map;
  * This is used by table servers, hence assuming that messages are of type
  * RequestBase
  */
-namespace lapis {
+namespace singa {
 
 /**
  * Dispatch requests to the registered callbacks.
@@ -55,7 +53,7 @@ private:
 
 	map<int, Callback> callbacks_;
 };
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_CORE_REQUEST_DISPATCHER_H_
 

@@ -1,6 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-// piccolo.h
-
 #ifndef INCLUDE_CORE_FILE_H_
 #define INCLUDE_CORE_FILE_H_
 
@@ -24,7 +21,7 @@
 
 using google::protobuf::Message;
 
-namespace lapis {
+namespace singa {
 
 /**
  * Log structured files for storing check-pointed table content.
@@ -83,6 +80,6 @@ private:
 	int current_offset_; /**< current read pointer, set to SEEK_END */
 };
 
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_CORE_FILE_H_

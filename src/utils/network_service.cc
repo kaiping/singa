@@ -1,4 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
 #include "utils/network_service.h"
 #include "utils/timer.h"
 #include "proto/worker.pb.h"
@@ -13,7 +12,7 @@ DEFINE_double(sleep_time, 0.0001, "");
  * Implementation of NetworkService class.
  * @see network_service.h
  */
-namespace lapis {
+namespace singa {
 
 std::shared_ptr<NetworkService> NetworkService::instance_;
 
@@ -73,7 +72,7 @@ void NetworkService::receive_loop(){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
 				request->ParseFromString(msg);
-				request->set_start(Now()); 
+				request->set_start(Now());
 				network_queue_->Enqueue(request);
 			}
 			else if (tag==MTYPE_RESPONSE){
@@ -100,7 +99,7 @@ void NetworkService::send_loop() {
 			boost::recursive_mutex::scoped_lock sl(send_lock_);
 			NetworkMessage *message = send_queue_.front();
 			network_->Send(message->dst, message->method, message->msg);
-			delete message; 
+			delete message;
 			send_queue_.pop_front();
 		}
 		else if (!receive_done_)

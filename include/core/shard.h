@@ -1,4 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
 #ifndef INCLUDE_CORE_SPARSE_TABLE_H_
 #define INCLUDE_CORE_SPARSE_TABLE_H_
 #include <functional>
@@ -29,7 +28,7 @@ struct hash<lapis::TKey> {
 }  // namespace std
 
 
-namespace lapis {
+namespace singa {
 
 class Shard: public GlobalTable,
 			 private boost::noncopyable {
@@ -155,6 +154,6 @@ private:
 
 	std::hash<TKey> hashobj_; /**< hash function for the key type K */
 };
-} // namespace lapis
+} // namespace singa
 
 #endif  // INCLUDE_CORE_SPARSE_TABLE_H_

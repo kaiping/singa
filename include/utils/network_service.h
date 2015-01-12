@@ -1,5 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-
 #ifndef INCLUDE_UTILS_NETWORK_SERVICE_H_
 #define INCLUDE_UTILS_NETWORK_SERVICE_H_
 #include <google/protobuf/message.h>
@@ -31,11 +29,9 @@ using std::deque;
  * A call to Receive() reads the next message off the queue.
  *
  */
-namespace lapis {
-
+namespace singa {
 
 void Sleep(double t); /**< sleep for t seconds */
-
 
 /**
  * The abstract queue for received messages.
@@ -125,5 +121,5 @@ private:
 
 	NetworkService(){} /**< private constructor */
 };
-}  // namespace lapis
+}  // namespace singa
 #endif  // INCLUDE_UTILS_NETWORK_SERVICE_H_

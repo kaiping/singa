@@ -1,4 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
 #ifndef INCLUDE_CORE_GLOBAL_TABLE_H_
 #define INCLUDE_CORE_GLOBAL_TABLE_H_
 
@@ -21,7 +20,7 @@
  * The current implementation assumes table servers run on different processes to workers, hence
  * table access requests will be remote.
  */
-namespace lapis {
+namespace singa {
 
 class Shard;
 
@@ -120,6 +119,6 @@ protected:
 
 	map<int, LogFile*> checkpoint_files_;
 };
-}  // namespace lapis
+}  // namespace singa
 
 #endif /* INCLUDE_CORE_GLOBAL_TABLE_H_ */

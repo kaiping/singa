@@ -9,11 +9,12 @@
 #include "net/param.h"
 #include "utils/common.h"
 #include "utils/global_context.h"
+#include "utils/network_service.h"
 #include "proto/model.pb.h"
 #include "server.h"
 
 
-namespace lapis {
+namespace singa {
 using std::string;
 using std::vector;
 using std::shared_ptr;
@@ -178,6 +179,6 @@ class TableDelegate {
   bool running_;
 };
 
-}  // namespace lapis
+}  // namespace singa
 #endif  // INCLUDE_CORE_TABLE_DELEGATE_H_
 

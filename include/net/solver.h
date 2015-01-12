@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-14 13:32
-
 #ifndef INCLUDE_NET_SOLVER_H_
 #define INCLUDE_NET_SOLVER_H_
 #include <atomic>
@@ -15,39 +12,9 @@
 #include "utils/shard.h"
 #include "utils/global_context.h"
 #include "core/table_delegate.h"
-namespace lapis {
+namespace singa {
 
 
-/**
- * Prefech one batch of data/records from local shard (\class Shard) into the
- * input layers of the neural network.
- * It can be run in another thread to parallelize IO and computation.
- */
-class Prefetcher {
- public:
-  /**
-   * @param path local shard file path.
-   * @param _net pointer to the neural net which has been initialized.
-   */
-  Prefetcher(std::string path, Net* net);
-  ~Prefetcher();
-  /**
-   * The main function, conducting prefeching task.
-   * Override the operator for easy creating thread.
-   */
-  void operator()();
-
- private:
-  /**
-   * Read next record.
-   * If reaches the end, then goto the begining of the shard and continue.
-   */
-  void NextRecord(Record* record);
-
- private:
-  shard::Shard* shard_;
-  Net* net_;
-};
 /**
  * The base trainer class.
  * Child class has to implement the ::Init(), ::Train(), ::Validation(),
@@ -68,26 +35,26 @@ class Solver {
      * distributed table (content of the tuples, i.e., parameters).
      * @param np proto for the neural network.
      */
-    void Setup(const NetProto& np);
+    Net* SetupNeuralNet(const NetProto& np);
     /**
      * Train the neraul network.
      * @param start_step start the training from this step.
      */
-    void Train(int start_step=0);
+    void Train(Net* net, int start_step=0);
     /**
      * Test the perforance of the learned model.
      * @param phase kValidation or kTest.
      */
-    Performance Test(const Phase& phase);
+    Performance Test(Net* net, const Phase& phase);
     /**
      * Initialize neural network parameters and put them to the table.
      */
-    void InitParams();
+    void PopulateTableServer(Net* net);
     /**
      * Profiling the time cost of training one batch.
      * @param runs run this number of batches for average.
      */
-    void TimeOneBatch(int runs=10) ;
+    void TimeOneBatch(Net* net, int runs=10) ;
     /**
      * return the current training step
      * the ::Train() has been called such num of times
@@ -95,7 +62,6 @@ class Solver {
     const int step() {
       return step_;
     }
-  static Phase phase;
  protected:
   void DebugInfo(Net* net);
   //void LocalUpdate(Param* param, int step);
@@ -165,45 +131,51 @@ class Solver {
     step_++;
   }
 
-
- protected:
-  Net* SetupNeuralNet(const NetProto& proto) ;
  protected:
   //!< current phase, need this field to change the data sources for input layer
   //!< current training step, e.g., such num of mini-batches have been processed
   int step_;
-  /*
-  //!< assume train, validation and test have the same batchsize
-  int batchsize_;
-  //!< start display after this num of steps
-  int display_after_steps_;
-  //!< display frequency
-  int display_every_steps_;
-  //!< start validation after this num of steps
-  int validation_after_steps_;
-  //!< display frequency
-  int validation_every_steps_;
-  //!< start validation after this num of steps
-  int test_after_steps_;
-  //!< display frequency
-  int test_every_steps_;
-
-  //!< number of iterations for training phase
-  int train_steps_;
-  //!< number of iterations to go through the validation dataset
-  int validation_steps_;
-  //!< number of iterations to go through the test dataset
-  int test_steps_;
-  */
   SolverProto proto_;
   Performance train_perf_, val_perf_, test_perf_;
   //!< path to the shard files
   string train_shard_, val_shard_, test_shard_;
 
-  Net* net_;
+  Phase phase_;
   TableDelegate* delegate_;
   std::shared_ptr<GlobalContext> context_;
 };
+/**
+ * Prefech one batch of data/records from local shard (\class Shard) into the
+ * input layers of the neural network.
+ * It can be run in another thread to parallelize IO and computation.
+ */
+class Prefetcher {
+ public:
+  /**
+   * @param path local shard file path.
+   * @param _net pointer to the neural net which has been initialized.
+   */
+  Prefetcher(std::string path, Net* net, Phase phase);
+  ~Prefetcher();
+  /**
+   * The main function, conducting prefeching task.
+   * Override the operator for easy creating thread.
+   */
+  void operator()();
+
+ private:
+  /**
+   * Read next record.
+   * If reaches the end, then goto the begining of the shard and continue.
+   */
+  void NextRecord(Record* record);
+
+ private:
+  shard::Shard* shard_;
+  Net* net_;
+  Phase phase_;
+};
+
 
 }  // namespace lapis
 #endif  // INCLUDE_NET_SOLVER_H_

@@ -274,16 +274,7 @@ message SolverProto {
   }
   optional GradCalcAlg alg= 26 [default = kBackPropagation];
 
-  // partition mode
-  enum Partition{
-    // only partition data
-    kData=1;
-    // only partition model
-    kModel=2;
-    // hybrid partition
-    kHybrid=3;
-  }
-  optional Partition partition=27;
+  optional PartitionMode partition=27;
 }
 
 message Record {

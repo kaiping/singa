@@ -58,7 +58,10 @@ class Net {
    * serialize the net.
    */
   void ToProto(NetProto *net_proto, bool copyData=false);
-
+  PerformanceLayer* performance_layer(int k) {
+    CHECK_LT(k, performance_layers_.size());
+    return performance_layers_[k];
+  }
   const std::vector<InputLayer *> &input_layer() {
     return input_layers_;
   }
@@ -66,17 +69,28 @@ class Net {
     CHECK_LT(k, input_layers_.size());
     return input_layers_[k];
   }
-  PerformanceLayer* performance_layer(int k) {
-    CHECK_LT(k, performance_layers_.size());
-    return performance_layers_[k];
-  }
-
-  const std::vector<Layer *>& layers() {
+    const std::vector<Layer *>& layers() {
     return layers_;
   }
   const std::vector<Param *> &params() {
     return params_;
   }
+  Layer* name2layer(string name){
+    if (name2layer_.find(name)!=name2layer_.end())
+      return name2layer_[name];
+    else return NULL;
+  }
+  const vector<Layer*> name2srclayers(string name){
+     if (name2srclayers_.find(name)!=name2srclayers_.end())
+      return name2srclayers_[name];
+    else return vector<Layer*>{};
+  }
+  const vector<Layer*> name2dstlayers(string name){
+    if (name2dstlayers_.find(name)!=name2dstlayers_.end())
+      return name2dstlayers_[name];
+    else return vector<Layer*>{};
+  }
+
  protected:
   // called internally to setup the net.
   void Setup(PartitionMode mode);
@@ -102,6 +116,5 @@ class Net {
   // <src layer name, dst layer name>, 'Dummy' for dangling layer
   std::unordered_set<string> edge_set_;
 };
-
 }  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

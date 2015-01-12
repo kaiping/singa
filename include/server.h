@@ -1,13 +1,10 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-29 13:46
-
 #ifndef INCLUDE_SERVER_H_
 #define INCLUDE_SERVER_H_
 
 #include "utils/network_service.h"
 #include "core/global-table.h"
 #include "proto/model.pb.h"
-namespace lapis {
+namespace singa {
 /**
  * \file server.h defines the Class \class TableServer and the interface of
  * its handlers. Two classes implemented this interface are also provided,
@@ -156,6 +153,6 @@ class TSHandlerFactory {
 };
 
 
-} /* lapis */
+}
 
 #endif

@@ -179,4 +179,5 @@ void Net::topology_sort(vector<Layer *> *layers,
     stack.pop();
   }
 }
+
 }  // namespace singa

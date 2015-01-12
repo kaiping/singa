@@ -1,6 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-// From piccolo's timer.h
-
 #ifndef INCLUDE_CORE_TIMER_H_
 #define INCLUDE_CORE_TIMER_H_
 #include <time.h>
@@ -9,7 +6,7 @@
  * @file timer.h
  * Provide access to nano-second clock. Taken from piccolo codebase.
  */
-namespace lapis {
+namespace singa {
 
 /**
  * Read CPU timestamp counter.
@@ -66,6 +63,6 @@ private:
 	uint64_t start_cycle_;
 };
 
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_CORE_TIMER_H_

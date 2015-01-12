@@ -6,28 +6,15 @@
 #include "net/solver.h"
 #include "da/gary.h"
 #include "utils/debug.h"
+#include "utils/timer.h"
 
 namespace singa {
-Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.step();
   proto_=proto;
-  /*
-  display_after_steps_ = proto.display_after_steps();
-  display_every_steps_ = proto.display_every_steps();
-  validation_after_steps_ = proto.validation_after_steps();
-  validation_every_steps_ = proto.validation_every_steps();
-  test_after_steps_ = proto.test_after_steps();
-  test_every_steps_ = proto.test_every_steps();
-
-  batchsize_=proto.batchsize();
-  train_steps_=proto.train_steps();
-  test_steps_=proto.test_steps();
-  validation_steps_=proto.validation_steps();
-  sgd_=proto.sgd();
-  */
   context_=GlobalContext::Get();
+  phase_=kTrain;
 
   string data_folder=GlobalContext::Get()->data_folder();
   train_shard_=data_folder+"/train";
@@ -35,36 +22,10 @@ Solver::Solver(const SolverProto &proto) {
   test_shard_=data_folder+"/test";
   delegate_=new TableDelegate(GlobalContext::Get());
 }
+
 Solver::~Solver() {
-  delete net_;
   delete delegate_;
 }
-
-/*
-void Solver::LocalUpdate(Param* param, int step) {
-  float lr=UpdateHyperParam(step, sgd_.learning_rate_change(),
-      sgd_.learning_rate_change_steps(),sgd_.base_learning_rate(), sgd_.gamma());
-  DAry* history=param->mutable_history();
-  const DAry& grad=param->grad();
-  const DAry& data=param->data();
-  int len=data.local_size();
-  CHECK_EQ(len, grad.local_size());
-  CHECK_EQ(len, history->local_size());
-  lr=lr*param->learning_rate_multiplier();
-  float w=sgd_.weight_decay()*param->weight_decay_multiplier();
-  // hist=hist-lr*grad
-  DAry::arymath().madd(history->dptr(), lr, grad.dptr(), history->dptr(), len);
-  // hist=hist-lr*weight*param
-  if(w>0)
-    DAry::arymath().madd(history->dptr(), lr*w, data.dptr(), history->dptr(), len);
-
-  // param+=history/n, /data->n_update()
-  DAry::arymath().sub(data.dptr(), data.dptr(), history->dptr(), len);
-  // hist=hist*mom
-  DAry::arymath().mul(history->dptr(), sgd_.momentum(), history->dptr(), len);
-}
-*/
-
 
 Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Net *net=new Net(proto);
@@ -79,36 +40,23 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
 
 void Solver::PopulateTableServer(Net* net){
   for(auto* param: net->params()){
-    param->Fill();
+    param->Init();
     delegate_->Put(param);
   }
 }
 
 void Solver::ToProto(SolverProto *proto) {
-  /*
-  proto->set_checkpoint_after_steps(checkpoint_after_steps_);
-  proto->set_checkpoint_every_steps(checkpoint_every_steps_);
-  proto->set_checkpoint_step(checkpoint_step_);
-
-  proto->set_display_after_steps(display_after_steps_);
-  proto->set_display_every_steps(display_every_steps_);
-
-  proto->set_validation_after_steps(validation_after_steps_);
-  proto->set_validation_every_steps(validation_every_steps_);
-
-  proto->set_test_after_steps(test_after_steps_);
-  proto->set_test_every_steps(test_every_steps_);
-  */
   proto->MergeFrom(proto_);
   proto->set_step(step_);
 }
+
 void debug_mem(string prefix){
   char buf[1024];
   sprintf(buf, "%30s, %12lu", prefix.c_str(), getCurrentRSS());
   LOG(INFO)<<string(buf);
 }
 
-Performance Solver::Test(const Phase& phase){
+Performance Solver::Test(Net*net, const Phase& phase){
   string shard;
   int nsteps;
   if(phase==Phase::kValidation){
@@ -123,26 +71,22 @@ Performance Solver::Test(const Phase& phase){
     LOG(ERROR)<<"Phase must be kValidation or kTest";
   // fetch params once
 
-  Prefetcher prefetcher(shard, net_);
+  Prefetcher prefetcher(shard, net, phase);
   std::thread *thd=nullptr;
   thd=new std::thread(std::ref(prefetcher));
-  Solver::phase=phase;
+  phase_=phase;
   Performance perf;
   for(int b=0;b<nsteps;b++){
     thd->join();
     delete thd;
-    for(auto* layer:net_->input_layer())
+    for(auto* layer:net->input_layer())
       layer->SetInputData(nullptr);
     thd=new std::thread(std::ref(prefetcher));
-    perf.Aggregate(TestOneBatch(net_, step_));
+    perf.Aggregate(TestOneBatch(net, step_));
   }
   thd->join();
   delete thd;
-  /*
-  for(auto* layer:net_->input_layer())
-    layer->SetInputData(nullptr);
-    */
-  Solver::phase=Phase::kTrain;
+  phase_=Phase::kTrain;
   return perf;
 }
 
@@ -150,31 +94,31 @@ void Solver::ReportPerformance(string prefix, Performance perf) {
   LOG(ERROR)<<"Train Step: "<<step_<<" "<<prefix<<" "<<perf.ToString();
 }
 
-void Solver::Train(int start_step){
+void Solver::Train(Net* net, int start_step){
   step_=start_step;
-  Prefetcher prefetcher(train_shard_, net_);
+  Prefetcher prefetcher(train_shard_, net, kTrain);
   std::thread *thd=nullptr;
   thd=new std::thread(std::ref(prefetcher));
   while (!HasFinished()) {
-    Solver::phase=Phase::kTrain;
+    phase_=kTrain;
     thd->join();
     delete thd;
-    for(auto* layer:net_->input_layer())
+    for(auto* layer:net->input_layer())
       layer->SetInputData(nullptr);
     if(!ValidateNow()&&!TestNow())
       thd=new std::thread(std::ref(prefetcher));
-    train_perf_.Aggregate(TrainOneBatch(net_, step_));
+    train_perf_.Aggregate(TrainOneBatch(net, step_));
     if(DisplayNow()){
       ReportPerformance("Train", train_perf_.Avg());
-      DebugInfo(net_);
+      DebugInfo(net);
       train_perf_.Reset();
     }
     if(ValidateNow()){
-      Performance perf=Test(Phase::kValidation);
+      Performance perf=Test(net, Phase::kValidation);
       ReportPerformance("Val  ", perf.Avg());
     }
     if(TestNow()){
-      Performance perf=Test(Phase::kTest);
+      Performance perf=Test(net, Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
     }
     if(ValidateNow()||TestNow())
@@ -237,25 +181,28 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     }
   }
   for(auto* layer: layers){
+    const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
     for(auto* param: layer->GetParams()){
         delegate_->AsyncCollect(param, step);
     }
-    if(layer->PreSyncF())
+    if(layer->PreSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
-    layer->ComputeFeature();
-    if(layer->PostSyncF())
+    layer->ComputeFeature(srclayers);
+    if(layer->PostSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
-  Performance perf=net->output_layer(0)->CalcPerf(true, false);
+  const vector<Layer*> &srclayers=net->name2srclayers(net->performance_layer(0)->name());
+  Performance perf=net->performance_layer(0)->ComputePerformance(srclayers, kLoss);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    if((*layer)->PreSyncG())
+    const vector<Layer*> &srclayers=net->name2srclayers((*layer)->name());
+    if((*layer)->PreSyncG(srclayers))
       MPI_Barrier(context_->mpicomm());
-    (*layer)->ComputeGradient();
+    (*layer)->ComputeGradient(srclayers);
     for(auto* param: (*layer)->GetParams()){
         delegate_->Update(param, step);
         delegate_->AsyncGet(param,step+1);
     }
-    if((*layer)->PostSyncG())
+    if((*layer)->PostSyncG(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
   //DebugInfo(net);
@@ -264,23 +211,27 @@ Performance Solver::TrainOneBatch(Net *net, int step){
 
 Performance Solver::TestOneBatch(Net *net, int step){
   for(auto* layer: net->layers()){
-    if(layer->PreSyncF())
+    const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
+    if(layer->PreSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
-    layer->ComputeFeature();
-    if(layer->PostSyncF())
+    layer->ComputeFeature(srclayers);
+    if(layer->PostSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
-  return net->output_layer(0)->CalcPerf(true, true);
+  const vector<Layer*> &srclayers=net->name2srclayers(net->performance_layer(0)->name());
+  Performance perf=net->performance_layer(0)->ComputePerformance(srclayers,kAccuracy);
+
+  return perf;
 }
 
-void Solver::TimeOneBatch(int runs) {
-  phase=Phase::kTrain;
-  Prefetcher prefetcher(train_shard_, net_);
+void Solver::TimeOneBatch(Net* net, int runs) {
+  phase_=Phase::kTrain;
+  Prefetcher prefetcher(train_shard_, net, phase_);
   prefetcher();
-  for(auto* layer:net_->input_layer())
+  for(auto* layer:net->input_layer())
     layer->SetInputData(nullptr);
 
-  auto layers=net_->layers();
+  auto layers=net->layers();
   int nlayers=layers.size();
   double* forward=new double[nlayers+1];;
   double* backward=new double[nlayers+1];;
@@ -298,7 +249,7 @@ void Solver::TimeOneBatch(int runs) {
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
   //delegate_->StartCollectThread();
-  for(auto* param: net_->params()){
+  for(auto* param: net->params()){
       delegate_->AsyncGet(param,step_);
   }
 
@@ -307,33 +258,35 @@ void Solver::TimeOneBatch(int runs) {
   for(int k=0;k<runs;k++){
     int layerid=0;
     for(auto* layer: layers){
+      const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
       refresh_start=Now();
       for(auto* param: layer->GetParams()){
           delegate_->AsyncCollect(param, step_);
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
-      if(layer->PreSyncF())
+      if(layer->PreSyncF(srclayers))
         MPI_Barrier(context_->mpicomm());
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
-      layer->ComputeFeature();
+      layer->ComputeFeature(srclayers);
       sync_start=Now();
       forward[layerid]+=sync_start-comp_start;
-      if(layer->PostSyncF())
+      if(layer->PostSyncF(srclayers))
         MPI_Barrier(context_->mpicomm());
       sync[layerid]+=Now()-sync_start;
       layerid++;
     }
 
     for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+      const vector<Layer*> &srclayers=net->name2srclayers((*layer)->name());
       layerid--;
       sync_start=Now();
-      if((*layer)->PreSyncG())
+      if((*layer)->PreSyncG(srclayers))
         MPI_Barrier(context_->mpicomm());
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
-      (*layer)->ComputeGradient();
+      (*layer)->ComputeGradient(srclayers);
       refresh_start=Now();
       backward[layerid]+=refresh_start-comp_start;
 
@@ -343,7 +296,7 @@ void Solver::TimeOneBatch(int runs) {
         }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
-      if((*layer)->PostSyncG())
+      if((*layer)->PostSyncG(srclayers))
         MPI_Barrier(context_->mpicomm());
       sync[layerid]+=Now()-sync_start;
     }
@@ -375,15 +328,16 @@ void Solver::TimeOneBatch(int runs) {
   delete backward;
   delete sync;
   delete refresh;
-  //DebugInfo(net_);
+  //DebugInfo(net);
 }
 
 /***********************************************************************
  * Prefetcher Implementation
  ***********************************************************************/
-Prefetcher::Prefetcher(string path, Net* _net) {
-  net_=_net;
+Prefetcher::Prefetcher(string path, Net* net, Phase phase) {
+  net_=net;
   shard_=new shard::Shard(path, shard::Shard::kRead);
+  phase_=phase;
 }
 
 Prefetcher::~Prefetcher() {
@@ -401,15 +355,14 @@ void Prefetcher::NextRecord(Record* record){
 void Prefetcher::operator()(){
   // can avoid directly dependent on DAry by fetching the whole mini-batch
   // or telling the prefetcher the size of partition of the mini-batch
-  const DAry& input= net_->input_layer(0)->GetData(nullptr);
+  const DAry& input= net_->input_layer(0)->data();
   // add a lshape(k) api for DAry to return local shape on k-dim
   Range nrng=input.IndexRange(0);
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
     NextRecord(&record);
     for(auto* layer:net_->input_layer())
-      layer->AddInputRecord(record);
+      layer->AddInputRecord(record, phase_);
   }
 }
-
 }  // namespace singa

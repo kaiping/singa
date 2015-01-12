@@ -1,6 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-// piccolo/table.h
-
 #ifndef INCLUDE_CORE_TABLE_H_
 #define INCLUDE_CORE_TABLE_H_
 #include <glog/logging.h>
@@ -10,7 +7,7 @@
  * @file table.h
  * Common interfaces for table classes.
  */
-namespace lapis {
+namespace singa {
 
 struct TableBase; /**< type declaration */
 class TableData; /**< type declaration */
@@ -73,7 +70,7 @@ public:
 protected:
 	TableDescriptor *info_;
 };
-}  // namespace lapis
+}  // namespace singa
 
 
 #endif  // INCLUDE_CORE_TABLE_H_

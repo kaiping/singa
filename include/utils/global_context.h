@@ -78,6 +78,7 @@ class GlobalContext {
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   const vector<vector<int>>& groups() {return groups_;}
 
+  const MPI_Comm& workergroup_comm(){return workergroup_comm_;}
  private:
   GlobalContext(const Cluster& cluster);
 
@@ -100,6 +101,10 @@ class GlobalContext {
   MPI_Group mpigroup_;
   // my mpi communicator, for MPI Barrier
   MPI_Comm mpicomm_;
+
+  MPI_Group worker_group_; 
+  MPI_Comm workergroup_comm_; 
+
   // make this class a singlton
   static shared_ptr<GlobalContext> instance_;
 };

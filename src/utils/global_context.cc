@@ -51,6 +51,16 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
     MPI_Comm_create_group(MPI_COMM_WORLD, mpigroup_,0, &mpicomm_);
     delete member;
   }
+
+  // setup the group containing all workers
+  int *members = new int[end-start]; 
+  for (int i=start; i<end; i++)
+	members[i-start]=i; 
+  MPI_Group world_group;
+  MPI_Comm_group(MPI_COMM_WORLD,&world_group); 
+  MPI_Group_incl(world_group, end-start, members, &worker_group_); 
+  MPI_Comm_create_group(MPI_COMM_WORLD, worker_group_,0, &workergroup_comm_); 
+
   LOG(INFO)<<"GlobalContext Setup: "<<
     "Group id "<<gid_<<" rank "<<rank_<<" id within group "<<id_;
 }

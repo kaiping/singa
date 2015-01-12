@@ -39,6 +39,8 @@ message RequestBase {
 	required int32 table = 1;
 	required int32 source = 2;
   optional int32 shard =3;
+  // ?? start for what?
+	optional double start = 4;
 	extensions 100 to 199;
 }
 

@@ -10,7 +10,7 @@
 #include "core/shard.h"
 
 DECLARE_double(sleep_time);
-
+DEFINE_int32(server_threads,8,"number of table server threads"); 
 namespace lapis {
 void TableServer::Start(const SGDProto& sgd) {
 	create_table(sgd);
@@ -31,7 +31,31 @@ void TableServer::Start(const SGDProto& sgd) {
 			boost::bind(&TableServer::handle_update_request, this, _1));
 	dispatcher_->RegisterTableCb(MTYPE_GET_REQUEST,
 			boost::bind(&TableServer::handle_get_request, this, _1));
-	dispatcher_->StartDispatchLoop();
+
+	boost::thread *t[FLAGS_server_threads]; 
+	for (int i=0; i<FLAGS_server_threads; i++)
+		t[i] = new boost::thread(&RequestDispatcher::StartDispatchLoop,dispatcher_); 
+	
+	for (int i=0; i<FLAGS_server_threads; i++)
+		t[i]->join();  
+
+	//boost::thread t1(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t2(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t3(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t4(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t5(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t6(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t7(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+	//boost::thread t8(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
+
+	//t1.join();
+	//t2.join();
+	//t3.join();
+	//t4.join(); 
+	//t5.join();
+	//t6.join(); 
+	//t7.join();
+	//t8.join(); 
 }
 
 void TableServer::create_table(const SGDProto &sgd) {
@@ -82,8 +106,9 @@ bool TableServer::handle_get_request(Message *msg) {
 	if (table_->HandleGet(*get_req, &get_resp)) {
 		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
 		return true;
-	} else
+	} else{
 		return false;
+	}
 }
 /**************************************************************************
  * Implementation for base table server handlers

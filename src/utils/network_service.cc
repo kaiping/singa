@@ -73,6 +73,7 @@ void NetworkService::receive_loop(){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
 				request->ParseFromString(msg);
+				request->set_start(Now()); 
 				network_queue_->Enqueue(request);
 			}
 			else if (tag==MTYPE_RESPONSE){
@@ -98,7 +99,6 @@ void NetworkService::send_loop() {
 		if (more_to_send()) {
 			boost::recursive_mutex::scoped_lock sl(send_lock_);
 			NetworkMessage *message = send_queue_.front();
-
 			network_->Send(message->dst, message->method, message->msg);
 			delete message; 
 			send_queue_.pop_front();

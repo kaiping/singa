@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace lapis{
+namespace singa{
 
 LArray::LArray() {}
 LArray::LArray(const Shape& shp, float* addr) : shape_(shp),head_(addr) {}
@@ -41,5 +41,5 @@ float* LArray::GetAddress() const{
   return head_;
 }
 
-} // namespace lapis
+} // namespace singa
 

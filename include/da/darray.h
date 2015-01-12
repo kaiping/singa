@@ -1,10 +1,10 @@
 #ifndef INCLUDE_DA_DARRAY_H_
 #define INCLUDE_DA_DARRAY_H_
 
-#include "arraycomm.h"
-#include "larray.h"
+#include "da/arraycomm.h"
+#include "da/larray.h"
 
-namespace lapis{
+namespace singa{
 
 class DArray{
 
@@ -48,8 +48,8 @@ class DArray{
   size_t GlobalVolume() ;
   size_t LocalVolume() ;
   Pair LocalRange(int k) const;
-  Shape GlobalShape() const;
-  size_t ShapeAt(int k) const;
+  Shape shape() const;
+  size_t shape(int k) const;
   size_t PartitionDim() const;
   Partition* LocalPartition() const;
   float* dptr() const;
@@ -72,13 +72,13 @@ class DArray{
   void Div(const DArray& src1, const float v);
   void Div(const DArray& src);
   void Div(const float v);
-  void MatriMult(const DArray& src1, DArray& src2);
+  void Dot(const DArray& src1, DArray& src2);
   void Square(const DArray& src);
   void Pow(const DArray& src, const float p);
   void AddCol(const DArray& src);
   void AddRow(const DArray& src);
-  void SumCol(const DArray& src);
-  void SumRow(const DArray& src);
+  void SumCol(const DArray& src, bool overwrite=true);
+  void SumRow(const DArray& src, bool overwrite=true);
   void Sum(const DArray& src, Pair& rng);
   void Max(const DArray& src, float v);
   void Min(const DArray& src, float v);
@@ -93,18 +93,18 @@ class DArray{
   float Min();
   float Min(const Range& rng);
   //elemental
-  float* addr(int idx0); 
-  float* addr(int idx0, int idx1); 
-  float* addr(int idx0, int idx1, int idx2); 
-  float* addr(int idx0, int idx1, int idx2, int idx3);   
-  int locate(int idx0) const; 
-  int locate(int idx0, int idx1) const; 
-  int locate(int idx0, int idx1, int idx2) const; 
-  int locate(int idx0, int idx1, int idx2, int idx3) const;   
-  float& at(int idx0) const; 
-  float& at(int idx0, int idx1) const; 
-  float& at(int idx0, int idx1, int idx2) const; 
-  float& at(int idx0, int idx1, int idx2, int idx3) const;  
+  float* addr(int idx0);
+  float* addr(int idx0, int idx1);
+  float* addr(int idx0, int idx1, int idx2);
+  float* addr(int idx0, int idx1, int idx2, int idx3);
+  int locate(int idx0) const;
+  int locate(int idx0, int idx1) const;
+  int locate(int idx0, int idx1, int idx2) const;
+  int locate(int idx0, int idx1, int idx2, int idx3) const;
+  float& at(int idx0) const;
+  float& at(int idx0, int idx1) const;
+  float& at(int idx0, int idx1, int idx2) const;
+  float& at(int idx0, int idx1, int idx2, int idx3) const;
 
   private:
   Shape shape_;

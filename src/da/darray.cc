@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace lapis{
+namespace singa{
 
 DArray::DArray() {}
 DArray::DArray(const Shape& shp, size_t dim) : shape_(shp),par_dim_(dim) {}
@@ -37,7 +37,7 @@ bool DArray::Alloc(){
   if (allocated_) return false;
   head_ = (float*)malloc(sizeof(float)*shape_.Volume());
   if (head_ == nullptr) return false;
-  local_array_ = new LArray(shape_, head_); 
+  local_array_ = new LArray(shape_, head_);
   allocated_ = true;
   return true;
 }
@@ -100,11 +100,11 @@ Pair DArray::LocalRange(int k) const{
   return Pair(0, shape_[k]);
 }
 
-Shape DArray::GlobalShape() const{
+Shape DArray::shape() const{
   return shape_;
 }
 
-size_t DArray::ShapeAt(int k) const{
+size_t DArray::shape(int k) const{
   return shape_[k];
 }
 
@@ -139,17 +139,17 @@ void DArray::Minus(const DArray& src){
   void Div(const DArray& src1, const float v);
   void Div(const DArray& src);
   void Div(const float v);
-  void MatriMult(const DArray& src1, DArray& src2);
+  void Dot(const DArray& src1, DArray& src2);
   void Square(const DArray& src);
   void Pow(const DArray& src, const float p);
 void DArray::AddCol(const DArray& src){
   //TODO
 }
-  void AddRow(const DArray& src);
-void DArray::SumCol(const DArray& src){
+  void AddRow(const DArray& src){};
+void DArray::SumCol(const DArray& src, bool overwrite){
   //TODO
 }
-  void SumRow(const DArray& src);
+  void SumRow(const DArray& src, bool overwrite){};
 void DArray::Sum(const DArray& src, Pair& rng){
   //TODO
 }
@@ -166,20 +166,20 @@ void DArray::Sum(const DArray& src, Pair& rng){
   float Min();
   float Min(const Range& rng);
   //elemental
-  float* addr(int idx0); 
-  float* addr(int idx0, int idx1); 
-  float* addr(int idx0, int idx1, int idx2); 
-  float* addr(int idx0, int idx1, int idx2, int idx3);   
-  //int locate(int idx0) const; 
-  //int locate(int idx0, int idx1) const; 
-  //int locate(int idx0, int idx1, int idx2) const; 
-  //int locate(int idx0, int idx1, int idx2, int idx3) const;   
-  //float& at(int idx0) const; 
+  float* addr(int idx0);
+  float* addr(int idx0, int idx1);
+  float* addr(int idx0, int idx1, int idx2);
+  float* addr(int idx0, int idx1, int idx2, int idx3);
+  //int locate(int idx0) const;
+  //int locate(int idx0, int idx1) const;
+  //int locate(int idx0, int idx1, int idx2) const;
+  //int locate(int idx0, int idx1, int idx2, int idx3) const;
+  //float& at(int idx0) const;
 float& DArray::at(int idx0, int idx1) const{
   //TODO
   return *head_;
-} 
-  //float& at(int idx0, int idx1, int idx2) const; 
-  //float& at(int idx0, int idx1, int idx2, int idx3) const;  
+}
+  //float& at(int idx0, int idx1, int idx2) const;
+  //float& at(int idx0, int idx1, int idx2, int idx3) const;
 
 }

@@ -4,7 +4,7 @@
 #include <memory>
 #include "arraycomm.h"
 
-namespace lapis{
+namespace singa{
 
 class LArray{
 
@@ -33,13 +33,13 @@ class LArray{
   void Ones();
   //operation
   float* GetAddress() const;
-  
+
   private:
   Shape shape_;
   float* head_;
 
 };
 
-} // namespace lapis
+} // namespace singa
 
 #endif // INCLUDE_DA_LARRAY_H_

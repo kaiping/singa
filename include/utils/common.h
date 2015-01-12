@@ -1,19 +1,28 @@
 #ifndef INCLUDE_UTILS_COMMON_H_
 #define INCLUDE_UTILS_COMMON_H_
 #include <glog/logging.h>
+#include <google/protobuf/message.h>
+#include <stdarg.h>
 #include <string>
 #include <vector>
 #include <mutex>
 #include <queue>
 #include <sys/stat.h>
-
 #include <map>
 #include "proto/model.pb.h"
 
 using std::vector;
 using std::string;
 using std::map;
+using google::protobuf::Message;
+
 namespace singa {
+
+void ReadProtoFromTextFile(const char *filename, Message *proto);
+void WriteProtoToTextFile(const Message &proto, const char *filename);
+void ReadProtoFromBinaryFile(const char *filename, Message *proto);
+void WriteProtoToBinaryFile(const Message &proto, const char *filename);
+
 const int kBufLen=1024;
 
 inline bool check_exists(const std::string& name) {
@@ -40,49 +49,6 @@ class SafeQueue{
  private:
   std::queue<T> q;
   mutable std::mutex m;
-};
-template<typename T>
-class StateQueue {
- public:
-   StateQueue(int size):nvalide_(size) {
-     for (int i = 0; i <size; i++) {
-       states_[i]=true;
-       iter_=states_.begin();
-     }
-   }
-   StateQueue(vector<T> members){
-     for(auto& x:members)
-      states_[x]=true;
-     iter_=states_.begin();
-     nvalide_=members.size();
-   }
-
-   T Next() {
-     CHECK(nvalide_);
-     iter_++;
-     while(iter_!=states_.end()&&iter_->second==false)
-       iter_++;
-     if(iter_==states_.end()){
-       iter_=states_.begin();
-       while(iter_!=states_.end()&&iter_->second==false)
-        iter_++;
-     }
-     return iter_->first;
-   }
-   void Invalide() {
-     CHECK(iter_->second);
-     iter_->second=false;
-     nvalide_--;
-   }
-
-   bool HasValid() {
-      return nvalide_>0;
-   }
- private:
-  std::map<T,bool> states_;
-  int nvalide_;
-  // typename to tell complier iterator is a type in map class
-  typename std::map<T,bool>::iterator iter_;
 };
 
 class Performance: public PerformanceProto{
@@ -119,18 +85,35 @@ class Performance: public PerformanceProto{
   }
 };
 
+/**
+ * Formatted string.
+ */
+string VStringPrintf(string fmt, va_list l) {
+  char buffer[32768];
+  vsnprintf(buffer, 32768, fmt.c_str(), l);
+  return string(buffer);
+}
 
 /**
  * Formatted string.
  */
-string StringPrintf(string fmt, ...);
+string StringPrintf(string fmt, ...) {
+  va_list l;
+  va_start(l, fmt); //fmt.AsString().c_str());
+  string result = VStringPrintf(fmt, l);
+  va_end(l);
+  return result;
+}
 
-/**
- * Formatted string.
- */
-string VStringPrintf(string fmt, va_list args);
-
-void Debug();
+void Debug() {
+  int i = 0;
+  char hostname[256];
+  gethostname(hostname, sizeof(hostname));
+  printf("PID %d on %s ready for attach\n", getpid(), hostname);
+  fflush(stdout);
+  while (0 == i)
+    sleep(5);
+}
 }  // namespace singa
 
 #endif  // INCLUDE_UTILS_COMMON_H_

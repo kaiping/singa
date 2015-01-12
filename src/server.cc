@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-29 14:40
-
 #include "proto/model.pb.h"
 #include "server.h"
 #include "utils/math.h"
@@ -10,8 +7,8 @@
 #include "core/shard.h"
 
 DECLARE_double(sleep_time);
-DEFINE_int32(server_threads,8,"number of table server threads"); 
-namespace lapis {
+DEFINE_int32(server_threads,8,"number of table server threads");
+namespace singa {
 void TableServer::Start(const SGDProto& sgd) {
 	create_table(sgd);
 
@@ -32,30 +29,12 @@ void TableServer::Start(const SGDProto& sgd) {
 	dispatcher_->RegisterTableCb(MTYPE_GET_REQUEST,
 			boost::bind(&TableServer::handle_get_request, this, _1));
 
-	boost::thread *t[FLAGS_server_threads]; 
+	boost::thread *t[FLAGS_server_threads];
 	for (int i=0; i<FLAGS_server_threads; i++)
-		t[i] = new boost::thread(&RequestDispatcher::StartDispatchLoop,dispatcher_); 
-	
+		t[i] = new boost::thread(&RequestDispatcher::StartDispatchLoop,dispatcher_);
+
 	for (int i=0; i<FLAGS_server_threads; i++)
-		t[i]->join();  
-
-	//boost::thread t1(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t2(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t3(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t4(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t5(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t6(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t7(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-	//boost::thread t8(&RequestDispatcher::StartDispatchLoop, dispatcher_); 
-
-	//t1.join();
-	//t2.join();
-	//t3.join();
-	//t4.join(); 
-	//t5.join();
-	//t6.join(); 
-	//t7.join();
-	//t8.join(); 
+		t[i]->join();
 }
 
 void TableServer::create_table(const SGDProto &sgd) {
@@ -282,35 +261,4 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
   }
   return true;
 }
-
-/*****************************************************************************
- * Implementation for TSHandlerFactory
- ****************************************************************************/
-#define CreateTSHandler(Handler) \
-  [](void)->TableServerHandler* {return new Handler();}
-
-std::shared_ptr<TSHandlerFactory> TSHandlerFactory::instance_;
-std::shared_ptr<TSHandlerFactory> TSHandlerFactory::Get() {
-  if (!instance_.get()) {
-    instance_.reset(new TSHandlerFactory());
-  }
-  return instance_;
-}
-
-TSHandlerFactory::TSHandlerFactory() {
-  RegisterCreateFunction("SGD", CreateTSHandler(TSHandlerForSGD));
-  RegisterCreateFunction("AdaGrad", CreateTSHandler(TSHandlerForAda));
-}
-
-void TSHandlerFactory::RegisterCreateFunction(
-  const std::string id,
-  std::function<TableServerHandler*(void)> create_function) {
-  map_[id] = create_function;
-}
-
-TableServerHandler *TSHandlerFactory::Create(const std::string id) {
-  CHECK(map_.find(id) != map_.end())
-      << "The TSHandler" << id << " has not been registered";
-  return map_[id]();
-}
-} /* lapis  */
+} /* singa  */

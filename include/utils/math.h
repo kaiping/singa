@@ -1,9 +1,6 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-29 17:22
-
 #ifndef INCLUDE_UTIL_MATH_
 #define INCLUDE_UTIL_MATH_
-namespace lapis {
+namespace singa {
 
 namespace Math {
 inline void Map(std::function<float(float)> func, int len,
@@ -49,5 +46,5 @@ inline void Minus(int len, float*ret, const float* a, const float *b){
 }
 
 } /* Math */
-} /* lapis  */
+} /* singa  */
 #endif

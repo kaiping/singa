@@ -7,7 +7,7 @@
 #include "net/solver.h"
 #include "proto/model.pb.h"
 
-namespace lapis {
+namespace singa {
 /**
  * The Worker class which runs the training algorithm.
  * The first worker group will initialize parameters of the Net,
@@ -18,6 +18,6 @@ class Worker {
   void Start(const Model& model);
   void Resume();
 };
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_WORKER_H_

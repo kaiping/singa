@@ -1,5 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-06-28 16:01
 #include <glog/logging.h>
 #include <memory>
 #include "worker.h"
@@ -8,37 +6,24 @@
 #include "net/solver.h"
 #include "net/net.h"
 
-namespace lapis {
+namespace singa {
 
 void Worker::Resume() {
-
-/* todo get solverproto from hdfs or local disk
-  ModelProto model;
-  model.mutable_data()->CopyFrom(dp);
-  model.mutable_solver()->CopyFrom(sp);
-  NetProto np;
-  mpi_->Read(GlobalContext::kCoordinator, MTYPE_NET_PARTITION, &np);
-  model.mutable_net()->CopyFrom(np);
-  Run(model);
-
-  Solver solver(model.solver());
-  LOG(ERROR)<<"setup solver";
-  solver.Setup(model.data(), model.net());
-  */
+  // TODO implement resume from snapshot
 }
+
 void Worker::Start(const Model& model){
     Solver solver(model.solver());
-    solver.Setup(model.net());
+    Net* net=solver.SetupNeuralNet(model.net());
     if(GlobalContext::Get()->group_id()==0)
-      solver.InitParams();
+      solver.PopulateTableServer(net);
     // todo, two ways to syn all workers
     // 1. create MPI communicator for all workers, and call MPI_Barrier for
     // this communicator
     // 2. handle_get returns false if the key of get() is not found in the
     // table, i.e., parameters have not been inserted
     LOG(ERROR)<<"Worker starting...";
-    //solver.Train();
-    solver.TimeOneBatch();
+    solver.Train();
   LOG(ERROR)<<"Worker shutting down";
 }
-}  // namespace lapis
+}  // namespace singa

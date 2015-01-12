@@ -1,7 +1,6 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
 #include "utils/common.h"
 #include <stdarg.h>
-namespace lapis {
+namespace singa {
 
 void Debug() {
   int i = 0;
@@ -26,4 +25,4 @@ string VStringPrintf(string fmt, va_list l) {
   vsnprintf(buffer, 32768, fmt.c_str(), l);
   return string(buffer);
 }
-}  // namespace lapis
+}  // namespace singa

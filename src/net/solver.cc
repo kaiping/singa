@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-14 14:28
-
 #include <glog/logging.h>
 #include <mpi.h>
 #include <vector>
@@ -10,7 +7,7 @@
 #include "da/gary.h"
 #include "utils/debug.h"
 
-namespace lapis {
+namespace singa {
 Phase Solver::phase=Phase::kTrain;
 Solver::Solver(const SolverProto &proto) {
   //! if step_>0, then the trainer is restored from a checkpoint
@@ -36,6 +33,7 @@ Solver::Solver(const SolverProto &proto) {
   train_shard_=data_folder+"/train";
   val_shard_=data_folder+"/validation";
   test_shard_=data_folder+"/test";
+  delegate_=new TableDelegate(GlobalContext::Get());
 }
 Solver::~Solver() {
   delete net_;
@@ -67,11 +65,6 @@ void Solver::LocalUpdate(Param* param, int step) {
 }
 */
 
-void Solver::Setup(const NetProto& np){
-  net_=SetupNeuralNet(np);
-  auto params=net_->params();
-  delegate_=new TableDelegate(GlobalContext::Get());
-}
 
 Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Net *net=new Net(proto);
@@ -79,47 +72,18 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   Record record;
   string key;
   shard.Next(&key, &record);
-  // setup the net, init parameters
-  net->SetNetShape(proto_.batchsize(), record);
-
-  if(proto_.partition()==SolverProto::kHybrid){
-    int pdim=0;
-    for(Layer* layer: net->layers()){
-      if(layer->name()=="fc6")
-        pdim=1;
-      if(layer->name()=="fc8")
-        pdim=0;
-      layer->SetupDAry(pdim);
-    }
-  }else if (proto_.partition()==SolverProto::kData){
-    for(Layer* layer: net->layers())
-      layer->SetupDAry(0);
-  }else{
-     for(Layer* layer: net->layers()){
-      if(layer->name()=="softmax")
-        layer->SetupDAry(-1);
-      else
-        layer->SetupDAry(1);
-     }
-  }
-  // data are envenly distributed to all workers, the input layer must be
-  // partitioned on num (0-th) dim
-  // fc8 and imgcol1's 1-th dim mode 2^k !=0
-  for(Layer* layer: net->layers()){
-    if(layer->HasInput()||layer->name()=="fc8"||layer->name()=="imgcol1")
-      layer->SetupDAry(0);
-  }
-  // net->AllocMemory();
+  // setup the net
+  net->Setup(proto_.batchsize(), record);
   return net;
 }
-void Solver::InitParams(){
-  for(auto* param: net_->params()){
+
+void Solver::PopulateTableServer(Net* net){
+  for(auto* param: net->params()){
     param->Fill();
+    delegate_->Put(param);
   }
-  for(auto* param: net_->params())
-    if(!param->partition()||context_->num_groups()>1)
-      delegate_->Put(param);
 }
+
 void Solver::ToProto(SolverProto *proto) {
   /*
   proto->set_checkpoint_after_steps(checkpoint_after_steps_);
@@ -435,7 +399,10 @@ void Prefetcher::NextRecord(Record* record){
 }
 
 void Prefetcher::operator()(){
+  // can avoid directly dependent on DAry by fetching the whole mini-batch
+  // or telling the prefetcher the size of partition of the mini-batch
   const DAry& input= net_->input_layer(0)->GetData(nullptr);
+  // add a lshape(k) api for DAry to return local shape on k-dim
   Range nrng=input.IndexRange(0);
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
@@ -445,4 +412,4 @@ void Prefetcher::operator()(){
   }
 }
 
-}  // namespace lapis
+}  // namespace singa

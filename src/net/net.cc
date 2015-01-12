@@ -1,112 +1,133 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-14 13:18
 #include <queue>
 
 #include "net/net.h"
-#include "utils/common.h"
-#include "utils/timer.h"
+#include "utils/singleton.h"
+#include "utils/factory.h"
 
+#define CreateLayer(ID) CreateInstance(ID, Layer)
 
-namespace lapis {
+namespace singa {
 Net::Net(const NetProto &net_proto) {
-  LOG(INFO)<<"Construct Neural Net...";
-  std::map<std::pair<string, string>, Edge *> edge_map;
-  for (auto &layer_proto : net_proto.layer()) {
-    Layer *layer = LayerFactory::Instance()->Create(layer_proto.type());
-    layer->Init(layer_proto, &edge_map);
-    layers_.push_back(layer);
-    if(layer->HasInput())
-      input_layer_.push_back(dynamic_cast<InputLayer*>(layer));
-    if(layer->HasOutput())
-      output_layer_.push_back(dynamic_cast<OutputLayer*>(layer));
-  }
-  LOG(INFO)<<"layers inited";
-  for(auto& entry: edge_map){
-    edges_.push_back(entry.second);
-    CHECK(entry.second->src()!=nullptr)<<"missing src node, dst node is "
-      <<entry.second->dst()->name();
-    CHECK(entry.second->dst()!=nullptr)<<"missing dst node, src node is "
-      <<entry.second->src()->name();
-  }
-  LOG(INFO)<<"edges inited";
+  auto factory=Singleton<Factory<Layer>>::Instance();
+  factory.RegisterCreateFunction("ImageLayer", CreateLayer(ImageLayer));
+  factory.RegisterCreateFunction("LabelLayer", CreateLayer(LabelLayer));
+  factory.RegisterCreateFunction("Im2colLayer", CreateLayer(Im2colLayer));
+  factory.RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
+  factory.RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));
+  factory.RegisterCreateFunction("LRNLayer", CreateLayer(LRNLayer));
+  factory.RegisterCreateFunction("FCLayer", CreateLayer(FCLayer));
+  factory.RegisterCreateFunction("DropoutLayer", CreateLayer(DropoutLayer));
+  factory.RegisterCreateFunction("ConvProductLayer",
+      CreateLayer(ConvProductLayer));
+  factory.RegisterCreateFunction("SoftmaxLossLayer",
+      CreateLayer(SoftmaxLossLayer));
 
-  topology_sort(&layers_);
+  LOG(ERROR)<<"Construct Neural Net...";
+  NetProto netproto;
+  for (auto &layer_proto : net_proto.layer()) {
+    if(layer_proto.type()=="ConvolutionLayer"){
+      LayerProto im2col;
+      im2col.CopyFrom(layer_proto);
+      im2col.set_type("Im2colLayer");
+      im2col.set_name(im2col.name()+"-im2col");
+      netproto.add_layer()->CopyFrom(im2col);
+      LayerProto convprod;
+      convprod.CopyFrom(layer_proto);
+      convprod.set_type("ConvProductLayer");
+      convprod.set_src_layer(0, im2col.name());
+      netproto.add_layer()->CopyFrom(convprod);
+    }else{
+      netproto.add_layer()->CopyFrom(layer_proto);
+    }
+  }
+
+  for (auto &layer_proto : net_proto.layer()) {
+    Layer *layer = factory.Create(layer_proto.type());
+    layer->FromProto(layer_proto);
+    if(layer_proto.src_layer_size()){
+      for(auto src: layer_proto.src_layer()){
+        string edge=src+"-->"+layer->name();
+        if(edge_set_.find(edge)==edge_set_.end()){
+          name2dstlayers_[src].push_back(layer);
+          name2srclayers_[layer->name()].push_back(name2layer_[layer->name()]);
+          edge_set_.insert(edge);
+        }
+      }
+    } else
+      input_layers_.push_back(dynamic_cast<InputLayer*>(layer));
+    layers_.push_back(layer);
+    name2layer_[layer->name()]=layer;
+  }
+  for(auto *layer: layers_)
+    if(name2dstlayers_.find(layer->name())==name2dstlayers_.end())
+      performance_layers_.push_back(dynamic_cast<PerformanceLayer*>(layer));
+  //TODO DLOG(INFO)<<ToDOT(edge_set_);
+  DLOG(INFO)<<"layers inited";
+
+  topology_sort(&layers_, name2dstlayers_);
   for(auto* layer: layers_){
-    LOG(INFO)<<layer->name();
+    DLOG(INFO)<<layer->name();
     layer->CollectParams(&params_);
   }
- // the softmax loss layer
+  // the softmax loss layer
   LOG(ERROR)<<"Neural Net constructed";
 }
+
 Net::~Net() {
   for(auto* layer: layers_)
     delete layer;
-  for(auto* edge: edges_)
-    delete edge;
 }
 
-std::string Net::ShapeInfo(){
-  char display[8*1024];
+std::string Net::ToString(){
+  char disp[8*1024];
   std::queue<Layer*> layers;
-  for(auto* layer: layers_)
-    if(layer->HasInput())
-      layers.push(layer);
-  display[0]='\n';
+  for(auto* layer: input_layers_)
+    layers.push(layer);
+  disp[0]='\n';
   while(!layers.empty()){
     int size=layers.size();
     for(int i=0;i<size;i++){
       auto* layer=layers.front();
       layers.pop();
-      sprintf(display+strlen(display), "\t||Layer: %10s, %s", layer->name().c_str(),
-          layer->data().shape().ToString().c_str());
+      sprintf(disp+strlen(disp), "\t||Layer: %10s, %s",
+          layer->name().c_str(), layer->data().shape().ToString().c_str());
       for(auto* param:layer->GetParams())
-        sprintf(display+strlen(display), "\tParam: %10s, %s", param->name().c_str(),
-            param->data().shape().ToString().c_str());
-      for(auto* edge: layer->out_edges()){
-        auto* layer1=edge->OtherSide(layer);
+        sprintf(disp+strlen(disp), "\tParam: %10s, %s",
+            param->name().c_str(), param->data().shape().ToString().c_str());
+      for(auto* layer1: name2dstlayers_[layer->name()]){
         if(layers.size()==0||layer1!=layers.front())
           layers.push(layer1);
       }
     }
-    sprintf(display+strlen(display), "\n");
+    sprintf(disp+strlen(disp), "\n");
   }
-  return string(display);
+  return string(disp);
 }
 
-void Net::SetNetShape(){
-  for(auto *layer : layers_) {
-    layer->SetShape();
-  }
-}
-
-void Net::SetNetShape(const int batchsize, const Record &record) {
-  for (auto *layer : input_layer_){
+void Net::Setup(const int batchsize, const Record &record, PartitionMode mode){
+  for (auto *layer : input_layers_){
     InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
-    dlayer->SetShape(batchsize, record);
+    dlayer->Setup(batchsize, record, mode);
   }
-  SetNetShape();
+  Setup(mode);
 }
 
-void Net::SetNetShape(const vector<vector<int>>& shapes){
-  for (auto *layer : input_layer_){
+void Net::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
+  for (auto *layer : input_layers_){
     InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
-    dlayer->SetShape(shapes);
+    dlayer->Setup(shapes, mode);
   }
-  SetNetShape();
-}
-/*
-void Net::SetupDAry() {
-  for(auto* layer: layers_){
-    layer->SetupDAry(-1);
-  }
+  Setup(mode);
 }
 
-void Net::InitParameters() {
-  for(auto* param: params_){
-    param->Fill();
+void Net::Setup(PartitionMode mode){
+  for(Layer* layer: layers_){
+    if(name2srclayers_.find(layer->name())!=name2srclayers_.end())
+      layer->Setup(name2srclayers_[layer->name()], mode);
   }
+  for(Param* param: params_)
+    param->Init();
 }
-*/
 
 void Net::ToProto(NetProto *proto, bool copyData) {
   proto->clear_layer();
@@ -117,10 +138,10 @@ void Net::ToProto(NetProto *proto, bool copyData) {
 }
 // visited all out going layers and then push current layer into the stack
 void Net::topology_sort_inner(Layer *layer,
-                         const std::map<Layer *,
-                         std::vector<Layer *>> &adjacent_list,
-                         std::map<Layer *, bool> *visited,
-                         std::stack<Layer *> *stack) {
+    const std::map<Layer *,
+    vector<Layer *>> &adjacent_list,
+    map<Layer *, bool> *visited,
+    std::stack<Layer *> *stack) {
   (*visited)[layer] = true;
   for (Layer *layer1 : adjacent_list.at(layer)) {
     if ((*visited)[layer1])
@@ -132,28 +153,17 @@ void Net::topology_sort_inner(Layer *layer,
 
 // sort to make `bottom' layers be placed in the front positions
 // forward propagation will be processed based on this order
-void Net::topology_sort(std::vector<Layer *> *layers) {
+void Net::topology_sort(vector<Layer *> *layers,
+    const map<string, vector<Layer*>>& name2dstlayers ) {
   // adjacent list from upper layers to lower layers
-  std::map<Layer *, std::vector<Layer *>> adjacent_list;
+  std::map<Layer *, vector<Layer *>> adjacent_list;
   std::map<Layer *, bool> visited;
-  std::vector<Layer *> input_layers;
+  vector<Layer *> input_layers;
   // prepare adjacent list; input layers will be processed firstly,
   // hence no need to sort them (mark them as visited)
   for (Layer *layer : *layers) {
-    /*
-    if (layer->HasInput()) {
-      visited[layer] = true;
-      input_layers.push_back(layer);
-    } else {
-    */
     visited[layer] = false;
-    // automatically insert a new entry to the map
-    // the direction of edge is from layer to layers in adjacent_list
-    adjacent_list[layer]={};
-    for (Edge *edge : layer->out_edges()) {
-      Layer *layer1 = edge->OtherSide(layer);
-      adjacent_list[layer].push_back(layer1);
-    }
+    adjacent_list[layer]=name2dstlayers.at(layer->name());
   }
   // the `top' layer in the net will be placed at the bottom of the stack
   // and then be processed (i.e., forward) at last
@@ -163,17 +173,10 @@ void Net::topology_sort(std::vector<Layer *> *layers) {
       topology_sort_inner(layer, adjacent_list, &visited, &stack);
   }
   layers->clear();
-  // input layers are placed at front to be processed firstly
-  /*
-  for (auto layer : input_layers)
-    layers->push_back(layer);
-    */
 
   while (!stack.empty()) {
     layers->push_back(stack.top());
     stack.pop();
   }
 }
-
-
-}  // namespace lapis
+}  // namespace singa

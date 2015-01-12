@@ -23,5 +23,6 @@ cscope.*
 build/
 tmp/
 include/proto/*.h
+src/proto/*.cc
 dary.test
 .sync

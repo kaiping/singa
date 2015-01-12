@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-namespace lapis {
+namespace singa {
 using std::vector;
 using Range=std::pair<int, int>;
 
@@ -108,6 +108,10 @@ class Shape {
     }
     sprintf(buf+strlen(buf), ")");
     return std::string(buf);
+  }
+
+  int operator()(int k){
+    return s[k];
   }
   /*
   int Offset(const Partition& part){

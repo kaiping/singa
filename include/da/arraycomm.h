@@ -72,10 +72,12 @@ class Shape{
    * methods *
    ***********/
   size_t Dim() const;
-  size_t Volume() const;
-  Point GetPoint() const;
+  size_t Volume();
+  Point GetScale() const;
+  Shape SubShape() const;
 
   private:
+  size_t vol_ = 0;
   Point scale_;
 };
 

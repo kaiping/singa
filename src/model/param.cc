@@ -1,7 +1,6 @@
 #include <glog/logging.h>
 #include <cmath>
-#include "net/param.h"
-#include "da/ary.h"
+#include "model/param.h"
 
 namespace singa {
 void Param::FromProto(const ParamProto &proto){
@@ -23,11 +22,11 @@ void Param::FromProto(const ParamProto &proto){
 
 void Param::ToProto(ParamProto *proto, bool copyData) {
   proto->CopyFrom(param_proto_);
-  DAryProto* data=proto->add_ary();
+  DArrayProto* data=proto->add_ary();
   data_.ToProto(data, copyData);
-  DAryProto* grad=proto->add_ary();
+  DArrayProto* grad=proto->add_ary();
   grad_.ToProto(grad, copyData);
-  DAryProto* history=proto->add_ary();
+  DArrayProto* history=proto->add_ary();
   history_.ToProto(history, copyData);
 }
 

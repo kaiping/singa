@@ -1,5 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
-
 #include <gflags/gflags.h>
 #include "core/network_queue.h"
 #include "proto/worker.pb.h"
@@ -13,7 +11,7 @@ DECLARE_double(sleep_time);
  *
  * @see request_queue.h.
  */
-namespace lapis {
+namespace singa {
 
 /**
  * Place the raw request to the end of the queue.
@@ -26,7 +24,7 @@ void SimpleQueue::Enqueue(Message *message) {
 	stats_["request_queue_access_count"]++;
 	if ((GlobalContext::Get()->IsTableServer(NetworkService::Get()->id())))
 	if (((long)stats_["request_queue_access_count"])%100==0)
-		VLOG(3) << "process " << NetworkService::Get()->id() << " queue length = " << (stats_["request_queue_length"]/stats_["request_queue_access_count"]); 
+		VLOG(3) << "process " << NetworkService::Get()->id() << " queue length = " << (stats_["request_queue_length"]/stats_["request_queue_access_count"]);
 */
 }
 
@@ -49,5 +47,5 @@ bool SimpleQueue::is_active(){
 	return !receive_queue_.empty();
 }
 
-} //  namespace lapis
+} //  namespace singa
 

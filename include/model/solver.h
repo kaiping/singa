@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "proto/model.pb.h"
-#include "net/net.h"
+#include "model/net.h"
 #include "utils/common.h"
 #include "utils/shard.h"
 #include "utils/global_context.h"

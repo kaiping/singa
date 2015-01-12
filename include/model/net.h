@@ -6,7 +6,7 @@
 #include <map>
 #include <unordered_set>
 #include <stack>
-#include "net/param.h"
+#include "model/param.h"
 #include "proto/model.pb.h"
 #include "net/layer.h"
 

@@ -3,7 +3,7 @@
 #include <vector>
 #include "utils/proto_helper.h"
 #include "proto/model.pb.h"
-#include "net/solver.h"
+#include "model/solver.h"
 #include "da/gary.h"
 #include "utils/debug.h"
 #include "utils/timer.h"

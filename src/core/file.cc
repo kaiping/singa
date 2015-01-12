@@ -9,7 +9,7 @@
  * @file file.cc
  * Implementation of file related classes declared in file.h.
  */
-namespace lapis {
+namespace singa {
 
 static const int kFileBufferSize = 4 * 1024 * 1024; /**< file I/O buffer size */
 
@@ -106,4 +106,4 @@ int LogFile::read_latest_table_size() {
 	return size;
 }
 
-} //namespace lapis
+} //namespace singa

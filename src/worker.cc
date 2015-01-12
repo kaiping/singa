@@ -12,7 +12,7 @@ void Worker::Resume() {
   // TODO implement resume from snapshot
 }
 
-void Worker::Start(const Model& model){
+void Worker::Start(const ModelProto& model){
     Solver solver(model.solver());
     Net* net=solver.SetupNeuralNet(model.net());
     if(GlobalContext::Get()->group_id()==0)
@@ -23,7 +23,7 @@ void Worker::Start(const Model& model){
     // 2. handle_get returns false if the key of get() is not found in the
     // table, i.e., parameters have not been inserted
     LOG(ERROR)<<"Worker starting...";
-    solver.Train();
+    solver.Train(net);
   LOG(ERROR)<<"Worker shutting down";
 }
 }  // namespace singa

@@ -19,8 +19,8 @@ namespace std {
  * Definition of hash value for TKey. This overrides std::hash<TKey>.
  */
 template<>
-struct hash<lapis::TKey> {
-	size_t operator()(const lapis::TKey& k) const {
+struct hash<singa::TKey> {
+	size_t operator()(const singa::TKey& k) const {
 		hash<int> hashint;
 		return hashint(k.id());
 	}

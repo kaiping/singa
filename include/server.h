@@ -3,6 +3,7 @@
 
 #include "utils/network_service.h"
 #include "core/global-table.h"
+#include "core/common.h"
 #include "proto/model.pb.h"
 namespace singa {
 /**
@@ -18,6 +19,7 @@ namespace singa {
  */
 class TableServer {
 public:
+  TableServer();
 	/**
 	 * Start the table server. There are several steps:
 	 * 1. Create the table of type <TKey, TVal>
@@ -103,5 +105,6 @@ class TSHandlerForAda: public TableServerHandler {
  protected:
    float learning_rate_;
 };
+}
 
 #endif

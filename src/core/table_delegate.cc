@@ -3,7 +3,7 @@
 #include "core/table_delegate.h"
 #include "proto/model.pb.h"
 #include "utils/network.h"
-namespace lapis {
+namespace singa {
 const int kMaxParamLen=1<30;
 
 TableDelegate::TableDelegate(int worker_id, int rank, int num_servers,
@@ -261,4 +261,4 @@ void TableDelegate::InternalThread(){
       sleep(0.0001);
   }
 }
-}  // namespace lapis
+}  // namespace singa

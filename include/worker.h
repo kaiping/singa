@@ -15,7 +15,7 @@ namespace singa {
  */
 class Worker {
  public:
-  void Start(const Model& model);
+  void Start(const ModelProto& model);
   void Resume();
 };
 }  // namespace singa

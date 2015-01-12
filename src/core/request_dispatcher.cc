@@ -1,4 +1,3 @@
-// Copyright © 2014 Anh Dinh. All Rights Reserved.
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
@@ -12,7 +11,7 @@
  * @see request_dispatcher.h.
  */
 DECLARE_double(sleep_time);
-namespace lapis {
+namespace singa {
 
 void RequestDispatcher::StartDispatchLoop(){
 	NetworkService *network = NetworkService::Get().get();
@@ -30,7 +29,7 @@ void RequestDispatcher::StartDispatchLoop(){
 				tag = MTYPE_UPDATE_REQUEST;
 			// if successful, re-claim memory
 			if (callbacks_[tag](msg)){
-				//VLOG(3) << "wait time = " << (Now() - request->start()); 
+				//VLOG(3) << "wait time = " << (Now() - request->start());
 				delete msg;
 			}
 			else{ // re-enqueue the request
@@ -42,4 +41,4 @@ void RequestDispatcher::StartDispatchLoop(){
 	}
 }
 
-}  // namespace lapis
+}  // namespace singa

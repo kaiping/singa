@@ -33,23 +33,16 @@ int main(int argc, char **argv) {
   singa::Cluster cluster;
   singa::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &cluster);
   auto gc=singa::GlobalContext::Get(cluster);
-  singa::Model model;
+  singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
-  if(gc->AmITableServer()) {
-    auto factory=Singleton<TableServerHandler>::Instance();
-    RegisterCreateFunction("SGD",
-        CreateInstance(TSHandlerForSGD, TableServerHandler));
-    RegisterCreateFunction("AdaGrad",
-        CreateInstance(TSHandlerForAda, TableServerHandler));
 
+  if(gc->AmITableServer()) {
     singa::TableServer server;
     server.Start(model.solver().sgd());
   }else {
     // TODO: comment out the below to execute training at the workers.
-
     /*
-        singa::GAry::Init(gc->rank(), gc->groups());
-    // worker or table server
+       singa::GAry::Init(gc->rank(), gc->groups());
     singa::Worker worker;
     worker.Start(model);
     singa::GAry::Finalize();

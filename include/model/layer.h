@@ -9,8 +9,8 @@
 #include <memory>
 
 #include "proto/model.pb.h"
-#include "net/param.h"
-#include "da/dary.h"
+#include "model/param.h"
+#include "da/darray.h"
 #include "utils/common.h"
 
 /**
@@ -34,22 +34,22 @@ class Layer {
   virtual ~Layer(){}
   /**
    * initialize members, called after layer specific FromProto().
-   * simply copy the configuations and init DArys if available, most
+   * simply copy the configuations and init DArrays if available, most
    * initializations are done by Setup().
    * @param layer_proto user defined layer configuration
    */
   virtual void FromProto(const LayerProto &proto);
   /**
-   * Marshal layer properties and DArys into google protobuf object
+   * Marshal layer properties and DArrays into google protobuf object
    * (i.e., snapshot).
    * Parameters are marshalled separately into another object (i.e., model).
    * @param layer_proto
-   * @param copyData if true marshal data of DAry
+   * @param copyData if true marshal data of DArray
    */
   virtual void ToProto(LayerProto *layer_proto, bool copyData);
   /**
-   * Setup the DArys for data and parameters, also setup some properties.
-   * setup the shapes of DArys according to configuration and shapes of DArys
+   * Setup the DArrays for data and parameters, also setup some properties.
+   * setup the shapes of DArrays according to configuration and shapes of DArrays
    * of the connected layer; partition them according to partition mode.
    * @param src_layers layers connecting to this layer
    * @param mode
@@ -77,12 +77,12 @@ class Layer {
   /**
    * default implementation returns false if the src layers are local
    * (not partitioned) or both connected layers are in kData partition mode.
-   * @return true if need to sync DAry before ComptueFeature
+   * @return true if need to sync DArray before ComptueFeature
    */
   virtual bool PreSyncF(const vector<Layer*>& src_layers);
   /**
    * return false by default.
-   * @return true if need to sync DAry after ComptueFeature
+   * @return true if need to sync DArray after ComptueFeature
    */
   virtual bool PostSyncF(const vector<Layer*>& src_layers){return false;}
   /**
@@ -94,16 +94,16 @@ class Layer {
   virtual void ComputeGradient(const vector<Layer*>& src_layers)=0;
   /**
    * \copybrief PreSyncF()
-   * @return true if need to sync DAry before ComptueGradient
+   * @return true if need to sync DArray before ComptueGradient
    */
   virtual bool PreSyncG(const vector<Layer*>& src_layers);
   /**
    * return false by default;
-   * @return true if need to sync DAry after ComptueGradient
+   * @return true if need to sync DArray after ComptueGradient
    */
   virtual bool PostSyncG(const vector<Layer*>& src_layers) {return false;}
   /**
-   * decide on which dimension of DAry to do the partitioning.
+   * decide on which dimension of DArray to do the partitioning.
    * @mode kModel, kData, kHybrid, kNone (no partition)
    * @return the partition dimension, -1 for no partition
    */
@@ -116,19 +116,19 @@ class Layer {
   }
 
   /**
-   * @return a const ref for DAry storing neuron values of this layer for BP
+   * @return a const ref for DArray storing neuron values of this layer for BP
    */
-  virtual const DAry& data() {return data_;}
+  virtual const DArray& data() {return data_;}
   /**
-   * @return a const ref for DAry storing neuron grads of this layer for BP
+   * @return a const ref for DArray storing neuron grads of this layer for BP
    */
-  virtual const DAry& grad() {return grad_;}
-  virtual DAry* mutable_data() {return &data_;}
-  virtual DAry* mutable_grad() {return &grad_;}
+  virtual const DArray& grad() {return grad_;}
+  virtual DArray* mutable_data() {return &data_;}
+  virtual DArray* mutable_grad() {return &grad_;}
 
 protected:
-  DAry data_, grad_;
-  // DAry pos_, neg_;//for CD
+  DArray data_, grad_;
+  // DArray pos_, neg_;//for CD
   LayerProto layer_proto_;
 };
 
@@ -142,21 +142,21 @@ class Im2colLayer: public Layer {
    * @param data_im input local array
    * @param data_col output local array
    */
-  void im2col(const DAry& data_im, const int channels,
+  void im2col(const DArray& data_im, const int channels,
       const int height, const int width, const int patch_h, const int patch_w,
       const int pad_h, const int pad_w,
       const int stride_h, const int stride_w,
-      DAry* data_col);
+      DArray* data_col);
   /**
    * process one image
    * @param data_col input local array
    * @param data_im output local array
    */
-  void col2im(const DAry& data_col, const int channels,
+  void col2im(const DArray& data_col, const int channels,
       const int height, const int width, const int patch_h, const int patch_w,
       const int pad_h, const int pad_w,
       const int stride_h, const int stride_w,
-      DAry* data_im);
+      DArray* data_im);
  protected:
   int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
   int channels_, height_, width_;
@@ -197,7 +197,7 @@ class DropoutLayer: public Layer {
   /* record which neuron is dropped, required for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
-  DAry mask_;
+  DArray mask_;
 };
 
 class PoolingLayer: public Layer {
@@ -210,7 +210,7 @@ class PoolingLayer: public Layer {
  protected:
   int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
   int channels_, height_, width_, pooled_height_, pooled_width_;
-  DAry mask_idx_;
+  DArray mask_idx_;
 };
 
 class LRNLayer: public Layer {
@@ -236,7 +236,7 @@ class LRNLayer: public Layer {
   int size_, lpad_, rpad_;
   //! hyper-parameter
   float alpha_, beta_, knorm_;
-  DAry norm_, ratio_; //ratio : grad/(data*norm)
+  DArray norm_, ratio_; //ratio : grad/(data*norm)
 };
 class FCLayer: public Layer {
   /*
@@ -288,16 +288,16 @@ class InputLayer: public Layer {
  public:
   virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain)=0;
-  virtual void SetInputData(DAry *data);
+  virtual void SetInputData(DArray *data);
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode){};
   virtual void ComputeFeature(const vector<Layer*>& src_layers){};
   virtual void ComputeGradient(const vector<Layer*>& src_layers){};
   virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode)=0;
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode)=0;
-  DAry* mutable_prefetch_data(){return &(this->grad_);}
+  DArray* mutable_prefetch_data(){return &(this->grad_);}
  protected:
-  //DAry prefetch_data_; use the grad_ field for prefetch data
+  //DArray prefetch_data_; use the grad_ field for prefetch data
   int offset_;
 };
 

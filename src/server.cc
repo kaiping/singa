@@ -1,14 +1,26 @@
 #include "proto/model.pb.h"
-#include "server.h"
 #include "utils/math.h"
 #include "utils/global_context.h"
 #include "utils/network_service.h"
+#include "utils/singleton.h"
+#include "utils/factory.h"
+#include "core/common.h"
 #include "core/network_queue.h"
 #include "core/shard.h"
+#include "server.h"
 
 DECLARE_double(sleep_time);
 DEFINE_int32(server_threads,8,"number of table server threads");
+
 namespace singa {
+TableServer::TableServer(){
+  auto factory=Singleton<Factory<TableServerHandler>>::Instance();
+  factory.RegisterCreateFunction("SGD",
+      CreateInstance(TSHandlerForSGD, TableServerHandler));
+  factory.RegisterCreateFunction("AdaGrad",
+      CreateInstance(TSHandlerForAda, TableServerHandler));
+}
+
 void TableServer::Start(const SGDProto& sgd) {
 	create_table(sgd);
 
@@ -38,8 +50,8 @@ void TableServer::Start(const SGDProto& sgd) {
 }
 
 void TableServer::create_table(const SGDProto &sgd) {
-	TableServerHandler *tshandler = TSHandlerFactory::Get()->Create("SGD");
-			//sgd.handler());
+  auto factory=Singleton<Factory<TableServerHandler>>::Instance();
+	TableServerHandler *tshandler = factory.Create(sgd.handler());
 	tshandler->Setup(sgd);
 
 	TableDescriptor *info = new TableDescriptor(0,

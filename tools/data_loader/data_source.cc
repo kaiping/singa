@@ -1,6 +1,3 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-07-16 22:01
-#include <hdfs.h>
 #include <glog/logging.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -8,12 +5,9 @@
 #include <memory>
 #include <fstream>
 
-#include "datasource/data_source.h"
-#include "utils/proto_helper.h"
 #include "utils/common.h"
+#include "data_source.h"
 
-
-namespace lapis {
 
 const std::string ImageNetSource::type="ImageNetSource";
 void ImageNetSource::Init(const string& folder, const string& meanfile, const int width, const int height){
@@ -50,14 +44,14 @@ void ImageNetSource::LoadLabel(string path){
 }
 void ImageNetSource::LoadMeanFile(string path){
   // read mean of the images
-  ReadProtoFromBinaryFile(path.c_str(), &data_mean_);
+  singa::ReadProtoFromBinaryFile(path.c_str(), &data_mean_);
   LOG(INFO)<<"Read mean proto, of shape: "
     <<data_mean_.num()<<" "<<data_mean_.channels()
     <<" "<<data_mean_.height() <<" "<<data_mean_.width();
 }
 
 int ImageNetSource::ReadImage(const std::string &path, int height, int width,
-    const float *mean, DAryProto* image) {
+    const float *mean, singa::DAryProto* image) {
   cv::Mat cv_img;
   if (height > 0 && width > 0) {
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
@@ -95,10 +89,10 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
   return 1;
 }
 
-bool ImageNetSource::GetRecord(const int key, Record* record) {
+bool ImageNetSource::GetRecord(const int key, singa::Record* record) {
   if(key<0 || key>=size_)
     return false;
-  DAryProto *image=record->mutable_image();
+  singa::DAryProto *image=record->mutable_image();
   if(image->value().size()<record_size_){
     for(int i=0;i<record_size_;i++)
       image->add_value(0);
@@ -109,8 +103,8 @@ bool ImageNetSource::GetRecord(const int key, Record* record) {
   return true;
 }
 
-bool ImageNetSource::NextRecord(string* key, Record *record) {
-  DAryProto *image=record->mutable_image();
+bool ImageNetSource::NextRecord(string* key, singa::Record *record) {
+  singa::DAryProto *image=record->mutable_image();
   if(image->value().size()<record_size_){
     for(int i=image->value().size();i<record_size_;i++)
       image->add_value(0);
@@ -150,4 +144,3 @@ DataSource *DataSourceFactory::Create(const string id) {
       << " has not been registered\n";
   return ds_map_.at(id)();
 }
-}  // namespace lapis

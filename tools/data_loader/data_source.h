@@ -12,7 +12,6 @@
 using std::shared_ptr;
 using std::vector;
 using std::string;
-namespace singa {
 
 /**
  * Base class for data sources.
@@ -28,7 +27,7 @@ class DataSource {
    * @pointer to Record, exist content will be overwrite
    * @return true if read succ, false otherwise
    */
-  virtual bool NextRecord(string* key, Record *record)=0;
+  virtual bool NextRecord(string* key, singa::Record *record)=0;
   /**
    * @return name of this data source
    */
@@ -78,7 +77,7 @@ class ImageNetSource : public DataSource {
   void Init(const string& folder, const string& meanfile,
       const int width, const int height);
 
-  virtual bool NextRecord(string* key, Record *record);
+  virtual bool NextRecord(string* key, singa::Record *record);
 
   //!< class identifier
   static const std::string type;
@@ -87,12 +86,12 @@ class ImageNetSource : public DataSource {
    * get record at the specific offset
    * return true if succ, otherwise false
    */
-  bool GetRecord(const int offset, Record* record);
+  bool GetRecord(const int offset, singa::Record* record);
   /**
    * Read raw image, resize, normalize (substract mean), copy to DAryProto obj
    */
   int ReadImage(const std::string &path, int height, int width,
-      const float *mean, DAryProto* datum);
+      const float *mean, singa::DAryProto* datum);
   /**
    * Load meta info file which has image path and label
    */
@@ -183,5 +182,4 @@ class DataSourceFactory {
   static shared_ptr<DataSourceFactory> instance_;
 };
 
-}  // namespace singa
 #endif  // INCLUDE_DATA_SOURCE_H_

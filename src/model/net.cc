@@ -1,6 +1,6 @@
 #include <queue>
 
-#include "net/net.h"
+#include "model/net.h"
 #include "utils/singleton.h"
 #include "utils/factory.h"
 

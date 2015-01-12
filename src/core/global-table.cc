@@ -15,7 +15,7 @@
 DEFINE_bool(checkpoint_enabled, false, "enabling checkpoint");
 
 
-namespace lapis {
+namespace singa {
 
 /**
  * Delete the local shards upon destruction.
@@ -26,7 +26,7 @@ GlobalTable::~GlobalTable() {
 	}
 }
 
-void GlobalTable::Init(const lapis::TableDescriptor *info) {
+void GlobalTable::Init(const singa::TableDescriptor *info) {
 	TableBase::Init(info);
 	worker_id_ = NetworkService::Get()->id();
 	partitions_.resize(info->num_shards);
@@ -80,13 +80,13 @@ bool GlobalTable::HandleGet(GetRequest &get_req, TableData *get_resp) {
 }
 
 
-bool GlobalTable::ApplyUpdates(int shard, lapis::TableData &req) {
+bool GlobalTable::ApplyUpdates(int shard, singa::TableData &req) {
 	bool ret = partitions_[shard]->ApplyUpdates(req,
 			checkpoint_files_[shard]);
 	return ret;
 }
 
-bool GlobalTable::ApplyPut(int shard, lapis::TableData &req) {
+bool GlobalTable::ApplyPut(int shard, singa::TableData &req) {
 	bool ret = partitions_[shard]->ApplyPut(req,
 			checkpoint_files_[shard]);
 

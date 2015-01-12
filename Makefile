@@ -7,9 +7,7 @@ HOME_DIR := /home/wangwei/install
 # Location of g++
 CXX := g++
 # Header folder for system and external libs. You may need to change it.
-
-INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include \
-	./include/da ./include
+INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include
 
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
@@ -18,10 +16,9 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas arraymath armci
+							opencv_core openblas armci
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
-#$(HOME_DIR)/atlas/lib
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
@@ -29,9 +26,9 @@ LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 BUILD_DIR := build
 
 ###############################################################################
-# Build Lapis into .a and .so library
+# Build singa into .a and .so library
 ###############################################################################
-.PHONY: all proto core init model utils test_core flint clean
+.PHONY: all proto init loader singa
 
 # find user defined .proto file, and then compute the corresponding .h, .cc
 # files, which cannot be found by shell find, because they haven't been
@@ -41,40 +38,31 @@ PROTO_SRCS :=$(PROTOS:.proto=.pb.cc)
 PROTO_HDRS :=$(patsubst src%, include%, $(PROTOS:.proto=.pb.h))
 PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
-# each lapis src file will generate a .o file
-LAPIS_SRCS := $(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
+# each singa src file will generate a .o file
+SINGA_SRCS := $(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
 	-o \( -name "*.cc" -type f \) -print )
-LAPIS_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(LAPIS_SRCS:.cc=.o)) $(PROTO_OBJS) )
--include $(LAPIS_OBJS:%.o=%.P)
+SINGA_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(SINGA_SRCS:.cc=.o)) $(PROTO_OBJS) )
+-include $(SINGA_OBJS:%.o=%.P)
 
-SHARD_SRCS :=$(shell find src/datasource/ -name "*.cc") src/utils/proto_helper.cc src/utils/shard.cc
-SHARD_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(SHARD_SRCS:.cc=.o)) $(PROTO_OBJS) )
--include $(SHARD_OBJS:%.o=%.P)
+LOADER_SRCS :=$(shell find tools/data_loader/ -name "*.cc") src/utils/shard.cc
+LOADER_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(LOADER_SRCS:.cc=.o)) $(PROTO_OBJS) )
+-include $(LOADER_OBJS:%.o=%.P)
 
-TUPLE_SRCS := src/test/test_tuple.cc
-TUPLE_OBJS := $(addprefix $(BUILD_DIR)/, $(TUPLE_SRCS:.cc=.o))
+OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) )
 
-OBJS := $(sort $(LAPIS_OBJS) $(SHARD_OBJS) $(TUPLE_OBJS))
+layer:init proto build/src/model/layer.o
 
-run_hybrid: lapis
-	mpirun  -np 21 -hostfile examples/imagenet12/hostfile ./lapis.bin \
-	-system_conf=examples/imagenet12/system.conf -model_conf=examples/imagenet12/model.conf \
-	--v=0  --restore=false --table_buffer=20 --block_size=10 -par_mode=hybrid
+param:init proto build/src/model/param.o
 
-run_test_table: lapis.test
-	mpirun -np 24 -hostfile examples/imagenet12/hostfile \
-		./lapis_test.bin --v=3
+net:init proto build/src/model/net.o
 
-loader: init proto $(SHARD_OBJS)
-	$(CXX) $(SHARD_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
+run_hybrid: singa
+loader: init proto $(LOADER_OBJS)
+	$(CXX) $(LOADER_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
-lapis: init proto  $(LAPIS_OBJS)
-	$(CXX) $(LAPIS_OBJS) -o lapis $(CXXFLAGS) $(LDFLAGS)
-	@echo
-
-lapis.test: lapis $(TABLE_TEST_OBJS)
-	$(CXX) $(filter-out build/src/main.o,$(LAPIS_OBJS)) $(TABLE_TEST_OBJS) -o lapis_test.bin $(CXXFLAGS) $(LDFLAGS)
+singa: init proto  $(SINGA_OBJS)
+	$(CXX) $(SINGA_OBJS) -o singa $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 $(OBJS):$(BUILD_DIR)/%.o : %.cc
@@ -97,24 +85,6 @@ $(PROTO_HDRS) $(PROTO_SRCS): $(PROTOS)
 	cp src/proto/*.pb.h include/proto/
 	@echo
 
-###############################################################################
-# Formatting and lint, target is flint
-###############################################################################
-# files genreated by astyle, to be deleted
-ORIGS := $(shell find . -name "*.orig" -type f)
-# header files, with Eigen/ ignored
-FL_HDRS := $(shell find include -path "include/mshadow"  -prune \
-						-o \( -name "*.h" ! -name "*.pb.h" -type f \) -print )
-# cc files
-FL_SRCS :=$(shell find src -name "*.cc" ! -name "*.pb.cc" -type f )
-
-flint: $(FL_HDRS) $(FL_SRCS)
-	astyle --options=astyle.conf $(FL_HDRS)
-	astyle --options=astyle.conf $(FL_SRCS)
-	rm -f $(ORIGS)
-	python cpplint.py $(FL_HDRS)
-	python cpplint.py $(FL_SRCS)
-	@echo
 
 ###############################################################################
 # Clean files generated by previous targets
@@ -125,10 +95,3 @@ clean:
 	rm -rf src/proto/*.pb.h src/proto/*.pb.cc
 	rm -rf $(BUILD_DIR)
 	@echo
-
-###############################################################################
-# Test makefile, mtest
-###############################################################################
-mtest:
-	@echo $(LAPIS_OBJS)
-# DO NOT DELETE

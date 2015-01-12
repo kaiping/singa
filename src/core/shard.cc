@@ -2,7 +2,7 @@
 #include "core/shard.h"
 #include "google/protobuf/message.h"
 
-namespace lapis {
+namespace singa {
 /**
  * Initialize the table with specific size (default = 0).
  */
@@ -149,4 +149,4 @@ void Shard::put(const TKey &k, const TVal &v) {
 		buckets_[b].v = v;
 	}
 }
-} //namespace lapis
+} //namespace singa

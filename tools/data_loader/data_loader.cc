@@ -2,7 +2,8 @@
 #include <gflags/gflags.h>
 #include <mpi.h>
 #include "utils/shard.h"
-#include "datasource/data_source.h"
+#include "data_source.h"
+#
 
 /**
  * \file data_loader.cc is the main entry of loader.
@@ -11,7 +12,7 @@
  * crashes. Data (e.g., images) is in local shard_folder.
  *
  * Aguments mean, width, and height are specifc for the ImageNet dataset and
- * are required to create the lapis::ImageNetSource obj.
+ * are required to create the ImageNetSource obj.
  */
 
 DEFINE_string(shard_folder, "/data1/wangwei/lapis/validation/", "shard_folder");
@@ -24,12 +25,12 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  lapis::ImageNetSource source;
+  ImageNetSource source;
   source.Init(FLAGS_shard_folder, FLAGS_mean, FLAGS_width, FLAGS_height);
   shard::Shard shard(FLAGS_shard_folder, shard::Shard::kAppend);
 
   std::string key, value;
-  lapis::Record record;
+  singa::Record record;
   int count=shard.Count();
   char hostname[256];
   gethostname(hostname, sizeof(hostname));

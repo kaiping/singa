@@ -3,10 +3,49 @@
 
 #include <vector>
 #include <cstdlib>
+#include <string>
 
 namespace singa{
 using Point = std::vector<size_t>;
 using Pair = std::pair<size_t,size_t>;
+class Shape{
+
+  public:
+  /**********
+   * static *
+   **********/
+  static Shape Empty(size_t dim);
+  static Shape Regular(size_t dim, size_t val);
+  /****************
+   * constructors *
+   ****************/
+  Shape();
+  Shape(const Point& pt);
+  Shape(Point&& pt);
+  Shape(const Shape& other);
+  Shape(Shape&& other);
+  /*************
+   * operators *
+   *************/
+  Shape& operator=(const Shape& other);
+  Shape& operator=(Shape&& other);
+  int operator[](size_t i) const;
+  bool operator==(const Shape& other) const;
+  bool operator!=(const Shape& other) const;
+  /***********
+   * methods *
+   ***********/
+  size_t Dim() const;
+  size_t Volume();
+  Point GetScale() const;
+  Shape SubShape() const;
+  std::string ToString() const;
+
+  private:
+  size_t vol_ = 0;
+  Point scale_;
+};
+
 
 class Range{
 
@@ -41,41 +80,6 @@ class Range{
 
   public:
   Point start_, end_;
-};
-
-class Shape{
-
-  public:
-  /**********
-   * static *
-   **********/
-  static Shape Empty(size_t dim);
-  static Shape Regular(size_t dim, size_t val);
-  /****************
-   * constructors *
-   ****************/
-  Shape();
-  Shape(const Point& pt);
-  Shape(Point&& pt);
-  Shape(const Shape& other);
-  Shape(Shape&& other);
-  /*************
-   * operators *
-   *************/
-  Shape& operator=(const Shape& other);
-  Shape& operator=(Shape&& other);
-  int operator[](size_t i) const;
-  bool operator==(const Shape& other) const;
-  bool operator!=(const Shape& other) const;
-  /***********
-   * methods *
-   ***********/
-  size_t Dim() const;
-  size_t Volume() const;
-  Point GetPoint() const;
-
-  private:
-  Point scale_;
 };
 
 class Partition{

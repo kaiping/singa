@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 
-#include "net/param.h"
+#include "model/param.h"
 #include "utils/common.h"
 #include "utils/global_context.h"
 #include "utils/network_service.h"

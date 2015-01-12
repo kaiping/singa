@@ -7,7 +7,7 @@
 #include "utils/network.h"
 #include <cstdio>
 
-namespace lapis {
+namespace singa {
 
 bool MPINetwork::Send(int dst, int tag, const string& msg) {
 	MPI_Send(const_cast<char*>(msg.data()), msg.size(), MPI::BYTE, dst, tag,
@@ -64,4 +64,4 @@ std::shared_ptr<Network> Network::Get(Impl impl) {
 	return instance_;
 }
 
-} /* lapis  */
+} /* singa  */

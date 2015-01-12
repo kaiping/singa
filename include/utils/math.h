@@ -1,5 +1,6 @@
 #ifndef INCLUDE_UTIL_MATH_
 #define INCLUDE_UTIL_MATH_
+#include <functional>
 namespace singa {
 
 namespace Math {

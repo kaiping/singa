@@ -187,11 +187,11 @@ class ReLULayer: public Layer {
 
 class DropoutLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
   virtual void ComputeFeature(const vector<Layer*>& src_layers);
   virtual void ComputeGradient(const vector<Layer*>& src_layers);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  //virtual void FromProto(const LayerProto &proto);
+  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
  protected:
   float drop_prob_;
   /* record which neuron is dropped, required for back propagating gradients,
@@ -253,7 +253,8 @@ class FCLayer: public Layer {
   virtual bool PostSyncG(const vector<Layer*>& src_layers);
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  //virtual void FromProto(const LayerProto &proto);
+  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   //! dimension of the hidden layer
   int hdim_;
@@ -292,7 +293,7 @@ class InputLayer: public Layer {
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode){};
   virtual void ComputeFeature(const vector<Layer*>& src_layers){};
   virtual void ComputeGradient(const vector<Layer*>& src_layers){};
-  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode)=0;
+  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode)=0;
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode)=0;
   DArray* mutable_prefetch_data(){return &(this->grad_);}
@@ -303,8 +304,7 @@ class InputLayer: public Layer {
 
 class ImageLayer: public InputLayer {
  public:
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode);
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode);
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
@@ -316,7 +316,7 @@ class ImageLayer: public InputLayer {
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode);
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode);
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);

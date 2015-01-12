@@ -3,8 +3,6 @@
 #include "worker.h"
 #include "proto/model.pb.h"
 #include "utils/global_context.h"
-#include "net/solver.h"
-#include "net/net.h"
 
 namespace singa {
 

@@ -1,11 +1,8 @@
 #include <glog/logging.h>
 #include <mpi.h>
 #include <vector>
-#include "utils/proto_helper.h"
 #include "proto/model.pb.h"
 #include "model/solver.h"
-#include "da/gary.h"
-#include "utils/debug.h"
 #include "utils/timer.h"
 
 namespace singa {
@@ -50,11 +47,7 @@ void Solver::ToProto(SolverProto *proto) {
   proto->set_step(step_);
 }
 
-void debug_mem(string prefix){
-  char buf[1024];
-  sprintf(buf, "%30s, %12lu", prefix.c_str(), getCurrentRSS());
-  LOG(INFO)<<string(buf);
-}
+
 
 Performance Solver::Test(Net*net, const Phase& phase){
   string shard;
@@ -132,9 +125,9 @@ void Solver::Train(Net* net, int start_step){
 void Solver::DoLocalCheckpoint(Net* net){
   for(auto* param: net->params()){
     if(param->partition()&&GlobalContext::Get()->num_groups()==1){
-      DAryProto data;
+      DArryProtoProto data;
       param->data().ToProto(&data, true);
-      DAryProto grad;
+      DArryProtoProto grad;
       param->history().ToProto(&grad, true);
       char fname[256];
       sprintf(fname, "%s/local_cp/param_%d_%d.dat", context_->data_folder().c_str(),
@@ -319,7 +312,7 @@ void Solver::TimeOneBatch(Net* net, int runs) {
     sync[nlayers]+=sync[i];
     refresh[nlayers]+=refresh[i];
   }
-  double armcitime=GAry::comm_time;
+  double armcitime=0.;//GAry::comm_time;
   sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
       total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
       refresh[nlayers]/runs, armcitime/runs);
@@ -353,11 +346,11 @@ void Prefetcher::NextRecord(Record* record){
 }
 
 void Prefetcher::operator()(){
-  // can avoid directly dependent on DAry by fetching the whole mini-batch
+  // can avoid directly dependent on DArryProto by fetching the whole mini-batch
   // or telling the prefetcher the size of partition of the mini-batch
-  const DAry& input= net_->input_layer(0)->data();
-  // add a lshape(k) api for DAry to return local shape on k-dim
-  Range nrng=input.IndexRange(0);
+  const DArray& input= net_->input_layer(0)->data();
+  // add a lshape(k) api for DArryProto to return local shape on k-dim
+  Pair nrng=input.LocalRange(0);
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
     NextRecord(&record);

@@ -3,8 +3,8 @@
 #include <map>
 #include <pthread.h>
 
-#include "net/net.h"
-#include "net/solver.h"
+#include "model/net.h"
+#include "model/solver.h"
 #include "proto/model.pb.h"
 
 namespace singa {

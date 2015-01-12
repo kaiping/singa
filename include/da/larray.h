@@ -12,7 +12,8 @@ class LArray{
    * constructors *
    ****************/
   LArray();
-  LArray(const Shape& shp, std::shared_ptr<float> addr);
+  //LArray(const Shape& shp, std::shared_ptr<float> addr);
+  LArray(const Shape& shp, float* addr);
   LArray(const LArray& other);
   LArray(LArray&& other);
   /*************
@@ -29,10 +30,12 @@ class LArray{
   void RandGaussian(float mean, float std);
   void Zeros();
   void Ones();
+  //operation
+  float* GetAddress() const;
 
   private:
   Shape shape_;
-  std::shared_ptr<float> address_;
+  float* head_;
 
 };
 

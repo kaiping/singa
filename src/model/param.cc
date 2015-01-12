@@ -22,15 +22,15 @@ void Param::FromProto(const ParamProto &proto){
 
 void Param::ToProto(ParamProto *proto, bool copyData) {
   proto->CopyFrom(param_proto_);
-  DArrayProto* data=proto->add_ary();
+  DAryProto* data=proto->add_ary();
   data_.ToProto(data, copyData);
-  DArrayProto* grad=proto->add_ary();
+  DAryProto* grad=proto->add_ary();
   grad_.ToProto(grad, copyData);
-  DArrayProto* history=proto->add_ary();
+  DAryProto* history=proto->add_ary();
   history_.ToProto(history, copyData);
 }
 
-void Param::Setup(const vector<int>& shape, int partition_dim){
+void Param::Setup(const vector<size_t>& shape, int partition_dim){
   data_.Setup(shape, partition_dim);
   grad_.Setup(shape, partition_dim);
   history_.Setup(shape, partition_dim);
@@ -38,7 +38,7 @@ void Param::Setup(const vector<int>& shape, int partition_dim){
 }
 
 void Param::Init(){
-  CHECK(data_.shape().size)<<"must set shape of param";
+  CHECK(data_.shape().Volume())<<"must set shape of param";
   switch (param_proto_.init_method()) {
   case ParamProto::kConstant:
     data_.Fill(param_proto_.value());
@@ -70,13 +70,13 @@ void Param::Init(){
 }
 
 void Param::FillGaussainData(float mean, float std, float factor) {
-  data_.SampleGaussian(mean, std);
+  data_.SetRandGaussian(mean, std);
   if (factor != 1.0f)
     data_.Mult(data_,factor);
 }
 
 void Param::FillUniformData(float low, float high, float factor) {
-  data_.SampleUniform(low, high);
+  data_.SetRandUniform(low, high);
   if (factor != 1.0f)
     data_.Mult(data_,factor);
 }

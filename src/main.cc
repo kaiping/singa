@@ -6,7 +6,6 @@
 #include "proto/cluster.pb.h"
 #include "server.h"
 #include "worker.h"
-#include "da/gary.h"
 
 /**
  * \file main.cc is the main entry of SINGA.

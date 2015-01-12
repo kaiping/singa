@@ -8,7 +8,7 @@
 #include <stack>
 #include "model/param.h"
 #include "proto/model.pb.h"
-#include "net/layer.h"
+#include "model/layer.h"
 
 namespace singa {
 /**
@@ -46,7 +46,7 @@ class Net {
    * @input_shapes shapes for the input layers
    * @mode partition mode, namely, kHybrid, kModel, kData, kNone
    */
-  void Setup(const vector<vector<int>>& input_shapes, PartitionMode mode=kNone);
+  void Setup(const vector<vector<size_t>>& input_shapes, PartitionMode mode=kNone);
   /**
    * @batchsize mini-batch size
    * @record input record to the net, used to set the shapes of input layers

@@ -112,7 +112,7 @@ void Net::Setup(const int batchsize, const Record &record, PartitionMode mode){
   Setup(mode);
 }
 
-void Net::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
+void Net::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
   for (auto *layer : input_layers_){
     InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
     dlayer->Setup(shapes, mode);

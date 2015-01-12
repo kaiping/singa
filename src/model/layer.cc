@@ -27,7 +27,7 @@ bool Layer::PreSyncF(const vector<Layer*>& src_layers){
   if(src_layers.size()==0)
     return false;
   const DArray& src=src_layers[0]->data();
-  if(src.partition()==-1||src.partition()==data_.partition())
+  if(src.PartitionDim()==-1||src.PartitionDim()==data_.PartitionDim())
     return false;
   else
     return true;
@@ -89,12 +89,12 @@ void Im2colLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
     stride_w_ = conv_param.stride_w();
   }
   const DArray& src=src_layers[0]->data();
-  CHECK_EQ(src.shape().size,4)<<"Im2colLayer only support src DArray with 4 dim";
+  CHECK_EQ(src.shape().Volume(),4)<<"Im2colLayer only support src DArray with 4 dim";
   int num=src.shape(0);
   channels_=src.shape(1);
   height_ = src.shape(2);
   width_ = src.shape(3);
-  vector<int> shape{num, channels_ * kernel_h_ * kernel_w_,
+  vector<size_t> shape{num, channels_ * kernel_h_ * kernel_w_,
     (height_ + 2 * pad_h_ - kernel_h_) / stride_h_ + 1,
     (width_ + 2 * pad_w_ - kernel_w_) / stride_w_ + 1};
   int pdim=GetPartitionDimension(mode);
@@ -106,17 +106,18 @@ void Im2colLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
  * only consider parition along the num/channel dimension
  */
 void Im2colLayer::ComputeFeature(const vector<Layer*>& src_layers){
-  const Pair& nrng=data_.IndexRange(0);
-  const Pair& crng=data_.IndexRange(1);
+  const Pair& nrng=data_.LocalRange(0);
+  const Pair& crng=data_.LocalRange(1);
   int kernel_area=kernel_h_*kernel_w_;
   CHECK_EQ(crng.first%kernel_area,0);
   CHECK_EQ(crng.second%kernel_area,0);
   Pair srccrng(crng.first/kernel_area, crng.second/kernel_area);
-  vector<Pair> slice{nrng, srccrng, Pair({0, height_}), Pair({0, width_})};
+  Range slice({nrng.first, srccrng.first, 0, 0},
+      {nrng.second, srccrng.second, height_,width_});
   const DArray& src=src_layers[0]->data().Fetch(slice);
   for(int n=nrng.first; n<nrng.second;++n){
-    DArray im=src[n].SubArray(srccrng);
-    DArray col=data_[n].SubArray(crng);
+    DArray im=src[n].SubArray(Range({srccrng.first, srccrng.second}));
+    DArray col=data_[n].SubArray(Range({crng.first, crng.second}));
     im2col(im, channels_, height_, width_, kernel_h_, kernel_w_,
         pad_h_, pad_w_, stride_h_, stride_w_, &col);
   }
@@ -124,15 +125,16 @@ void Im2colLayer::ComputeFeature(const vector<Layer*>& src_layers){
 void Im2colLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   DArray* gsrc=src_layers[0]->mutable_grad();
   if(gsrc!=nullptr){
-    const Pair& srcnrng=gsrc->IndexRange(0);
-    const Pair& srccrng=gsrc->IndexRange(1);
+    const Pair& srcnrng=gsrc->LocalRange(0);
+    const Pair& srccrng=gsrc->LocalRange(1);
     int kernel_area=kernel_h_*kernel_w_;
     Pair crng(srccrng.first*kernel_area, srccrng.second*kernel_area);
-    vector<Pair> slice{srcnrng, crng, Pair({0, height_}), Pair({0, width_})};
+    Range slice({srcnrng.first, crng.first, 0, 0},
+      {srcnrng.second, crng.second, height_,width_});
     const DArray& grad=grad_.Fetch(slice);
     for(int n=srcnrng.first;n<srcnrng.second;n++){
-      DArray col=grad[n].SubArray(crng);
-      DArray im=gsrc[n].SubArray(srccrng);
+      DArray col=grad[n].SubArray(Range({crng.first, crng.second}));
+      DArray im=gsrc[n].SubArray(Range({srccrng.first, srccrng.second}));
       col2im(col, channels_, height_, width_, kernel_h_, kernel_w_,
           pad_h_, pad_w_, stride_h_, stride_w_, &im);
     }
@@ -215,10 +217,10 @@ void ConvProductLayer::Setup(const vector<Layer*>& src_layers,
     PartitionMode mode){
   ConvolutionProto conv_param=layer_proto_.convolution_param();
   int num_output=conv_param.num_output();
-  const Shape& shape=src_layers[0]->data().shape();
+  const DArray& src=src_layers[0]->data();
   int pdim=GetPartitionDimension(mode);
-  data_.Setup({shape.s[0], num_output, shape.s[1], shape.s[2]}, pdim);
-  grad_.Setup({shape.s[0], num_output, shape.s[1], shape.s[2]}, pdim);
+  data_.Setup({src.shape(0), num_output, src.shape(1), src.shape(2)}, pdim);
+  grad_.Setup(data_.shape(), pdim);
 
   int kernel_area=0;
   if (conv_param.has_kernel_size()) {
@@ -227,12 +229,12 @@ void ConvProductLayer::Setup(const vector<Layer*>& src_layers,
     kernel_area=conv_param.kernel_h()* conv_param.kernel_w();
   }
   pdim=mode==kModel?0:-1;
-  weight_.Setup({num_output, shape.s[1]*kernel_area}, pdim);
+  weight_.Setup({num_output, src.shape(1)*kernel_area}, pdim);
   bias_.Setup({num_output},pdim);
 }
 
 void ConvProductLayer::ComputeFeature(const vector<Layer*>& src_layers){
-  const Pair nrng=data_.IndexRange(0);
+  const Pair nrng=data_.LocalRange(0);
   const DArray& src=src_layers[0]->data();
   const DArray src3d=src.Reshape({src.shape(0),src.shape(1),
       src.shape(2)*src.shape(3)});
@@ -246,16 +248,14 @@ void ConvProductLayer::ComputeFeature(const vector<Layer*>& src_layers){
 
 void ConvProductLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   DArray* gsrc=src_layers[0]->mutable_grad();
-  DArray gsrc3d;
-  if(gsrc!=nullptr)
-    gsrc3d=gsrc->Reshape({gsrc->shape(0), gsrc->shape(1),
+  DArray gsrc3d=gsrc->Reshape({gsrc->shape(0), gsrc->shape(1),
         gsrc->shape(2)*gsrc->shape(3)});
   const DArray& src=src_layers[0]->data();
   const DArray src3d=src.Reshape({gsrc->shape(0), gsrc->shape(1),
         gsrc->shape(2)*gsrc->shape(3)});
   const DArray data3d=data_.Reshape({src.shape(0), src.shape(1), src3d.shape(2)});
   const DArray grad3d=grad_.Reshape(data3d.shape());
-  const Pair nrng=gsrc->IndexRange(0);
+  const Pair nrng=gsrc->LocalRange(0);
   DArray* gweight=weight_.mutable_grad();
   gweight->Fill(0.f);
   DArray* gbias=bias_.mutable_grad();
@@ -264,10 +264,8 @@ void ConvProductLayer::ComputeGradient(const vector<Layer*>& src_layers) {
     const DArray grad2d=grad3d[n];
     gweight->Dot(grad2d, src3d[n], false, true, false);
     gbias->SumCol(grad2d, false);
-    if(gsrc!=nullptr){
-      DArray gsrc2d=gsrc3d[n];
-      gsrc2d.Dot(weight_.data(), grad2d, true, false, true);
-    }
+    DArray gsrc2d=gsrc3d[n];
+    gsrc2d.Dot(weight_.data(), grad2d, true, false, true);
   }
 }
 
@@ -377,9 +375,9 @@ void PoolingLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   }
 
   const Shape& srcshape=src_layers[0]->data().shape();
-  channels_ = srcshape.s[1];
-  height_ = srcshape.s[2];
-  width_ = srcshape.s[3];
+  channels_ = srcshape[1];
+  height_ = srcshape[2];
+  width_ = srcshape[3];
   pooled_height_ = static_cast<int>(ceil(static_cast<float>(
           height_ + 2 * pad_h_ - kernel_h_) / stride_h_)) + 1;
   pooled_width_ = static_cast<int>(ceil(static_cast<float>(
@@ -397,7 +395,7 @@ void PoolingLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
     CHECK_LT((pooled_width_ - 1) * stride_w_, width_ + pad_w_);
   }
   int pdim=GetPartitionDimension(mode);
-  data_.Setup({srcshape.s[0], channels_, pooled_height_, pooled_width_}, pdim);
+  data_.Setup({srcshape[0], channels_, pooled_height_, pooled_width_}, pdim);
   grad_.Setup(data_.shape(),pdim);
   // If max pooling, we will initialize the vector index part.
   if (this->layer_proto_.pooling_param().pool() ==
@@ -407,9 +405,11 @@ void PoolingLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
 }
 
 void PoolingLayer::ComputeFeature(const vector<Layer*>& src_layers){
-  Pair nrng=data_.IndexRange(0);
-  Pair crng=data_.IndexRange(1);
-  vector<Pair> slice{nrng, crng, Pair({0, height_}),Pair({0,width_})};
+  Pair nrng=data_.LocalRange(0);
+  Pair crng=data_.LocalRange(1);
+  Range slice({nrng.first, crng.first, 0, 0},
+      {nrng.second, crng.second, height_,width_});
+
   const DArray& src=src_layers[0]->data().Fetch(slice);
   switch (this->layer_proto_.pooling_param().pool()) {
     case PoolingProto_PoolMethod_MAX:
@@ -484,10 +484,12 @@ void PoolingLayer::ComputeFeature(const vector<Layer*>& src_layers){
  */
 void PoolingLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   DArray* gsrc=src_layers[0]->mutable_grad();
-  Pair nrng=gsrc->IndexRange(0);
-  Pair crng=gsrc->IndexRange(1);
-  vector<Pair> slice{nrng, crng,
-    Pair({0, pooled_height_}),Pair({0,pooled_height_})};
+  Pair nrng=gsrc->LocalRange(0);
+  Pair crng=gsrc->LocalRange(1);
+  Range slice({nrng.first, crng.first, 0, 0},
+      {nrng.second, crng.second, pooled_height_, pooled_width_});
+
+
   const DArray& grad=grad_.Fetch(slice);
   gsrc->Fill(0.f);
   switch (this->layer_proto_.pooling_param().pool()) {
@@ -565,7 +567,7 @@ void LRNLayer::ToProto(LayerProto* proto, bool copyData) {
 void LRNLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   int pdim=GetPartitionDimension(mode);
   size_ = this->layer_proto_.lrn_param().local_size();
-  CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for local_size";
+  CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for LocalVolume";
   lpad_ = (size_ - 1) / 2;
   knorm_=this->layer_proto_.lrn_param().knorm();
   rpad_=size_-lpad_;
@@ -580,15 +582,18 @@ void LRNLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   data_.Setup(src.shape(),pdim);
   grad_.Setup(src.shape(),pdim);
   norm_.Setup(src.shape(),pdim);
-  ratio_.Setup(src.shape(), src.partition());
+  ratio_.Setup(src.shape(), src.PartitionDim());
 }
 
 void LRNLayer::ComputeFeature(const vector<Layer*>& src_layers){
-  Pair nrng=data_.IndexRange(0);
-  Pair crng=data_.IndexRange(1);
-  // crng.first<- max(0, data_.IndexRange(1).first-lpad_)
+  Pair nrng=data_.LocalRange(0);
+  Pair crng=data_.LocalRange(1);
+  // crng.first<- max(0, data_.LocalRange(1).first-lpad_)
   //Pair crng({0, data_.shape(1)});
-  std::vector<Pair>slice{nrng, crng, Pair({0, height_}), Pair({0, width_})};
+  Range slice({nrng.first, crng.first, 0, 0},
+      {nrng.second, crng.second, height_, width_});
+
+
   const DArray& src=src_layers[0]->data().Fetch(slice);
   // local array
   DArray squared3d(src.shape().SubShape());
@@ -601,7 +606,7 @@ void LRNLayer::ComputeFeature(const vector<Layer*>& src_layers){
     norm3d[crng.first].Sum(squared3d, Pair(crng.first, crng.first+rpad_));
     for(int c=crng.first+1;c<crng.second;++c){
       DArray cur=norm3d[c];
-      cur.Copy(norm3d[c-1]);
+      cur.CopyFrom(norm3d[c-1]);
       if(c-lpad_>=crng.first)
         cur.Minus(cur, squared3d[c-lpad_]);
       if(c+rpad_<=crng.second)
@@ -618,10 +623,13 @@ void LRNLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   float factor = -2.*alpha_ * beta_ / size_;
   DArray* gsrc=src_layers[0]->mutable_grad();
   const DArray& src=src_layers[0]->data();
-  Pair nrng=src.IndexRange(0);
-  Pair crng=src.IndexRange(1);
+  Pair nrng=src.LocalRange(0);
+  Pair crng=src.LocalRange(1);
   // ignore channel boundary
-  std::vector<Pair>slice{nrng, crng, Pair({0, height_}),Pair({0, width_})};
+  Range slice({nrng.first, crng.first, 0, 0},
+      {nrng.second, crng.second, height_, width_});
+
+
   const DArray& data=data_.Fetch(slice);
   const DArray& grad=grad_.Fetch(slice);
   const DArray& norm=norm_.Fetch(slice);
@@ -635,7 +643,7 @@ void LRNLayer::ComputeGradient(const vector<Layer*>& src_layers) {
     DArray gsrc3d=(*gsrc)[n];
     DArray src3d=src[n];
     DArray ratio3d=ratio_[n];
-    accum_ratio.Sum(ratio3d, {crng.first, lpad_});
+    accum_ratio.Sum(ratio3d, Pair({crng.first, lpad_}));
     for(int c=crng.first;c<crng.second;++c) {
       if(c+lpad_<crng.second) accum_ratio.Add(ratio3d[c+lpad_]);
       gsrc3d[c].Map([factor](float g, float a, float b)
@@ -663,7 +671,7 @@ vector<Param*> FCLayer::GetParams() {
 void FCLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   const DArray& src=src_layers[0]->data();
   num_=src.shape(0);
-  vdim_=src.shape().size/num_;
+  vdim_=src.shape().Volume()/num_;
   hdim_=this->layer_proto_.inner_product_param().num_output();
   //data, weight, bias partition dimension
   int dp=-1, wp=-1, bp=-1;
@@ -691,7 +699,7 @@ bool FCLayer::PreSyncG(const vector<Layer*>& src_layers){
 
 bool FCLayer::PostSyncF(const vector<Layer*>& src_layers){
   const DArray& src=src_layers[0]->data();
-  if(src.GetPartition()==0&&data_.GetPartition()==0)
+  if(src.PartitionDim()==0&&data_.PartitionDim()==0)
     return false;
   else
     return true;
@@ -739,15 +747,15 @@ void SoftmaxLossLayer::Setup(const vector<Layer*>& src_layers,
   }
   const DArray& src=src_layers[0]->data();
   num_=src.shape(0);
-  dim_=src.shape().size/num_;
-  vector<int> shape{num_, dim_};
+  dim_=src.shape().Volume()/num_;
+  vector<size_t> shape{num_, dim_};
   top_k_=this->layer_proto_.softmaxloss_param().top_k();
   data_.Setup(shape, pdim);
 }
 
 void SoftmaxLossLayer::ComputeFeature(const vector<Layer*>& src_layers) {
-  Pair nrng=data_.IndexRange(0);
-  vector<Pair> slice{nrng, {0,dim_}};
+  Pair nrng=data_.LocalRange(0);
+  Range slice({nrng.first, 0}, {nrng.second, 1});
   DArray src=src_layers[0]->data().Fetch(slice);
   for (int n = nrng.first; n < nrng.second; ++n) {
     DArray src1d=src[n];
@@ -761,10 +769,11 @@ void SoftmaxLossLayer::ComputeFeature(const vector<Layer*>& src_layers) {
 
 void SoftmaxLossLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   DArray* gsrc=src_layers[0]->mutable_grad();
-  gsrc->Copy(data_);
-  Pair nrng=gsrc->IndexRange(0);
+  gsrc->CopyFrom(data_);
+  Pair nrng=gsrc->LocalRange(0);
   DArray gsrc2d=gsrc->Reshape({num_, dim_});
-  const DArray label=src_layers[1]->data().Fetch({nrng, Pair({0,1})});
+  Range slice({nrng.first, 0}, {nrng.second, 1});
+  const DArray label=src_layers[1]->data().Fetch(slice);
   for (int n = nrng.first; n < nrng.second; n++) {
     int k = static_cast<int>(label.at(n,0));
     gsrc2d.at(n,k)-=1.0f;
@@ -777,8 +786,9 @@ Performance SoftmaxLossLayer::ComputePerformance(
     const vector<Layer*>& src_layers, PerformanceType type){
   int ncorrectk=0, ncorrect=0;
   float logprob=0.0f;
-  Pair nrng=data_.IndexRange(0);
-  const DArray label=src_layers[1]->data().Fetch({nrng, Pair({0,1})});
+  Pair nrng=data_.LocalRange(0);
+  Range slice({nrng.first, 0}, {nrng.second, 1});
+  const DArray label=src_layers[1]->data().Fetch(slice);
   for(int n=nrng.first;n<nrng.second;n++) {
     float *dptr=data_.addr(n,0);
     int labelid=static_cast<int>(label.at(n,0));
@@ -836,11 +846,11 @@ int GetPartitionDimension(PartitionMode mode){
 /*****************************************************************************
  * Implementation for ImageLayer
  *****************************************************************************/
-void ImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
+void ImageLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
   CHECK_EQ(shapes[0].size(),4);
-  vector<int> shape=shapes[0];
+  vector<size_t> shape=shapes[0];
   if(cropsize_>0){
     shape[2]=cropsize_;
     shape[3]=cropsize_;
@@ -853,8 +863,8 @@ void ImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
 void ImageLayer::Setup(const int batchsize,
     const Record & record,
     PartitionMode mode){
-  const DArrayProto& image=record.imagenet().image();
-  vector<int> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
+  const DAryProto& image=record.imagenet().image();
+  vector<size_t> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
   if(cropsize_>0){
@@ -867,11 +877,11 @@ void ImageLayer::Setup(const int batchsize,
 }
 
 void ImageLayer::AddInputRecord(const Record &record, Phase phase){
-  Pair nrng=grad_.IndexRange(0);
+  Pair nrng=grad_.LocalRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
   float *dptr=grad_.addr(n,0,0,0);
-  const DArrayProto& image=record.imagenet().image();
+  const DAryProto& image=record.imagenet().image();
   int channels=image.shape(0);
   int height=image.shape(1);
   int width=image.shape(2);
@@ -926,7 +936,7 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
 /*****************************************************************************
  * Implementation for LabelLayer
  *****************************************************************************/
-void LabelLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
+void LabelLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
   CHECK_GE(shapes.size(),2);
   CHECK_EQ(shapes[1].size(),2);
   int pdim=GetPartitionDimension(mode);
@@ -936,12 +946,12 @@ void LabelLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
 
 void LabelLayer::Setup(const int batchsize, const Record & record, PartitionMode mode){
   int pdim=GetPartitionDimension(mode);
-  data_.Setup(vector<int>{batchsize,1}, pdim);
-  grad_.Setup(vector<int>{batchsize,1}, pdim);
+  data_.Setup(vector<size_t>{batchsize,1}, pdim);
+  grad_.Setup(vector<size_t>{batchsize,1}, pdim);
 }
 
 void LabelLayer::AddInputRecord(const Record &record, Phase phase){
-  Pair nrng=grad_.IndexRange(0);
+  Pair nrng=grad_.LocalRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
   if(record.type()==Record::kImageNet)

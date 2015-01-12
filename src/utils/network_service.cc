@@ -115,4 +115,4 @@ bool NetworkService::more_to_send(){
 	return send_queue_.size() > 0;
 }
 
-}  // namespace lapis
+}  // namespace singa

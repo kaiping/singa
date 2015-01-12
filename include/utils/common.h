@@ -1,5 +1,6 @@
 #ifndef INCLUDE_UTILS_COMMON_H_
 #define INCLUDE_UTILS_COMMON_H_
+#pragma once
 #include <glog/logging.h>
 #include <google/protobuf/message.h>
 #include <stdarg.h>
@@ -15,16 +16,17 @@ using std::vector;
 using std::string;
 using std::map;
 using google::protobuf::Message;
-
 namespace singa {
 
-void ReadProtoFromTextFile(const char *filename, Message *proto);
-void WriteProtoToTextFile(const Message &proto, const char *filename);
-void ReadProtoFromBinaryFile(const char *filename, Message *proto);
-void WriteProtoToBinaryFile(const Message &proto, const char *filename);
+void ReadProtoFromTextFile(const char* filename,
+    ::google::protobuf::Message* proto) ;
 
-const int kBufLen=1024;
+void WriteProtoToTextFile(const Message& proto, const char* filename) ;
+void ReadProtoFromBinaryFile(const char* filename, Message* proto) ;
 
+string VStringPrintf(string fmt, va_list l) ;
+string StringPrintf(string fmt, ...) ;
+void Debug() ;
 inline bool check_exists(const std::string& name) {
     struct stat buffer;
     return (stat (name.c_str(), &buffer) == 0);
@@ -85,35 +87,6 @@ class Performance: public PerformanceProto{
   }
 };
 
-/**
- * Formatted string.
- */
-string VStringPrintf(string fmt, va_list l) {
-  char buffer[32768];
-  vsnprintf(buffer, 32768, fmt.c_str(), l);
-  return string(buffer);
-}
 
-/**
- * Formatted string.
- */
-string StringPrintf(string fmt, ...) {
-  va_list l;
-  va_start(l, fmt); //fmt.AsString().c_str());
-  string result = VStringPrintf(fmt, l);
-  va_end(l);
-  return result;
-}
-
-void Debug() {
-  int i = 0;
-  char hostname[256];
-  gethostname(hostname, sizeof(hostname));
-  printf("PID %d on %s ready for attach\n", getpid(), hostname);
-  fflush(stdout);
-  while (0 == i)
-    sleep(5);
-}
-}  // namespace singa
-
+} /* singa */
 #endif  // INCLUDE_UTILS_COMMON_H_

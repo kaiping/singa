@@ -1,0 +1,21 @@
+package singa;
+
+message Cluster{
+  // The following process ID refers to MPI rank which starts at 0
+  // table server process ID in [server_start, server_end)
+  required int32 server_start=1;
+  required int32 server_end=2;
+
+  // worker process ID in [worker_start, worker_end)
+  required int32 worker_start=3;
+  required int32 worker_end=4;
+
+  // partition workers into groups based on ID,
+  // e.g., first group: [worker_start, worker_start+group_size)
+  required int32 group_size=5;
+
+  // local data folder , train/val/test shards, checkpoint files
+  required string data_folder=6;
+
+  optional bool synchronous=7 [default=false];
+}

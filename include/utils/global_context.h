@@ -1,39 +1,111 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-06-28 14:58
 #ifndef INCLUDE_UTILS_GLOBAL_CONTEXT_H_
 #define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
-
-#include <map>
+#include <glog/logging.h>
+#include <string>
 #include <utility>
+#include <memory>
+#include <vector>
+#include <mpi.h>
+#include "proto/cluster.pb.h"
 
-namespace lapis {
-enum Role {
-  kCoordinator,
-  kWoker,
-  kMemoryServer,
-  kDiskServer
-};
+using std::shared_ptr;
+using std::string;
+using std::vector;
 
+namespace singa {
+
+/**
+ * Global Context is a singlton object, which provides cluster configuations,
+ * e.g., num workers/servers.
+ * It also provides the MPI group of a worker group for coordination
+ * e.g, Barrier
+ */
 class GlobalContext {
  public:
-  explicit GlobalContext(const char* system_conf_path,
-                         const char * model_conf_path);
-  inline bool IsRoleOf(const Role& role, int rank);
+  // assume the rank of coordinator is num_procs-1
+  static int kCoordinator;
+  static shared_ptr<GlobalContext> Get();
+  static shared_ptr<GlobalContext> Get(const Cluster& cluster);
+  // free my mpi group and mpi communicator
+  void Finalize();
 
-  int num_memory_servers() { return num_memory_servers_; }
-  int num_disk_servers() { return num_disk_servers_; }
-  const char* model_conf_path() {return model_conf_path_; }
+  const int num_table_servers() {
+    return cluster_.server_end()-cluster_.server_start();
+  }
+  const int server_start() {
+    return cluster_.server_start();
+  }
+  const int server_end() {
+    return cluster_.server_end();
+  }
+  const int num_servers(){
+    return cluster_.server_end()-cluster_.server_start();
+  }
+  const int num_procs() {
+    return num_procs_;
+  }
+  const int num_workers() {
+    return cluster_.worker_end()-cluster_.worker_start();
+  }
+  const bool IsTableServer(int rank) {
+    return rank>=server_start()&&rank<server_end();
+  }
+  const bool AmICoordinator() {
+    return rank_==kCoordinator;
+  }
+  bool AmITableServer() {
+    return IsTableServer(rank_);
+  }
+  bool AmIWorker() {
+    return rank_>=cluster_.worker_start()&&rank_<cluster_.worker_end();
+  }
+  /**
+   * Return the id of the worker within his group.
+   */
+  int worker_id() {return id_;}
+  int group_id() {return gid_;}
+  int num_groups() {return groups_.size();}
+  int group_size() {return cluster_.group_size();}
+  bool synchronous() {return cluster_.synchronous();}
+  int rank() {return rank_;}
+  //bool checkpoint_enabled() {return cluster_.checkpoint_enabled();}
+  //int checkpoint_freq() {return cluster_.checkpoint_freq();}
+  //int checkpoint_after() {return cluster_.checkpoint_after();}
+  const string data_folder() {return cluster_.data_folder();}
+  const MPI_Comm& mpicomm() {return mpicomm_;}
+  vector<int> MembersOfGroup(int gid) {return groups_[gid];}
+  const vector<vector<int>>& groups() {return groups_;}
+
+  const MPI_Comm& workergroup_comm(){return workergroup_comm_;}
+ private:
+  GlobalContext(const Cluster& cluster);
 
  private:
-  // map from role to (start_rank, end_rank) pair
-  std::map<Role, std::pair<int, int> > role_rank_;
-  // # of nodes have memory tables
-  int num_memory_servers;
-  // # of nodes have disk tables
-  int num_disk_servers;
+  // mpi rank, global ID
+  int rank_;
+  // ID of worker within group, starts from 0; -1 for servers
+  int id_;
+  // worker group id, start from 0; -1 for servers
+  int gid_;
+  // total number of processes started by mpi
+  int num_procs_;
+  // hostname
+  std::string hostname_;
+  // ranks of workers for each group
+  vector<vector<int>> groups_;
+  // cluster config proto
+  Cluster cluster_;
+  // my mpi group, for MPI Barrier
+  MPI_Group mpigroup_;
+  // my mpi communicator, for MPI Barrier
+  MPI_Comm mpicomm_;
 
-  const char* model_conf_path_;
+  MPI_Group worker_group_;
+  MPI_Comm workergroup_comm_;
+
+  // make this class a singlton
+  static shared_ptr<GlobalContext> instance_;
 };
-}  // namespace lapis
+}  // namespace singa
 
 #endif  // INCLUDE_UTILS_GLOBAL_CONTEXT_H_

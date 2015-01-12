@@ -1,0 +1,74 @@
+package singa;
+
+import "common.proto";
+import "model.proto";
+
+option optimize_for = SPEED;
+
+message RegisterWorkerRequest {
+  required int32 id = 1;
+}
+
+message ShardAssignment {
+  required int32 table = 1;
+  required int32 shard = 2;
+//  required int32 old_worker = 3;
+  required int32 new_worker = 4;
+}
+
+message ShardAssignmentRequest {
+  repeated ShardAssignment assign = 1;
+}
+
+message ShardInfo {
+  required uint32 table = 1;
+  required uint32 shard = 2;
+  required uint64 entries = 3;
+  required uint32 owner = 4;
+  required int32 type = 5;
+}
+
+message MethodStats {
+  required double total_time = 1;
+  required double shard_time = 2;
+  required int32 calls = 3;
+  required int32 shard_calls = 4;
+};
+
+message RequestBase {
+	required int32 table = 1;
+	required int32 source = 2;
+  optional int32 shard =3;
+  // ?? start for what?
+	optional double start = 4;
+	extensions 100 to 199;
+}
+
+message GetRequest {
+	extend RequestBase{
+		optional GetRequest name = 101;
+	}
+	optional uint32 shard = 1;
+	optional TKey key = 2;
+}
+
+message PutRequest {
+	extend RequestBase{
+		optional PutRequest name = 102;
+	}
+	optional uint32 shard = 1;
+	optional TableData data=2;
+}
+
+message UpdateRequest {
+	extend RequestBase{
+		optional UpdateRequest name = 103;
+	}
+	optional uint32 shard = 1;
+	optional TableData data=2;
+}
+
+message TableData {
+	optional TKey key = 1;
+  	optional TVal value =2;
+}

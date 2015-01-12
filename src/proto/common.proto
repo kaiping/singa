@@ -1,0 +1,76 @@
+package singa;
+enum MessageTypes {
+  MTYPE_PUT_REQUEST = 1;
+  MTYPE_GET_REQUEST = 2;
+  MTYPE_GET_RESPONSE = 3;
+
+  MTYPE_SHUTDOWN = 4;
+  MTYPE_REGISTER_WORKER = 5;
+
+  MTYPE_WORKER_FLUSH = 6;
+  MTYPE_WORKER_FLUSH_DONE = 7;
+
+  MTYPE_SHARD_ASSIGNMENT = 8;
+  MTYPE_SHARD_ASSIGNMENT_DONE = 9;
+
+  MTYPE_WORKER_APPLY = 10;
+  MTYPE_WORKER_APPLY_DONE = 11;
+
+  MTYPE_WORKER_END = 12;
+
+
+  MTYPE_DATA_PUT_REQUEST = 14;
+  MTYPE_DATA_PUT_REQUEST_FINISH = 15;
+  MTYPE_DATA_PUT_REQUEST_DONE = 16;
+
+  MTYPE_NET_PARTITION = 17;
+  MTYPE_VALIDATION = 18;
+  MTYPE_INSTRUCTION = 19;
+  MTYPE_PERFORMANCE = 20;
+  MTYPE_GROUP_CONFIG = 21;
+  MTYPE_PUT_SHARD=23;
+
+  MTYPE_BARRIER_REQUEST=24;
+  MTYPE_BARRIER_REPLY=25;
+  MTYPE_BARRIER_READY=26;
+
+  MTYPE_WORKER_START =27;
+  MTYPE_FINISH_INIT_PARAMS =28;
+  MTYPE_INIT_PARAMS=29;
+
+  MTYPE_UPDATE_REQUEST=30;
+  MTYPE_SERVER_RESTORED=31;
+
+  MTYPE_REQUEST = 32;
+  MTYPE_RESPONSE = 33;
+};
+message EmptyMessage {}
+message ShortMsg {
+  optional int32 step = 1;
+  optional bool answer = 2;
+}
+message Arg {
+  required bytes key = 1;
+  required bytes value = 2;
+}
+
+message Args {
+  repeated Arg param = 1;
+}
+
+enum CompressionFormat {
+  NONE = 0;
+  LZO = 1;
+  ZLIB = 2;
+};
+
+message FileParams {
+  repeated Arg attr = 1;
+  optional int32 compression = 2 [default=0];
+}
+
+message ConfigData {
+  required int32 num_workers = 1;
+  required int32 worker_id = 2;
+  required int32 master_id = 3;
+}

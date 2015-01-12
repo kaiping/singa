@@ -1,0 +1,389 @@
+package singa;
+message ModelProto{
+  optional string name = 1;
+  optional NetProto net = 2;
+  optional SolverProto solver = 3;
+}
+
+message NetProto {
+  repeated LayerProto layer = 1;
+  repeated EdgeProto edge=2;
+}
+
+// used to simplify the configuation of layer connections
+// and draw net structure graph
+message EdgeProto{
+  // if true, the edge is from layer1 to layer2.
+  optional bool directed=1 [default = true];
+  // layer name
+  optional string layer1=2;
+  // layer name
+  optional string layer2=3;
+}
+
+message DAryProto {
+  optional int32 partition_dim =1;
+  repeated int32 shape = 2;
+  repeated float value = 3 [packed=true];
+}
+
+message ParamProto {
+  // for the program to identify it and share among layers.
+  // e.g., "conv1_weight","fc_bias"
+  optional string name = 1;
+  optional int32 id=2;
+  // in most situations, user do not need to config this,
+  // the program will calculate it
+  repeated int32 shape = 3;
+
+  // split the parameter into multiple DAryProtos for serialzation and
+  // transferring (Google Protobuf has size limit)
+  optional int32 split_threshold=4 [default=5000000];
+  // partition dimension, -1 for no partition
+  optional int32 partition_dim=5 [default =-1];
+
+  // value of the parameter
+  repeated DAryProto ary = 6;
+
+  enum InitMethod {
+    kConstant = 0;
+    // sample gaussian with std and mean
+    kGaussain = 1;
+    // uniform sampling between low and high
+    kUniform = 2;
+    // copy the content and history which are from previous training
+    kPretrained = 3;
+    // from Toronto Convnet, let a=1/sqrt(fan_in), w*=a after generating from
+    // Gaussian distribution
+    kGaussainSqrtFanIn = 4;
+    // from Toronto Convnet, rectified linear activation, let
+    // a=sqrt(3)/sqrt(fan_in), range is [-a, +a]; no need to set value=sqrt(3),
+    // the program will multiply it.
+    kUniformSqrtFanIn = 5;
+    // from Theano MLP tutorial, let a=1/sqrt(fan_in+fan_out). for tanh
+    // activation, range is [-6a, +6a], for sigmoid activation, range is
+    // [-24a, +24a], put the scale factor to value field.
+    // <a href="http://deeplearning.net/tutorial/mlp.html"> Theano MLP</a>
+    kUniformSqrtFanInOut = 6;
+  }
+  optional InitMethod init_method = 7 [default = kConstant];
+  // constant init
+  optional float value = 8 [default = 1.0];
+  // for uniform sampling
+  optional float low = 9 [default = -1];
+  optional float high = 10 [default = 1];
+  // for gaussian sampling
+  optional float mean = 11 [default = 0];
+  optional float std = 12 [default = 1];
+  // multiplied on the global learning rate.
+  optional float learning_rate_multiplier =13 [default=1];
+  // multiplied on the global weight decay.
+  optional float weight_decay_multiplier =14 [default=1];
+}
+
+enum Phase {
+  kTrain = 0;
+  kValidation=1;
+  kTest= 2;
+}
+
+enum PartitionMode{
+  kData=0;
+  kModel=1;
+  kHybrid=2;
+  kNone=3;
+}
+
+enum PerformanceType{
+  kLoss=1;
+  kAccuracy=2;
+}
+
+message LayerProto {
+  optional string name = 1; // the layer name
+  optional string type = 2; // the layer type from the enum above
+  repeated string src_layer=3;
+  // can be pos/neg neuron value for CD, neuron value/grad for BP
+  repeated DAryProto ary = 5;
+  repeated string share_ary =6;
+  // parameters, e.g., weight matrix or bias vector
+  repeated ParamProto param = 7;
+  // names of parameters shared from other layers
+  repeated string share_param=8;
+
+  // All layers are included in the net structure for training phase by default.
+  // Layers, e.g., computing performance metrics for test phase, can be excluded
+  // by this field which defines in which phase this layer should be excluded.
+  repeated Phase exclude = 9;
+
+  // hyper-parameters for layers
+  optional ConvolutionProto convolution_param = 11;
+  optional DataProto data_param = 12;
+  optional DropoutProto dropout_param = 13;
+  optional InnerProductProto inner_product_param = 17;
+  optional LRNProto lrn_param = 18;
+  optional PoolingProto pooling_param = 19;
+  optional ReLUProto relu_param = 30;
+  optional SoftmaxLossProto softmaxloss_param = 10;
+}
+
+// Message that stores parameters used by SoftmaxLossProto
+message SoftmaxLossProto {
+  // When computing accuracy, count as correct by comparing the true label to
+  // the top k scoring classes. By default, only compare to the top scoring
+  // class (i.e. argmax).
+  optional uint32 top_k = 1 [default = 1];
+}
+// Message that stores parameters used by ConvolutionLayer
+message ConvolutionProto {
+  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional bool bias_term = 2 [default = true]; // whether to have bias terms
+  // Pad, kernel size, and stride are all given as a single value for equal
+  // dimensions in height and width or as Y, X pairs.
+  optional uint32 pad = 3 [default = 0]; // The padding size (equal in Y, X)
+  optional uint32 pad_h = 9 [default = 0]; // The padding height
+  optional uint32 pad_w = 10 [default = 0]; // The padding width
+  optional uint32 kernel_size = 4; // The kernel size (square)
+  optional uint32 kernel_h = 11; // The kernel height
+  optional uint32 kernel_w = 12; // The kernel width
+  optional uint32 group = 5 [default = 1]; // The group size for group conv
+  optional uint32 stride = 6 [default = 1]; // The stride (equal in Y, X)
+  optional uint32 stride_h = 13; // The stride height
+  optional uint32 stride_w = 14; // The stride width
+}
+// Message that stores parameters used by DataLayer
+message DataProto {
+  // Specify the data source.
+  optional string source = 1;
+  // For data pre-processing, we can do simple scaling and subtracting the
+  // data mean, if provided. Note that the mean subtraction is always carried
+  // out before scaling.
+  optional float scale = 2 [default = 1];
+  optional string mean_file = 3;
+  // Specify the batch size.
+  optional uint32 batch_size = 4;
+  // Specify if we would like to randomly crop an image.
+  optional uint32 crop_size = 5 [default = 0];
+  // Specify if we want to randomly mirror data.
+  optional bool mirror = 6 [default = false];
+  // The rand_skip variable is for the data layer to skip a few data points
+  // to avoid all asynchronous sgd clients to start at the same point. The skip
+  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
+  // be larger than the number of keys in the leveldb.
+  optional uint32 rand_skip = 7 [default = 0];
+}
+// Message that stores parameters used by DropoutLayer
+message DropoutProto {
+  optional float dropout_ratio = 1 [default = 0.5]; // dropout ratio
+}
+// Message that stores parameters used by InnerProductLayer
+message InnerProductProto {
+  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional bool bias_term = 2 [default = true]; // whether to have bias terms
+}
+
+// Message that stores parameters used by LRNLayer
+message LRNProto {
+  optional uint32 local_size = 1 [default = 5];
+  optional float alpha = 2 [default = 1.];
+  optional float beta = 3 [default = 0.75];
+  enum NormRegion {
+    ACROSS_CHANNELS = 0;
+    WITHIN_CHANNEL = 1;
+  }
+  optional NormRegion norm_region = 4 [default = ACROSS_CHANNELS];
+  optional float knorm =5 [default=1.0];
+}
+
+// Message that stores parameters used by PoolingLayer
+message PoolingProto {
+  enum PoolMethod {
+    MAX = 0;
+    AVE = 1;
+  }
+  optional PoolMethod pool = 1 [default = MAX]; // The pooling method
+  // Pad, kernel size, and stride are all given as a single value for equal
+  // dimensions in height and width or as Y, X pairs.
+  optional uint32 pad = 4 [default = 0]; // The padding size (equal in Y, X)
+  optional uint32 pad_h = 9 [default = 0]; // The padding height
+  optional uint32 pad_w = 10 [default = 0]; // The padding width
+  optional uint32 kernel_size = 2; // The kernel size (square)
+  optional uint32 kernel_h = 5; // The kernel height
+  optional uint32 kernel_w = 6; // The kernel width
+  optional uint32 stride = 3 [default = 1]; // The stride (equal in Y, X)
+  optional uint32 stride_h = 7; // The stride height
+  optional uint32 stride_w = 8; // The stride width
+}
+
+// Message that stores parameters used by ReLULayer
+message ReLUProto {
+  // Allow non-zero slope for negative inputs to speed up optimization
+  // Described in:
+  // Maas, A. L., Hannun, A. Y., & Ng, A. Y. (2013). Rectifier nonlinearities
+  // improve neural network acoustic models. In ICML Workshop on Deep Learning
+  // for Audio, Speech, and Language Processing.
+  optional float negative_slope = 1 [default = 0];
+}
+
+message PerformanceProto {
+  optional float topk_precision = 1 [default=0.0];
+  optional float top_precision = 2 [default=0.0];
+  optional float loss = 3 [default=0.0];
+  optional int32 count =4 [default=0];
+  optional int32 step = 5 [default=0];
+}
+
+message SolverProto {
+  optional int32 step=1 [default=0];
+  // start display after this num steps
+  optional int32 display_after_steps = 6 [default = 0];
+  // frequency of display
+  optional int32 display_every_steps = 7 [default = 0];
+
+  // the time of validation
+  //optional int32 validation_step = 9 [default = 0];
+  // start validation after this num steps
+  optional int32 validation_after_steps = 10 [default = 0];
+  // frequency of validation
+  optional int32 validation_every_steps = 11 [default = 0];
+
+  // the time of test
+  //optional int32 test_step = 12 [default = 0];
+  // start test after this num steps
+  optional int32 test_after_steps = 13 [default = 0];
+  // frequency of test
+  optional int32 test_every_steps = 14 [default = 0];
+
+  // batchsize is the num of instances processed per step
+  optional int32 batchsize = 19;
+  // total num of steps for training
+  optional int32 train_steps = 20;
+  // total num of steps for validation
+  optional int32 validation_steps=21;
+  // total num of steps for test
+  optional int32 test_steps=22;
+  // max number of tuples; 3571 is the 500-th prime number
+  optional int32 max_splits=23 [default = 3571];
+  // SGD parameters
+  optional SGDProto sgd=24;
+  // There are two basic algorithms for calculating gradients.
+  // Different deep learning models use different algorithms.
+  enum GradCalcAlg{
+    kBackPropagation = 1;
+    kContrastiveDivergence = 2;
+  }
+  optional GradCalcAlg alg= 26 [default = kBackPropagation];
+
+  optional PartitionMode partition=27;
+}
+
+message Record {
+  enum Type{
+    kImageNet=0;
+  }
+  optional Type type=1 [default=kImageNet];
+  optional ImageNetRecord imagenet=2;
+}
+
+message ImageNetRecord {
+  optional DAryProto image=1;
+  optional int32 label=2;
+}
+
+message SGDProto {
+  optional float learning_rate=1;
+  optional float momentum=2;
+  optional float weight_decay=3;
+  // used in changing learning rate
+  optional float gamma = 4;
+  optional int32 learning_rate_change_steps = 5;
+  enum ChangeProto {
+    kFixed = 0;
+    kInverse_t= 1;
+    kExponential = 2;
+    kLinear = 3;
+    kStep = 4;
+  }
+  optional ChangeProto learning_rate_change = 6 [default = kStep];
+  optional bool synchronous=7 [default=false];
+  // table server handler class identifier
+  optional string handler=8 [default="SGDHandler"];
+  // start the checkpoint operation after this num steps
+  optional int32 checkpoint_after_steps = 9 [default = 0];
+  // frequency of checkpoint
+  optional int32 checkpoint_every_steps = 10 [default = 0];
+  // leave for further extension
+  extensions 100 to max;
+}
+
+// Tuple key class for Parameter Table
+message TKey{
+  // Unique identifier of the tuple, i.e, parameter split id
+  optional int32 id=1;
+  // Tuple version
+  optional int32 version=2;
+  // MPI rank, e.g. the rank of a worker who sends Get request, used in debug
+  optional int32 rank=3;
+  // leave for extension
+  extensions 100 to max;
+}
+
+// Tuple value class for Parameter Table.
+message TVal{
+  // Identifier string, e.g., type for SGDVal is "SGDVal", "AdaVal" for AdaVal.
+  optional string type=1;
+  // num of workers whose gradients have been aggregated.
+  optional int32 num_aggregate = 4;
+  // tuple version the same to that in TKey.
+  optional int32 version = 5 ;
+  // MPI rank, e.g. the rank of a worker who sends Update request, used in debug
+  optional int32 rank=6;
+  // parameter id, used in debug and reconstruct the parameter object
+  optional int32 param_id=7;
+  // split id, used in debug and reconstruct the parameter object
+  optional int32 split_id=8;
+  // split offset, position (num of floats) of the start of this split to the
+  // pos of the first split.
+  optional int32 split_offset=9;
+  optional float learning_rate_multiplier=10 [default=1.0];
+  optional float weight_decay_multiplier=11 [default=1.0];
+   // content of the parameter split (i.e., the tuple).
+  optional DAryProto data=12;
+  // gradient
+  optional DAryProto grad = 13;
+  // gradient history
+  optional DAryProto history=14;
+  optional int32 threshold=15 [default=1];
+  // extensions used by Child message, e.g., SGDValue
+  extensions 100 to max;
+}
+
+message Tuple{
+  optional TKey key=1;;
+  optional TVal val=2;
+}
+
+// Tuple value class used in normal SGD algorithm.
+message SGDVal{
+  extend TVal {
+    optional SGDVal sgd=101;
+  }
+}
+
+// Tuple value class used in AdaGrad SGD algorithm.
+message AdaVal{
+  extend TVal{
+    optional AdaVal ada=102;
+  }
+}
+// used to load image mean provided by caffe, in RGBDirSource
+message MeanProto{
+  optional int32 num =1 [default =0];
+  optional int32 channels = 2 [default =0];
+  optional int32 height = 3 [default =0];
+  optional int32 width = 4 [default =0];
+  repeated float data=5 [packed=true];
+  repeated float diff=6 [packed=true];
+}
+
+

@@ -1,4 +1,3 @@
-#!/home/wangwei/install/anaconda/bin/python
 import sys
 import os
 import numpy as np

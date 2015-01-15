@@ -5,10 +5,8 @@
 #include <string>
 #include <map>
 #include <functional>
-#include "da/darray.h"
+#include "darray/darray.h"
 #include "proto/model.pb.h"
-using std::vector;
-using std::string;
 // Base paramter class.
 namespace singa {
 class Param {
@@ -68,9 +66,9 @@ class Param {
   }
 
   const int local_size(){
-    return data_.LocalVolume();
+    return data_.localVol();
   }
-  void Setup(const vector<size_t>& shape, int partition_dim);
+  void Setup(const std::vector<size_t>& shape, int partition_dim);
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */

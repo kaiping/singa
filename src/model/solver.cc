@@ -350,7 +350,7 @@ void Prefetcher::operator()(){
   // or telling the prefetcher the size of partition of the mini-batch
   const DArray& input= net_->input_layer(0)->data();
   // add a lshape(k) api for DArryProto to return local shape on k-dim
-  Pair nrng=input.LocalRange(0);
+  Pair nrng=input.localRange(0);
   Record record;
   for(int n=0;n<nrng.second-nrng.first;++n){
     NextRecord(&record);

@@ -1,15 +1,15 @@
 #ifndef INCLUDE_DA_DARRAY_H_
 #define INCLUDE_DA_DARRAY_H_
-//#include "proto/model.pb.h"
 
 #include <memory>
 #include "darray/arraycomm.h"
 #include "darray/larray.h"
+#include "proto/model.pb.h"
 
 namespace singa{
 
 class MemSpace{
- 
+
   public:
   /****************
    * constructors *
@@ -51,8 +51,8 @@ class DArray{
   //setup
   void Setup(const Shape& shp, int dim = -1);
   void Setup(const Point& shp, int dim = -1);
-  //void FromProto(const DAryProto proto);
-  //void ToProto(DAryProto* proto, bool copyData);
+  void FromProto(const DAryProto proto){}//TODO;
+  void ToProto(DAryProto* proto, bool copyData){}//TODO;
   //fill
   bool Alloc();
   void Fill(float val);
@@ -107,7 +107,7 @@ class DArray{
   void Min(const DArray& src, const float v);
   void Threshold(const DArray& src, const float v);
   //apply func for each element
-  void Map(std::function<float(float)> func, const DArray& src); 
+  void Map(std::function<float(float)> func, const DArray& src);
   void Map(std::function<float(float, float)> func, const DArray& src1, const DArray& src2);
   void Map(std::function<float(float, float, float)> func, const DArray& src1, const DArray& src2, const DArray& src3);
   //centralized math

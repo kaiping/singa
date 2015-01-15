@@ -1,7 +1,8 @@
 #include <glog/logging.h>
 #include <cmath>
 #include "model/param.h"
-
+using std::vector;
+using std::string;
 namespace singa {
 void Param::FromProto(const ParamProto &proto){
   if(proto.ary_size()>=1){
@@ -38,7 +39,7 @@ void Param::Setup(const vector<size_t>& shape, int partition_dim){
 }
 
 void Param::Init(){
-  CHECK(data_.shape().Volume())<<"must set shape of param";
+  CHECK(data_.shape().vol())<<"must set shape of param";
   switch (param_proto_.init_method()) {
   case ParamProto::kConstant:
     data_.Fill(param_proto_.value());
@@ -70,13 +71,13 @@ void Param::Init(){
 }
 
 void Param::FillGaussainData(float mean, float std, float factor) {
-  data_.SetRandGaussian(mean, std);
+  data_.RandGaussian(mean, std);
   if (factor != 1.0f)
     data_.Mult(data_,factor);
 }
 
 void Param::FillUniformData(float low, float high, float factor) {
-  data_.SetRandUniform(low, high);
+  data_.RandUniform(low, high);
   if (factor != 1.0f)
     data_.Mult(data_,factor);
 }

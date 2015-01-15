@@ -307,9 +307,10 @@ message SGDProto {
   enum ChangeProto {
     kFixed = 0;
     kInverse_t= 1;
-    kExponential = 2;
-    kLinear = 3;
-    kStep = 4;
+    kInverse= 2;
+    kExponential = 3;
+    kLinear = 4;
+    kStep = 5;
   }
   optional ChangeProto learning_rate_change = 7 [default = kStep];
   optional bool synchronous=8 [default=false];

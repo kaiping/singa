@@ -10,7 +10,7 @@
 
 #include "proto/model.pb.h"
 #include "model/param.h"
-#include "da/darray.h"
+#include "darray/darray.h"
 #include "utils/common.h"
 
 /**
@@ -107,7 +107,7 @@ class Layer {
    * @mode kModel, kData, kHybrid, kNone (no partition)
    * @return the partition dimension, -1 for no partition
    */
-  int GetPartitionDimension(PartitionMode mode);
+  virtual int GetPartitionDimension(PartitionMode mode);
   /**
    * Return name of this layer
    */
@@ -297,6 +297,7 @@ class InputLayer: public Layer {
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode)=0;
   DArray* mutable_prefetch_data(){return &(this->grad_);}
+  virtual int GetPartitionDimension(PartitionMode mode);
  protected:
   //DArray prefetch_data_; use the grad_ field for prefetch data
   int offset_;

@@ -2,6 +2,7 @@
 #define INCLUDE_DA_COMMON_H_
 
 #include <vector>
+#include <iostream>
 #include <cstdlib>
 #include <string>
 
@@ -10,12 +11,9 @@ using Point = std::vector<size_t>;
 using Pair = std::pair<size_t,size_t>;
 class Shape{
 
+  friend class LArray;
+
   public:
-  /**********
-   * static *
-   **********/
-  static Shape Empty(size_t dim);
-  static Shape Regular(size_t dim, size_t val);
   /****************
    * constructors *
    ****************/
@@ -35,17 +33,22 @@ class Shape{
   /***********
    * methods *
    ***********/
-  size_t Dim() const;
-  size_t Volume();
-  Point GetScale() const;
+  size_t dim() const;
+  size_t vol() const;
+  Point point() const;
+  void Reassign(size_t dim, size_t v);
   Shape SubShape() const;
+  size_t SubShapeVol() const;
   std::string ToString() const;
+
+  private:
+  void Init();
 
   private:
   size_t vol_ = 0;
   Point scale_;
+  Point base_;
 };
-
 
 class Range{
 
@@ -73,10 +76,12 @@ class Range{
   /***********
    * methods *
    ***********/
-  size_t Dim() const;
+  size_t dim() const;
   bool IsValid() const;
-  Range Intersect(const Range& other) const;
   bool IsInRange(const Point& pt) const;
+  Range Intersect(const Range& other) const;
+  Point start();
+  Point end();
 
   public:
   Point start_, end_;
@@ -98,7 +103,7 @@ class Partition{
   /***********
    * methods *
    ***********/
-  size_t Dim() const;
+  size_t dim() const;
   size_t LocalVol() const;
   size_t TotalVol() const;
   bool IsValid() const;
@@ -111,6 +116,9 @@ class Partition{
   Range range_;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const Shape& shp){
+  return os << shp.ToString();
+}
 
 }
 

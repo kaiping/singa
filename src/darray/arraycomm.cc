@@ -70,12 +70,21 @@ void Shape::Reassign(size_t dim, size_t v){
 
 Shape Shape::SubShape() const{
   Point pt;
-  for (int i = 1; i < scale_.size(); ++i) pt.push_back(scale_[i]);
+  for (int i = 1; i < scale_.size(); ++i)
+    pt.push_back(scale_[i]);
   return Shape(pt);
 }
 
 size_t Shape::SubShapeVol() const{
   return vol_/scale_[0];
+}
+
+string Shape::ToString() const{
+  string ret = "{";
+  if (scale_.size()) ret += to_string(scale_[0]);
+  for (int i = 1; i < scale_.size(); ++i)
+    ret += ","+to_string(scale_[i]);
+  return ret + "}";
 }
 
 void Shape::Init(){

@@ -9,10 +9,16 @@ namespace singa{
  * MemSpace *
  ************/
 
-MemSpace::MemSpace(float* head, size_t size) : head_(head),size_(size) {}
-int MemSpace::IncCount(){ return ++use_count_; }
-int MemSpace::DecCount(){ return --use_count_; }
-int MemSpace::count(){ return use_count_; }
+MemSpace::MemSpace(size_t size, bool local){
+  size_ = size;
+  head_ = (float*)malloc(sizeof(float)*size_);
+  cout << "new mem allocated with " << size_*sizeof(float) << " bytes" << endl;
+  if (!head_) cout << "cannot allocate mem!" << endl;
+}
+MemSpace::~MemSpace(){
+  free(head_);
+  cout << "free mem space with " << size_*sizeof(float) << " bytes" << endl;
+}  
 float* MemSpace::dptr(){ return head_; }
 size_t MemSpace::size(){ return size_; }
 
@@ -25,21 +31,14 @@ DArray::DArray(const Shape& shp, int dim) : shape_(shp),par_dim_(dim) {}
 DArray::DArray(const DArray& other){
   shape_ = other.shape_;
   par_dim_ = other.par_dim_;
-  //head_ = other.head_;
   mem_ = other.mem_;
-  if (mem_) mem_->IncCount();
   local_array_ = other.local_array_;
 }
 DArray::DArray(DArray&& other){
   shape_ = move(other.shape_);
   par_dim_ = other.par_dim_;
-  //head_ = other.head_;
   mem_ = other.mem_;
-  if (mem_) mem_->IncCount();
   local_array_ = other.local_array_;
-}
-DArray::~DArray(){
-  LeaveMemSpace(mem_);
 }
 
 DArray& DArray::operator=(const DArray& other){
@@ -47,10 +46,7 @@ DArray& DArray::operator=(const DArray& other){
   shape_ = other.shape_;
   par_dim_ = other.par_dim_;
   local_array_ = other.local_array_;
-  MemSpace* tmp = mem_;
   mem_ = other.mem_;
-  if (mem_) mem_->IncCount();
-  LeaveMemSpace(tmp);
   return *this;
 }
 
@@ -59,10 +55,7 @@ DArray& DArray::operator=(DArray&& other){
   shape_ = move(other.shape_);
   par_dim_ = other.par_dim_;
   local_array_ = other.local_array_;
-  MemSpace* tmp = mem_;
   mem_ = other.mem_;
-  if (mem_) mem_->IncCount();
-  LeaveMemSpace(tmp);
   return *this;
 }
 
@@ -85,13 +78,10 @@ void DArray::Setup(const Point& shp, int dim) {
 
 bool DArray::Alloc(){
   if (mem_ != nullptr){
-    cout << "darray already allocatd";
+    cout << "darray already allocatd" << endl;
     return false;
   }
-  float* ptr = (float*)malloc(sizeof(float)*shape_.vol());
-  cout << "new mem allocated with " << shape_.vol()*sizeof(float) << " bytes" << endl;
-  if (ptr == nullptr) return false;
-  mem_ = new MemSpace(ptr, shape_.vol());
+  mem_ = shared_ptr<MemSpace>(new MemSpace(shape_.vol()));
   local_array_.Assign(shape_, mem_->dptr());
   return true;
 }
@@ -123,7 +113,6 @@ void DArray::CopyFrom(const DArray& src){
 DArray DArray::SubArray(const Pair& rng) const{
   DArray ret(*this);
   ret.shape_.Reassign(0, rng.second-rng.first);
-  //cout << "SHAPE = " << ret.shape_.vol() << endl;
   ret.local_array_.shape_.Reassign(0, rng.second-rng.first);
   ret.local_array_.head_ += ret.shape_.SubShapeVol()*rng.first;
   return ret;
@@ -145,9 +134,6 @@ DArray DArray::Fetch(const Range& rng) const{
 }
 
 void DArray::SwapDptr(DArray* other) {
-  //MemSpace* tmp = other->mem_;
-  //other->mem_ = mem_;
-  //mem_ = tmp;
   swap(mem_,other->mem_);
   swap(local_array_, other->local_array_);
 }
@@ -350,14 +336,6 @@ float& DArray::at(int idx0, int idx1, int idx2) const{
 }
 float& DArray::at(int idx0, int idx1, int idx2, int idx3) const{
   return local_array_.at(idx0, idx1, idx2, idx3);
-}
-
-void DArray::LeaveMemSpace(MemSpace* mem){
-  if (mem && !(mem->DecCount())){
-      cout << "free mem space with " << mem->size()*sizeof(float) << " bytes" << endl;
-      free(mem->dptr());
-      delete mem;
-  }
 }
 
 }

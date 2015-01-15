@@ -198,14 +198,14 @@ void LArray::AddCol(const LArray& src){
   float* p = head_;
   for (int i = 0; i < shape_[0]; ++i)
     for (int j = 0; j < shape_[1]; ++j)
-      *(p++) = src.head_[i];
+      *(p++) += src.head_[i];
 }
 
 void LArray::AddRow(const LArray& src){
   float* p = head_;
   for (int i = 0; i < shape_[0]; ++i)
     for (int j = 0; j < shape_[1]; ++j)
-      *(p++) = src.head_[j];
+      *(p++) += src.head_[j];
 }
 
 void LArray::SumCol(const LArray& src, bool overwrite){
@@ -242,17 +242,17 @@ void LArray::Sum(const LArray& src, const Pair& rng){
 
 void LArray::Max(const LArray& src, const float v){
   for (int i = 0; i < shape_.vol(); ++i)
-    head_[i] = max(head_[i], v);
+    head_[i] = max(src.head_[i], v);
 }
 
 void LArray::Min(const LArray& src, const float v){
   for (int i = 0; i < shape_.vol(); ++i)
-    head_[i] = min(head_[i], v);
+    head_[i] = min(src.head_[i], v);
 }
 
 void LArray::Threshold(const LArray& src, const float v){
   for (int i = 0; i < shape_.vol(); ++i)
-    head_[i] = head_[i] >= v ? head_[i] : 0.0;
+    head_[i] = src.head_[i] >= v ? 1.0 : 0.0;
 }
 
 void LArray::Map(std::function<float(float)> func, const LArray& src){
@@ -281,12 +281,14 @@ float LArray::Max() const{
   float ret = head_[0];
   for (int i = 0; i < shape_.vol(); ++i)
     ret = max(ret, head_[i]);
+  return ret;
 }
 
 float LArray::Min() const{
   float ret = head_[0];
   for (int i = 0; i < shape_.vol(); ++i)
     ret = min(ret, head_[i]);
+  return ret;
 }
 
 float LArray::Norm1() const{

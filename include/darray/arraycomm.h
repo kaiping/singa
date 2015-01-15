@@ -39,6 +39,7 @@ class Shape{
   void Reassign(size_t dim, size_t v);
   Shape SubShape() const;
   size_t SubShapeVol() const;
+  std::string ToString() const;
 
   private:
   void Init();
@@ -48,7 +49,6 @@ class Shape{
   Point scale_;
   Point base_;
 };
-
 
 class Range{
 
@@ -116,6 +116,9 @@ class Partition{
   Range range_;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const Shape& shp){
+  return os << shp.ToString();
+}
 
 }
 

@@ -2,6 +2,7 @@
 #define INCLUDE_DA_DARRAY_H_
 //#include "proto/model.pb.h"
 
+#include <memory>
 #include "darray/arraycomm.h"
 #include "darray/larray.h"
 
@@ -13,20 +14,18 @@ class MemSpace{
   /****************
    * constructors *
    ****************/
-  MemSpace(float* head, size_t size);
+  MemSpace(size_t size, bool local = true);
+  ~MemSpace();
   /***********
    * methods *
    ***********/
-  int IncCount();
-  int DecCount();
-  int count();
   float* dptr();
   size_t size();
 
   private:
+  bool local_ = true;
   float* head_ = nullptr;
   size_t size_ = 0;
-  size_t use_count_ = 1;
 };
 
 
@@ -40,7 +39,6 @@ class DArray{
   DArray(const Shape& shp, int dim = -1);
   DArray(const DArray& other);
   DArray(DArray&& other);
-  ~DArray();
   /*************
    * operators *
    *************/
@@ -64,8 +62,6 @@ class DArray{
   void CopyFrom(const DArray& src);
   //void CopyFrom(const DArray& src, const Range rng);
   //transform
-  //void FromProto(const DAryProto&);
-  //void ToProto(DAryProto* proto, bool copyData);
   DArray SubArray(const Pair& rng) const;
   DArray Reshape(const Shape& shp) const;
   DArray Reshape(const Point& pt) const;
@@ -133,16 +129,16 @@ class DArray{
   float& at(int idx0, int idx1, int idx2, int idx3) const;
 
   private:
-  void LeaveMemSpace(MemSpace* mem);
-
-  private:
   Shape shape_;
   int par_dim_ = 0;
-  MemSpace* mem_ = nullptr;
-  //float* head_ = nullptr;
+  std::shared_ptr<MemSpace> mem_;
   //Partition* local_prt_ = nullptr;
   LArray local_array_;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const DArray& arr){
+  return os << arr.ToString();
+}
 
 } // namespace singa
 

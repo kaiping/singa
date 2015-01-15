@@ -849,6 +849,8 @@ int GetPartitionDimension(PartitionMode mode){
 void ImageLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
+  scale_=this->layer_proto_.data_param().scale();
+
   CHECK_EQ(shapes[0].size(),4);
   vector<size_t> shape=shapes[0];
   if(cropsize_>0){
@@ -902,7 +904,7 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
       for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            dptr[(c*cropsize_+h)*cropsize_+cropsize_-1-w]=image.value(
+            dptr[(c*cropsize_+h)*cropsize_+cropsize_-1-w]=scale_*image.value(
                 (c * height + h + h_off) * width + w + w_off);
           }
         }
@@ -913,7 +915,7 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
       for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < cropsize_; ++h) {
           for (int w = 0; w < cropsize_; ++w) {
-            *dptr= image.value(
+            *dptr= scale_*image.value(
                 (c * height+ h + h_off) * width + w + w_off);
             dptr++;
           }
@@ -924,7 +926,7 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
     for (int c = 0; c < channels; ++c) {
       for (int h = 0; h < height; ++h) {
         for (int w = 0; w < width; ++w) {
-          *dptr= image.value((c * height+ h ) * width + w);
+          *dptr= scale_*image.value((c * height+ h ) * width + w);
           dptr++;
         }
       }

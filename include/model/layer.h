@@ -312,6 +312,7 @@ class ImageLayer: public InputLayer {
  private:
   bool mirror_;
   int cropsize_;
+  float scale_;
 };
 
 class LabelLayer: public InputLayer {

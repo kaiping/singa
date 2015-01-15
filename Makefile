@@ -50,12 +50,6 @@ LOADER_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(LOADER_SRCS:.cc=.o)) $(PROTO_O
 
 OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) )
 
-layer:init proto build/src/model/layer.o
-
-param:init proto build/src/model/param.o
-
-net:init proto build/src/model/net.o
-
 run_hybrid: singa
 loader: init proto $(LOADER_OBJS)
 	$(CXX) $(LOADER_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
@@ -63,6 +57,10 @@ loader: init proto $(LOADER_OBJS)
 
 singa: init proto  $(SINGA_OBJS)
 	$(CXX) $(SINGA_OBJS) -o singa $(CXXFLAGS) $(LDFLAGS)
+	@echo
+
+loader: init proto $(LOADER_OBJS)
+	$(CXX) $(LOADER_OBJS) -o $(BUILD_DIR)/loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 $(OBJS):$(BUILD_DIR)/%.o : %.cc

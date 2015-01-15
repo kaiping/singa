@@ -145,13 +145,14 @@ void TSHandlerForSGD::Setup(const SGDProto& sgd) {
   momentum_=sgd.momentum();
   weight_decay_=sgd.weight_decay();
   gamma_=sgd.gamma();
+  pow_=sgd.pow();
   learning_rate_change_steps_=sgd.learning_rate_change_steps();
   learning_rate_change_=sgd.learning_rate_change();
 }
 
 float TSHandlerForSGD::UpdateHyperParam(
     int step, SGDProto::ChangeProto change,
-    int change_steps, float a, float b) {
+    int change_steps, float a, float b, float c) {
   float ret = 0., r = 0.;
   switch (change) {
     case SGDProto::kFixed:
@@ -171,6 +172,10 @@ float TSHandlerForSGD::UpdateHyperParam(
       // a is init, b is the final, from convnet
       CHECK_EQ(a, 2 * b) << "final value should be the half";
       ret = a / (1. + step * 1. / b);
+      break;
+    case SGDProto::kInverse:
+      // a is init, b is gamma, c is pow
+      ret=a*pow(1.f+b*step, -c);
       break;
     case SGDProto::kStep:
       // a is the base learning rate, b is gamma, from caffe

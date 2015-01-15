@@ -22,7 +22,7 @@ message EdgeProto{
 }
 
 message DAryProto {
-  optional int32 partition_dim =1;
+  optional int32 partition_dim =1 [default =-1];
   repeated int32 shape = 2;
   repeated float value = 3 [packed=true];
 }
@@ -235,6 +235,10 @@ message PerformanceProto {
 
 message SolverProto {
   optional int32 step=1 [default=0];
+  // relative path to system folder
+  optional string train_folder=2 [default="train"];
+  optional string test_folder=3 [default="test"];
+  optional string validation_folder=4 [default="validation"];
   // start display after this num steps
   optional int32 display_after_steps = 6 [default = 0];
   // frequency of display
@@ -280,6 +284,7 @@ message SolverProto {
 message Record {
   enum Type{
     kImageNet=0;
+    kMnist=1;
   }
   optional Type type=1 [default=kImageNet];
   optional ImageNetRecord imagenet=2;
@@ -290,13 +295,15 @@ message ImageNetRecord {
   optional int32 label=2;
 }
 
+
 message SGDProto {
   optional float learning_rate=1;
   optional float momentum=2;
   optional float weight_decay=3;
   // used in changing learning rate
   optional float gamma = 4;
-  optional int32 learning_rate_change_steps = 5;
+  optional float pow=5;
+  optional int32 learning_rate_change_steps = 6;
   enum ChangeProto {
     kFixed = 0;
     kInverse_t= 1;
@@ -304,14 +311,14 @@ message SGDProto {
     kLinear = 3;
     kStep = 4;
   }
-  optional ChangeProto learning_rate_change = 6 [default = kStep];
-  optional bool synchronous=7 [default=false];
+  optional ChangeProto learning_rate_change = 7 [default = kStep];
+  optional bool synchronous=8 [default=false];
   // table server handler class identifier
-  optional string handler=8 [default="SGDHandler"];
+  optional string handler=9 [default="SGDHandler"];
   // start the checkpoint operation after this num steps
-  optional int32 checkpoint_after_steps = 9 [default = 0];
+  optional int32 checkpoint_after_steps = 10 [default = 0];
   // frequency of checkpoint
-  optional int32 checkpoint_every_steps = 10 [default = 0];
+  optional int32 checkpoint_every_steps = 11 [default = 0];
   // leave for further extension
   extensions 100 to max;
 }

@@ -1,7 +1,5 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-19 12:14
-#ifndef DATASOURCE_SHARD_H_
-#define DATASOURCE_SHARD_H_
+#ifndef INCLUDE_UTILS_SHARD_H_
+#define INCLUDE_UTILS_SHARD_H_
 
 #include <google/protobuf/message.h>
 #include <fstream>
@@ -17,7 +15,7 @@ namespace shard {
  * Data shard stores training/validation/test records.
  * Every worker node should have a training shard (validation/test shard
  * is optional). The shard file for training is
- * lapis::Cluster::data_folder()/train/shard.dat; The shard file for validation
+ * singa::Cluster::data_folder()/train/shard.dat; The shard file for validation
  * is lapis::Cluster::data_folder()/train/shard.dat; Similar path for test.
  *
  * shard.dat consists of a set of unordered records/tuples. The tuple is
@@ -26,6 +24,10 @@ namespace shard {
  *
  * When Shard obj is created, it will remove the last key if the tuple size and
  * key size do not match because the last write of tuple crashed.
+ *
+ * TODO
+ * 1. split one shard into multile shards.
+ * 2. add threading to prefetch and parse records
  *
  */
 class Shard {
@@ -43,9 +45,9 @@ class Shard {
    * @folder shard folder (path except shard.dat) on worker node
    * @mode shard open mode, Shard::kRead, Shard::kWrite or Shard::kAppend
    * @bufsize batch bufsize bytes data for every disk op (read or write),
-   * default is 32MB
+   * default is 100MB
    */
-  Shard(std::string folder, char mode, int capacity=33554432);
+  Shard(std::string folder, char mode, int capacity=104857600);
   ~Shard();
 
   /**
@@ -79,7 +81,6 @@ class Shard {
    * @return reture if sucess, otherwise false, e.g., inserted before
    */
   bool Insert(const std::string& key, const std::string& tuple);
-
   /**
    * Move the read pointer to the head of the shard file.
    * Used for repeated reading.
@@ -94,6 +95,12 @@ class Shard {
    * @return num of tuples
    */
   const int Count();
+  /**
+   * @return path to shard file
+   */
+  const std::string path(){
+    return path_;
+  }
 
  protected:
   /**

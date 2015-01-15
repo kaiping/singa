@@ -148,7 +148,6 @@ bool Shard::PrepareNextField(int size){
   return true;
 }
 
-
 const int Shard::Count() {
   std::ifstream fin(path_, std::ios::in|std::ios::binary);
   CHECK(fdat_.is_open())<<"Cannot create file "<<path_;

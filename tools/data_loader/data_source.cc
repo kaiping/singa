@@ -1,15 +1,98 @@
 #include <glog/logging.h>
+#include <fcntl.h>
+#include <google/protobuf/message.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <memory>
 #include <fstream>
-
-#include "utils/common.h"
+using google::protobuf::Message;
+using google::protobuf::io::FileInputStream;
+using google::protobuf::io::ZeroCopyInputStream;
+using google::protobuf::io::CodedInputStream;
 #include "data_source.h"
 
+/************************************************************************
+ * Implement DataSouce for ImageNet input
+ ************************************************************************/
+uint32_t swap_endian(uint32_t val) {
+  val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
+  return (val << 16) | (val >> 16);
+}
 
-const std::string ImageNetSource::type="ImageNetSource";
+void MnistSource::Init(string imagefile, string labelfile){
+  //Open files
+  imagestream_.open(imagefile, std::ios::in | std::ios::binary);
+  labelstream_.open(labelfile, std::ios::in | std::ios::binary);
+  CHECK(imagestream_.is_open()) << "Unable to open file " << imagefile;
+  CHECK(labelstream_.is_open()) << "Unable to open file " << labelfile;
+  // Read the magic and the meta data
+  uint32_t magic;
+  uint32_t num_items;
+  uint32_t num_labels;
+  imagestream_.read(reinterpret_cast<char*>(&magic), 4);
+  magic = swap_endian(magic);
+  CHECK_EQ(magic, 2051) << "Incorrect image file magic.";
+  labelstream_.read(reinterpret_cast<char*>(&magic), 4);
+  magic = swap_endian(magic);
+  CHECK_EQ(magic, 2049) << "Incorrect label file magic.";
+  imagestream_.read(reinterpret_cast<char*>(&num_items), 4);
+  num_items = swap_endian(num_items);
+  labelstream_.read(reinterpret_cast<char*>(&num_labels), 4);
+  num_labels = swap_endian(num_labels);
+  CHECK_EQ(num_items, num_labels);
+  size_=num_items;
+  imagestream_.read(reinterpret_cast<char*>(&height_), 4);
+  height_ = swap_endian(height_);
+  imagestream_.read(reinterpret_cast<char*>(&width_), 4);
+  width_ = swap_endian(width_);
+  image_=new char[height_*width_];
+  LOG(ERROR)<<"Data info, num of instances: "<<size_<<" height:"<<height_
+    <<" width_:"<<width_;
+}
+
+bool MnistSource::NextRecord(string* key, singa::Record *record){
+  if(!eof()){
+    offset_++;
+    char label;
+    imagestream_.read(image_, height_*width_);
+    labelstream_.read(&label, 1);
+    //use imagenetrecord here
+    record->set_type(singa::Record_Type_kMnist);
+    singa::ImageNetRecord* rec=record->mutable_imagenet();
+    rec->set_label(static_cast<int>(label));
+    singa::DAryProto* dary=rec->mutable_image();
+    dary->add_shape(1);
+    dary->add_shape(height_);
+    dary->add_shape(width_);
+    for(int i=0;i<height_*width_;i++)
+      dary->add_value(static_cast<float>(image_[i]));
+    return true;
+  }else{
+    return false;
+  }
+}
+
+/************************************************************************
+ * Implement DataSouce for ImageNet input
+ ************************************************************************/
+void ReadProtoFromBinaryFile(const char* filename, Message* proto) {
+  VLOG(3)<<"read from binry file";
+  int fd = open(filename, O_RDONLY);
+  CHECK_NE(fd, -1) << "File not found: " << filename;
+  ZeroCopyInputStream* raw_input = new FileInputStream(fd);
+  CodedInputStream* coded_input = new CodedInputStream(raw_input);
+  coded_input->SetTotalBytesLimit(536870912, 268435456);
+  VLOG(3)<<"before parse";
+  CHECK(proto->ParseFromCodedStream(coded_input));
+  delete coded_input;
+  delete raw_input;
+  close(fd);
+  VLOG(3)<<"read binry file";
+}
+
 void ImageNetSource::Init(const string& folder, const string& meanfile, const int width, const int height){
   size_=0;
   offset_=0;
@@ -44,7 +127,7 @@ void ImageNetSource::LoadLabel(string path){
 }
 void ImageNetSource::LoadMeanFile(string path){
   // read mean of the images
-  singa::ReadProtoFromBinaryFile(path.c_str(), &data_mean_);
+  ReadProtoFromBinaryFile(path.c_str(), &data_mean_);
   LOG(INFO)<<"Read mean proto, of shape: "
     <<data_mean_.num()<<" "<<data_mean_.channels()
     <<" "<<data_mean_.height() <<" "<<data_mean_.width();
@@ -92,55 +175,29 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
 bool ImageNetSource::GetRecord(const int key, singa::Record* record) {
   if(key<0 || key>=size_)
     return false;
-  singa::DAryProto *image=record->mutable_image();
+  singa::ImageNetRecord *imagenet=record->mutable_imagenet();
+  singa::DAryProto *image=imagenet->mutable_image();
   if(image->value().size()<record_size_){
     for(int i=0;i<record_size_;i++)
       image->add_value(0);
   }
   ReadImage(image_folder_ + "/" + lines_.at(key).first, height_,
             width_, data_mean_.data().data(),image);
-  record->set_label(lines_.at(key).second);
+  imagenet->set_label(lines_.at(key).second);
   return true;
 }
 
 bool ImageNetSource::NextRecord(string* key, singa::Record *record) {
-  singa::DAryProto *image=record->mutable_image();
+  record->set_type(singa::Record_Type_kImageNet);
+  singa::ImageNetRecord *imagenet=record->mutable_imagenet();
+  singa::DAryProto *image=imagenet->mutable_image();
   if(image->value().size()<record_size_){
     for(int i=image->value().size();i<record_size_;i++)
       image->add_value(0);
   }
   *key=lines_.at(offset_).first;
   int ret=ReadImage(image_folder_ + "/" + *key, height_, width_, data_mean_.data().data(),image);
-  record->set_label(lines_.at(offset_).second);
+  imagenet->set_label(lines_.at(offset_).second);
   offset_++;
   return ret;
-}
-/*****************************************************************************
- * Implementation of DataSourceFactory
- ****************************************************************************/
-#define CreateDS(DSClass) [](void)->DataSource* {return new DSClass();}
-
-std::shared_ptr<DataSourceFactory> DataSourceFactory::instance_;
-
-std::shared_ptr<DataSourceFactory> DataSourceFactory::Instance() {
-   if (!instance_.get())
-     instance_.reset(new DataSourceFactory());
-   return instance_;
-}
-
-DataSourceFactory::DataSourceFactory() {
-  RegisterCreateFunction(ImageNetSource::type, CreateDS(ImageNetSource));
-}
-
-void DataSourceFactory::RegisterCreateFunction(
-  const string &id,
-  std::function<DataSource*(void)> create_function) {
-  ds_map_[id] = create_function;
-  DLOG(INFO)<<"register DataSource: "<<id;
-}
-
-DataSource *DataSourceFactory::Create(const string id) {
-  CHECK(ds_map_.find(id) != ds_map_.end()) << "The reader " << id
-      << " has not been registered\n";
-  return ds_map_.at(id)();
 }

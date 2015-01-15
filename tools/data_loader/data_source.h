@@ -1,11 +1,10 @@
-#ifndef INCLUDE_DATA_SOURCE_H_
-#define INCLUDE_DATA_SOURCE_H_
 #include <google/protobuf/repeated_field.h>
 #include <string>
 #include <memory>
 #include <map>
 #include <vector>
 #include <functional>
+#include <fstream>
 
 #include "proto/model.pb.h"
 
@@ -61,6 +60,28 @@ class DataSource {
   //!< identifier of the data source
   string name_;
 };
+class MnistSource :public DataSource{
+ public:
+  void Init(string imagefile, string labelfile);
+  /**
+   * Fetch/parse next record.
+   * @key pointer to key string, exist content will be overwrite
+   * @pointer to Record, exist content will be overwrite
+   * @return true if read succ, false otherwise
+   */
+  virtual bool NextRecord(string* key, singa::Record *record);
+  /**
+   * @return name of this data source
+   */
+  const string &name() {
+    return name_;
+  }
+ protected:
+  char* image_;
+  int height_, width_;
+  std::ifstream imagestream_, labelstream_;
+};
+
 /**
  * ImageNet dataset specific source.
  */
@@ -79,8 +100,6 @@ class ImageNetSource : public DataSource {
 
   virtual bool NextRecord(string* key, singa::Record *record);
 
-  //!< class identifier
-  static const std::string type;
  protected:
   /**
    * get record at the specific offset
@@ -123,63 +142,8 @@ class ImageNetSource : public DataSource {
    * resized image size
    */
   int record_size_;
-  MeanProto data_mean_;
+  singa::MeanProto data_mean_;
   // record meta info,  a pair of image file name and label
   vector<std::pair<string, int>> lines_;
 };
-/*****************************************************************************
- * DataSourceFactory
- *****************************************************************************/
-/**
- * Register DataSource with identifier ID
- * @param ID identifier of the data source, e.g., "RGBFeature". The id field in
- * DataSourceProto should be the same to this identifier
- * @param DS the child DataSource
- */
-#define REGISTER_DATASOURCE(ID, DS) DataSourceFactory::Instance()->\
-  RegisterCreateFunction(ID, [](void)-> DataSource* {return new DS();})
 
-/**
- * Factory for creating DataSource instance based on user provided identifier.
- * Users are required to register user-defined DataSource before creating
- * instances of them during runtime through this factory. For example, if you
- * define a new DataSource FooDataSource with identifier "Foo", then you
- * can use it in your net by 1) configure your DataSrouceProto with the id
- * field to be "Foo". 2) register it (e.g., at the start of the program). Then
- * your FooDataSource will be created by calling
- * DataSourceFactory::Instance()->Create("Foo") automatically by the Trainer.
- */
-
-class DataSourceFactory {
- public:
-  /**
-   * Static method to get instance of this factory, there should be only one
-   * instance of this factory.
-   */
-  static shared_ptr<DataSourceFactory> Instance();
-
-  /**
-   * Register user defined DataSource, i.e., add it with its identifier (the
-   * id field in DataSourceProto) into a inner map.
-   * Later, the factory can then create an instance of the DataSource based on
-   * its identifier. This function will be called by the REGISTER_DATASOURCE
-   * macro.
-   */
-  void RegisterCreateFunction(
-    const string &id,
-    std::function<DataSource*(void)> create_function);
-  /**
-   * Create an instance the child DataSource of identifier being id.
-   * @param id the identifier of the child DataSource.
-   */
-  DataSource *Create(const string id);
-
- private:
-  //! To avoid creating multiple instances of this factory in the program.
-  DataSourceFactory();
-  //! Map from DataSource identifier to creating function.
-  std::map<const string, std::function<DataSource*(void)>> ds_map_;
-  static shared_ptr<DataSourceFactory> instance_;
-};
-
-#endif  // INCLUDE_DATA_SOURCE_H_

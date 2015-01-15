@@ -71,7 +71,7 @@ class TSHandlerForSGD: public TableServerHandler {
   float GetLearningRate(int step, float multiplier){
     float lr=UpdateHyperParam(
         step, learning_rate_change_,
-        learning_rate_change_steps_, learning_rate_, gamma_);
+        learning_rate_change_steps_, learning_rate_, gamma_, pow_);
     return lr*multiplier;
   }
 
@@ -85,10 +85,10 @@ class TSHandlerForSGD: public TableServerHandler {
 
   float UpdateHyperParam(
       int step, SGDProto::ChangeProto change,
-      int change_steps, float a, float b);
+      int change_steps, float a, float b, float c);
 
  protected:
-   float learning_rate_, momentum_, weight_decay_, gamma_;
+   float learning_rate_, momentum_, weight_decay_, gamma_, pow_;
    int learning_rate_change_steps_;
    SGDProto_ChangeProto learning_rate_change_;
 };

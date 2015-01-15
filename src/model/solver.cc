@@ -14,9 +14,9 @@ Solver::Solver(const SolverProto &proto) {
   phase_=kTrain;
 
   string data_folder=GlobalContext::Get()->data_folder();
-  train_shard_=data_folder+"/train";
-  val_shard_=data_folder+"/validation";
-  test_shard_=data_folder+"/test";
+  train_shard_=data_folder+"/"+proto.train_folder();
+  val_shard_=data_folder+"/"+proto.validation_folder();
+  test_shard_=data_folder+"/"+proto.test_folder();
   delegate_=new TableDelegate(GlobalContext::Get());
 }
 

@@ -7,8 +7,8 @@
 #include <string>
 
 namespace singa{
-using Point = std::vector<size_t>;
-using Pair = std::pair<size_t,size_t>;
+using Point = std::vector<int>;
+using Pair = std::pair<int,int>;
 class Shape{
 
   friend class LArray;
@@ -27,25 +27,25 @@ class Shape{
    *************/
   Shape& operator=(const Shape& other);
   Shape& operator=(Shape&& other);
-  int operator[](size_t i) const;
+  int operator[](int i) const;
   bool operator==(const Shape& other) const;
   bool operator!=(const Shape& other) const;
   /***********
    * methods *
    ***********/
-  size_t dim() const;
-  size_t vol() const;
+  int dim() const;
+  int vol() const;
   Point point() const;
-  void Reassign(size_t dim, size_t v);
+  void Reassign(int dim, int v);
   Shape SubShape() const;
-  size_t SubShapeVol() const;
+  int SubShapeVol() const;
   std::string ToString() const;
 
   private:
   void Init();
 
   private:
-  size_t vol_ = 0;
+  int vol_ = 0;
   Point scale_;
   Point base_;
 };
@@ -70,13 +70,13 @@ class Range{
    *************/
   Range& operator=(const Range& other);
   Range& operator=(Range&& other);
-  Pair operator[](size_t i) const;
+  Pair operator[](int i) const;
   bool operator==(const Range& other) const;
   bool operator!=(const Range& other) const;
   /***********
    * methods *
    ***********/
-  size_t dim() const;
+  int dim() const;
   bool IsValid() const;
   bool IsInRange(const Point& pt) const;
   Range Intersect(const Range& other) const;
@@ -103,9 +103,9 @@ class Partition{
   /***********
    * methods *
    ***********/
-  size_t dim() const;
-  size_t LocalVol() const;
-  size_t TotalVol() const;
+  int dim() const;
+  int LocalVol() const;
+  int TotalVol() const;
   bool IsValid() const;
   bool IsInPartition(const Point& pt) const;
   Shape GetShape() const;

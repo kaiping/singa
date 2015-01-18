@@ -2,6 +2,10 @@
 #include <memory>
 #include <cfloat>
 #include <math.h>
+#include <cblas.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "model/layer.h"
 namespace singa {
 /*****************************************************************************
@@ -94,7 +98,7 @@ void Im2colLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   channels_=src.shape(1);
   height_ = src.shape(2);
   width_ = src.shape(3);
-  vector<size_t> shape{num, channels_ * kernel_h_ * kernel_w_,
+  vector<int> shape{num, channels_ * kernel_h_ * kernel_w_,
     (height_ + 2 * pad_h_ - kernel_h_) / stride_h_ + 1,
     (width_ + 2 * pad_w_ - kernel_w_) / stride_w_ + 1};
   int pdim=GetPartitionDimension(mode);
@@ -118,8 +122,8 @@ void Im2colLayer::ComputeFeature(const vector<Layer*>& src_layers){
   for(int n=nrng.first; n<nrng.second;++n){
     DArray im=src[n].SubArray(Pair({srccrng.first, srccrng.second}));
     DArray col=data_[n].SubArray(Pair({crng.first, crng.second}));
-    im2col(im, channels_, height_, width_, kernel_h_, kernel_w_,
-        pad_h_, pad_w_, stride_h_, stride_w_, &col);
+    im2col(im.dptr(), channels_, height_, width_, kernel_h_, kernel_w_,
+        pad_h_, pad_w_, stride_h_, stride_w_, col.dptr());
   }
 }
 void Im2colLayer::ComputeGradient(const vector<Layer*>& src_layers) {
@@ -135,23 +139,21 @@ void Im2colLayer::ComputeGradient(const vector<Layer*>& src_layers) {
     for(int n=srcnrng.first;n<srcnrng.second;n++){
       DArray col=grad[n].SubArray(Pair({crng.first, crng.second}));
       DArray im=gsrc[n].SubArray(Pair({srccrng.first, srccrng.second}));
-      col2im(col, channels_, height_, width_, kernel_h_, kernel_w_,
-          pad_h_, pad_w_, stride_h_, stride_w_, &im);
+      col2im(col.dptr(), channels_, height_, width_, kernel_h_, kernel_w_,
+          pad_h_, pad_w_, stride_h_, stride_w_, im.dptr());
     }
   }
 }
 
 // Code of im2col function is from Caffe.
-void Im2colLayer::im2col(const DArray &im, const int channels,
+void Im2colLayer::im2col(const float* data_im, const int channels,
     const int height, const int width, const int kernel_h, const int kernel_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
-    DArray* col){
-  int height_col = (height + 2 * pad_h - kernel_h_) / stride_h + 1;
-  int width_col = (width + 2 * pad_w - kernel_w_) / stride_w + 1;
+    float* data_col){
+  int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+  int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
   int channels_col = channels * kernel_h * kernel_w;
-  float* data_col=col->dptr();
-  float* data_im=im.dptr();
   for (int c = 0; c < channels_col; ++c) {
     int w_offset = c % kernel_w;
     int h_offset = (c / kernel_w) % kernel_h;
@@ -171,14 +173,13 @@ void Im2colLayer::im2col(const DArray &im, const int channels,
 }
 
 // Code of im2col function is from Caffe.
-void Im2colLayer::col2im(const DArray& col, const int channels,
+void Im2colLayer::col2im(const float* data_col, const int channels,
     const int height, const int width, const int patch_h, const int patch_w,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
-    DArray* im){
-  im->Fill(0.f);
-  float* data_im=im->dptr();
-  float* data_col=col.dptr();
+    float* data_im){
+  memset(data_im, 0, sizeof(float)*channels*height*width);
+  //im->Fill(0.f);
   int height_col = (height + 2 * pad_h - patch_h) / stride_h + 1;
   int width_col = (width + 2 * pad_w - patch_w) / stride_w + 1;
   int channels_col = channels * patch_h * patch_w;
@@ -748,7 +749,7 @@ void SoftmaxLossLayer::Setup(const vector<Layer*>& src_layers,
   const DArray& src=src_layers[0]->data();
   num_=src.shape(0);
   dim_=src.shape().vol()/num_;
-  vector<size_t> shape{num_, dim_};
+  vector<int> shape{num_, dim_};
   top_k_=this->layer_proto_.softmaxloss_param().top_k();
   data_.Setup(shape, pdim);
 }
@@ -846,13 +847,13 @@ int InputLayer::GetPartitionDimension(PartitionMode mode){
 /*****************************************************************************
  * Implementation for ImageLayer
  *****************************************************************************/
-void ImageLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
+void ImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
   scale_=this->layer_proto_.data_param().scale();
 
   CHECK_EQ(shapes[0].size(),4);
-  vector<size_t> shape=shapes[0];
+  vector<int> shape=shapes[0];
   if(cropsize_>0){
     shape[2]=cropsize_;
     shape[3]=cropsize_;
@@ -860,13 +861,14 @@ void ImageLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode)
   int pdim=GetPartitionDimension(mode);
   data_.Setup(shape, pdim);
   grad_.Setup(shape, pdim);
+  offset_=0;
 }
 
 void ImageLayer::Setup(const int batchsize,
     const Record & record,
     PartitionMode mode){
   const DAryProto& image=record.imagenet().image();
-  vector<size_t> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
+  vector<int> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
   if(cropsize_>0){
@@ -876,6 +878,7 @@ void ImageLayer::Setup(const int batchsize,
   int pdim=GetPartitionDimension(mode);
   data_.Setup(shape, pdim);
   grad_.Setup(shape, pdim);
+  offset_=0;
 }
 
 void ImageLayer::AddInputRecord(const Record &record, Phase phase){
@@ -935,21 +938,215 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
   offset_++;
 }
 
+
+/****************************************************************************
+ * Implementation for MnistLayer
+ ***************************************************************************/
+void MnistImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
+  CHECK_GE(shapes.size(),1);
+  CHECK_GE(shapes[0].size(),3);//batchsize, height(29), width(29)
+  int pdim=GetPartitionDimension(mode);
+  vector<int> shape(shapes[0]);
+  if(this->layer_proto_.mnist_param().has_size())
+    shape[1]=shape[2]=this->layer_proto_.mnist_param().size();
+  data_.Setup(shapes[0], pdim);
+  grad_.Setup(shapes[0], pdim);
+  offset_=0;
+}
+
+void MnistImageLayer::Setup(const int batchsize, const Record & record,
+      PartitionMode mode){
+  int s=static_cast<int>(sqrt(record.mnist().pixel().size()));
+  if(this->layer_proto_.mnist_param().has_size())
+    s=this->layer_proto_.mnist_param().size();
+  vector<int> shape{batchsize, s, s};
+  int pdim=GetPartitionDimension(mode);
+  data_.Setup(shape, pdim);
+  grad_.Setup(shape, pdim);
+  offset_=0;
+}
+
+void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
+  MnistProto proto=this->layer_proto_.mnist_param();
+  int imgsize[2];
+  imgsize[0]=imgsize[1]=static_cast<int>(sqrt(record.mnist().pixel().size()));
+  cv::Mat input(imgsize[0], imgsize[1], CV_32FC1);
+  const string pixel=record.mnist().pixel();
+  int count=0;
+  for(int i=0,k=0;i<imgsize[0];i++)
+    for(int j=0;j<imgsize[1];j++){
+      input.at<float>(i,j)=static_cast<float>(static_cast<uint8_t>(pixel[k++]));
+      CHECK_GE(input.at<float>(i,j),0);
+      if(input.at<float>(i,j)>0)
+        count++;
+    }
+  LOG(ERROR)<<"input positive "<<count;
+  std::default_random_engine generator;
+  std::uniform_real_distribution<float> distribution(-1.0,1.0);
+
+  cv::Mat resizeMat=input;
+  if(proto.has_size()||proto.has_gamma()){
+    int h=imgsize[0];
+    int w=imgsize[1];
+    if(proto.has_size())
+      h=w=proto.size();
+    if(proto.has_gamma()){
+      h=static_cast<int>(h*(1.+distribution(generator)*proto.beta()/100.0));
+      w=static_cast<int>(w*(1.+distribution(generator)*proto.beta()/100.0));
+    }
+    cv::resize(input, resizeMat, cv::Size(h,w));
+  }
+  cv::Mat betaMat=resizeMat;
+  if(this->layer_proto_.mnist_param().has_beta()){
+    LOG(ERROR)<<"Beta";
+    cv::Mat warpmat(2,3, CV_32FC1);
+    if(rand() % 2){
+      // rotation
+      cv::Point center(resizeMat.rows/2, resizeMat.cols/2);
+      warpmat=cv::getRotationMatrix2D(center,
+          distribution(generator)*proto.beta(),
+          1.0);
+    }else{
+      //shearing
+      warpmat.at<float>(0,0)=1.0;
+      warpmat.at<float>(0,1)=distribution(generator)*proto.beta()/90;
+      if(record.mnist().label()==1 ||record.mnist().label()==7)
+        warpmat.at<float>(0,1)/=2.0;
+      warpmat.at<float>(0,2)=0.0;
+      warpmat.at<float>(1,0)=0.0;
+      warpmat.at<float>(1,1)=1.0;
+      warpmat.at<float>(1,2)=0.0;
+    }
+    cv::Size size=proto.has_size()?cv::Size(proto.size(),proto.size()):resizeMat.size();
+    cv::warpAffine(resizeMat, betaMat, warpmat, size);
+  }
+  Pair nrng=grad_.localRange(0);
+  CHECK_LT(offset_, nrng.second-nrng.first);
+  int n=offset_+nrng.first;
+  float* dptr=grad_.addr(n,0,0);
+  LOG(ERROR)<<"beta mat shape "<<betaMat.rows<<", "<<betaMat.cols;
+  int count2=0;
+  for(int i=0,k=0;i<betaMat.rows;i++){
+    for(int j=0;j<betaMat.cols;j++){
+      dptr[k++]=betaMat.at<float>(i,j);
+      if(dptr[k-1]>0)
+        count2++;
+    }
+  }
+  LOG(ERROR)<<"dptr positive "<<count2;
+  LOG(ERROR)<<"before elastic"<<grad_.Norm1();
+  if(proto.has_elastic_freq()&&++offset_%proto.elastic_freq()==0){
+    int freq=static_cast<int>(sqrt(proto.elastic_freq()));
+    CHECK_EQ(freq*freq, proto.elastic_freq());
+    ElasticDistortion(
+        grad_.SubArray(Pair(offset_-proto.elastic_freq(),offset_)).dptr(),
+        freq,
+        betaMat.rows,
+        betaMat.cols,
+        proto.kernel(),
+        proto.sigma(),
+        proto.alpha());
+  LOG(ERROR)<<"after elastic"<<grad_.Norm1();
+  }
+}
+
+void MnistImageLayer::ElasticDistortion(float* data, int n, int h, int w, int kernel,
+    float sigma, float alpha){
+  CHECK_EQ(h,w);
+  int pad=kernel/2;
+  std::default_random_engine generator;
+  std::uniform_real_distribution<float> distribution(-1.0,1.0);
+
+  float* displacementx=new float[n*h*n*w];
+  float* displacementy=new float[n*h*n*w];
+  for(int i=0;i<n*h*n*w;i++){
+    displacementx[i]=distribution(generator);
+    displacementy[i]=distribution(generator);
+  }
+
+  float* gauss=new float[kernel*kernel];
+  int center=kernel/2;
+  double denom=2.0*sigma*sigma;
+  float sum=0;
+  for(int i=0,k=0;i<kernel;i++)
+    for(int j=0;j<kernel;j++){
+      int dist=(i-center)*(i-center)+(j-center)*(j-center);
+      float z=static_cast<float>(exp(-dist*1.0/denom));
+      gauss[k++]=z;
+      sum+=z;
+    }
+  for(int i=0;i<kernel*kernel;i++)
+    gauss[i]/=sum;
+
+  float* colimg=new float[kernel*kernel*n*h*n*w];
+  Im2colLayer::im2col(displacementx, 1, n*h, n*w,
+      kernel, kernel, pad, pad, 1, 1, colimg);
+  cblas_sgemv(CblasRowMajor, CblasTrans,  kernel*kernel,n*h*n*w,alpha, colimg,
+      n*h*n*w, gauss, 1, 0, displacementx, 1);
+  Im2colLayer::im2col(displacementy, 1, n*h, n*w,
+      kernel, kernel, pad, pad, 1, 1, colimg);
+  cblas_sgemv(CblasRowMajor, CblasTrans,  kernel*kernel,n*h*n*w,alpha, colimg,
+      n*h*n*w, gauss, 1, 0, displacementy, 1);
+
+  float *input=new float[n*h*n*w];
+  memcpy(input, data, sizeof(float)*n*h*n*w);
+  for(int r=0;r<n;r++){
+    for(int c=0;c<n;c++){
+      int offset=(r*n+c)*h*w;
+      for(int y=0;y<h;y++)
+        for(int x=0;x<w;x++){
+          float xx=x+displacementx[(r*h+y)*n*w+c*w+x];
+          float yy=y+displacementy[(r*h+y)*n*w+c*w+x];
+          int low_x=static_cast<int>(floor(xx));
+          int low_y=static_cast<int>(floor(yy));
+          int hi_x=static_cast<int>(ceil(xx));
+          int hi_y=static_cast<int>(ceil(yy));
+          if(low_x<0||hi_x>w||low_y<0||hi_y>h)
+            data[offset+y*w+x]=0;
+          else
+            data[offset+y*w+x]=(
+              input[offset+low_y*w+low_x]
+              +input[offset+low_y*w+hi_x]
+              +input[offset+hi_y*w+low_x]
+              +input[offset+hi_y*w+hi_x])/4;
+        }
+    }
+  }
+  delete displacementx;
+  delete displacementy;
+  delete gauss;
+  delete colimg;
+  delete input;
+}
+
+vector<uint8_t> MnistImageLayer::Convert2Image(int k){
+  float* dptr=grad_.addr(k,0,0);
+  int s=static_cast<int>(sqrt(grad_.shape(1)));
+  if(this->layer_proto_.mnist_param().has_size())
+    s=this->layer_proto_.mnist_param().size();
+  vector<uint8_t>ret;
+  for(int i=0;i<s*s;i++){
+      ret.push_back(static_cast<uint8_t>(static_cast<int>(floor(dptr[i]))));
+  }
+  return ret;
+}
 /*****************************************************************************
  * Implementation for LabelLayer
  *****************************************************************************/
-void LabelLayer::Setup(const vector<vector<size_t>>& shapes, PartitionMode mode){
+void LabelLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
   CHECK_GE(shapes.size(),2);
   CHECK_EQ(shapes[1].size(),2);
   int pdim=GetPartitionDimension(mode);
   data_.Setup(shapes[1],pdim);
   grad_.Setup(shapes[1], pdim);
+  offset_=0;
 }
 
 void LabelLayer::Setup(const int batchsize, const Record & record, PartitionMode mode){
   int pdim=GetPartitionDimension(mode);
-  data_.Setup(vector<size_t>{batchsize,1}, pdim);
-  grad_.Setup(vector<size_t>{batchsize,1}, pdim);
+  data_.Setup(vector<int>{batchsize,1}, pdim);
+  grad_.Setup(vector<int>{batchsize,1}, pdim);
+  offset_=0;
 }
 
 void LabelLayer::AddInputRecord(const Record &record, Phase phase){

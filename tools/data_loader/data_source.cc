@@ -61,14 +61,13 @@ bool MnistSource::NextRecord(string* key, singa::Record *record){
     labelstream_.read(&label, 1);
     //use imagenetrecord here
     record->set_type(singa::Record_Type_kMnist);
-    singa::ImageNetRecord* rec=record->mutable_imagenet();
+    singa::MnistRecord* rec=record->mutable_mnist();
     rec->set_label(static_cast<int>(label));
-    singa::DAryProto* dary=rec->mutable_image();
-    dary->add_shape(1);
-    dary->add_shape(height_);
-    dary->add_shape(width_);
+    string pixel;
+    pixel.resize(height_*width_);
     for(int i=0;i<height_*width_;i++)
-      dary->add_value(static_cast<float>(image_[i]));
+      pixel[i]=image_[i];
+    rec->set_pixel(pixel);
     return true;
   }else{
     return false;

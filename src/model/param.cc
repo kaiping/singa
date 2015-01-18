@@ -31,7 +31,7 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
   history_.ToProto(history, copyData);
 }
 
-void Param::Setup(const vector<size_t>& shape, int partition_dim){
+void Param::Setup(const vector<int>& shape, int partition_dim){
   data_.Setup(shape, partition_dim);
   grad_.Setup(shape, partition_dim);
   history_.Setup(shape, partition_dim);

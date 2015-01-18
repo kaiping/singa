@@ -68,7 +68,7 @@ class Param {
   const int local_size(){
     return data_.localVol();
   }
-  void Setup(const std::vector<size_t>& shape, int partition_dim);
+  void Setup(const std::vector<int>& shape, int partition_dim);
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */

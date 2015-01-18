@@ -122,6 +122,7 @@ message LayerProto {
   optional DropoutProto dropout_param = 13;
   optional InnerProductProto inner_product_param = 17;
   optional LRNProto lrn_param = 18;
+  optional MnistProto mnist_param= 21;
   optional PoolingProto pooling_param = 19;
   optional ReLUProto relu_param = 30;
   optional SoftmaxLossProto softmaxloss_param = 10;
@@ -171,6 +172,20 @@ message DataProto {
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
   // be larger than the number of keys in the leveldb.
   optional uint32 rand_skip = 7 [default = 0];
+}
+
+message MnistProto {
+  // elastic distortion
+  optional float sigma=1;
+  optional float alpha=2;
+  optional int32 kernel=3;
+  // rotation or horizontal shearing
+  optional float beta=4;
+  // scaling
+  optional float gamma=5;
+  // scale to this size as input for deformation
+  optional int32 size=6 ;
+  optional int32 elastic_freq=7;
 }
 // Message that stores parameters used by DropoutLayer
 message DropoutProto {
@@ -288,6 +303,12 @@ message Record {
   }
   optional Type type=1 [default=kImageNet];
   optional ImageNetRecord imagenet=2;
+  optional MnistRecord mnist=3;
+}
+
+message MnistRecord{
+  optional int32 label=1;
+  optional bytes pixel=2;
 }
 
 message ImageNetRecord {

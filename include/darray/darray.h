@@ -14,18 +14,18 @@ class MemSpace{
   /****************
    * constructors *
    ****************/
-  MemSpace(size_t size, bool local = true);
+  MemSpace(int size, bool local = true);
   ~MemSpace();
   /***********
    * methods *
    ***********/
   float* dptr();
-  size_t size();
+  int size();
 
   private:
   bool local_ = true;
   float* head_ = nullptr;
-  size_t size_ = 0;
+  int size_ = 0;
 };
 
 
@@ -68,12 +68,12 @@ class DArray{
   DArray Fetch(const Range& rng) const;
   void SwapDptr(DArray* other);
   //inform
-  size_t dim() const;
-  size_t globalVol() const;
-  size_t localVol() const;
+  int dim() const;
+  int globalVol() const;
+  int localVol() const;
   Pair localRange(int k) const;
   Shape shape() const;
-  size_t shape(int k) const;
+  int shape(int k) const;
   int partitionDim() const;
   Partition localPartition() const;
   float* dptr() const;
@@ -119,10 +119,10 @@ class DArray{
   //float Min(const Range& rng);
   float Norm1() const;
   //element-level
-  float* addr(int idx0) const;
-  float* addr(int idx0, int idx1) const;
-  float* addr(int idx0, int idx1, int idx2) const;
-  float* addr(int idx0, int idx1, int idx2, int idx3) const;
+  float* addr(int idx0);
+  float* addr(int idx0, int idx1);
+  float* addr(int idx0, int idx1, int idx2);
+  float* addr(int idx0, int idx1, int idx2, int idx3);
   float& at(int idx0) const;
   float& at(int idx0, int idx1) const;
   float& at(int idx0, int idx1, int idx2) const;

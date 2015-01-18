@@ -39,7 +39,7 @@ Shape& Shape::operator=(Shape&& other){
   return *this;
 }
 
-int Shape::operator[](size_t i) const{
+int Shape::operator[](int i) const{
   return scale_[i];
 }
 
@@ -51,11 +51,11 @@ bool Shape::operator!=(const Shape& other) const{
   return scale_ != other.scale_;
 }
 
-size_t Shape::dim() const{
+int Shape::dim() const{
   return scale_.size();
 }
 
-size_t Shape::vol() const{
+int Shape::vol() const{
   return vol_;
 }
 
@@ -63,7 +63,7 @@ Point Shape::point() const{
   return scale_;
 }
 
-void Shape::Reassign(size_t dim, size_t v){
+void Shape::Reassign(int dim, int v){
   scale_[dim] = v;
   Init();
 }
@@ -75,7 +75,7 @@ Shape Shape::SubShape() const{
   return Shape(pt);
 }
 
-size_t Shape::SubShapeVol() const{
+int Shape::SubShapeVol() const{
   return vol_/scale_[0];
 }
 
@@ -125,7 +125,7 @@ Range& Range::operator=(Range&& other){
   return *this;
 }
 
-Pair Range::operator[](size_t i) const{
+Pair Range::operator[](int i) const{
   return Pair(start_[i], end_[i]);
 }
 
@@ -137,7 +137,7 @@ bool Range::operator!=(const Range& other) const{
   return !(*this == other);
 }
 
-size_t Range::dim() const{
+int Range::dim() const{
   return start_.size();
 }
 
@@ -180,13 +180,13 @@ Partition::Partition(const Shape& shp, Range&& rng){}
 Partition::Partition(Shape&& shp, Range&& rng){}
 Partition::Partition(const Partition& other){}
 Partition::Partition(Partition&& other){}
-size_t Partition::dim() const{
+int Partition::dim() const{
   return range_.dim();
 }
-size_t Partition::LocalVol() const{
+int Partition::LocalVol() const{
   return 0;
 }
-size_t Partition::TotalVol() const{
+int Partition::TotalVol() const{
   return 0;
 }
 bool Partition::IsValid() const{

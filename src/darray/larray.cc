@@ -43,7 +43,7 @@ void LArray::Fill(float v){
 }
 
 void LArray::RandUniform(float low, float high){
-  size_t seed = chrono::system_clock::now().time_since_epoch().count();
+  int seed = chrono::system_clock::now().time_since_epoch().count();
   default_random_engine generator(seed);
   uniform_real_distribution<float> distribution(low, high);
   for (int i = 0; i < shape_.vol(); ++i)
@@ -51,7 +51,7 @@ void LArray::RandUniform(float low, float high){
 }
 
 void LArray::RandGaussian(float mean, float std){
-  size_t seed = chrono::system_clock::now().time_since_epoch().count();
+  int seed = chrono::system_clock::now().time_since_epoch().count();
   default_random_engine generator(seed);
   normal_distribution<float> distribution(mean, std);
   cout << "gaussain mean " << mean << " std " << std << endl;
@@ -64,11 +64,11 @@ void LArray::CopyFrom(const LArray& src){
     head_[i] = src.head_[i];
 }
 
-size_t LArray::dim() const{
+int LArray::dim() const{
   return shape_.dim();
 }
 
-size_t LArray::vol() const{
+int LArray::vol() const{
   return shape_.vol();
 }
 
@@ -212,7 +212,7 @@ void LArray::SumCol(const LArray& src, bool overwrite){
   if (overwrite)
     for (int i = 0; i < shape_.vol(); ++i)
       head_[i] = 0.0;
-  
+
   float *p = src.head_;
   for (int i = 0; i < src.shape_[0]; ++i)
     for (int j = 0; j < src.shape_[1]; ++j)
@@ -223,7 +223,7 @@ void LArray::SumRow(const LArray& src, bool overwrite){
   if (overwrite)
     for (int i = 0; i < shape_.vol(); ++i)
       head_[i] = 0.0;
-  
+
   float *p = src.head_;
   for (int i = 0; i < src.shape_[0]; ++i)
     for (int j = 0; j < src.shape_[1]; ++j)
@@ -233,7 +233,7 @@ void LArray::SumRow(const LArray& src, bool overwrite){
 void LArray::Sum(const LArray& src, const Pair& rng){
   for (int i = 0; i < shape_.vol(); ++i)
     head_[i] = 0.0;
-  
+
   float *p = src.addr(rng.first);
   for (int i = rng.first; i < rng.second; ++i)
     for (int j = 0; j < shape_[0]; ++j)
@@ -258,7 +258,7 @@ void LArray::Threshold(const LArray& src, const float v){
 void LArray::Map(std::function<float(float)> func, const LArray& src){
   for (int i = 0; i < shape_.vol(); ++i)
     head_[i] = func(src.head_[i]);
-} 
+}
 
 void LArray::Map(std::function<float(float, float)> func, const LArray& src1, const LArray& src2){
   for (int i = 0; i < shape_.vol(); ++i)

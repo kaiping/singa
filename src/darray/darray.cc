@@ -9,7 +9,7 @@ namespace singa{
  * MemSpace *
  ************/
 
-MemSpace::MemSpace(size_t size, bool local){
+MemSpace::MemSpace(int size, bool local){
   size_ = size;
   head_ = (float*)malloc(sizeof(float)*size_);
   cout << "new mem allocated with " << size_*sizeof(float) << " bytes" << endl;
@@ -18,9 +18,9 @@ MemSpace::MemSpace(size_t size, bool local){
 MemSpace::~MemSpace(){
   free(head_);
   cout << "free mem space with " << size_*sizeof(float) << " bytes" << endl;
-}  
+}
 float* MemSpace::dptr(){ return head_; }
-size_t MemSpace::size(){ return size_; }
+int MemSpace::size(){ return size_; }
 
 /**********
  * DArray *
@@ -63,7 +63,7 @@ DArray DArray::operator[](int k) const{
   DArray ret(*this);
   ret.shape_ = shape_.SubShape();
   if (ret.par_dim_ >= 0) --ret.par_dim_;
-  ret.local_array_.ToSub(k); 
+  ret.local_array_.ToSub(k);
   return ret;
 }
 
@@ -138,15 +138,15 @@ void DArray::SwapDptr(DArray* other) {
   swap(local_array_, other->local_array_);
 }
 
-size_t DArray::dim() const{
+int DArray::dim() const{
   return shape_.dim();
 }
 
-size_t DArray::globalVol() const{
+int DArray::globalVol() const{
   return shape_.vol();
 }
 
-size_t DArray::localVol() const{
+int DArray::localVol() const{
   return local_array_.vol();
 }
 
@@ -158,7 +158,7 @@ Shape DArray::shape() const{
   return shape_;
 }
 
-size_t DArray::shape(int k) const{
+int DArray::shape(int k) const{
   return shape_[k];
 }
 
@@ -180,7 +180,7 @@ string DArray::ToString() const{
 void DArray::Add(const DArray& src1, const DArray& src2){
   local_array_.Add(src1.local_array_, src2.local_array_);
 }
-  
+
 void DArray::Add(const DArray& src, const float v){
   local_array_.Add(src.local_array_, v);
 }
@@ -192,11 +192,11 @@ void DArray::Add(const DArray& src){
 void DArray::Add(const float v){
   local_array_.Add(v);
 }
-  
+
 void DArray::Minus(const DArray& src1, const DArray& src2){
   local_array_.Minus(src1.local_array_, src2.local_array_);
 }
-  
+
 void DArray::Minus(const DArray& src, const float v){
   local_array_.Minus(src.local_array_, v);
 }
@@ -212,7 +212,7 @@ void DArray::Minus(const float v){
 void DArray::Mult(const DArray& src1, const DArray& src2){
   local_array_.Mult(src1.local_array_, src2.local_array_);
 }
-  
+
 void DArray::Mult(const DArray& src, const float v){
   local_array_.Mult(src.local_array_, v);
 }
@@ -224,11 +224,11 @@ void DArray::Mult(const DArray& src){
 void DArray::Mult(const float v){
   local_array_.Mult(v);
 }
- 
+
 void DArray::Div(const DArray& src1, const DArray& src2){
   local_array_.Div(src1.local_array_, src2.local_array_);
 }
-  
+
 void DArray::Div(const DArray& src, const float v){
   local_array_.Div(src.local_array_, v);
 }
@@ -240,7 +240,7 @@ void DArray::Div(const DArray& src){
 void DArray::Div(const float v){
   local_array_.Div(v);
 }
-  
+
 void DArray::Square(const DArray& src){
   local_array_.Square(src.local_array_);
 }
@@ -284,7 +284,7 @@ void DArray::Min(const DArray& src, float v){
 void DArray::Threshold(const DArray& src, const float v){
   local_array_.Threshold(src.local_array_, v);
 }
-  
+
 void DArray::Map(std::function<float(float)> func, const DArray& src){
   local_array_.Map(func, src.local_array_);
 }
@@ -313,16 +313,20 @@ float DArray::Norm1() const{
   return local_array_.Norm1();
 }
 
-float* DArray::addr(int idx0) const{
+float* DArray::addr(int idx0) {
+  if(mem_==nullptr) this->Alloc();
   return local_array_.addr(idx0);
 }
-float* DArray::addr(int idx0, int idx1) const{
+float* DArray::addr(int idx0, int idx1) {
+  if(mem_==nullptr) this->Alloc();
   return local_array_.addr(idx0, idx1);
 }
-float* DArray::addr(int idx0, int idx1, int idx2) const{
+float* DArray::addr(int idx0, int idx1, int idx2) {
+  if(mem_==nullptr) this->Alloc();
   return local_array_.addr(idx0, idx1, idx2);
 }
-float* DArray::addr(int idx0, int idx1, int idx2, int idx3) const{
+float* DArray::addr(int idx0, int idx1, int idx2, int idx3) {
+  if(mem_==nullptr) this->Alloc();
   return local_array_.addr(idx0, idx1, idx2, idx3);
 }
 float& DArray::at(int idx0) const{

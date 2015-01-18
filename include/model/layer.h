@@ -142,21 +142,21 @@ class Im2colLayer: public Layer {
    * @param data_im input local array
    * @param data_col output local array
    */
-  void im2col(const DArray& data_im, const int channels,
+  static void im2col(const float *data_im, const int channels,
       const int height, const int width, const int patch_h, const int patch_w,
       const int pad_h, const int pad_w,
       const int stride_h, const int stride_w,
-      DArray* data_col);
+      float* data_col);
   /**
    * process one image
    * @param data_col input local array
    * @param data_im output local array
    */
-  void col2im(const DArray& data_col, const int channels,
+  static void col2im(const float* data_col, const int channels,
       const int height, const int width, const int patch_h, const int patch_w,
       const int pad_h, const int pad_w,
       const int stride_h, const int stride_w,
-      DArray* data_im);
+      float* data_im);
  protected:
   int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
   int channels_, height_, width_;
@@ -293,7 +293,7 @@ class InputLayer: public Layer {
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode){};
   virtual void ComputeFeature(const vector<Layer*>& src_layers){};
   virtual void ComputeGradient(const vector<Layer*>& src_layers){};
-  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode)=0;
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode)=0;
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode)=0;
   DArray* mutable_prefetch_data(){return &(this->grad_);}
@@ -305,7 +305,7 @@ class InputLayer: public Layer {
 
 class ImageLayer: public InputLayer {
  public:
-  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode);
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode);
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
@@ -315,10 +315,22 @@ class ImageLayer: public InputLayer {
   int cropsize_;
   float scale_;
 };
+class MnistImageLayer: public InputLayer {
+ public:
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const int batchsize, const Record & record,
+      PartitionMode mode);
+  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
+  static void ElasticDistortion(float* data, int n, int h, int w, int kernel,
+    float sigma, float alpha);
+
+  vector<uint8_t> Convert2Image(int k);
+};
+
 
 class LabelLayer: public InputLayer {
  public:
-  virtual void Setup(const vector<vector<size_t>>& shapes, PartitionMode mode);
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode);
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);

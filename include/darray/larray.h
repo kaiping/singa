@@ -39,8 +39,8 @@ class LArray{
   void CopyFrom(const LArray& src);
   //void CopyFrom(const LArray& src, const Range rng);
   //operation
-  size_t dim() const;
-  size_t vol() const;
+  int dim() const;
+  int vol() const;
   float* dptr() const;
   void ToSub(int k);
   //math
@@ -70,8 +70,8 @@ class LArray{
   void Sum(const LArray& src, const Pair& rng);
   void Max(const LArray& src, const float v);
   void Min(const LArray& src, const float v);
-  void Threshold(const LArray& src, const float v); 
-  void Map(std::function<float(float)> func, const LArray& src); 
+  void Threshold(const LArray& src, const float v);
+  void Map(std::function<float(float)> func, const LArray& src);
   void Map(std::function<float(float, float)> func, const LArray& src1, const LArray& src2);
   void Map(std::function<float(float, float, float)> func, const LArray& src1, const LArray& src2, const LArray& src3);
   float Sum() const;
@@ -86,7 +86,7 @@ class LArray{
   float& at(int idx0, int idx1) const;
   float& at(int idx0, int idx1, int idx2) const;
   float& at(int idx0, int idx1, int idx2, int idx3) const;
-  
+
   private:
   Shape shape_;
   float* head_ = nullptr;

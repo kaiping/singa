@@ -16,7 +16,7 @@ MPI_LIBRARIES := mpicxx mpi
 # Folder to store compiled files
 LIBRARIES := $(MPI_LIBRARIES) glog gflags protobuf rt boost_system boost_regex \
 							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas armci
+							opencv_core openblas armci gtest
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 
@@ -39,7 +39,7 @@ PROTO_HDRS :=$(patsubst src%, include%, $(PROTOS:.proto=.pb.h))
 PROTO_OBJS :=$(addprefix $(BUILD_DIR)/, $(PROTO_SRCS:.cc=.o))
 
 # each singa src file will generate a .o file
-SINGA_SRCS := $(shell find src/ \( -path "src/test" -o -path "src/datasource" \) -prune \
+SINGA_SRCS := $(shell find src/ \( -path "src/test" -o -path "src/main.cc" \) -prune \
 	-o \( -name "*.cc" -type f \) -print )
 SINGA_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(SINGA_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(SINGA_OBJS:%.o=%.P)
@@ -48,20 +48,24 @@ LOADER_SRCS :=$(shell find tools/data_loader/ -name "*.cc") src/utils/shard.cc
 LOADER_OBJS :=$(sort $(addprefix $(BUILD_DIR)/, $(LOADER_SRCS:.cc=.o)) $(PROTO_OBJS) )
 -include $(LOADER_OBJS:%.o=%.P)
 
-OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) )
+TEST_SRCS := src/test/test_mnistlayer.cc src/test/test_main.cc
+TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS))
+-include $(TEST_OBJS:%.o=%.P)
 
-run_hybrid: singa
-loader: init proto $(LOADER_OBJS)
-	$(CXX) $(LOADER_OBJS) -o loader $(CXXFLAGS) $(LDFLAGS)
-	@echo
+OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS))
 
 singa: init proto  $(SINGA_OBJS)
-	$(CXX) $(SINGA_OBJS) -o singa $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) $(SINGA_OBJS) src/main.cc -o singa $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 loader: init proto $(LOADER_OBJS)
 	$(CXX) $(LOADER_OBJS) -o $(BUILD_DIR)/loader $(CXXFLAGS) $(LDFLAGS)
 	@echo
+
+test: init proto $(TEST_OBJS)
+	$(CXX) $(TEST_OBJS) -o $(BUILD_DIR)/test $(CXXFLAGS) $(LDFLAGS)
+	@echo
+
 
 $(OBJS):$(BUILD_DIR)/%.o : %.cc
 	$(CXX) $<  $(CXXFLAGS) -MMD -c -o $@

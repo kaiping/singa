@@ -202,6 +202,13 @@ void Im2colLayer::col2im(const float* data_col, const int channels,
 /*****************************************************************************
  * Implementation for ConvProductLayer
  *****************************************************************************/
+void ConvProductLayer::FromProto(const LayerProto& proto){
+  CHECK_EQ(proto.param_size(),2);
+  weight_.FromProto(proto.param(0));
+  bias_.FromProto(proto.param(1));
+  Layer::FromProto(proto);
+}
+
 void ConvProductLayer::CollectParams(vector<Param*> *params){
   weight_.set_id(params->size());
   params->push_back(&weight_);
@@ -270,9 +277,9 @@ void ConvProductLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   }
 }
 
-/*****************************************************************************
+/*******************************
  * Implementation for ReLULayer
- *****************************************************************************/
+ *******************************/
 void ReLULayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   const DArray& src=src_layers[0]->data();
   int pdim=GetPartitionDimension(mode);
@@ -289,9 +296,9 @@ void ReLULayer::ComputeGradient(const vector<Layer*>& src_layers) {
   const DArray& src=src_layers[0]->data();
   gsrc->Map([](float d, float g){return d>0?g:0;}, src, grad_);
 }
-/*****************************************************************************
+/**********************************
  * Implementation for DropoutLayer
- *****************************************************************************/
+ **********************************/
 void DropoutLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   int pdim=GetPartitionDimension(mode);
   const Shape& shape=src_layers[0]->data().shape();
@@ -315,10 +322,10 @@ void DropoutLayer::ComputeGradient(const vector<Layer*>& src_layers)  {
   float scale=1.0/keep_prob;
   gsrc->Map([scale](float g, float m) {return g*m*scale;}, grad_, mask_);
 }
-/*****************************************************************************
+/**********************************
  * Implementation for PoolingLayer
  * The code is adapted from Caffe.
- *****************************************************************************/
+ **********************************/
 void PoolingLayer::FromProto(const LayerProto& proto){
   if(proto.ary_size()>=3){
     mask_idx_.FromProto(proto.ary(2));
@@ -655,21 +662,28 @@ void LRNLayer::ComputeGradient(const vector<Layer*>& src_layers) {
 }
 
 /*****************************************************************************
- * Implementation for FCLayer
+ * Implementation for InnerProductLayer
  *****************************************************************************/
+void InnerProductLayer::FromProto(const LayerProto& proto){
+  CHECK_EQ(proto.param_size(),2);
+  weight_.FromProto(proto.param(0));
+  bias_.FromProto(proto.param(1));
+  Layer::FromProto(proto);
+}
 
-void FCLayer::CollectParams(vector<Param*> *params){
+void InnerProductLayer::CollectParams(vector<Param*> *params){
   weight_.set_id(params->size());
   params->push_back(&weight_);
   bias_.set_id(params->size());
   params->push_back(&bias_);
 }
-vector<Param*> FCLayer::GetParams() {
+
+vector<Param*> InnerProductLayer::GetParams() {
   vector<Param*> ret{&weight_, &bias_};
   return ret;
 }
 
-void FCLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
+void InnerProductLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   const DArray& src=src_layers[0]->data();
   num_=src.shape(0);
   vdim_=src.shape().vol()/num_;
@@ -688,35 +702,37 @@ void FCLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
   weight_.Setup({vdim_, hdim_},wp);
   bias_.Setup({hdim_},bp);
 }
-bool FCLayer::PreSyncF(const vector<Layer*>& src_layers){
+
+bool InnerProductLayer::PreSyncF(const vector<Layer*>& src_layers){
   data_.Fill(0.0f);
   return PostSyncF( src_layers);
 }
-bool FCLayer::PreSyncG(const vector<Layer*>& src_layers){
+
+bool InnerProductLayer::PreSyncG(const vector<Layer*>& src_layers){
   DArray* gsrc=src_layers[0]->mutable_grad();
   gsrc->Fill(0.0f);
   return PostSyncF(src_layers);
 }
 
-bool FCLayer::PostSyncF(const vector<Layer*>& src_layers){
+bool InnerProductLayer::PostSyncF(const vector<Layer*>& src_layers){
   const DArray& src=src_layers[0]->data();
-  if(src.partitionDim()==0&&data_.partitionDim()==0)
+  if(src.partitionDim()<=0&&data_.partitionDim()<=0)
     return false;
   else
     return true;
 }
 
-bool FCLayer::PostSyncG(const vector<Layer*>& src_layers){
+bool InnerProductLayer::PostSyncG(const vector<Layer*>& src_layers){
   return PostSyncF(src_layers);
 }
-void FCLayer::ComputeFeature(const vector<Layer*>& src_layers) {
+void InnerProductLayer::ComputeFeature(const vector<Layer*>& src_layers) {
   const DArray& src=src_layers[0]->data();
   DArray src2d=src.Reshape({num_, vdim_});
   data_.Dot(src2d, weight_.data());
   data_.AddRow(bias_.data());
 }
 
-void FCLayer::ComputeGradient(const vector<Layer*>& src_layers) {
+void InnerProductLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   const DArray& src=src_layers[0]->data();
   DArray src2d=src.Reshape({num_, vdim_});
   DArray grad2d=grad_.Reshape({num_, hdim_});
@@ -732,6 +748,31 @@ void FCLayer::ComputeGradient(const vector<Layer*>& src_layers) {
     gsrc2d.Dot(grad2d, weight_.data(), false, true,true);
   }
 }
+/****************************************
+ * Implementation of TanLayer with scaling
+ *****************************************/
+void TanhLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
+  const DArray& src=src_layers[0]->data();
+  int pdim=GetPartitionDimension(mode);
+  data_.Setup(src.shape(), pdim);
+  grad_.Setup(src.shape(), pdim);
+}
+
+void TanhLayer::ComputeFeature(const vector<Layer*>& src_layers){
+  float a=this->layer_proto_.tanh_param().a();
+  float b=this->layer_proto_.tanh_param().b();
+  data_.Map([a,b](float x) {return static_cast<float> (a*tanh(b*x));},
+      src_layers[0]->data());
+}
+
+void TanhLayer::ComputeGradient(const vector<Layer*>& src_layers) {
+  DArray* gsrc=src_layers[0]->mutable_grad();
+  const DArray& src=src_layers[0]->data();
+  float a=this->layer_proto_.tanh_param().a();
+  float b=this->layer_proto_.tanh_param().b();
+  float b_a=b/a, ba=b*a;
+  gsrc->Map([b_a,ba](float f, float g){return g*(ba-b_a*f*f);}, src, grad_);
+}
 
 /*****************************************************************************
  * Implementation for SoftmaxLossLayer
@@ -739,6 +780,7 @@ void FCLayer::ComputeGradient(const vector<Layer*>& src_layers) {
 void SoftmaxLossLayer::Setup(const vector<Layer*>& src_layers,
     PartitionMode mode) {
   int pdim=-1;
+  //either data partition or no partition
    switch(mode){
     case kData: pdim=0;break;
     case kModel: break;
@@ -820,9 +862,9 @@ Performance SoftmaxLossLayer::ComputePerformance(
   return perf;
 }
 
-/****************************************************************************
+/********************************
  * Implementation for InputLayer
- ***************************************************************************/
+ ********************************/
 void InputLayer::SetInputData(DArray *data){
   if(data==nullptr)
     data_.SwapDptr(&grad_);
@@ -833,6 +875,7 @@ void InputLayer::SetInputData(DArray *data){
 
 int InputLayer::GetPartitionDimension(PartitionMode mode){
   int pdim=-1;
+  // either data partition or no partition
   switch(mode){
     case kData: pdim=0;break;
     case kModel: break;
@@ -844,9 +887,9 @@ int InputLayer::GetPartitionDimension(PartitionMode mode){
 }
 
 
-/*****************************************************************************
+/********************************
  * Implementation for ImageLayer
- *****************************************************************************/
+ ********************************/
 void ImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
@@ -939,9 +982,9 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
 }
 
 
-/****************************************************************************
- * Implementation for MnistLayer
- ***************************************************************************/
+/*************************************
+ * Implementation for MnistImageLayer
+ *************************************/
 void MnistImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
   CHECK_GE(shapes.size(),1);
   CHECK_GE(shapes[0].size(),3);//batchsize, height(29), width(29)
@@ -970,22 +1013,19 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
   MnistProto proto=this->layer_proto_.mnist_param();
   int imgsize[2];
   imgsize[0]=imgsize[1]=static_cast<int>(sqrt(record.mnist().pixel().size()));
-  cv::Mat input(imgsize[0], imgsize[1], CV_32FC1);
   const string pixel=record.mnist().pixel();
-  int count=0;
+  // copy from record to cv::Mat
+  cv::Mat input(imgsize[0], imgsize[1], CV_32FC1);
   for(int i=0,k=0;i<imgsize[0];i++)
     for(int j=0;j<imgsize[1];j++){
       input.at<float>(i,j)=static_cast<float>(static_cast<uint8_t>(pixel[k++]));
       CHECK_GE(input.at<float>(i,j),0);
-      if(input.at<float>(i,j)>0)
-        count++;
     }
-  LOG(ERROR)<<"input positive "<<count;
   std::default_random_engine generator;
   std::uniform_real_distribution<float> distribution(-1.0,1.0);
-
   cv::Mat resizeMat=input;
-  if(proto.has_size()||proto.has_gamma()){
+  // affine transform, scaling, rotation and shearing
+  if(phase==kTrain&&(proto.has_size()||proto.has_gamma())){
     int h=imgsize[0];
     int w=imgsize[1];
     if(proto.has_size())
@@ -997,7 +1037,7 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
     cv::resize(input, resizeMat, cv::Size(h,w));
   }
   cv::Mat betaMat=resizeMat;
-  if(this->layer_proto_.mnist_param().has_beta()){
+  if(this->layer_proto_.mnist_param().has_beta()&&phase==kTrain){
     LOG(ERROR)<<"Beta";
     cv::Mat warpmat(2,3, CV_32FC1);
     if(rand() % 2){
@@ -1020,22 +1060,23 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
     cv::Size size=proto.has_size()?cv::Size(proto.size(),proto.size()):resizeMat.size();
     cv::warpAffine(resizeMat, betaMat, warpmat, size);
   }
+  // copy to grad_, i.e., prefetching buffer
   Pair nrng=grad_.localRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
   float* dptr=grad_.addr(n,0,0);
-  LOG(ERROR)<<"beta mat shape "<<betaMat.rows<<", "<<betaMat.cols;
-  int count2=0;
   for(int i=0,k=0;i<betaMat.rows;i++){
     for(int j=0;j<betaMat.cols;j++){
       dptr[k++]=betaMat.at<float>(i,j);
-      if(dptr[k-1]>0)
-        count2++;
     }
   }
-  LOG(ERROR)<<"dptr positive "<<count2;
-  LOG(ERROR)<<"before elastic"<<grad_.Norm1();
-  if(proto.has_elastic_freq()&&++offset_%proto.elastic_freq()==0){
+  if(proto.normalize()){
+    for(int i=0;i<betaMat.rows*betaMat.cols;i++)
+      dptr[i]=dptr[i]/127.5-1.0f;
+  }
+
+  // do elastic distortion
+  if(proto.has_elastic_freq()&&++offset_%proto.elastic_freq()==0&&phase==kTrain){
     int freq=static_cast<int>(sqrt(proto.elastic_freq()));
     CHECK_EQ(freq*freq, proto.elastic_freq());
     ElasticDistortion(
@@ -1048,6 +1089,7 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
         proto.alpha());
   LOG(ERROR)<<"after elastic"<<grad_.Norm1();
   }
+
 }
 
 void MnistImageLayer::ElasticDistortion(float* data, int n, int h, int w, int kernel,
@@ -1153,8 +1195,10 @@ void LabelLayer::AddInputRecord(const Record &record, Phase phase){
   Pair nrng=grad_.localRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
   int n=offset_+nrng.first;
-  if(record.type()==Record::kImageNet)
-    grad_.at(n,0)=static_cast<int>(record.imagenet().label());
+  if(record.type()==Record_Type_kImageNet)
+    grad_.at(n,0)=static_cast<float>(record.imagenet().label());
+  else if(record.type()==Record_Type_kMnist)
+    grad_.at(n,0)=static_cast<float>(record.mnist().label());
   else
     LOG(FATAL)<<"Not supported record type";
   offset_++;

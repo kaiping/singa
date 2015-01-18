@@ -3,11 +3,11 @@
 template<typename T>
 class Singleton {
  public:
-  static T& Instance() {
-    if (!data_) {
+  static T* Instance() {
+    if (data_==nullptr) {
       data_ = new T();
     }
-    return *data_;
+    return data_;
   }
  private:
   static T* data_;

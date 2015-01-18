@@ -3,6 +3,9 @@
 #include <vector>
 #include "proto/model.pb.h"
 #include "model/solver.h"
+#include "core/common.h"
+#include "utils/singleton.h"
+#include "utils/factory.h"
 #include "utils/timer.h"
 
 namespace singa {
@@ -17,7 +20,14 @@ Solver::Solver(const SolverProto &proto) {
   train_shard_=data_folder+"/"+proto.train_folder();
   val_shard_=data_folder+"/"+proto.validation_folder();
   test_shard_=data_folder+"/"+proto.test_folder();
-  delegate_=new TableDelegate(GlobalContext::Get());
+  if(context_->num_servers()==0){
+    auto factory=Singleton<Factory<TableServerHandler>>::Instance();
+    std::shared_ptr<TableServerHandler> tshandler(
+        factory->Create(proto.sgd().handler()));
+    tshandler->Setup(proto.sgd());
+    delegate_=new TableDelegate(GlobalContext::Get(), tshandler);
+  }else
+    delegate_=new TableDelegate(GlobalContext::Get());
 }
 
 Solver::~Solver() {

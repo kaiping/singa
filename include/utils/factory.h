@@ -29,8 +29,7 @@ class Factory{
    * @param id identifier of the creating function/class
    * @param create_function a function that creates a layer instance
    */
-  void RegisterCreateFunction(const std::string id,
-                              std::function<T*(void)> func);
+  void Register(const std::string id, std::function<T*(void)> func);
   /**
    * create a layer  instance by providing its type
    * @param type the identifier of the layer to be created
@@ -43,13 +42,14 @@ class Factory{
 };
 
 template<typename T>
-void Factory<T>::RegisterCreateFunction(const std::string id,
+void Factory<T>::Register(const std::string id,
                                         std::function<T*(void)> func) {
   str2func_[id] = func;
 }
 
 template<typename T>
 T *Factory<T>::Create(const std::string id) {
+  LOG(ERROR)<<"str2func size "<<str2func_.size();
   CHECK(str2func_.find(id) != str2func_.end())
       << "The creation function for " << id << " has not been registered";
   return str2func_[id]();

@@ -9,18 +9,19 @@
 namespace singa {
 Net::Net(const NetProto &net_proto) {
   auto factory=Singleton<Factory<Layer>>::Instance();
-  factory.RegisterCreateFunction("ImageLayer", CreateLayer(ImageLayer));
-  factory.RegisterCreateFunction("LabelLayer", CreateLayer(LabelLayer));
-  factory.RegisterCreateFunction("Im2colLayer", CreateLayer(Im2colLayer));
-  factory.RegisterCreateFunction("ReLULayer", CreateLayer(ReLULayer));
-  factory.RegisterCreateFunction("PoolingLayer", CreateLayer(PoolingLayer));
-  factory.RegisterCreateFunction("LRNLayer", CreateLayer(LRNLayer));
-  factory.RegisterCreateFunction("FCLayer", CreateLayer(FCLayer));
-  factory.RegisterCreateFunction("DropoutLayer", CreateLayer(DropoutLayer));
-  factory.RegisterCreateFunction("ConvProductLayer",
-      CreateLayer(ConvProductLayer));
-  factory.RegisterCreateFunction("SoftmaxLossLayer",
-      CreateLayer(SoftmaxLossLayer));
+  factory->Register("ConvProductLayer", CreateLayer(ConvProductLayer));
+  factory->Register("DropoutLayer", CreateLayer(DropoutLayer));
+  factory->Register("Im2colLayer", CreateLayer(Im2colLayer));
+  factory->Register("InnerProductLayer", CreateLayer(InnerProductLayer));
+  factory->Register("ImageLayer", CreateLayer(ImageLayer));
+  factory->Register("LabelLayer", CreateLayer(LabelLayer));
+  factory->Register("LRNLayer", CreateLayer(LRNLayer));
+  factory->Register("MnistImageLayer", CreateLayer(MnistImageLayer));
+  factory->Register("PoolingLayer", CreateLayer(PoolingLayer));
+  factory->Register("ReLULayer", CreateLayer(ReLULayer));
+  factory->Register("SoftmaxLossLayer", CreateLayer(SoftmaxLossLayer));
+  factory->Register("TanhLayer", CreateLayer(TanhLayer));
+
 
   LOG(ERROR)<<"Construct Neural Net...";
   NetProto netproto;
@@ -42,14 +43,14 @@ Net::Net(const NetProto &net_proto) {
   }
 
   for (auto &layer_proto : net_proto.layer()) {
-    Layer *layer = factory.Create(layer_proto.type());
+    Layer *layer = factory->Create(layer_proto.type());
     layer->FromProto(layer_proto);
     if(layer_proto.src_layer_size()){
       for(auto src: layer_proto.src_layer()){
         string edge=src+"-->"+layer->name();
         if(edge_set_.find(edge)==edge_set_.end()){
           name2dstlayers_[src].push_back(layer);
-          name2srclayers_[layer->name()].push_back(name2layer_[layer->name()]);
+          name2srclayers_[layer->name()].push_back(name2layer_[src]);
           edge_set_.insert(edge);
         }
       }
@@ -158,12 +159,16 @@ void Net::topology_sort(vector<Layer *> *layers,
   // adjacent list from upper layers to lower layers
   std::map<Layer *, vector<Layer *>> adjacent_list;
   std::map<Layer *, bool> visited;
-  vector<Layer *> input_layers;
   // prepare adjacent list; input layers will be processed firstly,
   // hence no need to sort them (mark them as visited)
   for (Layer *layer : *layers) {
     visited[layer] = false;
-    adjacent_list[layer]=name2dstlayers.at(layer->name());
+    if(name2dstlayers.find(layer->name())!=name2dstlayers.end())
+      adjacent_list[layer]=name2dstlayers.at(layer->name());
+    else{
+      LOG(ERROR)<<"Layer "<<layer->name()<<" has no dst layer";
+      adjacent_list[layer]=vector<Layer*>{};
+    }
   }
   // the `top' layer in the net will be placed at the bottom of the stack
   // and then be processed (i.e., forward) at last

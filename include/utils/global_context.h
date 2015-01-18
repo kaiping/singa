@@ -30,7 +30,7 @@ class GlobalContext {
   void Finalize();
 
   const int num_table_servers() {
-    return cluster_.server_end()-cluster_.server_start();
+    return num_servers();
   }
   const int server_start() {
     return cluster_.server_start();
@@ -39,7 +39,9 @@ class GlobalContext {
     return cluster_.server_end();
   }
   const int num_servers(){
-    return cluster_.server_end()-cluster_.server_start();
+    if(cluster_.has_server_start()&&cluster_.has_server_end())
+      return cluster_.server_end()-cluster_.server_start();
+    else return 0;
   }
   const int num_procs() {
     return num_procs_;
@@ -48,7 +50,9 @@ class GlobalContext {
     return cluster_.worker_end()-cluster_.worker_start();
   }
   const bool IsTableServer(int rank) {
-    return rank>=server_start()&&rank<server_end();
+    if(cluster_.has_server_start()&&cluster_.has_server_end())
+      return rank>=server_start()&&rank<server_end();
+    else return false;
   }
   const bool AmICoordinator() {
     return rank_==kCoordinator;

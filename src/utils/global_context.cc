@@ -19,9 +19,11 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   int start=cluster.worker_start();
   int end=cluster.worker_end();
   CHECK_LT(start, end);
-  CHECK_LT(cluster.server_start(), cluster.server_end());
-
-  CHECK_LE(cluster.server_end(), start);
+  if(cluster.has_server_start()){
+    CHECK(cluster.has_server_end());
+    CHECK_LT(cluster.server_start(), cluster.server_end());
+    CHECK_LE(cluster.server_end(), start);
+  }
   CHECK(cluster.group_size());
   for(int k=start, gid=0;k<end;gid++){
     vector<int> workers;

@@ -15,10 +15,8 @@ DEFINE_int32(server_threads,8,"number of table server threads");
 namespace singa {
 TableServer::TableServer(){
   auto factory=Singleton<Factory<TableServerHandler>>::Instance();
-  factory.RegisterCreateFunction("SGD",
-      CreateInstance(TSHandlerForSGD, TableServerHandler));
-  factory.RegisterCreateFunction("AdaGrad",
-      CreateInstance(TSHandlerForAda, TableServerHandler));
+  factory->Register("SGD", CreateInstance(TSHandlerForSGD, TableServerHandler));
+  factory->Register("AdaGrad", CreateInstance(TSHandlerForAda, TableServerHandler));
 }
 
 void TableServer::Start(const SGDProto& sgd) {
@@ -51,7 +49,7 @@ void TableServer::Start(const SGDProto& sgd) {
 
 void TableServer::create_table(const SGDProto &sgd) {
   auto factory=Singleton<Factory<TableServerHandler>>::Instance();
-	TableServerHandler *tshandler = factory.Create(sgd.handler());
+	TableServerHandler *tshandler = factory->Create(sgd.handler());
 	tshandler->Setup(sgd);
 
 	TableDescriptor *info = new TableDescriptor(0,
@@ -141,13 +139,7 @@ bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
  ************************************************************************/
 void TSHandlerForSGD::Setup(const SGDProto& sgd) {
   TableServerHandler::Setup(sgd);
-  learning_rate_=sgd.learning_rate();
-  momentum_=sgd.momentum();
-  weight_decay_=sgd.weight_decay();
-  gamma_=sgd.gamma();
-  pow_=sgd.pow();
-  learning_rate_change_steps_=sgd.learning_rate_change_steps();
-  learning_rate_change_=sgd.learning_rate_change();
+  sgd_=sgd;
 }
 
 float TSHandlerForSGD::UpdateHyperParam(

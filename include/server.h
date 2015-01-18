@@ -70,27 +70,31 @@ class TSHandlerForSGD: public TableServerHandler {
  protected:
   float GetLearningRate(int step, float multiplier){
     float lr=UpdateHyperParam(
-        step, learning_rate_change_,
-        learning_rate_change_steps_, learning_rate_, gamma_, pow_);
+        step, sgd_.learning_rate_change(),
+        sgd_.learning_rate_change_steps(),
+        sgd_.learning_rate(),
+        sgd_.gamma(),
+        sgd_.pow());
     return lr*multiplier;
   }
 
   float GetWeightDecay(int step, float multiplier){
-    return weight_decay_*multiplier;
+    if(sgd_.has_weight_decay())
+      return sgd_.weight_decay()*multiplier;
+    else return 0;
   }
 
   float GetMomentum(int step, float multiplier){
-    return momentum_;
+    if(sgd_.has_momentum())
+      return sgd_.momentum()*multiplier;
+    else return 0;
   }
-
   float UpdateHyperParam(
       int step, SGDProto::ChangeProto change,
       int change_steps, float a, float b, float c);
 
  protected:
-   float learning_rate_, momentum_, weight_decay_, gamma_, pow_;
-   int learning_rate_change_steps_;
-   SGDProto_ChangeProto learning_rate_change_;
+   SGDProto sgd_;
 };
 
 /**

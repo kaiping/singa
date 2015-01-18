@@ -54,8 +54,12 @@ TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS
 
 OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS))
 
+run: singa
+	mpirun -np 1 -hostfile examples/mnist/hostfile ./build/singa \
+	-cluster_conf=examples/mnist/cluster.conf -model_conf=examples/mnist/mlp.conf
+
 singa: init proto  $(SINGA_OBJS)
-	$(CXX) $(SINGA_OBJS) src/main.cc -o singa $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) $(SINGA_OBJS) src/main.cc -o $(BUILD_DIR)/singa $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 loader: init proto $(LOADER_OBJS)

@@ -132,6 +132,44 @@ protected:
   LayerProto layer_proto_;
 };
 
+/****************************Middel Layers************************************/
+/**
+ * Multiply the col image with convolution weight, add bias to columns.
+ */
+class ConvProductLayer: public Layer {
+ public:
+  virtual void FromProto(const LayerProto &proto);
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+  virtual void CollectParams(vector<Param*> *params);
+  virtual vector<Param*> GetParams();
+
+ protected:
+  Param weight_, bias_;
+};
+
+class ReLULayer: public Layer {
+ public:
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+};
+
+class DropoutLayer: public Layer {
+ public:
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+  //virtual void FromProto(const LayerProto &proto);
+  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
+ protected:
+  float drop_prob_;
+  /* record which neuron is dropped, required for back propagating gradients,
+   * if mask[i]=0, then the i-th neuron is dropped.
+   */
+  DArray mask_;
+};
 class Im2colLayer: public Layer {
  public:
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
@@ -162,55 +200,30 @@ class Im2colLayer: public Layer {
   int channels_, height_, width_;
 };
 
-/**
- * Multiply the col image with convolution weight, add bias to columns.
- */
-class ConvProductLayer: public Layer {
+class InnerProductLayer: public Layer {
+  /*
+   * fully connected layer
+   */
  public:
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
   virtual void ComputeFeature(const vector<Layer*>& src_layers);
   virtual void ComputeGradient(const vector<Layer*>& src_layers);
+
+  virtual bool PreSyncF(const vector<Layer*>& src_layers);
+  virtual bool PreSyncG(const vector<Layer*>& src_layers);
+  virtual bool PostSyncF(const vector<Layer*>& src_layers);
+  virtual bool PostSyncG(const vector<Layer*>& src_layers);
   virtual void CollectParams(vector<Param*> *params);
   virtual vector<Param*> GetParams();
-
- protected:
-  Im2colLayer im2collayer_;
-  Param weight_, bias_;
-};
-
-class ReLULayer: public Layer {
- public:
-  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
-  virtual void ComputeFeature(const vector<Layer*>& src_layers);
-  virtual void ComputeGradient(const vector<Layer*>& src_layers);
-};
-
-class DropoutLayer: public Layer {
- public:
-  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
-  virtual void ComputeFeature(const vector<Layer*>& src_layers);
-  virtual void ComputeGradient(const vector<Layer*>& src_layers);
-  //virtual void FromProto(const LayerProto &proto);
-  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
- protected:
-  float drop_prob_;
-  /* record which neuron is dropped, required for back propagating gradients,
-   * if mask[i]=0, then the i-th neuron is dropped.
-   */
-  DArray mask_;
-};
-
-class PoolingLayer: public Layer {
- public:
   virtual void FromProto(const LayerProto &proto);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
-  virtual void ComputeFeature(const vector<Layer*>& src_layers);
-  virtual void ComputeGradient(const vector<Layer*>& src_layers);
- protected:
-  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
-  int channels_, height_, width_, pooled_height_, pooled_width_;
-  DArray mask_idx_;
+  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
+ private:
+  //! dimension of the hidden layer
+  int hdim_;
+  //! dimension of the visible layer
+  int vdim_;
+  int num_;
+  Param weight_, bias_;
 };
 
 class LRNLayer: public Layer {
@@ -238,32 +251,32 @@ class LRNLayer: public Layer {
   float alpha_, beta_, knorm_;
   DArray norm_, ratio_; //ratio : grad/(data*norm)
 };
-class FCLayer: public Layer {
-  /*
-   * fully connected layer
-   */
+class PoolingLayer: public Layer {
+ public:
+  virtual void FromProto(const LayerProto &proto);
+  virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
+  virtual void ComputeFeature(const vector<Layer*>& src_layers);
+  virtual void ComputeGradient(const vector<Layer*>& src_layers);
+ protected:
+  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
+  int channels_, height_, width_, pooled_height_, pooled_width_;
+  DArray mask_idx_;
+};
+
+/**
+ * This layer apply Tan function to neuron activations.
+ * f(x)=A tanh(Bx)
+ * f'(x)=B/A (A*A-f(x)*f(x))
+ */
+class TanhLayer: public Layer {
  public:
   virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
   virtual void ComputeFeature(const vector<Layer*>& src_layers);
   virtual void ComputeGradient(const vector<Layer*>& src_layers);
-
-  virtual bool PreSyncF(const vector<Layer*>& src_layers);
-  virtual bool PreSyncG(const vector<Layer*>& src_layers);
-  virtual bool PostSyncF(const vector<Layer*>& src_layers);
-  virtual bool PostSyncG(const vector<Layer*>& src_layers);
-  virtual void CollectParams(vector<Param*> *params);
-  virtual vector<Param*> GetParams();
-  //virtual void FromProto(const LayerProto &proto);
-  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
- private:
-  //! dimension of the hidden layer
-  int hdim_;
-  //! dimension of the visible layer
-  int vdim_;
-  int num_;
-  Param weight_, bias_;
 };
 
+/**********************Output Performance/Loss Layers************************/
 class PerformanceLayer: public Layer{
  public:
   virtual Performance ComputePerformance(const vector<Layer*>&src_layers,
@@ -284,7 +297,7 @@ class SoftmaxLossLayer: public PerformanceLayer {
   int dim_;
   int top_k_;
 };
-
+/***********************Inpute Layers****************************************/
 class InputLayer: public Layer {
  public:
   virtual bool HasInput() { return true; }
@@ -302,7 +315,6 @@ class InputLayer: public Layer {
   //DArray prefetch_data_; use the grad_ field for prefetch data
   int offset_;
 };
-
 class ImageLayer: public InputLayer {
  public:
   virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
@@ -315,6 +327,13 @@ class ImageLayer: public InputLayer {
   int cropsize_;
   float scale_;
 };
+class LabelLayer: public InputLayer {
+ public:
+  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
+  virtual void Setup(const int batchsize, const Record & record,
+      PartitionMode mode);
+  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
+};
 class MnistImageLayer: public InputLayer {
  public:
   virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
@@ -326,16 +345,6 @@ class MnistImageLayer: public InputLayer {
 
   vector<uint8_t> Convert2Image(int k);
 };
-
-
-class LabelLayer: public InputLayer {
- public:
-  virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
-  virtual void Setup(const int batchsize, const Record & record,
-      PartitionMode mode);
-  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
-};
-
 }  // namespace lapis
 
 #endif  // INCLUDE_NET_LAYER_H_

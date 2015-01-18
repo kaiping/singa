@@ -120,12 +120,19 @@ message LayerProto {
   optional ConvolutionProto convolution_param = 11;
   optional DataProto data_param = 12;
   optional DropoutProto dropout_param = 13;
-  optional InnerProductProto inner_product_param = 17;
-  optional LRNProto lrn_param = 18;
-  optional MnistProto mnist_param= 21;
-  optional PoolingProto pooling_param = 19;
-  optional ReLUProto relu_param = 30;
-  optional SoftmaxLossProto softmaxloss_param = 10;
+  optional InnerProductProto inner_product_param = 14;
+  optional LRNProto lrn_param = 15;
+  optional MnistProto mnist_param= 16;
+  optional PoolingProto pooling_param = 17;
+  optional ReLUProto relu_param = 18;
+  optional SoftmaxLossProto softmaxloss_param = 19;
+  optional TanhProto tanh_param=20;
+}
+
+// scaled tan: A*tan(B*x)
+message TanhProto{
+  optional float a=1;
+  optional float b=2;
 }
 
 // Message that stores parameters used by SoftmaxLossProto
@@ -186,6 +193,7 @@ message MnistProto {
   // scale to this size as input for deformation
   optional int32 size=6 ;
   optional int32 elastic_freq=7;
+  optional bool normalize=8 [default=true];
 }
 // Message that stores parameters used by DropoutLayer
 message DropoutProto {
@@ -293,7 +301,7 @@ message SolverProto {
   }
   optional GradCalcAlg alg= 26 [default = kBackPropagation];
 
-  optional PartitionMode partition=27;
+  optional PartitionMode partition=27 [default=kNone];
 }
 
 message Record {
@@ -322,8 +330,8 @@ message SGDProto {
   optional float momentum=2;
   optional float weight_decay=3;
   // used in changing learning rate
-  optional float gamma = 4;
-  optional float pow=5;
+  optional float gamma = 4 [default=1];
+  optional float pow=5 [default=0];
   optional int32 learning_rate_change_steps = 6;
   enum ChangeProto {
     kFixed = 0;
@@ -336,7 +344,7 @@ message SGDProto {
   optional ChangeProto learning_rate_change = 7 [default = kStep];
   optional bool synchronous=8 [default=false];
   // table server handler class identifier
-  optional string handler=9 [default="SGDHandler"];
+  optional string handler=9 [default="SGD"];
   // start the checkpoint operation after this num steps
   optional int32 checkpoint_after_steps = 10 [default = 0];
   // frequency of checkpoint

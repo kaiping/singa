@@ -80,12 +80,14 @@ class TableDelegate {
    * if there are no table servers.
    */
   TableDelegate(int worker_id, int rank, int num_servers, int group_size,
-      int num_groups, bool synchronous, TableServerHandler* handler=nullptr);
+      int num_groups, bool synchronous,
+      std::shared_ptr<TableServerHandler> handler=nullptr);
   /**
    * Constructor.
    * @param gc, the GlobalContext which provides the cluster info numbers
    */
-  TableDelegate(shared_ptr<GlobalContext> gc, TableServerHandler* handler=nullptr);
+  TableDelegate(shared_ptr<GlobalContext> gc,
+      std::shared_ptr<TableServerHandler> handler=nullptr);
 
   /**
    * Setup TableDelegate.
@@ -168,7 +170,7 @@ class TableDelegate {
    */
   std::map<int, TVal> local_tuple_;
   //!< to perform for local updates.
-  TableServerHandler* handler_;
+  std::shared_ptr<TableServerHandler> handler_;
   /**
    * requests from put/get/updates are pushed into this queue firstly, then
    * send to servers by the internal thread, the queue operations (push, pop)

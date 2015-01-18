@@ -35,12 +35,13 @@ int main(int argc, char **argv) {
   singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
 
+  singa::Debug();
+  singa::TableServer server;
+  singa::Worker worker;
   if(gc->AmITableServer()) {
-    singa::TableServer server;
     server.Start(model.solver().sgd());
   }else {
     // TODO: comment out the below to execute training at the workers.
-    singa::Worker worker;
     worker.Start(model);
   }
   gc->Finalize();

@@ -329,16 +329,33 @@ float* DArray::addr(int idx0, int idx1, int idx2, int idx3) {
   if(mem_==nullptr) this->Alloc();
   return local_array_.addr(idx0, idx1, idx2, idx3);
 }
+float& DArray::at(int idx0) {
+  if(mem_==nullptr) this->Alloc();
+  return local_array_.at(idx0);
+}
+float& DArray::at(int idx0, int idx1){
+  if(mem_==nullptr) this->Alloc();
+  return local_array_.at(idx0, idx1);
+}
+float& DArray::at(int idx0, int idx1, int idx2){
+  if(mem_==nullptr) this->Alloc();
+  return local_array_.at(idx0, idx1, idx2);
+}
+float& DArray::at(int idx0, int idx1, int idx2, int idx3){
+  if(mem_==nullptr) this->Alloc();
+  return local_array_.at(idx0, idx1, idx2, idx3);
+}
+
 float& DArray::at(int idx0) const{
   return local_array_.at(idx0);
 }
-float& DArray::at(int idx0, int idx1) const{
+float& DArray::at(int idx0, int idx1)const {
   return local_array_.at(idx0, idx1);
 }
-float& DArray::at(int idx0, int idx1, int idx2) const{
+float& DArray::at(int idx0, int idx1, int idx2)const {
   return local_array_.at(idx0, idx1, idx2);
 }
-float& DArray::at(int idx0, int idx1, int idx2, int idx3) const{
+float& DArray::at(int idx0, int idx1, int idx2, int idx3)const {
   return local_array_.at(idx0, idx1, idx2, idx3);
 }
 

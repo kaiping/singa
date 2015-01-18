@@ -8,14 +8,14 @@ const int kMaxParamLen=1<30;
 
 TableDelegate::TableDelegate(int worker_id, int rank, int num_servers,
     int group_size, int num_groups, bool synchronous,
-    TableServerHandler* handler):
+    std::shared_ptr<TableServerHandler> handler):
     worker_id_(worker_id), rank_(rank), num_servers_(num_servers),
     group_size_(group_size), num_groups_(num_groups), synchronous_(synchronous),
     handler_(handler){
   Start();
 }
 TableDelegate::TableDelegate(shared_ptr<GlobalContext> gc,
-    TableServerHandler* handler){
+    std::shared_ptr<TableServerHandler> handler){
   worker_id_=gc->worker_id();
   rank_=gc->rank();
   num_servers_=gc->num_servers();
@@ -39,7 +39,7 @@ void TableDelegate::Start(){
 
 void TableDelegate::SplitParam(Param * param){
   int id=param->id()*group_size_;
-  if(param->partition())
+  if(param->partition()>=0)
     id+=worker_id_;
   int splitsize=param->split_threshold();
   if(splitsize>=16777216){

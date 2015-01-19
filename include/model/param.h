@@ -39,19 +39,19 @@ class Param {
   }
   /**
    * Return gradient history of this parameter
-   */
   const DArray &history() {
     return history_;
   }
+   */
   DArray *mutable_grad() {
     return &grad_;
   }
   /**
    * Return mem address for the content of this parameter
-   */
   DArray *mutable_history() {
     return &history_;
   }
+   */
   float* mutable_dptr(){
     return data_.dptr();
   }
@@ -120,7 +120,7 @@ class Param {
    * identifier of this parameter, will be used by ModelController
    */
   //! content, gradient and history gradient of this parameter
-  DArray data_, grad_, history_;
+  DArray data_, grad_;// history_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

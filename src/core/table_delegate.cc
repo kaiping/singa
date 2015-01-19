@@ -4,7 +4,7 @@
 #include "proto/model.pb.h"
 #include "utils/network.h"
 namespace singa {
-const int kMaxParamLen=1<30;
+const size_t kMaxParamLen=1<<30;
 
 TableDelegate::TableDelegate(int worker_id, int rank, int num_servers,
     int group_size, int num_groups, bool synchronous,
@@ -49,7 +49,7 @@ void TableDelegate::SplitParam(Param * param){
     splitsize = 1000000;
   }
   // do not split if there is no table server, updates will be done locally
-  int local_size=param->local_size();
+  size_t local_size=param->local_size();
   if(num_servers_==0){
     CHECK_LE(local_size, kMaxParamLen);
     splitsize=kMaxParamLen;

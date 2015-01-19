@@ -92,7 +92,7 @@ class Solver {
   }
 
   const bool DisplayNow(const int step) {
-    if (proto_.display_after_steps() > 0 && step >= proto_.display_after_steps()) {
+    if (proto_.display_every_steps() > 0 && step >= proto_.display_after_steps()) {
       if ((step - proto_.display_after_steps()) % proto_.display_every_steps() == 0)
         return true;
     }
@@ -105,7 +105,7 @@ class Solver {
     * @param step the ::Train() has been called step times.
     */
   const bool ValidateNow(const int step) {
-    if (proto_.validation_after_steps() > 0 && step >= proto_.validation_after_steps()) {
+    if (proto_.validation_every_steps() > 0 && step >= proto_.validation_after_steps()) {
       if ((step - proto_.validation_after_steps()) % proto_.validation_every_steps() == 0)
         return true;
     }
@@ -114,7 +114,7 @@ class Solver {
   const bool ValidateNow() {return ValidateNow(step_);}
 
   const bool TestNow(const int step) {
-    if (proto_.test_after_steps() > 0 && step >= proto_.test_after_steps()) {
+    if (proto_.test_every_steps() > 0 && step >= proto_.test_after_steps()) {
       if ((step - proto_.test_after_steps()) % proto_.test_every_steps() == 0)
         return true;
     }

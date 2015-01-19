@@ -12,12 +12,14 @@ namespace singa{
 MemSpace::MemSpace(int size, bool local){
   size_ = size;
   head_ = (float*)malloc(sizeof(float)*size_);
-  cout << "new mem allocated with " << size_*sizeof(float) << " bytes" << endl;
-  if (!head_) cout << "cannot allocate mem!" << endl;
+  DLOG(INFO) << "new mem allocated with "
+    << size_*sizeof(float) << " bytes" << endl;
+  if (!head_) LOG(ERROR) << "cannot allocate mem!" << endl;
 }
 MemSpace::~MemSpace(){
   free(head_);
-  cout << "free mem space with " << size_*sizeof(float) << " bytes" << endl;
+  DLOG(INFO) << "free mem space with "
+    << size_*sizeof(float) << " bytes" << endl;
 }
 float* MemSpace::dptr(){ return head_; }
 int MemSpace::size(){ return size_; }
@@ -70,6 +72,7 @@ DArray DArray::operator[](int k) const{
 void DArray::Setup(const Shape& shp, int dim) {
   shape_=shp;
   par_dim_=dim;
+  Alloc();
 }
 void DArray::Setup(const Point& shp, int dim) {
   Setup(Shape(shp), dim);
@@ -78,7 +81,7 @@ void DArray::Setup(const Point& shp, int dim) {
 
 bool DArray::Alloc(){
   if (mem_ != nullptr){
-    cout << "darray already allocatd" << endl;
+    LOG(ERROR) << "darray already allocatd" << endl;
     return false;
   }
   mem_ = shared_ptr<MemSpace>(new MemSpace(shape_.vol()));
@@ -313,37 +316,17 @@ float DArray::Norm1() const{
   return local_array_.Norm1();
 }
 
-float* DArray::addr(int idx0) {
-  if(mem_==nullptr) this->Alloc();
+float* DArray::addr(int idx0) const {
   return local_array_.addr(idx0);
 }
-float* DArray::addr(int idx0, int idx1) {
-  if(mem_==nullptr) this->Alloc();
+float* DArray::addr(int idx0, int idx1)const  {
   return local_array_.addr(idx0, idx1);
 }
-float* DArray::addr(int idx0, int idx1, int idx2) {
-  if(mem_==nullptr) this->Alloc();
+float* DArray::addr(int idx0, int idx1, int idx2)const  {
   return local_array_.addr(idx0, idx1, idx2);
 }
-float* DArray::addr(int idx0, int idx1, int idx2, int idx3) {
-  if(mem_==nullptr) this->Alloc();
+float* DArray::addr(int idx0, int idx1, int idx2, int idx3)const  {
   return local_array_.addr(idx0, idx1, idx2, idx3);
-}
-float& DArray::at(int idx0) {
-  if(mem_==nullptr) this->Alloc();
-  return local_array_.at(idx0);
-}
-float& DArray::at(int idx0, int idx1){
-  if(mem_==nullptr) this->Alloc();
-  return local_array_.at(idx0, idx1);
-}
-float& DArray::at(int idx0, int idx1, int idx2){
-  if(mem_==nullptr) this->Alloc();
-  return local_array_.at(idx0, idx1, idx2);
-}
-float& DArray::at(int idx0, int idx1, int idx2, int idx3){
-  if(mem_==nullptr) this->Alloc();
-  return local_array_.at(idx0, idx1, idx2, idx3);
 }
 
 float& DArray::at(int idx0) const{

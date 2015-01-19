@@ -1,5 +1,8 @@
+#include <math.h>
+#include <cblas.h>
 #include "darray/larray.h"
 #include <glog/logging.h>
+
 
 using namespace std;
 
@@ -172,6 +175,15 @@ void LArray::Pow(const LArray& src, const float p){
 }
 
 void LArray::Dot(const LArray& src1, const LArray& src2, bool trans1, bool trans2, bool overwrite){
+  CBLAS_TRANSPOSE transa=trans1?CblasTrans:CblasNoTrans;
+  CBLAS_TRANSPOSE transb=trans2?CblasTrans:CblasNoTrans;
+  int M=shape_[0], N=shape_[1], K=trans1?src1.shape_[0]:src1.shape_[1];
+  CHECK_EQ(K, trans2?src2.shape_[1]:src2.shape_[0]);
+  int lda=src1.shape_[1], ldb=src2.shape_[1];
+  float scale=overwrite?0.f:1.f;
+  cblas_sgemm(CblasRowMajor, transa, transb, M, N, K,
+      1.0f, src1.dptr(), lda, src2.dptr(), ldb, scale, head_, N);
+  /*
   if (overwrite)
     for (int i = 0; i < shape_.vol(); ++i)
       head_[i] = 0.0;
@@ -192,6 +204,7 @@ void LArray::Dot(const LArray& src1, const LArray& src2, bool trans1, bool trans
       }
       ++ptr;
     }
+    */
 }
 
 void LArray::AddCol(const LArray& src){
@@ -294,8 +307,8 @@ float LArray::Min() const{
 float LArray::Norm1() const{
   float ret = 0;
   for (int i = 0; i < shape_.vol(); ++i)
-    ret += head_[i]*head_[i];
-  return sqrt(ret);
+    ret += fabs(head_[i]);
+  return ret/(shape_.vol()+0.00001);//avoid shape_.vol()=0
 }
 
 float* LArray::addr(int idx0) const{

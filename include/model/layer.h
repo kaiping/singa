@@ -310,6 +310,7 @@ class InputLayer: public Layer {
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode)=0;
   DArray* mutable_prefetch_data(){return &(this->grad_);}
+  DArray* mutable_grad(){return nullptr;}
   virtual int GetPartitionDimension(PartitionMode mode);
  protected:
   //DArray prefetch_data_; use the grad_ field for prefetch data

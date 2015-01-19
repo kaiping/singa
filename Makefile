@@ -9,7 +9,7 @@ CXX := g++
 # Header folder for system and external libs. You may need to change it.
 INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include
 
-CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -O2 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi

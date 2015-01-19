@@ -49,7 +49,6 @@ void Factory<T>::Register(const std::string id,
 
 template<typename T>
 T *Factory<T>::Create(const std::string id) {
-  LOG(ERROR)<<"str2func size "<<str2func_.size();
   CHECK(str2func_.find(id) != str2func_.end())
       << "The creation function for " << id << " has not been registered";
   return str2func_[id]();

@@ -119,14 +119,10 @@ class DArray{
   //float Min(const Range& rng);
   float Norm1() const;
   //element-level
-  float* addr(int idx0);
-  float* addr(int idx0, int idx1);
-  float* addr(int idx0, int idx1, int idx2);
-  float* addr(int idx0, int idx1, int idx2, int idx3);
-  float& at(int idx0);
-  float& at(int idx0, int idx1) ;
-  float& at(int idx0, int idx1, int idx2) ;
-  float& at(int idx0, int idx1, int idx2, int idx3) ;
+  float* addr(int idx0) const;
+  float* addr(int idx0, int idx1) const;
+  float* addr(int idx0, int idx1, int idx2) const;
+  float* addr(int idx0, int idx1, int idx2, int idx3) const;
   float& at(int idx0) const;
   float& at(int idx0, int idx1) const;
   float& at(int idx0, int idx1, int idx2) const;

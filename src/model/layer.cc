@@ -710,13 +710,14 @@ bool InnerProductLayer::PreSyncF(const vector<Layer*>& src_layers){
 
 bool InnerProductLayer::PreSyncG(const vector<Layer*>& src_layers){
   DArray* gsrc=src_layers[0]->mutable_grad();
-  gsrc->Fill(0.0f);
+  if(gsrc!=nullptr)
+    gsrc->Fill(0.0f);
   return PostSyncF(src_layers);
 }
 
 bool InnerProductLayer::PostSyncF(const vector<Layer*>& src_layers){
   const DArray& src=src_layers[0]->data();
-  if(src.partitionDim()<=0&&data_.partitionDim()<=0)
+  if(src.partitionDim()<0||(src.partitionDim()==0&&data_.partitionDim()==0))
     return false;
   else
     return true;
@@ -820,8 +821,8 @@ void SoftmaxLossLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   for (int n = nrng.first; n < nrng.second; n++) {
     int k = static_cast<int>(label.at(n,0));
     gsrc2d.at(n,k)-=1.0f;
-    gsrc->Div(*gsrc, num_);
   }
+  gsrc->Div(*gsrc, num_);
 }
 
 // assume only partition along 0-th dim, add perfs from all partition
@@ -1038,7 +1039,6 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
   }
   cv::Mat betaMat=resizeMat;
   if(this->layer_proto_.mnist_param().has_beta()&&phase==kTrain){
-    LOG(ERROR)<<"Beta";
     cv::Mat warpmat(2,3, CV_32FC1);
     if(rand() % 2){
       // rotation
@@ -1087,7 +1087,6 @@ void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
         proto.kernel(),
         proto.sigma(),
         proto.alpha());
-  LOG(ERROR)<<"after elastic"<<grad_.Norm1();
   }
 
 }

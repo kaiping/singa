@@ -126,8 +126,6 @@ void Net::Setup(PartitionMode mode){
     if(name2srclayers_.find(layer->name())!=name2srclayers_.end())
       layer->Setup(name2srclayers_[layer->name()], mode);
   }
-  for(Param* param: params_)
-    param->Init();
 }
 
 void Net::ToProto(NetProto *proto, bool copyData) {

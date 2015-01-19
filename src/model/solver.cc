@@ -42,6 +42,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   shard.Next(&key, &record);
   // setup the net
   net->Setup(proto_.batchsize(), record);
+  DLOG(ERROR)<<net->ToString();
   return net;
 }
 
@@ -61,18 +62,15 @@ void Solver::ToProto(SolverProto *proto) {
 
 Performance Solver::Test(Net*net, const Phase& phase){
   string shard;
-  int nsteps;
+  int nsteps=0;
   if(phase==Phase::kValidation){
     shard=val_shard_;
     nsteps=proto_.validation_steps();
-  }
-  else if(phase==Phase::kTest){
+  } else if(phase==Phase::kTest){
     shard=test_shard_;
     nsteps=proto_.test_steps();
-  }
-  else
+  } else
     LOG(ERROR)<<"Phase must be kValidation or kTest";
-  // fetch params once
 
   Prefetcher prefetcher(shard, net, phase);
   std::thread *thd=nullptr;
@@ -84,11 +82,10 @@ Performance Solver::Test(Net*net, const Phase& phase){
     delete thd;
     for(auto* layer:net->input_layer())
       layer->SetInputData(nullptr);
-    thd=new std::thread(std::ref(prefetcher));
+    if(b!=nsteps-1)
+      thd=new std::thread(std::ref(prefetcher));
     perf.Aggregate(TestOneBatch(net, step_));
   }
-  thd->join();
-  delete thd;
   phase_=Phase::kTrain;
   return perf;
 }
@@ -177,6 +174,7 @@ void Solver::DebugInfo(Net* net){
 
 
 Performance Solver::TrainOneBatch(Net *net, int step){
+  //Timer tick;
   auto layers=net->layers();
   if(step==0){
     for(auto* param: net->params()){
@@ -208,11 +206,12 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     if((*layer)->PostSyncG(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
-  //DebugInfo(net);
+  //LOG(ERROR)<<"Train one batch "<<tick.elapsed();
   return perf;
 }
 
 Performance Solver::TestOneBatch(Net *net, int step){
+  //  Timer tick;
   for(auto* layer: net->layers()){
     const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
     if(layer->PreSyncF(srclayers))
@@ -223,7 +222,7 @@ Performance Solver::TestOneBatch(Net *net, int step){
   }
   const vector<Layer*> &srclayers=net->name2srclayers(net->performance_layer(0)->name());
   Performance perf=net->performance_layer(0)->ComputePerformance(srclayers,kAccuracy);
-
+  //LOG(ERROR)<<"Test one batch "<<tick.elapsed();
   return perf;
 }
 
@@ -362,10 +361,12 @@ void Prefetcher::operator()(){
   // add a lshape(k) api for DArryProto to return local shape on k-dim
   Pair nrng=input.localRange(0);
   Record record;
+  //Timer tick;
   for(int n=0;n<nrng.second-nrng.first;++n){
     NextRecord(&record);
     for(auto* layer:net_->input_layer())
       layer->AddInputRecord(record, phase_);
   }
+  //LOG(ERROR)<<"prefetch time "<<tick.elapsed();
 }
 }  // namespace singa

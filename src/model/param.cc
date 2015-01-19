@@ -9,8 +9,8 @@ void Param::FromProto(const ParamProto &proto){
     data_.FromProto(proto.ary(0));
     if(proto.ary_size()>=2){
       grad_.FromProto(proto.ary(1));
-      if(proto.ary_size()>=3)
-        history_.FromProto(proto.ary(2));
+      //if(proto.ary_size()>=3)
+       // history_.FromProto(proto.ary(2));
     }
   }
   /*
@@ -27,14 +27,14 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
   data_.ToProto(data, copyData);
   DAryProto* grad=proto->add_ary();
   grad_.ToProto(grad, copyData);
-  DAryProto* history=proto->add_ary();
-  history_.ToProto(history, copyData);
+  //DAryProto* history=proto->add_ary();
+  //history_.ToProto(history, copyData);
 }
 
 void Param::Setup(const vector<int>& shape, int partition_dim){
   data_.Setup(shape, partition_dim);
   grad_.Setup(shape, partition_dim);
-  history_.Setup(shape, partition_dim);
+  //history_.Setup(shape, partition_dim);
   param_proto_.set_partition_dim(partition_dim);
 }
 

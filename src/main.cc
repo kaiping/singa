@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
 
-  singa::Debug();
+  //singa::Debug();
   singa::TableServer server;
   singa::Worker worker;
   if(gc->AmITableServer()) {

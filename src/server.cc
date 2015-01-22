@@ -118,6 +118,7 @@ bool TableServerHandler::CheckpointNow(const TKey& key, const TVal& val){
 	return false;
 }
 bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
+  LOG(ERROR)<<"put key "<<key.id();
   to->CopyFrom(from);
   if(to->history().value_size()==0){
     for(int i=0;i<to->data().value_size();i++)
@@ -127,6 +128,7 @@ bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
 }
 
 bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
+  LOG(ERROR)<<"get key "<<key.id();
   if(key.version()<=from.version()&&from.num_aggregate()==0){
     to->mutable_data()->CopyFrom(from.data());
     return true;
@@ -180,6 +182,7 @@ float TSHandlerForSGD::UpdateHyperParam(
   return ret;
 }
 bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
+  LOG(ERROR)<<"update key "<<origin->split_id();
   //should be equal for syn sgd
   //CHECK_EQ(origin->version(), update.version())
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();

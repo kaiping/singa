@@ -40,11 +40,14 @@ class SafeQueue{
     std::lock_guard<std::mutex> lock(m);
     q.push(e);
   }
-  void pop(T* e) {
+  bool pop(T* e) {
     std::unique_lock<std::mutex> lock(m);
     if(q.size()>0){
       *e = q.front();
       q.pop();
+      return true;
+    }else{
+      return false;
     }
   }
 

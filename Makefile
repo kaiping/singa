@@ -9,7 +9,7 @@ CXX := g++
 # Header folder for system and external libs. You may need to change it.
 INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include
 
-CXXFLAGS := -O2 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 MPI_LIBRARIES := mpicxx mpi
@@ -55,7 +55,7 @@ TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS
 OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS))
 
 run: singa
-	mpirun -np 1 -hostfile examples/mnist/hostfile ./build/singa \
+	mpirun -np 2 -hostfile examples/mnist/hostfile ./build/singa \
 	-cluster_conf=examples/mnist/cluster.conf -model_conf=examples/mnist/mlp.conf
 
 singa: init proto  $(SINGA_OBJS)

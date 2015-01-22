@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <thread>
 
 #include "model/param.h"
 #include "utils/common.h"
@@ -90,6 +91,11 @@ class TableDelegate {
       std::shared_ptr<TableServerHandler> handler=nullptr);
 
   /**
+   * Destructor.
+   * set flag of running thread to false and joint the thread.
+   */
+  ~TableDelegate();
+  /**
    * Setup TableDelegate.
    * split parameters based on split threshold. if no table servers available,
    * set the threshold to infinity so that each split is a Param, and create
@@ -152,8 +158,6 @@ class TableDelegate {
    */
   void InternalThread();
  private:
-  //!< max num of splits per parameter, used to create split id
-  int kMaxSplits_;
   //!< cluster info
   int  worker_id_,rank_,  num_servers_, group_size_, num_groups_;
   //!< true if all groups run synchronously, otherwise false.
@@ -176,9 +180,10 @@ class TableDelegate {
    * send to servers by the internal thread, the queue operations (push, pop)
    * are thread safe.
    */
-  SafeQueue<shared_ptr<RequestBase>> sending_queue_;
+  SafeQueue<RequestBase*> sending_queue_;
   //!< thread state controller, set to false to terminate the thread.
   bool running_;
+  std::thread *running_loop_;
 };
 
 }  // namespace singa

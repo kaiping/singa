@@ -40,6 +40,7 @@ class EdgeProto;
 class DAryProto;
 class ParamProto;
 class LayerProto;
+class TanhProto;
 class SoftmaxLossProto;
 class ConvolutionProto;
 class DataProto;
@@ -225,25 +226,6 @@ inline bool PartitionMode_Parse(
     const ::std::string& name, PartitionMode* value) {
   return ::google::protobuf::internal::ParseNamedEnum<PartitionMode>(
     PartitionMode_descriptor(), name, value);
-}
-enum PerformanceType {
-  kLoss = 1,
-  kAccuracy = 2
-};
-bool PerformanceType_IsValid(int value);
-const PerformanceType PerformanceType_MIN = kLoss;
-const PerformanceType PerformanceType_MAX = kAccuracy;
-const int PerformanceType_ARRAYSIZE = PerformanceType_MAX + 1;
-
-const ::google::protobuf::EnumDescriptor* PerformanceType_descriptor();
-inline const ::std::string& PerformanceType_Name(PerformanceType value) {
-  return ::google::protobuf::internal::NameOfEnum(
-    PerformanceType_descriptor(), value);
-}
-inline bool PerformanceType_Parse(
-    const ::std::string& name, PerformanceType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<PerformanceType>(
-    PerformanceType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -1116,59 +1098,68 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::singa::DropoutProto* release_dropout_param();
   inline void set_allocated_dropout_param(::singa::DropoutProto* dropout_param);
 
-  // optional .singa.InnerProductProto inner_product_param = 17;
+  // optional .singa.InnerProductProto inner_product_param = 14;
   inline bool has_inner_product_param() const;
   inline void clear_inner_product_param();
-  static const int kInnerProductParamFieldNumber = 17;
+  static const int kInnerProductParamFieldNumber = 14;
   inline const ::singa::InnerProductProto& inner_product_param() const;
   inline ::singa::InnerProductProto* mutable_inner_product_param();
   inline ::singa::InnerProductProto* release_inner_product_param();
   inline void set_allocated_inner_product_param(::singa::InnerProductProto* inner_product_param);
 
-  // optional .singa.LRNProto lrn_param = 18;
+  // optional .singa.LRNProto lrn_param = 15;
   inline bool has_lrn_param() const;
   inline void clear_lrn_param();
-  static const int kLrnParamFieldNumber = 18;
+  static const int kLrnParamFieldNumber = 15;
   inline const ::singa::LRNProto& lrn_param() const;
   inline ::singa::LRNProto* mutable_lrn_param();
   inline ::singa::LRNProto* release_lrn_param();
   inline void set_allocated_lrn_param(::singa::LRNProto* lrn_param);
 
-  // optional .singa.MnistProto mnist_param = 21;
+  // optional .singa.MnistProto mnist_param = 16;
   inline bool has_mnist_param() const;
   inline void clear_mnist_param();
-  static const int kMnistParamFieldNumber = 21;
+  static const int kMnistParamFieldNumber = 16;
   inline const ::singa::MnistProto& mnist_param() const;
   inline ::singa::MnistProto* mutable_mnist_param();
   inline ::singa::MnistProto* release_mnist_param();
   inline void set_allocated_mnist_param(::singa::MnistProto* mnist_param);
 
-  // optional .singa.PoolingProto pooling_param = 19;
+  // optional .singa.PoolingProto pooling_param = 17;
   inline bool has_pooling_param() const;
   inline void clear_pooling_param();
-  static const int kPoolingParamFieldNumber = 19;
+  static const int kPoolingParamFieldNumber = 17;
   inline const ::singa::PoolingProto& pooling_param() const;
   inline ::singa::PoolingProto* mutable_pooling_param();
   inline ::singa::PoolingProto* release_pooling_param();
   inline void set_allocated_pooling_param(::singa::PoolingProto* pooling_param);
 
-  // optional .singa.ReLUProto relu_param = 30;
+  // optional .singa.ReLUProto relu_param = 18;
   inline bool has_relu_param() const;
   inline void clear_relu_param();
-  static const int kReluParamFieldNumber = 30;
+  static const int kReluParamFieldNumber = 18;
   inline const ::singa::ReLUProto& relu_param() const;
   inline ::singa::ReLUProto* mutable_relu_param();
   inline ::singa::ReLUProto* release_relu_param();
   inline void set_allocated_relu_param(::singa::ReLUProto* relu_param);
 
-  // optional .singa.SoftmaxLossProto softmaxloss_param = 10;
+  // optional .singa.SoftmaxLossProto softmaxloss_param = 19;
   inline bool has_softmaxloss_param() const;
   inline void clear_softmaxloss_param();
-  static const int kSoftmaxlossParamFieldNumber = 10;
+  static const int kSoftmaxlossParamFieldNumber = 19;
   inline const ::singa::SoftmaxLossProto& softmaxloss_param() const;
   inline ::singa::SoftmaxLossProto* mutable_softmaxloss_param();
   inline ::singa::SoftmaxLossProto* release_softmaxloss_param();
   inline void set_allocated_softmaxloss_param(::singa::SoftmaxLossProto* softmaxloss_param);
+
+  // optional .singa.TanhProto tanh_param = 20;
+  inline bool has_tanh_param() const;
+  inline void clear_tanh_param();
+  static const int kTanhParamFieldNumber = 20;
+  inline const ::singa::TanhProto& tanh_param() const;
+  inline ::singa::TanhProto* mutable_tanh_param();
+  inline ::singa::TanhProto* release_tanh_param();
+  inline void set_allocated_tanh_param(::singa::TanhProto* tanh_param);
 
   // @@protoc_insertion_point(class_scope:singa.LayerProto)
  private:
@@ -1194,6 +1185,8 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_relu_param();
   inline void set_has_softmaxloss_param();
   inline void clear_has_softmaxloss_param();
+  inline void set_has_tanh_param();
+  inline void clear_has_tanh_param();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -1214,9 +1207,10 @@ class LayerProto : public ::google::protobuf::Message {
   ::singa::PoolingProto* pooling_param_;
   ::singa::ReLUProto* relu_param_;
   ::singa::SoftmaxLossProto* softmaxloss_param_;
+  ::singa::TanhProto* tanh_param_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(17 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(18 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1224,6 +1218,98 @@ class LayerProto : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static LayerProto* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TanhProto : public ::google::protobuf::Message {
+ public:
+  TanhProto();
+  virtual ~TanhProto();
+
+  TanhProto(const TanhProto& from);
+
+  inline TanhProto& operator=(const TanhProto& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TanhProto& default_instance();
+
+  void Swap(TanhProto* other);
+
+  // implements Message ----------------------------------------------
+
+  TanhProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TanhProto& from);
+  void MergeFrom(const TanhProto& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional float a = 1;
+  inline bool has_a() const;
+  inline void clear_a();
+  static const int kAFieldNumber = 1;
+  inline float a() const;
+  inline void set_a(float value);
+
+  // optional float b = 2;
+  inline bool has_b() const;
+  inline void clear_b();
+  static const int kBFieldNumber = 2;
+  inline float b() const;
+  inline void set_b(float value);
+
+  // @@protoc_insertion_point(class_scope:singa.TanhProto)
+ private:
+  inline void set_has_a();
+  inline void clear_has_a();
+  inline void set_has_b();
+  inline void clear_has_b();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  float a_;
+  float b_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static TanhProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -1707,40 +1793,60 @@ class MnistProto : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional float sigma = 1;
-  inline bool has_sigma() const;
-  inline void clear_sigma();
-  static const int kSigmaFieldNumber = 1;
-  inline float sigma() const;
-  inline void set_sigma(float value);
-
-  // optional float alpha = 2;
-  inline bool has_alpha() const;
-  inline void clear_alpha();
-  static const int kAlphaFieldNumber = 2;
-  inline float alpha() const;
-  inline void set_alpha(float value);
-
-  // optional int32 kernel = 3;
+  // optional int32 kernel = 1;
   inline bool has_kernel() const;
   inline void clear_kernel();
-  static const int kKernelFieldNumber = 3;
+  static const int kKernelFieldNumber = 1;
   inline ::google::protobuf::int32 kernel() const;
   inline void set_kernel(::google::protobuf::int32 value);
 
-  // optional float beta = 4;
-  inline bool has_beta() const;
+  // repeated float sigma = 2;
+  inline int sigma_size() const;
+  inline void clear_sigma();
+  static const int kSigmaFieldNumber = 2;
+  inline float sigma(int index) const;
+  inline void set_sigma(int index, float value);
+  inline void add_sigma(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      sigma() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_sigma();
+
+  // repeated float alpha = 3;
+  inline int alpha_size() const;
+  inline void clear_alpha();
+  static const int kAlphaFieldNumber = 3;
+  inline float alpha(int index) const;
+  inline void set_alpha(int index, float value);
+  inline void add_alpha(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      alpha() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_alpha();
+
+  // repeated float beta = 4;
+  inline int beta_size() const;
   inline void clear_beta();
   static const int kBetaFieldNumber = 4;
-  inline float beta() const;
-  inline void set_beta(float value);
+  inline float beta(int index) const;
+  inline void set_beta(int index, float value);
+  inline void add_beta(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      beta() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_beta();
 
-  // optional float gamma = 5;
-  inline bool has_gamma() const;
+  // repeated float gamma = 5;
+  inline int gamma_size() const;
   inline void clear_gamma();
   static const int kGammaFieldNumber = 5;
-  inline float gamma() const;
-  inline void set_gamma(float value);
+  inline float gamma(int index) const;
+  inline void set_gamma(int index, float value);
+  inline void add_gamma(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      gamma() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_gamma();
 
   // optional int32 size = 6;
   inline bool has_size() const;
@@ -1749,42 +1855,44 @@ class MnistProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 size() const;
   inline void set_size(::google::protobuf::int32 value);
 
-  // optional int32 elastic_freq = 7 [default = 0];
+  // optional int32 elastic_freq = 7;
   inline bool has_elastic_freq() const;
   inline void clear_elastic_freq();
   static const int kElasticFreqFieldNumber = 7;
   inline ::google::protobuf::int32 elastic_freq() const;
   inline void set_elastic_freq(::google::protobuf::int32 value);
 
+  // optional bool normalize = 8 [default = true];
+  inline bool has_normalize() const;
+  inline void clear_normalize();
+  static const int kNormalizeFieldNumber = 8;
+  inline bool normalize() const;
+  inline void set_normalize(bool value);
+
   // @@protoc_insertion_point(class_scope:singa.MnistProto)
  private:
-  inline void set_has_sigma();
-  inline void clear_has_sigma();
-  inline void set_has_alpha();
-  inline void clear_has_alpha();
   inline void set_has_kernel();
   inline void clear_has_kernel();
-  inline void set_has_beta();
-  inline void clear_has_beta();
-  inline void set_has_gamma();
-  inline void clear_has_gamma();
   inline void set_has_size();
   inline void clear_has_size();
   inline void set_has_elastic_freq();
   inline void clear_has_elastic_freq();
+  inline void set_has_normalize();
+  inline void clear_has_normalize();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  float sigma_;
-  float alpha_;
+  ::google::protobuf::RepeatedField< float > sigma_;
+  ::google::protobuf::RepeatedField< float > alpha_;
   ::google::protobuf::int32 kernel_;
-  float beta_;
-  float gamma_;
   ::google::protobuf::int32 size_;
+  ::google::protobuf::RepeatedField< float > beta_;
+  ::google::protobuf::RepeatedField< float > gamma_;
   ::google::protobuf::int32 elastic_freq_;
+  bool normalize_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -2706,13 +2814,6 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 test_steps() const;
   inline void set_test_steps(::google::protobuf::int32 value);
 
-  // optional int32 max_splits = 23 [default = 3571];
-  inline bool has_max_splits() const;
-  inline void clear_max_splits();
-  static const int kMaxSplitsFieldNumber = 23;
-  inline ::google::protobuf::int32 max_splits() const;
-  inline void set_max_splits(::google::protobuf::int32 value);
-
   // optional .singa.SGDProto sgd = 24;
   inline bool has_sgd() const;
   inline void clear_sgd();
@@ -2729,7 +2830,7 @@ class SolverProto : public ::google::protobuf::Message {
   inline ::singa::SolverProto_GradCalcAlg alg() const;
   inline void set_alg(::singa::SolverProto_GradCalcAlg value);
 
-  // optional .singa.PartitionMode partition = 27;
+  // optional .singa.PartitionMode partition = 27 [default = kNone];
   inline bool has_partition() const;
   inline void clear_partition();
   static const int kPartitionFieldNumber = 27;
@@ -2766,8 +2867,6 @@ class SolverProto : public ::google::protobuf::Message {
   inline void clear_has_validation_steps();
   inline void set_has_test_steps();
   inline void clear_has_test_steps();
-  inline void set_has_max_splits();
-  inline void clear_has_max_splits();
   inline void set_has_sgd();
   inline void clear_has_sgd();
   inline void set_has_alg();
@@ -2793,14 +2892,13 @@ class SolverProto : public ::google::protobuf::Message {
   ::google::protobuf::int32 batchsize_;
   ::google::protobuf::int32 train_steps_;
   ::google::protobuf::int32 validation_steps_;
-  ::google::protobuf::int32 test_steps_;
-  ::google::protobuf::int32 max_splits_;
   ::singa::SGDProto* sgd_;
+  ::google::protobuf::int32 test_steps_;
   int alg_;
   int partition_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(18 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(17 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -3235,14 +3333,14 @@ class SGDProto : public ::google::protobuf::Message {
   inline float weight_decay() const;
   inline void set_weight_decay(float value);
 
-  // optional float gamma = 4;
+  // optional float gamma = 4 [default = 1];
   inline bool has_gamma() const;
   inline void clear_gamma();
   static const int kGammaFieldNumber = 4;
   inline float gamma() const;
   inline void set_gamma(float value);
 
-  // optional float pow = 5;
+  // optional float pow = 5 [default = 0];
   inline bool has_pow() const;
   inline void clear_pow();
   static const int kPowFieldNumber = 5;
@@ -3270,7 +3368,7 @@ class SGDProto : public ::google::protobuf::Message {
   inline bool synchronous() const;
   inline void set_synchronous(bool value);
 
-  // optional string handler = 9 [default = "SGDHandler"];
+  // optional string handler = 9 [default = "SGD"];
   inline bool has_handler() const;
   inline void clear_handler();
   static const int kHandlerFieldNumber = 9;
@@ -5341,7 +5439,7 @@ inline void LayerProto::set_allocated_dropout_param(::singa::DropoutProto* dropo
   }
 }
 
-// optional .singa.InnerProductProto inner_product_param = 17;
+// optional .singa.InnerProductProto inner_product_param = 14;
 inline bool LayerProto::has_inner_product_param() const {
   return (_has_bits_[0] & 0x00000800u) != 0;
 }
@@ -5379,7 +5477,7 @@ inline void LayerProto::set_allocated_inner_product_param(::singa::InnerProductP
   }
 }
 
-// optional .singa.LRNProto lrn_param = 18;
+// optional .singa.LRNProto lrn_param = 15;
 inline bool LayerProto::has_lrn_param() const {
   return (_has_bits_[0] & 0x00001000u) != 0;
 }
@@ -5417,7 +5515,7 @@ inline void LayerProto::set_allocated_lrn_param(::singa::LRNProto* lrn_param) {
   }
 }
 
-// optional .singa.MnistProto mnist_param = 21;
+// optional .singa.MnistProto mnist_param = 16;
 inline bool LayerProto::has_mnist_param() const {
   return (_has_bits_[0] & 0x00002000u) != 0;
 }
@@ -5455,7 +5553,7 @@ inline void LayerProto::set_allocated_mnist_param(::singa::MnistProto* mnist_par
   }
 }
 
-// optional .singa.PoolingProto pooling_param = 19;
+// optional .singa.PoolingProto pooling_param = 17;
 inline bool LayerProto::has_pooling_param() const {
   return (_has_bits_[0] & 0x00004000u) != 0;
 }
@@ -5493,7 +5591,7 @@ inline void LayerProto::set_allocated_pooling_param(::singa::PoolingProto* pooli
   }
 }
 
-// optional .singa.ReLUProto relu_param = 30;
+// optional .singa.ReLUProto relu_param = 18;
 inline bool LayerProto::has_relu_param() const {
   return (_has_bits_[0] & 0x00008000u) != 0;
 }
@@ -5531,7 +5629,7 @@ inline void LayerProto::set_allocated_relu_param(::singa::ReLUProto* relu_param)
   }
 }
 
-// optional .singa.SoftmaxLossProto softmaxloss_param = 10;
+// optional .singa.SoftmaxLossProto softmaxloss_param = 19;
 inline bool LayerProto::has_softmaxloss_param() const {
   return (_has_bits_[0] & 0x00010000u) != 0;
 }
@@ -5567,6 +5665,92 @@ inline void LayerProto::set_allocated_softmaxloss_param(::singa::SoftmaxLossProt
   } else {
     clear_has_softmaxloss_param();
   }
+}
+
+// optional .singa.TanhProto tanh_param = 20;
+inline bool LayerProto::has_tanh_param() const {
+  return (_has_bits_[0] & 0x00020000u) != 0;
+}
+inline void LayerProto::set_has_tanh_param() {
+  _has_bits_[0] |= 0x00020000u;
+}
+inline void LayerProto::clear_has_tanh_param() {
+  _has_bits_[0] &= ~0x00020000u;
+}
+inline void LayerProto::clear_tanh_param() {
+  if (tanh_param_ != NULL) tanh_param_->::singa::TanhProto::Clear();
+  clear_has_tanh_param();
+}
+inline const ::singa::TanhProto& LayerProto::tanh_param() const {
+  return tanh_param_ != NULL ? *tanh_param_ : *default_instance_->tanh_param_;
+}
+inline ::singa::TanhProto* LayerProto::mutable_tanh_param() {
+  set_has_tanh_param();
+  if (tanh_param_ == NULL) tanh_param_ = new ::singa::TanhProto;
+  return tanh_param_;
+}
+inline ::singa::TanhProto* LayerProto::release_tanh_param() {
+  clear_has_tanh_param();
+  ::singa::TanhProto* temp = tanh_param_;
+  tanh_param_ = NULL;
+  return temp;
+}
+inline void LayerProto::set_allocated_tanh_param(::singa::TanhProto* tanh_param) {
+  delete tanh_param_;
+  tanh_param_ = tanh_param;
+  if (tanh_param) {
+    set_has_tanh_param();
+  } else {
+    clear_has_tanh_param();
+  }
+}
+
+// -------------------------------------------------------------------
+
+// TanhProto
+
+// optional float a = 1;
+inline bool TanhProto::has_a() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void TanhProto::set_has_a() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void TanhProto::clear_has_a() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void TanhProto::clear_a() {
+  a_ = 0;
+  clear_has_a();
+}
+inline float TanhProto::a() const {
+  return a_;
+}
+inline void TanhProto::set_a(float value) {
+  set_has_a();
+  a_ = value;
+}
+
+// optional float b = 2;
+inline bool TanhProto::has_b() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void TanhProto::set_has_b() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void TanhProto::clear_has_b() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void TanhProto::clear_b() {
+  b_ = 0;
+  clear_has_b();
+}
+inline float TanhProto::b() const {
+  return b_;
+}
+inline void TanhProto::set_b(float value) {
+  set_has_b();
+  b_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -6121,59 +6305,15 @@ inline void DataProto::set_rand_skip(::google::protobuf::uint32 value) {
 
 // MnistProto
 
-// optional float sigma = 1;
-inline bool MnistProto::has_sigma() const {
+// optional int32 kernel = 1;
+inline bool MnistProto::has_kernel() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void MnistProto::set_has_sigma() {
+inline void MnistProto::set_has_kernel() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void MnistProto::clear_has_sigma() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void MnistProto::clear_sigma() {
-  sigma_ = 0;
-  clear_has_sigma();
-}
-inline float MnistProto::sigma() const {
-  return sigma_;
-}
-inline void MnistProto::set_sigma(float value) {
-  set_has_sigma();
-  sigma_ = value;
-}
-
-// optional float alpha = 2;
-inline bool MnistProto::has_alpha() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void MnistProto::set_has_alpha() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void MnistProto::clear_has_alpha() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void MnistProto::clear_alpha() {
-  alpha_ = 0;
-  clear_has_alpha();
-}
-inline float MnistProto::alpha() const {
-  return alpha_;
-}
-inline void MnistProto::set_alpha(float value) {
-  set_has_alpha();
-  alpha_ = value;
-}
-
-// optional int32 kernel = 3;
-inline bool MnistProto::has_kernel() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void MnistProto::set_has_kernel() {
-  _has_bits_[0] |= 0x00000004u;
-}
 inline void MnistProto::clear_has_kernel() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000001u;
 }
 inline void MnistProto::clear_kernel() {
   kernel_ = 0;
@@ -6187,48 +6327,104 @@ inline void MnistProto::set_kernel(::google::protobuf::int32 value) {
   kernel_ = value;
 }
 
-// optional float beta = 4;
-inline bool MnistProto::has_beta() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+// repeated float sigma = 2;
+inline int MnistProto::sigma_size() const {
+  return sigma_.size();
 }
-inline void MnistProto::set_has_beta() {
-  _has_bits_[0] |= 0x00000008u;
+inline void MnistProto::clear_sigma() {
+  sigma_.Clear();
 }
-inline void MnistProto::clear_has_beta() {
-  _has_bits_[0] &= ~0x00000008u;
+inline float MnistProto::sigma(int index) const {
+  return sigma_.Get(index);
 }
-inline void MnistProto::clear_beta() {
-  beta_ = 0;
-  clear_has_beta();
+inline void MnistProto::set_sigma(int index, float value) {
+  sigma_.Set(index, value);
 }
-inline float MnistProto::beta() const {
-  return beta_;
+inline void MnistProto::add_sigma(float value) {
+  sigma_.Add(value);
 }
-inline void MnistProto::set_beta(float value) {
-  set_has_beta();
-  beta_ = value;
+inline const ::google::protobuf::RepeatedField< float >&
+MnistProto::sigma() const {
+  return sigma_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+MnistProto::mutable_sigma() {
+  return &sigma_;
 }
 
-// optional float gamma = 5;
-inline bool MnistProto::has_gamma() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+// repeated float alpha = 3;
+inline int MnistProto::alpha_size() const {
+  return alpha_.size();
 }
-inline void MnistProto::set_has_gamma() {
-  _has_bits_[0] |= 0x00000010u;
+inline void MnistProto::clear_alpha() {
+  alpha_.Clear();
 }
-inline void MnistProto::clear_has_gamma() {
-  _has_bits_[0] &= ~0x00000010u;
+inline float MnistProto::alpha(int index) const {
+  return alpha_.Get(index);
+}
+inline void MnistProto::set_alpha(int index, float value) {
+  alpha_.Set(index, value);
+}
+inline void MnistProto::add_alpha(float value) {
+  alpha_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+MnistProto::alpha() const {
+  return alpha_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+MnistProto::mutable_alpha() {
+  return &alpha_;
+}
+
+// repeated float beta = 4;
+inline int MnistProto::beta_size() const {
+  return beta_.size();
+}
+inline void MnistProto::clear_beta() {
+  beta_.Clear();
+}
+inline float MnistProto::beta(int index) const {
+  return beta_.Get(index);
+}
+inline void MnistProto::set_beta(int index, float value) {
+  beta_.Set(index, value);
+}
+inline void MnistProto::add_beta(float value) {
+  beta_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+MnistProto::beta() const {
+  return beta_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+MnistProto::mutable_beta() {
+  return &beta_;
+}
+
+// repeated float gamma = 5;
+inline int MnistProto::gamma_size() const {
+  return gamma_.size();
 }
 inline void MnistProto::clear_gamma() {
-  gamma_ = 0;
-  clear_has_gamma();
+  gamma_.Clear();
 }
-inline float MnistProto::gamma() const {
+inline float MnistProto::gamma(int index) const {
+  return gamma_.Get(index);
+}
+inline void MnistProto::set_gamma(int index, float value) {
+  gamma_.Set(index, value);
+}
+inline void MnistProto::add_gamma(float value) {
+  gamma_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+MnistProto::gamma() const {
   return gamma_;
 }
-inline void MnistProto::set_gamma(float value) {
-  set_has_gamma();
-  gamma_ = value;
+inline ::google::protobuf::RepeatedField< float >*
+MnistProto::mutable_gamma() {
+  return &gamma_;
 }
 
 // optional int32 size = 6;
@@ -6253,7 +6449,7 @@ inline void MnistProto::set_size(::google::protobuf::int32 value) {
   size_ = value;
 }
 
-// optional int32 elastic_freq = 7 [default = 0];
+// optional int32 elastic_freq = 7;
 inline bool MnistProto::has_elastic_freq() const {
   return (_has_bits_[0] & 0x00000040u) != 0;
 }
@@ -6273,6 +6469,28 @@ inline ::google::protobuf::int32 MnistProto::elastic_freq() const {
 inline void MnistProto::set_elastic_freq(::google::protobuf::int32 value) {
   set_has_elastic_freq();
   elastic_freq_ = value;
+}
+
+// optional bool normalize = 8 [default = true];
+inline bool MnistProto::has_normalize() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void MnistProto::set_has_normalize() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void MnistProto::clear_has_normalize() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void MnistProto::clear_normalize() {
+  normalize_ = true;
+  clear_has_normalize();
+}
+inline bool MnistProto::normalize() const {
+  return normalize_;
+}
+inline void MnistProto::set_normalize(bool value) {
+  set_has_normalize();
+  normalize_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -7285,37 +7503,15 @@ inline void SolverProto::set_test_steps(::google::protobuf::int32 value) {
   test_steps_ = value;
 }
 
-// optional int32 max_splits = 23 [default = 3571];
-inline bool SolverProto::has_max_splits() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void SolverProto::set_has_max_splits() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void SolverProto::clear_has_max_splits() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void SolverProto::clear_max_splits() {
-  max_splits_ = 3571;
-  clear_has_max_splits();
-}
-inline ::google::protobuf::int32 SolverProto::max_splits() const {
-  return max_splits_;
-}
-inline void SolverProto::set_max_splits(::google::protobuf::int32 value) {
-  set_has_max_splits();
-  max_splits_ = value;
-}
-
 // optional .singa.SGDProto sgd = 24;
 inline bool SolverProto::has_sgd() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
+  return (_has_bits_[0] & 0x00004000u) != 0;
 }
 inline void SolverProto::set_has_sgd() {
-  _has_bits_[0] |= 0x00008000u;
+  _has_bits_[0] |= 0x00004000u;
 }
 inline void SolverProto::clear_has_sgd() {
-  _has_bits_[0] &= ~0x00008000u;
+  _has_bits_[0] &= ~0x00004000u;
 }
 inline void SolverProto::clear_sgd() {
   if (sgd_ != NULL) sgd_->::singa::SGDProto::Clear();
@@ -7347,13 +7543,13 @@ inline void SolverProto::set_allocated_sgd(::singa::SGDProto* sgd) {
 
 // optional .singa.SolverProto.GradCalcAlg alg = 26 [default = kBackPropagation];
 inline bool SolverProto::has_alg() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
+  return (_has_bits_[0] & 0x00008000u) != 0;
 }
 inline void SolverProto::set_has_alg() {
-  _has_bits_[0] |= 0x00010000u;
+  _has_bits_[0] |= 0x00008000u;
 }
 inline void SolverProto::clear_has_alg() {
-  _has_bits_[0] &= ~0x00010000u;
+  _has_bits_[0] &= ~0x00008000u;
 }
 inline void SolverProto::clear_alg() {
   alg_ = 1;
@@ -7368,18 +7564,18 @@ inline void SolverProto::set_alg(::singa::SolverProto_GradCalcAlg value) {
   alg_ = value;
 }
 
-// optional .singa.PartitionMode partition = 27;
+// optional .singa.PartitionMode partition = 27 [default = kNone];
 inline bool SolverProto::has_partition() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
+  return (_has_bits_[0] & 0x00010000u) != 0;
 }
 inline void SolverProto::set_has_partition() {
-  _has_bits_[0] |= 0x00020000u;
+  _has_bits_[0] |= 0x00010000u;
 }
 inline void SolverProto::clear_has_partition() {
-  _has_bits_[0] &= ~0x00020000u;
+  _has_bits_[0] &= ~0x00010000u;
 }
 inline void SolverProto::clear_partition() {
-  partition_ = 0;
+  partition_ = 3;
   clear_has_partition();
 }
 inline ::singa::PartitionMode SolverProto::partition() const {
@@ -7724,7 +7920,7 @@ inline void SGDProto::set_weight_decay(float value) {
   weight_decay_ = value;
 }
 
-// optional float gamma = 4;
+// optional float gamma = 4 [default = 1];
 inline bool SGDProto::has_gamma() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -7735,7 +7931,7 @@ inline void SGDProto::clear_has_gamma() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void SGDProto::clear_gamma() {
-  gamma_ = 0;
+  gamma_ = 1;
   clear_has_gamma();
 }
 inline float SGDProto::gamma() const {
@@ -7746,7 +7942,7 @@ inline void SGDProto::set_gamma(float value) {
   gamma_ = value;
 }
 
-// optional float pow = 5;
+// optional float pow = 5 [default = 0];
 inline bool SGDProto::has_pow() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
@@ -7835,7 +8031,7 @@ inline void SGDProto::set_synchronous(bool value) {
   synchronous_ = value;
 }
 
-// optional string handler = 9 [default = "SGDHandler"];
+// optional string handler = 9 [default = "SGD"];
 inline bool SGDProto::has_handler() const {
   return (_has_bits_[0] & 0x00000100u) != 0;
 }
@@ -8675,10 +8871,6 @@ inline const EnumDescriptor* GetEnumDescriptor< ::singa::Phase>() {
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::singa::PartitionMode>() {
   return ::singa::PartitionMode_descriptor();
-}
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::singa::PerformanceType>() {
-  return ::singa::PerformanceType_descriptor();
 }
 
 }  // namespace google

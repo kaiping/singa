@@ -768,11 +768,10 @@ void TanhLayer::ComputeFeature(const vector<Layer*>& src_layers){
 
 void TanhLayer::ComputeGradient(const vector<Layer*>& src_layers) {
   DArray* gsrc=src_layers[0]->mutable_grad();
-  const DArray& src=src_layers[0]->data();
   float a=this->layer_proto_.tanh_param().a();
   float b=this->layer_proto_.tanh_param().b();
   float b_a=b/a, ba=b*a;
-  gsrc->Map([b_a,ba](float f, float g){return g*(ba-b_a*f*f);}, src, grad_);
+  gsrc->Map([b_a,ba](float f, float g){return g*(ba-b_a*f*f);}, data_, grad_);
 }
 
 /*****************************************************************************
@@ -827,7 +826,7 @@ void SoftmaxLossLayer::ComputeGradient(const vector<Layer*>& src_layers) {
 
 // assume only partition along 0-th dim, add perfs from all partition
 Performance SoftmaxLossLayer::ComputePerformance(
-    const vector<Layer*>& src_layers, PerformanceType type){
+    const vector<Layer*>& src_layers, int type){
   int ncorrectk=0, ncorrect=0;
   float logprob=0.0f;
   Pair nrng=data_.localRange(0);
@@ -837,9 +836,9 @@ Performance SoftmaxLossLayer::ComputePerformance(
     float *dptr=data_.addr(n,0);
     int labelid=static_cast<int>(label.at(n,0));
     // debug for imagenet
-    CHECK(labelid>=0&&labelid<1000)<<"label "<<labelid;
+    CHECK(labelid>=0&&labelid<10)<<"label "<<labelid;
     float prob_of_truth=dptr[labelid];
-    if(type&kAccuracy){
+    if(type&kPrecision){
       int nlarger=0;
       // count num of probs larger than the prob of the ground truth label
       for(int i=0;i<dim_;i++) {
@@ -986,16 +985,22 @@ void ImageLayer::AddInputRecord(const Record &record, Phase phase){
 /*************************************
  * Implementation for MnistImageLayer
  *************************************/
+MnistImageLayer::~MnistImageLayer(){
+  if(this->layer_proto_.mnist_param().has_elastic_freq()){
+    delete displacementx_;
+    delete displacementy_;
+    delete gauss_;
+    delete tmpimg_;
+    delete colimg_;
+  }
+}
 void MnistImageLayer::Setup(const vector<vector<int>>& shapes, PartitionMode mode){
   CHECK_GE(shapes.size(),1);
   CHECK_GE(shapes[0].size(),3);//batchsize, height(29), width(29)
-  int pdim=GetPartitionDimension(mode);
   vector<int> shape(shapes[0]);
   if(this->layer_proto_.mnist_param().has_size())
     shape[1]=shape[2]=this->layer_proto_.mnist_param().size();
-  data_.Setup(shapes[0], pdim);
-  grad_.Setup(shapes[0], pdim);
-  offset_=0;
+  Setup(shape, mode);
 }
 
 void MnistImageLayer::Setup(const int batchsize, const Record & record,
@@ -1004,160 +1009,163 @@ void MnistImageLayer::Setup(const int batchsize, const Record & record,
   if(this->layer_proto_.mnist_param().has_size())
     s=this->layer_proto_.mnist_param().size();
   vector<int> shape{batchsize, s, s};
+  Setup(shape, mode);
+}
+
+void MnistImageLayer::Setup(const vector<int> &shape, PartitionMode mode ){
   int pdim=GetPartitionDimension(mode);
   data_.Setup(shape, pdim);
   grad_.Setup(shape, pdim);
   offset_=0;
+  unsigned sd = std::chrono::system_clock::now().time_since_epoch().count();
+  generator_.seed(sd);
+  MnistProto proto=this->layer_proto_.mnist_param();
+  if(proto.has_elastic_freq()){
+    n_=static_cast<int>(sqrt(proto.elastic_freq()));
+    CHECK_EQ(n_*n_, proto.elastic_freq());
+    h_=proto.has_size()?proto.size():shape[1];
+    w_=proto.has_size()?proto.size():shape[2];
+    CHECK(h_);
+    CHECK(w_);
+    kernel_=proto.kernel();
+    CHECK(kernel_);
+    conv_h_=kernel_*kernel_;
+    conv_w_=n_*h_*n_*w_;
+    gauss_=new float[conv_h_];
+    displacementx_=new float[conv_w_];
+    displacementy_=new float[conv_w_];
+    tmpimg_=new float[conv_w_];
+    colimg_=new float[conv_h_*conv_w_];
+  }
 }
-
 void MnistImageLayer::AddInputRecord(const Record& record, Phase phase){
   MnistProto proto=this->layer_proto_.mnist_param();
-  int imgsize[2];
-  imgsize[0]=imgsize[1]=static_cast<int>(sqrt(record.mnist().pixel().size()));
   const string pixel=record.mnist().pixel();
+  int h=static_cast<int>(sqrt(pixel.size())), w=h;
   // copy from record to cv::Mat
-  cv::Mat input(imgsize[0], imgsize[1], CV_32FC1);
-  for(int i=0,k=0;i<imgsize[0];i++)
-    for(int j=0;j<imgsize[1];j++){
+  cv::Mat input(h, w, CV_32FC1);
+  for(int i=0,k=0;i<h;i++)
+    for(int j=0;j<w;j++){
       input.at<float>(i,j)=static_cast<float>(static_cast<uint8_t>(pixel[k++]));
       CHECK_GE(input.at<float>(i,j),0);
     }
-  std::default_random_engine generator;
-  std::uniform_real_distribution<float> distribution(-1.0,1.0);
+  UniformDist distribution(-1.0f,1.0f);
   cv::Mat resizeMat=input;
   // affine transform, scaling, rotation and shearing
-  if(phase==kTrain&&(proto.has_size()||proto.has_gamma())){
-    int h=imgsize[0];
-    int w=imgsize[1];
-    if(proto.has_size())
-      h=w=proto.size();
-    if(proto.has_gamma()){
-      h=static_cast<int>(h*(1.+distribution(generator)*proto.beta()/100.0));
-      w=static_cast<int>(w*(1.+distribution(generator)*proto.beta()/100.0));
-    }
+  if(proto.gamma_size()){
+    UniformDist gamma_dist(proto.gamma(0), proto.gamma(proto.gamma_size()-1));
+    float gamma=gamma_dist(generator_);
+    h=static_cast<int>(h*(1.+distribution(generator_)*gamma/100.0));
+    w=static_cast<int>(w*(1.+distribution(generator_)*gamma/100.0));
     cv::resize(input, resizeMat, cv::Size(h,w));
   }
   cv::Mat betaMat=resizeMat;
-  if(this->layer_proto_.mnist_param().has_beta()&&phase==kTrain){
-    cv::Mat warpmat(2,3, CV_32FC1);
+  cv::Mat warpmat(2,3, CV_32FC1);
+  warpmat.at<float>(0,0)=1.0;
+  warpmat.at<float>(0,1)=0.0;
+  warpmat.at<float>(0,2)=0.0;
+  warpmat.at<float>(1,0)=0.0;
+  warpmat.at<float>(1,1)=1.0;
+  warpmat.at<float>(1,2)=0.0;
+
+  if(this->layer_proto_.mnist_param().beta_size()){
+    UniformDist beta_dist(proto.beta(0), proto.beta(proto.beta_size()-1));
+    float beta=beta_dist(generator_);
     if(rand() % 2){
       // rotation
       cv::Point center(resizeMat.rows/2, resizeMat.cols/2);
       warpmat=cv::getRotationMatrix2D(center,
-          distribution(generator)*proto.beta(),
+          distribution(generator_)*beta,
           1.0);
     }else{
       //shearing
-      warpmat.at<float>(0,0)=1.0;
-      warpmat.at<float>(0,1)=distribution(generator)*proto.beta()/90;
+      warpmat.at<float>(0,1)=distribution(generator_)*beta/90;
       if(record.mnist().label()==1 ||record.mnist().label()==7)
         warpmat.at<float>(0,1)/=2.0;
-      warpmat.at<float>(0,2)=0.0;
-      warpmat.at<float>(1,0)=0.0;
-      warpmat.at<float>(1,1)=1.0;
-      warpmat.at<float>(1,2)=0.0;
     }
-    cv::Size size=proto.has_size()?cv::Size(proto.size(),proto.size()):resizeMat.size();
-    cv::warpAffine(resizeMat, betaMat, warpmat, size);
   }
+  cv::warpAffine(resizeMat, betaMat, warpmat, cv::Size(h_,w_));
   // copy to grad_, i.e., prefetching buffer
   Pair nrng=grad_.localRange(0);
   CHECK_LT(offset_, nrng.second-nrng.first);
-  int n=offset_+nrng.first;
-  float* dptr=grad_.addr(n,0,0);
-  for(int i=0,k=0;i<betaMat.rows;i++){
-    for(int j=0;j<betaMat.cols;j++){
+  float* dptr=grad_.addr(offset_+nrng.first,0,0);
+  for(int i=0,k=0;i<h_;i++){
+    for(int j=0;j<w_;j++){
       dptr[k++]=betaMat.at<float>(i,j);
     }
   }
   if(proto.normalize()){
-    for(int i=0;i<betaMat.rows*betaMat.cols;i++)
-      dptr[i]=dptr[i]/127.5-1.0f;
+    for(int i=0;i<h_*w_;i++)
+      dptr[i]=dptr[i]/127.5f-1.0f;
   }
-
+  offset_++;
   // do elastic distortion
-  if(proto.has_elastic_freq()&&++offset_%proto.elastic_freq()==0&&phase==kTrain){
-    int freq=static_cast<int>(sqrt(proto.elastic_freq()));
-    CHECK_EQ(freq*freq, proto.elastic_freq());
-    ElasticDistortion(
-        grad_.SubArray(Pair(offset_-proto.elastic_freq(),offset_)).dptr(),
-        freq,
-        betaMat.rows,
-        betaMat.cols,
-        proto.kernel(),
-        proto.sigma(),
-        proto.alpha());
+  if(proto.has_elastic_freq()&&(offset_%proto.elastic_freq()==0)){
+    UniformDist sigma_dist(proto.sigma(0), proto.sigma(proto.sigma_size()-1));
+    UniformDist alpha_dist(proto.alpha(0), proto.alpha(proto.alpha_size()-1));
+    float sigma=sigma_dist(generator_), alpha=alpha_dist(generator_);
+    const DArray batch=grad_.SubArray(Pair(offset_-n_*n_,offset_));
+    ElasticDistortion( batch.dptr(), sigma, alpha);
   }
-
 }
 
-void MnistImageLayer::ElasticDistortion(float* data, int n, int h, int w, int kernel,
-    float sigma, float alpha){
-  CHECK_EQ(h,w);
-  int pad=kernel/2;
-  std::default_random_engine generator;
-  std::uniform_real_distribution<float> distribution(-1.0,1.0);
+void MnistImageLayer::ElasticDistortion(float* data, const float sigma,
+    const float alpha){
+  CHECK_EQ(h_,w_);
+  int pad=kernel_/2;
 
-  float* displacementx=new float[n*h*n*w];
-  float* displacementy=new float[n*h*n*w];
-  for(int i=0;i<n*h*n*w;i++){
-    displacementx[i]=distribution(generator);
-    displacementy[i]=distribution(generator);
+  UniformDist distribution(-1.0,1.0);
+
+  for(int i=0;i<conv_w_;i++){
+    displacementx_[i]=distribution(generator_);
+    displacementy_[i]=distribution(generator_);
   }
 
-  float* gauss=new float[kernel*kernel];
-  int center=kernel/2;
+  int center=kernel_/2;
   double denom=2.0*sigma*sigma;
   float sum=0;
-  for(int i=0,k=0;i<kernel;i++)
-    for(int j=0;j<kernel;j++){
+  for(int i=0,k=0;i<kernel_;i++)
+    for(int j=0;j<kernel_;j++){
       int dist=(i-center)*(i-center)+(j-center)*(j-center);
       float z=static_cast<float>(exp(-dist*1.0/denom));
-      gauss[k++]=z;
+      gauss_[k++]=z;
       sum+=z;
     }
-  for(int i=0;i<kernel*kernel;i++)
-    gauss[i]/=sum;
+  for(int i=0;i<conv_h_;i++)
+    gauss_[i]/=sum;
+  Im2colLayer::im2col(displacementx_, 1, n_*h_, n_*w_,
+      kernel_, kernel_, pad, pad, 1, 1, colimg_);
+  cblas_sgemv(CblasRowMajor, CblasTrans, conv_h_, conv_w_, alpha, colimg_,
+      conv_w_, gauss_, 1, 0, displacementx_, 1);
+  Im2colLayer::im2col(displacementy_, 1, n_*h_, n_*w_,
+      kernel_, kernel_, pad, pad, 1, 1, colimg_);
+  cblas_sgemv(CblasRowMajor, CblasTrans,  conv_h_, conv_w_,alpha, colimg_,
+      conv_w_, gauss_, 1, 0, displacementy_, 1);
 
-  float* colimg=new float[kernel*kernel*n*h*n*w];
-  Im2colLayer::im2col(displacementx, 1, n*h, n*w,
-      kernel, kernel, pad, pad, 1, 1, colimg);
-  cblas_sgemv(CblasRowMajor, CblasTrans,  kernel*kernel,n*h*n*w,alpha, colimg,
-      n*h*n*w, gauss, 1, 0, displacementx, 1);
-  Im2colLayer::im2col(displacementy, 1, n*h, n*w,
-      kernel, kernel, pad, pad, 1, 1, colimg);
-  cblas_sgemv(CblasRowMajor, CblasTrans,  kernel*kernel,n*h*n*w,alpha, colimg,
-      n*h*n*w, gauss, 1, 0, displacementy, 1);
-
-  float *input=new float[n*h*n*w];
-  memcpy(input, data, sizeof(float)*n*h*n*w);
-  for(int r=0;r<n;r++){
-    for(int c=0;c<n;c++){
-      int offset=(r*n+c)*h*w;
-      for(int y=0;y<h;y++)
-        for(int x=0;x<w;x++){
-          float xx=x+displacementx[(r*h+y)*n*w+c*w+x];
-          float yy=y+displacementy[(r*h+y)*n*w+c*w+x];
+  memcpy(tmpimg_, data, sizeof(float)*conv_w_);
+  for(int r=0;r<n_;r++){
+    for(int c=0;c<n_;c++){
+      int offset=(r*n_+c)*h_*w_;
+      for(int y=0;y<h_;y++)
+        for(int x=0;x<w_;x++){
+          float xx=x+displacementx_[(r*h_+y)*n_*w_+c*w_+x];
+          float yy=y+displacementy_[(r*h_+y)*n_*w_+c*w_+x];
           int low_x=static_cast<int>(floor(xx));
           int low_y=static_cast<int>(floor(yy));
           int hi_x=static_cast<int>(ceil(xx));
           int hi_y=static_cast<int>(ceil(yy));
-          if(low_x<0||hi_x>w||low_y<0||hi_y>h)
-            data[offset+y*w+x]=0;
+          // because carefull, do not cross boundary
+          if(low_x<0||hi_x>=w_||low_y<0||hi_y>=h_)
+            data[offset+y*w_+x]=0;
           else
-            data[offset+y*w+x]=(
-              input[offset+low_y*w+low_x]
-              +input[offset+low_y*w+hi_x]
-              +input[offset+hi_y*w+low_x]
-              +input[offset+hi_y*w+hi_x])/4;
+            data[offset+y*w_+x]=(
+              tmpimg_[offset+low_y*w_+low_x]
+              +tmpimg_[offset+low_y*w_+hi_x]
+              +tmpimg_[offset+hi_y*w_+low_x]
+              +tmpimg_[offset+hi_y*w_+hi_x])/4;
         }
     }
   }
-  delete displacementx;
-  delete displacementy;
-  delete gauss;
-  delete colimg;
-  delete input;
 }
 
 vector<uint8_t> MnistImageLayer::Convert2Image(int k){

@@ -20,6 +20,7 @@ void Worker::Start(const ModelProto& model){
     // this communicator
     // 2. handle_get returns false if the key of get() is not found in the
     // table, i.e., parameters have not been inserted
+    MPI_Barrier(GlobalContext::Get()->allworkers_comm());
     LOG(ERROR)<<"Worker starting...";
     solver.Train(net);
   LOG(ERROR)<<"Worker shutting down";

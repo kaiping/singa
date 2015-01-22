@@ -91,35 +91,35 @@ class Cluster : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required int32 server_start = 1;
+  // optional int32 server_start = 1 [default = 0];
   inline bool has_server_start() const;
   inline void clear_server_start();
   static const int kServerStartFieldNumber = 1;
   inline ::google::protobuf::int32 server_start() const;
   inline void set_server_start(::google::protobuf::int32 value);
 
-  // required int32 server_end = 2;
+  // optional int32 server_end = 2 [default = 1];
   inline bool has_server_end() const;
   inline void clear_server_end();
   static const int kServerEndFieldNumber = 2;
   inline ::google::protobuf::int32 server_end() const;
   inline void set_server_end(::google::protobuf::int32 value);
 
-  // required int32 worker_start = 3;
+  // optional int32 worker_start = 3;
   inline bool has_worker_start() const;
   inline void clear_worker_start();
   static const int kWorkerStartFieldNumber = 3;
   inline ::google::protobuf::int32 worker_start() const;
   inline void set_worker_start(::google::protobuf::int32 value);
 
-  // required int32 worker_end = 4;
+  // optional int32 worker_end = 4;
   inline bool has_worker_end() const;
   inline void clear_worker_end();
   static const int kWorkerEndFieldNumber = 4;
   inline ::google::protobuf::int32 worker_end() const;
   inline void set_worker_end(::google::protobuf::int32 value);
 
-  // required int32 group_size = 5;
+  // optional int32 group_size = 5 [default = 1];
   inline bool has_group_size() const;
   inline void clear_group_size();
   static const int kGroupSizeFieldNumber = 5;
@@ -189,7 +189,7 @@ class Cluster : public ::google::protobuf::Message {
 
 // Cluster
 
-// required int32 server_start = 1;
+// optional int32 server_start = 1 [default = 0];
 inline bool Cluster::has_server_start() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -211,7 +211,7 @@ inline void Cluster::set_server_start(::google::protobuf::int32 value) {
   server_start_ = value;
 }
 
-// required int32 server_end = 2;
+// optional int32 server_end = 2 [default = 1];
 inline bool Cluster::has_server_end() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -222,7 +222,7 @@ inline void Cluster::clear_has_server_end() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void Cluster::clear_server_end() {
-  server_end_ = 0;
+  server_end_ = 1;
   clear_has_server_end();
 }
 inline ::google::protobuf::int32 Cluster::server_end() const {
@@ -233,7 +233,7 @@ inline void Cluster::set_server_end(::google::protobuf::int32 value) {
   server_end_ = value;
 }
 
-// required int32 worker_start = 3;
+// optional int32 worker_start = 3;
 inline bool Cluster::has_worker_start() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -255,7 +255,7 @@ inline void Cluster::set_worker_start(::google::protobuf::int32 value) {
   worker_start_ = value;
 }
 
-// required int32 worker_end = 4;
+// optional int32 worker_end = 4;
 inline bool Cluster::has_worker_end() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -277,7 +277,7 @@ inline void Cluster::set_worker_end(::google::protobuf::int32 value) {
   worker_end_ = value;
 }
 
-// required int32 group_size = 5;
+// optional int32 group_size = 5 [default = 1];
 inline bool Cluster::has_group_size() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
@@ -288,7 +288,7 @@ inline void Cluster::clear_has_group_size() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void Cluster::clear_group_size() {
-  group_size_ = 0;
+  group_size_ = 1;
   clear_has_group_size();
 }
 inline ::google::protobuf::int32 Cluster::group_size() const {

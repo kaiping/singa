@@ -76,11 +76,11 @@ class GlobalContext {
   //int checkpoint_freq() {return cluster_.checkpoint_freq();}
   //int checkpoint_after() {return cluster_.checkpoint_after();}
   const string data_folder() {return cluster_.data_folder();}
-  const MPI_Comm& mpicomm() {return mpicomm_;}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   const vector<vector<int>>& groups() {return groups_;}
+  const MPI_Comm& mpicomm() {return mpicomm_;}
 
-  const MPI_Comm& workergroup_comm(){return workergroup_comm_;}
+  const MPI_Comm& allworkers_comm(){return allworkers_comm_;}
  private:
   GlobalContext(const Cluster& cluster);
 
@@ -104,8 +104,8 @@ class GlobalContext {
   // my mpi communicator, for MPI Barrier
   MPI_Comm mpicomm_;
 
-  MPI_Group worker_group_;
-  MPI_Comm workergroup_comm_;
+  MPI_Group allworkers_;
+  MPI_Comm allworkers_comm_;
 
   // make this class a singlton
   static shared_ptr<GlobalContext> instance_;

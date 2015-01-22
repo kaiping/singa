@@ -94,11 +94,6 @@ enum PartitionMode{
   kNone=3;
 }
 
-enum PerformanceType{
-  kLoss=1;
-  kAccuracy=2;
-}
-
 message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
@@ -183,13 +178,13 @@ message DataProto {
 
 message MnistProto {
   // elastic distortion
-  optional float sigma=1;
-  optional float alpha=2;
-  optional int32 kernel=3;
+  optional int32 kernel=1;
+  repeated float sigma=2;
+  repeated float alpha=3;
   // rotation or horizontal shearing
-  optional float beta=4;
+  repeated float beta=4;
   // scaling
-  optional float gamma=5;
+  repeated float gamma=5;
   // scale to this size as input for deformation
   optional int32 size=6 ;
   optional int32 elastic_freq=7;
@@ -289,8 +284,6 @@ message SolverProto {
   optional int32 validation_steps=21;
   // total num of steps for test
   optional int32 test_steps=22;
-  // max number of tuples; 3571 is the 500-th prime number
-  optional int32 max_splits=23 [default = 3571];
   // SGD parameters
   optional SGDProto sgd=24;
   // There are two basic algorithms for calculating gradients.

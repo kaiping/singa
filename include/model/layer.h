@@ -7,6 +7,8 @@
 #include <functional>
 #include <utility>
 #include <memory>
+#include <chrono>
+#include <random>
 
 #include "proto/model.pb.h"
 #include "model/param.h"
@@ -19,7 +21,9 @@
 
 using std::vector;
 using std::string;
+
 namespace singa {
+
 /**
  * Base layer class.
  * Children should implement at least Layer::Setup, Layer::ComputeFeature(),
@@ -125,6 +129,8 @@ class Layer {
   virtual const DArray& grad() {return grad_;}
   virtual DArray* mutable_data() {return &data_;}
   virtual DArray* mutable_grad() {return &grad_;}
+
+  virtual bool has_input() {return false;}
 
 protected:
   DArray data_, grad_;
@@ -277,10 +283,13 @@ class TanhLayer: public Layer {
 };
 
 /**********************Output Performance/Loss Layers************************/
+const int kLoss=1;
+const int kPrecision=2;
+
 class PerformanceLayer: public Layer{
  public:
   virtual Performance ComputePerformance(const vector<Layer*>&src_layers,
-      PerformanceType type)=0;
+      int type)=0;
 };
 class SoftmaxLossLayer: public PerformanceLayer {
   /*
@@ -291,7 +300,7 @@ class SoftmaxLossLayer: public PerformanceLayer {
   virtual void ComputeFeature(const vector<Layer*>& src_layers);
   virtual void ComputeGradient(const vector<Layer*>& src_layers);
   virtual Performance ComputePerformance(const vector<Layer*>&src_layers,
-      PerformanceType type);
+      int type);
  private:
   int num_;
   int dim_;
@@ -312,6 +321,7 @@ class InputLayer: public Layer {
   DArray* mutable_prefetch_data(){return &(this->grad_);}
   DArray* mutable_grad(){return nullptr;}
   virtual int GetPartitionDimension(PartitionMode mode);
+  virtual bool has_input() {return true;}
  protected:
   //DArray prefetch_data_; use the grad_ field for prefetch data
   int offset_;
@@ -337,14 +347,27 @@ class LabelLayer: public InputLayer {
 };
 class MnistImageLayer: public InputLayer {
  public:
+  typedef std::uniform_real_distribution<float> UniformDist;
   virtual void Setup(const vector<vector<int>>& shapes, PartitionMode mode);
   virtual void Setup(const int batchsize, const Record & record,
       PartitionMode mode);
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
-  static void ElasticDistortion(float* data, int n, int h, int w, int kernel,
-    float sigma, float alpha);
-
+  void ElasticDistortion(float* data,  const float sigma, const float alpha);
+  void Setup(const vector<int> &shape, PartitionMode mode );
+  virtual ~MnistImageLayer();
   vector<uint8_t> Convert2Image(int k);
+ protected:
+  std::default_random_engine generator_;
+  // height and width of the image after deformation
+  int h_,w_;
+  // kernel size for elastic distortion
+  int kernel_;
+  // n^2 images are processed as a batch for elastic distortion
+  int n_;
+  // conv height and conv width
+  int conv_h_, conv_w_;
+  // gauss kernel values, displacements, column image and tmp buffer
+  float* gauss_, *displacementx_, *displacementy_, *colimg_, *tmpimg_;
 };
 }  // namespace lapis
 

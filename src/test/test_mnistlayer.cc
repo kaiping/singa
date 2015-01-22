@@ -129,32 +129,34 @@ TEST(MnistLayerTest, MultElasticDistortion){
   layer.FromProto(proto);
   vector<vector<int>> shapes{{kTotal, kSize,kSize}};
   layer.Setup(shapes, kNone);
-  shard::Shard source("/data1/wangwei/singa/data/mnist/train/",shard::Shard::kRead);
+  shard::Shard source("/data1/wangwei/singa/data/mnist/test/",shard::Shard::kRead);
   int n=static_cast<int>(sqrt(kTotal));
   cv::Mat origin(n*28,n*28, CV_8UC1);
-  for(int i=0;i<kTotal;i++){
-    LOG(ERROR)<<"adding "<<i<<" -th image";
-    Record rec;
-    string key;
-    CHECK(source.Next(&key, &rec));
-    int x=(i/n);
-    int y=i%n;
-    const string pixel=rec.mnist().pixel();
-    cv::Mat img=origin(cv::Rect(x*28, y*28, 28, 28));
-    for(int i=0,k=0;i<28;i++)
-      for(int j=0;j<28;j++)
-        img.at<uint8_t>(i,j)=static_cast<uint8_t>(pixel[k++]);
-    layer.AddInputRecord(rec);
+  char disp[1024];
+  for(int x=0;x<n;x++){
+    sprintf(disp+strlen(disp), "\n");
+    for(int y=0;y<n;y++){
+      Record rec;
+      string key;
+      CHECK(source.Next(&key, &rec));
+      const string pixel=rec.mnist().pixel();
+      cv::Mat img=origin(cv::Rect(y*28, x*28, 28, 28));
+      for(int i=0,k=0;i<28;i++)
+        for(int j=0;j<28;j++)
+          img.at<uint8_t>(i,j)=static_cast<uint8_t>(pixel[k++]);
+      layer.AddInputRecord(rec);
+      sprintf(disp+strlen(disp), "%d ", rec.mnist().label());
+    }
   }
+  LOG(ERROR)<<disp;
   cv::imwrite("src/test/data/mnist_big.png", origin);
 
   cv::Mat output(n*kSize,n*kSize, CV_8UC1);
   for(int i=0;i<kTotal;i++){
-    LOG(ERROR)<<"reading "<<i<<" -th image";
     const vector<uint8_t>& dat=layer.Convert2Image(i);
     int x=(i/n);
     int y=i%n;
-    cv::Mat img=output(cv::Rect(x*kSize, y*kSize, kSize, kSize));
+    cv::Mat img=output(cv::Rect(y*kSize, x*kSize, kSize, kSize));
     for(int i=0,k=0;i<kSize;i++)
       for(int j=0;j<kSize;j++)
         img.at<uint8_t>(i,j)=dat[k++];

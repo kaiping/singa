@@ -34,14 +34,16 @@ int main(int argc, char **argv) {
   auto gc=singa::GlobalContext::Get(cluster);
   singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
+  LOG(INFO)<<"The cluster config is\n"<<cluster.DebugString()
+    <<"\nThe model config is\n"<<model.DebugString();
 
-  //singa::Debug();
   singa::TableServer server;
   singa::Worker worker;
   if(gc->AmITableServer()) {
     server.Start(model.solver().sgd());
   }else {
     // TODO: comment out the below to execute training at the workers.
+    singa::Debug();
     worker.Start(model);
   }
   gc->Finalize();

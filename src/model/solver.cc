@@ -42,7 +42,8 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   shard.Next(&key, &record);
   // setup the net
   net->Setup(proto_.batchsize(), record);
-  DLOG(ERROR)<<net->ToString();
+  if(context_->rank()==0)
+    DLOG(ERROR)<<net->ToString();
   return net;
 }
 
@@ -57,8 +58,6 @@ void Solver::ToProto(SolverProto *proto) {
   proto->MergeFrom(proto_);
   proto->set_step(step_);
 }
-
-
 
 Performance Solver::Test(Net*net, const Phase& phase){
   string shard;
@@ -108,16 +107,16 @@ void Solver::Train(Net* net, int start_step){
     if(!ValidateNow()&&!TestNow())
       thd=new std::thread(std::ref(prefetcher));
     train_perf_.Aggregate(TrainOneBatch(net, step_));
-    if(DisplayNow()){
+    if(DisplayNow()&&context_->rank()==0){
       ReportPerformance("Train", train_perf_.Avg());
       DebugInfo(net);
       train_perf_.Reset();
     }
-    if(ValidateNow()){
+    if(ValidateNow()&&context_->rank()==0){
       Performance perf=Test(net, Phase::kValidation);
       ReportPerformance("Val  ", perf.Avg());
     }
-    if(TestNow()){
+    if(TestNow()&&context_->rank()==0){
       Performance perf=Test(net, Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
     }
@@ -148,6 +147,8 @@ void Solver::DoLocalCheckpoint(Net* net){
 }
 */
 void Solver::DebugInfo(Net* net){
+  if(context_->rank()==0)
+    return;
   char display[4096];
   auto layers=net->layers();
   LOG(INFO)<<"Train Step: "<<step_;
@@ -157,9 +158,11 @@ void Solver::DebugInfo(Net* net){
     LOG(INFO)<<string(display);
   }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    sprintf(display, "Backward layer %10s grad norm1 %13.9f",
-        (*layer)->name().c_str(), (*layer)->grad().Norm1());
-    LOG(INFO)<<string(display);
+    if(!(*layer)->has_input()){
+      sprintf(display, "Backward layer %10s grad norm1 %13.9f",
+          (*layer)->name().c_str(), (*layer)->grad().Norm1());
+      LOG(INFO)<<string(display);
+    }
   }
   for(auto* layer: layers){
     for(auto* param: layer->GetParams()){
@@ -192,8 +195,9 @@ Performance Solver::TrainOneBatch(Net *net, int step){
     if(layer->PostSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
-  const vector<Layer*> &srclayers=net->name2srclayers(net->performance_layer(0)->name());
-  Performance perf=net->performance_layer(0)->ComputePerformance(srclayers, kLoss);
+  PerformanceLayer* perflayer=net->performance_layer(0);
+  auto &srclayers=net->name2srclayers(perflayer->name());
+  auto perf=perflayer->ComputePerformance(srclayers, kLoss|kPrecision);
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     const vector<Layer*> &srclayers=net->name2srclayers((*layer)->name());
     if((*layer)->PreSyncG(srclayers))
@@ -220,8 +224,9 @@ Performance Solver::TestOneBatch(Net *net, int step){
     if(layer->PostSyncF(srclayers))
       MPI_Barrier(context_->mpicomm());
   }
-  const vector<Layer*> &srclayers=net->name2srclayers(net->performance_layer(0)->name());
-  Performance perf=net->performance_layer(0)->ComputePerformance(srclayers,kAccuracy);
+  PerformanceLayer* perflayer=net->performance_layer(0);
+  const vector<Layer*> &srclayers=net->name2srclayers(perflayer->name());
+  Performance perf=perflayer->ComputePerformance(srclayers,kPrecision);
   //LOG(ERROR)<<"Test one batch "<<tick.elapsed();
   return perf;
 }

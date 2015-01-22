@@ -19,48 +19,46 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   int start=cluster.worker_start();
   int end=cluster.worker_end();
   CHECK_LT(start, end);
-  if(cluster.has_server_start()){
-    CHECK(cluster.has_server_end());
-    CHECK_LT(cluster.server_start(), cluster.server_end());
-    CHECK_LE(cluster.server_end(), start);
+  if(cluster.has_server_end()){
+    CHECK_LT(cluster.server_start(), cluster.server_end())
+      <<"server end should be smaller than server start";
+    CHECK_LE(cluster.server_end(), start)
+      <<"cluster ranks should be before worker ranks";
   }
   CHECK(cluster.group_size());
-  for(int k=start, gid=0;k<end;gid++){
-    vector<int> workers;
-    for(int i=0;i<cluster.group_size();i++){
-      if(k==rank_){
-        gid_=gid;
-        id_=i;
-      }
-      workers.push_back(k++);
+  for(int k=start;k<end;k++){
+    int gid=(k-start)/cluster.group_size();
+    int id=(k-start)%cluster.group_size();
+    if(id==0)
+      groups_.push_back({});
+    if(k==rank_){
+      gid_=gid;
+      id_=id;
     }
-    groups_.push_back(workers);
+    groups_.back().push_back(k);
   }
   CHECK(gid_!=-1||rank_==kCoordinator||AmITableServer())
     <<"gid "<<gid_<<" rank "<<rank_<< "start " << start << " end " << end << " istableserver "<<AmITableServer();
-  // setup worker's mpi group to be used in Barrier
   if(gid_!=-1) {
-    int gsize=cluster.group_size();
-    int *member=new int[gsize];
+    // setup worker's mpi group to be used in Barrier
+    int *member=new int[cluster.group_size()];
     int k=0;
-    for(auto mem: groups_[gid_])
-      member[k++]=mem;
+    for(auto rank: groups_[gid_])
+      member[k++]=rank;
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    MPI_Group_incl(world_group, gsize, member, &mpigroup_);
+    MPI_Group_incl(world_group, cluster.group_size(), member, &mpigroup_);
     MPI_Comm_create_group(MPI_COMM_WORLD, mpigroup_,0, &mpicomm_);
     delete member;
+
+    // setup the group containing all workers
+    int *allworkers = new int[end-start];
+    for (int i=start; i<end; i++)
+      allworkers[i-start]=i;
+    MPI_Group_incl(world_group, end-start, allworkers, &allworkers_);
+    MPI_Comm_create_group(MPI_COMM_WORLD, allworkers_,0, &allworkers_comm_);
+    delete allworkers;
   }
-
-  // setup the group containing all workers
-  int *members = new int[end-start];
-  for (int i=start; i<end; i++)
-	members[i-start]=i;
-  MPI_Group world_group;
-  MPI_Comm_group(MPI_COMM_WORLD,&world_group);
-  MPI_Group_incl(world_group, end-start, members, &worker_group_);
-  MPI_Comm_create_group(MPI_COMM_WORLD, worker_group_,0, &workergroup_comm_);
-
   LOG(INFO)<<"GlobalContext Setup: "<<
     "Group id "<<gid_<<" rank "<<rank_<<" id within group "<<id_;
 }

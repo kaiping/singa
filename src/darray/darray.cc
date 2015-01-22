@@ -138,7 +138,7 @@ DArray DArray::Fetch(const Range& rng) const{
 
 void DArray::SwapDptr(DArray* other) {
   swap(mem_,other->mem_);
-  swap(local_array_, other->local_array_);
+  swap(local_array_.head_, other->local_array_.head_);
 }
 
 int DArray::dim() const{

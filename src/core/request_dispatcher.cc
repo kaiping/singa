@@ -31,8 +31,7 @@ void RequestDispatcher::StartDispatchLoop(){
 			if (callbacks_[tag](msg)){
 				//VLOG(3) << "wait time = " << (Now() - request->start());
 				delete msg;
-			}
-			else{ // re-enqueue the request
+			} else{ // re-enqueue the request
 				network->Send(network->id(), tag, *msg);
 			}
 		}

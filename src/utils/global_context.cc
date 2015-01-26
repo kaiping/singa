@@ -1,6 +1,8 @@
 #include <glog/logging.h>
 #include "utils/global_context.h"
+#include "utils/network.h"
 #include "proto/cluster.pb.h"
+#include "proto/worker.pb.h"
 
 namespace singa {
 
@@ -16,8 +18,8 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs_);
   kCoordinator=num_procs_-1;
   gid_=id_=-1;
-  int start=cluster.worker_start();
-  int end=cluster.worker_end();
+  const int start=cluster.worker_start();
+  const int end=cluster.worker_end();
   CHECK_LT(start, end);
   if(cluster.has_server_end()){
     CHECK_LT(cluster.server_start(), cluster.server_end())
@@ -59,7 +61,7 @@ GlobalContext::GlobalContext(const Cluster &cluster) {
     MPI_Comm_create_group(MPI_COMM_WORLD, allworkers_,0, &allworkers_comm_);
     delete allworkers;
   }
-  LOG(INFO)<<"GlobalContext Setup: "<<
+  LOG(ERROR)<<"GlobalContext Setup: "<<
     "Group id "<<gid_<<" rank "<<rank_<<" id within group "<<id_;
 }
 
@@ -71,9 +73,20 @@ shared_ptr<GlobalContext> GlobalContext::Get(const Cluster& cluster){
 }
 void GlobalContext::Finalize() {
   if(gid_!=-1){
-	MPI_Comm_free(&mpicomm_);
+    MPI_Barrier(allworkers_comm_);
+    if(rank_==cluster_.worker_start()&&cluster_.has_server_end()){
+      EmptyMessage msg;
+      for (int i=cluster_.server_start(); i<cluster_.server_end(); i++){
+        EmptyMessage msg;
+        Network::Get()->Send(i, MTYPE_SHUTDOWN,msg);
+      }
+    }
+    MPI_Comm_free(&mpicomm_);
     MPI_Group_free(&mpigroup_);
-
+    MPI_Comm_free(&allworkers_comm_);
+    MPI_Group_free(&allworkers_);
+  }else{
+    LOG(ERROR)<<"server shuting down";
   }
 }
 shared_ptr<GlobalContext> GlobalContext::Get() {

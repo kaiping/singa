@@ -54,7 +54,7 @@ public:
 	};
 
 
-	Shard(int size = 1);
+	Shard(int size = 100);
 	~Shard() {}
 
 	/**

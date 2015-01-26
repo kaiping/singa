@@ -24,6 +24,7 @@ DEFINE_string(model_conf, "examples/imagenet12/model.conf",
 int main(int argc, char **argv) {
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+  //MPI_Init(&argc, &argv);
   //FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -42,8 +43,7 @@ int main(int argc, char **argv) {
   if(gc->AmITableServer()) {
     server.Start(model.solver().sgd());
   }else {
-    // TODO: comment out the below to execute training at the workers.
-    singa::Debug();
+    //singa::Debug();
     worker.Start(model);
   }
   gc->Finalize();

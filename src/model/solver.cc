@@ -1,5 +1,6 @@
 #include <glog/logging.h>
 #include <mpi.h>
+#include <random>
 #include <vector>
 #include "proto/model.pb.h"
 #include "model/solver.h"
@@ -10,17 +11,31 @@
 
 namespace singa {
 Solver::Solver(const SolverProto &proto) {
-  //! if step_>0, then the trainer is restored from a checkpoint
+  // if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.step();
-  proto_=proto;
   context_=GlobalContext::Get();
-  phase_=kTrain;
+  proto_=proto;
 
+  int ngroups=context_->num_groups();
+  // update proto_, all groups will do the training, but only the first group
+  // conduts test/validation. Hence, the training mini-batch is partitioned
+  // onto all groups.
+  if(context_->group_id()==0){
+    if(proto_.batchsize()%ngroups!=0)
+      LOG(ERROR)<<"batchsize % ngroups is not 0. "
+      <<proto_.batchsize()<<" % "<<ngroups;
+    proto_.set_validation_steps(proto_.validation_steps()*ngroups);
+    proto_.set_validation_frequency(proto_.validation_frequency()*ngroups);
+    proto_.set_test_steps(proto_.test_steps()*ngroups);
+    proto_.set_test_frequency(proto_.test_frequency()*ngroups);
+  }
+  proto_.set_batchsize(proto_.batchsize()/ngroups);
+  phase_=kTrain;
   string data_folder=GlobalContext::Get()->data_folder();
   train_shard_=data_folder+"/"+proto.train_folder();
-  val_shard_=data_folder+"/"+proto.validation_folder();
+  validation_shard_=data_folder+"/"+proto.validation_folder();
   test_shard_=data_folder+"/"+proto.test_folder();
-  if(context_->num_servers()==0){
+  if(context_->num_servers()==0){ // will update parameters locally
     auto factory=Singleton<Factory<TableServerHandler>>::Instance();
     std::shared_ptr<TableServerHandler> tshandler(
         factory->Create(proto.sgd().handler()));
@@ -42,7 +57,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   shard.Next(&key, &record);
   // setup the net
   net->Setup(proto_.batchsize(), record);
-  if(context_->rank()==0)
+  if(context_->group_id()==0)
     DLOG(ERROR)<<net->ToString();
   return net;
 }
@@ -55,6 +70,7 @@ void Solver::PopulateTableServer(Net* net){
 }
 
 void Solver::ToProto(SolverProto *proto) {
+  // TODO use the original proto (this proto_ is updated in constructor).
   proto->MergeFrom(proto_);
   proto->set_step(step_);
 }
@@ -63,7 +79,7 @@ Performance Solver::Test(Net*net, const Phase& phase){
   string shard;
   int nsteps=0;
   if(phase==Phase::kValidation){
-    shard=val_shard_;
+    shard=validation_shard_;
     nsteps=proto_.validation_steps();
   } else if(phase==Phase::kTest){
     shard=test_shard_;
@@ -71,7 +87,7 @@ Performance Solver::Test(Net*net, const Phase& phase){
   } else
     LOG(ERROR)<<"Phase must be kValidation or kTest";
 
-  Prefetcher prefetcher(shard, net, phase);
+  Prefetcher prefetcher(shard, net, phase, proto_.random_skip());
   std::thread *thd=nullptr;
   thd=new std::thread(std::ref(prefetcher));
   phase_=phase;
@@ -98,6 +114,7 @@ void Solver::Train(Net* net, int start_step){
   Prefetcher prefetcher(train_shard_, net, kTrain);
   std::thread *thd=nullptr;
   thd=new std::thread(std::ref(prefetcher));
+  Performance trainperf;
   while (!HasFinished()) {
     phase_=kTrain;
     thd->join();
@@ -106,17 +123,17 @@ void Solver::Train(Net* net, int start_step){
       layer->SetInputData(nullptr);
     if(!ValidateNow()&&!TestNow())
       thd=new std::thread(std::ref(prefetcher));
-    train_perf_.Aggregate(TrainOneBatch(net, step_));
-    if(DisplayNow()&&context_->rank()==0){
-      ReportPerformance("Train", train_perf_.Avg());
+    trainperf.Aggregate(TrainOneBatch(net, step_));
+    if(DisplayNow()&&context_->group_id()==0){
+      ReportPerformance("Train", trainperf.Avg());
       DebugInfo(net);
-      train_perf_.Reset();
+      trainperf.Reset();
     }
-    if(ValidateNow()&&context_->rank()==0){
+    if(ValidateNow()&&context_->group_id()==0){
       Performance perf=Test(net, Phase::kValidation);
       ReportPerformance("Val  ", perf.Avg());
     }
-    if(TestNow()&&context_->rank()==0){
+    if(TestNow()&&context_->group_id()==0){
       Performance perf=Test(net, Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
     }
@@ -147,21 +164,21 @@ void Solver::DoLocalCheckpoint(Net* net){
 }
 */
 void Solver::DebugInfo(Net* net){
-  if(context_->rank()==0)
+  if(context_->group_id()==0)
     return;
   char display[4096];
   auto layers=net->layers();
-  LOG(INFO)<<"Train Step: "<<step_;
+  DLOG(INFO)<<"Train Step: "<<step_;
   for(auto* layer: layers){
     sprintf(display, "Forward layer  %10s data norm1 %13.9f",
         layer->name().c_str(), layer->data().Norm1());
-    LOG(INFO)<<string(display);
+    DLOG(INFO)<<string(display);
   }
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     if(!(*layer)->has_input()){
       sprintf(display, "Backward layer %10s grad norm1 %13.9f",
           (*layer)->name().c_str(), (*layer)->grad().Norm1());
-      LOG(INFO)<<string(display);
+      DLOG(INFO)<<string(display);
     }
   }
   for(auto* layer: layers){
@@ -169,7 +186,7 @@ void Solver::DebugInfo(Net* net){
       sprintf(display, "Layer %10s, param id %2d, name %10s, value norm1 %13.9f , grad norm1 %13.9f",
           layer->name().c_str(), param->id(),
           param->name().c_str(), param->data().Norm1(), param->grad().Norm1());
-      LOG(INFO)<<string(display);
+      DLOG(INFO)<<string(display);
     }
   }
 }
@@ -249,13 +266,8 @@ void Solver::TimeOneBatch(Net* net, int runs) {
   memset(refresh, 0, sizeof(double)*(1+nlayers));
   memset(sync, 0, sizeof(double)*(1+nlayers));
 
-  /*
-  if(context_->group_id()!=0)
-    sleep(10000);
-    */
   LOG(ERROR)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
-  //delegate_->StartCollectThread();
   for(auto* param: net->params()){
       delegate_->AsyncGet(param,step_);
   }
@@ -272,15 +284,19 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
-      if(layer->PreSyncF(srclayers))
+      if(layer->PreSyncF(srclayers)){
         MPI_Barrier(context_->mpicomm());
+        CHECK(0)<<"presyncf "<<layer->name();
+      }
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
       layer->ComputeFeature(srclayers);
       sync_start=Now();
       forward[layerid]+=sync_start-comp_start;
-      if(layer->PostSyncF(srclayers))
+      if(layer->PostSyncF(srclayers)){
         MPI_Barrier(context_->mpicomm());
+        CHECK(0)<<"postsyncf "<<layer->name();
+      }
       sync[layerid]+=Now()-sync_start;
       layerid++;
     }
@@ -289,8 +305,10 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       const vector<Layer*> &srclayers=net->name2srclayers((*layer)->name());
       layerid--;
       sync_start=Now();
-      if((*layer)->PreSyncG(srclayers))
+      if((*layer)->PreSyncG(srclayers)){
         MPI_Barrier(context_->mpicomm());
+        CHECK(0)<<"presyncg "<<(*layer)->name();
+      }
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
       (*layer)->ComputeGradient(srclayers);
@@ -300,21 +318,21 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       for(auto* param: (*layer)->GetParams()){
           delegate_->Update(param, step_);
           delegate_->AsyncGet(param, step_+1);
-        }
+      }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
-      if((*layer)->PostSyncG(srclayers))
+      if((*layer)->PostSyncG(srclayers)){
         MPI_Barrier(context_->mpicomm());
+        CHECK(0)<<"postsyncg "<<(*layer)->name();
+      }
       sync[layerid]+=Now()-sync_start;
     }
     IncStep();
-    if(GlobalContext::Get()->rank()==0)
-      LOG(ERROR)<<"one iter";
+    //if(GlobalContext::Get()->group_id()==0)
+      LOG(ERROR)<<"one iter"<<GlobalContext::Get()->rank();
   }
-  //delegate_->StopCollectThread();
+  MPI_Barrier(context_->allworkers_comm());
   double total=Now()-start;
-  MPI_Barrier(context_->mpicomm());
-  LOG(ERROR)<<"Finish";
   int K=1024;
   char buf[10*K];
   sprintf(buf, "\n");
@@ -341,10 +359,21 @@ void Solver::TimeOneBatch(Net* net, int runs) {
 /***********************************************************************
  * Prefetcher Implementation
  ***********************************************************************/
-Prefetcher::Prefetcher(string path, Net* net, Phase phase) {
+Prefetcher::Prefetcher(string path, Net* net, Phase phase, bool random_skip) {
   net_=net;
   shard_=new shard::Shard(path, shard::Shard::kRead);
   phase_=phase;
+  if(phase_==kTrain && random_skip){
+    int nrecords=shard_->Count();
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0,nrecords);
+    int nskip=distribution(generator);
+    LOG(INFO)<<"Random Skip "<<nskip<<" training records";
+    for(int i=0;i<nskip;i++){
+      Record record;
+      NextRecord(&record);
+    }
+  }
 }
 
 Prefetcher::~Prefetcher() {

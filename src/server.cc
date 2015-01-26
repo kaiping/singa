@@ -10,7 +10,7 @@
 #include "server.h"
 
 DECLARE_double(sleep_time);
-DEFINE_int32(server_threads,8,"number of table server threads");
+DEFINE_int32(server_threads,3,"number of table server threads");
 
 namespace singa {
 TableServer::TableServer(){
@@ -96,6 +96,7 @@ bool TableServer::handle_get_request(Message *msg) {
 		network_service_->Send(dest, MTYPE_RESPONSE, get_resp);
 		return true;
 	} else{
+    Sleep(FLAGS_sleep_time);
 		return false;
 	}
 }
@@ -104,7 +105,7 @@ bool TableServer::handle_get_request(Message *msg) {
  *************************************************************************/
 void TableServerHandler::Setup(const SGDProto& sgd) {
   checkpoint_after_=sgd.checkpoint_after_steps();
-  checkpoint_frequency_=sgd.checkpoint_every_steps();
+  checkpoint_frequency_=sgd.checkpoint_frequency();
   // use threshold field in TVal for synchronous checking
 }
 
@@ -118,7 +119,6 @@ bool TableServerHandler::CheckpointNow(const TKey& key, const TVal& val){
 	return false;
 }
 bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
-  LOG(ERROR)<<"put key "<<key.id();
   to->CopyFrom(from);
   if(to->history().value_size()==0){
     for(int i=0;i<to->data().value_size();i++)
@@ -128,12 +128,18 @@ bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
 }
 
 bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
-  LOG(ERROR)<<"get key "<<key.id();
+  //LOG(ERROR)<<"get key "<<key.id();
+
   if(key.version()<=from.version()&&from.num_aggregate()==0){
+    Timer tick;
     to->mutable_data()->CopyFrom(from.data());
+    //LOG(ERROR)<<"get time "<<tick.elapsed();
     return true;
-  }else
+  }else{
+    //LOG(ERROR)<<"key "<<key.id()<<" version ="<< key.version()
+     // <<" from version="<<from.version()<<" agg ="<<from.num_aggregate();
     return false;
+  }
 }
 
 /*************************************************************************
@@ -181,39 +187,58 @@ float TSHandlerForSGD::UpdateHyperParam(
   }
   return ret;
 }
+bool TSHandlerForSGD::Put(const TKey& key, TVal* to, const TVal& from){
+  to->CopyFrom(from);
+  if((sgd_.has_momentum()||from.threshold()>1)
+      &&to->history().value_size()==0){
+    for(int i=0;i<to->data().value_size();i++)
+      to->mutable_history()->add_value(0.0f);
+  }
+  return true;
+}
+
+
 bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
-  LOG(ERROR)<<"update key "<<origin->split_id();
+  //LOG(ERROR)<<"update key "<<origin->split_id();
   //should be equal for syn sgd
   //CHECK_EQ(origin->version(), update.version())
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
+  Timer tick;
   int len=origin->data().value_size();
   CHECK_EQ(len, update.grad().value_size());
-
-  float* history=origin->mutable_history()->mutable_value()->mutable_data();
   const float* grad=update.grad().value().data();
   float* dptr=origin->mutable_data()->mutable_value()->mutable_data();
   int version=origin->version();
   float lr=GetLearningRate(version, origin->learning_rate_multiplier());
   float wd=GetWeightDecay(version, origin->weight_decay_multiplier());
   float mo=GetMomentum(version,1.0f);
+  if(mo==0&&origin->threshold()==1){
+    if(wd>0)
+      Math::mAdd(len, dptr, -lr*wd, dptr, dptr);
+    // must be put after apply weight decay
+    Math::mAdd(len, dptr, -lr, grad, dptr);
+    origin->set_version(origin->version()+1);
+
+    //LOG(ERROR)<<"update time "<<tick.elapsed();
+    return true;
+  }
+  float* history=origin->mutable_history()->mutable_value()->mutable_data();
   // hist=hist+lr*grad
   Math::mAdd(len, history, lr, grad, history);
   // hist=hist+lr*weight*param
   if(wd>0){
     Math::mAdd(len, history, lr*wd, dptr, history);
   }
-
   int num=origin->num_aggregate();
   if(num+1==origin->threshold()){
     // param+=history/n, /data->n_update()
-    //DAry::arymath().sub(dptr, dptr, history, len);
     float factor=-1.0/(num+1);
     Math::mAdd(len, dptr, factor, history, dptr);
     // hist=hist*mom
     Math::Mult(len, history, mo, history);
     origin->set_num_aggregate(0);
-    origin->set_version(update.version()+1);
+    origin->set_version(origin->version()+1);
   }else
     origin->set_num_aggregate(num+1);
 

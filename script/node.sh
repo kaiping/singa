@@ -1,10 +1,9 @@
 #!/bin/bash
-folder="/data1/wangwei/lapis/validation/*"
-#folder="/tmp/lapis.bin.INFO"
-hostfile="examples/imagenet12/hostfile"
+folder="/data1/wangwei/singa/data/mnist/"
+hostfile="examples/mnist/hostfile"
 if [ $# -eq 0 ]
 then
-  echo "must provide argument, [chmod,ps, ssh,ls,cat, cp, delete, create or reset] + hostfile"
+  echo "must provide argument, [chmod,ps, ssh,ls,cat, scp, cp, delete, create or reset] + hostfile"
   exit
 fi
 hosts=(`cat $hostfile |cut -d ' ' -f 1`)
@@ -20,6 +19,11 @@ fi
 
 for i in ${hosts[@]}
 do
+  if [ $1 == "scp" ]
+  then
+    echo "scp -r $2 wangwei@$i:$2"
+    scp -r $2 wangwei@$i:$2
+  fi
   if [ $1 == "ps" ]
   then
     echo "ssh $i"

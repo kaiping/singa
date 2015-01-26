@@ -66,12 +66,13 @@ class TSHandlerForSGD: public TableServerHandler {
  public:
   virtual void Setup(const SGDProto& sgd);
   virtual bool Update(TVal* origin, const TVal& update);
+  virtual bool Put(const TKey& key, TVal* to, const TVal& from);
 
  protected:
   float GetLearningRate(int step, float multiplier){
     float lr=UpdateHyperParam(
         step, sgd_.learning_rate_change(),
-        sgd_.learning_rate_change_steps(),
+        sgd_.learning_rate_change_frequency(),
         sgd_.learning_rate(),
         sgd_.gamma(),
         sgd_.pow());

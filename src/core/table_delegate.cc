@@ -113,6 +113,7 @@ void TableDelegate::Update(Param *param, int step){
       TKey* key=tuple->mutable_key();
       key->set_version(step);
       key->set_id(entry->id);
+      tval->set_version(step);
       tuple->set_allocated_value(tval);
       sending_queue_.push(request);
     }
@@ -150,11 +151,9 @@ void TableDelegate::Put(const std::vector<Param*> &params, int step) {
 void TableDelegate::Put(Param * param, int step){
   if(paramid_to_splits_.find(param->id())==paramid_to_splits_.end())
     SplitParam(param);
-  LOG(ERROR)<<"Put parameter "<<param->id();
   int offset=0;
   const float * data_addr = param->data().dptr();
   for(auto& entry: paramid_to_splits_[param->id()]) {
-    LOG(ERROR)<<"Put split "<<entry->id;
     TKey* key=new TKey();
     key->set_id(entry->id);
     key->set_version(step);
@@ -166,6 +165,7 @@ void TableDelegate::Put(Param * param, int step){
     tval->set_param_id(param->id());
     tval->set_split_id(entry->id);
     tval->set_split_offset(entry->offset);
+    tval->set_version(step);
     DAryProto* dary=tval->mutable_data();
     for(int k = 0; k < entry->len; k++){
       dary->add_value(data_addr[offset]);
@@ -192,7 +192,6 @@ void TableDelegate::Put(Param * param, int step){
       tuple->set_allocated_key(key);
       tuple->set_allocated_value(tval);
       sending_queue_.push(request);
-      LOG(ERROR)<<"add put request to send queue "<<request;
     }
   }
 }
@@ -218,7 +217,10 @@ void TableDelegate::AsyncGet(Param * param, int step){
     key->set_id(entry->id);
     key->set_version(step);
     sending_queue_.push(request);
-    split_collected_[entry->id]=false;
+    if(split_collected_.find(entry->id)==split_collected_.end())
+      split_collected_[entry->id]=false;
+    else
+      CHECK(!split_collected_[entry->id]);
   }
 }
 void TableDelegate::AsyncCollect(Param * param, int step){
@@ -237,12 +239,14 @@ void TableDelegate::AsyncCollect(Param * param, int step){
   while(nget<splits.size()){
     // check num of splits collected before
     for(auto& split: splits){
-      if(split_collected_.at(split->id))
+      if(split_collected_.at(split->id)){
         nget++;
+        split_collected_[split->id]=false;
+      }
     }
     if(nget<splits.size())
       sleep(0.0001);
-    nget=0;
+    //LOG(ERROR)<<"Get param splits "<<param->id()<<" rank "<<GlobalContext::Get()->rank();
   }
 }
 
@@ -254,7 +258,6 @@ void TableDelegate::InternalThread(){
     // sending
     RequestBase* request=nullptr;
     if(sending_queue_.pop(&request)){
-      LOG(ERROR)<<" send request ";
       request->SerializeToString(&msg);
       Network::Get()->Send(request->shard(), MTYPE_REQUEST,msg);
       delete request;

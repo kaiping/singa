@@ -23,7 +23,7 @@ void Worker::Start(const ModelProto& model){
   MPI_Barrier(GlobalContext::Get()->allworkers_comm());
   LOG(ERROR)<<"Worker starting...";
   //solver.Train(net);
-  solver.TimeOneBatch(net, 10);
+  solver.TimeOneBatch(net, 5);
   LOG(ERROR)<<"Worker shutting down";
 }
 }  // namespace singa

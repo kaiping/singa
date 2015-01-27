@@ -1,3 +1,4 @@
+#include <cblas.h>
 #include "proto/model.pb.h"
 #include "utils/math.h"
 #include "utils/global_context.h"
@@ -10,7 +11,7 @@
 #include "server.h"
 
 DECLARE_double(sleep_time);
-DEFINE_int32(server_threads,3,"number of table server threads");
+DEFINE_int32(server_threads,1,"number of table server threads");
 
 namespace singa {
 TableServer::TableServer(){
@@ -204,21 +205,23 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   //CHECK_EQ(origin->version(), update.version())
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
-  Timer tick;
+  //Timer tick;
+  int version=origin->version();
   int len=origin->data().value_size();
   CHECK_EQ(len, update.grad().value_size());
   const float* grad=update.grad().value().data();
   float* dptr=origin->mutable_data()->mutable_value()->mutable_data();
-  int version=origin->version();
   float lr=GetLearningRate(version, origin->learning_rate_multiplier());
   float wd=GetWeightDecay(version, origin->weight_decay_multiplier());
   float mo=GetMomentum(version,1.0f);
   if(mo==0&&origin->threshold()==1){
     if(wd>0)
-      Math::mAdd(len, dptr, -lr*wd, dptr, dptr);
+      //Math::mAdd(len, dptr, -lr*wd, dptr, dptr);
+      cblas_saxpby(len, -lr*wd, dptr,1, 1.0f, dptr,1);
     // must be put after apply weight decay
-    Math::mAdd(len, dptr, -lr, grad, dptr);
-    origin->set_version(origin->version()+1);
+    // Math::mAdd(len, dptr, -lr, grad, dptr);
+    cblas_saxpby(len, -lr, grad, 1, 1.0f, dptr, 1);
+    origin->set_version(version+1);
 
     //LOG(ERROR)<<"update time "<<tick.elapsed();
     return true;

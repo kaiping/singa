@@ -329,7 +329,7 @@ void Solver::TimeOneBatch(Net* net, int runs) {
     }
     IncStep();
     //if(GlobalContext::Get()->group_id()==0)
-      LOG(ERROR)<<"one iter"<<GlobalContext::Get()->rank();
+    //  LOG(ERROR)<<"one iter"<<GlobalContext::Get()->rank();
   }
   MPI_Barrier(context_->allworkers_comm());
   double total=Now()-start;

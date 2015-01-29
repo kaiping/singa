@@ -31,7 +31,7 @@ public:
 	void Enqueue(Message *message);
 	Message* NextMessage();
 	bool is_active();
-
+  virtual int size(){return receive_queue_.size();}
 	Stats stats(){ return stats_;}
 protected:
 	Stats stats_; /**< queue statistic */

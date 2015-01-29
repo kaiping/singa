@@ -9,7 +9,7 @@
 
 #include "model/param.h"
 #include "utils/common.h"
-#include "utils/global_context.h"
+#include "utils/cluster.h"
 #include "utils/network_service.h"
 #include "proto/model.pb.h"
 #include "server.h"
@@ -85,9 +85,9 @@ class TableDelegate {
       std::shared_ptr<TableServerHandler> handler=nullptr);
   /**
    * Constructor.
-   * @param gc, the GlobalContext which provides the cluster info numbers
+   * @param gc, the Cluster which provides the cluster info numbers
    */
-  TableDelegate(shared_ptr<GlobalContext> gc,
+  TableDelegate(shared_ptr<Cluster> cluster,
       std::shared_ptr<TableServerHandler> handler=nullptr);
 
   /**
@@ -139,7 +139,7 @@ class TableDelegate {
    * Split one parameter object into multiple splits, which will be used to
    * construct tuples.
    * @param param
-   * @worker_id id of the worker within one group, GlobalContext::worker_id().
+   * @worker_id id of the worker within one group, Cluster::worker_id().
    */
   void SplitParam(Param * param);
 
@@ -180,7 +180,7 @@ class TableDelegate {
    * send to servers by the internal thread, the queue operations (push, pop)
    * are thread safe.
    */
-  SafeQueue<RequestBase*> sending_queue_;
+  SafeQueue<shared_ptr<RequestBase>> sending_queue_;
   //!< thread state controller, set to false to terminate the thread.
   bool running_;
   std::thread *running_loop_;

@@ -1,7 +1,6 @@
 #include <gflags/gflags.h>
 #include "core/network_queue.h"
 #include "proto/worker.pb.h"
-#include "utils/global_context.h"
 DECLARE_double(sleep_time);
 
 /**

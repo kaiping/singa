@@ -23,7 +23,7 @@ Net::Net(const NetProto &net_proto) {
   factory->Register("TanhLayer", CreateLayer(TanhLayer));
 
 
-  LOG(ERROR)<<"Construct Neural Net...";
+  LOG(INFO)<<"Construct Neural Net...";
   NetProto netproto;
   for (auto &layer_proto : net_proto.layer()) {
     if(layer_proto.type()=="ConvolutionLayer"){
@@ -63,7 +63,6 @@ Net::Net(const NetProto &net_proto) {
     if(name2dstlayers_.find(layer->name())==name2dstlayers_.end())
       performance_layers_.push_back(dynamic_cast<PerformanceLayer*>(layer));
   //TODO DLOG(INFO)<<ToDOT(edge_set_);
-  DLOG(INFO)<<"layers inited";
 
   topology_sort(&layers_, name2dstlayers_);
   for(auto* layer: layers_){
@@ -71,7 +70,7 @@ Net::Net(const NetProto &net_proto) {
     layer->CollectParams(&params_);
   }
   // the softmax loss layer
-  LOG(ERROR)<<"Neural Net constructed";
+  LOG(INFO)<<"Neural Net constructed";
 }
 
 Net::~Net() {
@@ -164,7 +163,7 @@ void Net::topology_sort(vector<Layer *> *layers,
     if(name2dstlayers.find(layer->name())!=name2dstlayers.end())
       adjacent_list[layer]=name2dstlayers.at(layer->name());
     else{
-      LOG(ERROR)<<"Layer "<<layer->name()<<" has no dst layer";
+      LOG(INFO)<<"Layer "<<layer->name()<<" has no dst layer";
       adjacent_list[layer]=vector<Layer*>{};
     }
   }

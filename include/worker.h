@@ -12,6 +12,8 @@ namespace singa {
  * The Worker class which runs the training algorithm.
  * The first worker group will initialize parameters of the Net,
  * and put them into the distributed memory/table.
+ *
+ * May add more functions (e.g., communication with other workers/groups)
  */
 class Worker {
  public:

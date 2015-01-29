@@ -16,26 +16,42 @@ TableDelegate::TableDelegate(int worker_id, int rank, int num_servers,
     handler_(handler){
   Start();
 }
-TableDelegate::TableDelegate(shared_ptr<GlobalContext> gc,
+TableDelegate::TableDelegate(shared_ptr<Cluster> cluster,
     std::shared_ptr<TableServerHandler> handler){
-  worker_id_=gc->worker_id();
-  rank_=gc->rank();
-  num_servers_=gc->num_servers();
-  num_groups_=gc->num_groups();
-  group_size_=gc->group_size();
-  synchronous_=gc->synchronous();
+  worker_id_=cluster->worker_id();
+  rank_=cluster->rank();
+  num_servers_=cluster->num_servers();
+  num_groups_=cluster->num_groups();
+  group_size_=cluster->group_size();
+  synchronous_=cluster->synchronous();
   handler_=handler;
   Start();
 }
 
 TableDelegate::~TableDelegate(){
-  if(running_){
-    running_=false;
+  auto cluster=Cluster::Get();
+  if(cluster->num_servers()>0){
+    // ensure the sending queue is empty.
+    while(true){
+      if(sending_queue_.size()>0){
+        sleep(0.0001);
+      }else{
+        break;
+      }
+    }
+    MPI_Barrier(cluster->worker_comm());
+    if(cluster->rank()==cluster->worker_start()&&cluster->num_servers()){
+      string msg;
+      for (int i=cluster->server_start();i<cluster->server_end(); i++){
+        Network::Get()->Send(i, MTYPE_SHUTDOWN,msg);
+      }
+    }
+    //DLOG(ERROR)<<"wait";
     running_loop_->join();
+    //DLOG(ERROR)<<"joined";
     delete running_loop_;
   }
 }
-
 
 void TableDelegate::Start(){
   if(num_servers_==0){
@@ -60,13 +76,13 @@ void TableDelegate::SplitParam(Param * param){
     splitsize = 1000000;
   }
   // do not split if there is no table server, updates will be done locally
-  size_t local_size=param->local_size();
+  int local_size=param->local_size();
   if(num_servers_==0){
     CHECK_LE(local_size, kMaxParamLen);
     splitsize=kMaxParamLen;
   }
   int nsplits=local_size/splitsize+(local_size%splitsize!=0);
-  LOG(ERROR)<<"Parameter "<<param->id()<<" has "<<nsplits<<" splits";
+  DLOG(INFO)<<"Parameter "<<param->id()<<" has "<<nsplits<<" splits";
   CHECK_LE(nsplits,kMaxSplits)<<"total splits for one param partition "
     <<" exceeds kMaxSplits, raise kMaxSplits in solver config";
   vector<shared_ptr<Split>> splits;
@@ -104,7 +120,7 @@ void TableDelegate::Update(Param *param, int step){
       delete tval;
     } else{
       // prepare update request.
-      RequestBase* request=new RequestBase();
+      shared_ptr<RequestBase> request(new RequestBase());
       request->set_table(0);
       request->set_source(rank_);
       request->set_shard(Sharding(entry->id, num_servers_));
@@ -179,7 +195,7 @@ void TableDelegate::Put(Param * param, int step){
       delete tval;
     }else{
       // prepare put request
-      RequestBase* request=new RequestBase();
+      shared_ptr<RequestBase> request(new RequestBase());
       request->set_table(0);
       request->set_source(rank_);
       request->set_shard(Sharding(entry->id,num_servers_));
@@ -208,7 +224,7 @@ void TableDelegate::AsyncGet(Param * param, int step){
   if(paramid_to_splits_.find(param->id())==paramid_to_splits_.end())
     SplitParam(param);
   for(auto entry: paramid_to_splits_[param->id()]) {
-    RequestBase* request=new RequestBase();
+    shared_ptr<RequestBase> request(new RequestBase());
     request->set_table(0);
     request->set_source(rank_);
     request->set_shard(Sharding(entry->id, num_servers_));
@@ -246,37 +262,43 @@ void TableDelegate::AsyncCollect(Param * param, int step){
     }
     if(nget<splits.size())
       sleep(0.0001);
-    //LOG(ERROR)<<"Get param splits "<<param->id()<<" rank "<<GlobalContext::Get()->rank();
+    //LOG(ERROR)<<"Get param splits "<<param->id()<<" rank "<<Cluster::Get()->rank();
   }
 }
 
 void TableDelegate::InternalThread(){
   int src, tag;
-  while(running_){
+  while(true){
     string msg;
     bool sleeping=true;
     // sending
-    RequestBase* request=nullptr;
-    if(sending_queue_.pop(&request)){
+    if(sending_queue_.size()>0){
+      shared_ptr<RequestBase> request=sending_queue_.front();
       request->SerializeToString(&msg);
       Network::Get()->Send(request->shard(), MTYPE_REQUEST,msg);
-      delete request;
+      sending_queue_.pop();
       sleeping=false;
     }
     if(Network::Get()->Recv(&tag, &src, &msg)){
-      TableData tuple;
-      tuple.ParseFromString(msg);
-      const TVal& tval=tuple.value();
-      const TKey& key=tuple.key();
-      auto& split=id_to_split_[key.id()];
-      Param* p=split->param;
-      int offset=split->offset;
-      CHECK_EQ(split->len, tval.data().value_size());
-      float * dptr = p->mutable_data()->dptr();
-      for(auto v: tval.data().value())
-        dptr[offset++]=v;
-      split_collected_.at(key.id())=true;
-      sleeping=false;
+      if(tag==MTYPE_SHUTDOWN){
+        break;
+      }else if(tag==MTYPE_RESPONSE){
+        TableData tuple;
+        tuple.ParseFromString(msg);
+        const TVal& tval=tuple.value();
+        const TKey& key=tuple.key();
+        auto& split=id_to_split_[key.id()];
+        Param* p=split->param;
+        int offset=split->offset;
+        CHECK_EQ(split->len, tval.data().value_size());
+        float * dptr = p->mutable_data()->dptr();
+        for(auto v: tval.data().value())
+          dptr[offset++]=v;
+        split_collected_.at(key.id())=true;
+        sleeping=false;
+      }else{
+        LOG(FATAL)<<"TableDelegate receieved unexpected message (code) "<<tag;
+      }
     }
     if(sleeping)
       sleep(0.0001);

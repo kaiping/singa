@@ -51,6 +51,7 @@ void NetworkService::Send(int dst, int method, Message &msg){
 	{
 		boost::recursive_mutex::scoped_lock sl(send_lock_);
 		send_queue_.push_back(new NetworkMessage(dst,method,msg));
+    //LOG(ERROR)<<"send queue size "<<send_queue_.size();
 	}
 }
 
@@ -72,8 +73,9 @@ void NetworkService::receive_loop(){
 			if (tag==MTYPE_REQUEST){
 				RequestBase *request = new RequestBase();
 				request->ParseFromString(msg);
-				request->set_start(Now());
 				network_queue_->Enqueue(request);
+        //LOG(ERROR)<<"network queue size "<<network_queue_->size();
+				request->set_start(Now());
 			}
 			else if (tag==MTYPE_RESPONSE){
 				TableData *response = new TableData();
@@ -81,7 +83,7 @@ void NetworkService::receive_loop(){
 				network_queue_->Enqueue(response);
 			}
 			else if (tag==MTYPE_SHUTDOWN){
-				VLOG(3) << "Table server received SHUTDOWN ...";
+				DLOG(INFO) << "Table server received SHUTDOWN ...";
 				break;
 			}
 		}
@@ -96,11 +98,17 @@ void NetworkService::receive_loop(){
 void NetworkService::send_loop() {
 	while (true) {
 		if (more_to_send()) {
+			NetworkMessage *message;
+      {
 			boost::recursive_mutex::scoped_lock sl(send_lock_);
-			NetworkMessage *message = send_queue_.front();
+      message = send_queue_.front();
+      send_queue_.pop_front();
+      }
+      Timer tick;
 			network_->Send(message->dst, message->method, message->msg);
+      //LOG(ERROR)<<"mpi send time "<<tick.elapsed()<< "msg size "<<message->msg.size();
 			delete message;
-			send_queue_.pop_front();
+			//send_queue_.pop_front();
 		}
 		else if (!receive_done_)
 			Sleep(FLAGS_sleep_time);

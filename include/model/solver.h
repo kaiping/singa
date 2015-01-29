@@ -10,7 +10,7 @@
 #include "model/net.h"
 #include "utils/common.h"
 #include "utils/shard.h"
-#include "utils/global_context.h"
+#include "utils/cluster.h"
 #include "core/table_delegate.h"
 
 
@@ -170,7 +170,7 @@ class Solver {
   //!< current phase, either kTrain, kTest or kValidation
   Phase phase_;
   TableDelegate* delegate_;
-  std::shared_ptr<GlobalContext> context_;
+  std::shared_ptr<Cluster> cluster_;
 };
 /**
  * Prefech one batch of data/records from local shard (\class Shard) into the

@@ -3,7 +3,9 @@
 #include <google/protobuf/message.h>
 #include <boost/thread.hpp>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 #include "utils/network.h"
+#include "utils/timer.h"
 #include <deque>
 
 using google::protobuf::Message;
@@ -41,6 +43,7 @@ public:
 	virtual void Enqueue(Message *message)=0;
 	virtual Message* NextMessage()=0; /**< return NULL if there's no message. */
 	virtual bool is_active() = 0;
+  virtual int size()=0 ;
 };
 
 struct NetworkMessage{
@@ -97,7 +100,9 @@ public:
 	 */
 	void Shutdown();
 
-	bool is_active(){ return receive_done_ && send_done_ && network_queue_->is_active();}  /**< if there are messages to process.  */
+	bool is_active(){
+    return (!receive_done_) || (!send_done_) || network_queue_->is_active();
+  }  /**< if there are messages to process.  */
 	static std::shared_ptr<NetworkService> Get();
 
 	int id(){ return id_;}

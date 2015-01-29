@@ -1,5 +1,5 @@
-#ifndef INCLUDE_UTILS_GLOBAL_CONTEXT_H_
-#define INCLUDE_UTILS_GLOBAL_CONTEXT_H_
+#ifndef INCLUDE_UTILS_CLUSTER_H_
+#define INCLUDE_UTILS_CLUSTER_H_
 #include <glog/logging.h>
 #include <string>
 #include <utility>
@@ -15,17 +15,15 @@ using std::vector;
 namespace singa {
 
 /**
- * Global Context is a singlton object, which provides cluster configuations,
- * e.g., num workers/servers.
- * It also provides the MPI group of a worker group for coordination
- * e.g, Barrier
+ * Cluster is a singlton object, which provides cluster configuations,
+ * e.g., num workers/servers and MPI groups for coordination, e.g, Barrier
  */
-class GlobalContext {
+class Cluster {
  public:
   // assume the rank of coordinator is num_procs-1
   static int kCoordinator;
-  static shared_ptr<GlobalContext> Get();
-  static shared_ptr<GlobalContext> Get(const Cluster& cluster);
+  static shared_ptr<Cluster> Get();
+  static shared_ptr<Cluster> Get(const ClusterProto& cluster);
   // free my mpi group and mpi communicator
   void Finalize();
 
@@ -38,6 +36,13 @@ class GlobalContext {
   const int server_end() {
     return cluster_.server_end();
   }
+  const int worker_start() {
+    return cluster_.worker_start();
+  }
+  const int worker_end() {
+    return cluster_.worker_end();
+  }
+
   const int num_servers(){
     if(cluster_.has_server_start()&&cluster_.has_server_end())
       return cluster_.server_end()-cluster_.server_start();
@@ -78,11 +83,23 @@ class GlobalContext {
   const string data_folder() {return cluster_.data_folder();}
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   const vector<vector<int>>& groups() {return groups_;}
-  const MPI_Comm& mpicomm() {return mpicomm_;}
+  /**
+   * return the MPI_Comm of the all workers
+   */
+  const MPI_Comm& worker_comm() {return worker_comm_;}
+  /**
+   * return the MPI_Comm for my group
+   */
+  const MPI_Comm& mycomm(){return mycomm_;}
+  /**
+   * return the MPI_Comm for all servers
+   */
+  const MPI_Comm& server_comm(){return server_comm_;}
 
-  const MPI_Comm& allworkers_comm(){return allworkers_comm_;}
+  const string hostname(){return hostname_;}
  private:
-  GlobalContext(const Cluster& cluster);
+  Cluster(const ClusterProto& cluster);
+  void CreateGroupComm(int start, int end, MPI_Comm* comm, MPI_Group* group);
 
  private:
   // mpi rank, global ID
@@ -98,17 +115,22 @@ class GlobalContext {
   // ranks of workers for each group
   vector<vector<int>> groups_;
   // cluster config proto
-  Cluster cluster_;
+  ClusterProto cluster_;
   // my mpi group, for MPI Barrier
-  MPI_Group mpigroup_;
+  MPI_Group mygroup_;
   // my mpi communicator, for MPI Barrier
-  MPI_Comm mpicomm_;
-
-  MPI_Group allworkers_;
-  MPI_Comm allworkers_comm_;
+  MPI_Comm mycomm_;
+  // group for all workers
+  MPI_Group worker_group_;
+  // mpi comm for all workers
+  MPI_Comm worker_comm_;
+  // mpi group for all servers
+  MPI_Group server_group_;
+  // mpi comm for all servers
+  MPI_Comm server_comm_;
 
   // make this class a singlton
-  static shared_ptr<GlobalContext> instance_;
+  static shared_ptr<Cluster> instance_;
 };
 }  // namespace singa
 

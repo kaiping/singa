@@ -100,6 +100,9 @@ class TSHandlerForSGD: public TableServerHandler {
 
 /**
  * Table server handler for AdaGrad SGD.
+ * The parameter p, is updated according to p=p-\alpha*g_t/\sqrt(\sum_0^t g_k^2),
+ * \alpha is the initial learning rate, g_k is the gradient from k-th step,
+ * t is the current step.
  */
 class TSHandlerForAda: public TableServerHandler {
  public:

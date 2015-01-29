@@ -21,15 +21,18 @@ void RequestDispatcher::StartDispatchLoop(){
 		if (msg){
 			//parse the message
 			RequestBase *request = static_cast<RequestBase*>(msg);
-			if (request->HasExtension(GetRequest::name))
+			if (request->HasExtension(GetRequest::name)){
 				tag = MTYPE_GET_REQUEST;
+      }
 			else if (request->HasExtension(PutRequest::name))
 				tag = MTYPE_PUT_REQUEST;
-			else if (request->HasExtension(UpdateRequest::name))
+			else if (request->HasExtension(UpdateRequest::name)){
 				tag = MTYPE_UPDATE_REQUEST;
+      }
 			// if successful, re-claim memory
 			if (callbacks_[tag](msg)){
-				//VLOG(3) << "wait time = " << (Now() - request->start());
+        //if(tag==MTYPE_UPDATE_REQUEST)
+         // LOG(ERROR) << "get time = " << (Now() - request->start());
 				delete msg;
 			} else{ // re-enqueue the request
 				network->Send(network->id(), tag, *msg);

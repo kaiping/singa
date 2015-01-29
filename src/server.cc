@@ -1,7 +1,8 @@
 #include <cblas.h>
 #include "proto/model.pb.h"
+#include "proto/common.pb.h"
 #include "utils/math.h"
-#include "utils/global_context.h"
+#include "utils/cluster.h"
 #include "utils/network_service.h"
 #include "utils/singleton.h"
 #include "utils/factory.h"
@@ -25,7 +26,7 @@ void TableServer::Start(const SGDProto& sgd) {
 
 	// init network service
 	network_service_ = NetworkService::Get().get();
-	network_service_->Init(GlobalContext::Get()->rank(), Network::Get().get(),
+	network_service_->Init(Cluster::Get()->rank(), Network::Get().get(),
 			new SimpleQueue());
 	network_service_->RegisterShutdownCb(
 			boost::bind(&TableServer::handle_shutdown, this));
@@ -46,6 +47,16 @@ void TableServer::Start(const SGDProto& sgd) {
 
 	for (int i=0; i<FLAGS_server_threads; i++)
 		t[i]->join();
+
+  auto cluster=Cluster::Get();
+  MPI_Barrier(cluster->server_comm());
+  if(cluster->rank()==0){
+    string msg;
+    for(int worker=cluster->worker_start();worker<cluster->worker_end();worker++){
+      Network::Get()->Send(worker, MTYPE_SHUTDOWN, msg);
+     // DLOG(ERROR)<<"send shutdown msg to worker "<<worker;
+    }
+  }
 }
 
 void TableServer::create_table(const SGDProto &sgd) {
@@ -54,7 +65,7 @@ void TableServer::create_table(const SGDProto &sgd) {
 	tshandler->Setup(sgd);
 
 	TableDescriptor *info = new TableDescriptor(0,
-			GlobalContext::Get()->num_table_servers());
+			Cluster::Get()->num_table_servers());
 
 	info->handler = tshandler;
 	info->partition_factory = new typename Shard::Factory;
@@ -129,16 +140,12 @@ bool TableServerHandler::Put(const TKey& key, TVal* to, const TVal& from){
 }
 
 bool TableServerHandler::Get(const TKey& key, const TVal &from, TVal* to){
-  //LOG(ERROR)<<"get key "<<key.id();
-
   if(key.version()<=from.version()&&from.num_aggregate()==0){
-    Timer tick;
     to->mutable_data()->CopyFrom(from.data());
-    //LOG(ERROR)<<"get time "<<tick.elapsed();
     return true;
   }else{
-    //LOG(ERROR)<<"key "<<key.id()<<" version ="<< key.version()
-     // <<" from version="<<from.version()<<" agg ="<<from.num_aggregate();
+    DLOG(INFO)<<"key "<<key.id()<<" version ="<< key.version()
+      <<" from version="<<from.version()<<" agg ="<<from.num_aggregate();
     return false;
   }
 }
@@ -200,12 +207,9 @@ bool TSHandlerForSGD::Put(const TKey& key, TVal* to, const TVal& from){
 
 
 bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
-  //LOG(ERROR)<<"update key "<<origin->split_id();
-  //should be equal for syn sgd
   //CHECK_EQ(origin->version(), update.version())
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
-  //Timer tick;
   int version=origin->version();
   int len=origin->data().value_size();
   CHECK_EQ(len, update.grad().value_size());
@@ -216,30 +220,25 @@ bool TSHandlerForSGD::Update(TVal* origin, const TVal& update){
   float mo=GetMomentum(version,1.0f);
   if(mo==0&&origin->threshold()==1){
     if(wd>0)
-      //Math::mAdd(len, dptr, -lr*wd, dptr, dptr);
       cblas_saxpby(len, -lr*wd, dptr,1, 1.0f, dptr,1);
     // must be put after apply weight decay
-    // Math::mAdd(len, dptr, -lr, grad, dptr);
     cblas_saxpby(len, -lr, grad, 1, 1.0f, dptr, 1);
     origin->set_version(version+1);
-
-    //LOG(ERROR)<<"update time "<<tick.elapsed();
     return true;
   }
+
   float* history=origin->mutable_history()->mutable_value()->mutable_data();
   // hist=hist+lr*grad
-  Math::mAdd(len, history, lr, grad, history);
+  cblas_saxpby(len, lr, grad, 1, 1.0f, history,1);
   // hist=hist+lr*weight*param
-  if(wd>0){
-    Math::mAdd(len, history, lr*wd, dptr, history);
-  }
+  if(wd>0)
+    cblas_saxpby(len,lr*wd, dptr, 1, 1.0f, history,1);
   int num=origin->num_aggregate();
   if(num+1==origin->threshold()){
-    // param+=history/n, /data->n_update()
-    float factor=-1.0/(num+1);
-    Math::mAdd(len, dptr, factor, history, dptr);
+    // param+=history/(num+1)
+    cblas_saxpby(len, -1.0f/(num+1), history, 1, 1.0f, dptr,1);
     // hist=hist*mom
-    Math::Mult(len, history, mo, history);
+    cblas_sscal(len, mo, history, 1);
     origin->set_num_aggregate(0);
     origin->set_version(origin->version()+1);
   }else
@@ -259,7 +258,7 @@ void TSHandlerForAda::Setup(const SGDProto& sgd) {
 
 bool TSHandlerForAda::Put(const TKey& key, TVal* to, const TVal& from){
   TableServerHandler::Put(key, to, from);
-  //synchronous_&&GlobalContext::Get()->num_groups()>1
+  //synchronous_&&Cluster::Get()->num_groups()>1
   if(from.threshold()>1 && to->grad().value_size()==0)
     for(int i=0;i<to->data().value_size();i++)
       to->mutable_grad()->add_value(0.0f);
@@ -271,32 +270,32 @@ bool TSHandlerForAda::Update(TVal* origin, const TVal& update){
   //  <<data->id()<<" "<<data->threshold()<<" "<<data->n_update();
 
   float* grad=nullptr;
+  int len=origin->data().value_size();
   if(origin->threshold()>1){
+    // synchronous mode
     grad=origin->mutable_grad()->mutable_value()->mutable_data();
-    int k=0;
-    for(auto v: update.grad().value())
-      grad[k++]+=v;
+    // grad+=update.grad(), aggregate gradients from groups
+    cblas_saxpby(len, 1.0f, update.grad().value().data(), 1, 1.0f, grad, 1);
 
     int num=origin->num_aggregate();
-    if(num+1<GlobalContext::Get()->num_groups()) {
+    if(num+1<Cluster::Get()->num_groups()) {
       origin->set_num_aggregate(num+1);
       return true;
     }
   }else{
+    // asynchronous mode
     grad=const_cast<float*>(update.grad().value().data());
   }
   float * history=origin->mutable_history()->mutable_value()->mutable_data();
   float * dptr=origin->mutable_data()->mutable_value()->mutable_data();
-
-  for(int i=0;i<origin->data().value_size();i++){
+  for(int i=0;i<len;i++){
     history[i]+=grad[i]*grad[i];
+    // x=x-learning_rate*gradient/sqrt(squared_history_gradient)
     dptr[i]-=learning_rate_*grad[i]/sqrt(history[i]);
   }
   origin->set_version(origin->version()+1);
-  if(origin->threshold()){
-    for(int i=0;i<origin->data().value_size();i++){
-      grad[i]=0.f;
-    }
+  if(origin->threshold()>1){
+    cblas_sscal(len, 0.0f, grad, 1);
     origin->set_num_aggregate(0);
   }
   return true;

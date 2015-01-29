@@ -18,11 +18,10 @@ using std::map;
 using google::protobuf::Message;
 namespace singa {
 
-void ReadProtoFromTextFile(const char* filename,
-    ::google::protobuf::Message* proto) ;
-
+void ReadProtoFromTextFile(const char* filename, Message* proto) ;
 void WriteProtoToTextFile(const Message& proto, const char* filename) ;
 void ReadProtoFromBinaryFile(const char* filename, Message* proto) ;
+void WriteProtoToBinaryFile(const Message& proto, const char* filename);
 
 string VStringPrintf(string fmt, va_list l) ;
 string StringPrintf(string fmt, ...) ;
@@ -40,15 +39,35 @@ class SafeQueue{
     std::lock_guard<std::mutex> lock(m);
     q.push(e);
   }
-  bool pop(T* e) {
+
+  T front() {
+    T ret;
     std::unique_lock<std::mutex> lock(m);
     if(q.size()>0){
-      *e = q.front();
+      ret = q.front();
+    }else{
+      LOG(FATAL)<<"The queue is empty";
+    }
+    return ret;
+  }
+
+  void pop(){
+    std::unique_lock<std::mutex> lock(m);
+    q.pop();
+  }
+
+  bool pop(T* ret) {
+    std::unique_lock<std::mutex> lock(m);
+    if(q.size()>0){
+      *ret = q.front();
       q.pop();
       return true;
     }else{
       return false;
     }
+  }
+  int size(){
+    return q.size();
   }
 
  private:

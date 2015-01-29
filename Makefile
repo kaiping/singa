@@ -18,7 +18,7 @@ LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 
 # Folder to store compiled files
 BUILD_DIR := build
-CXXFLAGS := -O3 -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 # find user defined .proto file, and then compute the corresponding .h, .cc

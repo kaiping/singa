@@ -12,7 +12,8 @@ namespace singa {
 /**
  * Network Singleton to transfer data between workers and table servers.
  * It provides the interfaces, e.g., Send, Receive. The implementation can
- * use either MPI, 0MQ or any other libraries.
+ * use either MPI, 0MQ or any other libraries. Blocking send/recv are used to
+ * simplify the shutdown of system.
  */
 class Network {
  public:

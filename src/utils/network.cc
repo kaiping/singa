@@ -1,9 +1,6 @@
-// Copyright © 2014 Wei Wang. All Rights Reserved.
-// 2014-11-30 14:16
-
 #include <mpi.h>
 #include <glog/logging.h>
-
+#include <proto/common.pb.h>
 #include "utils/network.h"
 #include <cstdio>
 
@@ -35,8 +32,7 @@ bool MPINetwork::Recv(int *tag, int *src, string* msg){
 bool MPINetwork::Send(int dst, int tag, const Message& msg) {
   std::string buf;
   msg.SerializeToString(&buf);
-  MPI_Request req;
-  MPI_Isend(buf.data(), buf.size(), MPI::BYTE, dst, tag, MPI_COMM_WORLD, &req);
+  MPI_Send(buf.data(), buf.size(), MPI::BYTE, dst, tag, MPI_COMM_WORLD);
   return true;
 }
 

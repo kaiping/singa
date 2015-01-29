@@ -13,14 +13,14 @@ namespace singa {
 Solver::Solver(const SolverProto &proto) {
   // if step_>0, then the trainer is restored from a checkpoint
   step_ = proto.step();
-  context_=GlobalContext::Get();
+  cluster_=Cluster::Get();
   proto_=proto;
 
-  int ngroups=context_->num_groups();
+  int ngroups=cluster_->num_groups();
   // update proto_, all groups will do the training, but only the first group
   // conduts test/validation. Hence, the training mini-batch is partitioned
   // onto all groups.
-  if(context_->group_id()==0){
+  if(cluster_->group_id()==0){
     if(proto_.batchsize()%ngroups!=0)
       LOG(ERROR)<<"batchsize % ngroups is not 0. "
       <<proto_.batchsize()<<" % "<<ngroups;
@@ -31,18 +31,18 @@ Solver::Solver(const SolverProto &proto) {
   }
   proto_.set_batchsize(proto_.batchsize()/ngroups);
   phase_=kTrain;
-  string data_folder=GlobalContext::Get()->data_folder();
+  string data_folder=Cluster::Get()->data_folder();
   train_shard_=data_folder+"/"+proto.train_folder();
   validation_shard_=data_folder+"/"+proto.validation_folder();
   test_shard_=data_folder+"/"+proto.test_folder();
-  if(context_->num_servers()==0){ // will update parameters locally
+  if(cluster_->num_servers()==0){ // will update parameters locally
     auto factory=Singleton<Factory<TableServerHandler>>::Instance();
     std::shared_ptr<TableServerHandler> tshandler(
         factory->Create(proto.sgd().handler()));
     tshandler->Setup(proto.sgd());
-    delegate_=new TableDelegate(GlobalContext::Get(), tshandler);
+    delegate_=new TableDelegate(Cluster::Get(), tshandler);
   }else
-    delegate_=new TableDelegate(GlobalContext::Get());
+    delegate_=new TableDelegate(Cluster::Get());
 }
 
 Solver::~Solver() {
@@ -57,7 +57,7 @@ Net* Solver::SetupNeuralNet(const NetProto& proto) {
   shard.Next(&key, &record);
   // setup the net
   net->Setup(proto_.batchsize(), record);
-  if(context_->group_id()==0)
+  if(cluster_->group_id()==0)
     DLOG(ERROR)<<net->ToString();
   return net;
 }
@@ -124,16 +124,16 @@ void Solver::Train(Net* net, int start_step){
     if(!ValidateNow()&&!TestNow())
       thd=new std::thread(std::ref(prefetcher));
     trainperf.Aggregate(TrainOneBatch(net, step_));
-    if(DisplayNow()&&context_->group_id()==0){
+    if(DisplayNow()&&cluster_->group_id()==0){
       ReportPerformance("Train", trainperf.Avg());
       DebugInfo(net);
       trainperf.Reset();
     }
-    if(ValidateNow()&&context_->group_id()==0){
+    if(ValidateNow()&&cluster_->group_id()==0){
       Performance perf=Test(net, Phase::kValidation);
       ReportPerformance("Val  ", perf.Avg());
     }
-    if(TestNow()&&context_->group_id()==0){
+    if(TestNow()&&cluster_->group_id()==0){
       Performance perf=Test(net, Phase::kTest);
       ReportPerformance("Test ", perf.Avg());
     }
@@ -147,16 +147,16 @@ void Solver::Train(Net* net, int start_step){
 /*
 void Solver::DoLocalCheckpoint(Net* net){
   for(auto* param: net->params()){
-    if(param->partition()&&GlobalContext::Get()->num_groups()==1){
+    if(param->partition()&&Cluster::Get()->num_groups()==1){
       DArryProtoProto data;
       param->data().ToProto(&data, true);
       DArryProtoProto grad;
       param->history().ToProto(&grad, true);
       char fname[256];
-      sprintf(fname, "%s/local_cp/param_%d_%d.dat", context_->data_folder().c_str(),
+      sprintf(fname, "%s/local_cp/param_%d_%d.dat", cluster_->data_folder().c_str(),
           param->id(), step_);
       WriteProtoToBinaryFile(data, fname);
-      sprintf(fname, "%s/local_cp/param_%d_%d.hst", context_->data_folder().c_str(),
+      sprintf(fname, "%s/local_cp/param_%d_%d.hst", cluster_->data_folder().c_str(),
           param->id(), step_);
       WriteProtoToBinaryFile(grad, fname);
     }
@@ -164,7 +164,7 @@ void Solver::DoLocalCheckpoint(Net* net){
 }
 */
 void Solver::DebugInfo(Net* net){
-  if(context_->group_id()==0)
+  if(cluster_->group_id()==0)
     return;
   char display[4096];
   auto layers=net->layers();
@@ -207,10 +207,10 @@ Performance Solver::TrainOneBatch(Net *net, int step){
         delegate_->AsyncCollect(param, step);
     }
     if(layer->PreSyncF(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
     layer->ComputeFeature(srclayers);
     if(layer->PostSyncF(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
   }
   PerformanceLayer* perflayer=net->performance_layer(0);
   auto &srclayers=net->name2srclayers(perflayer->name());
@@ -218,14 +218,14 @@ Performance Solver::TrainOneBatch(Net *net, int step){
   for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
     const vector<Layer*> &srclayers=net->name2srclayers((*layer)->name());
     if((*layer)->PreSyncG(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
     (*layer)->ComputeGradient(srclayers);
     for(auto* param: (*layer)->GetParams()){
         delegate_->Update(param, step);
         delegate_->AsyncGet(param,step+1);
     }
     if((*layer)->PostSyncG(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
   }
   //LOG(ERROR)<<"Train one batch "<<tick.elapsed();
   return perf;
@@ -236,10 +236,10 @@ Performance Solver::TestOneBatch(Net *net, int step){
   for(auto* layer: net->layers()){
     const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
     if(layer->PreSyncF(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
     layer->ComputeFeature(srclayers);
     if(layer->PostSyncF(srclayers))
-      MPI_Barrier(context_->mpicomm());
+      MPI_Barrier(cluster_->mycomm());
   }
   PerformanceLayer* perflayer=net->performance_layer(0);
   const vector<Layer*> &srclayers=net->name2srclayers(perflayer->name());
@@ -250,43 +250,43 @@ Performance Solver::TestOneBatch(Net *net, int step){
 
 void Solver::TimeOneBatch(Net* net, int runs) {
   phase_=Phase::kTrain;
+  // prepare one batch training data
   Prefetcher prefetcher(train_shard_, net, phase_);
   prefetcher();
   for(auto* layer:net->input_layer())
     layer->SetInputData(nullptr);
 
+  // set up counters
   auto layers=net->layers();
   int nlayers=layers.size();
-  double* forward=new double[nlayers+1];;
-  double* backward=new double[nlayers+1];;
-  double* refresh=new double[nlayers+1];;
-  double* sync=new double[nlayers+1];;
-  memset(forward, 0, sizeof(double)*(1+nlayers));
-  memset(backward, 0, sizeof(double)*(1+nlayers));
-  memset(refresh, 0, sizeof(double)*(1+nlayers));
-  memset(sync, 0, sizeof(double)*(1+nlayers));
+  vector<double> forward(nlayers+1, 0.0);
+  vector<double> backward(nlayers+1, 0.0);
+  vector<double> refresh(nlayers+1, 0.0);
+  vector<double> sync(nlayers+1, 0.0);
 
-  LOG(ERROR)<<"Time One Batch...";;
+  LOG(INFO)<<"Time One Batch...";;
   double sync_start, refresh_start, comp_start;
+
   for(auto* param: net->params()){
-      delegate_->AsyncGet(param,step_);
+    delegate_->AsyncGet(param,step_);
   }
 
-  MPI_Barrier(context_->mpicomm());
+  CHECK_NE(cluster_->mycomm(), MPI_COMM_NULL);
+  MPI_Barrier(cluster_->mycomm());
   double start=Now();
-  for(int k=0;k<runs;k++){
+  for(int runid=0;runid<runs;runid++){
+    LOG(INFO)<<runid<<"-th run";
     int layerid=0;
     for(auto* layer: layers){
       const vector<Layer*> &srclayers=net->name2srclayers(layer->name());
       refresh_start=Now();
       for(auto* param: layer->GetParams()){
-          delegate_->AsyncCollect(param, step_);
+        delegate_->AsyncCollect(param, step_);
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if(layer->PreSyncF(srclayers)){
-        MPI_Barrier(context_->mpicomm());
-        CHECK(0)<<"presyncf "<<layer->name();
+        MPI_Barrier(cluster_->mycomm());
       }
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
@@ -294,8 +294,7 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       sync_start=Now();
       forward[layerid]+=sync_start-comp_start;
       if(layer->PostSyncF(srclayers)){
-        MPI_Barrier(context_->mpicomm());
-        CHECK(0)<<"postsyncf "<<layer->name();
+        MPI_Barrier(cluster_->mycomm());
       }
       sync[layerid]+=Now()-sync_start;
       layerid++;
@@ -306,8 +305,7 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       layerid--;
       sync_start=Now();
       if((*layer)->PreSyncG(srclayers)){
-        MPI_Barrier(context_->mpicomm());
-        CHECK(0)<<"presyncg "<<(*layer)->name();
+        MPI_Barrier(cluster_->mycomm());
       }
       comp_start=Now();
       sync[layerid]+=comp_start-sync_start;
@@ -316,44 +314,43 @@ void Solver::TimeOneBatch(Net* net, int runs) {
       backward[layerid]+=refresh_start-comp_start;
 
       for(auto* param: (*layer)->GetParams()){
-          delegate_->Update(param, step_);
-          delegate_->AsyncGet(param, step_+1);
+        delegate_->Update(param, step_);
+        delegate_->AsyncGet(param, step_+1);
       }
       sync_start=Now();
       refresh[layerid]+=sync_start-refresh_start;
       if((*layer)->PostSyncG(srclayers)){
-        MPI_Barrier(context_->mpicomm());
-        CHECK(0)<<"postsyncg "<<(*layer)->name();
+        MPI_Barrier(cluster_->mycomm());
       }
       sync[layerid]+=Now()-sync_start;
     }
     IncStep();
-    //if(GlobalContext::Get()->group_id()==0)
-    //  LOG(ERROR)<<"one iter"<<GlobalContext::Get()->rank();
   }
-  MPI_Barrier(context_->allworkers_comm());
+  MPI_Barrier(cluster_->worker_comm());
   double total=Now()-start;
+
+  // display the time counters
   int K=1024;
   char buf[10*K];
   sprintf(buf, "\n");
   for(int i=0;i<nlayers;i++){
-    sprintf(buf+strlen(buf), "Layer %10s forward %6.2f backward %6.2f sync %6.2f refresh %6.2f\n",
-        layers[i]->name().c_str(),forward[i]/runs, backward[i]/runs, sync[i]/runs, refresh[i]/runs);
+    sprintf(buf+strlen(buf),
+        "Layer %10s forward %6.2f backward %6.2f sync %6.2f refresh %6.2f\n",
+        layers[i]->name().c_str(),forward[i]/runs, backward[i]/runs,
+        sync[i]/runs, refresh[i]/runs);
     forward[nlayers]+=forward[i];
     backward[nlayers]+=backward[i];
     sync[nlayers]+=sync[i];
     refresh[nlayers]+=refresh[i];
   }
   double armcitime=0.;//GAry::comm_time;
-  sprintf(buf+strlen(buf), "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\trefresh\t%6.2f\tarmci\t%6.2f\n",
-      total/runs,forward[nlayers]/runs, backward[nlayers]/runs, (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
+  sprintf(buf+strlen(buf),
+      "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\
+      \trefresh\t%6.2f\tarmci\t%6.2f\n",
+      total/runs,forward[nlayers]/runs, backward[nlayers]/runs,
+      (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
       refresh[nlayers]/runs, armcitime/runs);
-  LOG(ERROR)<<string(buf);
-  delete forward;
-  delete backward;
-  delete sync;
-  delete refresh;
-  //DebugInfo(net);
+  LOG(INFO)<<string(buf);
 }
 
 /***********************************************************************

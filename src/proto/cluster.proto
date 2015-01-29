@@ -1,6 +1,6 @@
 package singa;
 
-message Cluster{
+message ClusterProto{
   // The following process ID refers to MPI rank which starts at 0
   // table server process ID in [server_start, server_end)
   optional int32 server_start=1 [default=0];

@@ -12,12 +12,16 @@
 
 namespace singa {
 /**
- * The neural network consists of Layers and Edges.
+ * The neural network is constructed from user configured layers through google
+ * protocol buffer or by adding layers explicitly.
+ *
+ * Some layers, e.g., SplitLayer and NetSrcLayer/NetDstLayer  will be added
+ * implicitly.
  */
-class Net {
+class NeuralNet {
  public:
   /**
-   * construct the net structure, init layers and sort layer orders
+   * construct the net structure from protocol buffer.
    */
   explicit Net(const NetProto &net_proto);
   /**
@@ -30,29 +34,32 @@ class Net {
    * shape info.
    */
   std::string ToString();
-
   /**
-   * construct a DOT string for drawing network structure
-  std::string ToDOT();
+   * print the DOT string for drawing a graph for the neural net
    */
+  std::string ToDOTString();
+  /**
+   * Add layer explicitly used in manually programming/constructing neural net.
+   */
+  void AddLayer(const LayerProto &layer_proto);
+  /**
+   * Add layer explicitly used in manually programming/constructing neural net.
+   */
+  void AddLayer(const Layer* layer);
 
   /**
-   * setup the layers and parameters.
-   * shapes of layer data and parameters are infered from input records/shapes.
-   * DAry partition is set according to PartitionMode.
-   * parameters are initialized.
-   * Memory of DAry is allocated when first time used.
+   * set the meta data of layer, e.g., shape.
+   * shapes of the first layer are infered from input records/shapes.
+   * Memory is not allocated until first time used.
    *
    * @input_shapes shapes for the input layers
-   * @mode partition mode, namely, kHybrid, kModel, kData, kNone
    */
-  void Setup(const vector<vector<int>>& input_shapes, PartitionMode mode=kNone);
+  void Setup(const vector<vector<int>>& input_shapes);
   /**
    * @batchsize mini-batch size
    * @record input record to the net, used to set the shapes of input layers
-   * @mode partition mode, namely, kHybrid, kModel, kData, kNone
    */
-  void Setup(int batchsize, const Record &record,PartitionMode mode=kNone);
+  void Setup(int batchsize, const Record &record);
 
   /**
    * serialize the net.
@@ -92,8 +99,59 @@ class Net {
   }
 
  protected:
-  // called internally to setup the net.
-  void Setup(PartitionMode mode);
+  void check();
+  /**
+   * called internally to setup the neural net without considering partitions.
+   * the input layers are setup
+   */
+  void Setup();
+  /**
+   * Partition each layer according its partition type and dimension.
+   * @param layers original unpartitioned layers
+   */
+  map<string, vector<shared_ptr<Layer>> PartitionNeuralNet(
+      const vector<shared_ptr<Layer>>& layers);
+  /**
+   * connect partitioned layers by adding helper layers, e.g., ConcateLayer
+   * and SliceLayer.
+   * TODO distinguish kOneToMany from kOneToOne. Now kOnetoMany is
+   * processed the same as kOneToOne.
+   */
+  void ConnectPartitionedLayers(
+      const map<string, vector<shared_ptr<Layer>>>& partitioned_layers,
+      const map<pair<string,string>, ConnectionType>& connections,
+      vector<shared_ptr<Layer>* layers,
+      map<string, shared_ptr<Layer>* name2srclayers,
+      map<string, shared_ptr<Layer>* name2dstlayers);
+
+  /**
+   * Add SliceLayer to connect src_layer and dst_layers.
+   */
+  void AddSliceLayer(int slice_dimension, shared_ptr<Layer> src_layer,
+    vector<shared_ptr<Layer>> dst_layers, vector<shared_ptr<Layer>> *layers,
+    map<string, shared_ptr<Layer>* name2srclayers);
+  /**
+   * add ConcateLayer to connect src_layers and dst_layer
+   */
+  void AddConcateLayer(int concate_dimension,
+    vector<shared_ptr<Layer>> src_layers,
+    shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers,
+    map<string, shared_ptr<Layer>* name2srclayers);
+  /**
+   * add a split layer for the layer which has multiple outgoing connected
+   * layers (exception SliceLayer).
+   */
+  void AddSplitLayers(
+    vector<shared_ptr<Layer>> *layers,
+    map<string, vector<shared_ptr<Layer>>> *name2dstlayers);
+  /**
+   * add a NetSrcLayer and NetDstLayer between any connection whose ending
+   * layers resident on different machines.
+   */
+  void AddNetTransferLayers(
+    vector<shared_ptr<Layer>> *layers,
+    map<string, vector<shared_ptr<Layer>>> *name2dstlayers);
+
   // SortLayersForBP
   void topology_sort(vector<Layer *> *layers,
                      const map<string, vector<Layer*>>& name2dstlayers);
@@ -102,7 +160,6 @@ class Net {
                          std::vector<Layer *>> &adjacent_list,
                          std::map<Layer *, bool> *visited,
                          std::stack<Layer *> *stack) ;
-
   // TODO SortLayersForCD
  private:
   std::vector<Layer *> layers_;
@@ -113,8 +170,6 @@ class Net {
   std::map<string, Layer*> name2layer_;
   std::map<string, vector<Layer*>> name2srclayers_;;
   std::map<string, vector<Layer*>> name2dstlayers_;;
-  // <src layer name, dst layer name>, 'Dummy' for dangling layer
-  std::unordered_set<string> edge_set_;
 };
 }  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

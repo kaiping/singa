@@ -35,6 +35,10 @@ namespace singa {
 class Layer {
  public:
   Layer(){}
+  /**
+   * construct layer from the other Layer, but with different shape
+   */
+  Layer(const Layer& other, const vector<int>& shape);
   virtual ~Layer(){}
   /**
    * initialize members, called after layer specific FromProto().
@@ -111,7 +115,21 @@ class Layer {
    * @mode kModel, kData, kHybrid, kNone (no partition)
    * @return the partition dimension, -1 for no partition
    */
-  virtual int GetPartitionDimension(PartitionMode mode);
+  virtual int partition_dimension() const {
+    if(layer_proto_.partition_type()==kDataPartition)
+      return 0;
+    else if(layer_proto_.partition_type()==kLayerPartition)
+      return 1;
+    else if(layer_proto_.partition_type()==kNone)
+      return -1;
+  }
+
+  virtual PartitionType partition_type() const {
+    return layer_proto_.partition_type();
+  }
+  virtual set_machine_id(int id){
+    layer_proto_.set_machine_id(id);
+  }
   /**
    * Return name of this layer
    */

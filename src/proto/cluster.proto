@@ -22,5 +22,5 @@ message ClusterProto{
   // relative path to workerspace will be created if not exist
   optional string log_subfolder=8 [default="log"];
 
-  optional bool synchronous=8 [default=false];
+  optional bool synchronous=9 [default=false];
 }

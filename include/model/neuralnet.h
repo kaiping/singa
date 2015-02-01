@@ -8,9 +8,11 @@
 #include <stack>
 #include <memory>
 
-#include "model/param.h"
+//#include "model/param.h"
 #include "proto/model.pb.h"
 #include "model/layer.h"
+#include "utils/cluster.h"
+#include "utils/factory.h"
 
 using std::vector;
 using std::string;
@@ -31,21 +33,18 @@ class NeuralNet {
   /**
    * construct the net structure from protocol buffer.
    */
-  explicit Net(const NetProto &net_proto);
+  explicit NeuralNet(const NetProto &net_proto);
+  void Init(const NetProto &net_proto, const shared_ptr<Cluster>& cluster) ;
   /**
    * desctruct the net.
    * free layer objects.
    */
-  ~Net();
+  ~NeuralNet();
   /**
    * construct a string for describing the layers and parameters, including
    * shape info.
    */
   std::string ToString();
-  /**
-   * print the DOT string for drawing a graph for the neural net
-   */
-  void DisplayNeuralNet();
   /**
    * print the DOT string for drawing a graph for the neural net
    */
@@ -93,25 +92,29 @@ class NeuralNet {
     CHECK_LT(k, input_layers_.size());
     return input_layers_[k];
   }
-    const std::vector<Layer *>& layers() {
+  const std::vector<shared_ptr<Layer>>& layers() {
     return layers_;
   }
+    /*
   const std::vector<Param *> &params() {
     return params_;
   }
-  Layer* name2layer(string name){
+  */
+  shared_ptr<Layer> name2layer(string name){
     if (name2layer_.find(name)!=name2layer_.end())
       return name2layer_[name];
     else return NULL;
   }
 
  protected:
-  void check();
+  void Check();
+  void ConstructNeuralNet(const NetProto &net_proto);
+  void PartitionNeuralNet(const vector<shared_ptr<Layer>>& layers);
   /**
    * Partition each layer according its partition type and dimension.
    * @param layers original unpartitioned layers
    */
-  map<string, vector<shared_ptr<Layer>> PartitionNeuralNet(
+  map<string, vector<shared_ptr<Layer>> PartitionLayers(
       const vector<shared_ptr<Layer>>& layers);
   /**
    * connect partitioned layers by adding helper layers, e.g., ConcateLayer
@@ -126,13 +129,13 @@ class NeuralNet {
   /**
    * Add SliceLayer to connect src_layer and dst_layers.
    */
-  void InsertSliceLayer(int slice_dimension, shared_ptr<Layer> src_layer,
+  void InsertSliceLayer(const int slice_dimension, shared_ptr<Layer> src_layer,
     const vector<shared_ptr<Layer>> dst_layers,
     vector<shared_ptr<Layer>> *layers);
   /**
    * add ConcateLayer to connect src_layers and dst_layer
    */
-  void InsertConcateLayer(int concate_dimension,
+  void InsertConcateLayer(const int concate_dimension,
     const vector<shared_ptr<Layer>>& src_layers,
     shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers);
   /**
@@ -148,20 +151,19 @@ class NeuralNet {
  vector<shared_ptr<Layer>> InsertNetTransferLayers(
      const vector<shared_ptr<Layer>> &layers);
   // SortLayersForBP
-  void topology_sort(vector<Layer *> *layers,
-                     const map<string, vector<Layer*>>& name2dstlayers);
-  void topology_sort_inner(Layer *layer,
-                         const std::map<Layer *,
-                         std::vector<Layer *>> &adjacent_list,
-                         std::map<Layer *, bool> *visited,
-                         std::stack<Layer *> *stack) ;
+  void topology_sort(vector<shared_ptr<Layer>> *layers);
+  void topology_sort_inner(shared_ptr<Layer> layer,
+                         std::map<string, bool> *visited,
+                         std::stack<string> *stack) ;
   // TODO SortLayersForCD
  private:
   vector<shared_ptr<Layer>> layers_;
-  //vector<PerformanceLayer *> performance_layers_;
-  //vector<InputLayer *> input_layers_;
-  vector<shared_ptr<Param>> params_;
+  vector<PerformanceLayer *> performance_layers_;
+  vector<InputLayer *> input_layers_;
+  //vector<shared_ptr<Param>> params_;
   map<string, shared_ptr<Layer>> name2layer_;
+  shared_ptr<Cluster> cluster_;
+  Factory<Layer>* factory_;
 };
 }  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

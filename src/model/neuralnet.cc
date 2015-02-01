@@ -1,5 +1,11 @@
+#include <algorithm>
 #include <queue>
-#include <cgraph.h>
+#include <graphviz/cgraph.h>
+#include <graphviz/gvc.h>
+#include <utility> // std::pair
+//#include <boost/graph/graph_traits.hpp>
+//#include <boost/graph/adjacency_list.hpp>
+//#include <boost/graph/topological_sort.hpp>
 
 #include "model/neuralnet.h"
 #include "utils/singleton.h"
@@ -8,43 +14,48 @@
 #define CreateLayer(ID) CreateInstance(ID, Layer)
 
 namespace singa {
-Net::Net(const NetProto &net_proto) {
+NeuralNet::NeuralNet(const NetProto &net_proto) {
   Init(net_proto, Cluster::Get());
 }
-void Net::Init(const NetProto &net_proto, const shared_ptr<Cluster>& cluster) {
+void NeuralNet::Init(const NetProto &net_proto, const shared_ptr<Cluster>& cluster) {
   cluster_=cluster;
   factory_=Singleton<Factory<Layer>>::Instance();
-  factory_->Register("ConvProduct", CreateLayer(ConvProductLayer));
+  factory_->Register("Convolution", CreateLayer(ConvolutionLayer));
+  factory_->Register("Concate", CreateLayer(ConcateLayer));
   factory_->Register("Dropout", CreateLayer(DropoutLayer));
-  factory_->Register("Im2col", CreateLayer(Im2colLayer));
   factory_->Register("InnerProduct", CreateLayer(InnerProductLayer));
-  factory_->Register("RGBImage", CreateLayer(ImageLayer));
+  factory_->Register("RGBImage", CreateLayer(RGBImageLayer));
   factory_->Register("Label", CreateLayer(LabelLayer));
   factory_->Register("LRN", CreateLayer(LRNLayer));
   factory_->Register("MnistImage", CreateLayer(MnistImageLayer));
+  factory_->Register("NetDst", CreateLayer(NetDstLayer));
+  factory_->Register("NetSrc", CreateLayer(NetSrcLayer));
   factory_->Register("Pooling", CreateLayer(PoolingLayer));
   factory_->Register("ReLU", CreateLayer(ReLULayer));
+  factory_->Register("Slice", CreateLayer(SliceLayer));
   factory_->Register("SoftmaxLoss", CreateLayer(SoftmaxLossLayer));
+  factory_->Register("Split", CreateLayer(SplitLayer));
   factory_->Register("Tanh", CreateLayer(TanhLayer));
 
   LOG_IF(INFO, cluster_->group_id()==0)<<"Construct Neural Net...";
   ConstructNeuralNet(net_proto);
   // currently only support partition among procs. todo support partition within
   // single procs, e.g., multiple threads.
-  if(net_proto.partition_neuralnet()&&cluster_->group_size()==1)
+  if(cluster_->group_size()>1)
     PartitionNeuralNet(layers_);
-  for(auto* layer: layers_){
+  for(auto layer: layers_){
+    layer->OrderConnectedLayers();
     DLOG(INFO)<<layer->name();
-    layer->CollectParams(&params_);
+    //layer->CollectParams(&params_);
   }
-  check();
+  Check();
   if(cluster_->group_id()==0)
     DisplayNeuralNet(layers_);
   // the softmax loss layer
   LOG_IF(INFO, cluster_->group_id()==0)<<"Neural Net constructed";
 }
 
-Net::~Net() { }
+NeuralNet::~NeuralNet() { }
 
 void NeuralNet::Check(){
   CHECK_EQ(layers_.size(), name2layer_.size());
@@ -59,14 +70,14 @@ void NeuralNet::Check(){
 void NeuralNet::DisplayNeuralNet(const vector<shared_ptr<Layer>>& layers){
   Agraph_t *g;
   /* Create a simple digraph */
-  g = agopen("g", AGDIGRAPH);
+  g = agopen("g", Agdirected, NULL);
   for(const shared_ptr<Layer>& layer: layers){
     Agnode_t* src, *dst;
     Agedge_t *e;
-    src=agnode(g, layer->name());
+    src=agnode(g, static_cast<char*>(layer->name().c_str()),1);
     for(auto entry: layer->dstlayers()){
-      dst=agnode(g, entry.first);
-      e=agedge(src,dst,1);
+      dst=agnode(g, static_cast<char*>(entry.first.c_str()),1);
+      e=agedge(g,src,dst,NULL,1);
     }
   }
   /* set up a graphviz context - but only once even for multiple graphs */
@@ -74,8 +85,8 @@ void NeuralNet::DisplayNeuralNet(const vector<shared_ptr<Layer>>& layers){
   /* Use the directed graph layout engine */
   gvLayout(gvc, g, "dot");
   /* Output in .dot format */
-  string dotpath=cluster_.visualization_folder()+"neuralnet.dot";
-  string pngpath=cluster_.visualization_folder()+"neuralnet.png";
+  string dotpath=cluster_->visualization_folder()+"neuralnet.dot";
+  string pngpath=cluster_->visualization_folder()+"neuralnet.png";
   gvRenderFile(gvc, g, "dot", dotpath.c_str());
   gvRenderFIle(gvc, g, "png", pngpath.c_str());
   gvFreeLayout(gvc, g);
@@ -86,13 +97,13 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   std::unordered_set<string> edge_set;
 
   for (auto &layer_proto : net_proto.layer()) {
-    Layer *layer = factory->Create(layer_proto.type());
+    shared_ptr<Layer>layer(factory_->Create(layer_proto.type()));
     layer->Init(layer_proto);
     if(layer_proto.src_layers_size()){
       for(auto src: layer_proto.src_layers()){
         string edge=src+"-->"+layer->name();
         if(edge_set.find(edge)==edge_set.end()){
-          name2layer_[src]->add_dstlayers(name2layers_[src],layer);
+          name2layer_[src]->add_dstlayers(name2layer_[src],layer);
           edge_set.insert(edge);
         }
       }
@@ -100,8 +111,10 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
     layers_.push_back(layer);
     name2layer_[layer->name()]=layer;
   }
+  for(auto& layer: layers_)
+    layer->OrderConnectedLayers();
   topology_sort(&layers_);
-  Setup(layers_);
+  Setup();
 }
 
 void NeuralNet::PartitionNeuralNet(const vector<shared_ptr<Layer>>& layers){
@@ -110,9 +123,15 @@ void NeuralNet::PartitionNeuralNet(const vector<shared_ptr<Layer>>& layers){
   layers_=InsertSplitLayers(layers_);
   layers_=InsertNetTransferLayers(layers_);
   name2layer_=GetNameToLayer(layers_);
+  for(auto& layer: layers_)
+    layer->OrderConnectedLayers();
   topology_sort(&layers_);
   for(shared_ptr<Layer> layer: layers_){
-      layer->SetupAfterPartition();
+    vector<vector<int>> shape=layer->shapes();
+    layer->SetupAfterPartition();
+    const vector<vector<int>> & newshape=layer->shapes();
+    CHECK(std::equal(
+          shape.begin(),shape.end(),newshape.begin(),newshape.end()));
   }
 }
 map<string, vector<shared_ptr<Layer>>> NeuralNet::PartitionLayers(
@@ -136,7 +155,7 @@ map<string, vector<shared_ptr<Layer>>> NeuralNet::PartitionLayers(
       // residue assigned to the last worker.
       // TODO support user defined partition, e..g, which partition on which
       // location, then the total num of partitions maybe smaller than group
-      // size. partitionID and locationID will then be different.
+      // size. partitionid and locationid will then be different.
       char suffix[4];
       for(int i=0;i<gsize;i++){
         vector<int> newshape=shape;
@@ -147,8 +166,8 @@ map<string, vector<shared_ptr<Layer>>> NeuralNet::PartitionLayers(
         // differentiate partitions
         newlayer->set_name(layer->name()+"-"+string(suffix));
         partitions.push_back(newlayer);
-        layer->set_locationID(i);
-        layer->set_partitionID(i);
+        layer->set_locationid(i);
+        layer->set_partitionid(i);
       }
     }else if(layer->partition_type()==kNone){
       partitions.push_back(layer);
@@ -174,15 +193,15 @@ vector<shared_ptr<Layer>> NeuralNet::ConnectPartitionedLayers(
     PartitionType type=layer->partition_type();
     const auto partitions=partitioned_layers[name];
     for(int srcid=0;srcid<layer->srclayers_size();srcid++){
-      shared_ptr<Layer> srclayer=layer->srclayers(i);
+      shared_ptr<Layer> srclayer=layer->ordered_srclayers(srcid);
       string srcname=srclayer->name();
-      const auto srcpartitions=partitioned_layers[srcname];
+      const auto srcpartitions=partitioned_layers.at(srcname);
       PartitionType srctype=srclayer->partition_type();
       if(srctype==kNone){
         CHECK_EQ(srcpartitions.size(),1)
           <<"local layer "<<srcname<<" should not be partitioned";
         shared_ptr<Layer> srcpartition=srcpartitions[0];
-        if(type==kDataPartition||type==kLayerPartition)){
+        if(type==kDataPartition||type==kLayerPartition){
           InsertSliceLayer(layer->partition_dimension(), srcpartition,
               partitions, &newlayers);
         } else if(type==kNone){
@@ -207,7 +226,7 @@ vector<shared_ptr<Layer>> NeuralNet::ConnectPartitionedLayers(
               srcpartition, partitions, &newlayers);
         }
         for(shared_ptr<Layer> partition: partitions){
-          auto slicelayers=partition->srclayers();
+          auto slicelayers=partition->ordered_srclayers();
           //partition->clear_srclayers();
           InsertConcateLayer(srcpartitions[0]->partition_dimension(),
               slicelayers, partition, &newlayers);
@@ -231,22 +250,22 @@ vector<shared_ptr<Layer>> NeuralNet::InsertSplitLayers(
     const vector<shared_ptr<Layer>>& layers){
   vector<shared_ptr<Layer>> newlayers;
 
-  for(shared_ptr<Layer> layer: layers){
+  for(auto& layer: layers){
     newlayers.push_back(layer);
-    const vector<shared_ptr>& dstlayers=layer->dstlayers();
+    const vector<shared_ptr>& dstlayers=layer->ordered_dstlayers();
     if(dstlayers.size()>1&&layer->type()!="Slice"){
       // remove connections between myself and all dst layers
       layer->clear_dstlayers();
       LayerProto proto;
       proto.set_type("Split");
       proto.set_name("splitfrom"+layer->name());
-      proto.set_locationID(layer->locationID());
-      proto.set_partitionID(0);
+      proto.set_locationid(layer->locationid());
+      proto.set_partitionid(0);
       proto.set_num_splits(dstlayers.size());
-      shared_ptr<Layer> splitlayer(factory->Create(proto.type()));
+      shared_ptr<Layer> splitlayer(factory_->Create(proto.type()));
       splitlayer->Init(proto);
       newlayers.push_back(splitlayer);
-      splitlayer->set_srclayers(splitlayer, {layer});
+      splitlayer->set_srclayers(splitlayer, vector<shared_ptr<Layer>>{layer});
       splitlayer->set_dstlayers(splitlayer,dstlayers);
     }
   }
@@ -258,26 +277,26 @@ vector<shared_ptr<Layer>> NeuralNet::InsertNetTransferLayers(
 
   vector<shared_ptr<Layer>> newlayers;
   for(shared_ptr<Layer> layer: layers){
-    newlayers->push_back(layer);
-    for(shared_ptr<Layer> dstlayer: layer->dstlayers()){
-      if(layer->locationID()!=dstlayer->locationID()){
+    newlayers.push_back(layer);
+    for(shared_ptr<Layer> dstlayer: layer->ordered_dstlayers()){
+      if(layer->locationid()!=dstlayer->locationid()){
         // remove existing connection.
         layer->remove_dstlayers(dstlayer);
         LayerProto proto;
         proto.set_type("NetSrc");
         proto.set_name("netsrc-"+layer->name()+"-"+dstlayer->name());
-        proto.locationID(layer->locationID());
-        shared_ptr<Layer> netsrclayer(factory->Create(proto.type()));
+        proto.set_locationid(layer->locationid());
+        shared_ptr<Layer> netsrclayer(factory_->Create(proto.type()));
         netsrclayer->Init(proto);
-        newlayers->push_back(netsrclayer);
+        newlayers.push_back(netsrclayer);
         layer->add_dstlayers(layer, netsrclayer);
 
         proto.set_type("NetDst");
         proto.set_name("netdst-"+layer->name()+"-"+dstlayer->name());
-        proto.locationID(dstlayer->locationID());
-        shared_ptr<Layer> netdstlayer(factory->Create(proto.type()));
+        proto.set_locationid(dstlayer->locationid());
+        shared_ptr<Layer> netdstlayer(factory_->Create(proto.type()));
         netdstlayer->Init(proto);
-        newlayers->push_back(netdstlayer);
+        newlayers.push_back(netdstlayer);
         netdstlayer->add_dstlayers(netdstlayer, dstlayer);
 
         netdstlayer->add_srclayers(netdstlayer, netsrclayer);
@@ -302,14 +321,14 @@ void NeuralNet::InsertConcateLayer(const int concate_dimension,
   LayerProto proto;
   // remove exisitng connections
   for(shared_ptr<Layer> layer: src_layers)
-    layer->remove_dstlayers(dstlayer);
+    layer->remove_dstlayers(dst_layer);
   proto.set_name("concatefor"+dst_layer->name());
   proto.set_type("Concate");
   proto.set_concate_dimension(concate_dimension);
   proto.set_concate_num(src_layers.size());
-  proto.set_locationID(dst_layer->locationID());
-  proto.set_partitionID(0); // no partition for concate layer and slice layer
-  shared_ptr<Layer> concatelayer(factory->Create(proto.type()));
+  proto.set_locationid(dst_layer->locationid());
+  proto.set_partitionid(0); // no partition for concate layer and slice layer
+  shared_ptr<Layer> concatelayer(factory_->Create(proto.type()));
   concatelayer->Init(proto);
   layers->push_back(concatelayer);
   concatelayer->set_dstlayers(concatelayer,{dst_layer});
@@ -327,18 +346,19 @@ void NeuralNet::InsertSliceLayer(const int slice_dimension,
   proto.set_name("slicefrom"+src_layer->name());
   proto.set_type("Slice");
   proto.set_slice_dimension(slice_dimension);
-  proto.set_locationID(src_layer->locationID());
-  proto.set_partitionID(0); // no partition
+  proto.set_locationid(src_layer->locationid());
+  proto.set_partitionid(0); // no partition
   proto.set_slice_num(dst_layers.size());
-  shared_ptr<Layer> slicelayer(factory->Create(proto.type()));
+  shared_ptr<Layer> slicelayer(factory_->Create(proto.type()));
   slicelayer->Init(proto);
   layers->push_back(slicelayer);
-  slicelayer->set_srclayers(slicelayer, {src_layer});
-  slicelayer->set_dstlayers(slicelayer, {dst_layers});
+  slicelayer->set_srclayers(slicelayer,vector<shared_ptr<Layer>> {src_layer});
+  slicelayer->set_dstlayers(slicelayer, vector<shared_ptr<Layer>>{dst_layers});
 }
 
-std::string Net::ToString(){
+std::string NeuralNet::ToString(){
   char disp[8*1024];
+  /*
   std::queue<Layer*> layers;
   for(auto* layer: input_layers_)
     layers.push(layer);
@@ -360,10 +380,11 @@ std::string Net::ToString(){
     }
     sprintf(disp+strlen(disp), "\n");
   }
+  */
   return string(disp);
 }
 
-void Net::Setup(const int batchsize, const Record &record){
+void NeuralNet::Setup(const int batchsize, const Record &record){
   for (auto *layer : input_layers_){
     InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
     dlayer->Setup(batchsize, record);
@@ -371,7 +392,7 @@ void Net::Setup(const int batchsize, const Record &record){
   Setup();
 }
 
-void Net::Setup(const vector<vector<int>>& shapes){
+void NeuralNet::Setup(const vector<vector<int>>& shapes){
   for (auto *layer : input_layers_){
     InputLayer* dlayer=dynamic_cast<InputLayer*>(layer);
     dlayer->Setup(shapes);
@@ -379,16 +400,16 @@ void Net::Setup(const vector<vector<int>>& shapes){
   Setup();
 }
 
-void Net::Setup(){
+void NeuralNet::Setup(){
   for(Layer* layer: layers_){
     if(name2srclayers_.find(layer->name())!=name2srclayers_.end())
       layer->Setup(name2srclayers_[layer->name()]);
     else
-      layer->Setup();
+      layer->Setup(vector<vector<int>>{});
   }
 }
 
-void Net::ToProto(NetProto *proto, bool copyData) {
+void NeuralNet::ToProto(NetProto *proto, bool copyData) {
   proto->clear_layer();
   for (Layer *layer : layers_) {
     LayerProto *layer_proto = proto->add_layer();
@@ -396,7 +417,7 @@ void Net::ToProto(NetProto *proto, bool copyData) {
   }
 }
 // visited all out going layers and then push current layer into the stack
-void Net::topology_sort_inner(shared_ptr<Layer> layer,
+void NeuralNet::topology_sort_inner(shared_ptr<Layer> layer,
     map<string, bool> *visited,
     std::stack<string> *stack) {
   (*visited)[layer->name()] = true;
@@ -410,7 +431,7 @@ void Net::topology_sort_inner(shared_ptr<Layer> layer,
 
 // sort to make `bottom' layers be placed in the front positions
 // forward propagation will be processed based on this order
-void Net::topology_sort(vector<shared_ptr<Layer>> *layers) {
+void NeuralNet::topology_sort(vector<shared_ptr<Layer>> *layers) {
   // adjacent list from upper layers to lower layers
   std::map<string, bool> visited;
   // prepare adjacent list; input layers will be processed firstly,

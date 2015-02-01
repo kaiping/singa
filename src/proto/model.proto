@@ -87,41 +87,49 @@ enum Phase {
   kTest= 2;
 }
 
-enum PartitionMode{
-  kData=0;
-  kModel=1;
-  kHybrid=2;
-  kNone=3;
+enum PartitionType{
+  kDataPartition=0;
+  kLayerPartition=1;
+  kNone=2;
+}
+enum ConnectionType{
+  kOneToOne=0;
+  kOneToAll=1;
 }
 
 message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
-  repeated string src_layer=3;
+  repeated string src_layers=3;
+  optional int32 locationid=4 [default=0]; // todo make locationID an array
+  optional int32 partitionid=5 [default=0];
+  optional PartitionType partition_type=6 [default=kNone];
   // can be pos/neg neuron value for CD, neuron value/grad for BP
-  repeated DAryProto ary = 5;
-  repeated string share_ary =6;
+  repeated DAryProto ary = 10;
+  repeated string share_ary =11;
   // parameters, e.g., weight matrix or bias vector
-  repeated ParamProto param = 7;
+  repeated ParamProto param = 12;
   // names of parameters shared from other layers
-  repeated string share_param=8;
+  repeated string share_param=13;
 
   // All layers are included in the net structure for training phase by default.
   // Layers, e.g., computing performance metrics for test phase, can be excluded
   // by this field which defines in which phase this layer should be excluded.
-  repeated Phase exclude = 9;
+  repeated Phase exclude = 20;
 
   // hyper-parameters for layers
-  optional ConvolutionProto convolution_param = 11;
-  optional DataProto data_param = 12;
-  optional DropoutProto dropout_param = 13;
-  optional InnerProductProto inner_product_param = 14;
-  optional LRNProto lrn_param = 15;
-  optional MnistProto mnist_param= 16;
-  optional PoolingProto pooling_param = 17;
-  optional ReLUProto relu_param = 18;
-  optional SoftmaxLossProto softmaxloss_param = 19;
-  optional TanhProto tanh_param=20;
+  optional ConvolutionProto convolution_param = 21;
+  optional ConcateProto concate_param = 31;
+  optional DataProto data_param = 22;
+  optional DropoutProto dropout_param = 23;
+  optional InnerProductProto inner_product_param = 24;
+  optional LRNProto lrn_param = 25;
+  optional MnistProto mnist_param= 26;
+  optional PoolingProto pooling_param = 27;
+  optional SliceProto slice_param = 32;
+  optional ReLUProto relu_param = 28;
+  optional SoftmaxLossProto softmaxloss_param = 29;
+  optional TanhProto tanh_param=30;
 }
 
 // scaled tan: A*tan(B*x)
@@ -154,6 +162,11 @@ message ConvolutionProto {
   optional uint32 stride_h = 13; // The stride height
   optional uint32 stride_w = 14; // The stride width
 }
+
+message ConcateProto{
+  optional int32 concate_dimension=1;
+  optional int32 concate_num=2;
+}
 // Message that stores parameters used by DataLayer
 message DataProto {
   // Specify the data source.
@@ -174,6 +187,8 @@ message DataProto {
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
   // be larger than the number of keys in the leveldb.
   optional uint32 rand_skip = 7 [default = 0];
+
+  repeated int32 shape=9;
 }
 
 message MnistProto {
@@ -189,6 +204,7 @@ message MnistProto {
   optional int32 size=6 ;
   optional int32 elastic_freq=7;
   optional bool normalize=8 [default=true];
+  repeated int32 shape=9;
 }
 // Message that stores parameters used by DropoutLayer
 message DropoutProto {
@@ -233,6 +249,10 @@ message PoolingProto {
   optional uint32 stride_w = 8; // The stride width
 }
 
+message SliceProto{
+  optional int32 slice_dimension=1;
+  optional int32 slice_num=2;
+}
 // Message that stores parameters used by ReLULayer
 message ReLUProto {
   // Allow non-zero slope for negative inputs to speed up optimization
@@ -294,7 +314,7 @@ message SolverProto {
   }
   optional GradCalcAlg alg= 26 [default = kBackPropagation];
 
-  optional PartitionMode partition=27 [default=kNone];
+  //optional PartitionType partition=27 [default=kNone];
   // random skip some training records
   optional bool random_skip=28 [default=true];
 }

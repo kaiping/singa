@@ -21,6 +21,8 @@
 
 using std::vector;
 using std::string;
+using std::map;
+using std::shared_ptr;
 
 namespace singa {
 
@@ -29,8 +31,8 @@ namespace singa {
  * Children should implement at least Layer::Setup, Layer::ComputeFeature(),
  * Layer::ComputGradient() functions for backpropagation method;
  * TODO(wangwei) implement children layers to support contrastive divergence,
- * The identifier of each layer is the literal string of the class name, which
- * is used in net configuration and registration.
+ * The identifier of each layer is the literal string of the class name without
+ * the suffix "Layer", which is used in net configuration and registration.
  */
 class Layer {
  public:
@@ -38,7 +40,7 @@ class Layer {
   /**
    * construct layer from the other Layer, but with different shape
    */
-  Layer(const Layer& other, const vector<int>& shape);
+  void Init(const Layer& other, const vector<int>& shape);
   virtual ~Layer(){}
   /**
    * initialize members, called after layer specific FromProto().
@@ -46,7 +48,7 @@ class Layer {
    * initializations are done by Setup().
    * @param layer_proto user defined layer configuration
    */
-  virtual void FromProto(const LayerProto &proto);
+  virtual void Init(const LayerProto &proto);
   /**
    * Marshal layer properties and DArrays into google protobuf object
    * (i.e., snapshot).
@@ -62,7 +64,7 @@ class Layer {
    * @param src_layers layers connecting to this layer
    * @param mode
    */
-  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode)=0;
+  virtual void Setup(const vector<Layer*>& src_layers)=0;
   /**
    * collect parameters associated with this layer.
    * Layers that have paramters must overload this function.
@@ -82,17 +84,8 @@ class Layer {
    * @param src_layers layers connecting to this layer
    */
   virtual void ComputeFeature(const vector<Layer*>& src_layers)=0;
-  /**
-   * default implementation returns false if the src layers are local
-   * (not partitioned) or both connected layers are in kData partition mode.
-   * @return true if need to sync DArray before ComptueFeature
-   */
-  virtual bool PreSyncF(const vector<Layer*>& src_layers);
-  /**
-   * return false by default.
-   * @return true if need to sync DArray after ComptueFeature
-   */
-  virtual bool PostSyncF(const vector<Layer*>& src_layers){return false;}
+  virtual void ComputeFeature(){
+  }
   /**
    * Compute gradients for parameters and connecting layers.
    * Implement backward propagation for BP; TODO Calculate gradients for
@@ -100,16 +93,9 @@ class Layer {
    * @param src_layers layers connecting to this layer.
    */
   virtual void ComputeGradient(const vector<Layer*>& src_layers)=0;
-  /**
-   * \copybrief PreSyncF()
-   * @return true if need to sync DArray before ComptueGradient
-   */
-  virtual bool PreSyncG(const vector<Layer*>& src_layers);
-  /**
-   * return false by default;
-   * @return true if need to sync DArray after ComptueGradient
-   */
-  virtual bool PostSyncG(const vector<Layer*>& src_layers) {return false;}
+  virtual void ComputeGradient(){
+    ComputeGradient();
+  }
   /**
    * decide on which dimension of DArray to do the partitioning.
    * @mode kModel, kData, kHybrid, kNone (no partition)
@@ -127,8 +113,21 @@ class Layer {
   virtual PartitionType partition_type() const {
     return layer_proto_.partition_type();
   }
-  virtual set_machine_id(int id){
-    layer_proto_.set_machine_id(id);
+  virtual set_locationID(int id){
+    layer_proto_.set_locationID(id);
+  }
+  virtual int locationID() const {
+    return layer_proto_.localtionID();
+  }
+  virtual set_partitionID(int id){
+    layer_proto_.set_partitionID(id);
+  }
+  virtual int partitiionID() const {
+    return layer_proto_.partitionID();
+  }
+  virtual set_name(string name){
+    name_=name;
+    layer_proto_.set_name(name);
   }
   /**
    * Return name of this layer
@@ -136,7 +135,9 @@ class Layer {
   const std::string &name() const {
     return layer_proto_.name();
   }
-
+  virtual const vector<int>& shape() const{
+    return shape_;
+  }
   /**
    * @return a const ref for DArray storing neuron values of this layer for BP
    */
@@ -150,10 +151,98 @@ class Layer {
 
   virtual bool has_input() {return false;}
 
+  virtual const shared_ptr<Layer> dstlayers(string name) const {
+    if(dstlayers_.find(name)==dstlayers_.end())
+      return nullptr;
+    return dstlayers_[name];
+  }
+  virtual const shared_ptr<Layer> srclayers(string name) const {
+    if(srclayers_.find(name)==srclayers_.end())
+      return nullptr;
+    return srclayers_[name];
+  }
+  virtual const map<string, shared_ptr<Layer>> srclayers() const {
+    return srclayers_;
+  }
+  virtual const map<string, shared_ptr<Layer>> dstlayers() const {
+    return dstlayers_;
+  }
+  virtual const int srclayers_size() const {
+    return srclayers_.size();
+  }
+  virtual const int dstlayers_size() const {
+    return dstlayers_.size();
+
+  virutal void remove_dstlayers(shared_ptr<Layer> layer){
+    remove_dstlayers(layer->name());
+    layer->remove_srclayers(name_);
+  }
+  virutal void remove_srclayers(shared_ptr<Layer> layer){
+    remove_srclayers(layer->name());
+    layer->remove_dstlayers(name_);
+  }
+  virtual void clear_srclayers() {
+    for(shared_ptr<Layer> src: srclayers_)
+      remove_srclayers(src);
+  }
+  virtual void clear_dstlayers() {
+    for(shared_ptr<Layer> dst: dstlayers_)
+      remove_dstlayers(dst);
+  }
+  virtual void add_srclayers(shared_ptr<Layer> myself, shared_ptr<Layer> layer){
+    CHECK_EQ(*myself,this);
+    add_srclayers(layer);
+    layer->add_dstlayers(myself);
+  }
+  virtual void add_dstlayers(shared_ptr<Layer> myself,shared_ptr<Layer> layer){
+    CHECK_EQ(*myself,this);
+    add_dstlayers(layer);
+    layer->add_srclayers(myself);
+  }
+  virtual void set_srclayers(shared_ptr<Layer> myself,
+      vector<shared_ptr<Layer>>& layers){
+    clear_srclayers();
+    for(shared_ptr<Layer> layer: layers){
+      add_srclayers(myself, layer);
+    }
+  }
+  virtual void set_dstlayers(shared_ptr<Layer> myself,
+      vector<shared_ptr<Layer>>& layers){
+    clear_dstlayers();
+    for(shared_ptr<Layer> layer: layers){
+      add_dstlayers(myself, layer);
+    }
+  }
+ protected:
+  void remove_srclayers(string name){
+    srclayers_.erase(name);
+    srclayer_order_.erase(name);
+  }
+  void remove_dstlayers(string name){
+    dstlayers_.erase(name);
+    dstlayer_order_.erase(name);
+  }
+  void add_dstlayers(shared_ptr<Layer> layer){
+    dstlayers_[layer->name()]=layer;
+    dstlayer_order_[layer->name()]=dstid_++;
+  }
+  void add_srclayers(shared_ptr<Layer> layer){
+    srclayers_[layer->name()]=layer;
+    srclayer_order_[layer->name()]=srcid_++;
+  }
+
 protected:
-  DArray data_, grad_;
+  string name_;
+  //vector<shared_ptr<SyncedMem>> memblobs_;
+  vector<int> shape_;
   // DArray pos_, neg_;//for CD
   LayerProto layer_proto_;
+
+  map<string, shared_ptr<Layer>> srclayers_, dstlayers_;
+  // used to order src layers and dst layers
+  map<string, int> srclayer_order_, dstlayer_order_;
+  //<! current largest id for dst and src layers
+  int dstid_, srcid_;
 };
 
 /****************************Middel Layers************************************/
@@ -193,35 +282,6 @@ class DropoutLayer: public Layer {
    * if mask[i]=0, then the i-th neuron is dropped.
    */
   DArray mask_;
-};
-class Im2colLayer: public Layer {
- public:
-  virtual void Setup(const vector<Layer*>& src_layers, PartitionMode mode);
-  virtual void ComputeFeature(const vector<Layer*>& src_layers);
-  virtual void ComputeGradient(const vector<Layer*>& src_layers);
-  /**
-   * process one image
-   * @param data_im input local array
-   * @param data_col output local array
-   */
-  static void im2col(const float *data_im, const int channels,
-      const int height, const int width, const int patch_h, const int patch_w,
-      const int pad_h, const int pad_w,
-      const int stride_h, const int stride_w,
-      float* data_col);
-  /**
-   * process one image
-   * @param data_col input local array
-   * @param data_im output local array
-   */
-  static void col2im(const float* data_col, const int channels,
-      const int height, const int width, const int patch_h, const int patch_w,
-      const int pad_h, const int pad_w,
-      const int stride_h, const int stride_w,
-      float* data_im);
- protected:
-  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
-  int channels_, height_, width_;
 };
 
 class InnerProductLayer: public Layer {

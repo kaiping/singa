@@ -14,8 +14,13 @@ message ClusterProto{
   // e.g., first group: [worker_start, worker_start+group_size)
   optional int32 group_size=5 [default=1];
 
-  // local data folder , train/val/test shards, checkpoint files
-  required string data_folder=6;
+  // local workspace, train/val/test shards, checkpoint files
+  required string workspace=6;
 
-  optional bool synchronous=7 [default=false];
+  // relative path to workerspace will be created if not exist
+  optional string vis_subfolder=7 [default="vis"];
+  // relative path to workerspace will be created if not exist
+  optional string log_subfolder=8 [default="log"];
+
+  optional bool synchronous=8 [default=false];
 }

@@ -6,17 +6,25 @@
 #include <map>
 #include <unordered_set>
 #include <stack>
+#include <memory>
+
 #include "model/param.h"
 #include "proto/model.pb.h"
 #include "model/layer.h"
 
+using std::vector;
+using std::string;
+using std::map;
+using std::shared_ptr;
+
 namespace singa {
 /**
  * The neural network is constructed from user configured layers through google
- * protocol buffer or by adding layers explicitly.
+ * protocol buffer. TODO support constructing neural network by adding layers
+ * explicitly. E.g., users create layers and connect them manually in the code.
  *
- * Some layers, e.g., SplitLayer and NetSrcLayer/NetDstLayer  will be added
- * implicitly.
+ * Some layers, e.g., SplitLayer and NetSrcLayer/NetDstLayer will be added
+ * implicitly to partition the neural network.
  */
 class NeuralNet {
  public:
@@ -37,16 +45,20 @@ class NeuralNet {
   /**
    * print the DOT string for drawing a graph for the neural net
    */
-  std::string ToDOTString();
+  void DisplayNeuralNet();
   /**
-   * Add layer explicitly used in manually programming/constructing neural net.
+   * print the DOT string for drawing a graph for the neural net
    */
-  void AddLayer(const LayerProto &layer_proto);
-  /**
-   * Add layer explicitly used in manually programming/constructing neural net.
-   */
-  void AddLayer(const Layer* layer);
+  void DisplayNeuralNet(const vector<shared_ptr<Layer>>& layers);
 
+  /**
+   * Add layer explicitly used in manually programming/constructing neural net.
+   */
+  void AddLayer(const LayerProto &layer_proto){};
+  /**
+   * Add layer explicitly used in manually programming/constructing neural net.
+   */
+  void AddLayer(const Layer* layer){};
   /**
    * set the meta data of layer, e.g., shape.
    * shapes of the first layer are infered from input records/shapes.
@@ -60,6 +72,11 @@ class NeuralNet {
    * @record input record to the net, used to set the shapes of input layers
    */
   void Setup(int batchsize, const Record &record);
+  /**
+   * called internally to setup the neural net without considering partitions.
+   * the input layers' shapes are from google protobuf config
+   */
+  void Setup();
 
   /**
    * serialize the net.
@@ -87,24 +104,9 @@ class NeuralNet {
       return name2layer_[name];
     else return NULL;
   }
-  const vector<Layer*> name2srclayers(string name){
-     if (name2srclayers_.find(name)!=name2srclayers_.end())
-      return name2srclayers_[name];
-    else return vector<Layer*>{};
-  }
-  const vector<Layer*> name2dstlayers(string name){
-    if (name2dstlayers_.find(name)!=name2dstlayers_.end())
-      return name2dstlayers_[name];
-    else return vector<Layer*>{};
-  }
 
  protected:
   void check();
-  /**
-   * called internally to setup the neural net without considering partitions.
-   * the input layers are setup
-   */
-  void Setup();
   /**
    * Partition each layer according its partition type and dimension.
    * @param layers original unpartitioned layers
@@ -117,41 +119,34 @@ class NeuralNet {
    * TODO distinguish kOneToMany from kOneToOne. Now kOnetoMany is
    * processed the same as kOneToOne.
    */
-  void ConnectPartitionedLayers(
+  vector<shared_ptr<Layer>> ConnectPartitionedLayers(
       const map<string, vector<shared_ptr<Layer>>>& partitioned_layers,
-      const map<pair<string,string>, ConnectionType>& connections,
-      vector<shared_ptr<Layer>* layers,
-      map<string, shared_ptr<Layer>* name2srclayers,
-      map<string, shared_ptr<Layer>* name2dstlayers);
+      const vector<shared_ptr<Layer>>& layers);
 
   /**
    * Add SliceLayer to connect src_layer and dst_layers.
    */
-  void AddSliceLayer(int slice_dimension, shared_ptr<Layer> src_layer,
-    vector<shared_ptr<Layer>> dst_layers, vector<shared_ptr<Layer>> *layers,
-    map<string, shared_ptr<Layer>* name2srclayers);
+  void InsertSliceLayer(int slice_dimension, shared_ptr<Layer> src_layer,
+    const vector<shared_ptr<Layer>> dst_layers,
+    vector<shared_ptr<Layer>> *layers);
   /**
    * add ConcateLayer to connect src_layers and dst_layer
    */
-  void AddConcateLayer(int concate_dimension,
-    vector<shared_ptr<Layer>> src_layers,
-    shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers,
-    map<string, shared_ptr<Layer>* name2srclayers);
+  void InsertConcateLayer(int concate_dimension,
+    const vector<shared_ptr<Layer>>& src_layers,
+    shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers);
   /**
    * add a split layer for the layer which has multiple outgoing connected
    * layers (exception SliceLayer).
    */
-  void AddSplitLayers(
-    vector<shared_ptr<Layer>> *layers,
-    map<string, vector<shared_ptr<Layer>>> *name2dstlayers);
+ vector<shared_ptr<Layer>> InsertSplitLayers(
+     const vector<shared_ptr<Layer>> &layers);
   /**
    * add a NetSrcLayer and NetDstLayer between any connection whose ending
    * layers resident on different machines.
    */
-  void AddNetTransferLayers(
-    vector<shared_ptr<Layer>> *layers,
-    map<string, vector<shared_ptr<Layer>>> *name2dstlayers);
-
+ vector<shared_ptr<Layer>> InsertNetTransferLayers(
+     const vector<shared_ptr<Layer>> &layers);
   // SortLayersForBP
   void topology_sort(vector<Layer *> *layers,
                      const map<string, vector<Layer*>>& name2dstlayers);
@@ -162,14 +157,11 @@ class NeuralNet {
                          std::stack<Layer *> *stack) ;
   // TODO SortLayersForCD
  private:
-  std::vector<Layer *> layers_;
-  std::vector<PerformanceLayer *> performance_layers_;
-  std::vector<InputLayer *> input_layers_;
-  std::vector<Param *> params_;
-
-  std::map<string, Layer*> name2layer_;
-  std::map<string, vector<Layer*>> name2srclayers_;;
-  std::map<string, vector<Layer*>> name2dstlayers_;;
+  vector<shared_ptr<Layer>> layers_;
+  //vector<PerformanceLayer *> performance_layers_;
+  //vector<InputLayer *> input_layers_;
+  vector<shared_ptr<Param>> params_;
+  map<string, shared_ptr<Layer>> name2layer_;
 };
 }  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

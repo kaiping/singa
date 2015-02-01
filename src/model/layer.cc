@@ -11,202 +11,25 @@ namespace singa {
 /*****************************************************************************
  * Implementation for Layer
  *****************************************************************************/
-void Layer::FromProto(const LayerProto &proto) {
+void Layer::Init(const LayerProto &proto) {
   layer_proto_=proto;
-  if(proto.ary_size()>=2){
-    data_.FromProto(proto.ary(0));
-    grad_.FromProto(proto.ary(1));
-  }
-  layer_proto_.clear_ary();
+}
+
+void Layer::Init(const Layer& other, const vector<int>& shape){
+  shape_=shape;
 }
 
 void Layer::ToProto(LayerProto *proto, bool copyData) {
-  proto->clear_ary();
-  proto->CopyFrom(layer_proto_);
-  data_.ToProto(proto->add_ary(), copyData);
-  grad_.ToProto(proto->add_ary(), copyData);
-}
-
-bool Layer::PreSyncF(const vector<Layer*>& src_layers){
-  if(src_layers.size()==0)
-    return false;
-  const DArray& src=src_layers[0]->data();
-  if(src.partitionDim()==-1||src.partitionDim()==data_.partitionDim())
-    return false;
-  else
-    return true;
-}
-
-bool Layer::PreSyncG(const vector<Layer*>& src_layers){
-  return PreSyncF(src_layers);
-}
-
-int Layer::GetPartitionDimension(PartitionMode mode){
-  int pdim=-1;
-  switch(mode){
-    case kModel: pdim=1;break;
-    case kData: pdim=0;break;
-    case kHybrid: pdim=0;break;
-    case kNone: pdim=-1;break;
-    default: LOG(FATAL)<<"unknonw partition mode";
-  }
-  return pdim;
-}
-
-/*****************************************************************************
- * Implementation for ImgColLayer
- *****************************************************************************/
-void Im2colLayer::Setup(const vector<Layer*>& src_layers, PartitionMode mode){
-  ConvolutionProto conv_param = layer_proto_.convolution_param();
-  CHECK(!conv_param.has_kernel_size() !=
-      !(conv_param.has_kernel_h() && conv_param.has_kernel_w()))
-    << "Filter size is kernel_size OR kernel_h and kernel_w; not both";
-  CHECK(conv_param.has_kernel_size() ||
-      (conv_param.has_kernel_h() && conv_param.has_kernel_w()))
-    << "For non-square filters both kernel_h and kernel_w are required.";
-  CHECK((!conv_param.has_pad() && conv_param.has_pad_h()
-        && conv_param.has_pad_w())
-      || (!conv_param.has_pad_h() && !conv_param.has_pad_w()))
-    << "pad is pad OR pad_h and pad_w are required.";
-  CHECK((!conv_param.has_stride() && conv_param.has_stride_h()
-        && conv_param.has_stride_w())
-      || (!conv_param.has_stride_h() && !conv_param.has_stride_w()))
-    << "Stride is stride OR stride_h and stride_w are required.";
-  if (conv_param.has_kernel_size()) {
-    kernel_h_ = kernel_w_ = conv_param.kernel_size();
-  } else {
-    kernel_h_ = conv_param.kernel_h();
-    kernel_w_ = conv_param.kernel_w();
-  }
-  CHECK_GT(kernel_h_, 0) << "Filter dimensions cannot be zero.";
-  CHECK_GT(kernel_w_, 0) << "Filter dimensions cannot be zero.";
-  if (!conv_param.has_pad_h()) {
-    pad_h_ = pad_w_ = conv_param.pad();
-  } else {
-    pad_h_ = conv_param.pad_h();
-    pad_w_ = conv_param.pad_w();
-  }
-  if (!conv_param.has_stride_h()) {
-    stride_h_ = stride_w_ = conv_param.stride();
-  } else {
-    stride_h_ = conv_param.stride_h();
-    stride_w_ = conv_param.stride_w();
-  }
-  const DArray& src=src_layers[0]->data();
-  CHECK_EQ(src.shape().vol(),4)<<"Im2colLayer only support src DArray with 4 dim";
-  int num=src.shape(0);
-  channels_=src.shape(1);
-  height_ = src.shape(2);
-  width_ = src.shape(3);
-  vector<int> shape{num, channels_ * kernel_h_ * kernel_w_,
-    (height_ + 2 * pad_h_ - kernel_h_) / stride_h_ + 1,
-    (width_ + 2 * pad_w_ - kernel_w_) / stride_w_ + 1};
-  int pdim=GetPartitionDimension(mode);
-  data_.Setup(shape, pdim);
-  grad_.Setup(shape, pdim);
-}
-
-/*
- * only consider parition along the num/channel dimension
- */
-void Im2colLayer::ComputeFeature(const vector<Layer*>& src_layers){
-  const Pair& nrng=data_.localRange(0);
-  const Pair& crng=data_.localRange(1);
-  int kernel_area=kernel_h_*kernel_w_;
-  CHECK_EQ(crng.first%kernel_area,0);
-  CHECK_EQ(crng.second%kernel_area,0);
-  Pair srccrng(crng.first/kernel_area, crng.second/kernel_area);
-  Range slice({nrng.first, srccrng.first, 0, 0},
-      {nrng.second, srccrng.second, height_,width_});
-  const DArray& src=src_layers[0]->data().Fetch(slice);
-  for(int n=nrng.first; n<nrng.second;++n){
-    DArray im=src[n].SubArray(Pair({srccrng.first, srccrng.second}));
-    DArray col=data_[n].SubArray(Pair({crng.first, crng.second}));
-    im2col(im.dptr(), channels_, height_, width_, kernel_h_, kernel_w_,
-        pad_h_, pad_w_, stride_h_, stride_w_, col.dptr());
-  }
-}
-void Im2colLayer::ComputeGradient(const vector<Layer*>& src_layers) {
-  DArray* gsrc=src_layers[0]->mutable_grad();
-  if(gsrc!=nullptr){
-    const Pair& srcnrng=gsrc->localRange(0);
-    const Pair& srccrng=gsrc->localRange(1);
-    int kernel_area=kernel_h_*kernel_w_;
-    Pair crng(srccrng.first*kernel_area, srccrng.second*kernel_area);
-    Range slice({srcnrng.first, crng.first, 0, 0},
-      {srcnrng.second, crng.second, height_,width_});
-    const DArray& grad=grad_.Fetch(slice);
-    for(int n=srcnrng.first;n<srcnrng.second;n++){
-      DArray col=grad[n].SubArray(Pair({crng.first, crng.second}));
-      DArray im=gsrc[n].SubArray(Pair({srccrng.first, srccrng.second}));
-      col2im(col.dptr(), channels_, height_, width_, kernel_h_, kernel_w_,
-          pad_h_, pad_w_, stride_h_, stride_w_, im.dptr());
-    }
-  }
-}
-
-// Code of im2col function is from Caffe.
-void Im2colLayer::im2col(const float* data_im, const int channels,
-    const int height, const int width, const int kernel_h, const int kernel_w,
-    const int pad_h, const int pad_w,
-    const int stride_h, const int stride_w,
-    float* data_col){
-  int height_col = (height + 2 * pad_h - kernel_h) / stride_h + 1;
-  int width_col = (width + 2 * pad_w - kernel_w) / stride_w + 1;
-  int channels_col = channels * kernel_h * kernel_w;
-  for (int c = 0; c < channels_col; ++c) {
-    int w_offset = c % kernel_w;
-    int h_offset = (c / kernel_w) % kernel_h;
-    int c_im = c / kernel_h / kernel_w;
-    for (int h = 0; h < height_col; ++h) {
-      for (int w = 0; w < width_col; ++w) {
-        int h_pad = h * stride_h - pad_h + h_offset;
-        int w_pad = w * stride_w - pad_w + w_offset;
-        if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width)
-          data_col[(c * height_col + h) * width_col + w] =
-            data_im[(c_im * height + h_pad) * width + w_pad];
-        else
-          data_col[(c * height_col + h) * width_col + w] = 0;
-      }
-    }
-  }
-}
-
-// Code of im2col function is from Caffe.
-void Im2colLayer::col2im(const float* data_col, const int channels,
-    const int height, const int width, const int patch_h, const int patch_w,
-    const int pad_h, const int pad_w,
-    const int stride_h, const int stride_w,
-    float* data_im){
-  memset(data_im, 0, sizeof(float)*channels*height*width);
-  //im->Fill(0.f);
-  int height_col = (height + 2 * pad_h - patch_h) / stride_h + 1;
-  int width_col = (width + 2 * pad_w - patch_w) / stride_w + 1;
-  int channels_col = channels * patch_h * patch_w;
-  for (int c = 0; c < channels_col; ++c) {
-    int w_offset = c % patch_w;
-    int h_offset = (c / patch_w) % patch_h;
-    int c_im = c / patch_h / patch_w;
-    for (int h = 0; h < height_col; ++h) {
-      for (int w = 0; w < width_col; ++w) {
-        int h_pad = h * stride_h - pad_h + h_offset;
-        int w_pad = w * stride_w - pad_w + w_offset;
-        if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width)
-          data_im[(c_im * height + h_pad) * width + w_pad] +=
-            data_col[(c * height_col + h) * width_col + w];
-      }
-    }
-  }
 }
 
 /*****************************************************************************
  * Implementation for ConvProductLayer
  *****************************************************************************/
-void ConvProductLayer::FromProto(const LayerProto& proto){
+void ConvProductLayer::Init(const LayerProto& proto){
   CHECK_EQ(proto.param_size(),2);
-  weight_.FromProto(proto.param(0));
-  bias_.FromProto(proto.param(1));
-  Layer::FromProto(proto);
+  weight_.Init(proto.param(0));
+  bias_.Init(proto.param(1));
+  Layer::Init(proto);
 }
 
 void ConvProductLayer::CollectParams(vector<Param*> *params){
@@ -221,8 +44,7 @@ vector<Param*> ConvProductLayer::GetParams() {
   return ret;
 }
 
-void ConvProductLayer::Setup(const vector<Layer*>& src_layers,
-    PartitionMode mode){
+void ConvProductLayer::Setup(const vector<Layer*>& src_layers){
   ConvolutionProto conv_param=layer_proto_.convolution_param();
   int num_output=conv_param.num_output();
   const DArray& src=src_layers[0]->data();
@@ -326,11 +148,11 @@ void DropoutLayer::ComputeGradient(const vector<Layer*>& src_layers)  {
  * Implementation for PoolingLayer
  * The code is adapted from Caffe.
  **********************************/
-void PoolingLayer::FromProto(const LayerProto& proto){
+void PoolingLayer::Init(const LayerProto& proto){
   if(proto.ary_size()>=3){
-    mask_idx_.FromProto(proto.ary(2));
+    mask_idx_.Init(proto.ary(2));
   }
-  Layer::FromProto(proto);
+  Layer::Init(proto);
 }
 void PoolingLayer::ToProto(LayerProto* proto, bool copyData){
   Layer::ToProto(proto, copyData);
@@ -558,12 +380,12 @@ void PoolingLayer::ComputeGradient(const vector<Layer*>& src_layers) {
 /*****************************************************************************
  * Implementation for LRNLayer
  *****************************************************************************/
-void LRNLayer::FromProto(const LayerProto &proto)  {
+void LRNLayer::Init(const LayerProto &proto)  {
   if(proto.ary_size()==4){
-    norm_.FromProto(proto.ary(2));
-    ratio_.FromProto(proto.ary(3));
+    norm_.Init(proto.ary(2));
+    ratio_.Init(proto.ary(3));
   }
-  Layer::FromProto(proto);
+  Layer::Init(proto);
 }
 
 void LRNLayer::ToProto(LayerProto* proto, bool copyData) {
@@ -664,11 +486,11 @@ void LRNLayer::ComputeGradient(const vector<Layer*>& src_layers) {
 /*****************************************************************************
  * Implementation for InnerProductLayer
  *****************************************************************************/
-void InnerProductLayer::FromProto(const LayerProto& proto){
+void InnerProductLayer::Init(const LayerProto& proto){
   CHECK_EQ(proto.param_size(),2);
-  weight_.FromProto(proto.param(0));
-  bias_.FromProto(proto.param(1));
-  Layer::FromProto(proto);
+  weight_.Init(proto.param(0));
+  bias_.Init(proto.param(1));
+  Layer::Init(proto);
 }
 
 void InnerProductLayer::CollectParams(vector<Param*> *params){

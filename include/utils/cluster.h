@@ -80,7 +80,10 @@ class Cluster {
   //bool checkpoint_enabled() {return cluster_.checkpoint_enabled();}
   //int checkpoint_freq() {return cluster_.checkpoint_freq();}
   //int checkpoint_after() {return cluster_.checkpoint_after();}
-  const string data_folder() {return cluster_.data_folder();}
+  const string workerspace() {return cluster_.data_folder();}
+  const string& visualization_folder(){
+    return cluster_.workspace()+"/"+cluster_.vis_subfolder();
+  }
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}
   const vector<vector<int>>& groups() {return groups_;}
   /**

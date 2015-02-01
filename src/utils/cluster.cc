@@ -22,6 +22,14 @@ void Cluster::CreateGroupComm(int start, int end,
 
 Cluster::Cluster(const ClusterProto &cluster) {
 	cluster_ = cluster;
+  SetupGroups(cluster);
+  SetupFolders(cluster);
+}
+void Cluster::SetupFolders(const ClusterProto &cluster){
+  // create visulization folder
+  mkdir(visualization_folder().c_str(),  S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+}
+void Cluster::SetupGroups(const ClusterProto &cluster){
   char tmp[256];
   int len;
   MPI_Get_processor_name(tmp, &len);
@@ -67,7 +75,6 @@ Cluster::Cluster(const ClusterProto &cluster) {
   LOG(INFO)<<"Cluster Setup: "<<
     "Group id "<<gid_<<" rank "<<rank_<<" id within group "<<id_;
 }
-
 shared_ptr<Cluster> Cluster::Get(const ClusterProto& cluster){
   if(!instance_) {
     instance_.reset(new Cluster(cluster));

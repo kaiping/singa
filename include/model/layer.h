@@ -115,12 +115,12 @@ class Layer {
    * @return the partition dimension, -1 for no partition
    */
   virtual int partition_dimension() const {
-    if(layer_proto_.partition_type()==kDataPartition)
-      return 0;
-    else if(layer_proto_.partition_type()==kLayerPartition)
-      return 1;
+    int ret=0;
+    if(layer_proto_.partition_type()==kLayerPartition)
+      ret= 1;
     else if(layer_proto_.partition_type()==kNone)
-      return -1;
+      ret= -1;
+    return ret;
   }
 
   virtual ConnectionType connection_type(int k) const {
@@ -162,6 +162,9 @@ class Layer {
     else{
       return vector<int>{};
     }
+  }
+  virtual const vector<vector<int>>& shapes() const{
+    return shapes_;
   }
   /**
    * @return a const ref for DArray storing neuron values of this layer for BP
@@ -224,20 +227,26 @@ class Layer {
     layer->add_srclayers(myself);
   }
   virtual void set_srclayers(shared_ptr<Layer> myself,
-      vector<shared_ptr<Layer>>& layers){
+      vector<shared_ptr<Layer>> layers){
     clear_srclayers();
     for(shared_ptr<Layer> layer: layers){
       add_srclayers(myself, layer);
     }
   }
   virtual void set_dstlayers(shared_ptr<Layer> myself,
-      vector<shared_ptr<Layer>>& layers){
+      vector<shared_ptr<Layer>> layers){
     clear_dstlayers();
     for(shared_ptr<Layer> layer: layers){
       add_dstlayers(myself, layer);
     }
   }
 
+  const vector<shared_ptr<Layer>>& ordered_srclayers()const{
+    return ordered_srclayers_;
+  }
+  const vector<shared_ptr<Layer>>& ordered_dstlayers()const{
+    return ordered_dstlayers_;
+  }
   shared_ptr<Layer> ordered_srclayers(int k){
     CHECK_LT(k, ordered_srclayers_.size());
     if(ordered_dstlayers_.size()!=dstlayers_.size())

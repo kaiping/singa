@@ -40,6 +40,7 @@ class EdgeProto;
 class DAryProto;
 class ParamProto;
 class LayerProto;
+class SplitProto;
 class TanhProto;
 class SoftmaxLossProto;
 class ConvolutionProto;
@@ -1193,6 +1194,15 @@ class LayerProto : public ::google::protobuf::Message {
   inline ::singa::SliceProto* release_slice_param();
   inline void set_allocated_slice_param(::singa::SliceProto* slice_param);
 
+  // optional .singa.SplitProto split_param = 33;
+  inline bool has_split_param() const;
+  inline void clear_split_param();
+  static const int kSplitParamFieldNumber = 33;
+  inline const ::singa::SplitProto& split_param() const;
+  inline ::singa::SplitProto* mutable_split_param();
+  inline ::singa::SplitProto* release_split_param();
+  inline void set_allocated_split_param(::singa::SplitProto* split_param);
+
   // optional .singa.ReLUProto relu_param = 28;
   inline bool has_relu_param() const;
   inline void clear_relu_param();
@@ -1250,6 +1260,8 @@ class LayerProto : public ::google::protobuf::Message {
   inline void clear_has_pooling_param();
   inline void set_has_slice_param();
   inline void clear_has_slice_param();
+  inline void set_has_split_param();
+  inline void clear_has_split_param();
   inline void set_has_relu_param();
   inline void clear_has_relu_param();
   inline void set_has_softmaxloss_param();
@@ -1278,13 +1290,14 @@ class LayerProto : public ::google::protobuf::Message {
   ::singa::MnistProto* mnist_param_;
   ::singa::PoolingProto* pooling_param_;
   ::singa::SliceProto* slice_param_;
+  ::singa::SplitProto* split_param_;
   ::singa::ReLUProto* relu_param_;
   ::singa::SoftmaxLossProto* softmaxloss_param_;
   ::singa::TanhProto* tanh_param_;
   int partition_type_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(23 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(24 + 31) / 32];
 
   friend void  protobuf_AddDesc_model_2eproto();
   friend void protobuf_AssignDesc_model_2eproto();
@@ -1292,6 +1305,88 @@ class LayerProto : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static LayerProto* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class SplitProto : public ::google::protobuf::Message {
+ public:
+  SplitProto();
+  virtual ~SplitProto();
+
+  SplitProto(const SplitProto& from);
+
+  inline SplitProto& operator=(const SplitProto& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SplitProto& default_instance();
+
+  void Swap(SplitProto* other);
+
+  // implements Message ----------------------------------------------
+
+  SplitProto* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const SplitProto& from);
+  void MergeFrom(const SplitProto& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 num_splits = 1;
+  inline bool has_num_splits() const;
+  inline void clear_num_splits();
+  static const int kNumSplitsFieldNumber = 1;
+  inline ::google::protobuf::int32 num_splits() const;
+  inline void set_num_splits(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:singa.SplitProto)
+ private:
+  inline void set_has_num_splits();
+  inline void clear_has_num_splits();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::int32 num_splits_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_model_2eproto();
+  friend void protobuf_AssignDesc_model_2eproto();
+  friend void protobuf_ShutdownFile_model_2eproto();
+
+  void InitAsDefaultInstance();
+  static SplitProto* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -6018,15 +6113,53 @@ inline void LayerProto::set_allocated_slice_param(::singa::SliceProto* slice_par
   }
 }
 
-// optional .singa.ReLUProto relu_param = 28;
-inline bool LayerProto::has_relu_param() const {
+// optional .singa.SplitProto split_param = 33;
+inline bool LayerProto::has_split_param() const {
   return (_has_bits_[0] & 0x00100000u) != 0;
 }
-inline void LayerProto::set_has_relu_param() {
+inline void LayerProto::set_has_split_param() {
   _has_bits_[0] |= 0x00100000u;
 }
-inline void LayerProto::clear_has_relu_param() {
+inline void LayerProto::clear_has_split_param() {
   _has_bits_[0] &= ~0x00100000u;
+}
+inline void LayerProto::clear_split_param() {
+  if (split_param_ != NULL) split_param_->::singa::SplitProto::Clear();
+  clear_has_split_param();
+}
+inline const ::singa::SplitProto& LayerProto::split_param() const {
+  return split_param_ != NULL ? *split_param_ : *default_instance_->split_param_;
+}
+inline ::singa::SplitProto* LayerProto::mutable_split_param() {
+  set_has_split_param();
+  if (split_param_ == NULL) split_param_ = new ::singa::SplitProto;
+  return split_param_;
+}
+inline ::singa::SplitProto* LayerProto::release_split_param() {
+  clear_has_split_param();
+  ::singa::SplitProto* temp = split_param_;
+  split_param_ = NULL;
+  return temp;
+}
+inline void LayerProto::set_allocated_split_param(::singa::SplitProto* split_param) {
+  delete split_param_;
+  split_param_ = split_param;
+  if (split_param) {
+    set_has_split_param();
+  } else {
+    clear_has_split_param();
+  }
+}
+
+// optional .singa.ReLUProto relu_param = 28;
+inline bool LayerProto::has_relu_param() const {
+  return (_has_bits_[0] & 0x00200000u) != 0;
+}
+inline void LayerProto::set_has_relu_param() {
+  _has_bits_[0] |= 0x00200000u;
+}
+inline void LayerProto::clear_has_relu_param() {
+  _has_bits_[0] &= ~0x00200000u;
 }
 inline void LayerProto::clear_relu_param() {
   if (relu_param_ != NULL) relu_param_->::singa::ReLUProto::Clear();
@@ -6058,13 +6191,13 @@ inline void LayerProto::set_allocated_relu_param(::singa::ReLUProto* relu_param)
 
 // optional .singa.SoftmaxLossProto softmaxloss_param = 29;
 inline bool LayerProto::has_softmaxloss_param() const {
-  return (_has_bits_[0] & 0x00200000u) != 0;
+  return (_has_bits_[0] & 0x00400000u) != 0;
 }
 inline void LayerProto::set_has_softmaxloss_param() {
-  _has_bits_[0] |= 0x00200000u;
+  _has_bits_[0] |= 0x00400000u;
 }
 inline void LayerProto::clear_has_softmaxloss_param() {
-  _has_bits_[0] &= ~0x00200000u;
+  _has_bits_[0] &= ~0x00400000u;
 }
 inline void LayerProto::clear_softmaxloss_param() {
   if (softmaxloss_param_ != NULL) softmaxloss_param_->::singa::SoftmaxLossProto::Clear();
@@ -6096,13 +6229,13 @@ inline void LayerProto::set_allocated_softmaxloss_param(::singa::SoftmaxLossProt
 
 // optional .singa.TanhProto tanh_param = 30;
 inline bool LayerProto::has_tanh_param() const {
-  return (_has_bits_[0] & 0x00400000u) != 0;
+  return (_has_bits_[0] & 0x00800000u) != 0;
 }
 inline void LayerProto::set_has_tanh_param() {
-  _has_bits_[0] |= 0x00400000u;
+  _has_bits_[0] |= 0x00800000u;
 }
 inline void LayerProto::clear_has_tanh_param() {
-  _has_bits_[0] &= ~0x00400000u;
+  _has_bits_[0] &= ~0x00800000u;
 }
 inline void LayerProto::clear_tanh_param() {
   if (tanh_param_ != NULL) tanh_param_->::singa::TanhProto::Clear();
@@ -6130,6 +6263,32 @@ inline void LayerProto::set_allocated_tanh_param(::singa::TanhProto* tanh_param)
   } else {
     clear_has_tanh_param();
   }
+}
+
+// -------------------------------------------------------------------
+
+// SplitProto
+
+// optional int32 num_splits = 1;
+inline bool SplitProto::has_num_splits() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void SplitProto::set_has_num_splits() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void SplitProto::clear_has_num_splits() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void SplitProto::clear_num_splits() {
+  num_splits_ = 0;
+  clear_has_num_splits();
+}
+inline ::google::protobuf::int32 SplitProto::num_splits() const {
+  return num_splits_;
+}
+inline void SplitProto::set_num_splits(::google::protobuf::int32 value) {
+  set_has_num_splits();
+  num_splits_ = value;
 }
 
 // -------------------------------------------------------------------

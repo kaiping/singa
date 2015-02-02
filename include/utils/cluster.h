@@ -81,7 +81,7 @@ class Cluster {
   //int checkpoint_freq() {return cluster_.checkpoint_freq();}
   //int checkpoint_after() {return cluster_.checkpoint_after();}
   const string workerspace() {return cluster_.workspace();}
-  const string& visualization_folder(){
+  const string visualization_folder(){
     return cluster_.workspace()+"/"+cluster_.vis_subfolder();
   }
   vector<int> MembersOfGroup(int gid) {return groups_[gid];}

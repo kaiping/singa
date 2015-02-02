@@ -110,11 +110,13 @@ class NeuralNet {
   void Check();
   void ConstructNeuralNet(const NetProto &net_proto);
   void PartitionNeuralNet(const vector<shared_ptr<Layer>>& layers);
+  map<string, shared_ptr<Layer>> GetNameToLayer(
+    const vector<shared_ptr<Layer>>& layers);
   /**
    * Partition each layer according its partition type and dimension.
    * @param layers original unpartitioned layers
    */
-  map<string, vector<shared_ptr<Layer>> PartitionLayers(
+  map<string, vector<shared_ptr<Layer>>> PartitionLayers(
       const vector<shared_ptr<Layer>>& layers);
   /**
    * connect partitioned layers by adding helper layers, e.g., ConcateLayer

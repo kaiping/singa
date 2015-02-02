@@ -127,11 +127,14 @@ message LayerProto {
   optional MnistProto mnist_param= 26;
   optional PoolingProto pooling_param = 27;
   optional SliceProto slice_param = 32;
+  optional SplitProto split_param = 33;
   optional ReLUProto relu_param = 28;
   optional SoftmaxLossProto softmaxloss_param = 29;
   optional TanhProto tanh_param=30;
 }
-
+message SplitProto{
+  optional int32 num_splits=1;
+}
 // scaled tan: A*tan(B*x)
 message TanhProto{
   optional float a=1;

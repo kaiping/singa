@@ -155,17 +155,13 @@ class Layer {
   const std::string &name() const {
     return layer_proto_.name();
   }
-  virtual const vector<int>& shapes(const Layer* layer) const{
-    CHECK_LE(shapes_.size(),1);
-    if(shapes_.size()==1)
-      return shapes_[0];
-    else{
-      return vector<int>{};
-    }
+  virtual const vector<int>& shape() const{
+    return shape_;
   }
-  virtual const vector<vector<int>>& shapes() const{
-    return shapes_;
+  virtual const vector<int>& shape(const Layer* layer) const{
+    return shape_;
   }
+
   /**
    * @return a const ref for DArray storing neuron values of this layer for BP
   virtual const DArray& data() {return data_;}
@@ -177,22 +173,13 @@ class Layer {
   virtual DArray* mutable_grad() {return &grad_;}
    */
 
-  virtual const shared_ptr<Layer> dstlayers(string name) const {
-    if(dstlayers_.find(name)==dstlayers_.end())
-      return nullptr;
-    return dstlayers_.at(name);
-  }
-  virtual const shared_ptr<Layer> srclayers(string name) const {
-    if(srclayers_.find(name)==srclayers_.end())
-      return nullptr;
-    return srclayers_.at(name);
-  }
-  virtual const map<string, shared_ptr<Layer>> srclayers() const {
+  virtual const vector< shared_ptr<Layer>> srclayers() const {
     return srclayers_;
   }
-  virtual const map<string, shared_ptr<Layer>> dstlayers() const {
+  virtual const vector<shared_ptr<Layer>> dstlayers() const {
     return dstlayers_;
   }
+
   virtual const int srclayers_size() const {
     return srclayers_.size();
   }
@@ -200,127 +187,20 @@ class Layer {
     return dstlayers_.size();
   }
 
-  virtual void remove_dstlayers(const shared_ptr<Layer>& layer){
-    remove_dstlayers(layer->name());
-    layer->remove_srclayers(name_);
+  virtual void AddSrcLayer(shared_ptr<Layer> src){
+    srclayers_.push_back(src);
   }
-  virtual void remove_srclayers(const shared_ptr<Layer>& layer){
-    remove_srclayers(layer->name());
-    layer->remove_dstlayers(name_);
+  virtual void AddDstLayer(shared_ptr<Layer> dst){
+    dstlayers_.push_back(dst);
   }
-  virtual void clear_srclayers() {
-    for(auto& entry: srclayers_)
-      remove_srclayers(entry.second);
-  }
-  virtual void clear_dstlayers() {
-    for(auto& entry: dstlayers_)
-      remove_dstlayers(entry.second);
-  }
-  virtual void add_srclayers(shared_ptr<Layer> myself, shared_ptr<Layer> layer){
-    CHECK_EQ(myself.get(),this);
-    add_srclayers(layer);
-    layer->add_dstlayers(myself);
-  }
-  virtual void add_dstlayers(shared_ptr<Layer> myself,shared_ptr<Layer> layer){
-    CHECK_EQ(myself.get(),this);
-    add_dstlayers(layer);
-    layer->add_srclayers(myself);
-  }
-  virtual void set_srclayers(shared_ptr<Layer> myself,
-      vector<shared_ptr<Layer>> layers){
-    clear_srclayers();
-    for(shared_ptr<Layer> layer: layers){
-      add_srclayers(myself, layer);
-    }
-  }
-  virtual void set_dstlayers(shared_ptr<Layer> myself,
-      vector<shared_ptr<Layer>> layers){
-    clear_dstlayers();
-    for(shared_ptr<Layer> layer: layers){
-      add_dstlayers(myself, layer);
-    }
-  }
-
-  const vector<shared_ptr<Layer>>& ordered_srclayers()const{
-    return ordered_srclayers_;
-  }
-  const vector<shared_ptr<Layer>>& ordered_dstlayers()const{
-    return ordered_dstlayers_;
-  }
-  shared_ptr<Layer> ordered_srclayers(int k){
-    CHECK_LT(k, ordered_srclayers_.size());
-    if(ordered_dstlayers_.size()!=dstlayers_.size())
-      OrderConnectedLayers();
-    return ordered_srclayers_[k];
-  }
-  shared_ptr<Layer> ordered_dstlayers(int k){
-    CHECK_LT(k, ordered_dstlayers_.size());
-    if(ordered_srclayers_.size()!=srclayers_.size())
-      OrderConnectedLayers();
-    return ordered_dstlayers_[k];
-  }
-
-  void OrderConnectedLayers(){
-    vector<pair<int, string>> vec;
-    ordered_srclayers_.clear();
-    for(auto& entry: srclayer_order_)
-      vec.push_back(std::make_pair(entry.second, entry.first));
-    std::sort(vec.begin(),vec.end());
-    for(auto& entry: vec)
-      ordered_srclayers_.push_back(srclayers_[entry.second]);
-    vec.clear();
-
-    for(auto& entry: dstlayer_order_)
-      vec.push_back(std::make_pair(entry.second, entry.first));
-    std::sort(vec.begin(),vec.end());
-    ordered_dstlayers_.clear();
-    for(auto& entry: vec)
-      ordered_dstlayers_.push_back(dstlayers_[entry.second]);
-  }
- protected:
-  void remove_srclayers(string name){
-    srclayers_.erase(name);
-    srclayer_order_.erase(name);
-    auto iter=ordered_srclayers_.begin();
-    while(iter!=ordered_srclayers_.end()&&(*iter)->name()!=name)
-      iter++;
-    CHECK_EQ((*iter)->name(), name);
-    ordered_srclayers_.erase(iter);
-  }
-  void remove_dstlayers(string name){
-    dstlayers_.erase(name);
-    dstlayer_order_.erase(name);
-    auto iter=ordered_dstlayers_.begin();
-    while(iter!=ordered_dstlayers_.end()&&(*iter)->name()!=name)
-      iter++;
-    CHECK_EQ((*iter)->name(), name);
-    ordered_dstlayers_.erase(iter);
-  }
-  void add_dstlayers(shared_ptr<Layer> layer){
-    dstlayers_[layer->name()]=layer;
-    dstlayer_order_[layer->name()]=dstid_++;
-    ordered_dstlayers_.push_back(layer);
-  }
-  void add_srclayers(shared_ptr<Layer> layer){
-    srclayers_[layer->name()]=layer;
-    srclayer_order_[layer->name()]=srcid_++;
-    ordered_srclayers_.push_back(layer);
-  }
-
 
 protected:
   string name_;
   //vector<shared_ptr<SyncedMem>> memblobs_;
-  vector<vector<int>> shapes_;
+  vector<int> shape_;
   // DArray pos_, neg_;//for CD
   LayerProto layer_proto_;
-
-  vector<shared_ptr<Layer>> ordered_dstlayers_, ordered_srclayers_;
-  map<string, shared_ptr<Layer>> srclayers_, dstlayers_;
-  // used to order src layers and dst layers
-  map<string, int> srclayer_order_, dstlayer_order_;
-  //<! current largest id for dst and src layers
-  int dstid_, srcid_;
+  vector<shared_ptr<Layer>> srclayers_, dstlayers_;
 };
 
 /****************************Middel Layers************************************/
@@ -345,21 +225,18 @@ class ConvolutionLayer: public Layer {
 class ConcateLayer: public Layer {
  public:
   virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
 };
 
 class ReLULayer: public Layer {
  public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
 };
 
 class DropoutLayer: public Layer {
  public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
   //virtual void Init(const LayerProto &proto);
@@ -392,13 +269,12 @@ class InnerProductLayer: public Layer {
   int num_;
   //Param weight_, bias_;
 };
-class NetSrcLayer: public Layer {
+class BridgeSrcLayer: public Layer {
  public:
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-
 };
-class NetDstLayer: public Layer {
+class BridgeDstLayer: public Layer {
  public:
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
@@ -442,16 +318,16 @@ class PoolingLayer: public Layer {
 };
 class SliceLayer: public Layer {
  public:
-  virtual const vector<int>& shapes(const Layer* layer) const;
+  virtual const vector<int>& shape(const Layer* layer) const;
   virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+
+ protected:
+  vector<vector<int>> shapes_;
 };
 class SplitLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
 
@@ -464,7 +340,6 @@ class SplitLayer: public Layer {
  */
 class TanhLayer: public Layer {
  public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
 };
@@ -483,7 +358,6 @@ class SoftmaxLossLayer: public PerformanceLayer {
    * connected from the label layer and the last fc layer
    */
  public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
   virtual Performance ComputePerformance(const vector<shared_ptr<Layer>>&src_layers,
@@ -494,17 +368,19 @@ class SoftmaxLossLayer: public PerformanceLayer {
   int top_k_;
 };
 /***********************Inpute Layers****************************************/
+/**
+ * TODO make InputLayer the base for for prefetching records from local Shard,
+ * HDFS, lmdb, etc. The current InputLayer is then moved to ParseLayer, e.g.,
+ * MnistParserLayer, RGBImageParserlayer, etc.
+ */
 class InputLayer: public Layer {
  public:
-  virtual bool HasInput() { return true; }
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain)=0;
   //virtual void SetInputData(DArray *data);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){};
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){};
   virtual void Setup(const vector<vector<int>>& shapes)=0;
-  virtual void Setup(const int batchsize, const Record & record);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const int batchsize, const Record & record)=0;
 
   //DArray* mutable_prefetch_data(){return &(this->grad_);}
   //DArray* mutable_grad(){return nullptr;}
@@ -515,7 +391,6 @@ class InputLayer: public Layer {
 class RGBImageLayer: public InputLayer {
  public:
   virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
   virtual void Setup(const vector<vector<int>>& shapes);
   virtual void Setup(const int batchsize, const Record & record);
   void Setup(const vector<int>& shape);
@@ -531,8 +406,6 @@ class LabelLayer: public InputLayer {
   virtual void Setup(const vector<vector<int>>& shapes);
   virtual void Setup(const int batchsize, const Record & record);
   virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
-
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
 };
 class MnistImageLayer: public InputLayer {
@@ -541,7 +414,6 @@ class MnistImageLayer: public InputLayer {
   virtual void Setup(const vector<vector<int>>& shapes);
   virtual void Setup(const int batchsize, const Record & record);
   virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
   void Setup(const vector<int>& shape);
 
   virtual void AddInputRecord(const Record& record, Phase phase=kTrain);

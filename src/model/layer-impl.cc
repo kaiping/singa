@@ -29,7 +29,7 @@ vector<Param*> ConvProductLayer::GetParams() {
   vector<Param*> ret;//{&weight_, &bias_};
   return ret;
 }
-  */
+*/
 
 void ConvolutionLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   CHECK_EQ(src_layers.size(),1);
@@ -69,7 +69,7 @@ void ConvolutionLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
     stride_w_ = conv_param.stride_w();
   }
   int num_output=conv_param.num_output();
-  const vector<int>& srcshape=src_layers[0]->shapes(this);
+  const vector<int>& srcshape=src_layers[0]->shape(this);
   int dim=srcshape.size();
   CHECK_GT(dim, 2);
   width_=srcshape[dim-1];
@@ -78,7 +78,7 @@ void ConvolutionLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
     channels_=srcshape[dim-3];
   else if(dim>2)
     channels_=1;
-  vector<int> shape{srcshape[0], num_output,
+  shape_=vector<int>{srcshape[0], num_output,
     (height_ + 2 * pad_h_ - kernel_h_) / stride_h_ + 1,
     (width_ + 2 * pad_w_ - kernel_w_) / stride_w_ + 1};
 }
@@ -86,7 +86,7 @@ void ConvolutionLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
 void ConvolutionLayer::SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers){
   CHECK_EQ(src_layers.size(),1);
   ConvolutionProto*conv_param=layer_proto_.mutable_convolution_param();
-  conv_param->set_num_output(src_layers[0]->shapes(this)[0]);
+  conv_param->set_num_output(src_layers[0]->shape(this)[1]);
   Setup(src_layers);
 }
 
@@ -102,17 +102,16 @@ void ConcateLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   size_t concate_dim=layer_proto_.concate_param().concate_dimension();
   CHECK(concate_dim);
   CHECK_GT(src_layers.size(),1);
-  vector<int> shape=src_layers[0]->shapes(this);
+  vector<int> shape=src_layers[0]->shape(this);
   for(size_t i=1;i<src_layers.size();i++){
-    const vector<int>& srcshape=src_layers[i]->shapes(this);
+    const vector<int>& srcshape=src_layers[i]->shape(this);
     for(size_t j=0;j<shape.size();j++)
       if(j==concate_dim)
         shape[j]+=srcshape[j];
       else
         CHECK_EQ(shape[j], srcshape[j]);
   }
-  shapes_.clear();
-  shapes_.push_back(shape);
+  shape_=shape;
 }
 void ConcateLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){}
 
@@ -201,7 +200,7 @@ void PoolingLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
     CHECK_LT(pad_w_, kernel_w_);
   }
 
-  const auto& srcshape=src_layers[0]->shapes(this);
+  const auto& srcshape=src_layers[0]->shape(this);
   int dim=srcshape.size();
   CHECK_GT(dim,2);
   width_ = srcshape[dim-1];
@@ -227,9 +226,9 @@ void PoolingLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
     CHECK_LT((pooled_height_ - 1) * stride_h_, height_ + pad_h_);
     CHECK_LT((pooled_width_ - 1) * stride_w_, width_ + pad_w_);
   }
-  shapes_.push_back(srcshape);
-  shapes_.back()[dim-1]=pooled_width_;
-  shapes_.back()[dim-2]=pooled_height_;
+  shape_=srcshape;
+  shape_[dim-1]=pooled_width_;
+  shape_[dim-2]=pooled_height_;
 }
 
 void PoolingLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){
@@ -264,13 +263,11 @@ void LRNLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   alpha_ = this->layer_proto_.lrn_param().alpha();
   beta_ = this->layer_proto_.lrn_param().beta();
 
-  const auto& shape=src_layers[0]->shapes(this);
-  num_=shape[0];
-  channels_=shape[1];
-  height_=shape[2];
-  width_=shape[3];
-
-  shapes_.push_back(shape);
+  shape_=src_layers[0]->shape(this);
+  num_=shape_[0];
+  channels_=shape_[1];
+  height_=shape_[2];
+  width_=shape_[3];
 }
 
 void LRNLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){
@@ -307,20 +304,20 @@ vector<Param*> InnerProductLayer::GetParams() {
 
 void InnerProductLayer::SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers){
   InnerProductProto * proto=layer_proto_.mutable_inner_product_param();
-  proto->set_num_output(shapes_[0][1]);
+  proto->set_num_output(shape_[1]);
   Setup(src_layers);
 }
 void InnerProductLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   CHECK_EQ(src_layers.size(),1);
-  const auto& shape=src_layers[0]->shapes(this);
+  const auto& shape=src_layers[0]->shape(this);
   num_=shape[0];
   int size=1;
   for(size_t i=0;i<shape.size();i++)
     size*=shape[i];
   vdim_=size/num_;
   hdim_=this->layer_proto_.inner_product_param().num_output();
-  shapes_.clear();
-  shapes_.push_back({num_,hdim_});
+  shape_.push_back(num_);
+  shape_.push_back(hdim_);
 }
 void InnerProductLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers) {
 }
@@ -347,22 +344,23 @@ void SliceLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   CHECK_GT(slice_num, 1);
   CHECK(slice_dim);
   CHECK_EQ(src_layers.size(),1);
-  vector<int> shape=src_layers[0]->shapes(this);
+  shape_=src_layers[0]->shape(this);
   shapes_.clear();
   for(int i=0;i<slice_num;i++){
-    vector<int> newshape=shape;
-    newshape[slice_dim]=shape[slice_dim]/slice_num+
-      (i==slice_num-1)?shape[slice_dim]%slice_num:0;
-    this->shapes_.push_back(shape);
+    vector<int> newshape=shape_;
+    newshape[slice_dim]=shape_[slice_dim]/slice_num+
+      (i==slice_num-1)?shape_[slice_dim]%slice_num:0;
+    shapes_.push_back(newshape);
   }
 }
 
-const vector<int>& SliceLayer::shapes(const Layer* layer) const {
-  CHECK_EQ(shapes_.size(), ordered_dstlayers_.size());
+const vector<int>& SliceLayer::shape(const Layer* layer) const {
   for(size_t i=0;i<shapes_.size();i++){
-    if(ordered_dstlayers_[i].get() == layer)
+    if(dstlayers_[i].get() == layer)
       return shapes_[i];
   }
+  CHECK(false);
+  return shape_; // avoid compile warning
 }
 void SliceLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){}
 void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){}
@@ -420,31 +418,26 @@ void RGBImageLayer::Setup(const int batchsize, const Record & record){
 void RGBImageLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   CHECK_EQ(src_layers.size(),0);
   vector<int> shape;
-  CHECK_EQ(layer_proto_.mnist_param().shape().size(),3);
-  shape.push_back(layer_proto_.mnist_param().shape(0));
-  shape.push_back(layer_proto_.mnist_param().shape(1));
-  shape.push_back(layer_proto_.mnist_param().shape(2));
+  CHECK_EQ(layer_proto_.rgb_param().shape().size(),3);
+  shape.push_back(layer_proto_.rgb_param().shape(0));
+  shape.push_back(layer_proto_.rgb_param().shape(1));
+  shape.push_back(layer_proto_.rgb_param().shape(2));
+  shape.push_back(layer_proto_.rgb_param().shape(3));
   Setup(shape);
 }
 
 void RGBImageLayer::Setup(const vector<int>& shape){
-  shapes_.clear();
-  shapes_.push_back(shape);
+  shape_=shape;
   cropsize_=this->layer_proto_.data_param().crop_size();
   mirror_=this->layer_proto_.data_param().mirror();
   scale_=this->layer_proto_.data_param().scale();
   if(cropsize_>0){
-    shapes_.back()[2]=cropsize_;
-    shapes_.back()[3]=cropsize_;
+    shape_[2]=cropsize_;
+    shape_[3]=cropsize_;
   }
   offset_=0;
 }
 
-void RGBImageLayer::SetupAfterPartition(
-    const vector<shared_ptr<Layer>>& src_layers){
-  CHECK_EQ(shapes_.size(),1);
-  Setup(shapes_[0]);
-}
 void RGBImageLayer::AddInputRecord(const Record &record, Phase phase){
   offset_++;
 }
@@ -489,13 +482,8 @@ void MnistImageLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
   Setup(shape);
 }
 
-void MnistImageLayer::SetupAfterPartition(
-    const vector<shared_ptr<Layer>>& src_layers){
-  CHECK_EQ(shapes_.size(),1);
-  Setup(shapes_[0]);
-}
-
 void MnistImageLayer::Setup(const vector<int> &shape){
+  shape_=shape;
   offset_=0;
   /*
   unsigned sd = std::chrono::system_clock::now().time_since_epoch().count();
@@ -603,15 +591,17 @@ vector<uint8_t> MnistImageLayer::Convert2Image(int k){
 void LabelLayer::Setup(const vector<vector<int>>& shapes){
   CHECK_GE(shapes.size(),2);
   CHECK_EQ(shapes[1].size(),2);
-  shapes_.clear();
-  shapes_.push_back(shapes[0]);
+  shape_=shapes[1];
   offset_=0;
 }
 
 void LabelLayer::Setup(const int batchsize, const Record & record){
-  shapes_.clear();
-  shapes_.push_back(vector<int>{batchsize,1});
+  shape_.push_back(batchsize);
+  shape_.push_back(1);
   offset_=0;
+}
+void LabelLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
+
 }
 
 void LabelLayer::AddInputRecord(const Record &record, Phase phase){

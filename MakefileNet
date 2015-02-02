@@ -2,9 +2,9 @@
 # third-party library installation folder
 HOME_DIR := /home/wangwei/install
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := #$(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include /usr/include/mpi #$(HOME_DIR)/include $(HOME_DIR)/mpich/include
+INCLUDE_DIRS := ./include /usr/include/mpi $(HOME_DIR)/include $(HOME_DIR)/mpich/include
 # g++ location, should support c++11, tested with 4.8.1
 CXX := g++
 
@@ -41,7 +41,9 @@ TEST_SRCS := src/test/test_mnistlayer.cc src/test/test_main.cc
 TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS))
 -include $(TEST_OBJS:%.o=%.P)
 
-NET_SRCS := src/model/layer.cc utils/common.cc src/model/neuralnet.cc src/model/layer-impl.cc
+NET_SRCS := src/model/layer.cc src/utils/common.cc src/test/test_neuralnet.cc \
+	src/test/test_main.cc src/model/neuralnet.cc src/model/layer-impl.cc \
+	src/utils/cluster.cc src/utils/graph.cc
 NET_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(NET_SRCS:.cc=.o)) $(PROTO_OBJS))
 -include $(NET_OBJS:%.o=%.P)
 

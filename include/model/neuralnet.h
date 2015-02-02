@@ -4,8 +4,6 @@
 #include <glog/logging.h>
 #include <vector>
 #include <map>
-#include <unordered_set>
-#include <stack>
 #include <memory>
 
 //#include "model/param.h"
@@ -13,12 +11,12 @@
 #include "model/layer.h"
 #include "utils/cluster.h"
 #include "utils/factory.h"
+#include "utils/graph.h"
 
 using std::vector;
 using std::string;
 using std::map;
 using std::shared_ptr;
-
 namespace singa {
 /**
  * The neural network is constructed from user configured layers through google
@@ -107,11 +105,13 @@ class NeuralNet {
   }
 
  protected:
-  void Check();
   void ConstructNeuralNet(const NetProto &net_proto);
-  void PartitionNeuralNet(const vector<shared_ptr<Layer>>& layers);
+  void PartitionNeuralNet();
   map<string, shared_ptr<Layer>> GetNameToLayer(
     const vector<shared_ptr<Layer>>& layers);
+  Graph CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
+    const map<string, shared_ptr<Layer>>& name2layer);
+
   /**
    * Partition each layer according its partition type and dimension.
    * @param layers original unpartitioned layers
@@ -123,41 +123,35 @@ class NeuralNet {
    * and SliceLayer.
    * TODO distinguish kOneToMany from kOneToOne. Now kOnetoMany is
    * processed the same as kOneToOne.
-   */
   vector<shared_ptr<Layer>> ConnectPartitionedLayers(
       const map<string, vector<shared_ptr<Layer>>>& partitioned_layers,
       const vector<shared_ptr<Layer>>& layers);
+   */
 
   /**
    * Add SliceLayer to connect src_layer and dst_layers.
-   */
   void InsertSliceLayer(const int slice_dimension, shared_ptr<Layer> src_layer,
     const vector<shared_ptr<Layer>> dst_layers,
     vector<shared_ptr<Layer>> *layers);
+   */
   /**
    * add ConcateLayer to connect src_layers and dst_layer
-   */
   void InsertConcateLayer(const int concate_dimension,
     const vector<shared_ptr<Layer>>& src_layers,
     shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers);
+   */
   /**
    * add a split layer for the layer which has multiple outgoing connected
    * layers (exception SliceLayer).
-   */
  vector<shared_ptr<Layer>> InsertSplitLayers(
      const vector<shared_ptr<Layer>> &layers);
+   */
   /**
    * add a NetSrcLayer and NetDstLayer between any connection whose ending
    * layers resident on different machines.
-   */
  vector<shared_ptr<Layer>> InsertNetTransferLayers(
      const vector<shared_ptr<Layer>> &layers);
-  // SortLayersForBP
-  void topology_sort(vector<shared_ptr<Layer>> *layers);
-  void topology_sort_inner(shared_ptr<Layer> layer,
-                         std::map<string, bool> *visited,
-                         std::stack<string> *stack) ;
-  // TODO SortLayersForCD
+   */
  private:
   vector<shared_ptr<Layer>> layers_;
   vector<PerformanceLayer *> performance_layers_;

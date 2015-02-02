@@ -129,8 +129,13 @@ message LayerProto {
   optional SliceProto slice_param = 32;
   optional SplitProto split_param = 33;
   optional ReLUProto relu_param = 28;
+  optional RGBProto rgb_param =34;
   optional SoftmaxLossProto softmaxloss_param = 29;
   optional TanhProto tanh_param=30;
+}
+
+message RGBProto{
+  repeated int32 shape=1;
 }
 message SplitProto{
   optional int32 num_splits=1;

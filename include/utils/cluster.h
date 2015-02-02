@@ -27,6 +27,9 @@ class Cluster {
   // free my mpi group and mpi communicator
   void Finalize();
 
+  void SetupGroups(const ClusterProto &cluster);
+  void SetupFolders(const ClusterProto &cluster);
+
   const int num_table_servers() {
     return num_servers();
   }

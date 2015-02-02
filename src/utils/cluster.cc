@@ -1,4 +1,5 @@
 #include <glog/logging.h>
+#include <fcntl.h>
 #include "utils/cluster.h"
 #include "utils/network.h"
 #include "proto/cluster.pb.h"

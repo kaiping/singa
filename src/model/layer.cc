@@ -10,15 +10,19 @@ void Layer::Init(const LayerProto &proto) {
 }
 
 void Layer::Init(const Layer& other, const vector<int>& shape){
-  shapes_.clear();
-  shapes_.push_back(shape);
+  shape_=shape;
 }
-void Layer::Setup(const vector<shared_ptr<Layer>>& src_layers){
-  CHECK_EQ(src_layers.size(),1);
-  shapes_.clear();
-  shapes_.push_back(src_layers[0]->shapes(this));
+void Layer::Setup(){
+  Setup(srclayers_);
 }
-void Layer::SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers){
+void Layer::Setup(const vector<shared_ptr<Layer>>& srclayers){
+  if(srclayers.size()==1);
+    shape_=srclayers[0]->shape(this);
+}
+void Layer::SetupAfterPartition(){
+  SetupAfterPartition(srclayers_);
+}
+void Layer::SetupAfterPartition(const vector<shared_ptr<Layer>>& srclayers){
   /*
   int k=0;
   for(auto& layer: src_layers){
@@ -27,9 +31,36 @@ void Layer::SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers){
     CHECK(std::equal(shape.begin(), shape.end(), shape_.begin(),shape_.end()));
   }
   */
-  Setup(src_layers);
+  Setup(srclayers);
 }
+void Layer::ComputeFeature(){
+  ComputeFeature(srclayers_);
+}
+void Layer::ComputeGradient(){
+  ComputeGradient(srclayers_);
+}
+
 void Layer::ToProto(LayerProto *proto, bool copyData) {
+}
+
+
+void BridgeSrcLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){
+
+}
+void BridgeSrcLayer::ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){
+
+}
+void BridgeDstLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){
+
+}
+void BridgeDstLayer::ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){
+
+}
+void SplitLayer::ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){
+
+}
+void SplitLayer::ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){
+
 }
 
 }  // namespace singa

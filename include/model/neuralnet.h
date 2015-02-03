@@ -36,6 +36,8 @@ class NeuralNet {
    * shape info.
    */
   std::string ToString();
+
+  std::string ToAdjacency();
   /**
    * print the DOT string for drawing a graph for the neural net
    */
@@ -55,18 +57,18 @@ class NeuralNet {
    * Memory is not allocated until first time used.
    *
    * @input_shapes shapes for the input layers
-   */
   void Setup(const vector<vector<int>>& input_shapes);
+   */
   /**
    * @batchsize mini-batch size
    * @record input record to the net, used to set the shapes of input layers
-   */
   void Setup(int batchsize, const Record &record);
+   */
   /**
    * called internally to setup the neural net without considering partitions.
    * the input layers' shapes are from google protobuf config
-   */
   void Setup();
+   */
 
   /**
    * serialize the net.
@@ -75,13 +77,6 @@ class NeuralNet {
   PerformanceLayer* performance_layer(int k) {
     CHECK_LT(k, performance_layers_.size());
     return performance_layers_[k];
-  }
-  const std::vector<InputLayer *> &input_layer() {
-    return input_layers_;
-  }
-  InputLayer * input_layer(int k) {
-    CHECK_LT(k, input_layers_.size());
-    return input_layers_[k];
   }
   const std::vector<shared_ptr<Layer>>& layers() {
     return layers_;
@@ -148,9 +143,9 @@ class NeuralNet {
  private:
   vector<shared_ptr<Layer>> layers_;
   vector<PerformanceLayer *> performance_layers_;
-  vector<InputLayer *> input_layers_;
   //vector<shared_ptr<Param>> params_;
   map<string, shared_ptr<Layer>> name2layer_;
+  map<string, LayerProto> name2layerproto_;
   Factory<Layer>* factory_;
   int group_size_;
   Graph graph_;

@@ -23,6 +23,7 @@ void WriteProtoToTextFile(const Message& proto, const char* filename) ;
 void ReadProtoFromBinaryFile(const char* filename, Message* proto) ;
 void WriteProtoToBinaryFile(const Message& proto, const char* filename);
 
+std::string IntVecToString(const vector<int>& vec) ;
 string VStringPrintf(string fmt, va_list l) ;
 string StringPrintf(string fmt, ...) ;
 void Debug() ;

@@ -47,11 +47,13 @@ class Node{
     auto iter=dstnodes_.begin();
     while((*iter)->name_!=dst->name_&&iter!=dstnodes_.end()) iter++;
     CHECK((*iter)->name_==dst->name_);
+    dstnodes_.erase(iter);
   }
   void RemoveSrcNode(SNode src){
     auto iter=srcnodes_.begin();
     while((*iter)->name_!=src->name_&&iter!=srcnodes_.end()) iter++;
     CHECK((*iter)->name_==src->name_);
+    srcnodes_.erase(iter);
   }
   const string& name() const {return name_;}
   const V& val() const {return val_;}
@@ -129,8 +131,9 @@ class Graph{
   bool Check() const;
 
   SNode InsertSliceNode(SNode srcnode, const vector<SNode>& dstnodes,
-      bool connect_dst=true);
-  SNode InsertConcateNode(const vector<SNode>&srcnodes, SNode  dstnode);
+      const V& info, bool connect_dst=true);
+  SNode InsertConcateNode(const vector<SNode>&srcnodes, SNode dstnode,
+      const V& info);
   SNode InsertSplitNode(SNode srcnode, const vector<SNode>& dstnodes);
   std::pair<SNode, SNode> InsertBridgeNode(SNode srcnode, SNode dstnode);
   void topology_sort_inner(SNode node, map<string, bool> *visited,

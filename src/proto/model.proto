@@ -130,14 +130,10 @@ message LayerProto {
   optional SliceProto slice_param = 32;
   optional SplitProto split_param = 33;
   optional ReLUProto relu_param = 28;
-  optional RGBProto rgb_param =34;
   optional SoftmaxLossProto softmaxloss_param = 29;
   optional TanhProto tanh_param=30;
 }
 
-message RGBProto{
-  repeated int32 shape=1;
-}
 message SplitProto{
   optional int32 num_splits=1;
 }
@@ -176,28 +172,16 @@ message ConcateProto{
   optional int32 concate_dimension=1;
   optional int32 concate_num=2;
 }
+
 // Message that stores parameters used by DataLayer
 message DataProto {
   // Specify the data source.
   optional string source = 1;
-  // For data pre-processing, we can do simple scaling and subtracting the
-  // data mean, if provided. Note that the mean subtraction is always carried
-  // out before scaling.
-  optional float scale = 2 [default = 1];
-  optional string mean_file = 3;
+  // path to the data file/folder, absolute or relative to the
+  // ClusterProto::workspace
+  optional string path=2;
   // Specify the batch size.
-  optional uint32 batch_size = 4;
-  // Specify if we would like to randomly crop an image.
-  optional uint32 crop_size = 5 [default = 0];
-  // Specify if we want to randomly mirror data.
-  optional bool mirror = 6 [default = false];
-  // The rand_skip variable is for the data layer to skip a few data points
-  // to avoid all asynchronous sgd clients to start at the same point. The skip
-  // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
-  // be larger than the number of keys in the leveldb.
-  optional uint32 rand_skip = 7 [default = 0];
-
-  repeated int32 shape=9;
+  optional uint32 batchsize = 4;
 }
 
 message MnistProto {
@@ -213,7 +197,6 @@ message MnistProto {
   optional int32 size=6 ;
   optional int32 elastic_freq=7;
   optional bool normalize=8 [default=true];
-  repeated int32 shape=9;
 }
 // Message that stores parameters used by DropoutLayer
 message DropoutProto {
@@ -330,24 +313,18 @@ message SolverProto {
 
 message Record {
   enum Type{
-    kImageNet=0;
-    kMnist=1;
+    kSingleLabelImage=0;
   }
-  optional Type type=1 [default=kImageNet];
-  optional ImageNetRecord imagenet=2;
-  optional MnistRecord mnist=3;
+  optional Type type=1 [default=kSingleLabelImage];
+  optional SingleLabelImageRecord image=2;
 }
 
-message MnistRecord{
-  optional int32 label=1;
-  optional bytes pixel=2;
-}
-
-message ImageNetRecord {
-  optional DAryProto image=1;
+message SingleLabelImageRecord{
+  repeated int32 shape=1;
   optional int32 label=2;
+  optional bytes pixel=3;
+  repeated float data=4;
 }
-
 
 message SGDProto {
   optional float learning_rate=1;

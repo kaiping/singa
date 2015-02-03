@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "utils/graph.h"
 
 const string Graph::ToString() const {
@@ -12,11 +13,14 @@ const string Graph::ToString(const map<string, string>& info) const {
   disp+="\"nodes\":[\n";
   bool first=true;
 
+  vector<string> colors={"red", "blue", "black", "green"};
   int id=0;
   for(auto src: nodes_){
     char str[1024];
-    sprintf(str, "{\"id\":\"%s%s\"}\n", src->name().c_str(),
-        info.find(src->name())!=info.end()?info.at(src->name()).c_str():"");
+    string color=colors[(src->val().locationid)%colors.size()];
+    sprintf(str, "{\"id\":\"%s%s\", \"color\":\"%s\"}\n", src->name().c_str(),
+        info.find(src->name())!=info.end()?info.at(src->name()).c_str():"",
+        color.c_str());
     if(!first)
       disp+=",";
     else
@@ -53,10 +57,11 @@ void Graph::topology_sort_inner(SNode node,
     map<string, bool> *visited,
     std::stack<string> *stack) {
   (*visited)[node->name()] = true;
-  for (SNode dstnode : node->dstnodes()) {
-    if ((*visited)[dstnode->name()])
+  const vector<SNode>& dstnodes=node->dstnodes();
+  for (auto it=dstnodes.rbegin();it!=dstnodes.rend();it++) {
+    if ((*visited)[(*it)->name()])
       continue;
-    topology_sort_inner(dstnode,visited, stack);
+    topology_sort_inner((*it),visited, stack);
   }
   stack->push(node->name());
 }
@@ -88,29 +93,30 @@ void Graph::Sort() {
 
 
 SNode Graph::InsertSliceNode(SNode srcnode, const vector<SNode>& dstnodes,
-    bool connect_dst){
-  LayerInfo info=srcnode->val();
-  info.origin="SLICE";
-  SNode node=AddNode("slice-"+srcnode->name(),info);
+    const V& info, bool connect_dst){
+  V myinfo=info;
+  myinfo.origin="kSlice";
+  SNode node=AddNode("slice-"+srcnode->name(),myinfo);
   AddEdge(srcnode, node);
   if(connect_dst)
     for(SNode dst: dstnodes)
       AddEdge(node, dst);
   return node;
 }
-SNode Graph::InsertConcateNode(const vector<SNode>&srcnodes, SNode dstnode){
-  LayerInfo info=dstnode->val();
-  info.origin="CONCATE";
-  SNode node=AddNode("concate-"+dstnode->name(),info);
+SNode Graph::InsertConcateNode(const vector<SNode>&srcnodes, SNode dstnode,
+    const V& info){
+  V myinfo=info;
+  myinfo.origin="kConcate";
+  SNode node=AddNode("concate-"+dstnode->name(),myinfo);
   AddEdge(node, dstnode);
   for(SNode src: srcnodes)
     AddEdge(src, node);
   return node;
 }
 SNode Graph::InsertSplitNode(SNode srcnode, const vector<SNode>& dstnodes){
-  LayerInfo info=srcnode->val();
-  info.origin="SPLIT";
-  SNode node=AddNode("split-"+srcnode->name(), info);
+  V myinfo=srcnode->val();
+  myinfo.origin="kSplit";
+  SNode node=AddNode("split-"+srcnode->name(), myinfo);
   AddEdge(srcnode, node);
   for(SNode dst: dstnodes)
     AddEdge(node, dst);
@@ -118,11 +124,11 @@ SNode Graph::InsertSplitNode(SNode srcnode, const vector<SNode>& dstnodes){
 }
 std::pair<SNode, SNode> Graph::InsertBridgeNode(SNode srcnode, SNode dstnode){
   LayerInfo info=srcnode->val();
-  info.origin="BRIDGESRC";
-  SNode src=AddNode("bridge-"+srcnode->name(), info);
+  info.origin="kBridgeSrc";
+  SNode src=AddNode("s-"+srcnode->name()+"-"+dstnode->name(), info);
   info=dstnode->val();
-  info.origin="BRIDGEDST";
-  SNode dst=AddNode("bridge-"+dstnode->name(), info);
+  info.origin="kBridgeDst";
+  SNode dst=AddNode("d-"+srcnode->name()+"-"+dstnode->name(), info);
   AddEdge(srcnode, src);
   AddEdge(src, dst);
   AddEdge(dst, dstnode);

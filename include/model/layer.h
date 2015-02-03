@@ -13,207 +13,32 @@
 #include "proto/model.pb.h"
 //#include "model/param.h"
 #include "utils/common.h"
-
+#include "utils/shard.h"
+#include "model/base_layer.h"
 /**
- * \file this file includes the declarations of Layer and its children classes.
+ * \file this file includes the declarations neuron layer classes that conduct
+ * the transformation of features.
  */
-
-using std::vector;
-using std::string;
-using std::map;
-using std::shared_ptr;
-using std::pair;
-
 namespace singa {
 
 /**
- * Base layer class.
- * Children should implement at least Layer::Setup, Layer::ComputeFeature(),
- * Layer::ComputGradient() functions for backpropagation method;
- * TODO(wangwei) implement children layers to support contrastive divergence,
- * The identifier of each layer is the literal string of the class name without
- * the suffix "Layer", which is used in net configuration and registration.
- */
-class Layer {
- public:
-  Layer(){}
-  /**
-   * construct layer from the other Layer, but with different shape
-   */
-  void Init(const Layer& other, const vector<int>& shape);
-  virtual ~Layer(){}
-  /**
-   * initialize members, called after layer specific Init().
-   * simply copy the configuations , most
-   * initializations are done by Setup().
-   * @param layer_proto user defined layer configuration
-   */
-  virtual void Init(const LayerProto &proto);
-  /**
-   * Marshal layer properties and data into google protobuf object
-   * (i.e., snapshot).
-   * Parameters are marshalled separately into another object (i.e., model).
-   * @param layer_proto
-   * @param copyData if true marshal data of DArray
-   */
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  /**
-   * Setup the shapes for data and parameters, also setup some properties.
-   * @param src_layers layers connecting to this layer
-   */
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  /**
-   * \copybrief Setup(const vector<shared_ptr<Layer>>& src_layers)
-   */
-  virtual void Setup();
-  /**
-   * this should not change the current shapes_. Check the shapes outside the
-   * function.
-   */
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
-  /**
-   * \copybrief SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers).
-   */
-  virtual void SetupAfterPartition();
-  /**
-   * collect parameters associated with this layer.
-   * Layers that have paramters must overload this function.
-   * parameter id is set in sequence order starting with 0.
-   * @param params parameters collected from previous layers.
-  virtual void CollectParams(vector<Param*> *params){};
-   */
-  /**
-   * Layers that have paramters must overload this function.
-   * @return parameters associated with this layer
-  virtual vector<Param*> GetParams(){ return vector<Param*>(); }
-   */
-  /**
-   * Compute features of this layer based on connected layers.
-   * Implement forward propagation for BP; TODO Implement both postive phase
-   * and negative phase for CD.
-   * @param src_layers layers connecting to this layer
-   */
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers)=0;
-  /**
-   * \copybrief ComputeFeature(const vector<shared_ptr<Layer>>& src_layers)
-   */
-  virtual void ComputeFeature();
-  /**
-   * Compute gradients for parameters and connecting layers.
-   * Implement backward propagation for BP; TODO Calculate gradients for
-   * parameters for CD.
-   * @param src_layers layers connecting to this layer.
-   */
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers)=0;
-  /**
-   * \copybrief ComputeGradient(const vector<shared_ptr<Layer>>& src_layers)
-   */
-  virtual void ComputeGradient();
-  /**
-   * decide on which dimension of DArray to do the partitioning.
-   * @mode kModel, kData, kHybrid, kNone (no partition)
-   * @return the partition dimension, -1 for no partition
-   */
-  virtual int partition_dimension() const {
-    int ret=0;
-    if(layer_proto_.partition_type()==kLayerPartition)
-      ret= 1;
-    else if(layer_proto_.partition_type()==kNone)
-      ret= -1;
-    return ret;
-  }
-
-  virtual ConnectionType connection_type(int k) const {
-    CHECK_LT(k, srclayers_.size());
-    return kOneToOne;
-  }
-  virtual PartitionType partition_type() const {
-    return layer_proto_.partition_type();
-  }
-  virtual void set_locationid(int id){
-    layer_proto_.set_locationid(id);
-  }
-  virtual int locationid() const {
-    return layer_proto_.locationid();
-  }
-  virtual void set_partitionid(int id){
-    layer_proto_.set_partitionid(id);
-  }
-  virtual int partitiionID() const {
-    return layer_proto_.partitionid();
-  }
-  virtual void set_name(string name){
-    name_=name;
-    layer_proto_.set_name(name);
-  }
-  virtual const string type() const {
-    return layer_proto_.type();
-  }
-  /**
-   * Return name of this layer
-   */
-  const std::string &name() const {
-    return layer_proto_.name();
-  }
-  virtual const vector<int>& shape() const{
-    return shape_;
-  }
-  virtual const vector<int>& shape(const Layer* layer) const{
-    return shape_;
-  }
-
-  /**
-   * @return a const ref for DArray storing neuron values of this layer for BP
-  virtual const DArray& data() {return data_;}
-   */
-  /**
-   * @return a const ref for DArray storing neuron grads of this layer for BP
-  virtual const DArray& grad() {return grad_;}
-  virtual DArray* mutable_data() {return &data_;}
-  virtual DArray* mutable_grad() {return &grad_;}
-   */
-
-  virtual const vector< shared_ptr<Layer>> srclayers() const {
-    return srclayers_;
-  }
-  virtual const vector<shared_ptr<Layer>> dstlayers() const {
-    return dstlayers_;
-  }
-
-  virtual const int srclayers_size() const {
-    return srclayers_.size();
-  }
-  virtual const int dstlayers_size() const {
-    return dstlayers_.size();
-  }
-
-  virtual void AddSrcLayer(shared_ptr<Layer> src){
-    srclayers_.push_back(src);
-  }
-  virtual void AddDstLayer(shared_ptr<Layer> dst){
-    dstlayers_.push_back(dst);
-  }
-
-protected:
-  string name_;
-  //vector<shared_ptr<SyncedMem>> memblobs_;
-  vector<int> shape_;
-  // DArray pos_, neg_;//for CD
-  LayerProto layer_proto_;
-  vector<shared_ptr<Layer>> srclayers_, dstlayers_;
-};
-
-/****************************Middel Layers************************************/
-/**
- * Multiply the col image with convolution weight, add bias to columns.
+ * Convolution layer.
  */
 class ConvolutionLayer: public Layer {
  public:
-  virtual void Init(const LayerProto &proto);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  /**
+   * need to reset some properties (e.g., weight matrix) according to
+   * shapes (after partition, e.g., partition is done against channel dimension)
+   */
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void CollectParams(vector<Param*> *params);
   //virtual vector<Param*> GetParams();
 
@@ -222,23 +47,18 @@ class ConvolutionLayer: public Layer {
   int num_, channels_, height_,width_;
   //Param weight_, bias_;
 };
-class ConcateLayer: public Layer {
- public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-};
-
-class ReLULayer: public Layer {
- public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-};
 
 class DropoutLayer: public Layer {
  public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void Init(const LayerProto &proto);
   //virtual void ToProto(LayerProto *layer_proto, bool copyData);
  protected:
@@ -248,18 +68,29 @@ class DropoutLayer: public Layer {
    */
 };
 
+/**
+  * fully connected layer
+  */
 class InnerProductLayer: public Layer {
-  /*
-   * fully connected layer
-   */
  public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  /**
+   * need to reset weight matrix in case of LayerPartition
+   */
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+  virtual ConnectionType connection_type(int k) const {
+    CHECK_LT(k, srclayers_.size());
+    return kOneToAll;
+  }
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void CollectParams(vector<Param*> *params);
   //virtual vector<Param*> GetParams();
-  virtual void Init(const LayerProto &proto);
   //virtual void ToProto(LayerProto *layer_proto, bool copyData);
  private:
   //! dimension of the hidden layer
@@ -269,16 +100,13 @@ class InnerProductLayer: public Layer {
   int num_;
   //Param weight_, bias_;
 };
-class BridgeSrcLayer: public Layer {
+
+class LabelLayer: public ParserLayer {
  public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(const vector<SLayer>& srclayers);
 };
-class BridgeDstLayer: public Layer {
- public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-};
+
 class LRNLayer: public Layer {
 /**
  * Local Response Normalization edge
@@ -290,11 +118,16 @@ class LRNLayer: public Layer {
  */
 
  public:
-  virtual void Init(const LayerProto &proto);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   //! shape of the bottom layer feature
   int num_, channels_, height_, width_;
@@ -304,121 +137,12 @@ class LRNLayer: public Layer {
   float alpha_, beta_, knorm_;
   //DArray norm_, ratio_; //ratio : grad/(data*norm)
 };
-class PoolingLayer: public Layer {
- public:
-  virtual void Init(const LayerProto &proto);
-  virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
- protected:
-  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
-  int num_,channels_, height_, width_, pooled_height_, pooled_width_;
-};
-class SliceLayer: public Layer {
- public:
-  virtual const vector<int>& shape(const Layer* layer) const;
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
 
- protected:
-  vector<vector<int>> shapes_;
-};
-class SplitLayer: public Layer {
+class MnistImageLayer: public ParserLayer {
  public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
+  virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(const vector<SLayer>& srclayers);
 
-};
-
-/**
- * This layer apply Tan function to neuron activations.
- * f(x)=A tanh(Bx)
- * f'(x)=B/A (A*A-f(x)*f(x))
- */
-class TanhLayer: public Layer {
- public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-};
-
-/**********************Output Performance/Loss Layers************************/
-const int kLoss=1;
-const int kPrecision=2;
-
-class PerformanceLayer: public Layer{
- public:
-  virtual Performance ComputePerformance(const vector<shared_ptr<Layer>>&src_layers,
-      int type)=0;
-};
-class SoftmaxLossLayer: public PerformanceLayer {
-  /*
-   * connected from the label layer and the last fc layer
-   */
- public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers);
-  virtual Performance ComputePerformance(const vector<shared_ptr<Layer>>&src_layers,
-      int type);
- private:
-  int num_;
-  int dim_;
-  int top_k_;
-};
-/***********************Inpute Layers****************************************/
-/**
- * TODO make InputLayer the base for for prefetching records from local Shard,
- * HDFS, lmdb, etc. The current InputLayer is then moved to ParseLayer, e.g.,
- * MnistParserLayer, RGBImageParserlayer, etc.
- */
-class InputLayer: public Layer {
- public:
-  virtual void AddInputRecord(const Record& record, Phase phase=kTrain)=0;
-  //virtual void SetInputData(DArray *data);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& src_layers){};
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& src_layers){};
-  virtual void Setup(const vector<vector<int>>& shapes)=0;
-  virtual void Setup(const int batchsize, const Record & record)=0;
-
-  //DArray* mutable_prefetch_data(){return &(this->grad_);}
-  //DArray* mutable_grad(){return nullptr;}
- protected:
-  //DArray prefetch_data_; use the grad_ field for prefetch data
-  int offset_;
-};
-class RGBImageLayer: public InputLayer {
- public:
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void Setup(const vector<vector<int>>& shapes);
-  virtual void Setup(const int batchsize, const Record & record);
-  void Setup(const vector<int>& shape);
-  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
-
- private:
-  bool mirror_;
-  int cropsize_;
-  float scale_;
-};
-class LabelLayer: public InputLayer {
- public:
-  virtual void Setup(const vector<vector<int>>& shapes);
-  virtual void Setup(const int batchsize, const Record & record);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
-};
-class MnistImageLayer: public InputLayer {
- public:
-  typedef std::uniform_real_distribution<float> UniformDist;
-  virtual void Setup(const vector<vector<int>>& shapes);
-  virtual void Setup(const int batchsize, const Record & record);
-  virtual void Setup(const vector<shared_ptr<Layer>>& src_layers);
-  void Setup(const vector<int>& shape);
-
-  virtual void AddInputRecord(const Record& record, Phase phase=kTrain);
-  virtual ~MnistImageLayer();
-  vector<uint8_t> Convert2Image(int k);
  protected:
   std::default_random_engine generator_;
   // height and width of the image after deformation
@@ -432,6 +156,105 @@ class MnistImageLayer: public InputLayer {
   // gauss kernel values, displacements, column image and tmp buffer
   float* gauss_, *displacementx_, *displacementy_, *colimg_, *tmpimg_;
 };
-}  // namespace lapis
+
+class PoolingLayer: public Layer {
+ public:
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+ protected:
+  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
+  int num_,channels_, height_, width_, pooled_height_, pooled_width_;
+};
+
+class ReLULayer: public Layer {
+ public:
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+};
+
+
+class SoftmaxLossLayer: public PerformanceLayer {
+  /*
+   * connected from the label layer and the last fc layer
+   */
+ public:
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+  virtual ConnectionType connection_type(int k) const {
+    CHECK_LT(k, srclayers_.size());
+    return kOneToAll;
+  }
+
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+  virtual Performance ComputePerformance(const vector<shared_ptr<Layer>>&srclayers,
+      int type);
+ private:
+  int num_;
+  int dim_;
+  int top_k_;
+};
+
+class RGBImageLayer: public ParserLayer {
+ public:
+  virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+ private:
+  bool mirror_;
+  int cropsize_;
+  float scale_;
+};
+
+class ShardDataLayer: public DataLayer{
+ public:
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){};
+  virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
+ private:
+  shard::Shard* shard_;
+};
+
+/**
+ * This layer apply Tan function to neuron activations.
+ * f(x)=A tanh(Bx)
+ * f'(x)=B/A (A*A-f(x)*f(x))
+ */
+class TanhLayer: public Layer {
+ public:
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers);
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers);
+
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+};
+
+
+}  // namespace singa
 
 #endif  // INCLUDE_NET_LAYER_H_

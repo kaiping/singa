@@ -13,7 +13,15 @@ using google::protobuf::io::ZeroCopyOutputStream;
 using google::protobuf::io::CodedOutputStream;
 
 namespace singa {
+
 const int kBufLen=1024;
+std::string IntVecToString(const vector<int>& vec) {
+  string disp="(";
+  for(int x: vec)
+    disp+=std::to_string(x)+", ";
+  return disp+")";
+}
+
 /**
  * Formatted string.
  */

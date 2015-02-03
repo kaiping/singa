@@ -41,8 +41,8 @@ TEST_SRCS := src/test/test_mnistlayer.cc src/test/test_main.cc
 TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS))
 -include $(TEST_OBJS:%.o=%.P)
 
-NET_SRCS := src/model/layer.cc src/utils/common.cc src/test/test_neuralnet.cc \
-	src/test/test_main.cc src/model/neuralnet.cc src/model/layer-impl.cc \
+NET_SRCS := src/model/base_layer.cc src/utils/common.cc src/test/test_neuralnet.cc \
+	src/test/test_main.cc src/model/neuralnet.cc src/model/layer.cc src/utils/shard.cc\
 	src/utils/cluster.cc src/utils/graph.cc
 NET_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(NET_SRCS:.cc=.o)) $(PROTO_OBJS))
 -include $(NET_OBJS:%.o=%.P)

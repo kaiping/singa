@@ -36,7 +36,10 @@ class ConvolutionLayer: public Layer {
   virtual void SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
-
+  virtual ConnectionType connection_type(int k) const {
+    CHECK_LT(k, srclayers_.size());
+    return kOneToAll;
+  }
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void CollectParams(vector<Param*> *params);
@@ -200,6 +203,16 @@ class SoftmaxLossLayer: public PerformanceLayer {
   virtual void SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
+  /**
+   * softmax is not recommendeded for partition because it requires the whole
+   * src layer for normalization.
+   */
+  virtual PartitionType partition_type() const {
+    if(layer_proto_.partition_type()==kLayerPartition)
+      return kNone;
+    else
+      return layer_proto_.partition_type();
+  }
   virtual ConnectionType connection_type(int k) const {
     CHECK_LT(k, srclayers_.size());
     return kOneToAll;

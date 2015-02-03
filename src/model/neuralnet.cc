@@ -86,12 +86,12 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   for(auto& layer: layers_){
       layer->Setup();
   }
-  LOG(ERROR)<<"network graph witout partition\n"<<ToString();
+  LOG(INFO)<<"network graph witout partition\n"<<ToString();
 }
 
 void NeuralNet::PartitionNeuralNet(){
   graph_=CreatePartitonedGraph(layers_, name2layer_);
-  DLOG(ERROR)<<"pure graph after partition\n"<<graph_.ToString();
+  //DLOG(ERROR)<<"pure graph after partition\n"<<graph_.ToString();
   map<string, shared_ptr<Layer>> name2layer(name2layer_);
   name2layer_.clear();
   layers_.clear();
@@ -160,7 +160,7 @@ void NeuralNet::PartitionNeuralNet(){
       layer->AddSrcLayer(name2layer_[src->name()]);
   }
 
-  LOG(ERROR)<<"Adjacency matrix\n"<<ToAdjacency();
+  LOG(INFO)<<"Adjacency matrix\n"<<ToAdjacency();
 
   // set up layers after
   for(shared_ptr<Layer> layer: layers_){
@@ -171,7 +171,7 @@ void NeuralNet::PartitionNeuralNet(){
       CHECK(std::equal(shape.begin(),shape.end(),newshape.begin()));
   }
 
-  LOG(ERROR)<<"network graph after partition layers\n"<<ToString();
+  LOG(INFO)<<"network graph after partition layers\n"<<ToString();
 }
 
 Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
@@ -219,7 +219,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
         CHECK_EQ(srcnodes.size(),1)
           <<"local layer "<<srcname<<" should not be partitioned";
         SNode srcnode=srcnodes[0];
-        if(type==kDataPartition||type==kLayerPartition){
+        if(type==kDataPartition||(type==kLayerPartition&&connection==kOneToOne)){
           LayerInfo info=srcnode->val();
           info.slice_dimension=name2layer.at(name)->partition_dimension();
           graph.InsertSliceNode(srcnode, nodes, info);
@@ -227,15 +227,18 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
           CHECK_EQ(nodes.size(),1)
             <<"local layer "<<name<<" should not be nodeed";
           graph.AddEdge(srcnode, nodes[0]);
+        } else { // type==kLayerPartition&&connection==kOneToAll
+          graph.InsertSplitNode(srcnode, nodes);
         }
       }else if((type==kNone
                 &&(srctype==kDataPartition||srctype==kLayerPartition))
-               ||(srctype==kLayerPartition&&type==kLayerPartition
-                  &&connection!=kOneToOne)){
+               ||(type==kLayerPartition&&connection==kOneToAll&&
+                  (srctype==kDataPartition||srctype==kLayerPartition))){
         // copy/concate the whole srclayer for every dst partition
         for(SNode node:nodes){
           LayerInfo info=node->val();
           info.concate_dimension=name2layer.at(srcname)->partition_dimension();
+          CHECK_GE(info.concate_dimension,0);
           graph.InsertConcateNode(srcnodes, node, info);
         }
       }else if((srctype==kLayerPartition&&type==kDataPartition)
@@ -251,6 +254,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
         for(SNode node: nodes){
           LayerInfo info=node->val();
           info.concate_dimension=name2layer.at(srcname)->partition_dimension();
+          CHECK_GE(info.concate_dimension,0);
           graph.InsertConcateNode(slicenodes, node, info);
         }
       }else if((srctype==kDataPartition&&type==kDataPartition)||
@@ -268,8 +272,10 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
 
   // add node for split layer
   bool data_node=true;
-  for(SNode node: graph.nodes()){
-    if(node->dstnodes_size()>1&&node->val().origin!="kSlice"&&!data_node){
+  vector<SNode> oldnodes=graph.nodes();
+  for(SNode node: oldnodes){
+    if(node->dstnodes_size()>1&&node->val().origin!="kSlice"
+        &&node->val().origin!="kSplit"&&!data_node){
       vector<SNode> dstnodes=node->dstnodes();
       for(SNode dst: dstnodes)
         graph.RemoveEdge(node, dst);
@@ -279,7 +285,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
   }
 
   // add bridge
-  vector<SNode> oldnodes=graph.nodes();
+  oldnodes=graph.nodes();
   for(SNode node: oldnodes){
     vector<SNode> dstnodes=node->dstnodes();
     for(size_t i=0;i<dstnodes.size();i++){
@@ -296,15 +302,17 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
 
 std::string NeuralNet::ToString(){
   map<string, string> info;
-  for(auto layer: layers_)
+  for(auto layer: layers_){
     info[layer->name()]=IntVecToString(layer->shape(nullptr));
+    string type=layer->type();
+  }
   return graph_.ToString(info);
 }
 
 std::string NeuralNet::ToAdjacency(){
   string disp="";
   for(auto& layer: layers_){
-    disp+=layer->name()+":";
+    disp+=layer->name()+": ";
     for(const auto& dst: layer->dstlayers())
       disp+=dst->name()+", ";
     disp+="\n";

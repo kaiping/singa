@@ -75,7 +75,7 @@ void BridgeDstLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers)
 void ConcateLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   size_t concate_dim=proto.concate_param().concate_dimension();
-  CHECK(concate_dim);
+  CHECK_GE(concate_dim,0);
   CHECK_GT(srclayers.size(),1);
   vector<int> shape=srclayers[0]->shape(this);
   for(size_t i=1;i<srclayers.size();i++){

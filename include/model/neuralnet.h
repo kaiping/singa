@@ -52,25 +52,6 @@ class NeuralNet {
    */
   void AddLayer(const Layer* layer){};
   /**
-   * set the meta data of layer, e.g., shape.
-   * shapes of the first layer are infered from input records/shapes.
-   * Memory is not allocated until first time used.
-   *
-   * @input_shapes shapes for the input layers
-  void Setup(const vector<vector<int>>& input_shapes);
-   */
-  /**
-   * @batchsize mini-batch size
-   * @record input record to the net, used to set the shapes of input layers
-  void Setup(int batchsize, const Record &record);
-   */
-  /**
-   * called internally to setup the neural net without considering partitions.
-   * the input layers' shapes are from google protobuf config
-  void Setup();
-   */
-
-  /**
    * serialize the net.
    */
   void ToProto(NetProto *net_proto, bool copyData=false);

@@ -123,9 +123,9 @@ class Layer {
    */
   virtual int partition_dimension() const {
     int ret=0;
-    if(layer_proto_.partition_type()==kLayerPartition)
+    if(partition_type()==kLayerPartition)
       ret= 1;
-    else if(layer_proto_.partition_type()==kNone)
+    else if(partition_type()==kNone)
       ret= -1;
     return ret;
   }

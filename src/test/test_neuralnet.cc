@@ -72,16 +72,25 @@ NetProto CreateNetProto(){
 TEST(NeuralNetTest, NoPartition){
   NetProto proto=CreateNetProto();
   NeuralNet net(proto);
+  const auto& layers=net.layers();
+  ASSERT_EQ(8, layers.size());
+  ASSERT_EQ("data", layers.at(0)->name());
+  ASSERT_EQ("loss", layers.at(7)->name());
 }
 
 TEST(NeuralNetTest, DataPartition){
   NetProto proto=CreateNetProto();
   proto.set_partition_type(kDataPartition);
   NeuralNet net(proto, 3);
+  const auto& layers=net.layers();
+  ASSERT_EQ(28, layers.size());
+  ASSERT_EQ("data", layers.at(0)->name());
 }
-TEST(NeuralNetTest, ModelPartition){
-
-
+TEST(NeuralNetTest, LayerPartition){
+  NetProto proto=CreateNetProto();
+  proto.set_partition_type(kLayerPartition);
+  NeuralNet net(proto, 2);
+ // const auto& layers=net.layers();
 }
 TEST(NeuralNetTest, HyridPartition){
 

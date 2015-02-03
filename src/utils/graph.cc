@@ -14,19 +14,29 @@ const string Graph::ToString(const map<string, string>& info) const {
   bool first=true;
 
   vector<string> colors={"red", "blue", "black", "green"};
+  // see for more shapes at http://www.graphviz.org/doc/info/shapes.html
+  vector<string> shapes={"box", "ellipse"};
   int id=0;
-  for(auto src: nodes_){
+  for(auto node: nodes_){
     char str[1024];
-    string color=colors[(src->val().locationid)%colors.size()];
-    sprintf(str, "{\"id\":\"%s%s\", \"color\":\"%s\"}\n", src->name().c_str(),
-        info.find(src->name())!=info.end()?info.at(src->name()).c_str():"",
-        color.c_str());
+    string name=node->name();
+    string color=colors[(node->val().locationid)%colors.size()];
+    string shape;
+    string origin=node->val().origin;
+    if(origin=="kSlice"||origin=="kConcate"||origin=="kSplit"
+        ||origin=="kBridgeSrc"||origin=="kBridgeDst")
+      shape=shapes[1];
+    else
+      shape=shapes[0];
+    sprintf(str, "{\"id\":\"%s%s\", \"color\":\"%s\",\"shape\":\"%s\"}\n",
+        name.c_str(), info.find(name)!=info.end()?info.at(name).c_str():"",
+        color.c_str(), shape.c_str());
     if(!first)
       disp+=",";
     else
       first=false;
     disp+=string(str);
-    nodeid[src->name()]=id++;
+    nodeid[name]=id++;
   }
   disp+="]\n,";
 

@@ -1,8 +1,47 @@
 #include "utils/graph.h"
 
 const string Graph::ToString() const {
-  string disp;
-  return disp;
+  map<string, string> info;
+  return ToString(info);
+}
+const string Graph::ToString(const map<string, string>& info) const {
+  map<string, int> nodeid;
+  string disp="{\"directed\":1,\n";
+
+  // add nodes
+  disp+="\"nodes\":[\n";
+  bool first=true;
+
+  int id=0;
+  for(auto src: nodes_){
+    char str[1024];
+    sprintf(str, "{\"id\":\"%s%s\"}\n", src->name().c_str(),
+        info.find(src->name())!=info.end()?info.at(src->name()).c_str():"");
+    if(!first)
+      disp+=",";
+    else
+      first=false;
+    disp+=string(str);
+    nodeid[src->name()]=id++;
+  }
+  disp+="]\n,";
+
+  // add edges
+  disp+="\"links\":[\n";
+  first=true;
+  for(auto src: nodes_)
+    for(auto dst: src->dstnodes()){
+    char str[1024];
+    sprintf(str, "{\"source\":%d, \"target\":%d, \"color\":\"%s\"}\n",
+        nodeid[src->name()], nodeid[dst->name()], "black");
+    if(!first)
+      disp+=",";
+    else
+      first=false;
+    disp+=string(str);
+  }
+  disp+="]\n";
+  return disp+"}";
 }
 bool Graph::Check() const {
   return true;

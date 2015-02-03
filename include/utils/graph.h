@@ -124,6 +124,7 @@ class Graph{
   }
 
   const string ToString() const;
+  const string ToString(const map<string, string>& info) const;
 
   bool Check() const;
 

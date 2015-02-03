@@ -54,7 +54,7 @@ OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS) $(NET_OBJS))
 all: net
 
 net: init proto $(NET_OBJS)
-	$(CXX) $(NET_OBJS) -o $(BUILD_DIR)/net.o $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) $(NET_OBJS) -o $(BUILD_DIR)/net $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
 singa: init proto  $(SINGA_OBJS)

@@ -8,6 +8,7 @@ message ModelProto{
 message NetProto {
   repeated LayerProto layer = 1;
   repeated EdgeProto edge=2;
+  optional PartitionType partition_type=3 [default=kNone];
 }
 
 // used to simplify the configuation of layer connections
@@ -100,10 +101,10 @@ enum ConnectionType{
 message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
-  repeated string src_layers=3;
+  repeated string srclayers=3;
   optional int32 locationid=4 [default=0]; // todo make locationID an array
   optional int32 partitionid=5 [default=0];
-  optional PartitionType partition_type=6 [default=kNone];
+  optional PartitionType partition_type=6;
   // can be pos/neg neuron value for CD, neuron value/grad for BP
   repeated DAryProto ary = 10;
   repeated string share_ary =11;

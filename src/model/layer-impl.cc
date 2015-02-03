@@ -11,7 +11,7 @@ namespace singa {
  * Implementation for ConvProductLayer
  *****************************************************************************/
 void ConvolutionLayer::Init(const LayerProto& proto){
-  CHECK_EQ(proto.param_size(),2);
+  //CHECK_EQ(proto.param_size(),2);
   //weight_.Init(proto.param(0));
   //bias_.Init(proto.param(1));
   Layer::Init(proto);
@@ -305,6 +305,7 @@ vector<Param*> InnerProductLayer::GetParams() {
 void InnerProductLayer::SetupAfterPartition(const vector<shared_ptr<Layer>>& src_layers){
   InnerProductProto * proto=layer_proto_.mutable_inner_product_param();
   proto->set_num_output(shape_[1]);
+  shape_.clear();
   Setup(src_layers);
 }
 void InnerProductLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
@@ -416,9 +417,8 @@ void RGBImageLayer::Setup(const int batchsize, const Record & record){
   //vector<int> shape{batchsize, image.shape(0),image.shape(1), image.shape(2)};
 }
 void RGBImageLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
-  CHECK_EQ(src_layers.size(),0);
   vector<int> shape;
-  CHECK_EQ(layer_proto_.rgb_param().shape().size(),3);
+  CHECK_EQ(layer_proto_.rgb_param().shape().size(),4);
   shape.push_back(layer_proto_.rgb_param().shape(0));
   shape.push_back(layer_proto_.rgb_param().shape(1));
   shape.push_back(layer_proto_.rgb_param().shape(2));
@@ -596,12 +596,14 @@ void LabelLayer::Setup(const vector<vector<int>>& shapes){
 }
 
 void LabelLayer::Setup(const int batchsize, const Record & record){
+  shape_.clear();
   shape_.push_back(batchsize);
-  shape_.push_back(1);
   offset_=0;
 }
 void LabelLayer::Setup(const vector<shared_ptr<Layer>>& src_layers){
-
+  // debug
+  shape_.clear();
+  shape_.push_back(4);
 }
 
 void LabelLayer::AddInputRecord(const Record &record, Phase phase){

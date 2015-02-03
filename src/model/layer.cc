@@ -11,6 +11,7 @@ void Layer::Init(const LayerProto &proto) {
 
 void Layer::Init(const Layer& other, const vector<int>& shape){
   shape_=shape;
+  layer_proto_=other.layer_proto_;
 }
 void Layer::Setup(){
   Setup(srclayers_);
@@ -30,8 +31,8 @@ void Layer::SetupAfterPartition(const vector<shared_ptr<Layer>>& srclayers){
     const vector<int>& shape=layer->shape(this);
     CHECK(std::equal(shape.begin(), shape.end(), shape_.begin(),shape_.end()));
   }
-  */
   Setup(srclayers);
+  */
 }
 void Layer::ComputeFeature(){
   ComputeFeature(srclayers_);

@@ -9,11 +9,8 @@
 #define CreateLayer(ID) CreateInstance(ID, Layer)
 
 namespace singa {
-NeuralNet::NeuralNet(const NetProto &net_proto) {
-  Init(net_proto, Cluster::Get());
-}
-void NeuralNet::Init(const NetProto &net_proto, const shared_ptr<Cluster>& cluster) {
-  cluster_=cluster;
+NeuralNet::NeuralNet(NetProto net_proto, int group_size) {
+  group_size_=group_size;
   factory_=Singleton<Factory<Layer>>::Instance();
   factory_->Register("Convolution", CreateLayer(ConvolutionLayer));
   factory_->Register("Concate", CreateLayer(ConcateLayer));
@@ -32,39 +29,44 @@ void NeuralNet::Init(const NetProto &net_proto, const shared_ptr<Cluster>& clust
   factory_->Register("Split", CreateLayer(SplitLayer));
   factory_->Register("Tanh", CreateLayer(TanhLayer));
 
-  LOG_IF(INFO, cluster_->group_id()==0)<<"Construct Neural Net...";
+  for(int i=0;i<net_proto.layer_size();i++){
+    LayerProto * layer_proto=net_proto.mutable_layer(i);
+    if(!layer_proto->has_partition_type())
+      layer_proto->set_partition_type(net_proto.partition_type());
+  }
+
+  LOG(INFO)<<"Construct Neural Net...";
   ConstructNeuralNet(net_proto);
   // currently only support partition among procs.
   // TODO support partition within single procs, e.g., multiple threads.
-  if(cluster_->group_size()>1)
+  if(group_size_>1)
     PartitionNeuralNet();
   for(auto layer: layers_){
     DLOG(INFO)<<layer->name();
     //layer->CollectParams(&params_);
   }
   // the softmax loss layer
-  LOG_IF(INFO, cluster_->group_id()==0)<<"Neural Net constructed";
+  LOG(INFO)<<"Neural Net constructed";
 }
 
 void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   // construct graph, one node for one layer, identified by layer name
-  Graph graph; //val field is not used here
   map<string, LayerProto> protos;
   for (auto &layer_proto : net_proto.layer()){
-    graph.AddNode(layer_proto.name());
+    graph_.AddNode(layer_proto.name());
     protos[layer_proto.name()]=layer_proto;
   }
   for (auto &layer_proto : net_proto.layer())
-    if(layer_proto.src_layers_size())
-      for(const string& src: layer_proto.src_layers())
-        graph.AddEdge(layer_proto.name(), src);
+    if(layer_proto.srclayers_size())
+      for(const string& src: layer_proto.srclayers())
+        graph_.AddEdge(src, layer_proto.name());
 
   // topology sort
-  graph.Sort();
-  LOG(INFO)<<graph.ToString();
+  graph_.Sort();
+  LOG(ERROR)<<graph_.ToString();
 
   // create Layers according to topology order
-  for(SNode node: graph.nodes()){
+  for(SNode node: graph_.nodes()){
     shared_ptr<Layer> layer(factory_->Create(protos[node->name()].type()));
     layer->Init(protos[node->name()]);
     name2layer_[node->name()]=layer;
@@ -72,7 +74,7 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   }
 
   // connect Layers.
-  for(SNode node: graph.nodes()){
+  for(SNode node: graph_.nodes()){
     auto layer=name2layer_[node->name()];
     for(SNode dst: node->dstnodes())
       layer->AddDstLayer(name2layer_[dst->name()]);
@@ -81,17 +83,19 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   }
   // setup layer properties, e.g., shapes
   Setup();
+
+  LOG(ERROR)<<ToString();
 }
 
 void NeuralNet::PartitionNeuralNet(){
-  const Graph graph=CreatePartitonedGraph(layers_, name2layer_);
-  LOG(INFO)<<graph.ToString();
+  graph_=CreatePartitonedGraph(layers_, name2layer_);
+  LOG(ERROR)<<graph_.ToString();
   map<string, shared_ptr<Layer>> name2layer(name2layer_);
   name2layer_.clear();
   layers_.clear();
-  int gsize=cluster_->group_size();
+  int gsize=group_size_;
   // create Layers according to topology order
-  for(SNode node: graph.nodes()){
+  for(SNode node: graph_.nodes()){
     LayerProto proto;
     proto.set_name(node->name());
     proto.set_locationid(node->val().locationid);
@@ -126,15 +130,16 @@ void NeuralNet::PartitionNeuralNet(){
     }else{
       // partitioned layers from origin neuralnet
       auto oldlayer=name2layer.at(node->val().origin);
-      auto shape=oldlayer->shape(nullptr);
+      vector<int> shape=oldlayer->shape(nullptr);
       if(oldlayer->partition_type()==kNone){
         newlayer=oldlayer;
       } else{
         int pdim=oldlayer->partition_dimension();
         shape[pdim]=shape[pdim]/gsize+
-          node->val().partitionid==gsize-1?shape[pdim]%gsize:0;
+          ((node->val().partitionid==gsize-1)?shape[pdim]%gsize:0);
         shared_ptr<Layer> layer(factory_->Create(oldlayer->type()));
         layer->Init(*oldlayer, shape);
+        layer->set_name(node->name());
         newlayer=layer;
       }
     }
@@ -143,7 +148,7 @@ void NeuralNet::PartitionNeuralNet(){
   }
 
   // connect Layers.
-  for(SNode node: graph.nodes()){
+  for(SNode node: graph_.nodes()){
     auto layer=name2layer_[node->name()];
     for(SNode dst: node->dstnodes())
       layer->AddDstLayer(name2layer_[dst->name()]);
@@ -159,6 +164,8 @@ void NeuralNet::PartitionNeuralNet(){
     if(shape.size())
       CHECK(std::equal(shape.begin(),shape.end(),newshape.begin()));
   }
+
+  LOG(ERROR)<<"after partition layers\n"<<ToString();
 }
 
 Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
@@ -166,7 +173,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
   Graph graph;
   // partition origin nodes/layers
   map<string, vector<SNode>> layer2nodes; //from name of original layer to nodes
-  int gsize=cluster_->group_size();
+  int gsize=group_size_;
   for(const auto& layer: layers){
     vector<SNode> nodes;
     if(layer->partition_type()==kDataPartition||
@@ -267,31 +274,14 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
 }
 
 std::string NeuralNet::ToString(){
-  char disp[8*1024];
-  /*
-  std::queue<Layer*> layers;
-  for(auto* layer: input_layers_)
-    layers.push(layer);
-  disp[0]='\n';
-  while(!layers.empty()){
-    int size=layers.size();
-    for(int i=0;i<size;i++){
-      auto* layer=layers.front();
-      layers.pop();
-      sprintf(disp+strlen(disp), "\t||Layer: %10s, %s",
-          layer->name().c_str(), layer->data().shape().ToString().c_str());
-      for(auto* param:layer->GetParams())
-        sprintf(disp+strlen(disp), "\tParam: %10s, %s",
-            param->name().c_str(), param->data().shape().ToString().c_str());
-      for(auto* layer1: name2dstlayers_[layer->name()]){
-        if(layers.size()==0||layer1!=layers.front())
-          layers.push(layer1);
-      }
-    }
-    sprintf(disp+strlen(disp), "\n");
+  map<string, string> info;
+  for(auto layer: layers_){
+    string shape="";
+    for(int x: layer->shape(nullptr))
+      shape+="-"+std::to_string(x);
+    info[layer->name()]=shape;
   }
-  */
-  return string(disp);
+  return graph_.ToString(info);
 }
 
 void NeuralNet::Setup(const int batchsize, const Record &record){

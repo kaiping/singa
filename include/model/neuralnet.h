@@ -9,7 +9,6 @@
 //#include "model/param.h"
 #include "proto/model.pb.h"
 #include "model/layer.h"
-#include "utils/cluster.h"
 #include "utils/factory.h"
 #include "utils/graph.h"
 
@@ -31,13 +30,7 @@ class NeuralNet {
   /**
    * construct the net structure from protocol buffer.
    */
-  explicit NeuralNet(const NetProto &net_proto);
-  void Init(const NetProto &net_proto, const shared_ptr<Cluster>& cluster) ;
-  /**
-   * desctruct the net.
-   * free layer objects.
-   */
-  ~NeuralNet();
+  NeuralNet(NetProto net_proto, int group_size=1);
   /**
    * construct a string for describing the layers and parameters, including
    * shape info.
@@ -158,8 +151,9 @@ class NeuralNet {
   vector<InputLayer *> input_layers_;
   //vector<shared_ptr<Param>> params_;
   map<string, shared_ptr<Layer>> name2layer_;
-  shared_ptr<Cluster> cluster_;
   Factory<Layer>* factory_;
+  int group_size_;
+  Graph graph_;
 };
 }  // namespace singa
 #endif  // INCLUDE_NET_NET_H_

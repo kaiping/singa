@@ -6,37 +6,38 @@
   ,{"id":"conv1-00(8, 4, 15, 15, )", "color":"red","shape":"box"}
   ,{"id":"relu1-00(8, 4, 15, 15, )", "color":"red","shape":"box"}
   ,{"id":"pool1-00(8, 4, 7, 7, )", "color":"red","shape":"box"}
-  ,{"id":"split-pool1-00(8, 4, 7, 7, )", "color":"red","shape":"ellipse"}
-  ,{"id":"s-split-pool1-00-concate-fc1-01(8, 4, 7, 7, )", "color":"red","shape":"ellipse"}
-  ,{"id":"d-split-pool1-00-concate-fc1-01(8, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
+  ,{"id":"slice-pool1-00(8, 4, 7, 7, )", "color":"red","shape":"ellipse"}
+  ,{"id":"s-slice-pool1-00-concate-fc1-01(4, 4, 7, 7, )", "color":"red","shape":"ellipse"}
+  ,{"id":"d-slice-pool1-00-concate-fc1-01(4, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
   ,{"id":"s-split-rgbimage-conv1-01(8, 3, 16, 16, )", "color":"red","shape":"ellipse"}
   ,{"id":"d-split-rgbimage-conv1-01(8, 3, 16, 16, )", "color":"blue","shape":"ellipse"}
   ,{"id":"conv1-01(8, 4, 15, 15, )", "color":"blue","shape":"box"}
   ,{"id":"relu1-01(8, 4, 15, 15, )", "color":"blue","shape":"box"}
   ,{"id":"pool1-01(8, 4, 7, 7, )", "color":"blue","shape":"box"}
-  ,{"id":"split-pool1-01(8, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"concate-fc1-01(8, 8, 7, 7, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"fc1-01(8, 5, )", "color":"blue","shape":"box"}
-  ,{"id":"s-fc1-01-concate-loss(8, 5, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"d-fc1-01-concate-loss(8, 5, )", "color":"red","shape":"ellipse"}
-  ,{"id":"s-split-pool1-01-concate-fc1-00(8, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"d-split-pool1-01-concate-fc1-00(8, 4, 7, 7, )", "color":"red","shape":"ellipse"}
-  ,{"id":"concate-fc1-00(8, 8, 7, 7, )", "color":"red","shape":"ellipse"}
-  ,{"id":"fc1-00(8, 5, )", "color":"red","shape":"box"}
-  ,{"id":"concate-loss(8, 10, )", "color":"red","shape":"ellipse"}
+  ,{"id":"slice-pool1-01(8, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
+  ,{"id":"concate-fc1-01(4, 8, 7, 7, )", "color":"blue","shape":"ellipse"}
+  ,{"id":"fc1-01(4, 10, )", "color":"blue","shape":"box"}
+  ,{"id":"s-slice-pool1-01-concate-fc1-00(4, 4, 7, 7, )", "color":"blue","shape":"ellipse"}
+  ,{"id":"d-slice-pool1-01-concate-fc1-00(4, 4, 7, 7, )", "color":"red","shape":"ellipse"}
+  ,{"id":"concate-fc1-00(4, 8, 7, 7, )", "color":"red","shape":"ellipse"}
+  ,{"id":"fc1-00(4, 10, )", "color":"red","shape":"box"}
   ,{"id":"label(8, )", "color":"red","shape":"box"}
-  ,{"id":"loss(8, 10, )", "color":"red","shape":"box"}
+  ,{"id":"slice-label(8, )", "color":"red","shape":"ellipse"}
+  ,{"id":"loss-00(4, 10, )", "color":"red","shape":"box"}
+  ,{"id":"s-slice-label-loss-01(4, )", "color":"red","shape":"ellipse"}
+  ,{"id":"d-slice-label-loss-01(4, )", "color":"blue","shape":"ellipse"}
+  ,{"id":"loss-01(4, 10, )", "color":"blue","shape":"box"}
   ]
     ,"links":[
     {"source":0, "target":1, "color":"black"}
-  ,{"source":0, "target":24, "color":"black"}
+  ,{"source":0, "target":21, "color":"black"}
   ,{"source":1, "target":2, "color":"black"}
   ,{"source":2, "target":3, "color":"black"}
   ,{"source":2, "target":9, "color":"black"}
   ,{"source":3, "target":4, "color":"black"}
   ,{"source":4, "target":5, "color":"black"}
   ,{"source":5, "target":6, "color":"black"}
-  ,{"source":6, "target":21, "color":"black"}
+  ,{"source":6, "target":19, "color":"black"}
   ,{"source":6, "target":7, "color":"black"}
   ,{"source":7, "target":8, "color":"black"}
   ,{"source":8, "target":15, "color":"black"}
@@ -46,16 +47,18 @@
   ,{"source":12, "target":13, "color":"black"}
   ,{"source":13, "target":14, "color":"black"}
   ,{"source":14, "target":15, "color":"black"}
-  ,{"source":14, "target":19, "color":"black"}
+  ,{"source":14, "target":17, "color":"black"}
   ,{"source":15, "target":16, "color":"black"}
-  ,{"source":16, "target":17, "color":"black"}
+  ,{"source":16, "target":26, "color":"black"}
   ,{"source":17, "target":18, "color":"black"}
-  ,{"source":18, "target":23, "color":"black"}
+  ,{"source":18, "target":19, "color":"black"}
   ,{"source":19, "target":20, "color":"black"}
-  ,{"source":20, "target":21, "color":"black"}
+  ,{"source":20, "target":23, "color":"black"}
   ,{"source":21, "target":22, "color":"black"}
   ,{"source":22, "target":23, "color":"black"}
-  ,{"source":23, "target":25, "color":"black"}
+  ,{"source":22, "target":24, "color":"black"}
   ,{"source":24, "target":25, "color":"black"}
+  ,{"source":25, "target":26, "color":"black"}
   ]
 }
+

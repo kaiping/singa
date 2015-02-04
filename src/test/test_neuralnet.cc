@@ -93,6 +93,10 @@ TEST(NeuralNetTest, LayerPartition){
  // const auto& layers=net.layers();
 }
 TEST(NeuralNetTest, HyridPartition){
-
-
+  NetProto proto=CreateNetProto();
+  int num_layers=proto.layer_size();
+  proto.mutable_layer(num_layers-2)->set_partition_type(kDataPartition);
+  proto.mutable_layer(num_layers-1)->set_partition_type(kDataPartition);
+  proto.set_partition_type(kLayerPartition);
+  NeuralNet net(proto, 2);
 }

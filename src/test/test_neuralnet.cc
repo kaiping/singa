@@ -32,9 +32,8 @@ NetProto CreateNetProto(){
   layer->set_type("kConvolution");
   layer->add_srclayers("rgbimage");
   ConvolutionProto *conv=layer->mutable_convolution_param();
-  conv->set_num_output(8);
-  conv->set_kernel_h(2);
-  conv->set_kernel_w(2);
+  conv->set_num_filters(8);
+  conv->set_kernel(2);
 
   // 4x8x9x9
   layer=proto.add_layer();
@@ -48,7 +47,7 @@ NetProto CreateNetProto(){
   layer->set_type("kPooling");
   layer->add_srclayers("relu1");
   PoolingProto *pool=layer->mutable_pooling_param();
-  pool->set_kernel_size(4);
+  pool->set_kernel(4);
   pool->set_stride(2);
 
   // 4x10

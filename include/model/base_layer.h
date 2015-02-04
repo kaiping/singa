@@ -12,8 +12,9 @@
 #include <algorithm>
 
 #include "proto/model.pb.h"
-//#include "model/param.h"
+#include "model/param.h"
 #include "utils/common.h"
+#include "utils/blob.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -92,8 +93,8 @@ class Layer {
   /**
    * Layers that have paramters must overload this function.
    * @return parameters associated with this layer
-  virtual vector<Param*> GetParams(){ return vector<Param*>(); }
    */
+  virtual vector<Param*> GetParams(){ return vector<Param*>(); }
   /**
    * Compute features of this layer based on connected layers.
    * Implement forward propagation for BP; TODO Implement both postive phase
@@ -162,23 +163,26 @@ class Layer {
   const std::string &name() const {
     return layer_proto_.name();
   }
-  virtual const vector<int>& shape() const{
-    return shape_;
-  }
-  virtual const vector<int>& shape(const Layer* layer) const{
-    return shape_;
+  virtual const vector<int>& shape(const Layer* layer=nullptr) const{
+    return data_.shape();
   }
 
   /**
-   * @return a const ref for DArray storing neuron values of this layer for BP
-  virtual const DArray& data() {return data_;}
+   * @return a const ref for Blob storing neuron values of this layer for BP
    */
+  virtual const Blob<float>& data(int k=0){
+    return data_;
+  }
+  virtual Blob<float>* mutable_data(int k=0){
+    return &data_;
+  }
+
   /**
-   * @return a const ref for DArray storing neuron grads of this layer for BP
-  virtual const DArray& grad() {return grad_;}
-  virtual DArray* mutable_data() {return &data_;}
-  virtual DArray* mutable_grad() {return &grad_;}
+   * @return a pointer to storing neuron grads of this layer for BP
    */
+  virtual Blob<float>* mutable_grad(int k=0) {
+    return &grad_;
+  }
 
   virtual const vector< SLayer> srclayers() const {
     return srclayers_;
@@ -210,7 +214,7 @@ class Layer {
 protected:
   string name_;
   //vector<shared_ptr<SyncedMem>> memblobs_;
-  vector<int> shape_;
+  Blob<float> data_, grad_;
   // DArray pos_, neg_;//for CD
   LayerProto layer_proto_;
   vector<SLayer> srclayers_, dstlayers_;
@@ -259,8 +263,11 @@ class ConcateLayer: public Layer {
 class DataLayer: public Layer{
  public:
   virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
-  virtual void ComputeGradient(const vector<SLayer>& srclayers){};
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
+  virtual void ComputeGradient(const vector<SLayer>& srclayers){};
+  virtual const vector<Record>& records() const {
+    return records_;
+  }
   virtual void Setup(){
     vector<SLayer> dummy;
     Setup(layer_proto_,dummy);
@@ -284,9 +291,16 @@ class DataLayer: public Layer{
   virtual const Record& sample() const {
     return sample_;
   }
+
+  virtual void CompletePrefetch(){
+    records_.swap(prefetch_data_);
+  }
+
  protected:
   bool has_set_;
+  int random_skip_, batchsize_;
   Record sample_;
+  vector<Record> records_, prefetch_data_;
 };
 class SliceLayer: public Layer {
  public:
@@ -297,7 +311,7 @@ class SliceLayer: public Layer {
       const vector<SLayer>& srclayers){}
 
 
-  virtual const vector<int>& shape(const Layer* layer) const;
+  virtual const vector<int>& shape(const Layer* layer=nullptr) const;
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 
@@ -340,16 +354,21 @@ class ParserLayer: public Layer {
     Setup(layer_proto_,srclayers_);
     has_set_=true;
   }
-   virtual void SetupAfterPartition(){
+  virtual void SetupAfterPartition(){
     if(!has_set_)
-    Setup();
+      Setup();
   }
   virtual void SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual PartitionType partition_type () const {
+  virtual PartitionType partition_type () {
     return kNone;
+  }
+
+  virtual Blob<float>* mutable_grad(int k=0) {
+    NOT_IMPLEMENTED;
+    return &grad_;
   }
 
  private:

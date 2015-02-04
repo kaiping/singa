@@ -2,6 +2,7 @@
 #define INCLUDE_UTILS_COMMON_H_
 #pragma once
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 #include <google/protobuf/message.h>
 #include <stdarg.h>
 #include <string>
@@ -16,6 +17,12 @@ using std::vector;
 using std::string;
 using std::map;
 using google::protobuf::Message;
+
+#ifndef GFLAGS_GFLAGS_H_
+namespace gflags = google;
+#endif  // GFLAGS_GFLAGS_H_
+
+
 namespace singa {
 
 void ReadProtoFromTextFile(const char* filename, Message* proto) ;
@@ -26,12 +33,16 @@ void WriteProtoToBinaryFile(const Message& proto, const char* filename);
 std::string IntVecToString(const vector<int>& vec) ;
 string VStringPrintf(string fmt, va_list l) ;
 string StringPrintf(string fmt, ...) ;
+
 void Debug() ;
 inline bool check_exists(const std::string& name) {
     struct stat buffer;
     return (stat (name.c_str(), &buffer) == 0);
 }
 
+inline float rand_real(){
+  return  static_cast<float>(rand())/(RAND_MAX+1.0f);
+}
 template<typename T>
 class SafeQueue{
  public:

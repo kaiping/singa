@@ -13,19 +13,19 @@ void Layer::Init(const LayerProto &proto) {
 }
 
 void Layer::Init(const Layer& other, const vector<int>& shape){
-  shape_=shape;
+  data_.Reshape(shape);
+  grad_.Reshape(shape);
   layer_proto_=other.layer_proto_;
 }
 void Layer::Setup(){
   Setup(layer_proto_, srclayers_);
 }
 void Layer::SetupAfterPartition(){
-  vector<int> shape=shape_;
-  shape_.clear();
+  vector<int> shape=data_.shape();
   SetupAfterPartition(layer_proto_, shape, srclayers_);
   //LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
-  CHECK(std::equal(shape.begin(), shape.end(), shape_.begin()))<<name()
-    <<IntVecToString(shape)<<"--"<<IntVecToString(shape_);
+  CHECK(std::equal(shape.begin(), shape.end(), data_.shape().begin()))<<name()
+    <<IntVecToString(shape)<<"--"<<IntVecToString(data_.shape());
 }
 void Layer::ComputeFeature(){
   ComputeFeature(srclayers_);
@@ -39,7 +39,7 @@ void Layer::ToProto(LayerProto *proto, bool copyData) {
 void BridgeSrcLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  shape_=srclayers[0]->shape(this);
+  data_.Reshape(srclayers[0]->shape(this));
 }
 void BridgeSrcLayer::SetupAfterPartition(){
   Setup(layer_proto_, srclayers_);
@@ -55,7 +55,7 @@ void BridgeSrcLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers)
 void BridgeDstLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  shape_=srclayers[0]->shape(this);
+  data_.Reshape(srclayers[0]->shape(this));
 }
 void BridgeDstLayer::SetupAfterPartition(){
   Setup(layer_proto_, srclayers_);
@@ -86,7 +86,7 @@ void ConcateLayer::Setup(const LayerProto& proto,
       else
         CHECK_EQ(shape[j], srcshape[j]);
   }
-  shape_=shape;
+  data_.Reshape(shape);
 }
 
 void ConcateLayer::SetupAfterPartition(){
@@ -106,13 +106,13 @@ void SliceLayer::Setup(const LayerProto& proto,
   int slice_num=proto.slice_param().slice_num();
   CHECK_GE(slice_dim,0);
   CHECK_EQ(slice_num, dstlayers_.size());
-  shape_=srclayers[0]->shape(this);
+  data_.Reshape(srclayers[0]->shape(this));
   shapes_.clear();
   //LOG(ERROR)<<"slice dim "<<slice_dim<<" slice num "<<slice_num;
   for(int i=0;i<slice_num;i++){
-    vector<int> newshape(shape_);
-    newshape[slice_dim]=shape_[slice_dim]/slice_num+
-      ((i==slice_num-1)?shape_[slice_dim]%slice_num:0);
+    vector<int> newshape(data_.shape());
+    newshape[slice_dim]=newshape[slice_dim]/slice_num+
+      ((i==slice_num-1)?newshape[slice_dim]%slice_num:0);
     shapes_.push_back(newshape);
     //LOG(ERROR)<<"slice "<<IntVecToString(newshape);
   }
@@ -125,14 +125,14 @@ void SliceLayer::SetupAfterPartition(){
 
 const vector<int>& SliceLayer::shape(const Layer* layer) const {
   if(layer==nullptr)
-    return shape_;
+    return data_.shape();
   for(size_t i=0;i<shapes_.size();i++){
     //LOG(ERROR)<<"get slice "<<IntVecToString(shapes_[i]);
     if(dstlayers_[i].get() == layer)
       return shapes_[i];
   }
   CHECK(false);
-  return shape_; // avoid compile warning
+  return data_.shape(); // avoid compile warning
 }
 void SliceLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){}
 void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
@@ -140,7 +140,7 @@ void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
 void SplitLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  shape_=srclayers[0]->shape(this);
+  data_.Reshape(srclayers[0]->shape(this));
 }
 
 void SplitLayer::SetupAfterPartition(){

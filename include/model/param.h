@@ -1,12 +1,12 @@
-#ifndef INCLUDE_NET_PARAM_H_
-#define INCLUDE_NET_PARAM_H_
+#ifndef INCLUDE_MODEL_PARAM_H_
+#define INCLUDE_MODEL_PARAM_H_
 
 #include <vector>
 #include <string>
 #include <map>
 #include <functional>
-#include "darray/darray.h"
 #include "proto/model.pb.h"
+#include "utils/blob.h"
 // Base paramter class.
 namespace singa {
 class Param {
@@ -15,60 +15,45 @@ class Param {
    * Set properties of this parameter from ParamProto, allocate
    * corresponding memory and initialize the parameter. Copy data, history and
    * grad from ParamProto if available.
-   */
   void FromProto(const ParamProto &proto);
+   */
   /**
    * Marshal properties, content and history gradient of this parameter into
    * ParamProto
-   */
   void ToProto(ParamProto *proto, bool copyData);
+   */
   /**
    * Return const mem address for the content of this parameter
    */
-  const DArray &data() {
+  const Blob<float> &data() {
     return data_;
   }
-  DArray *mutable_data() {
+  Blob<float> *mutable_data() {
     return &data_;
   }
   /**
    * Return gradient of this parameter
    */
-  const DArray &grad() {
+  const Blob<float> &grad() {
     return grad_;
   }
-  /**
-   * Return gradient history of this parameter
-  const DArray &history() {
-    return history_;
-  }
-   */
-  DArray *mutable_grad() {
+  Blob<float> *mutable_grad() {
     return &grad_;
   }
-  /**
-   * Return mem address for the content of this parameter
-  DArray *mutable_history() {
-    return &history_;
-  }
-   */
-  float* mutable_dptr(){
-    return data_.dptr();
-  }
-  const float* dptr(){
-    return data_.dptr();
-  }
-  const float* gptr(){
-    return grad_.dptr();
-  }
-  float* mutable_gptr(){
-    return grad_.dptr();
-  }
 
-  const int local_size(){
-    return data_.localVol();
+  float* mutable_cpu_data(){
+    return data_.mutable_cpu_data();
   }
-  void Setup(const std::vector<int>& shape, int partition_dim);
+  const float* cpu_data(){
+    return data_.cpu_data();
+  }
+  float* mutable_cpu_grad(){
+    return grad_.mutable_cpu_data();
+  }
+  const float* cpu_grad(){
+    return grad_.cpu_data();
+  }
+  void Setup(const ParamProto& proto, const std::vector<int>& shape);
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */
@@ -120,7 +105,7 @@ class Param {
    * identifier of this parameter, will be used by ModelController
    */
   //! content, gradient and history gradient of this parameter
-  DArray data_, grad_;// history_;
+  Blob<float> data_, grad_;// history_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.
@@ -128,6 +113,6 @@ class Param {
   ParamProto param_proto_;
 };
 
-}  // namespace lapis
+}  // namespace singa
 
-#endif  // INCLUDE_NET_PARAM_H_
+#endif  // INCLUDE_MODEL_PARAM_H_

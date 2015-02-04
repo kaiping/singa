@@ -11,10 +11,12 @@
 #include <random>
 
 #include "proto/model.pb.h"
-//#include "model/param.h"
+#include "model/param.h"
 #include "utils/common.h"
 #include "utils/shard.h"
 #include "model/base_layer.h"
+
+
 /**
  * \file this file includes the declarations neuron layer classes that conduct
  * the transformation of features.
@@ -36,19 +38,22 @@ class ConvolutionLayer: public Layer {
   virtual void SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
+
+  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+  virtual vector<Param*> GetParams() {
+    return vector<Param*>{&weight_, &bias_};
+  }
   virtual ConnectionType connection_type(int k) const {
     CHECK_LT(k, srclayers_.size());
     return kOneToAll;
   }
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
-  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
-  //virtual void CollectParams(vector<Param*> *params);
-  //virtual vector<Param*> GetParams();
-
  protected:
-  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
-  int num_, channels_, height_,width_;
-  //Param weight_, bias_;
+  int kernel_, pad_,  stride_ ;
+  int num_,  channels_, height_,width_;
+  int col_height_, col_width_, conv_height_, conv_width_, num_filters_;
+  Param weight_, bias_;
+  Blob<float> col_data_, col_grad_;
 };
 
 class DropoutLayer: public Layer {
@@ -62,13 +67,13 @@ class DropoutLayer: public Layer {
 
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
-  //virtual void Init(const LayerProto &proto);
-  //virtual void ToProto(LayerProto *layer_proto, bool copyData);
  protected:
-  float drop_prob_;
+  // drop probability
+  float pdrop_;
   /* record which neuron is dropped, required for back propagating gradients,
    * if mask[i]=0, then the i-th neuron is dropped.
    */
+  Blob<float> mask_;
 };
 
 /**
@@ -92,16 +97,18 @@ class InnerProductLayer: public Layer {
 
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
-  //virtual void CollectParams(vector<Param*> *params);
-  //virtual vector<Param*> GetParams();
   //virtual void ToProto(LayerProto *layer_proto, bool copyData);
+  virtual vector<Param*> GetParams() {
+    return vector<Param*>{&weight_, &bias_};
+  }
+
  private:
   //! dimension of the hidden layer
   int hdim_;
   //! dimension of the visible layer
   int vdim_;
   int num_;
-  //Param weight_, bias_;
+  Param weight_, bias_;
 };
 
 class LabelLayer: public ParserLayer {
@@ -147,17 +154,15 @@ class MnistImageLayer: public ParserLayer {
   virtual void ComputeFeature(const vector<SLayer>& srclayers);
 
  protected:
-  std::default_random_engine generator_;
   // height and width of the image after deformation
-  int h_,w_;
   // kernel size for elastic distortion
-  int kernel_;
   // n^2 images are processed as a batch for elastic distortion
-  int n_;
   // conv height and conv width
-  int conv_h_, conv_w_;
   // gauss kernel values, displacements, column image and tmp buffer
-  float* gauss_, *displacementx_, *displacementy_, *colimg_, *tmpimg_;
+  //float* gauss_, *displacementx_, *displacementy_, *colimg_, *tmpimg_;
+  float  gamma_, beta_, sigma_, kernel_, alpha_;
+  int resize_, elastic_freq_;
+  bool normalize_;
 };
 
 class PoolingLayer: public Layer {
@@ -173,7 +178,7 @@ class PoolingLayer: public Layer {
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
-  int kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_;
+  int kernel_, pad_, stride_;
   int num_,channels_, height_, width_, pooled_height_, pooled_width_;
 };
 
@@ -233,10 +238,11 @@ class RGBImageLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
   virtual void ComputeFeature(const vector<SLayer>& srclayers);
+
  private:
-  bool mirror_;
-  int cropsize_;
   float scale_;
+  int cropsize_;
+  bool mirror_;
 };
 
 class ShardDataLayer: public DataLayer{
@@ -245,7 +251,7 @@ class ShardDataLayer: public DataLayer{
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){};
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
  private:
-  shard::Shard* shard_;
+  shared_ptr<shard::Shard> shard_;
 };
 
 /**

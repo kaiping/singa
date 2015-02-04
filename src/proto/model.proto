@@ -130,10 +130,15 @@ message LayerProto {
   optional SliceProto slice_param = 32;
   optional SplitProto split_param = 33;
   optional ReLUProto relu_param = 28;
+  optional RGBImage rgbimage_param=34;
   optional SoftmaxLossProto softmaxloss_param = 29;
   optional TanhProto tanh_param=30;
 }
-
+message RGBImage {
+  optional float scale=1 [default=1.0];
+  optional int32 cropsize=2 [default=0];
+  optional bool mirror=3 [default=false];
+}
 message SplitProto{
   optional int32 num_splits=1;
 }
@@ -152,20 +157,13 @@ message SoftmaxLossProto {
 }
 // Message that stores parameters used by ConvolutionLayer
 message ConvolutionProto {
-  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional uint32 num_filters = 1; // The number of outputs for the layer
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
   // Pad, kernel size, and stride are all given as a single value for equal
   // dimensions in height and width or as Y, X pairs.
   optional uint32 pad = 3 [default = 0]; // The padding size (equal in Y, X)
-  optional uint32 pad_h = 9 [default = 0]; // The padding height
-  optional uint32 pad_w = 10 [default = 0]; // The padding width
-  optional uint32 kernel_size = 4; // The kernel size (square)
-  optional uint32 kernel_h = 11; // The kernel height
-  optional uint32 kernel_w = 12; // The kernel width
-  optional uint32 group = 5 [default = 1]; // The group size for group conv
-  optional uint32 stride = 6 [default = 1]; // The stride (equal in Y, X)
-  optional uint32 stride_h = 13; // The stride height
-  optional uint32 stride_w = 14; // The stride width
+  optional uint32 stride = 4 [default = 1]; // The stride (equal in Y, X)
+  required uint32 kernel= 5; // The kernel height/width
 }
 
 message ConcateProto{
@@ -182,20 +180,22 @@ message DataProto {
   optional string path=2;
   // Specify the batch size.
   optional uint32 batchsize = 4;
+  // skip [0,random_skip] records
+  optional uint32 random_skip=5 [default=0];
 }
 
 message MnistProto {
   // elastic distortion
-  optional int32 kernel=1;
-  repeated float sigma=2;
-  repeated float alpha=3;
+  optional int32 kernel=1 [default=0];
+  optional float sigma=2 [default=0];
+  optional float alpha=3 [default=0];
   // rotation or horizontal shearing
-  repeated float beta=4;
+  optional float beta=4 [default=0];
   // scaling
-  repeated float gamma=5;
+  optional float gamma=5 [default=0];
   // scale to this size as input for deformation
-  optional int32 size=6 ;
-  optional int32 elastic_freq=7;
+  optional int32 resize=6 [default=0] ;
+  optional int32 elastic_freq=7 [default=0];
   optional bool normalize=8 [default=true];
 }
 // Message that stores parameters used by DropoutLayer
@@ -230,15 +230,9 @@ message PoolingProto {
   optional PoolMethod pool = 1 [default = MAX]; // The pooling method
   // Pad, kernel size, and stride are all given as a single value for equal
   // dimensions in height and width or as Y, X pairs.
+  required uint32 kernel= 2; // The kernel size (square)
   optional uint32 pad = 4 [default = 0]; // The padding size (equal in Y, X)
-  optional uint32 pad_h = 9 [default = 0]; // The padding height
-  optional uint32 pad_w = 10 [default = 0]; // The padding width
-  optional uint32 kernel_size = 2; // The kernel size (square)
-  optional uint32 kernel_h = 5; // The kernel height
-  optional uint32 kernel_w = 6; // The kernel width
   optional uint32 stride = 3 [default = 1]; // The stride (equal in Y, X)
-  optional uint32 stride_h = 7; // The stride height
-  optional uint32 stride_w = 8; // The stride width
 }
 
 message SliceProto{

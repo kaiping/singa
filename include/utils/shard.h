@@ -33,11 +33,13 @@ namespace shard {
 class Shard {
  public:
   //!< read only mode used in training
-  static const char kRead=0;
+  enum {
+    kRead=0,
   //!< write mode used in creating shard (will overwrite previous one)
-  static const char kCreate=1;
+   kCreate=1,
   //!< append mode, e.g. used when previous creating crashes
-  static const char kAppend=2;
+   kAppend=2
+  };
 
  public:
   /**

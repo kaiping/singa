@@ -4,19 +4,23 @@ HOME_DIR := /home/wangwei/install
 # Lib folder for system and external libs. You may need to change it.
 LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := ./include /usr/include/mpi $(HOME_DIR)/include $(HOME_DIR)/mpich/include
+INCLUDE_DIRS := ./include  \
+	/usr/include/mpi $(HOME_DIR)/include $(HOME_DIR)/mpich/include
 # g++ location, should support c++11, tested with 4.8.1
 CXX := g++
 
 ######################Setting Varialbes#######################################
-LIBRARIES := glog gflags protobuf rt gtest mpi
+LIBRARIES := glog gflags protobuf rt gtest mpi openblas opencv_highgui \
+	opencv_imgproc opencv_core
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
 
+MSHADOW_FLAGS :=-DMSHADOW_USE_CUDA=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_MKL=0
 # Folder to store compiled files
 BUILD_DIR := build
-CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -DHAVE_STRING_H -Wno-unknown-pragmas \
+CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+	$(MSHADOW_FLAGS) -DCPU_ONLY=1 \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 # find user defined .proto file, and then compute the corresponding .h, .cc
@@ -42,8 +46,8 @@ TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS
 -include $(TEST_OBJS:%.o=%.P)
 
 NET_SRCS := src/model/base_layer.cc src/utils/common.cc src/test/test_neuralnet.cc \
-	src/test/test_main.cc src/model/neuralnet.cc src/model/layer.cc src/utils/shard.cc\
-	src/utils/cluster.cc src/utils/graph.cc
+	src/test/test_main.cc src/model/neuralnet.cc src/model/layer.cc src/utils/shard.cc \
+	src/utils/cluster.cc src/utils/graph.cc src/model/param.cc src/utils/blob.cc
 NET_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(NET_SRCS:.cc=.o)) $(PROTO_OBJS))
 -include $(NET_OBJS:%.o=%.P)
 

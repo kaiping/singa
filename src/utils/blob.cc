@@ -191,6 +191,7 @@ Blob<Dtype>::Blob(const vector<int>& shape)
 template <typename Dtype>
 void Blob<Dtype>::Reshape(const vector<int>& shape) {
   count_=1;
+  shape_=shape;
   for(size_t i=0;i<shape.size();i++){
     CHECK(shape[i]);
     count_*=shape[i];
@@ -252,6 +253,13 @@ template <> int Blob<int>::asum_data() const {
   return 0;
 }
 
+template <typename Dtype>
+void Swap(Blob& other){
+  CHECK_EQ(other.count(), count());
+  CHECK_EQ(std::equal(shape_.begin(), shape_.end(), other.shape_.begin()));
+  swap(data_, other.data_);
+  swap(capacity_, other.capacity_);
+}
 
 template <typename Dtype>
 void Blob<Dtype>::CopyFrom(const Blob& source, bool reshape) {

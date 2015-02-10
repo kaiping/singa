@@ -110,7 +110,7 @@ class ImageNetSource : public DataSource {
    * Read raw image, resize, normalize (substract mean), copy to DAryProto obj
    */
   int ReadImage(const std::string &path, int height, int width,
-      const float *mean, singa::DAryProto* datum);
+      const float *mean, singa::SingleLabelImageRecord* datum);
   /**
    * Load meta info file which has image path and label
    */

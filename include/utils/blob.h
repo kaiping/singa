@@ -153,6 +153,7 @@ class Blob {
    * shared_ptr calls its destructor when reset with the "=" operator.
    */
   void ShareData(const Blob& other);
+  void Swap(Blob& other);
  protected:
   shared_ptr<SyncedMemory> data_;
   vector<int> shape_;

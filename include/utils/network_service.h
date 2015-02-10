@@ -14,19 +14,20 @@ using std::deque;
 /**
  * @file network_service.h
  *
- * A wrapper of network communication, providing access to network message queues.
- * Messages arrived to the Rx queue belong to one of two types: response queue (to the Get
- * requests) and request queue (Put/Get/Update). Workers have access to the former, and
- * Servers to the latter.
+ * A wrapper of network communication, providing access to network message
+ * queues.
+ * Messages arrived to the Rx queue belong to one of two types: response
+ * queue (to the Get requests) and request queue (Put/Get/Update). Workers
+ * have access to the former, and Servers to the latter.
  *
- * This service contains a thread the reads raw message off the network (@see network.h) and
- * put it to the corresponding queue. All queue elements are of type Message.
+ * This service contains a thread that reads raw message off the network
+ * (@see network.h) and put it to the corresponding queue. All queue elements
+ * are of type Message. It also has another thread for sending messages. We
+ * found that using non-blocking communication, i.e. MPI_ISend() is buggy,
+ * thus we use blocking communication and create a new thread for that.
  *
- * It also has another thread for sending messages. We found that using non-blocking communication,
- * i.e. MPI_ISend() is buggy, thus we use blocking communication and create a new thread for that.
- *
- * A call to Send() to a remote process sends the message directly using the network implementation,
- * or enqueues it again if the message is local.
+ * A call to Send() to a remote process sends the message directly using the
+ * network implementation, or enqueues it again if the message is local.
  *
  * A call to Receive() reads the next message off the queue.
  *

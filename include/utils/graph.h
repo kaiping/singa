@@ -96,16 +96,16 @@ class Graph{
   }
 
   void AddEdge(const string& src, const string& dst){
-    CHECK(name2node_.find(src)!=name2node_.end());
-    CHECK(name2node_.find(dst)!=name2node_.end());
+    CHECK(name2node_.find(src)!=name2node_.end())<<"can't find src node "<<src;
+    CHECK(name2node_.find(dst)!=name2node_.end())<<"can't find dst node "<<dst;
 
     SNode srcnode=name2node_[src], dstnode=name2node_[dst];
     AddEdge(srcnode, dstnode);
   }
 
   void RemoveEdge(const string &src, const string& dst){
-    CHECK(name2node_.find(src)!=name2node_.end());
-    CHECK(name2node_.find(dst)!=name2node_.end());
+    CHECK(name2node_.find(src)!=name2node_.end())<<"can't find src node "<<src;
+    CHECK(name2node_.find(dst)!=name2node_.end())<<"can't find dst node "<<dst;
 
     SNode srcnode=name2node_[src], dstnode=name2node_[dst];
     RemoveEdge(srcnode, dstnode);
@@ -121,7 +121,8 @@ class Graph{
   };
 
   const SNode& node(string name) const{
-    CHECK(name2node_.find(name)!= name2node_.end());
+    CHECK(name2node_.find(name)!= name2node_.end())
+      <<"can't find dst node "<<name;
     return name2node_.at(name);
   }
 

@@ -8,11 +8,10 @@
 #include <utility>
 #include <memory>
 #include <chrono>
-#include <random>
 #include <algorithm>
 
 #include "proto/model.pb.h"
-#include "model/param.h"
+#include "utils/param.h"
 #include "utils/common.h"
 #include "utils/blob.h"
 
@@ -163,24 +162,27 @@ class Layer {
   const std::string &name() const {
     return layer_proto_.name();
   }
-  virtual const vector<int>& shape(const Layer* layer=nullptr) const{
-    return data_.shape();
+  const vector<int>& shape(const Layer* layer=nullptr) const{
+    return data(layer).shape();
   }
 
   /**
    * @return a const ref for Blob storing neuron values of this layer for BP
    */
-  virtual const Blob<float>& data(int k=0){
+  virtual const Blob<float>& data(const Layer* from=nullptr) const {
     return data_;
   }
-  virtual Blob<float>* mutable_data(int k=0){
+  virtual Blob<float>* mutable_data(const Layer* from=nullptr){
     return &data_;
   }
 
+  virtual const Blob<float>& grad(const Layer* from=nullptr) const {
+    return grad_;
+  }
   /**
    * @return a pointer to storing neuron grads of this layer for BP
    */
-  virtual Blob<float>* mutable_grad(int k=0) {
+  virtual Blob<float>* mutable_grad(const Layer* from=nullptr) {
     return &grad_;
   }
 
@@ -210,6 +212,21 @@ class Layer {
   virtual void AddDstLayer(SLayer dst){
     dstlayers_.push_back(dst);
   }
+
+  virtual bool is_datalayer() const {
+    return false;
+  }
+  virtual bool is_parserlayer() const {
+    return false;
+  }
+  virtual bool is_losslayer() const {
+    return false;
+  }
+  /*
+  virtual bool is_neuronlayer() const {
+    return false;
+  }
+  */
 
 protected:
   string name_;
@@ -264,6 +281,9 @@ class DataLayer: public Layer{
  public:
   virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
+  virtual bool is_datalayer() const {
+    return true;
+  }
   virtual void ComputeGradient(const vector<SLayer>& srclayers){};
   virtual const vector<Record>& records() const {
     return records_;
@@ -292,15 +312,11 @@ class DataLayer: public Layer{
     return sample_;
   }
 
-  virtual void CompletePrefetch(){
-    records_.swap(prefetch_data_);
-  }
-
  protected:
   bool has_set_;
   int random_skip_, batchsize_;
   Record sample_;
-  vector<Record> records_, prefetch_data_;
+  vector<Record> records_;
 };
 class SliceLayer: public Layer {
  public:
@@ -311,12 +327,16 @@ class SliceLayer: public Layer {
       const vector<SLayer>& srclayers){}
 
 
-  virtual const vector<int>& shape(const Layer* layer=nullptr) const;
+  virtual const Blob<float>& data(const Layer* layer=nullptr) const;
+  virtual const Blob<float>& grad(const Layer* layer=nullptr) const;
+  virtual Blob<float>* mutable_data(const Layer* layer=nullptr);
+  virtual Blob<float>* mutable_grad(const Layer* layer=nullptr);
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 
  protected:
-  vector<vector<int>> shapes_;
+  int SliceID(const Layer* layer) const;
+  vector<Blob<float>> datavec_, gradvec_;
 };
 
 
@@ -331,15 +351,32 @@ class SplitLayer: public Layer {
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
-/**********************Output Performance/Loss Layers************************/
-const int kLoss=1;
-const int kPrecision=2;
+/**********************Loss Layers************************/
 
-class PerformanceLayer: public Layer{
+class LossLayer: public Layer{
  public:
-  virtual Performance ComputePerformance(
-      const vector<SLayer>&srclayers,
-      int type)=0;
+  virtual void Setup(const LayerProto& proto,
+      const vector<SLayer>& srclayers)=0;
+
+  virtual void SetupAfterPartition(const LayerProto& proto,
+      const vector<int> &shape,
+      const vector<SLayer>& srclayers)=0;
+  virtual Blob<float>* mutable_grad(Layer* layer=nullptr){
+    return nullptr;
+  }
+  virtual const Blob<float>& grad(const Layer* from=nullptr) const {
+    CHECK(false)<<"Loss layer has not gradient blob";
+    return grad_;
+  }
+  virtual bool is_losslayer() const {
+    return true;
+  }
+
+  virtual const Blob<float>& metric() const {
+    return metric_;
+  }
+ protected:
+  Blob<float> metric_;
 };
 
 /**
@@ -347,8 +384,12 @@ class PerformanceLayer: public Layer{
  */
 class ParserLayer: public Layer {
  public:
+  virtual void ComputeFeature();
   virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
+  virtual bool is_parserlayer() const {
+    return true;
+  }
   virtual void ComputeGradient(const vector<SLayer>& srclayers){};
   virtual void Setup(){
     Setup(layer_proto_,srclayers_);
@@ -362,17 +403,51 @@ class ParserLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual PartitionType partition_type () {
+  virtual PartitionType partition_type () const{
     return kNone;
   }
 
-  virtual Blob<float>* mutable_grad(int k=0) {
-    NOT_IMPLEMENTED;
-    return &grad_;
+  virtual Blob<float>* mutable_grad(const Layer* layer=nullptr) {
+    return nullptr;
+  }
+  virtual const Blob<float>& grad(const Layer* from=nullptr) const {
+    CHECK(false)<<"Parser layer has not gradient blob";
+    return grad_;
+  }
+
+  /**
+   * prefetching is transparent to parsing logics.
+   * users implement parsing logics in ComputeFeature(const vector<SLayer>&)
+   * worker/training algorithm calls this function to do prefetching in a
+   * thread. data is in fact parsed into prefetch_data_.
+   */
+  void Prefetching(){
+    if(prefetch_data_.count()==0)
+      prefetch_data_.ReshapeLike(data_);
+    data_.Swap(prefetch_data_);
+    ComputeFeature(srclayers_);
+  }
+
+  /**
+   * must be called after Prefetching and before calling upper layers
+   * otherwise, the old data will be used (new data is in prefech_data_).
+   */
+  void CompletePrefetching(){
+    data_.Swap(prefetch_data_);
+  }
+
+  /**
+   * if prefetching, then do nothing; otherwise conduct normal ComputeFeature
+   */
+  void ComputeFeature(){
+    if(prefetch_data_.count()==0)
+      ComputeFeature(srclayers_);
   }
 
  private:
   bool has_set_;
+  //!< prefetch_data_ is invisible to layer logics, i.e., parsing.
+  Blob<float> prefetch_data_;
 };
 } // singa
 

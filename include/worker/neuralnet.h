@@ -6,7 +6,6 @@
 #include <map>
 #include <memory>
 
-//#include "model/param.h"
 #include "proto/model.pb.h"
 #include "model/layer.h"
 #include "utils/factory.h"
@@ -36,12 +35,19 @@ class NeuralNet {
    * shape info.
    */
   std::string ToString();
+  string DebugInfo();
 
   std::string ToAdjacency();
   /**
    * print the DOT string for drawing a graph for the neural net
    */
   void DisplayNeuralNet(const vector<shared_ptr<Layer>>& layers);
+/**
+   * Print Norm1 of data and grad of each Layer and parameter.
+   * @param net, neural network
+   */
+  void DebugInfo() const;
+
 
   /**
    * Add layer explicitly used in manually programming/constructing neural net.
@@ -54,14 +60,28 @@ class NeuralNet {
   /**
    * serialize the net.
    */
+  void ShareWeights(shared_ptr<NeuralNet> net){}
   void ToProto(NetProto *net_proto, bool copyData=false);
-  PerformanceLayer* performance_layer(int k) {
-    CHECK_LT(k, performance_layers_.size());
-    return performance_layers_[k];
-  }
   const std::vector<shared_ptr<Layer>>& layers() {
     return layers_;
   }
+  const std::vector<shared_ptr<Layer>>& parserlayers() {
+    if(parserlayers_.size()==0){
+      for(auto& layer: layers_)
+        if(layer->is_parserlayer())
+          parserlayers_.push_back(layer);
+    }
+    return parserlayers_;
+  }
+  const std::vector<shared_ptr<Layer>>& losslayers() {
+    if(parserlayers_.size()==0){
+      for(auto& layer: layers_)
+        if(layer->is_losslayer())
+          parserlayers_.push_back(layer);
+    }
+    return losslayers_;
+  }
+
     /*
   const std::vector<Param *> &params() {
     return params_;
@@ -123,8 +143,9 @@ class NeuralNet {
    */
  private:
   vector<shared_ptr<Layer>> layers_;
-  vector<PerformanceLayer *> performance_layers_;
-  //vector<shared_ptr<Param>> params_;
+  vector<shared_ptr<Layer>> parserlayers_;
+  vector<shared_ptr<Layer>> losslayers_;
+  vector<Param*> params_;
   map<string, shared_ptr<Layer>> name2layer_;
   map<string, LayerProto> name2layerproto_;
   Factory<Layer>* factory_;

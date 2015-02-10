@@ -269,6 +269,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
   }
   // must do topology sort, because we have added new nodes.
   graph.Sort();
+  LOG(ERROR)<<graph.ToString();
 
   // add node for split layer
   bool data_node=true;
@@ -323,6 +324,33 @@ std::string NeuralNet::ToAdjacency(){
 
 void NeuralNet::ToProto(NetProto *proto, bool copyData) {
   proto->clear_layer();
+}
+
+string NeuralNet::DebugInfo(){
+  string ret;
+  char display[4096];
+  for(auto* layer: layers_){
+    sprintf(display, "Forward layer  %10s data norm1 %13.9f",
+        layer->name().c_str(), layer->data().asum_data());
+    ret+=string(display);
+  }
+  for (auto layer = layers_.rbegin(); layer != layers_.rend_(); layer++){
+    if(!(*layer)->has_input()){
+      sprintf(display, "Backward layer %10s grad norm1 %13.9f",
+          (*layer)->name().c_str(), (*layer)->grad().asum_data());
+      ret+=string(display);
+    }
+  }
+  for(auto* layer: layers_){
+    for(auto* param: layer->GetParams()){
+      sprintf(display, "Layer %10s, param id %2d, name %10s,\
+          value norm1 %13.9f, grad norm1 %13.9f",
+          layer->name().c_str(), param->id(), param->name().c_str(), p
+          aram->data().asum_data(), param->grad().asum_data());
+      ret+=string(display);
+    }
+  }
+  return ret;
 }
 
 }  // namespace singa

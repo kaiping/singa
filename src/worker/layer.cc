@@ -8,11 +8,10 @@
 
 using namespace mshadow;
 using namespace mshadow::expr;
+
 namespace singa {
 
-/*****************************************************************************
- * Implementation for ConvProductLayer
- *****************************************************************************/
+/************ Implementation for ConvProductLayer*************************/
 void ConvolutionLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
@@ -22,22 +21,21 @@ void ConvolutionLayer::Setup(const LayerProto& proto,
   pad_=conv_param.pad();
   stride_=conv_param.stride();
   num_filters_=conv_param.num_filters();
-  const vector<int>& srcshape=srclayers[0]->shape(this);
+  const vector<int>& srcshape=srclayers[0]->data(this).shape();
   int dim=srcshape.size();
   CHECK_GT(dim, 2);
-  num_=srcshape[0];
-  CHECK_EQ(num_, data_.shape()[0]);
   width_=srcshape[dim-1];
   height_=srcshape[dim-2];
   if(dim>3)
     channels_=srcshape[dim-3];
   else if(dim>2)
     channels_=1;
+  batchsize_=srcshape[0];
   conv_height_=(height_ + 2 * pad_ - kernel_) / stride_ + 1;
   conv_width_= (width_ + 2 * pad_ - kernel_) / stride_ + 1;
   col_height_=channels_*kernel_*kernel_;
   col_width_=conv_height_*conv_width_;
-  vector<int> shape{srcshape[0], num_filters_, conv_height_, conv_width_};
+  vector<int> shape{batchsize_, num_filters_, conv_height_, conv_width_};
   data_.Reshape(shape);
   grad_.Reshape(shape);
   col_data_.Reshape(vector<int>{col_height_, col_width_});
@@ -56,17 +54,18 @@ void ConvolutionLayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void ConvolutionLayer::ComputeFeature(const vector<SLayer>& srclayers){
-  Tensor<cpu, 4> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
-      Shape4(num_, channels_, height_, width_));
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
+      Shape4(batchsize_, channels_, height_, width_));
   Tensor<cpu, 3> data(data_.mutable_cpu_data(),
-      Shape3(num_, num_filters_, conv_height_* conv_width_));
+      Shape3(batchsize_, num_filters_, conv_height_* conv_width_));
   Tensor<cpu, 2> col(col_data_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
   Tensor<cpu, 2> weight(weight_.mutable_cpu_data(),
       Shape2(num_filters_, col_height_));
-  Tensor<cpu, 1> bias(bias_.mutable_cpu_data(), Shape1(num_filters_));
+  Tensor<cpu, 1> bias(bias_.mutable_cpu_data(),
+      Shape1(num_filters_));
 
-  for(int n=0;n<num_;n++){
+  for(int n=0;n<batchsize_;n++){
     Tensor<cpu, 3> srcn=src[n];
     col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
     Tensor<cpu, 2> datan=data[n];
@@ -76,29 +75,32 @@ void ConvolutionLayer::ComputeFeature(const vector<SLayer>& srclayers){
 }
 
 void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
-  Tensor<cpu, 4> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
-      Shape4(num_, channels_, height_, width_));
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
+      Shape4(batchsize_, channels_, height_, width_));
   Tensor<cpu, 2> col(col_data_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
-  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(), Shape2(num_filters_, col_height_));
+  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(),
+      Shape2(num_filters_, col_height_));
 
-  Blob<float>* gsrcblob=srclayers[0]->mutable_grad();
-  Tensor<cpu, 4> gsrc(Shape4(num_, channels_, height_, width_));
+  Blob<float>* gsrcblob=srclayers[0]->mutable_grad(this);
+  Tensor<cpu, 4> gsrc(Shape4(batchsize_, channels_, height_, width_));
   if(gsrcblob!=nullptr)
     gsrc.dptr=gsrcblob->mutable_cpu_data();
   Tensor<cpu, 3> grad(grad_.mutable_cpu_data(),
-      Shape3(num_, num_filters_, conv_height_* conv_width_));
+      Shape3(batchsize_, num_filters_, conv_height_* conv_width_));
   Tensor<cpu, 2> gcol(col_grad_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
-  Tensor<cpu, 2> gweight(weight_.mutable_cpu_grad(), Shape2(num_filters_, col_height_));
-  Tensor<cpu, 1> gbias(bias_.mutable_cpu_grad(), Shape1(num_filters_));
+  Tensor<cpu, 2> gweight(weight_.mutable_cpu_grad(),
+      Shape2(num_filters_, col_height_));
+  Tensor<cpu, 1> gbias(bias_.mutable_cpu_grad(),
+      Shape1(num_filters_));
 
   gweight=0.0f;
   gbias=sumall_except_dim<2>(grad);
   Shape<3> padshape(gsrc.shape.SubShape());
   padshape[0]+=2*pad_;padshape[1]+=2*pad_;
   Shape<2> imgshape=Shape2(height_, width_);
-  for(int n=0;n<num_;n++){
+  for(int n=0;n<batchsize_;n++){
     Tensor<cpu, 3> srcn=src[n];
     col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
     gweight+=dot(grad[n], col.T());
@@ -111,15 +113,15 @@ void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
   }
 }
 
-/**********************************
- * Implementation for DropoutLayer
- **********************************/
+/****************** Implementation for DropoutLayer ***********************/
 void DropoutLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
-  data_.ShareData(srclayers[0]->data());
-  grad_.ShareData(*srclayers[0]->mutable_grad());
-  mask_.Reshape(srclayers[0]->shape());
+  data_.ReshapeLike(srclayers[0]->data(this));
+  grad_.ReshapeLike(*srclayers[0]->mutable_grad(this));
+  mask_.Reshape(srclayers[0]->data(this).shape());
   pdrop_=proto.dropout_param().dropout_ratio();
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  ASingleton<Random<cpu>>::Instance(seed);
 }
 
 void DropoutLayer::SetupAfterPartition(const LayerProto& proto,
@@ -132,7 +134,8 @@ void DropoutLayer::ComputeFeature(const vector<SLayer>& srclayers) {
   // check training
   float pkeep=1-pdrop_;
   Tensor<cpu, 1> mask(mask_.mutable_cpu_data(), Shape1(mask_.count()));
-  mask = F<op::threshold>(ASingleton<Random<cpu>>::Instance()->uniform(mask.shape), pkeep ) * (1.0f/pkeep);
+  mask = F<op::threshold>(ASingleton<Random<cpu>>::Instance()\
+      ->uniform(mask.shape), pkeep ) * (1.0f/pkeep);
   Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
   Blob<float>* srcblob=srclayers[0]->mutable_data();
   Tensor<cpu, 1> src(srcblob->mutable_cpu_data(), Shape1(srcblob->count()));
@@ -146,23 +149,18 @@ void DropoutLayer::ComputeGradient(const vector<SLayer>& srclayers)  {
   Tensor<cpu, 1> gsrc(gsrcblob->mutable_cpu_data(), Shape1(gsrcblob->count()));
   gsrc=grad*mask;
 }
-/*****************************************************************************
- * Implementation for InnerProductLayer
- *****************************************************************************/
+/**************** Implementation for InnerProductLayer********************/
 void InnerProductLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  const auto& shape=srclayers[0]->shape(this);
-  num_=shape[0];
-  int size=1;
-  for(size_t i=0;i<shape.size();i++)
-    size*=shape[i];
-  vdim_=size/num_;
+  const auto& src=srclayers[0]->data(this);
+  batchsize_=src.shape()[0];
+  vdim_=src.count()/batchsize_;
   hdim_=proto.inner_product_param().num_output();
-  data_.Reshape(vector<int>{num_, hdim_});
+  data_.Reshape(vector<int>{batchsize_, hdim_});
   grad_.ReshapeLike(data_);
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  ASingleton<Random<cpu>>::Instance(seed);
+  weight_.Setup(proto.param(0), vector<int>{vdim_, hdim_});
+  bias_.Setup(proto.param(1), vector<int>{hdim_});
 }
 void InnerProductLayer::SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
@@ -174,9 +172,33 @@ void InnerProductLayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void InnerProductLayer::ComputeFeature(const vector<SLayer>& srclayers) {
+  Tensor<cpu, 2> data(data_.mutable_cpu_data(), Shape2(batchsize_,hdim_));
+  Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
+      Shape2(batchsize_,vdim_));
+  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 1> bias(bias_.mutable_cpu_data(), Shape1(hdim_));
+  data=dot(src, weight);
+  // repmat: repeat bias vector into batchsize rows
+  data+=repmat(bias, batchsize_);
 }
 
 void InnerProductLayer::ComputeGradient(const vector<SLayer>& srclayers) {
+  Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
+      Shape2(batchsize_,vdim_));
+  Tensor<cpu, 2> gsrc(Shape2(batchsize_,vdim_));
+  Blob<float>* gsrcblob=srclayers[0]->mutable_grad(this);
+  if(gsrcblob!=nullptr)
+    gsrc.dptr=gsrcblob->mutable_cpu_data();
+  Tensor<cpu, 2> grad(grad_.mutable_cpu_data(),Shape2(batchsize_,hdim_));
+  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 2> gweight(weight_.mutable_cpu_grad(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 1> gbias(bias_.mutable_cpu_grad(), Shape1(hdim_));
+
+  gbias=sum_rows(grad);
+  gweight=dot(src.T(), grad);
+
+  if(gsrcblob!=nullptr)
+    gsrc=dot(grad, weight.T());
 }
 /*****************************************************************************
  * Implementation for LabelLayer
@@ -197,24 +219,21 @@ void LabelLayer::ComputeFeature(const vector<SLayer>& srclayers){
   }
   CHECK_EQ(rid, data_.shape()[0]);
 }
-/*****************************************************************************
- * Implementation for LRNLayer
- *****************************************************************************/
+/***************** Implementation for LRNLayer *************************/
 void LRNLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  size_ = proto.lrn_param().local_size();
-  CHECK_EQ(size_ % 2, 1) << "LRN only supports odd values for Localvol";
-  lpad_ = (size_ - 1) / 2;
+  lsize_ = proto.lrn_param().local_size();
+  CHECK_EQ(lsize_ % 2, 1) << "LRN only supports odd values for Localvol";
   knorm_=proto.lrn_param().knorm();
-  rpad_=size_-lpad_;
   alpha_ = proto.lrn_param().alpha();
   beta_ = proto.lrn_param().beta();
 
-  const vector<int>& s=srclayers[0]->shape(this);
+  const vector<int>& s=srclayers[0]->data(this).shape();
   data_.Reshape(s);
   grad_.Reshape(s);
-  num_=s[0];
+  norm_.Reshape(s);
+  batchsize_=s[0];
   channels_=s[1];
   height_=s[2];
   width_=s[3];
@@ -227,15 +246,31 @@ void LRNLayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void LRNLayer::ComputeFeature(const vector<SLayer>& srclayers){
-
+  const float salpha = alpha_ / lsize_;
+  Shape<4> s=Shape4(batchsize_,channels_, height_, width_);
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(), s);
+  Tensor<cpu, 4> data(data_.mutable_cpu_data(), s);
+  Tensor<cpu, 4> norm(norm_.mutable_cpu_data(), s);
+  // stores normalizer without power
+  norm= chpool<red::sum>( F<op::square>(src) , lsize_ ) * salpha + knorm_;
+  data = src * F<op::power>(norm, -beta_ );
 }
 
 void LRNLayer::ComputeGradient(const vector<SLayer>& srclayers) {
+  const float salpha = alpha_ / lsize_;
+  Shape<4> s=Shape4(batchsize_,channels_, height_, width_);
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data()->mutable_cpu_data(), s);
+  Tensor<cpu, 4> norm(norm_.mutable_cpu_data(), s);
+  Tensor<cpu, 4> grad(grad_.mutable_cpu_data(), s);
+  Tensor<cpu, 4> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(), s);
+
+  gsrc = grad * F<op::power>( norm, -beta_ );
+  gsrc += ( - 2.0f * beta_ * salpha ) * chpool<red::sum>(
+      grad * src * F<op::power>( norm, -beta_-1.0f ), lsize_ )  * src;
 }
 
-/*************************************
- * Implementation for MnistImageLayer
- *************************************/
+/**************** Implementation for MnistImageLayer******************/
+
 void MnistImageLayer::ComputeFeature(const vector<SLayer>& srclayers){
   DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
   int inputsize =datalayer->sample().image().shape(0);
@@ -323,24 +358,8 @@ void MnistImageLayer::Setup(const LayerProto& proto,
     data_.Reshape(vector<int>{batchsize, s, s });
   }
 }
-  /*
-vector<uint8_t> MnistImageLayer::Convert2Image(int k){
-  vector<uint8_t>ret;
-  float* dptr=grad_.addr(k,0,0);
-  int s=static_cast<int>(sqrt(grad_.shape(1)));
-  if(this->layer_proto_.mnist_param().has_size())
-    s=this->layer_proto_.mnist_param().size();
-  for(int i=0;i<s*s;i++){
-      ret.push_back(static_cast<uint8_t>(static_cast<int>(floor(dptr[i]))));
-  }
-  return ret;
-}
-  */
 
-/**********************************
- * Implementation for PoolingLayer
- * The code is adapted from Caffe.
- **********************************/
+/******************** Implementation for PoolingLayer******************/
 void PoolingLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
@@ -349,12 +368,12 @@ void PoolingLayer::Setup(const LayerProto& proto,
   pad_=pool_param.pad();
   stride_=pool_param.stride();
   CHECK_LT(pad_, kernel_);
-
-  CHECK(proto.pooling_param().pool() == PoolingProto_PoolMethod_AVE
-        || proto.pooling_param().pool() == PoolingProto_PoolMethod_MAX)
+  pool_=proto.pooling_param().pool();
+  CHECK(pool_ == PoolingProto_PoolMethod_AVE
+        || pool_ == PoolingProto_PoolMethod_MAX)
       << "Padding implemented only for average and max pooling.";
 
-  const auto& srcshape=srclayers[0]->shape(this);
+  const auto& srcshape=srclayers[0]->data(this).shape();
   int dim=srcshape.size();
   CHECK_GT(dim,2);
   width_ = srcshape[dim-1];
@@ -363,23 +382,12 @@ void PoolingLayer::Setup(const LayerProto& proto,
     channels_ = srcshape[dim-3];
   else
     channels_=1;
-  num_=srcshape[0];
+  batchsize_=srcshape[0];
   pooled_height_ = static_cast<int>(ceil(static_cast<float>(
           height_ + 2 * pad_ - kernel_) / stride_)) + 1;
   pooled_width_ = static_cast<int>(ceil(static_cast<float>(
           width_ + 2 * pad_ - kernel_) / stride_)) + 1;
-  if (pad_) {
-    // If we have padding, ensure that the last pooling starts strictly
-    // inside the image (instead of at the padding); otherwise clip the last.
-    if ((pooled_height_ - 1) * stride_ >= height_ + pad_) {
-      --pooled_height_;
-    }
-    if ((pooled_width_ - 1) * stride_ >= width_ + pad_) {
-      --pooled_width_;
-    }
-    CHECK_LT((pooled_height_ - 1) * stride_, height_ + pad_);
-  }
-  data_.Reshape(vector<int>{num_, channels_, pooled_height_, pooled_width_});
+  data_.Reshape(vector<int>{batchsize_, channels_, pooled_height_, pooled_width_});
   grad_.ReshapeLike(data_);
 }
 
@@ -390,6 +398,15 @@ void PoolingLayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void PoolingLayer::ComputeFeature(const vector<SLayer>& srclayers){
+  Shape<2> pshape=Shape2(pooled_height_, pooled_width_);
+  Shape<4> s= Shape4(batchsize_, channels_, height_, width_);
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),s);
+  Tensor<cpu, 4> data(data_.mutable_cpu_data(), s);
+  if(pool_ == PoolingProto_PoolMethod_MAX)
+    data=pool<red::maximum>(src, pshape, kernel_, stride_);
+  else if(pool_ == PoolingProto_PoolMethod_AVE)
+    data=pool<red::sum>(src, pshape, kernel_, stride_)
+      *(1.0f/(kernel_*kernel_));
 }
 
 /*
@@ -397,15 +414,25 @@ void PoolingLayer::ComputeFeature(const vector<SLayer>& srclayers){
  * assume grad and data have the same paritition
  */
 void PoolingLayer::ComputeGradient(const vector<SLayer>& srclayers) {
+  Shape<4> s1= Shape4(batchsize_, channels_, height_, width_);
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),s1);
+  Tensor<cpu, 4> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),s1);
+  Shape<4> s2= Shape4(batchsize_, channels_, pooled_height_, pooled_width_);
+  Tensor<cpu, 4> data(data_.mutable_cpu_data(), s2);
+  Tensor<cpu, 4> grad(grad_.mutable_cpu_data(), s2);
+  if(pool_ == PoolingProto_PoolMethod_MAX)
+      gsrc = unpool<red::maximum>(src, data, grad, kernel_, stride_);
+  else if(pool_ == PoolingProto_PoolMethod_AVE)
+      gsrc = unpool<red::sum>(src, data, grad, kernel_, stride_)
+        *(1.0f/(kernel_*kernel_));
 }
 
-/*******************************
- * Implementation for ReLULayer
- *******************************/
+/***************** Implementation for ReLULayer *****************************/
+
 void ReLULayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
-  data_.ShareData(srclayers[0]->data());
-  grad_.ShareData(*(srclayers[0]->mutable_grad()));
+  data_.ReshapeLike(srclayers[0]->data());
+  grad_.ReshapeLike(*(srclayers[0]->mutable_grad()));
 }
 
 void ReLULayer::SetupAfterPartition(const LayerProto& proto,
@@ -415,11 +442,22 @@ void ReLULayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void ReLULayer::ComputeFeature(const vector<SLayer>& srclayers){
+  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
+  Tensor<cpu, 1> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
+      Shape1(data_.count()));
+  data=F<op::relu>(src);
 }
 
 void ReLULayer::ComputeGradient(const vector<SLayer>& srclayers) {
+  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
+  Tensor<cpu, 1> grad(grad_.mutable_cpu_data(), Shape1(grad_.count()));
+  Tensor<cpu, 1> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),
+      Shape1(data_.count()));
+  gsrc=F<op::relu_grad>(data)*grad;
 }
-/******************RGBImageLayer************************/
+
+/*************** Implementation for RGBImageLayer *************************/
+
 void RGBImageLayer::ComputeFeature(const vector<SLayer>& srclayers){
   DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
   const vector<int>& s=data_.shape();
@@ -494,7 +532,7 @@ void RGBImageLayer::Setup(const LayerProto& proto,
   data_.Reshape(shape);
 }
 
-/***************ShardDataLayer**************************/
+/***************Implementation for ShardDataLayer**************************/
 void ShardDataLayer::ComputeFeature(const vector<SLayer>& srclayers){
   if(random_skip_){
     int nskip=rand()%random_skip_;
@@ -505,7 +543,7 @@ void ShardDataLayer::ComputeFeature(const vector<SLayer>& srclayers){
     }
     random_skip_=0;
   }
-  for(auto& record: prefetch_data_){
+  for(auto& record: data_){
     string key;
     shard_->Next(&key, &record);
   }
@@ -520,16 +558,13 @@ void ShardDataLayer::Setup(const LayerProto& proto,
   batchsize_=proto.data_param().batchsize();
 
   records_.resize(batchsize_);
-  prefetch_data_.resize(batchsize_);
   random_skip_=proto.data_param().random_skip();
 }
-/****************************************
- * Implementation of TanLayer with scaling
- *****************************************/
+/*******************Implementation of TanLayer***************************/
 void TanhLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
-  data_.Reshape(srclayers[0]->shape());
-  grad_.ReshapeLike(data_);
+  data_.ReshapeLike(srclayers[0]->data(this));
+  grad_.ReshapeLike(srclayers[0]->grad(this));
 }
 
 void TanhLayer::SetupAfterPartition(const LayerProto& proto,
@@ -540,19 +575,30 @@ void TanhLayer::SetupAfterPartition(const LayerProto& proto,
 
 
 void TanhLayer::ComputeFeature(const vector<SLayer>& srclayers){
+  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
+  Tensor<cpu, 1> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
+      Shape1(data_.count()));
+  data=F<op::tanh>(src);
 }
 
 void TanhLayer::ComputeGradient(const vector<SLayer>& srclayers) {
+  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
+  Tensor<cpu, 1> grad(grad_.mutable_cpu_data(), Shape1(grad_.count()));
+  Tensor<cpu, 1> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),
+      Shape1(data_.count()));
+  gsrc=F<op::tanh_grad>(data)*grad;
 }
-
-
-/*****************************************************************************
- * Implementation for SoftmaxLossLayer
- *****************************************************************************/
+/********** * Implementation for SoftmaxLossLayer*************************/
 void SoftmaxLossLayer::Setup(const LayerProto& proto,
-      const vector<SLayer>& srclayers){
-  data_.Reshape(srclayers[0]->shape());
-  grad_.ReshapeLike(data_);
+    const vector<SLayer>& srclayers){
+  CHECK_EQ(srclayers.size(),2);
+  data_.Reshape(srclayers[0]->data(this).shape());
+  batchsize_=data_.shape()[0];
+  dim_=data_.count()/batchsize_;
+  for(int k: proto.softmaxloss_param().topk())
+    topk_.push_back(k);
+  metric_.Reshape(vector<int>{1+static_cast<int>(topk_.size())});
+  scale_=proto.softmaxloss_param().scale();
 }
 void SoftmaxLossLayer::SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
@@ -560,23 +606,43 @@ void SoftmaxLossLayer::SetupAfterPartition(const LayerProto& proto,
   Setup(proto, srclayers);
 }
 void SoftmaxLossLayer::ComputeFeature(const vector<SLayer>& srclayers) {
-
+  Shape<2> s=Shape2(batchsize_, dim_);
+  Tensor<cpu, 2> prob(data_.mutable_cpu_data(), s);
+  Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(), s);
+  Softmax(prob, src);
+  const float* label=srclayers[1]->data().cpu_data();
+  const float* probptr=prob.dptr;
+  float *metric=metric_.mutable_cpu_data();
+  memset(metric,0, sizeof(float)* metric_.count());
+  for(int n=0;n<batchsize_;n++){
+    float prob_of_truth=probptr[static_cast<int>(label[n])];
+    metric[0]-=log(std::max(prob_of_truth, FLT_MIN));
+    if(topk_.size()){
+      int nlarger=0;
+      for(int i=0;i<dim_;i++){
+        if(probptr[i]>prob_of_truth)
+          nlarger++;
+      }
+      for(size_t i=1;i<=topk_.size();i++)
+        if(nlarger<topk_[i])
+          metric[i]++;
+    }
+    probptr+=dim_;
+  }
+  for(size_t i=0;i<=topk_.size();i++)
+    metric[i]*=scale_/(1.0f*batchsize_);
 }
 
 void SoftmaxLossLayer::ComputeGradient(const vector<SLayer>& srclayers) {
-}
-
-// assume only partition along 0-th dim, add perfs from all partition
-Performance SoftmaxLossLayer::ComputePerformance(
-    const vector<SLayer>& srclayers, int type){
-  Performance perf;
-  /*
-  int nrecords=nrng.second-nrng.first;
-  perf.set_topk_precision(ncorrectk*1.0/nrecords);
-  perf.set_top_precision(ncorrect*1.0/nrecords);
-  perf.set_loss(logprob/nrecords);
-  */
-  return perf;
+  const float* label=srclayers[1]->data().cpu_data();
+  Blob<float>* gsrcblob=srclayers[0]->mutable_grad();
+  gsrcblob->CopyFrom(data_);
+  float* gsrcptr=gsrcblob->mutable_cpu_data();
+  for(int n=0;n<batchsize_;n++){
+    gsrcptr[n*dim_+static_cast<int>(label[n])]-=1.0f;
+  }
+  Tensor<cpu, 1> gsrc(gsrcptr, Shape1(gsrcblob->count()));
+  gsrc*=scale_/(1.0f*batchsize_);
 }
 
 }  // namespace singa

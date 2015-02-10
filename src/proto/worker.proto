@@ -38,7 +38,7 @@ message MethodStats {
 message RequestBase {
 	required int32 table = 1;
 	required int32 source = 2;
-  optional int32 shard =3;
+  repeated int32 destination =3;
   // ?? start for what?
 	optional double start = 4;
 	extensions 100 to 199;
@@ -49,7 +49,7 @@ message GetRequest {
 		optional GetRequest name = 101;
 	}
 	optional uint32 shard = 1;
-	optional TKey key = 2;
+  optional TableData data=2;
 }
 
 message PutRequest {
@@ -69,6 +69,8 @@ message UpdateRequest {
 }
 
 message TableData {
-	optional TKey key = 1;
-  	optional TVal value =2;
+	optional int32 key = 1;
+  optional int32 version=2;
+  optional int32 threshold=3;
+  optional bytes value =4;
 }

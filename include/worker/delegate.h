@@ -12,8 +12,6 @@
 #include "utils/cluster.h"
 #include "utils/network_service.h"
 #include "proto/model.pb.h"
-#include "server.h"
-
 
 namespace singa {
 using std::string;
@@ -22,13 +20,12 @@ using std::shared_ptr;
 using std::make_shared;
 
 /**
- * Table Delegate is a proxy for the distributed parameter table.
- * Table Delegate works as a bridge between the workers and the table servers.
+ * Delegate is a proxy for the distributed parameter table.
+ * Delegate works as a bridge between the workers and the servers.
  * It redirects the Put, Get, Update requests for the parameters to the
- * TableServer, and collects/handles the responses from the Tableserver.
- * If there is no table server, it handles these requests locally.
+ * servers, and collects/handles the responses from the servers.
  */
-class TableDelegate {
+class Delegate {
  public:
   /**
    * Split represents meta info of a split of a Param object.
@@ -61,7 +58,6 @@ class TableDelegate {
     int id;
     int offset;
     int len;
-    int pid;
     Param* param;
   };
  public:
@@ -81,14 +77,12 @@ class TableDelegate {
    * if there are no table servers.
    */
   TableDelegate(int worker_id, int rank, int num_servers, int group_size,
-      int num_groups, bool synchronous,
-      std::shared_ptr<TableServerHandler> handler=nullptr);
+      int num_groups, bool synchronous)
   /**
    * Constructor.
    * @param gc, the Cluster which provides the cluster info numbers
    */
-  TableDelegate(shared_ptr<Cluster> cluster,
-      std::shared_ptr<TableServerHandler> handler=nullptr);
+  TableDelegate(shared_ptr<Cluster> cluster);
 
   /**
    * Destructor.
@@ -129,20 +123,16 @@ class TableDelegate {
   void AsyncCollect(Param * param, int step);
   //void Get(Param * param, int step);
 
-  /*
-  void StopCollectThread();
-  void StartCollectThread();
-  */
-
   //void SplitParams(const std::vector<Param *> &params, int worker_id);
   /**
    * Split one parameter object into multiple splits, which will be used to
    * construct tuples.
    * @param param
    * @worker_id id of the worker within one group, Cluster::worker_id().
-   */
   void SplitParam(Param * param);
+   */
 
+  void Setup(const vector<Param *>& params);
   int Sharding(int id, int num_servers) {
     return id % num_servers;
   }
@@ -160,6 +150,7 @@ class TableDelegate {
  private:
   //!< cluster info
   int  worker_id_,rank_,  num_servers_, group_size_, num_groups_;
+  int largest_message_;
   //!< true if all groups run synchronously, otherwise false.
   bool synchronous_;
   //!< each param has a vector of Splits
@@ -169,21 +160,14 @@ class TableDelegate {
   //!< split id to bool, set to true if the split is collected.
   std::map<int, bool> split_collected_;
   /**
-   * map from param id to local tuple (i.e., TVal).
-   * the local tuples are used do local update when there is no table server.
-   */
-  std::map<int, TVal> local_tuple_;
-  //!< to perform for local updates.
-  std::shared_ptr<TableServerHandler> handler_;
-  /**
    * requests from put/get/updates are pushed into this queue firstly, then
    * send to servers by the internal thread, the queue operations (push, pop)
    * are thread safe.
-   */
   SafeQueue<shared_ptr<RequestBase>> sending_queue_;
   //!< thread state controller, set to false to terminate the thread.
   bool running_;
   std::thread *running_loop_;
+   */
 };
 
 }  // namespace singa

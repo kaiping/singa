@@ -39,7 +39,8 @@ void Layer::ToProto(LayerProto *proto, bool copyData) {
 void BridgeSrcLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  data_.Reshape(srclayers[0]->shape(this));
+  data_.Reshape(srclayers[0]->data(this).shape());
+  grad_.ReshapeLike(data_);
 }
 void BridgeSrcLayer::SetupAfterPartition(){
   Setup(layer_proto_, srclayers_);
@@ -55,7 +56,8 @@ void BridgeSrcLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers)
 void BridgeDstLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  data_.Reshape(srclayers[0]->shape(this));
+  data_.Reshape(srclayers[0]->data(this).shape());
+  grad_.ReshapeLike(data_);
 }
 void BridgeDstLayer::SetupAfterPartition(){
   Setup(layer_proto_, srclayers_);
@@ -77,9 +79,9 @@ void ConcateLayer::Setup(const LayerProto& proto,
   size_t concate_dim=proto.concate_param().concate_dimension();
   CHECK_GE(concate_dim,0);
   CHECK_GT(srclayers.size(),1);
-  vector<int> shape=srclayers[0]->shape(this);
+  vector<int> shape=srclayers[0]->data(this).shape();
   for(size_t i=1;i<srclayers.size();i++){
-    const vector<int>& srcshape=srclayers[i]->shape(this);
+    const vector<int>& srcshape=srclayers[i]->data(this).shape();
     for(size_t j=0;j<shape.size();j++)
       if(j==concate_dim)
         shape[j]+=srcshape[j];
@@ -87,6 +89,7 @@ void ConcateLayer::Setup(const LayerProto& proto,
         CHECK_EQ(shape[j], srcshape[j]);
   }
   data_.Reshape(shape);
+  grad_.Reshape(shape);
 }
 
 void ConcateLayer::SetupAfterPartition(){
@@ -106,14 +109,17 @@ void SliceLayer::Setup(const LayerProto& proto,
   int slice_num=proto.slice_param().slice_num();
   CHECK_GE(slice_dim,0);
   CHECK_EQ(slice_num, dstlayers_.size());
-  data_.Reshape(srclayers[0]->shape(this));
-  shapes_.clear();
+  data_.Reshape(srclayers[0]->data(this).shape());
+  grad_.ReshapeLike(data_);
+  datavec_.resize(slice_num);
+  gradvec_.resize(slice_num);
   //LOG(ERROR)<<"slice dim "<<slice_dim<<" slice num "<<slice_num;
   for(int i=0;i<slice_num;i++){
     vector<int> newshape(data_.shape());
     newshape[slice_dim]=newshape[slice_dim]/slice_num+
       ((i==slice_num-1)?newshape[slice_dim]%slice_num:0);
-    shapes_.push_back(newshape);
+    datavec_[i].Reshape(newshape);
+    gradvec_[i].Reshape(newshape);
     //LOG(ERROR)<<"slice "<<IntVecToString(newshape);
   }
 }
@@ -123,16 +129,37 @@ void SliceLayer::SetupAfterPartition(){
   //LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
 }
 
-const vector<int>& SliceLayer::shape(const Layer* layer) const {
-  if(layer==nullptr)
-    return data_.shape();
-  for(size_t i=0;i<shapes_.size();i++){
+
+int SliceLayer::SliceID(const Layer* layer) const {
+  CHECK(layer!= nullptr);
+  for(size_t i=0;i<datavec_.size();i++){
     //LOG(ERROR)<<"get slice "<<IntVecToString(shapes_[i]);
     if(dstlayers_[i].get() == layer)
-      return shapes_[i];
+      return i;
   }
   CHECK(false);
-  return data_.shape(); // avoid compile warning
+  return -1;
+}
+
+const Blob<float>& SliceLayer::data(const Layer* layer) const {
+  if(layer==nullptr)
+    return data_;
+  return datavec_[SliceID(layer)];
+}
+const Blob<float>& SliceLayer::grad(const Layer* layer) const {
+  if(layer==nullptr)
+    return grad_;
+  return gradvec_[SliceID(layer)];
+}
+Blob<float>* SliceLayer::mutable_data(const Layer* layer) {
+  if(layer==nullptr)
+    return &data_;
+  return &datavec_[SliceID(layer)];
+}
+Blob<float>* SliceLayer::mutable_grad(const Layer* layer){
+  if(layer==nullptr)
+    return &grad_;
+  return &gradvec_[SliceID(layer)];
 }
 void SliceLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){}
 void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
@@ -140,7 +167,8 @@ void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
 void SplitLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
   CHECK_EQ(srclayers.size(),1);
-  data_.Reshape(srclayers[0]->shape(this));
+  data_.Reshape(srclayers[0]->data(this).shape());
+  grad_.Reshape(srclayers[0]->data(this).shape());
 }
 
 void SplitLayer::SetupAfterPartition(){

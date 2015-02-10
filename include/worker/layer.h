@@ -11,8 +11,6 @@
 #include <random>
 
 #include "proto/model.pb.h"
-#include "model/param.h"
-#include "utils/common.h"
 #include "utils/shard.h"
 #include "model/base_layer.h"
 
@@ -50,7 +48,7 @@ class ConvolutionLayer: public Layer {
   }
  protected:
   int kernel_, pad_,  stride_ ;
-  int num_,  channels_, height_,width_;
+  int batchsize_,  channels_, height_,width_;
   int col_height_, col_width_, conv_height_, conv_width_, num_filters_;
   Param weight_, bias_;
   Blob<float> col_data_, col_grad_;
@@ -107,7 +105,7 @@ class InnerProductLayer: public Layer {
   int hdim_;
   //! dimension of the visible layer
   int vdim_;
-  int num_;
+  int batchsize_;
   Param weight_, bias_;
 };
 
@@ -140,12 +138,12 @@ class LRNLayer: public Layer {
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   //! shape of the bottom layer feature
-  int num_, channels_, height_, width_;
-  //! size local response (neighbor) area and padding size
-  int size_, lpad_, rpad_;
+  int batchsize_, channels_, height_, width_;
+  //! size local response (neighbor) area
+  int lsize_;
   //! hyper-parameter
   float alpha_, beta_, knorm_;
-  //DArray norm_, ratio_; //ratio : grad/(data*norm)
+  Blob<float> norm_;
 };
 
 class MnistImageLayer: public ParserLayer {
@@ -179,7 +177,8 @@ class PoolingLayer: public Layer {
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   int kernel_, pad_, stride_;
-  int num_,channels_, height_, width_, pooled_height_, pooled_width_;
+  int batchsize_,channels_, height_, width_, pooled_height_, pooled_width_;
+  PoolingProto_PoolMethod pool_;
 };
 
 class ReLULayer: public Layer {
@@ -197,7 +196,7 @@ class ReLULayer: public Layer {
 };
 
 
-class SoftmaxLossLayer: public PerformanceLayer {
+class SoftmaxLossLayer: public LossLayer {
   /*
    * connected from the label layer and the last fc layer
    */
@@ -223,15 +222,13 @@ class SoftmaxLossLayer: public PerformanceLayer {
     return kOneToAll;
   }
 
-
   virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
-  virtual Performance ComputePerformance(const vector<shared_ptr<Layer>>&srclayers,
-      int type);
  private:
-  int num_;
+  int batchsize_;
   int dim_;
-  int top_k_;
+  float scale_;
+  vector<int> topk_;
 };
 
 class RGBImageLayer: public ParserLayer {

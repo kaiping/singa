@@ -23,4 +23,7 @@ message ClusterProto{
   optional string log_subfolder=8 [default="log"];
 
   optional bool synchronous=9 [default=false];
+
+  // message size limit, default 1MB
+  optional int32 largest_message=10 [default=1048576];
 }

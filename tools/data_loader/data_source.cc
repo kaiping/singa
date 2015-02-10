@@ -60,14 +60,16 @@ bool MnistSource::NextRecord(string* key, singa::Record *record){
     imagestream_.read(image_, height_*width_);
     labelstream_.read(&label, 1);
     //use imagenetrecord here
-    record->set_type(singa::Record_Type_kMnist);
-    singa::MnistRecord* rec=record->mutable_mnist();
+    record->set_type(singa::Record_Type_kSingleLabelImage);
+    singa::SingleLabelImageRecord* rec=record->mutable_image();
     rec->set_label(static_cast<int>(label));
     string pixel;
     pixel.resize(height_*width_);
     for(int i=0;i<height_*width_;i++)
       pixel[i]=image_[i];
     rec->set_pixel(pixel);
+    rec->add_shape(height_);
+    rec->add_shape(width_);
     return true;
   }else{
     return false;
@@ -133,7 +135,7 @@ void ImageNetSource::LoadMeanFile(string path){
 }
 
 int ImageNetSource::ReadImage(const std::string &path, int height, int width,
-    const float *mean, singa::DAryProto* image) {
+    const float *mean, singa::SingleLabelImageRecord* image) {
   cv::Mat cv_img;
   if (height > 0 && width > 0) {
     cv::Mat cv_img_origin = cv::imread(path, CV_LOAD_IMAGE_COLOR);
@@ -150,11 +152,12 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
   image->add_shape(cv_img.rows);
   image->add_shape(cv_img.cols);
   int idx=0;
+  string *pixel=image->mutable_pixel();
   if(mean==nullptr){
     for (int c = 0; c < 3; ++c) {
       for (int h = 0; h < cv_img.rows; ++h) {
         for (int w = 0; w < cv_img.cols; ++w) {
-          image->set_value(idx++,static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c]));
+          pixel->push_back(static_cast<char>(cv_img.at<cv::Vec3b>(h, w)[c]));
         }
       }
     }
@@ -162,7 +165,8 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
     for (int c = 0; c < 3; ++c) {
       for (int h = 0; h < cv_img.rows; ++h) {
         for (int w = 0; w < cv_img.cols; ++w) {
-          image->set_value(idx++,static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[c])-(*mean));
+          pixel->push_back(
+              static_cast<char>((cv_img.at<cv::Vec3b>(h, w)[c])-(*mean)));
           mean++;
         }
       }
@@ -174,29 +178,20 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
 bool ImageNetSource::GetRecord(const int key, singa::Record* record) {
   if(key<0 || key>=size_)
     return false;
-  singa::ImageNetRecord *imagenet=record->mutable_imagenet();
-  singa::DAryProto *image=imagenet->mutable_image();
-  if(image->value().size()<record_size_){
-    for(int i=0;i<record_size_;i++)
-      image->add_value(0);
-  }
+  singa::SingleLabelImageRecord *image=record->mutable_image();
   ReadImage(image_folder_ + "/" + lines_.at(key).first, height_,
             width_, data_mean_.data().data(),image);
-  imagenet->set_label(lines_.at(key).second);
+  image->set_label(lines_.at(key).second);
   return true;
 }
 
 bool ImageNetSource::NextRecord(string* key, singa::Record *record) {
-  record->set_type(singa::Record_Type_kImageNet);
-  singa::ImageNetRecord *imagenet=record->mutable_imagenet();
-  singa::DAryProto *image=imagenet->mutable_image();
-  if(image->value().size()<record_size_){
-    for(int i=image->value().size();i<record_size_;i++)
-      image->add_value(0);
-  }
+  record->set_type(singa::Record_Type_kSingleLabelImage);
+  singa::SingleLabelImageRecord *image=record->mutable_image();
   *key=lines_.at(offset_).first;
-  int ret=ReadImage(image_folder_ + "/" + *key, height_, width_, data_mean_.data().data(),image);
-  imagenet->set_label(lines_.at(offset_).second);
+  int ret=ReadImage(image_folder_ + "/" + *key, height_, width_,
+      data_mean_.data().data(),image);
+  image->set_label(lines_.at(offset_).second);
   offset_++;
   return ret;
 }

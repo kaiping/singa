@@ -1,10 +1,43 @@
 #include <gtest/gtest.h>
 #include <model/neuralnet.h>
 #include "proto/model.pb.h"
+#include "utils/common.h"
+#include "utils/param_updater.h"
 
 using namespace singa;
+NetProto CreateMLPProto(){
+  ModelProto model;
+  ReadProtoFromTextFile("examples/mnist/mlp.conf", &model);
+  return model.neuralnet();
+}
+TEST(NeuralnetTest, BP){
+  ModelProto model;
+  ReadProtoFromTextFile("examples/mnist/mlp.conf", &model);
 
-NetProto CreateNetProto(){
+  AdaGradUpdater updater;
+  updater.Init(model.solver().updater());
+
+  NeuralNet net(model.neuralnet());
+  auto layers=net.layers();
+  for(int i=0;i<3;i++){
+    bool firstlayer=true;
+    for(auto& layer: layers){
+      layer->ComputeFeature();
+      if(firstlayer){
+        DataLayer* dl=static_cast<DataLayer*>(layer.get());
+        dl->CompletePrefetch();
+        firstlayer=false;
+      }
+    }
+
+    for(int k=layers.size()-1;k>=0;k--){
+      layers[k]->ComputeGradient();
+      for(Param* param: layers[k]->GetParams())
+        updater.Update(i, param);
+    }
+  }
+}
+NetProto CreateConvNetProto(){
   NetProto proto;
   LayerProto *layer;
 
@@ -13,11 +46,12 @@ NetProto CreateNetProto(){
   layer->set_type("kShardData");
   DataProto *data=layer->mutable_data_param();
   data->set_batchsize(8);
+  data->set_path("/data1/wangwei/singa/data/mnist/train/");
 
   // 4x3x10x10
   layer=proto.add_layer();
-  layer->set_name("rgbimage");
-  layer->set_type("kRGBImage");
+  layer->set_name("mnist");
+  layer->set_type("kMnistImage");
   layer->add_srclayers("data");
 
   // 4x1
@@ -30,7 +64,9 @@ NetProto CreateNetProto(){
   layer=proto.add_layer();
   layer->set_name("conv1");
   layer->set_type("kConvolution");
-  layer->add_srclayers("rgbimage");
+  layer->add_srclayers("mnist");
+  layer->add_param();
+  layer->add_param();
   ConvolutionProto *conv=layer->mutable_convolution_param();
   conv->set_num_filters(8);
   conv->set_kernel(2);
@@ -55,6 +91,8 @@ NetProto CreateNetProto(){
   layer->set_name("fc1");
   layer->set_type("kInnerProduct");
   layer->add_srclayers("pool1");
+  layer->add_param();
+  layer->add_param();
   InnerProductProto *inner=layer->mutable_inner_product_param();
   inner->set_num_output(10);
 
@@ -69,7 +107,7 @@ NetProto CreateNetProto(){
 }
 
 TEST(NeuralNetTest, NoPartition){
-  NetProto proto=CreateNetProto();
+  NetProto proto=CreateConvNetProto();
   NeuralNet net(proto);
   const auto& layers=net.layers();
   ASSERT_EQ(8, layers.size());
@@ -78,7 +116,7 @@ TEST(NeuralNetTest, NoPartition){
 }
 
 TEST(NeuralNetTest, DataPartition){
-  NetProto proto=CreateNetProto();
+  NetProto proto=CreateConvNetProto();
   proto.set_partition_type(kDataPartition);
   NeuralNet net(proto, 3);
   const auto& layers=net.layers();
@@ -86,16 +124,18 @@ TEST(NeuralNetTest, DataPartition){
   ASSERT_EQ("data", layers.at(0)->name());
 }
 TEST(NeuralNetTest, LayerPartition){
-  NetProto proto=CreateNetProto();
+  NetProto proto=CreateConvNetProto();
   proto.set_partition_type(kLayerPartition);
   NeuralNet net(proto, 2);
  // const auto& layers=net.layers();
 }
 TEST(NeuralNetTest, HyridPartition){
-  NetProto proto=CreateNetProto();
+  NetProto proto=CreateConvNetProto();
   int num_layers=proto.layer_size();
   proto.mutable_layer(num_layers-2)->set_partition_type(kDataPartition);
   proto.mutable_layer(num_layers-1)->set_partition_type(kDataPartition);
   proto.set_partition_type(kLayerPartition);
   NeuralNet net(proto, 2);
 }
+
+

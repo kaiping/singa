@@ -22,6 +22,13 @@ class Param {
    * ParamProto
   void ToProto(ParamProto *proto, bool copyData);
    */
+
+   /**
+    * @return num of floats.
+    */
+  int size() const {
+    return data_.count();
+  }
   /**
    * Return const mem address for the content of this parameter
    */
@@ -39,6 +46,13 @@ class Param {
   }
   Blob<float> *mutable_grad() {
     return &grad_;
+  }
+
+  const Blob<float> &history() {
+    return history_;
+  }
+  Blob<float> *mutable_history() {
+    return &history_;
   }
 
   float* mutable_cpu_data(){
@@ -78,23 +92,7 @@ class Param {
   const int split_threshold(){
     return param_proto_.split_threshold();
   }
-  const int partition(){
-    return param_proto_.partition_dim();
-  }
  protected:
-  /**
-   * Fill in the val with data generated from a uniform distribution
-   * @param low the lower boundary of the uniform distribution
-   * @param high the upper boundary of the uniform distribution
-   * @param factor the generated data is multiplied to this number
-   * @param val float array to store the generated data
-   */
-  void FillUniformData(float low, float high, float factor);
-  /**
-   * Similar to ::FillGaussainData(), except the data are generated from
-   * Gaussain distribution.
-   */
-  void FillGaussainData(float mean, float std, float factor);
   /**
    * name of the parameter used to identify the ParamProto configed in
    * EdgeProto by users. Currently there are two kinds of parameters, 'weight'
@@ -105,7 +103,7 @@ class Param {
    * identifier of this parameter, will be used by ModelController
    */
   //! content, gradient and history gradient of this parameter
-  Blob<float> data_, grad_;// history_;
+  Blob<float> data_, grad_, history_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.

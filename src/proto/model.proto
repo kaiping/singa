@@ -1,7 +1,7 @@
 package singa;
 message ModelProto{
   optional string name = 1;
-  optional NetProto net = 2;
+  optional NetProto neuralnet = 2;
   optional SolverProto solver = 3;
 }
 
@@ -144,16 +144,17 @@ message SplitProto{
 }
 // scaled tan: A*tan(B*x)
 message TanhProto{
-  optional float a=1;
-  optional float b=2;
+  optional float a=1 [default=1.0];
+  optional float b=2 [default=1.0];
 }
 
 // Message that stores parameters used by SoftmaxLossProto
 message SoftmaxLossProto {
+  // accuracy is not comptued by default, unless topk>0;
   // When computing accuracy, count as correct by comparing the true label to
-  // the top k scoring classes. By default, only compare to the top scoring
-  // class (i.e. argmax).
-  optional uint32 top_k = 1 [default = 1];
+  // the top k scoring classes.
+  repeated uint32 topk = 1 ;
+  optional float scale=2 [default=1.0];
 }
 // Message that stores parameters used by ConvolutionLayer
 message ConvolutionProto {
@@ -283,13 +284,14 @@ message SolverProto {
   optional int32 test_frequency = 14 [default = 0];
 
   // batchsize is the num of instances processed per step
-  optional int32 batchsize = 19;
+  // optional int32 batchsize = 19;
   // total num of steps for training
   optional int32 train_steps = 20;
   // total num of steps for validation
   optional int32 validation_steps=21;
   // total num of steps for test
   optional int32 test_steps=22;
+  optional UpdaterProto updater=23;
   // SGD parameters
   optional SGDProto sgd=24;
   // There are two basic algorithms for calculating gradients.
@@ -299,10 +301,6 @@ message SolverProto {
     kContrastiveDivergence = 2;
   }
   optional GradCalcAlg alg= 26 [default = kBackPropagation];
-
-  //optional PartitionType partition=27 [default=kNone];
-  // random skip some training records
-  optional bool random_skip=28 [default=true];
 }
 
 message Record {
@@ -318,6 +316,32 @@ message SingleLabelImageRecord{
   optional int32 label=2;
   optional bytes pixel=3;
   repeated float data=4;
+}
+
+message UpdaterProto {
+  enum Type{
+    kAdaGrad=1,
+    kSGD=2
+  }
+  optional Type type=1 [default=kAdaGrad];
+  optional float base_learning_rate=3;
+  optional float momentum=4 [default=0];
+  optional float weight_decay=5 [default=0];
+  // used in changing learning rate
+  optional float gamma = 6 [default=1];
+  optional float pow=7 [default=0];
+  optional float delta=8 [default=0.000000001];
+  optional float final_learning_rate=9;
+  optional int32 learning_rate_change_frequency = 15;
+  enum ChangeProto {
+    kFixed = 0;
+    kInverse_t= 1;
+    kInverse= 2;
+    kExponential = 3;
+    kLinear = 4;
+    kStep = 5;
+  }
+  optional ChangeProto learning_rate_change_method = 16 [default = kStep];
 }
 
 message SGDProto {

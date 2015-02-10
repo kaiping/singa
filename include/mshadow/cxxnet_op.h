@@ -73,6 +73,12 @@ namespace mshadow {
                 return a * a;
             }
         };
+        struct sqrtop {
+            MSHADOW_XINLINE static real_t Map(real_t a) {
+                return sqrt(a);
+            }
+        };
+
     }; //namespace op
 
 }; //namespace mshadow
@@ -94,4 +100,21 @@ namespace mshadow {
         };
     }; // namespace op
 }; // namespace mshadow
+namespace mshadow {
+    namespace op {
+        /*! \brief scaled tanh:  b* tanh(c*x),b, c are scale factors */
+        struct stanh {
+            MSHADOW_XINLINE static real_t Map(real_t a, real_t b, real_t c) {
+                return b* tanhf(a*c);
+            }
+        };
+        /*! \breif back prop for scaled tanh: x=c*b, y=c/b */
+        struct stanh_grad {
+            MSHADOW_XINLINE static real_t Map(real_t a, real_t x, real_t y) {
+                return x-y*a*a;
+            }
+        };
+    }; // namespace op
+}; // namespace mshadow
+
 #endif // CXXNET_OP_H

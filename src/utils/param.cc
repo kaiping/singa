@@ -1,7 +1,7 @@
 #include <glog/logging.h>
 #include <cmath>
 #include <chrono>
-#include "model/param.h"
+#include "utils/param.h"
 #include "mshadow/tensor.h"
 #include "utils/singleton.h"
 using namespace mshadow;
@@ -36,6 +36,7 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
 void Param::Setup(const ParamProto& proto, const vector<int>& shape){
   data_.Reshape(shape);
   grad_.Reshape(shape);
+  history_.Reshape(shape);
   param_proto_=proto;
 }
 

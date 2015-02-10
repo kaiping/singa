@@ -95,7 +95,7 @@ void SplitN(int nshards, std::string input, std::string prefix){
 
 
 int main(int argc, char **argv) {
-  MPI_Init(&argc, &argv);
+//  MPI_Init(&argc, &argv);
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -143,6 +143,6 @@ int main(int argc, char **argv) {
   }
   shard.Flush();
   LOG(ERROR)<<"Finish creating shard, there are "<<count<<" records";
-  MPI_Finalize();
+//  MPI_Finalize();
   return 0;
 }

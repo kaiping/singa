@@ -47,7 +47,8 @@ TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS
 
 NET_SRCS := src/model/base_layer.cc src/utils/common.cc src/test/test_neuralnet.cc \
 	src/test/test_main.cc src/model/neuralnet.cc src/model/layer.cc src/utils/shard.cc \
-	src/utils/cluster.cc src/utils/graph.cc src/model/param.cc src/utils/blob.cc
+	src/utils/cluster.cc src/utils/graph.cc src/utils/blob.cc src/utils/param.cc \
+	src/utils/param_updater.cc
 NET_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(NET_SRCS:.cc=.o)) $(PROTO_OBJS))
 -include $(NET_OBJS:%.o=%.P)
 

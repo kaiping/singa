@@ -4,8 +4,8 @@
 #include "utils/common.h"
 #include "proto/model.pb.h"
 #include "proto/cluster.pb.h"
-#include "server.h"
-#include "worker.h"
+//#include "server.h"
+#include "worker/worker.h"
 
 /**
  * \file main.cc is the main entry of SINGA.
@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
     <<"\nThe model config is\n"<<model.DebugString();
 
   if(singa::Cluster::Get()->AmIServer()) {
-    singa::Server server;
-    server.Start();
+    //singa::Server server;
+    //server.Start();
     //    singa::Debug();
   }else {
     singa::Worker worker(Cluster::Get());

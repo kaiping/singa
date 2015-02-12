@@ -1,9 +1,10 @@
 #include <glog/logging.h>
+#include <thread>
 #include <memory>
 #include "worker.h"
 #include "proto/model.pb.h"
 #include "utils/cluster.h"
-
+using std::thread;
 namespace singa {
 Worker::Worker(shared_ptr<Cluster> cluster){
   cluster_=cluster;
@@ -20,27 +21,17 @@ void Worker::Start(const ModelProto& model){
   if(validation_net_!=nullptr)
     validation_net_.ShareWeights(train_net_);
 
-  if(cluster_->num_servers()){ // training with parameter servers
-    delegate_=make_shared<Delegate>(cluster_);
-    if(cluster_->group_id()==0){ // first group populate the parameter servers
-      train_net_->InitParams();
-      delegate_->Put(train_net_->GetParams());
-    }else{
-      //delegate_->AsyncGet();
-    }
-  }else{ // training without parameter servers, update params locally
-    if(model.updater().handler()==ParamUpdater_Type_kAdaGrad){
-      updater_=make_shared<AdaGradUpdater>();
-      updater_->Init(modelproto_.updater());
-    } else
-      LOG(FATAL)<<"Only support AdaGradUpdater now";
-  }
+  if(model.updater().handler()==ParamUpdater_Type_kAdaGrad){
+    updater_=make_shared<AdaGradUpdater>();
+    updater_->Init(modelproto_.updater());
+  } else
+    LOG(FATAL)<<"Only support AdaGradUpdater now";
 
   // update proto_, all groups will do the training, but only the first group
   // conduts test/validation. Hence, the training mini-batch is partitioned
   // onto all groups.
   if(cluster_->group_id()==0){
-    int ngroups=cluster_.num_groups();
+    int ngroups=cluster_.ngroups();
     modelproto_.set_validation_frequency(
         modelproto_.validation_frequency()/ngroups);
     modelproto_.set_test_frequency(modelproto_.test_frequency()/ngroups);
@@ -50,9 +41,32 @@ void Worker::Start(const ModelProto& model){
   // this communicator
   // 2. handle_get returns false if the key of get() is not found in the
   // table, i.e., parameters have not been inserted
-  MPI_Barrier(Cluster::Get()->worker_comm());
-  Run(0);
-  //solver.TimeOneBatch(net, 5);
+  int nthreads=cluster_.nthreads_per_procs();
+  vector<Executor> executors(nthreads-1);
+  vector<thread> threads;
+  //setup main executor
+  Setup(0);
+  for(size_t i=1;i<executors.size();i++){
+    executors[i]=new Executor(i, cluster_, train_net_);
+    threads.push_back(thread(&Executor::Run, ref(*executors[i]), step_));
+  }
+
+  ParamManager pm(train_net_);
+  if(cluster_->groupID()==0){
+    pm.InitParams();
+    Performance perf(train_net_);
+    for(int i=0;i<modelproto_.warmup_steps();i++){
+      RunOneBatch(step_, &perf);
+      pm.Update();
+    }
+    pm.SendParamsToServers();
+  }else{
+    // will be blocked until recv all parameters.
+    pm.GetParamsFromServers();
+  }
+  Run(&pm, modelproto_.warmup_steps());
+  for(auto& th: threads)
+    th.join();
   //LOG(ERROR)<<"Worker on "<<hostname_<< " is shutting down";
 }
 
@@ -60,212 +74,217 @@ void Worker::Resume() {
   // TODO implement resume from snapshot
 }
 
-
-void PrefetchData(shared_ptr<NeuralNet> net){
-  auto& layers=net->layers();
-  CHECK(layers[0]->is_datalayer());
-  for(auto& layer: layers){
-    if(layer->is_datalayer())
-      layer->ComputeFeature();
-    else if(layer->is_parserlayer())
-      layer->Prefetching();
-  }
-}
-
-void Worker::Run(const int start_step){
-  int step=start_step;
-  Performance perf(train_net_);
-  prefetch_thread_=std::thread(Worker::PrefetchData, train_net_);
-
-  while(!StopNow(step){
-    RunOneBatch(step, &perf);
-    // communicate with others
-    step++;
-  }
-
-  if(prefetch_thread_.joinable())
-    prefetch_thread_.join();
-}
-
-void RunOneBatch(int step, Performance* perf){
-  if(ValidateNow(step))
-    Test(validation_net_);
-  if(TestNow(step))
-    Test(test_net_);
-
-  TrainOneBatch(step);
-  perf->Update();
-
-  if(DisplayNow(step)){
-    perf->Display();
-    perf->Reset();
-    DebugInfo(train_net_);
-  }
-}
-
-shared_ptr<NeuralNet> SetupNeuralNet(const NeuralNetProto& np, Phase phase){
+shared_ptr<NeuralNet> Worker::SetupNeuralNet(const NeuralNetProto& np,
+    Phase phase){
   // only consider training phase now.
-  // resetting the proto to config test and valdiation neuralnet.
+  // TODO reset the proto to config test and valdiation neuralnet.
+  // diff nets should have diff layer objects,
+  // but share parameter objects (by ptr).
   shared_ptr<NeuralNet> net(new NeuralNet(np));
   return net;
 }
 
-void Test(shared_ptr<NeuralNet> net){
+void Worker::Run(ParamManager* pm, const int start_step){
+  step_=start_step;
+  while(!StopNow(step_)){
+    RunOneBatch(step_, &perf);
+    pm->Update();
+    // communicate with others
+    step_++;
+  }
+}
+
+
+/**************************Executor***********************************/
+void Executor::Executor(int local_threadID,
+    shared_ptr<Cluster> cluster,
+    shared_ptr<NeuralNet> train_net,
+    shared_ptr<NeuralNet> test_net,
+    shared_ptr<NeuralNet> validation_net):
+      cluster_(cluster),
+      train_net_(train_net),
+      test_net_(test_net),
+      validation_net_(validation_net){
+        Setup(local_threadID);
+      }
+
+void Executor::Setup(int local_threadID){
+  threadID_=local_threadID;
+  if(train_net_->datalayer()->locationID()==cluster_->group_threadID(threadID);
+    prefetch_thread_=std::thread(Worker::PrefetchData, train_net_, true);
+
+  subparam_=zsock_new_sub(">inproc://pmpub");
+  pushparam_=zsock_new_push(">inproc://pmpull");
+
+  for(auto& layer: train_net_->layers()){
+    if(layer->locationID()==threadID){
+      int pushloc=-1;
+      if(layer->is_bridgesrclayer())
+        pushloc=layer->dstlayers()[0]->locationID();
+      else if(layer->is_bridgedstlayer())
+        pushloc=layer->srclayers()[0]->locationID();
+      if(pushloc!=-1&&push_.find(pushloc)==push_.end()){
+        pull_=zsock_new_pull("@tcp://*:"+cluster_->pull_port(threadID));
+        string pushaddr=cluster_->addr(cluster_->global_procsID(pushloc));
+        push_[pushloc]= zsock_new_push( ">tcp://"+pushaddr
+            +":"+cluster_->pull_port(pushloc%cluster_->nthreads_per_procs()));
+      }
+    }
+  }
+}
+
+void Executor::~Executor(){
+  if(prefetch_thread_.joinable())
+    prefetch_thread_.join();
+}
+
+void Executor::PrefetchData(shared_ptr<NeuralNet> net, bool training){
+  auto& layers=net->layers();
+  CHECK(layers[0]->is_datalayer());
+  for(auto& layer: layers){
+    if(layer->is_datalayer())
+      layer->ComputeFeature(training);
+    else if(layer->is_parserlayer())
+      layer->Prefetching(training);
+  }
+}
+
+void Executor::Run(){
+  while(!StopNow(step_)){
+    RunOneBatch(step_);
+    step_++;
+  }
+}
+
+void Executor::RunOneBatch(int step, Performance* perf){
+  ticks_++;
+  // Test will call Pull which updates the sync time
+  // Hence we store the sync time, and restore it later
+  int64_t tSyncData=tSyncData_, tSyncParam=tSyncParam_;
+  if(ValidateNow(step))
+    Test(validation_net_, perf==nullptr);
+  if(TestNow(step))
+    Test(test_net_, perf==nullptr);
+  tSyncData_=tSyncData;
+  tSyncParam_=tSyncParam;
+
+  TrainOneBatch(step);
+  if(perf!=nullptr){
+    perf->Update();
+    if(DisplayNow(step)){
+      LOG(INFO)<<perf->ToString();
+      perf->Reset();
+      LOG(INFO)<<TimerInfo();
+      DLOG(INFO)<<DebugInfo(train_net_);
+    }
+  }
+}
+
+void Executor::Pull(zsock_t pull, shared_ptr<NeuralNet> net){
+  int type;
+  char *name;
+  int64_t tick=zclock_mono();
+  zframe_t* frame=zframe_new_empty();
+
+  zsock_recv(pull_, "isf", &type, &name, &frame);
+  if(type==kDataFrame){
+    auto* dst=static_cas<BridgeDstLayer*>(
+        net->name2layer(string(name).get()));
+    dst->set_ready(true);
+    memcpy(layer->mutable_data()->mutable_cpu_data(), zframe_data(frame),
+        zframe_size(frame));
+  }else if(type==kGradFrame){
+    auto* src=static_cas<BridgeSrcLayer*>(net->name2layer(string(name).get()));
+    src->set_ready(true);
+    memcpy(layer->mutable_grad()->mutable_cpu_data(), zframe_data(frame),
+        zframe_size(frame));
+  }
+  zframe_destroy(&frame);
+  delete name;
+  tSyncData_+=zclock_mono()-tick;
+}
+
+void Executor::Forward(shared_ptr<NeuralNet> net, bool training){
+  auto& layers=net->layers();
+  int type;
+  int paramID;
+  for(auto& layer: layers){
+    while(!layer->ready()){
+      Pull(pull_, train_net_);
+    }
+    for(Param* p: layer->params()){
+      while(p->ready()){
+        zsock_recv(subparam_, "ii", &type, &paramID);
+        Param* pp=train_net_->paramID2Param(paramID);
+        pp->set_ready(true);
+      }
+    }
+    layer->ComputeFeature(training);
+    if(layer->is_bridgesrclayer()){
+      zframe_t* frame=zframe_new(layer->data().cpu_data(),
+          layer->data().count()*sizeof(float));
+      zsock_send(push_[layer->locationID()], "isf",
+          kDataFrame, layer->dstlayers()[0]->name().c_str(), frame);
+      zframe_destroy(&frame);
+    }
+  }
+}
+
+void Executor::Backward(shared_ptr<NeuralNet> net){
+  auto& layers=net->layers();
+  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
+    while(!layer->ready()){
+      Pull(pull_, train_net_);
+    }
+    (*layer)->ComputeGradient();
+    for(auto* param: (*layer)->GetParams()){
+      zsock_send(pushparam_, "ip",kGradReady,param);
+    }
+    if(layer->is_bridgedstlayer()){
+      zframe_t* frame=zframe_new(layer->grad().cpu_data(),
+          layer->data().count()*sizeof(float));
+      zsock_send(push_[layer->locationID()], "isf",
+          kGradFrame, layer->srclayers()[0]->name().c_str(), frame);
+      zframe_destroy(&frame);
+    }
+  }
+}
+
+void Executor::TrainOneBatch(int step){
+  if(prefetch_thread_.joinable()){
+    prefetch_thread_->join();
+    for(auto* layer:train_net_->parser_layers())
+      layer->CompleteParsing();
+    prefetch_thread_=std::thread(PrefetchData, train_net_, true);
+  }
+  int64_t tick=zclock_mono();
+  Forward(train_net_, true);
+  tForward_+=zclock_mono()-tick;
+  tick=zclock_mono();
+  Backward(train_net_);
+  tBackward_+=zclock_mono()-tick;
+}
+
+void Executor::Test(shared_ptr<NeuralNet> net, bool disperf){
   std::thread prefetch;
-  prefetch=std::thread(Worker::PrefetchData, net);
+  prefetch=std::thread(Worker::PrefetchData, net, false);
   Performance perf(net);
   for(int b=0;b<nsteps;b++){
     if(prefetch.joinable()){
       prefetch->join();
       for(auto* layer:net->parser_layers())
         layer->CompleteParsing();
-      prefetch=std::thread(Worker::PrefetchData, net);
+      prefetch=std::thread(Worker::PrefetchData, net, false);
     }
-    for(auto* layer: net->layers()){
-      layer->ComputeFeature();
-    }
-    perf.Update();
+    Forward(net, false);
+    if(disperf)
+      perf.Update();
   }
-  if(prefetch.joinable()){
+  if(prefetch.joinable())
     prefetch.join();
-  perf.Display();
+  if(disperf)
+    LOG(INFO)<<perf.ToString();
 }
-
-void Solver::TimeOneBatch(shared_ptr<NeuralNet> net, int runs) {
-  // prepare one batch training data
-  Prefetching(net);
-  for(auto& layer:net->parserlayers())
-    layer->CompletePrefetching();
-
-  // set up counters
-  auto layers=net->layers();
-  int nlayers=layers.size();
-  vector<double> forward(nlayers+1, 0.0);
-  vector<double> backward(nlayers+1, 0.0);
-  vector<double> refresh(nlayers+1, 0.0);
-  vector<double> sync(nlayers+1, 0.0);
-
-  LOG(INFO)<<"Time One Batch...";;
-  double sync_start, refresh_start, comp_start;
-
-  if(updater_==nullptr)
-  for(auto* param: net->GetParams()){
-    delegate_->AsyncGet(param,step_);
-  }
-
-  CHECK_NE(cluster_->mycomm(), MPI_COMM_NULL);
-  MPI_Barrier(cluster_->mycomm());
-  double start=Now();
-  for(int step=0;step<runs;step++){
-    LOG(INFO)<<runid<<"-th run";
-    int layerid=0;
-    for(auto& layer: layers){
-      refresh_start=Now();
-      if(updater_==nullptr)
-        for(auto* param: layer->GetParams()){
-          delegate_->AsyncCollect(param, step);
-        }
-      sync_start=Now();
-      refresh[layerid]+=sync_start-refresh_start;
-      comp_start=Now();
-      sync[layerid]+=comp_start-sync_start;
-      layer->ComputeFeature();
-      sync_start=Now();
-      forward[layerid]+=sync_start-comp_start;
-      sync[layerid]+=Now()-sync_start;
-      layerid++;
-    }
-
-    for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-      layerid--;
-      sync_start=Now();
-      comp_start=Now();
-      sync[layerid]+=comp_start-sync_start;
-      (*layer)->ComputeGradient();
-      refresh_start=Now();
-      backward[layerid]+=refresh_start-comp_start;
-
-      if(updater_)
-        updater_->Update(param, step);
-      else
-        for(auto* param: (*layer)->GetParams()){
-          delegate_->Update(param, step);
-          delegate_->AsyncGet(param, step+1);
-        }
-      sync_start=Now();
-      refresh[layerid]+=sync_start-refresh_start;
-      sync[layerid]+=Now()-sync_start;
-    }
-  }
-  MPI_Barrier(cluster_->worker_comm());
-  double total=Now()-start;
-
-  // display the time counters
-  string disp="\n";
-  char buf[1024];
-  for(int i=0;i<nlayers;i++){
-    sprintf(buf,
-        "Layer %10s forward %6.2f backward %6.2f sync %6.2f refresh %6.2f\n",
-        layers[i]->name().c_str(),forward[i]/runs, backward[i]/runs,
-        sync[i]/runs, refresh[i]/runs);
-    disp+=string(buf);
-    forward[nlayers]+=forward[i];
-    backward[nlayers]+=backward[i];
-    sync[nlayers]+=sync[i];
-    refresh[nlayers]+=refresh[i];
-  }
-  double armcitime=0.;//GAry::comm_time;
-  sprintf(buf,
-      "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\tcomp\t%6.2f\tsync\t%6.2f\
-      \trefresh\t%6.2f\tarmci\t%6.2f\n",
-      total/runs,forward[nlayers]/runs, backward[nlayers]/runs,
-      (forward[nlayers]+backward[nlayers]-armcitime)/runs, sync[nlayers]/runs,
-      refresh[nlayers]/runs, armcitime/runs);
-  disp+=string(buf);
-  LOG(ERROR)<<disp;
-}
-
-void TrainOneBatch(int step){
-  if(step==0){
-    for(auto* param: train_net_->params()){
-      delegate_->AsyncGet(param,step);
-    }
-  }
-  if(prefetch_thread_.joinable()){
-    prefetch_thread_->join();
-    for(auto* layer:train_net_->parser_layers())
-      layer->CompleteParsing();
-    prefetch_thread_=std::thread(Worker::PrefetchData, train_net_);
-  }
-  if(updater_==nullptr){
-    for(auto* param: train_net_->GetParams()){
-      delegate_->AsyncGet(param,step_);
-    }
-  }
-  auto& layers=train_net_->layers();
-  for(auto& layer: layers){
-    if(updater_==nullptr){
-      for(auto* param: layer->GetParams()){
-        delegate_->AsyncCollect(param, step);
-      }
-    }
-    layer->ComputeFeature();
-  }
-
-  for (auto layer = layers.rbegin(); layer != layers.rend(); layer++){
-    (*layer)->ComputeGradient();
-    if(updater_==nullptr){
-      for(auto* param: (*layer)->GetParams()){
-        delegate_->Update(param, step);
-        delegate_->AsyncGet(param, step+1);
-      }
-    }
-    else{
-      updater_->Update(param, step);
-    }
-  }
-}
-
 /*********************Implementation for Performance class*******************/
 Performance::Performance(shared_ptr<NeuralNet> net){
   net_=net;
@@ -297,15 +316,16 @@ void Performance::Reset(){
   }
 }
 
-void Performance::Display(){
+string Performance::ToString(){
+  string disp="";
   for(size_t i=0;i<metric_.size();i++){
-    LOG(INFO)<<"Output from layer: "<<name_[i];
-    string disp="";
+    disp+="Output from layer: "+name_[i];
     vector<float> m=metric_.at(i);
     for(size_t j=0;j<m.size();j++)
-        disp+=std::to_string(j)<<" : "<<m[j]/counter_<<"\t";
-    LOG(INFO)<<"\t"<<disp;
+        disp+=std::to_string(j)+" : "+std::to_string(m[j]/counter_)+"\t";
+    disp+="\n";
   }
+  return disp;
 }
 
 }  // namespace singa

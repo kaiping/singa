@@ -10,7 +10,8 @@
 /**
  * \file main.cc is the main entry of SINGA.
  */
-
+DEFINE_int32(procsID, 0, "global process ID");
+DEFINE_string(hostfile, "examples/imagenet12/hostfile", "hostfile");
 DEFINE_string(cluster_conf, "examples/imagenet12/cluster.conf",
     "configuration file for the cluster");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf",
@@ -22,31 +23,27 @@ DEFINE_string(model_conf, "examples/imagenet12/model.conf",
 #endif
 
 int main(int argc, char **argv) {
-  int provided;
-  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   //FLAGS_logtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // Init Cluster
-  singa::ClusterProto cluster_proto;
-  singa::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &cluster_proto);
-  auto cluster =singa::Cluster::Get(cluster_proto);
+  singa::ClusterProto cluster;
+  singa::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &cluster);
+  singa::Cluster::Get(cluster, FLAGS_hostfile, FLAGS_procsID);
   singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
-  LOG(INFO)<<"The cluster config is\n"<<cluster_proto.DebugString()
+  LOG(INFO)<<"The cluster config is\n"<<cluster.DebugString()
     <<"\nThe model config is\n"<<model.DebugString();
 
-  if(cluster->AmITableServer()) {
-    singa::TableServer server;
-    server.Start(model.solver().sgd());
+  if(singa::Cluster::Get()->AmIServer()) {
+    singa::Server server;
+    server.Start();
     //    singa::Debug();
   }else {
-    singa::Worker worker;
+    singa::Worker worker(Cluster::Get());
     worker.Start(model);
   }
-  cluster->Finalize();
-  MPI_Finalize();
   //LOG(ERROR)<<"SINA has shutdown successfully";
   return 0;
 }

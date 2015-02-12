@@ -37,7 +37,7 @@ class ConvolutionLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   virtual vector<Param*> GetParams() {
     return vector<Param*>{&weight_, &bias_};
@@ -63,7 +63,7 @@ class DropoutLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   // drop probability
@@ -93,7 +93,7 @@ class InnerProductLayer: public Layer {
     return kOneToAll;
   }
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void ToProto(LayerProto *layer_proto, bool copyData);
   virtual vector<Param*> GetParams() {
@@ -112,7 +112,7 @@ class InnerProductLayer: public Layer {
 class LabelLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
 };
 
 class LRNLayer: public Layer {
@@ -134,7 +134,7 @@ class LRNLayer: public Layer {
       const vector<SLayer>& srclayers);
 
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   //! shape of the bottom layer feature
@@ -149,7 +149,7 @@ class LRNLayer: public Layer {
 class MnistImageLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
 
  protected:
   // height and width of the image after deformation
@@ -173,7 +173,7 @@ class PoolingLayer: public Layer {
       const vector<SLayer>& srclayers);
 
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   int kernel_, pad_, stride_;
@@ -191,7 +191,7 @@ class ReLULayer: public Layer {
       const vector<SLayer>& srclayers);
 
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
 
@@ -222,7 +222,7 @@ class SoftmaxLossLayer: public LossLayer {
     return kOneToAll;
   }
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  private:
   int batchsize_;
@@ -234,7 +234,7 @@ class SoftmaxLossLayer: public LossLayer {
 class RGBImageLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
 
  private:
   float scale_;
@@ -244,7 +244,7 @@ class RGBImageLayer: public ParserLayer {
 
 class ShardDataLayer: public DataLayer{
  public:
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){};
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
  private:
@@ -266,7 +266,7 @@ class TanhLayer: public Layer {
       const vector<SLayer>& srclayers);
 
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
 

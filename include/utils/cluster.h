@@ -20,121 +20,105 @@ namespace singa {
  */
 class Cluster {
  public:
-  // assume the rank of coordinator is num_procs-1
-  static int kCoordinator;
   static shared_ptr<Cluster> Get();
   static shared_ptr<Cluster> Get(const ClusterProto& cluster);
   // free my mpi group and mpi communicator
-  void Finalize();
 
   void SetupGroups(const ClusterProto &cluster);
   void SetupFolders(const ClusterProto &cluster);
 
-  const int num_table_servers() {
-    return num_servers();
+  const int num_servers_procs(){
+    return cluster_.nservers();
   }
-  const int server_start() {
-    return cluster_.server_start();
+  const int num_worker_procs() {
+    return cluster_.nworkers();
   }
-  const int server_end() {
-    return cluster_.server_end();
-  }
-  const int worker_start() {
-    return cluster_.worker_start();
-  }
-  const int worker_end() {
-    return cluster_.worker_end();
-  }
-
-  const int num_servers(){
-    if(cluster_.has_server_start()&&cluster_.has_server_end())
-      return cluster_.server_end()-cluster_.server_start();
-    else return 0;
-  }
-  const int num_procs() {
-    return num_procs_;
-  }
-  const int num_workers() {
-    return cluster_.worker_end()-cluster_.worker_start();
-  }
-  const bool IsTableServer(int rank) {
-    if(cluster_.has_server_start()&&cluster_.has_server_end())
-      return rank>=server_start()&&rank<server_end();
-    else return false;
-  }
-  const bool AmICoordinator() {
-    return rank_==kCoordinator;
-  }
-  bool AmITableServer() {
-    return IsTableServer(rank_);
+  bool AmIServer() {
+    return procsID_>=num_worker_procs()
+      &&procsID_<num_worker_procs()+num_servers_procs();
   }
   bool AmIWorker() {
-    return rank_>=cluster_.worker_start()&&rank_<cluster_.worker_end();
+    return procsID_>=0&&procsID_<num_worker_procs();
   }
   /**
    * Return the id of the worker within his group.
    */
-  int worker_id() {return id_;}
-  int group_id() {return gid_;}
-  int num_groups() {return groups_.size();}
-  int group_size() {return cluster_.group_size();}
+  int groupID() {return procsID/nprocs_per_group();}
+  int ngroups() {return cluster_.worker_size()/nprocs_per_group_;}
+  int procsID() {return procsID_;}
+  int nprocs_per_group() {return cluster_.nprocs_per_group();}
+  int nthreads_per_procs(){return cluster_.nthreads_per_procs();}
+  int nthreads_per_group() {return nthreads_per_procs()*nprocs_per_group();}
+  int groupID_of_procs(int procsID) {return procsID/nprocs_per_group();}
+  int procsID_of_thread(int threadID) {return threadID/nthreads_per_thread();}
+  int groupID_of_thread(int threadID) {
+    return groupID_of_procs(procsID_of_thread(threadID));
+  }
+  /**
+   * thread ID within a workring group, there are
+   * procs_per_group()*nthreads_per_procs threads in one group.
+   */
+  int group_threadID(int local_threadID){
+    (procsID_%nprocs_per_group())*nthreads_per_procs()+local_threadID;
+  }
+  /**
+   * thread ID among all worker nodes/procs
+   */
+  int global_threadID(int local_threadID){
+    return procsID()*nthreads_per_procs()+local_threadID;
+  }
+  int group_procsID(int global_procsID){
+    CHECK(global_procsID<cluster_.nworkers()&&global_procsID>=0);
+    return global_procsID%nprocs_per_group();
+  }
+  int global_procsID(int local_threadID){
+    return (procsID/nprocs_per_group)*nprocs_per_group+
+      local_threadID/nthreads_per_procs();
+  }
+
+  /**
+   * procsID for the server that manages param for the worker of group_procsID
+   */
+  const string server_addr(int group_procsID){
+    return addr(num_worker_procs()+group_procsID%nprocs_per_group());
+  }
+  const string addr(int procsID) const{
+    CHECK(procsID>=0&&procsID<addr_.size());
+    return addr_[procsID];
+  }
+  const string pub_port() const {
+    return std::to_string(cluster_.start_port());
+  }
+  /**
+   * pull port of ParameterManager
+   */
+  const string pull_port() const {
+    return std::to_string(cluster_.start_port()+1);
+  }
+  /**
+   * pull port of Bridge layers.
+   */
+  const string pull_port(int k) const {
+    return std::to_string(cluster_.start_port()+2+k);
+  }
   bool synchronous() {return cluster_.synchronous();}
-  int rank() {return rank_;}
-  //bool checkpoint_enabled() {return cluster_.checkpoint_enabled();}
-  //int checkpoint_freq() {return cluster_.checkpoint_freq();}
-  //int checkpoint_after() {return cluster_.checkpoint_after();}
   const string workerspace() {return cluster_.workspace();}
   const string visualization_folder(){
     return cluster_.workspace()+"/"+cluster_.vis_subfolder();
   }
-  vector<int> MembersOfGroup(int gid) {return groups_[gid];}
-  const vector<vector<int>>& groups() {return groups_;}
-  /**
-   * return the MPI_Comm of the all workers
-   */
-  const MPI_Comm& worker_comm() {return worker_comm_;}
-  /**
-   * return the MPI_Comm for my group
-   */
-  const MPI_Comm& mycomm(){return mycomm_;}
-  /**
-   * return the MPI_Comm for all servers
-   */
-  const MPI_Comm& server_comm(){return server_comm_;}
-
   const string hostname(){return hostname_;}
  private:
-  Cluster(const ClusterProto& cluster);
-  void CreateGroupComm(int start, int end, MPI_Comm* comm, MPI_Group* group);
+  Cluster(const ClusterProto &cluster, string hostfile, int procsID) ;
 
  private:
-  // mpi rank, global ID
-  int rank_;
-  // ID of worker within group, starts from 0; -1 for servers
-  int id_;
-  // worker group id, start from 0; -1 for servers
-  int gid_;
+  int procsID_;
   // total number of processes started by mpi
-  int num_procs_;
+  int nprocs_;
+  int ngroups_;
   // hostname
   std::string hostname_;
-  // ranks of workers for each group
-  vector<vector<int>> groups_;
   // cluster config proto
   ClusterProto cluster_;
-  // my mpi group, for MPI Barrier
-  MPI_Group mygroup_;
-  // my mpi communicator, for MPI Barrier
-  MPI_Comm mycomm_;
-  // group for all workers
-  MPI_Group worker_group_;
-  // mpi comm for all workers
-  MPI_Comm worker_comm_;
-  // mpi group for all servers
-  MPI_Group server_group_;
-  // mpi comm for all servers
-  MPI_Comm server_comm_;
-
   // make this class a singlton
   static shared_ptr<Cluster> instance_;
 };

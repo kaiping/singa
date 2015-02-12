@@ -100,11 +100,11 @@ class Layer {
    * and negative phase for CD.
    * @param srclayers layers connecting to this layer
    */
-  virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers)=0;
   /**
    * \copybrief ComputeFeature(const vector<SLayer>& srclayers)
    */
-  virtual void ComputeFeature();
+  virtual void ComputeFeature(bool training);
   /**
    * Compute gradients for parameters and connecting layers.
    * Implement backward propagation for BP; TODO Calculate gradients for
@@ -222,6 +222,18 @@ class Layer {
   virtual bool is_losslayer() const {
     return false;
   }
+  virtual bool is_bridgesrclayer() const {
+    return false;
+  }
+  virtual bool is_bridgedstlayer() const {
+    return false;
+  }
+  virtual void set_ready(bool a) const{
+  }
+  virtual bool ready() const{
+    return true;
+  }
+
   /*
   virtual bool is_neuronlayer() const {
     return false;
@@ -245,8 +257,20 @@ class BridgeSrcLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
   virtual void ComputeGradient(const vector<SLayer>& srclayers);
+  virtual bool is_bridgesrclayer() const {
+    true;
+  }
+
+  virtual void set_ready(bool a) const {
+    ready_=a;
+  }
+  virtual bool ready() const {
+    return ready_;
+  }
+ protected:
+  bool ready_;
 };
 class BridgeDstLayer: public Layer {
  public:
@@ -256,8 +280,19 @@ class BridgeDstLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual void ComputeFeature(const vector<SLayer>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
   virtual void ComputeGradient(const vector<SLayer>& srclayers);
+  virtual bool is_bridgedstlayer() const {
+    true;
+  }
+  virtual void set_ready(bool a) const {
+    ready_=a;
+  }
+  virtual bool ready() const {
+    return ready_;
+  }
+ protected:
+  bool ready_;
 };
 class ConcateLayer: public Layer {
  public:
@@ -267,7 +302,7 @@ class ConcateLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
 
@@ -279,7 +314,7 @@ class ConcateLayer: public Layer {
 
 class DataLayer: public Layer{
  public:
-  virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
   virtual bool is_datalayer() const {
     return true;
@@ -331,7 +366,7 @@ class SliceLayer: public Layer {
   virtual const Blob<float>& grad(const Layer* layer=nullptr) const;
   virtual Blob<float>* mutable_data(const Layer* layer=nullptr);
   virtual Blob<float>* mutable_grad(const Layer* layer=nullptr);
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 
  protected:
@@ -348,7 +383,7 @@ class SplitLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers){}
 
-  virtual void ComputeFeature(const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
 /**********************Loss Layers************************/
@@ -384,8 +419,8 @@ class LossLayer: public Layer{
  */
 class ParserLayer: public Layer {
  public:
-  virtual void ComputeFeature();
-  virtual void ComputeFeature(const vector<SLayer>& srclayers)=0;
+  virtual void ComputeFeature(bool training);
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
   virtual bool is_parserlayer() const {
     return true;
@@ -421,11 +456,11 @@ class ParserLayer: public Layer {
    * worker/training algorithm calls this function to do prefetching in a
    * thread. data is in fact parsed into prefetch_data_.
    */
-  void Prefetching(){
+  void Prefetching(bool training){
     if(prefetch_data_.count()==0)
       prefetch_data_.ReshapeLike(data_);
     data_.Swap(prefetch_data_);
-    ComputeFeature(srclayers_);
+    ComputeFeature(training, srclayers_);
   }
 
   /**
@@ -439,9 +474,9 @@ class ParserLayer: public Layer {
   /**
    * if prefetching, then do nothing; otherwise conduct normal ComputeFeature
    */
-  void ComputeFeature(){
+  void ComputeFeature(bool training){
     if(prefetch_data_.count()==0)
-      ComputeFeature(srclayers_);
+      ComputeFeature(training, srclayers_);
   }
 
  private:

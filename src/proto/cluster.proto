@@ -1,18 +1,11 @@
 package singa;
 
 message ClusterProto{
-  // The following process ID refers to MPI rank which starts at 0
-  // table server process ID in [server_start, server_end)
-  optional int32 server_start=1 [default=0];
-  optional int32 server_end=2 [default=1];
-
-  // worker process ID in [worker_start, worker_end)
-  optional int32 worker_start=3;
-  optional int32 worker_end=4;
-
+  optional int32 nworkers=1;
+  optional int32 nservers=2;
+  optional int32 start_port=3 [default=6723];
   // partition workers into groups based on ID,
-  // e.g., first group: [worker_start, worker_start+group_size)
-  optional int32 group_size=5 [default=1];
+  optional int32 nprocs_per_group=5 [default=1];
 
   // local workspace, train/val/test shards, checkpoint files
   required string workspace=6;

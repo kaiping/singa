@@ -27,8 +27,8 @@ void Layer::SetupAfterPartition(){
   CHECK(std::equal(shape.begin(), shape.end(), data_.shape().begin()))<<name()
     <<IntVecToString(shape)<<"--"<<IntVecToString(data_.shape());
 }
-void Layer::ComputeFeature(){
-  ComputeFeature(srclayers_);
+void Layer::ComputeFeature(bool training){
+  ComputeFeature(training, srclayers_);
 }
 void Layer::ComputeGradient(){
   ComputeGradient(srclayers_);
@@ -47,10 +47,14 @@ void BridgeSrcLayer::SetupAfterPartition(){
   //LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
 }
 
-void BridgeSrcLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){
-
+void BridgeSrcLayer::ComputeFeature(bool training,
+    const vector<SLayer>& srclayers){
+  if(training)
+    ready_=false;
+  else
+    ready_=true;
 }
-void BridgeSrcLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){
+void BridgeSrcLayer::ComputeGradient(const vector<SLayer>& srclayers){
 
 }
 void BridgeDstLayer::Setup(const LayerProto& proto,
@@ -64,8 +68,12 @@ void BridgeDstLayer::SetupAfterPartition(){
   //LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
 }
 
-void BridgeDstLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){
-
+void BridgeDstLayer::ComputeFeature(bool training,
+    const vector<SLayer>& srclayers){
+  if(training)
+    ready_=true;
+  else
+    ready_=false;
 }
 void BridgeDstLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){
 
@@ -97,7 +105,7 @@ void ConcateLayer::SetupAfterPartition(){
 //  LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
 }
 
-void ConcateLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){}
+void ConcateLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){}
 
 void ConcateLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
 /*****************************************************************************
@@ -161,7 +169,7 @@ Blob<float>* SliceLayer::mutable_grad(const Layer* layer){
     return &grad_;
   return &gradvec_[SliceID(layer)];
 }
-void SliceLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){}
+void SliceLayer::ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers){}
 void SliceLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){}
 
 void SplitLayer::Setup(const LayerProto& proto,
@@ -175,7 +183,7 @@ void SplitLayer::SetupAfterPartition(){
   Setup(layer_proto_, srclayers_);
   //LOG(ERROR)<<name()<<":"<<IntVecToString(shape_);
 }
-void SplitLayer::ComputeFeature(const vector<shared_ptr<Layer>>& srclayers){
+void SplitLayer::ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers){
 
 }
 void SplitLayer::ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){

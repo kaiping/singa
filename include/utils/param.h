@@ -77,11 +77,14 @@ class Param {
     return param_proto_.name();
   }
 
-  int id() {
+  int ID() {
     return param_proto_.id();
   }
-  void set_id(int id) {
-    param_proto_.set_id(id);
+  void set_ID(int ID){
+    param_proto_.set_id(ID);
+  }
+  void ShareData(Param* other){
+    data_.ShareData(other->data_);
   }
   float learning_rate_multiplier() {
     return param_proto_.learning_rate_multiplier();
@@ -92,6 +95,17 @@ class Param {
   const int split_threshold(){
     return param_proto_.split_threshold();
   }
+  const Param* owner() const{
+    return owner_;
+  }
+  /*
+  const bool ready() const {
+    return ready_;
+  }
+  void set_ready(bool r) {
+    ready_=r;
+  }
+  */
  protected:
   /**
    * name of the parameter used to identify the ParamProto configed in
@@ -99,17 +113,21 @@ class Param {
    * and 'bias'.
    */
   std::string name_;
+  //bool ready_;
   /**
    * identifier of this parameter, will be used by ModelController
    */
   //! content, gradient and history gradient of this parameter
   Blob<float> data_, grad_, history_;
+
+  Param* owner_;
   /**
    * Currently support 5 init methods. May change to ParamInitFactory later to
    * support user defined init method.
    */
   ParamProto param_proto_;
 };
+
 
 }  // namespace singa
 

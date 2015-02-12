@@ -93,6 +93,17 @@ class NeuralNet {
     else return NULL;
   }
 
+  Param* paramID2param(int ID) {
+    if(paramID2param_.size()==0){
+      for(auto& layer: layers_){
+        for(Param* p: layer->GetParams()){
+          paramID2param_[p->ID()]=p;
+        }
+      }
+    }
+    return paramID2param_[ID];
+  }
+
  protected:
   void ConstructNeuralNet(const NetProto &net_proto);
   void PartitionNeuralNet();
@@ -147,6 +158,7 @@ class NeuralNet {
   vector<shared_ptr<Layer>> losslayers_;
   vector<Param*> params_;
   map<string, shared_ptr<Layer>> name2layer_;
+  map<int, Param*> paramID2param_;
   map<string, LayerProto> name2layerproto_;
   Factory<Layer>* factory_;
   int group_size_;

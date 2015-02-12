@@ -87,40 +87,5 @@ class SafeQueue{
   mutable std::mutex m;
 };
 
-class Performance: public PerformanceProto{
- public:
-   void Aggregate(const Performance& other){
-     set_loss(other.loss()+loss());
-     set_topk_precision(other.topk_precision()+topk_precision());
-     set_top_precision(other.top_precision()+top_precision());
-     set_count(count()+1);
-   }
-
-  void Reset() {
-    set_count(0);
-    set_loss(0.f);
-    set_topk_precision(0.f);
-    set_top_precision(0.f);
-  }
-
-  Performance Avg() {
-    Performance perf;
-    perf.CopyFrom(*this);
-    perf.set_loss(perf.loss()/perf.count());
-    perf.set_topk_precision(perf.topk_precision()/perf.count());
-    perf.set_top_precision(perf.top_precision()/perf.count());
-    return perf;
-  }
-
-  string ToString(){
-    char buf[1024];
-    sprintf(buf,"TopK Precision %.4f, ", topk_precision());
-    sprintf(buf+strlen(buf),"Top1 Precision %.4f, ", top_precision());
-    sprintf(buf+strlen(buf),"loss %.4f, ", loss());
-    return string(buf);
-  }
-};
-
-
 } /* singa */
 #endif  // INCLUDE_UTILS_COMMON_H_

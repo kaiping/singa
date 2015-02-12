@@ -80,11 +80,11 @@ class Param {
     return param_proto_.name();
   }
 
-  int ID() {
+  int id() const{
     return param_proto_.id();
   }
-  void set_ID(int ID){
-    param_proto_.set_id(ID);
+  void set_id(int id){
+    param_proto_.set_id(id);
   }
   void ShareData(Param* other){
     owner_=other;

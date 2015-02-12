@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     //server.Start();
     //    singa::Debug();
   }else {
-    singa::Worker worker(Cluster::Get());
+    singa::Worker worker(singa::Cluster::Get());
     worker.Start(model);
   }
   //LOG(ERROR)<<"SINA has shutdown successfully";

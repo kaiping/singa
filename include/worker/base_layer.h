@@ -137,17 +137,17 @@ class Layer {
   virtual PartitionType partition_type() const {
     return layer_proto_.partition_type();
   }
-  virtual void set_locationID(int ID){
-    layer_proto_.set_locationID(ID);
+  virtual void set_locationid(int id){
+    layer_proto_.set_locationid(id);
   }
-  virtual int locationID() const {
-    return layer_proto_.locationID();
+  virtual int locationid() const {
+    return layer_proto_.locationid();
   }
-  virtual void set_partitionID(int ID){
-    layer_proto_.set_partitionID(ID);
+  virtual void set_partitionid(int id){
+    layer_proto_.set_partitionid(id);
   }
-  virtual int partitiionID() const {
-    return layer_proto_.partitionID();
+  virtual int partitiionid() const {
+    return layer_proto_.partitionid();
   }
   virtual void set_name(string name){
     name_=name;
@@ -228,7 +228,7 @@ class Layer {
   virtual bool is_bridgedstlayer() const {
     return false;
   }
-  virtual void set_ready(bool a) const{
+  virtual void set_ready(bool a) {
   }
   virtual bool ready() const{
     return true;
@@ -260,10 +260,10 @@ class BridgeSrcLayer: public Layer {
   virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
   virtual void ComputeGradient(const vector<SLayer>& srclayers);
   virtual bool is_bridgesrclayer() const {
-    true;
+    return true;
   }
 
-  virtual void set_ready(bool a) const {
+  virtual void set_ready(bool a) {
     ready_=a;
   }
   virtual bool ready() const {
@@ -283,9 +283,9 @@ class BridgeDstLayer: public Layer {
   virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
   virtual void ComputeGradient(const vector<SLayer>& srclayers);
   virtual bool is_bridgedstlayer() const {
-    true;
+    return true;
   }
-  virtual void set_ready(bool a) const {
+  virtual void set_ready(bool a) {
     ready_=a;
   }
   virtual bool ready() const {
@@ -419,7 +419,6 @@ class LossLayer: public Layer{
  */
 class ParserLayer: public Layer {
  public:
-  virtual void ComputeFeature(bool training);
   virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
   virtual bool is_parserlayer() const {
@@ -474,7 +473,7 @@ class ParserLayer: public Layer {
   /**
    * if prefetching, then do nothing; otherwise conduct normal ComputeFeature
    */
-  void ComputeFeature(bool training){
+  virtual void ComputeFeature(bool training){
     if(prefetch_data_.count()==0)
       ComputeFeature(training, srclayers_);
   }

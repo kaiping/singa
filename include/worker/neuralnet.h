@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "proto/model.pb.h"
-#include "model/layer.h"
+#include "worker/layer.h"
 #include "utils/factory.h"
 #include "utils/graph.h"
 
@@ -46,8 +46,6 @@ class NeuralNet {
    * Print Norm1 of data and grad of each Layer and parameter.
    * @param net, neural network
    */
-  void DebugInfo() const;
-
 
   /**
    * Add layer explicitly used in manually programming/constructing neural net.
@@ -65,19 +63,19 @@ class NeuralNet {
   const std::vector<shared_ptr<Layer>>& layers() {
     return layers_;
   }
-  const std::vector<shared_ptr<Layer>>& parserlayers() {
+  const std::vector<ParserLayer*>& parserlayers() {
     if(parserlayers_.size()==0){
       for(auto& layer: layers_)
         if(layer->is_parserlayer())
-          parserlayers_.push_back(layer);
+          parserlayers_.push_back(static_cast<ParserLayer*>(layer.get()));
     }
     return parserlayers_;
   }
-  const std::vector<shared_ptr<Layer>>& losslayers() {
-    if(parserlayers_.size()==0){
+  const std::vector<LossLayer*>& losslayers() {
+    if(losslayers_.size()==0){
       for(auto& layer: layers_)
         if(layer->is_losslayer())
-          parserlayers_.push_back(layer);
+          losslayers_.push_back(static_cast<LossLayer*>(layer.get()));
     }
     return losslayers_;
   }
@@ -93,15 +91,20 @@ class NeuralNet {
     else return NULL;
   }
 
-  Param* paramID2param(int ID) {
-    if(paramID2param_.size()==0){
+  Param* paramid2param(int id) {
+    if(paramid2param_.size()==0){
       for(auto& layer: layers_){
         for(Param* p: layer->GetParams()){
-          paramID2param_[p->ID()]=p;
+          paramid2param_[p->id()]=p;
         }
       }
     }
-    return paramID2param_[ID];
+    return paramid2param_[id];
+  }
+
+  shared_ptr<Layer> datalayer() const {
+    CHECK(layers_.at(0)->is_datalayer());
+    return layers_.at(0);
   }
 
  protected:
@@ -154,11 +157,11 @@ class NeuralNet {
    */
  private:
   vector<shared_ptr<Layer>> layers_;
-  vector<shared_ptr<Layer>> parserlayers_;
-  vector<shared_ptr<Layer>> losslayers_;
+  vector<ParserLayer*> parserlayers_;
+  vector<LossLayer*> losslayers_;
   vector<Param*> params_;
   map<string, shared_ptr<Layer>> name2layer_;
-  map<int, Param*> paramID2param_;
+  map<int, Param*> paramid2param_;
   map<string, LayerProto> name2layerproto_;
   Factory<Layer>* factory_;
   int group_size_;

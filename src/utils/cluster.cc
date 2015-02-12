@@ -2,15 +2,13 @@
 #include <fcntl.h>
 #include <fstream>
 #include "utils/cluster.h"
-#include "utils/network.h"
 #include "proto/cluster.pb.h"
-#include "proto/worker.pb.h"
 
 namespace singa {
 
 std::shared_ptr<Cluster> Cluster::instance_;
-Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsID) {
-  procsID_=procsID;
+Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsid) {
+  procsid_=procsid;
 	cluster_ = cluster;
   SetupFolders(cluster);
   char hostname[256];
@@ -18,6 +16,7 @@ Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsID) {
   hostname_.insert(0, hostname, sizeof(hostname));
 
   std::ifstream ifs(hostfile, std::ifstream::in);
+  std::string line;
   while(std::getline(ifs, line)){
     addr_.push_back(line);
   }
@@ -30,14 +29,12 @@ void Cluster::SetupFolders(const ClusterProto &cluster){
 }
 
 void Cluster::SetupGroups(const ClusterProto &cluster){
-  char tmp[256];
-  int len;
 }
 
 shared_ptr<Cluster> Cluster::Get(const ClusterProto& cluster, string hostfile,
-    int procsID){
+    int procsid){
   if(!instance_) {
-    instance_.reset(new Cluster(cluster, hostfile, procsID));
+    instance_.reset(new Cluster(cluster, hostfile, procsid));
   }
   return instance_;
 }

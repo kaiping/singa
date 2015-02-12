@@ -3,6 +3,8 @@
 
 #include <czmq.h>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "utils/param.h"
 #include "utils/param_updater.h"
 #include "worker/neuralnet.h"
@@ -24,14 +26,15 @@ class ParamManager{
   /**
    * Allocate memory for local Param objects of net and init network settings.
    */
-  ParamManager(shared_ptr<NeuralNet> net, const UpdaterProto updater);
+  ParamManager(shared_ptr<NeuralNet> net, const UpdaterProto& updater);
 
   /**
     * Initialize neural network parameters and put them to
     * distributed parameter table on parameter servers.
     * @param net, neural network
     */
-  void PopulateServers(shared_ptr<Net> net);
+  void SendParamsToServers(){}
+  void GetParamsFromServers(){} // will be blocked until recv all parameters.
   /**
    * randomlly init allocated parameters and set them ready
    */
@@ -40,29 +43,32 @@ class ParamManager{
     /**
    * Poll messages and conduct updates for parameters.
    */
-  void Update(int step, shared_ptr<NeuralNet> net,  int threadID);
+  void Update(int step, int threadid);
   /**
    * A loop which calls Update, running as a background thread.
    */
-  void Run();
+  void Run(int step);
   void Stop(){
     running_=false;
   }
+  void SyncWithPS(int step);
  protected:
+  bool hogwild_;
   bool running_;
+  shared_ptr<NeuralNet> net_;
   //!< sgd updater
   shared_ptr<ParamUpdater> updater_;
   //!< a big param which allocates mem for all local params.
   Param param_;
-  //!< map from param's owner ID to process whose ParamManager allocates
+  //!< map from param's owner id to process whose ParamManager allocates
   //the owner param object.
-  // map<int, int> paramOwnerID2procsID_;
-  //!< map from param ID to Param poiner on local machine.
-  //map<int, Param*> paramID2param_;
-  map<int, vector<Param*>> ownerID2Params_;
+  // map<int, int> paramOwnerid2procsid_;
+  //!< map from param id to Param poiner on local machine.
+  //map<int, Param*> paramid2param_;
+  map<int, vector<Param*>> ownerid2Params_;
   //!< aggregated updates for one param
   //map<int, int> aggregatedUpdates_;
-  map<int, int> paramIDOffset_;
+  map<int, int> paramid2Offset_;
   // for leader PM to publish new parameters;
   // for worker PM to sub parameters from leader PM and;
   // for leader PM to pull grad from worker nodes;
@@ -77,9 +83,9 @@ class ParamManager{
   int step_;
 
   //!< sub updates/grad from PS
-  zsock_t sub_;
+  zsock_t*sub_;
   //!< push updates/grad to PS
-  zsock_t push_;
+  zsock_t*push_;
   zpoller_t *poller_;
 
   int timeout_;

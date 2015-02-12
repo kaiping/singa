@@ -37,6 +37,8 @@
  * or otherwise, the contributor releases their content to the
  * license and copyright terms herein.
  */
+#include <utility>
+#include <math.h>
 #include "utils/blob.h"
 /*********************SyncedMemory implementation************************/
 
@@ -161,6 +163,7 @@ const void* SyncedMemory::gpu_data() {
 #else
   NO_GPU;
 #endif
+  return nullptr;
 }
 
 void* SyncedMemory::mutable_cpu_data() {
@@ -177,6 +180,7 @@ void* SyncedMemory::mutable_gpu_data() {
 #else
   NO_GPU;
 #endif
+  return nullptr;
 }
 
 /*********************Blob implementation************************/
@@ -243,6 +247,13 @@ void Blob<Dtype>::ShareData(const Blob& other) {
   data_ = other.data();
 }
 
+template <> float Blob<float>::asum_data() const {
+  float sum=0.f;
+  const float* dptr=cpu_data();
+  for(int i=0;i<count();i++)
+    sum+=fabs(dptr[i]);
+  return sum/count();
+}
 template <> unsigned int Blob<unsigned int>::asum_data() const {
   NOT_IMPLEMENTED;
   return 0;
@@ -254,11 +265,11 @@ template <> int Blob<int>::asum_data() const {
 }
 
 template <typename Dtype>
-void Swap(Blob& other){
+void Blob<Dtype>::Swap(Blob& other){
   CHECK_EQ(other.count(), count());
-  CHECK_EQ(std::equal(shape_.begin(), shape_.end(), other.shape_.begin()));
-  swap(data_, other.data_);
-  swap(capacity_, other.capacity_);
+  CHECK(std::equal(shape_.begin(), shape_.end(), other.shape_.begin()));
+  std::swap(data_, other.data_);
+  std::swap(capacity_, other.capacity_);
 }
 
 template <typename Dtype>

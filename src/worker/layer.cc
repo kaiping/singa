@@ -3,7 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "mshadow/tensor.h"
-#include "model/layer.h"
+#include "worker/layer.h"
 #include "utils/singleton.h"
 
 using namespace mshadow;
@@ -543,7 +543,7 @@ void ShardDataLayer::ComputeFeature(bool training, const vector<SLayer>& srclaye
     }
     random_skip_=0;
   }
-  for(auto& record: data_){
+  for(auto& record: records_){
     string key;
     shard_->Next(&key, &record);
   }

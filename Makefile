@@ -9,16 +9,17 @@ INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include
 CXX := g++
 
 ######################Setting Varialbes#######################################
-LIBRARIES := mpicxx mpi glog gflags protobuf rt boost_system boost_regex \
-							boost_thread boost_filesystem opencv_highgui opencv_imgproc\
-							opencv_core openblas armci gtest
+LIBRARIES := glog gflags protobuf rt opencv_highgui opencv_imgproc\
+							opencv_core openblas gtest zmq czmq
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
 						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
 
 # Folder to store compiled files
 BUILD_DIR := build
+MSHADOW_FLAGS :=-DMSHADOW_USE_CUDA=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_MKL=0
 CXXFLAGS := -g -Wall -pthread -fPIC -std=c++11 -Wno-unknown-pragmas \
+	$(MSHADOW_FLAGS) -DCPU_ONLY=1 \
 	-funroll-loops $(foreach includedir, $(INCLUDE_DIRS), -I$(includedir))
 
 # find user defined .proto file, and then compute the corresponding .h, .cc

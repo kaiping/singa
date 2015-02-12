@@ -12,7 +12,7 @@
 
 #include "proto/model.pb.h"
 #include "utils/shard.h"
-#include "model/base_layer.h"
+#include "worker/base_layer.h"
 
 
 /**
@@ -63,7 +63,7 @@ class DropoutLayer: public Layer {
       const vector<int> &shape,
       const vector<SLayer>& srclayers);
 
-  virtual void ComputeFeature(bool training, bool training, const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
  protected:
   // drop probability

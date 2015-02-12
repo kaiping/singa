@@ -6,17 +6,18 @@ message ClusterProto{
   optional int32 start_port=3 [default=6723];
   // partition workers into groups based on ID,
   optional int32 nprocs_per_group=5 [default=1];
+  optional int32 nthreads_per_procs=6 [default=1];
 
   // local workspace, train/val/test shards, checkpoint files
-  required string workspace=6;
+  required string workspace=10;
 
   // relative path to workerspace will be created if not exist
-  optional string vis_subfolder=7 [default="vis"];
+  optional string vis_subfolder=11 [default="vis"];
   // relative path to workerspace will be created if not exist
-  optional string log_subfolder=8 [default="log"];
+  optional string log_subfolder=12 [default="log"];
 
-  optional bool synchronous=9 [default=false];
+  optional bool synchronous=15 [default=false];
 
   // message size limit, default 1MB
-  optional int32 largest_message=10 [default=1048576];
+  optional int32 largest_message=20 [default=1048576];
 }

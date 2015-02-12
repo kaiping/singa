@@ -67,7 +67,7 @@ message ParamProto {
   optional int32 partition_dim=5 [default =-1];
 
   // value of the parameter
-  repeated DAryProto ary = 6;
+  //repeated DAryProto ary = 6;
 
   enum InitMethod {
     kConstant = 0;
@@ -125,11 +125,11 @@ message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
   repeated string srclayers=3;
-  optional int32 locationID=4 [default=0]; // todo make locationID an array
-  optional int32 partitionID=5 [default=0];
+  optional int32 locationid=4 [default=0]; // todo make locationID an array
+  optional int32 partitionid=5 [default=0];
   optional PartitionType partition_type=6;
   // can be pos/neg neuron value for CD, neuron value/grad for BP
-  repeated DAryProto ary = 10;
+  //repeated DAryProto ary = 10;
   repeated string share_ary =11;
   // parameters, e.g., weight matrix or bias vector
   repeated ParamProto param = 12;
@@ -292,8 +292,8 @@ message SingleLabelImageRecord{
 
 message UpdaterProto {
   enum Type{
-    kAdaGrad=1,
-    kSGD=2
+    kAdaGrad=1;
+    kSGD=2;
   }
   optional Type type=1 [default=kAdaGrad];
   optional bool hogwild=2 [default=true];

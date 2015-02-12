@@ -5,7 +5,6 @@
 #include <utility>
 #include <memory>
 #include <vector>
-#include <mpi.h>
 #include "proto/cluster.pb.h"
 
 using std::shared_ptr;
@@ -21,70 +20,74 @@ namespace singa {
 class Cluster {
  public:
   static shared_ptr<Cluster> Get();
-  static shared_ptr<Cluster> Get(const ClusterProto& cluster);
+  static shared_ptr<Cluster> Get(const ClusterProto& cluster,string hostfile,
+    int procsid);
   // free my mpi group and mpi communicator
 
   void SetupGroups(const ClusterProto &cluster);
   void SetupFolders(const ClusterProto &cluster);
 
-  const int num_servers_procs(){
+  const int nservers(){
     return cluster_.nservers();
   }
-  const int num_worker_procs() {
+  const int nworkers() {
     return cluster_.nworkers();
   }
   bool AmIServer() {
-    return procsID_>=num_worker_procs()
-      &&procsID_<num_worker_procs()+num_servers_procs();
+    return procsid_>=nworkers()
+      &&procsid_<nworkers()+nservers();
   }
   bool AmIWorker() {
-    return procsID_>=0&&procsID_<num_worker_procs();
+    return procsid_>=0&&procsid_<nworkers();
   }
+  int nprocs_per_group() {return cluster_.nprocs_per_group();}
+  int nthreads_per_procs(){return cluster_.nthreads_per_procs();}
+  int procsid() {return procsid_;}
   /**
    * Return the id of the worker within his group.
    */
-  int groupID() {return procsID/nprocs_per_group();}
-  int ngroups() {return cluster_.worker_size()/nprocs_per_group_;}
-  int procsID() {return procsID_;}
-  int nprocs_per_group() {return cluster_.nprocs_per_group();}
-  int nthreads_per_procs(){return cluster_.nthreads_per_procs();}
+  int groupid() {return procsid_/nprocs_per_group();}
+  int ngroups() {return cluster_.nworkers()/nprocs_per_group();}
   int nthreads_per_group() {return nthreads_per_procs()*nprocs_per_group();}
-  int groupID_of_procs(int procsID) {return procsID/nprocs_per_group();}
-  int procsID_of_thread(int threadID) {return threadID/nthreads_per_thread();}
-  int groupID_of_thread(int threadID) {
-    return groupID_of_procs(procsID_of_thread(threadID));
+  int groupid_of_procs(int procsid) {return procsid/nprocs_per_group();}
+  //int procsid_of_thread(int threadid) {return threadid/nthreads_per_thread();}
+  /*
+   int groupid_of_thread(int threadid) {
+    return groupid_of_procs(procsid_of_thread(threadid));
   }
+  */
   /**
-   * thread ID within a workring group, there are
+   * thread id within a workring group, there are
    * procs_per_group()*nthreads_per_procs threads in one group.
    */
-  int group_threadID(int local_threadID){
-    (procsID_%nprocs_per_group())*nthreads_per_procs()+local_threadID;
+  int group_threadid(int local_threadid){
+    return (procsid_%nprocs_per_group())*nthreads_per_procs()+local_threadid;
+  }
+  int group_procsid(int global_procsid){
+    CHECK(global_procsid<cluster_.nworkers()&&global_procsid>=0);
+    return global_procsid%nprocs_per_group();
   }
   /**
-   * thread ID among all worker nodes/procs
+   * thread id among all worker nodes/procs
+  int global_threadid(int local_threadid){
+    return procsid()*nthreads_per_procs()+local_threadid;
+  }
    */
-  int global_threadID(int local_threadID){
-    return procsID()*nthreads_per_procs()+local_threadID;
-  }
-  int group_procsID(int global_procsID){
-    CHECK(global_procsID<cluster_.nworkers()&&global_procsID>=0);
-    return global_procsID%nprocs_per_group();
-  }
-  int global_procsID(int local_threadID){
-    return (procsID/nprocs_per_group)*nprocs_per_group+
-      local_threadID/nthreads_per_procs();
+  int global_procsid(int local_threadid){
+    return (procsid()/nprocs_per_group())*nprocs_per_group()+
+      local_threadid/nthreads_per_procs();
   }
 
   /**
-   * procsID for the server that manages param for the worker of group_procsID
+   * procsid for the server that manages param for the worker of group_procsid
    */
-  const string server_addr(int group_procsID){
-    return addr(num_worker_procs()+group_procsID%nprocs_per_group());
+  const string server_addr(int group_procsid){
+    return addr(nworkers()+group_procsid%nprocs_per_group());
   }
-  const string addr(int procsID) const{
-    CHECK(procsID>=0&&procsID<addr_.size());
-    return addr_[procsID];
+  const string addr(int procsid) const{
+    CHECK_GE(procsid,0);
+    CHECK_LT(procsid,addr_.size());
+    return addr_[procsid];
   }
   const string pub_port() const {
     return std::to_string(cluster_.start_port());
@@ -108,13 +111,14 @@ class Cluster {
   }
   const string hostname(){return hostname_;}
  private:
-  Cluster(const ClusterProto &cluster, string hostfile, int procsID) ;
+  Cluster(const ClusterProto &cluster, string hostfile, int procsid) ;
 
  private:
-  int procsID_;
+  int procsid_;
   // total number of processes started by mpi
   int nprocs_;
   int ngroups_;
+  std::vector<std::string> addr_;
   // hostname
   std::string hostname_;
   // cluster config proto

@@ -10,7 +10,7 @@ INCLUDE_DIRS := ./include  \
 CXX := g++
 
 ######################Setting Varialbes#######################################
-LIBRARIES := glog gflags protobuf rt gtest mpi openblas opencv_highgui \
+LIBRARIES := glog gflags protobuf rt gtest openblas opencv_highgui \
 	opencv_imgproc opencv_core
 
 LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \

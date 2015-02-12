@@ -3,9 +3,10 @@
 #include <map>
 #include <pthread.h>
 
-#include "model/net.h"
+#include "worker/neuralnet.h"
 #include "worker/param_manager.h"
 #include "proto/model.pb.h"
+#include "utils/cluster.h"
 
 namespace singa {
 class Performance{
@@ -21,6 +22,7 @@ class Performance{
   vector<vector<float>> metric_;
   vector<string> name_;
   shared_ptr<NeuralNet> net_;
+  int counter_;
 };
 
 /**
@@ -28,22 +30,24 @@ class Performance{
  */
 class Executor{
  public:
+  Executor():local_threadid_(0){}
+  virtual ~Executor();
   /**
-    * threadID is the thread ID within a working group
+    * threadid is the thread id within a working group
     */
-  Executor(int local_threadID,
+  Executor(int local_threadid,
       const ModelProto& model,
       shared_ptr<Cluster> cluster,
       shared_ptr<NeuralNet> train_net,
       shared_ptr<NeuralNet> test_net=nullptr,
       shared_ptr<NeuralNet> validation_net=nullptr);
-  void Setup(int local_threadID, const ModelProto& model);
+  void Setup(int local_threadid, const ModelProto& model);
   virtual void Run(ParamManager*pm, int start_step=0);
   /**
     * Fetchdata by calling DataLayer and ParserLayer of the net.
     * This function is usually called by launcing a new thread as prefetching.
     */
-  static void PrefetchData(shared_ptr<Net> net, bool training);
+  static void PrefetchData(shared_ptr<NeuralNet> net, bool training);
 
   /**
     * check validation/test firstly, then TrainOneBatch
@@ -65,17 +69,20 @@ class Executor{
     * @param net, neural network
     * @param phase kValidation or kTest.
     */
-  void Test(shared_ptr<NeuralNet> net);
+  void Test(shared_ptr<NeuralNet> net, int nsteps, bool dispperf);
+  void Pull(zsock_t* pull, shared_ptr<NeuralNet> net);
 
+  void Forward(shared_ptr<NeuralNet> net, bool training);
+  void Backward(shared_ptr<NeuralNet> net);
   /**
     * Profiling the time cost of training one batch.
     */
   string TimerInfo(){
     char buf[1024];
     float ticks=ticks_;
-    float tf=tForward_/ticks, tb=fBackward_/ticks,
+    float tf=tForward_/ticks, tb=tBackward_/ticks,
           td=tSyncData_/ticks, tp=tSyncParam_/ticks;
-    int64_t total=tf+tb+td+tp;
+    float total=tf+tb+td+tp;
     sprintf(buf,
         "\nTotal\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\t\
         syncdata\t%6.2f\tsyncparam\t%6.2f\n", total,tf,tb, td,tp);
@@ -86,8 +93,8 @@ class Executor{
   /**
     * Check is it time to display training info, e.g., loss and precison.
     */
-  const bool DisplayNow(const int step) {
-    return (cluster_->groupID()==0
+  const bool DisplayNow(const int step) const {
+    return (cluster_->groupid()==0
         &&modelproto_.display_frequency() > 0
         && step >= modelproto_.display_after_steps()
         && ((step - modelproto_.display_after_steps())
@@ -98,7 +105,7 @@ class Executor{
     * return true if the stop condition is satisfied, e.g., the maximum number
     * of steps have been reached.
     */
-  const bool StopNow(const int step){
+  const bool StopNow(const int step) const{
     return (step >= modelproto_.train_steps());
   }
 
@@ -106,8 +113,8 @@ class Executor{
     * Check is it time to do test.
     * @param step the ::Train() has been called this num times.
     */
-  const bool TestNow(const int step) {
-    return (cluster_->groupID()==0
+  const bool TestNow(const int step) const{
+    return (cluster_->groupid()==0
         && modelproto_.test_frequency() > 0
         && step >= modelproto_.test_after_steps()
         && ((step - modelproto_.test_after_steps())
@@ -118,7 +125,7 @@ class Executor{
     * @param step the ::Train() has been called step times.
     */
   const bool ValidateNow(const int step) {
-    return (cluster_->groupID()==0
+    return (cluster_->groupid()==0
         && modelproto_.validation_frequency() > 0
         && step >= modelproto_.validation_after_steps()
         && ((step - modelproto_.validation_after_steps())
@@ -126,19 +133,19 @@ class Executor{
   }
 
  protected:
-  shared_ptr<NeuralNet> train_net_, test_net_, validation_net_;
-  shared_ptr<Cluster> cluster_;
+  int local_threadid_;
   ModelProto modelproto_;
+  shared_ptr<Cluster> cluster_;
   //!< thread for prefetching training data.
   std::thread prefetch_thread_;
   int step_;
-  int local_threadID_;
 
   int64_t tForward_, tBackward_, tSyncData_, tSyncParam_;
   int ticks_;
 
   zsock_t* pull_;
   map<int, zsock_t*> push_;
+  shared_ptr<NeuralNet> train_net_, test_net_, validation_net_;
 };
 
 /**
@@ -149,14 +156,14 @@ class Executor{
  *
  * TODO May add more functions (e.g., communication with other workers/groups).
  */
-class Worker {
+class Worker : public Executor{
  public:
   explicit Worker(shared_ptr<Cluster> cluster);
   /**
    * start training from scratch.
    * setup training/test/validation neuralnets, then call Run().
    */
-  void Start(const ModelProto& model);
+  void Start(ModelProto model);
   /**
    * TODO Resume from snapshot
    */
@@ -177,7 +184,7 @@ class Worker {
    * setup (done outside of this funcion).
    * @param np proto for the neural network.
    */
-  shared_ptr<NeuralNet> SetupNeuralNet(const NeuralNetProto& np, Phase phase);
+  shared_ptr<NeuralNet> SetupNeuralNet(const NetProto& np, Phase phase);
 };
 }  // namespace singa
 

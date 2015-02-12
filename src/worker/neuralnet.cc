@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <queue>
 
-#include "model/neuralnet.h"
+#include "worker/neuralnet.h"
 #include "utils/singleton.h"
 #include "utils/factory.h"
 #include "utils/graph.h"
 
-#define CreateLayer(ID) CreateInstance(ID, Layer)
+#define CreateLayer(id) CreateInstance(id, Layer)
 
 namespace singa {
 NeuralNet::NeuralNet(NetProto net_proto, int group_size) {
@@ -100,8 +100,8 @@ void NeuralNet::PartitionNeuralNet(){
   for(SNode node: graph_.nodes()){
     LayerProto proto;
     proto.set_name(node->name());
-    proto.set_locationID(node->val().locationID);
-    proto.set_partitionID(node->val().partitionID);
+    proto.set_locationid(node->val().locationid);
+    proto.set_partitionid(node->val().partitionid);
     const string& origin=node->val().origin;
     if (origin=="kSlice"){
       proto.set_type(origin);
@@ -138,7 +138,7 @@ void NeuralNet::PartitionNeuralNet(){
       } else{
         int pdim=oldlayer->partition_dimension();
         shape[pdim]=shape[pdim]/gsize+
-          ((node->val().partitionID==gsize-1)?shape[pdim]%gsize:0);
+          ((node->val().partitionid==gsize-1)?shape[pdim]%gsize:0);
         shared_ptr<Layer> layer(factory_->Create(oldlayer->type()));
         layer->Init(*oldlayer, shape);
         layer->set_name(node->name());
@@ -195,7 +195,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
       }
     }else if(layer->partition_type()==kNone){
       auto node=graph.AddNode(layer->name(),
-          LayerInfo{layer->name(), layer->locationID(), 0,-1,-1});
+          LayerInfo{layer->name(), layer->locationid(), 0,-1,-1});
       nodes.push_back(node);
     }else{
       LOG(FATAL)<<"Unknown partition type "<<layer->partition_type();
@@ -291,7 +291,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
     vector<SNode> dstnodes=node->dstnodes();
     for(size_t i=0;i<dstnodes.size();i++){
       SNode dstnode=dstnodes.at(i);
-      if(node->val().locationID!=dstnode->val().locationID){
+      if(node->val().locationid!=dstnode->val().locationid){
         graph.RemoveEdge(node, dstnode);
         graph.InsertBridgeNode(node, dstnode);
       }
@@ -329,24 +329,26 @@ void NeuralNet::ToProto(NetProto *proto, bool copyData) {
 string NeuralNet::DebugInfo(){
   string ret;
   char display[4096];
-  for(auto* layer: layers_){
+  for(auto& layer: layers_){
+    if(layer->is_datalayer()){
     sprintf(display, "Forward layer  %10s data norm1 %13.9f",
         layer->name().c_str(), layer->data().asum_data());
     ret+=string(display);
+    }
   }
-  for (auto layer = layers_.rbegin(); layer != layers_.rend_(); layer++){
-    if(!(*layer)->has_input()){
+  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++){
+    if(!(*layer)->is_datalayer()){
       sprintf(display, "Backward layer %10s grad norm1 %13.9f",
           (*layer)->name().c_str(), (*layer)->grad().asum_data());
       ret+=string(display);
     }
   }
-  for(auto* layer: layers_){
+  for(auto& layer: layers_){
     for(auto* param: layer->GetParams()){
       sprintf(display, "Layer %10s, param id %2d, name %10s,\
           value norm1 %13.9f, grad norm1 %13.9f",
-          layer->name().c_str(), param->id(), param->name().c_str(), p
-          aram->data().asum_data(), param->grad().asum_data());
+          layer->name().c_str(), param->id(), param->name().c_str(),
+          param->data().asum_data(), param->grad().asum_data());
       ret+=string(display);
     }
   }

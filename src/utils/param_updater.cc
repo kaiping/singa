@@ -56,12 +56,12 @@ void AdaGradUpdater::Init(const UpdaterProto& proto){
   weight_decay_=proto.weight_decay();
 }
 
-void AdaGradUpdater::Update(int step, Param* param){
+void AdaGradUpdater::Update(int step, Param* param, float grad_scale){
   Shape<1> s=Shape1(param->size());
   Tensor<cpu, 1> data(param->mutable_data()->mutable_cpu_data(), s);
   Tensor<cpu, 1> grad(param->mutable_grad()->mutable_cpu_data(), s);
   Tensor<cpu, 1> history(param->mutable_history()->mutable_cpu_data(), s);
-  history+=F<op::square>(grad);
+  history+=F<op::square>(grad*grad_scale);
   float lr=GetLearningRate(step)*param->learning_rate_multiplier();
   float wd=weight_decay_*param->weight_decay_multiplier();
   if(wd>0){ // L2 regularization

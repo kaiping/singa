@@ -100,8 +100,8 @@ void NeuralNet::PartitionNeuralNet(){
   for(SNode node: graph_.nodes()){
     LayerProto proto;
     proto.set_name(node->name());
-    proto.set_locationid(node->val().locationid);
-    proto.set_partitionid(node->val().partitionid);
+    proto.set_locationID(node->val().locationID);
+    proto.set_partitionID(node->val().partitionID);
     const string& origin=node->val().origin;
     if (origin=="kSlice"){
       proto.set_type(origin);
@@ -138,7 +138,7 @@ void NeuralNet::PartitionNeuralNet(){
       } else{
         int pdim=oldlayer->partition_dimension();
         shape[pdim]=shape[pdim]/gsize+
-          ((node->val().partitionid==gsize-1)?shape[pdim]%gsize:0);
+          ((node->val().partitionID==gsize-1)?shape[pdim]%gsize:0);
         shared_ptr<Layer> layer(factory_->Create(oldlayer->type()));
         layer->Init(*oldlayer, shape);
         layer->set_name(node->name());
@@ -195,7 +195,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
       }
     }else if(layer->partition_type()==kNone){
       auto node=graph.AddNode(layer->name(),
-          LayerInfo{layer->name(), layer->locationid(), 0,-1,-1});
+          LayerInfo{layer->name(), layer->locationID(), 0,-1,-1});
       nodes.push_back(node);
     }else{
       LOG(FATAL)<<"Unknown partition type "<<layer->partition_type();
@@ -291,7 +291,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
     vector<SNode> dstnodes=node->dstnodes();
     for(size_t i=0;i<dstnodes.size();i++){
       SNode dstnode=dstnodes.at(i);
-      if(node->val().locationid!=dstnode->val().locationid){
+      if(node->val().locationID!=dstnode->val().locationID){
         graph.RemoveEdge(node, dstnode);
         graph.InsertBridgeNode(node, dstnode);
       }

@@ -11,6 +11,9 @@
 namespace singa {
 class Param {
  public:
+   Param(){
+    owner_=this;
+   }
   /**
    * Set properties of this parameter from ParamProto, allocate
    * corresponding memory and initialize the parameter. Copy data, history and
@@ -84,6 +87,7 @@ class Param {
     param_proto_.set_id(ID);
   }
   void ShareData(Param* other){
+    owner_=other;
     data_.ShareData(other->data_);
   }
   float learning_rate_multiplier() {

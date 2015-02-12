@@ -11,7 +11,6 @@ Worker::Worker(shared_ptr<Cluster> cluster){
 }
 
 void Worker::Start(const ModelProto& model){
-  modelproto_=model;
   LOG(ERROR)<<"Worker on "<<cluster_->hostname()<<" is starting...";
   train_net_=SetupNeuralNet(model.neuralnet(), kTrain);
   test_net_=SetupNeuralNet(model.neuralnet(), kTest);
@@ -21,52 +20,49 @@ void Worker::Start(const ModelProto& model){
   if(validation_net_!=nullptr)
     validation_net_.ShareWeights(train_net_);
 
-  if(model.updater().handler()==ParamUpdater_Type_kAdaGrad){
-    updater_=make_shared<AdaGradUpdater>();
-    updater_->Init(modelproto_.updater());
-  } else
-    LOG(FATAL)<<"Only support AdaGradUpdater now";
-
   // update proto_, all groups will do the training, but only the first group
   // conduts test/validation. Hence, the training mini-batch is partitioned
   // onto all groups.
   if(cluster_->group_id()==0){
     int ngroups=cluster_.ngroups();
-    modelproto_.set_validation_frequency(
-        modelproto_.validation_frequency()/ngroups);
-    modelproto_.set_test_frequency(modelproto_.test_frequency()/ngroups);
+    model.set_validation_frequency(
+        model.validation_frequency()/ngroups);
+    model.set_test_frequency(model.test_frequency()/ngroups);
   }
   // todo, two ways to syn all workers
   // 1. create MPI communicator for all workers, and call MPI_Barrier for
   // this communicator
   // 2. handle_get returns false if the key of get() is not found in the
   // table, i.e., parameters have not been inserted
+  ParamManager pm(train_net_, model.updater());
+  if(cluster_->groupID()==0){
+    pm.InitParams(); //init local params
+  }else{
+    pm.GetParamsFromServers(); // will be blocked until recv all parameters.
+  }
+
   int nthreads=cluster_.nthreads_per_procs();
   vector<Executor> executors(nthreads-1);
   vector<thread> threads;
-  //setup main executor
-  Setup(0);
+  Setup(model,0); //setup main executor
   for(size_t i=1;i<executors.size();i++){
-    executors[i]=new Executor(i, cluster_, train_net_);
-    threads.push_back(thread(&Executor::Run, ref(*executors[i]), step_));
+    executors[i]=new Executor(i, model, cluster_, train_net_);
+    threads.push_back(thread(&Executor::Run, ref(*executors[i]), &pm, 0));
   }
-
-  ParamManager pm(train_net_);
   if(cluster_->groupID()==0){
-    pm.InitParams();
     Performance perf(train_net_);
-    for(int i=0;i<modelproto_.warmup_steps();i++){
-      RunOneBatch(step_, &perf);
-      pm.Update();
+    for(int i=0;i<model.warmup_steps();i++){
+      RunOneBatch(i, &perf);
+      pm.Update(i, train_net_, local_threadID_);
     }
     pm.SendParamsToServers();
-  }else{
-    // will be blocked until recv all parameters.
-    pm.GetParamsFromServers();
   }
-  Run(&pm, modelproto_.warmup_steps());
+  Run(&pm, model.warmup_steps());
   for(auto& th: threads)
     th.join();
+  for(size_t i=1;i<executors.size();i++){
+    delete executors[i];
+  }
   //LOG(ERROR)<<"Worker on "<<hostname_<< " is shutting down";
 }
 
@@ -88,7 +84,7 @@ void Worker::Run(ParamManager* pm, const int start_step){
   step_=start_step;
   while(!StopNow(step_)){
     RunOneBatch(step_, &perf);
-    pm->Update();
+    pm->Update(step_, train_net_, local_threadID_);
     // communicate with others
     step_++;
   }
@@ -108,23 +104,25 @@ void Executor::Executor(int local_threadID,
         Setup(local_threadID);
       }
 
-void Executor::Setup(int local_threadID){
-  threadID_=local_threadID;
-  if(train_net_->datalayer()->locationID()==cluster_->group_threadID(threadID);
+void Executor::Setup(int local_threadID, const ModelProto& model){
+  modelproto_=model;
+  local_threadID_=local_threadID;
+  gthreadID=cluster_->group_threadID(local_threadID);
+  if(train_net_->datalayer()->locationID()==gthreadID)
     prefetch_thread_=std::thread(Worker::PrefetchData, train_net_, true);
 
   subparam_=zsock_new_sub(">inproc://pmpub");
   pushparam_=zsock_new_push(">inproc://pmpull");
 
-  for(auto& layer: train_net_->layers()){
-    if(layer->locationID()==threadID){
+  for(auto& layer: train_net_->layers()){ //TODO check with PS
+    if(layer->locationID()==gthreadID){
       int pushloc=-1;
       if(layer->is_bridgesrclayer())
         pushloc=layer->dstlayers()[0]->locationID();
       else if(layer->is_bridgedstlayer())
         pushloc=layer->srclayers()[0]->locationID();
       if(pushloc!=-1&&push_.find(pushloc)==push_.end()){
-        pull_=zsock_new_pull("@tcp://*:"+cluster_->pull_port(threadID));
+        pull_=zsock_new_pull("@tcp://*:"+cluster_->pull_port(local_threadID));
         string pushaddr=cluster_->addr(cluster_->global_procsID(pushloc));
         push_[pushloc]= zsock_new_push( ">tcp://"+pushaddr
             +":"+cluster_->pull_port(pushloc%cluster_->nthreads_per_procs()));
@@ -149,9 +147,11 @@ void Executor::PrefetchData(shared_ptr<NeuralNet> net, bool training){
   }
 }
 
-void Executor::Run(){
+void Executor::Run(ParamManager*pm, int step){
+  step_=step;
   while(!StopNow(step_)){
     RunOneBatch(step_);
+    pm->Update(train_net_, step_, local_threadID_);
     step_++;
   }
 }
@@ -212,13 +212,6 @@ void Executor::Forward(shared_ptr<NeuralNet> net, bool training){
     while(!layer->ready()){
       Pull(pull_, train_net_);
     }
-    for(Param* p: layer->params()){
-      while(p->ready()){
-        zsock_recv(subparam_, "ii", &type, &paramID);
-        Param* pp=train_net_->paramID2Param(paramID);
-        pp->set_ready(true);
-      }
-    }
     layer->ComputeFeature(training);
     if(layer->is_bridgesrclayer()){
       zframe_t* frame=zframe_new(layer->data().cpu_data(),
@@ -237,9 +230,6 @@ void Executor::Backward(shared_ptr<NeuralNet> net){
       Pull(pull_, train_net_);
     }
     (*layer)->ComputeGradient();
-    for(auto* param: (*layer)->GetParams()){
-      zsock_send(pushparam_, "ip",kGradReady,param);
-    }
     if(layer->is_bridgedstlayer()){
       zframe_t* frame=zframe_new(layer->grad().cpu_data(),
           layer->data().count()*sizeof(float));

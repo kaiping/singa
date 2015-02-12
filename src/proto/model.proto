@@ -1,31 +1,54 @@
 package singa;
 message ModelProto{
   optional string name = 1;
-  optional NetProto neuralnet = 2;
-  optional SolverProto solver = 3;
+  // relative path to system folder
+  optional string train_folder=2 [default="train"];
+  optional string test_folder=3 [default="test"];
+  optional string validation_folder=4 [default="validation"];
+  // start display after this num steps
+  optional int32 display_after_steps = 6 [default = 0];
+  // frequency of display
+  optional int32 display_frequency = 7 [default = 0];
+
+  // the time of validation
+  //optional int32 validation_step = 9 [default = 0];
+  // start validation after this num steps
+  optional int32 validation_after_steps = 10 [default = 0];
+  // frequency of validation
+  optional int32 validation_frequency = 11 [default = 0];
+
+  // the time of test
+  //optional int32 test_step = 12 [default = 0];
+  // start test after this num steps
+  optional int32 test_after_steps = 13 [default = 0];
+  // frequency of test
+  optional int32 test_frequency = 14 [default = 0];
+
+  // total num of steps for training
+  optional int32 train_steps = 20;
+  // total num of steps for validation
+  optional int32 validation_steps=21;
+  // total num of steps for test
+  optional int32 test_steps=22;
+  // warmup the parameters and then send to parameter servers.
+  optional int32 warmup_steps=25 [default=0];
+  // last snapshot step
+  optional int32 step=29 [default=0];
+
+  optional UpdaterProto updater=31;
+  // There are two basic algorithms for calculating gradients.
+  // Different deep learning models use different algorithms.
+  enum GradCalcAlg{
+    kBackPropagation = 1;
+    kContrastiveDivergence = 2;
+  }
+  optional GradCalcAlg alg= 32 [default = kBackPropagation];
+  optional NetProto neuralnet = 40;
 }
 
-message NetProto {
-  repeated LayerProto layer = 1;
-  repeated EdgeProto edge=2;
+message NetProto{
+  repeated LayerProto layer=1;
   optional PartitionType partition_type=3 [default=kNone];
-}
-
-// used to simplify the configuation of layer connections
-// and draw net structure graph
-message EdgeProto{
-  // if true, the edge is from layer1 to layer2.
-  optional bool directed=1 [default = true];
-  // layer name
-  optional string layer1=2;
-  // layer name
-  optional string layer2=3;
-}
-
-message DAryProto {
-  optional int32 partition_dim =1 [default =-1];
-  repeated int32 shape = 2;
-  repeated float value = 3 [packed=true];
 }
 
 message ParamProto {
@@ -102,8 +125,8 @@ message LayerProto {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type from the enum above
   repeated string srclayers=3;
-  optional int32 locationid=4 [default=0]; // todo make locationID an array
-  optional int32 partitionid=5 [default=0];
+  optional int32 locationID=4 [default=0]; // todo make locationID an array
+  optional int32 partitionID=5 [default=0];
   optional PartitionType partition_type=6;
   // can be pos/neg neuron value for CD, neuron value/grad for BP
   repeated DAryProto ary = 10;
@@ -250,58 +273,7 @@ message ReLUProto {
   optional float negative_slope = 1 [default = 0];
 }
 
-message PerformanceProto {
-  optional float topk_precision = 1 [default=0.0];
-  optional float top_precision = 2 [default=0.0];
-  optional float loss = 3 [default=0.0];
-  optional int32 count =4 [default=0];
-  optional int32 step = 5 [default=0];
-}
 
-message SolverProto {
-  optional int32 step=1 [default=0];
-  // relative path to system folder
-  optional string train_folder=2 [default="train"];
-  optional string test_folder=3 [default="test"];
-  optional string validation_folder=4 [default="validation"];
-  // start display after this num steps
-  optional int32 display_after_steps = 6 [default = 0];
-  // frequency of display
-  optional int32 display_frequency = 7 [default = 0];
-
-  // the time of validation
-  //optional int32 validation_step = 9 [default = 0];
-  // start validation after this num steps
-  optional int32 validation_after_steps = 10 [default = 0];
-  // frequency of validation
-  optional int32 validation_frequency = 11 [default = 0];
-
-  // the time of test
-  //optional int32 test_step = 12 [default = 0];
-  // start test after this num steps
-  optional int32 test_after_steps = 13 [default = 0];
-  // frequency of test
-  optional int32 test_frequency = 14 [default = 0];
-
-  // batchsize is the num of instances processed per step
-  // optional int32 batchsize = 19;
-  // total num of steps for training
-  optional int32 train_steps = 20;
-  // total num of steps for validation
-  optional int32 validation_steps=21;
-  // total num of steps for test
-  optional int32 test_steps=22;
-  optional UpdaterProto updater=23;
-  // SGD parameters
-  optional SGDProto sgd=24;
-  // There are two basic algorithms for calculating gradients.
-  // Different deep learning models use different algorithms.
-  enum GradCalcAlg{
-    kBackPropagation = 1;
-    kContrastiveDivergence = 2;
-  }
-  optional GradCalcAlg alg= 26 [default = kBackPropagation];
-}
 
 message Record {
   enum Type{
@@ -324,6 +296,7 @@ message UpdaterProto {
     kSGD=2
   }
   optional Type type=1 [default=kAdaGrad];
+  optional bool hogwild=2 [default=true];
   optional float base_learning_rate=3;
   optional float momentum=4 [default=0];
   optional float weight_decay=5 [default=0];
@@ -343,103 +316,3 @@ message UpdaterProto {
   }
   optional ChangeProto learning_rate_change_method = 16 [default = kStep];
 }
-
-message SGDProto {
-  optional float learning_rate=1;
-  optional float momentum=2;
-  optional float weight_decay=3;
-  // used in changing learning rate
-  optional float gamma = 4 [default=1];
-  optional float pow=5 [default=0];
-  optional int32 learning_rate_change_frequency = 6;
-  enum ChangeProto {
-    kFixed = 0;
-    kInverse_t= 1;
-    kInverse= 2;
-    kExponential = 3;
-    kLinear = 4;
-    kStep = 5;
-  }
-  optional ChangeProto learning_rate_change = 7 [default = kStep];
-  optional bool synchronous=8 [default=false];
-  // table server handler class identifier
-  optional string handler=9 [default="SGD"];
-  // start the checkpoint operation after this num steps
-  optional int32 checkpoint_after_steps = 10 [default = 0];
-  // frequency of checkpoint
-  optional int32 checkpoint_frequency = 11 [default = 0];
-  // leave for further extension
-  extensions 100 to max;
-}
-
-// Tuple key class for Parameter Table
-message TKey{
-  // Unique identifier of the tuple, i.e, parameter split id
-  optional int32 id=1;
-  // Tuple version
-  optional int32 version=2;
-  // MPI rank, e.g. the rank of a worker who sends Get request, used in debug
-  optional int32 rank=3;
-  // leave for extension
-  extensions 100 to max;
-}
-
-// Tuple value class for Parameter Table.
-message TVal{
-  // Identifier string, e.g., type for SGDVal is "SGDVal", "AdaVal" for AdaVal.
-  optional string type=1;
-  // num of workers whose gradients have been aggregated.
-  optional int32 num_aggregate = 4;
-  // tuple version the same to that in TKey.
-  optional int32 version = 5 ;
-  // MPI rank, e.g. the rank of a worker who sends Update request, used in debug
-  optional int32 rank=6;
-  // parameter id, used in debug and reconstruct the parameter object
-  optional int32 param_id=7;
-  // split id, used in debug and reconstruct the parameter object
-  optional int32 split_id=8;
-  // split offset, position (num of floats) of the start of this split to the
-  // pos of the first split.
-  optional int32 split_offset=9;
-  optional float learning_rate_multiplier=10 [default=1.0];
-  optional float weight_decay_multiplier=11 [default=1.0];
-   // content of the parameter split (i.e., the tuple).
-  optional DAryProto data=12;
-  // gradient
-  optional DAryProto grad = 13;
-  // gradient history
-  optional DAryProto history=14;
-  optional int32 threshold=15 [default=1];
-  // extensions used by Child message, e.g., SGDValue
-  extensions 100 to max;
-}
-
-message Tuple{
-  optional TKey key=1;;
-  optional TVal val=2;
-}
-
-// Tuple value class used in normal SGD algorithm.
-message SGDVal{
-  extend TVal {
-    optional SGDVal sgd=101;
-  }
-}
-
-// Tuple value class used in AdaGrad SGD algorithm.
-message AdaVal{
-  extend TVal{
-    optional AdaVal ada=102;
-  }
-}
-// used to load image mean provided by caffe, in RGBDirSource
-message MeanProto{
-  optional int32 num =1 [default =0];
-  optional int32 channels = 2 [default =0];
-  optional int32 height = 3 [default =0];
-  optional int32 width = 4 [default =0];
-  repeated float data=5 [packed=true];
-  repeated float diff=6 [packed=true];
-}
-
-

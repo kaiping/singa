@@ -12,7 +12,7 @@ class ParamUpdater{
   virtual void Init(const UpdaterProto &proto){
     proto_=proto;
   }
-  virtual void Update(int step, Param* param)=0;
+  virtual void Update(int step, Param* param, float grad_scale=1.0f)=0;
 
   float GetLearningRate(int step);
  protected:
@@ -22,7 +22,7 @@ class ParamUpdater{
 class AdaGradUpdater : public ParamUpdater{
  public:
   virtual void Init(const UpdaterProto& proto);
-  virtual void Update(int step, Param* param);
+  virtual void Update(int step, Param* param, float grad_scale=1.0f);
 
  protected:
   float base_lr_;

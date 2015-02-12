@@ -1,7 +1,10 @@
 #ifndef INCLUDE_WORKER_PARAM_MANAGER_H_
 #define INCLUDE_WORKER_PARAM_MANAGER_H_
-#include "czmq.h"
+
+#include <czmq.h>
+#include <thread>
 #include "utils/param.h"
+#include "utils/param_updater.h"
 #include "worker/neuralnet.h"
 
 #define kGradFrame 2
@@ -19,6 +22,11 @@ namespace singa{
 class ParamManager{
  public:
   /**
+   * Allocate memory for local Param objects of net and init network settings.
+   */
+  ParamManager(shared_ptr<NeuralNet> net, const UpdaterProto updater);
+
+  /**
     * Initialize neural network parameters and put them to
     * distributed parameter table on parameter servers.
     * @param net, neural network
@@ -29,14 +37,10 @@ class ParamManager{
    */
   void InitParams();
 
-  /**
-   * Allocate memory for local Param objects of net and init network settings.
-   */
-  void Setup(shared_ptr<NeuralNet> net, shared_ptr<ParamUpdater> updater);
-  /**
+    /**
    * Poll messages and conduct updates for parameters.
    */
-  void Update();
+  void Update(int step, shared_ptr<NeuralNet> net,  int threadID);
   /**
    * A loop which calls Update, running as a background thread.
    */
@@ -54,30 +58,33 @@ class ParamManager{
   //the owner param object.
   // map<int, int> paramOwnerID2procsID_;
   //!< map from param ID to Param poiner on local machine.
-  map<int, Param*> paramID2param_;
+  //map<int, Param*> paramID2param_;
   map<int, vector<Param*>> ownerID2Params_;
   //!< aggregated updates for one param
-  map<int, int> aggregatedUpdates_;
-  map<int, int> paramOffset_;
+  //map<int, int> aggregatedUpdates_;
+  map<int, int> paramIDOffset_;
   // for leader PM to publish new parameters;
   // for worker PM to sub parameters from leader PM and;
   // for leader PM to pull grad from worker nodes;
   // for worker PM to push grad to leader PM;
 
   //!< publish param ready signal with param id
-  zsock_t pub_;
+  //zsock_t pub_;
   //!< pull grad ready signal with param id (or addr?)
-  zsock_t pull_;
+  //zsock_t pull_;
+  std::mutex mtx_;
+  std::condition_variable cv_;
+  int step_;
 
   //!< sub updates/grad from PS
   zsock_t sub_;
   //!< push updates/grad to PS
   zsock_t push_;
+  zpoller_t *poller_;
 
   int timeout_;
   int updateLimit_;
   int syncfreq_;
-  zpoller_t *poller_;
 };
 }
 #endif // INCLUDE_WORKER_PARAM_MANAGER_H_

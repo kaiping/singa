@@ -137,17 +137,17 @@ class Layer {
   virtual PartitionType partition_type() const {
     return layer_proto_.partition_type();
   }
-  virtual void set_locationid(int id){
-    layer_proto_.set_locationid(id);
+  virtual void set_locationID(int ID){
+    layer_proto_.set_locationID(ID);
   }
-  virtual int locationid() const {
-    return layer_proto_.locationid();
+  virtual int locationID() const {
+    return layer_proto_.locationID();
   }
-  virtual void set_partitionid(int id){
-    layer_proto_.set_partitionid(id);
+  virtual void set_partitionID(int ID){
+    layer_proto_.set_partitionID(ID);
   }
   virtual int partitiionID() const {
-    return layer_proto_.partitionid();
+    return layer_proto_.partitionID();
   }
   virtual void set_name(string name){
     name_=name;

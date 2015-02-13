@@ -151,7 +151,6 @@ int ImageNetSource::ReadImage(const std::string &path, int height, int width,
   image->add_shape(3);
   image->add_shape(cv_img.rows);
   image->add_shape(cv_img.cols);
-  int idx=0;
   string *pixel=image->mutable_pixel();
   if(mean==nullptr){
     for (int c = 0; c < 3; ++c) {

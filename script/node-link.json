@@ -1,63 +1,37 @@
 {"directed":1,
   "nodes":[
   {"id":"data()", "color":"red","shape":"box"}
-  ,{"id":"mnist(8, 28, 28, )", "color":"red","shape":"box"}
-  ,{"id":"split-mnist(8, 28, 28, )", "color":"red","shape":"ellipse"}
-  ,{"id":"conv1-00(8, 4, 27, 27, )", "color":"red","shape":"box"}
-  ,{"id":"relu1-00(8, 4, 27, 27, )", "color":"red","shape":"box"}
-  ,{"id":"pool1-00(8, 4, 13, 13, )", "color":"red","shape":"box"}
-  ,{"id":"slice-pool1-00(8, 4, 13, 13, )", "color":"red","shape":"ellipse"}
-  ,{"id":"s-slice-pool1-00-concate-fc1-01(4, 4, 13, 13, )", "color":"red","shape":"ellipse"}
-  ,{"id":"d-slice-pool1-00-concate-fc1-01(4, 4, 13, 13, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"s-split-mnist-conv1-01(8, 28, 28, )", "color":"red","shape":"ellipse"}
-  ,{"id":"d-split-mnist-conv1-01(8, 28, 28, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"conv1-01(8, 4, 27, 27, )", "color":"blue","shape":"box"}
-  ,{"id":"relu1-01(8, 4, 27, 27, )", "color":"blue","shape":"box"}
-  ,{"id":"pool1-01(8, 4, 13, 13, )", "color":"blue","shape":"box"}
-  ,{"id":"slice-pool1-01(8, 4, 13, 13, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"concate-fc1-01(4, 8, 13, 13, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"fc1-01(4, 10, )", "color":"blue","shape":"box"}
-  ,{"id":"s-slice-pool1-01-concate-fc1-00(4, 4, 13, 13, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"d-slice-pool1-01-concate-fc1-00(4, 4, 13, 13, )", "color":"red","shape":"ellipse"}
-  ,{"id":"concate-fc1-00(4, 8, 13, 13, )", "color":"red","shape":"ellipse"}
-  ,{"id":"fc1-00(4, 10, )", "color":"red","shape":"box"}
-  ,{"id":"label(8, )", "color":"red","shape":"box"}
-  ,{"id":"slice-label(8, )", "color":"red","shape":"ellipse"}
-  ,{"id":"loss-00(4, 10, )", "color":"red","shape":"box"}
-  ,{"id":"s-slice-label-loss-01(4, )", "color":"red","shape":"ellipse"}
-  ,{"id":"d-slice-label-loss-01(4, )", "color":"blue","shape":"ellipse"}
-  ,{"id":"loss-01(4, 10, )", "color":"blue","shape":"box"}
+  ,{"id":"mnist(100, 29, 29, )", "color":"red","shape":"box"}
+  ,{"id":"fc1(100, 2500, )", "color":"red","shape":"box"}
+  ,{"id":"tanh1(100, 2500, )", "color":"red","shape":"box"}
+  ,{"id":"fc2(100, 2000, )", "color":"red","shape":"box"}
+  ,{"id":"tanh2(100, 2000, )", "color":"red","shape":"box"}
+  ,{"id":"fc3(100, 1500, )", "color":"red","shape":"box"}
+  ,{"id":"tanh3(100, 1500, )", "color":"red","shape":"box"}
+  ,{"id":"fc4(100, 1000, )", "color":"red","shape":"box"}
+  ,{"id":"tanh4(100, 1000, )", "color":"red","shape":"box"}
+  ,{"id":"fc5(100, 500, )", "color":"red","shape":"box"}
+  ,{"id":"tanh5(100, 500, )", "color":"red","shape":"box"}
+  ,{"id":"fc6(100, 10, )", "color":"red","shape":"box"}
+  ,{"id":"label(100, )", "color":"red","shape":"box"}
+  ,{"id":"loss(100, 10, )", "color":"red","shape":"box"}
   ]
     ,"links":[
     {"source":0, "target":1, "color":"black"}
-  ,{"source":0, "target":21, "color":"black"}
+  ,{"source":0, "target":13, "color":"black"}
   ,{"source":1, "target":2, "color":"black"}
   ,{"source":2, "target":3, "color":"black"}
-  ,{"source":2, "target":9, "color":"black"}
   ,{"source":3, "target":4, "color":"black"}
   ,{"source":4, "target":5, "color":"black"}
   ,{"source":5, "target":6, "color":"black"}
-  ,{"source":6, "target":19, "color":"black"}
   ,{"source":6, "target":7, "color":"black"}
   ,{"source":7, "target":8, "color":"black"}
-  ,{"source":8, "target":15, "color":"black"}
+  ,{"source":8, "target":9, "color":"black"}
   ,{"source":9, "target":10, "color":"black"}
   ,{"source":10, "target":11, "color":"black"}
   ,{"source":11, "target":12, "color":"black"}
-  ,{"source":12, "target":13, "color":"black"}
+  ,{"source":12, "target":14, "color":"black"}
   ,{"source":13, "target":14, "color":"black"}
-  ,{"source":14, "target":15, "color":"black"}
-  ,{"source":14, "target":17, "color":"black"}
-  ,{"source":15, "target":16, "color":"black"}
-  ,{"source":16, "target":26, "color":"black"}
-  ,{"source":17, "target":18, "color":"black"}
-  ,{"source":18, "target":19, "color":"black"}
-  ,{"source":19, "target":20, "color":"black"}
-  ,{"source":20, "target":23, "color":"black"}
-  ,{"source":21, "target":22, "color":"black"}
-  ,{"source":22, "target":23, "color":"black"}
-  ,{"source":22, "target":24, "color":"black"}
-  ,{"source":24, "target":25, "color":"black"}
-  ,{"source":25, "target":26, "color":"black"}
   ]
 }
+

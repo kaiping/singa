@@ -79,14 +79,17 @@ class Executor{
     */
   string TimerInfo(){
     char buf[1024];
-    float ticks=ticks_;
+    float ticks=ticks_*1000;
     float tf=tForward_/ticks, tb=tBackward_/ticks,
           td=tSyncData_/ticks, tp=tSyncParam_/ticks;
     float total=tf+tb+td+tp;
     sprintf(buf,
-        "\nTotal\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\t\
+        "Total\t%6.2f\tforward\t%6.2f\tbackward\t%6.2f\t\
         syncdata\t%6.2f\tsyncparam\t%6.2f\n", total,tf,tb, td,tp);
-    tForward_=tBackward_=tSyncData_=tSyncData_;
+    tForward_=0;
+    tBackward_=0;
+    tSyncData_=0;
+    tSyncData_=0;
     ticks_=0;
     return string(buf);
   }
@@ -140,7 +143,7 @@ class Executor{
   std::thread prefetch_thread_;
   int step_;
 
-  int64_t tForward_, tBackward_, tSyncData_, tSyncParam_;
+  float tForward_, tBackward_, tSyncData_, tSyncParam_;
   int ticks_;
 
   zsock_t* pull_;

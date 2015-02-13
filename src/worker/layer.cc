@@ -1,5 +1,6 @@
 #include <glog/logging.h>
 #include <memory>
+#include <algorithm>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "mshadow/tensor.h"
@@ -578,7 +579,7 @@ void TanhLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
   Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
   Tensor<cpu, 1> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
       Shape1(data_.count()));
-  data=F<op::tanh>(src);
+  data=F<op::stanh>(src);
 }
 
 void TanhLayer::ComputeGradient(const vector<SLayer>& srclayers) {
@@ -586,7 +587,7 @@ void TanhLayer::ComputeGradient(const vector<SLayer>& srclayers) {
   Tensor<cpu, 1> grad(grad_.mutable_cpu_data(), Shape1(grad_.count()));
   Tensor<cpu, 1> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),
       Shape1(data_.count()));
-  gsrc=F<op::tanh_grad>(data)*grad;
+  gsrc=F<op::stanh_grad>(data)*grad;
 }
 /********** * Implementation for SoftmaxLossLayer*************************/
 void SoftmaxLossLayer::Setup(const LayerProto& proto,
@@ -595,9 +596,8 @@ void SoftmaxLossLayer::Setup(const LayerProto& proto,
   data_.Reshape(srclayers[0]->data(this).shape());
   batchsize_=data_.shape()[0];
   dim_=data_.count()/batchsize_;
-  for(int k: proto.softmaxloss_param().topk())
-    topk_.push_back(k);
-  metric_.Reshape(vector<int>{1+static_cast<int>(topk_.size())});
+  topk_=proto.softmaxloss_param().topk();
+  metric_.Reshape(vector<int>{2});
   scale_=proto.softmaxloss_param().scale();
 }
 void SoftmaxLossLayer::SetupAfterPartition(const LayerProto& proto,
@@ -612,25 +612,29 @@ void SoftmaxLossLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
   Softmax(prob, src);
   const float* label=srclayers[1]->data().cpu_data();
   const float* probptr=prob.dptr;
-  float *metric=metric_.mutable_cpu_data();
-  memset(metric,0, sizeof(float)* metric_.count());
+  float loss=0, precision=0;
   for(int n=0;n<batchsize_;n++){
     float prob_of_truth=probptr[static_cast<int>(label[n])];
-    metric[0]-=log(std::max(prob_of_truth, FLT_MIN));
-    if(topk_.size()){
-      int nlarger=0;
-      for(int i=0;i<dim_;i++){
-        if(probptr[i]>prob_of_truth)
-          nlarger++;
+    loss-=log(std::max(prob_of_truth, FLT_MIN));
+    vector<std::pair<float, int> > probvec;
+    for (int j = 0; j < dim_; ++j) {
+      probvec.push_back(std::make_pair(probptr[j], j));
+    }
+    std::partial_sort(
+        probvec.begin(), probvec.begin() + topk_,
+        probvec.end(), std::greater<std::pair<float, int> >());
+    // check if true label is in top k predictions
+    for (int k = 0; k < topk_; k++) {
+      if (probvec[k].second == static_cast<int>(label[n])) {
+        precision++;
+        break;
       }
-      for(size_t i=1;i<=topk_.size();i++)
-        if(nlarger<topk_[i])
-          metric[i]++;
     }
     probptr+=dim_;
   }
-  for(size_t i=0;i<=topk_.size();i++)
-    metric[i]*=scale_/(1.0f*batchsize_);
+  float *metric=metric_.mutable_cpu_data();
+  metric[0]=loss*scale_/(1.0f*batchsize_);
+  metric[1]=precision*scale_/(1.0f*batchsize_);
 }
 
 void SoftmaxLossLayer::ComputeGradient(const vector<SLayer>& srclayers) {

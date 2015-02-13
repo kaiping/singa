@@ -142,7 +142,7 @@ class ImageNetSource : public DataSource {
    * resized image size
    */
   int record_size_;
-  singa::MeanProto data_mean_;
+  singa::BlobProto data_mean_;
   // record meta info,  a pair of image file name and label
   vector<std::pair<string, int>> lines_;
 };

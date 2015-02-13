@@ -15,14 +15,13 @@ namespace singa {
 
 /**
  * Cluster is a singlton object, which provides cluster configuations,
- * e.g., num workers/servers and MPI groups for coordination, e.g, Barrier
+ * e.g., num workers/servers
  */
 class Cluster {
  public:
   static shared_ptr<Cluster> Get();
   static shared_ptr<Cluster> Get(const ClusterProto& cluster,string hostfile,
     int procsid);
-  // free my mpi group and mpi communicator
 
   void SetupGroups(const ClusterProto &cluster);
   void SetupFolders(const ClusterProto &cluster);
@@ -51,12 +50,7 @@ class Cluster {
   int nthreads_per_group() {return nthreads_per_procs()*nprocs_per_group();}
   int groupid_of_procs(int procsid) {return procsid/nprocs_per_group();}
   //int procsid_of_thread(int threadid) {return threadid/nthreads_per_thread();}
-  /*
-   int groupid_of_thread(int threadid) {
-    return groupid_of_procs(procsid_of_thread(threadid));
-  }
-  */
-  /**
+    /**
    * thread id within a workring group, there are
    * procs_per_group()*nthreads_per_procs threads in one group.
    */
@@ -67,12 +61,6 @@ class Cluster {
     CHECK(global_procsid<cluster_.nworkers()&&global_procsid>=0);
     return global_procsid%nprocs_per_group();
   }
-  /**
-   * thread id among all worker nodes/procs
-  int global_threadid(int local_threadid){
-    return procsid()*nthreads_per_procs()+local_threadid;
-  }
-   */
   int global_procsid(int local_threadid){
     return (procsid()/nprocs_per_group())*nprocs_per_group()+
       local_threadid/nthreads_per_procs();

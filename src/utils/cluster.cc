@@ -13,14 +13,14 @@ Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsid) {
   SetupFolders(cluster);
   char hostname[256];
   gethostname(hostname, sizeof(hostname));
-  hostname_.insert(0, hostname, sizeof(hostname));
+  hostname_=string(hostname);
 
   std::ifstream ifs(hostfile, std::ifstream::in);
   std::string line;
   while(std::getline(ifs, line)){
     addr_.push_back(line);
   }
-  CHECK_EQ(addr_.size(), cluster_.nservers()+cluster_.nworkers());
+  //CHECK_EQ(addr_.size(), cluster_.nservers()+cluster_.nworkers());
 }
 
 void Cluster::SetupFolders(const ClusterProto &cluster){

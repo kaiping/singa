@@ -64,7 +64,7 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
 
   // topology sort
   graph_.Sort();
-  DLOG(INFO)<<"pure graph without partition\n"<< graph_.ToString();
+  //DLOG(INFO)<<"pure graph without partition\n"<< graph_.ToString();
 
   // create Layers according to topology order
   for(SNode node: graph_.nodes()){
@@ -83,8 +83,12 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
       layer->AddSrcLayer(name2layer_[src->name()]);
   }
   // setup layer properties, e.g., shapes
+  int paramid=0;
   for(auto& layer: layers_){
       layer->Setup();
+      for(Param* p: layer->GetParams()){
+        p->set_id(paramid++);
+      }
   }
   LOG(INFO)<<"network graph witout partition\n"<<ToString();
 }
@@ -269,7 +273,7 @@ Graph NeuralNet::CreatePartitonedGraph(const vector<shared_ptr<Layer>>& layers,
   }
   // must do topology sort, because we have added new nodes.
   graph.Sort();
-  LOG(ERROR)<<graph.ToString();
+  //LOG(ERROR)<<graph.ToString();
 
   // add node for split layer
   bool data_node=true;
@@ -330,23 +334,24 @@ string NeuralNet::DebugInfo(){
   string ret;
   char display[4096];
   for(auto& layer: layers_){
-    if(layer->is_datalayer()){
-    sprintf(display, "Forward layer  %10s data norm1 %13.9f",
-        layer->name().c_str(), layer->data().asum_data());
-    ret+=string(display);
+    if(!layer->is_datalayer()){
+      sprintf(display, "Forward layer  %10s data norm1 %13.9f\n",
+          layer->name().c_str(), layer->data().asum_data());
+      ret+=string(display);
     }
   }
-  for (auto layer = layers_.rbegin(); layer != layers_.rend(); layer++){
-    if(!(*layer)->is_datalayer()){
-      sprintf(display, "Backward layer %10s grad norm1 %13.9f",
-          (*layer)->name().c_str(), (*layer)->grad().asum_data());
+  for (auto it = layers_.rbegin(); it != layers_.rend(); it++){
+    shared_ptr<Layer> layer=*it;
+    if(!(layer->is_datalayer()||layer->is_losslayer()||layer->is_parserlayer())){
+      sprintf(display, "Backward layer %10s grad norm1 %13.9f\n",
+          layer->name().c_str(), layer->grad().asum_data());
       ret+=string(display);
     }
   }
   for(auto& layer: layers_){
     for(auto* param: layer->GetParams()){
       sprintf(display, "Layer %10s, param id %2d, name %10s,\
-          value norm1 %13.9f, grad norm1 %13.9f",
+          value norm1 %13.9f, grad norm1 %13.9f\n",
           layer->name().c_str(), param->id(), param->name().c_str(),
           param->data().asum_data(), param->grad().asum_data());
       ret+=string(display);

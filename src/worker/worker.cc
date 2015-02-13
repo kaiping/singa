@@ -29,11 +29,6 @@ void Worker::Start(ModelProto model){
         model.validation_frequency()/ngroups);
     model.set_test_frequency(model.test_frequency()/ngroups);
   }
-  // todo, two ways to syn all workers
-  // 1. create MPI communicator for all workers, and call MPI_Barrier for
-  // this communicator
-  // 2. handle_get returns false if the key of get() is not found in the
-  // table, i.e., parameters have not been inserted
   ParamManager pm(train_net_, model.updater());
   if(cluster_->groupid()==0){
     pm.InitParams(); //init local params
@@ -101,6 +96,7 @@ Executor::Executor(int local_threadid, const ModelProto& model,
       train_net_(train_net),
       test_net_(test_net),
       validation_net_(validation_net){
+        tForward_=tBackward_=tSyncData_=tSyncParam_=0;
         Setup(local_threadid, model);
       }
 
@@ -108,9 +104,10 @@ void Executor::Setup(int local_threadid, const ModelProto& model){
   modelproto_=model;
   local_threadid_=local_threadid;
   int gthreadid=cluster_->group_threadid(local_threadid);
-  if(train_net_->datalayer()->locationid()==gthreadid)
+  if(modelproto_.prefetch()&&train_net_->datalayer()->locationid()==gthreadid)
     prefetch_thread_=std::thread(Worker::PrefetchData, train_net_, true);
 
+  // TODO create a message queue and network thread for send and recv
   for(auto& layer: train_net_->layers()){ //TODO check with PS
     if(layer->locationid()==gthreadid){
       int pushloc=-1;
@@ -160,11 +157,15 @@ void Executor::RunOneBatch(int step, Performance* perf){
   ticks_++;
   // Test will call Pull which updates the sync time
   // Hence we store the sync time, and restore it later
-  int64_t tSyncData=tSyncData_, tSyncParam=tSyncParam_;
-  if(ValidateNow(step))
+  float tSyncData=tSyncData_, tSyncParam=tSyncParam_;
+  if(ValidateNow(step)){
+    LOG(INFO)<<"Validation at step "<<step;
     Test(validation_net_, modelproto_.validation_steps(), perf==nullptr);
-  if(TestNow(step))
+  }
+  if(TestNow(step)){
+    LOG(INFO)<<"Test at step "<<step;
     Test(test_net_, modelproto_.validation_steps(), perf==nullptr);
+  }
   tSyncData_=tSyncData;
   tSyncParam_=tSyncParam;
 
@@ -172,10 +173,11 @@ void Executor::RunOneBatch(int step, Performance* perf){
   if(perf!=nullptr){
     perf->Update();
     if(DisplayNow(step)){
+      LOG(INFO)<<"Training at step "<<step;
       LOG(INFO)<<perf->ToString();
-      perf->Reset();
       LOG(INFO)<<TimerInfo();
       DLOG(INFO)<<train_net_->DebugInfo();
+      perf->Reset();
     }
   }
 }
@@ -275,12 +277,7 @@ void Executor::Test(shared_ptr<NeuralNet> net, int nsteps, bool disperf){
     LOG(INFO)<<perf.ToString();
 }
 /*********************Implementation for Performance class*******************/
-Performance::Performance(shared_ptr<NeuralNet> net){
-  net_=net;
-  auto& losslayers=net->losslayers();
-  name_.resize(losslayers.size());
-  metric_.resize(losslayers.size());
-  counter_=0;
+Performance::Performance(shared_ptr<NeuralNet> net):net_(net), counter_(0){
   for(auto& layer: net->losslayers()){
     name_.push_back(layer->name());
     metric_.push_back(vector<float>{});
@@ -292,7 +289,7 @@ void Performance::Update(){
   const auto& losslayers=net_->losslayers();
   for(size_t i=0;i<losslayers.size();i++){
     const float * ptr=losslayers[i]->metric().cpu_data();
-    vector<float> m=metric_.at(i);
+    vector<float>& m=metric_.at(i);
     for(int j=0;j<losslayers[i]->metric().count();j++)
       m[j]+=ptr[j];
   }
@@ -309,7 +306,7 @@ void Performance::Reset(){
 string Performance::ToString(){
   string disp="";
   for(size_t i=0;i<metric_.size();i++){
-    disp+="Output from layer: "+name_[i];
+    disp+="Output from "+name_[i]+" layer ";
     vector<float> m=metric_.at(i);
     for(size_t j=0;j<m.size();j++)
         disp+=std::to_string(j)+" : "+std::to_string(m[j]/counter_)+"\t";

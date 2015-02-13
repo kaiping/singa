@@ -228,7 +228,7 @@ class SoftmaxLossLayer: public LossLayer {
   int batchsize_;
   int dim_;
   float scale_;
-  vector<int> topk_;
+  int topk_;
 };
 
 class RGBImageLayer: public ParserLayer {
@@ -268,6 +268,8 @@ class TanhLayer: public Layer {
 
   virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
+ private:
+  float outer_scale_, inner_scale_;
 };
 
 

@@ -78,6 +78,18 @@ namespace mshadow {
                 return sqrt(a);
             }
         };
+        /*! \brief scaled tanh, hard code the scale factor*/
+        struct stanh {
+            MSHADOW_XINLINE static real_t Map(real_t a) {
+              return  1.7159047*tanhf(0.66666667 *a);
+            }
+        };
+        /*! \breif back prop for scaled tanh: */
+        struct stanh_grad {
+            MSHADOW_XINLINE static real_t Map(real_t a) {
+                return 0.66666667*1.7159047 -0.66666667/1.7159047*a*a;
+            }
+        };
 
     }; //namespace op
 
@@ -96,22 +108,6 @@ namespace mshadow {
         struct power {
             MSHADOW_XINLINE static real_t Map(real_t a, real_t b) {
                 return powf( a, b );
-            }
-        };
-    }; // namespace op
-}; // namespace mshadow
-namespace mshadow {
-    namespace op {
-        /*! \brief scaled tanh:  b* tanh(c*x),b, c are scale factors */
-        struct stanh {
-            MSHADOW_XINLINE static real_t Map(real_t a, real_t b, real_t c) {
-                return b* tanhf(a*c);
-            }
-        };
-        /*! \breif back prop for scaled tanh: x=c*b, y=c/b */
-        struct stanh_grad {
-            MSHADOW_XINLINE static real_t Map(real_t a, real_t x, real_t y) {
-                return x-y*a*a;
             }
         };
     }; // namespace op

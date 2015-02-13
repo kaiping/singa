@@ -11,7 +11,6 @@
 #include <queue>
 #include <sys/stat.h>
 #include <map>
-#include "proto/model.pb.h"
 
 using std::vector;
 using std::string;

@@ -248,11 +248,13 @@ void Blob<Dtype>::ShareData(const Blob& other) {
 }
 
 template <> float Blob<float>::asum_data() const {
+  if(count()==0)
+    return 0.f;
   float sum=0.f;
   const float* dptr=cpu_data();
   for(int i=0;i<count();i++)
     sum+=fabs(dptr[i]);
-  return sum/count();
+  return sum/(1.0e-10+count());
 }
 template <> unsigned int Blob<unsigned int>::asum_data() const {
   NOT_IMPLEMENTED;

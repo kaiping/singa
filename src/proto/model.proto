@@ -23,6 +23,7 @@ message ModelProto{
   optional int32 test_after_steps = 13 [default = 0];
   // frequency of test
   optional int32 test_frequency = 14 [default = 0];
+  optional bool prefetch=15[default=true];
 
   // total num of steps for training
   optional int32 train_steps = 20;
@@ -167,8 +168,8 @@ message SplitProto{
 }
 // scaled tan: A*tan(B*x)
 message TanhProto{
-  optional float a=1 [default=1.0];
-  optional float b=2 [default=1.0];
+  optional float outer_scale=1 [default=1.0];
+  optional float inner_scale=2 [default=1.0];
 }
 
 // Message that stores parameters used by SoftmaxLossProto
@@ -176,7 +177,7 @@ message SoftmaxLossProto {
   // accuracy is not comptued by default, unless topk>0;
   // When computing accuracy, count as correct by comparing the true label to
   // the top k scoring classes.
-  repeated uint32 topk = 1 ;
+  optional int32 topk = 1 [default=1] ;
   optional float scale=2 [default=1.0];
 }
 // Message that stores parameters used by ConvolutionLayer
@@ -314,5 +315,13 @@ message UpdaterProto {
     kLinear = 4;
     kStep = 5;
   }
-  optional ChangeProto learning_rate_change_method = 16 [default = kStep];
+  optional ChangeProto learning_rate_change_method = 16 [default = kFixed];
+}
+message BlobProto {
+  optional int32 num = 1 [default = 0];
+  optional int32 channels = 2 [default = 0];
+  optional int32 height = 3 [default = 0];
+  optional int32 width = 4 [default = 0];
+  repeated float data = 5 [packed = true];
+  repeated float diff = 6 [packed = true];
 }

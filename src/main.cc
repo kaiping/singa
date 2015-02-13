@@ -28,20 +28,20 @@ int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // Init Cluster
-  singa::ClusterProto cluster;
-  singa::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &cluster);
-  singa::Cluster::Get(cluster, FLAGS_hostfile, FLAGS_procsID);
+  singa::ClusterProto pcluster;
+  singa::ReadProtoFromTextFile(FLAGS_cluster_conf.c_str(), &pcluster);
+  auto cluster=singa::Cluster::Get(pcluster, FLAGS_hostfile, FLAGS_procsID);
   singa::ModelProto model;
   singa::ReadProtoFromTextFile(FLAGS_model_conf.c_str(), &model);
-  LOG(INFO)<<"The cluster config is\n"<<cluster.DebugString()
+  LOG(INFO)<<"The cluster config is\n"<<pcluster.DebugString()
     <<"\nThe model config is\n"<<model.DebugString();
 
-  if(singa::Cluster::Get()->AmIServer()) {
+  if(cluster->AmIServer()) {
     //singa::Server server;
     //server.Start();
     //    singa::Debug();
   }else {
-    singa::Worker worker(singa::Cluster::Get());
+    singa::Worker worker(cluster);
     worker.Start(model);
   }
   //LOG(ERROR)<<"SINA has shutdown successfully";

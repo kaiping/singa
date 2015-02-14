@@ -47,7 +47,7 @@ class Executor{
     * Fetchdata by calling DataLayer and ParserLayer of the net.
     * This function is usually called by launcing a new thread as prefetching.
     */
-  static void PrefetchData(shared_ptr<NeuralNet> net, bool training);
+  static void PrefetchData(shared_ptr<NeuralNet> net, int steps, bool training);
 
   /**
     * check validation/test firstly, then TrainOneBatch
@@ -187,7 +187,8 @@ class Worker : public Executor{
    * setup (done outside of this funcion).
    * @param np proto for the neural network.
    */
-  shared_ptr<NeuralNet> SetupNeuralNet(const NetProto& np, Phase phase);
+  shared_ptr<NeuralNet> SetupNeuralNet(const NetProto& np, bool prefetch,
+      Phase phase);
 };
 }  // namespace singa
 

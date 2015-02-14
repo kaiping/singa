@@ -5,6 +5,8 @@
 #include <gflags/gflags.h>
 #include <google/protobuf/message.h>
 #include <stdarg.h>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>
 #include <string>
 #include <vector>
 #include <mutex>
@@ -37,6 +39,10 @@ void Debug() ;
 inline bool check_exists(const std::string& name) {
     struct stat buffer;
     return (stat (name.c_str(), &buffer) == 0);
+}
+
+inline void Sleep(int millisec=1){
+  std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
 }
 
 inline float rand_real(){

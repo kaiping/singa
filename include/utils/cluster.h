@@ -66,6 +66,10 @@ class Cluster {
       local_threadid/nthreads_per_procs();
   }
 
+  int procsidOfGroupThread(int local_threadid){
+    return local_threadid/nthreads_per_procs();
+  }
+
   /**
    * procsid for the server that manages param for the worker of group_procsid
    */

@@ -79,6 +79,15 @@ class NeuralNet {
     }
     return losslayers_;
   }
+  const std::vector<DataLayer*>& datalayers() {
+    if(datalayers_.size()==0){
+      for(auto& layer: layers_)
+        if(layer->is_datalayer())
+          datalayers_.push_back(static_cast<DataLayer*>(layer.get()));
+    }
+    return datalayers_;
+  }
+
 
     /*
   const std::vector<Param *> &params() {
@@ -100,11 +109,6 @@ class NeuralNet {
       }
     }
     return paramid2param_[id];
-  }
-
-  shared_ptr<Layer> datalayer() const {
-    CHECK(layers_.at(0)->is_datalayer());
-    return layers_.at(0);
   }
 
  protected:
@@ -159,6 +163,7 @@ class NeuralNet {
   vector<shared_ptr<Layer>> layers_;
   vector<ParserLayer*> parserlayers_;
   vector<LossLayer*> losslayers_;
+  vector<DataLayer*> datalayers_;
   vector<Param*> params_;
   map<string, shared_ptr<Layer>> name2layer_;
   map<int, Param*> paramid2param_;

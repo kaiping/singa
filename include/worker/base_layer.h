@@ -6,6 +6,8 @@
 #include <map>
 #include <functional>
 #include <utility>
+#include <condition_variable>
+#include <mutex>
 #include <memory>
 #include <chrono>
 #include <algorithm>
@@ -228,12 +230,6 @@ class Layer {
   virtual bool is_bridgedstlayer() const {
     return false;
   }
-  virtual void set_ready(bool a) {
-  }
-  virtual bool ready() const{
-    return true;
-  }
-
   /*
   virtual bool is_neuronlayer() const {
     return false;
@@ -347,8 +343,18 @@ class DataLayer: public Layer{
     return sample_;
   }
 
+  void set_prefetch(bool prefetch){
+    prefetch_=prefetch;
+  }
+
+  virtual void ComputeFeature(bool training) {
+    if(!prefetch_)
+      ComputeFeature(training, srclayers_);
+  }
+
  protected:
   bool has_set_;
+  bool prefetch_;
   int random_skip_, batchsize_;
   Record sample_;
   vector<Record> records_;
@@ -428,6 +434,8 @@ class ParserLayer: public Layer {
   virtual void Setup(){
     Setup(layer_proto_,srclayers_);
     has_set_=true;
+    prefetch_=false;
+    ready_=false;
   }
   virtual void SetupAfterPartition(){
     if(!has_set_)
@@ -440,7 +448,19 @@ class ParserLayer: public Layer {
   virtual PartitionType partition_type () const{
     return kNone;
   }
-
+  virtual const Blob<float>& data(const Layer* layer=nullptr) {
+    if(prefetch_){
+      return prefetch_data_;
+    }else
+      return data_;
+  }
+  virtual Blob<float>* mutable_data(const Layer* layer=nullptr) {
+    if(prefetch_){
+      return &prefetch_data_;
+    }else{
+      return &data_;
+    }
+  }
   virtual Blob<float>* mutable_grad(const Layer* layer=nullptr) {
     return nullptr;
   }
@@ -458,28 +478,45 @@ class ParserLayer: public Layer {
   void Prefetching(bool training){
     if(prefetch_data_.count()==0)
       prefetch_data_.ReshapeLike(data_);
-    data_.Swap(prefetch_data_);
+    std::unique_lock<std::mutex> lck(mtx_);
+    while(ready_) cv_.wait(lck);
+    //data_.Swap(prefetch_data_);
     ComputeFeature(training, srclayers_);
+    ready_=true;
+    cv_.notify_all();
   }
 
   /**
-   * must be called after Prefetching and before calling upper layers
-   * otherwise, the old data will be used (new data is in prefech_data_).
+   * must be called before calling ComputeFeature() if Prefetching runs in a
+   * separate thread
    */
-  void CompletePrefetching(){
-    data_.Swap(prefetch_data_);
+  void set_prefetch(bool prefetch) {
+    prefetch_=prefetch;
+    ready_=false;
   }
 
   /**
-   * if prefetching, then do nothing; otherwise conduct normal ComputeFeature
+   * if prefetching, then swap data and prefetch data;
+   * otherwise conduct normal ComputeFeature
    */
   virtual void ComputeFeature(bool training){
-    if(prefetch_data_.count()==0)
+    if(!prefetch_)
       ComputeFeature(training, srclayers_);
+    else{
+      std::unique_lock<std::mutex> lck(mtx_);
+      while(!ready_) cv_.wait(lck);
+      data_.Swap(prefetch_data_);
+      ready_=false;
+      cv_.notify_all();
+    }
   }
 
  private:
+  std::mutex mtx_;
+  std::condition_variable cv_;
+  bool ready_;
   bool has_set_;
+  bool prefetch_;
   //!< prefetch_data_ is invisible to layer logics, i.e., parsing.
   Blob<float> prefetch_data_;
 };

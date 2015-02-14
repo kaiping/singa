@@ -12,14 +12,6 @@ Worker::Worker(shared_ptr<Cluster> cluster){
 
 void Worker::Start(ModelProto model){
   LOG(ERROR)<<"Worker on "<<cluster_->hostname()<<" is starting...";
-  train_net_=SetupNeuralNet(model.neuralnet(), kTrain);
-  test_net_=SetupNeuralNet(model.neuralnet(), kTest);
-  if(test_net_!=nullptr)
-    test_net_->ShareWeights(train_net_);
-  validation_net_=SetupNeuralNet(model.neuralnet(), kValidation);
-  if(validation_net_!=nullptr)
-    validation_net_->ShareWeights(train_net_);
-
   // update proto_, all groups will do the training, but only the first group
   // conduts test/validation. Hence, the training mini-batch is partitioned
   // onto all groups.
@@ -29,6 +21,16 @@ void Worker::Start(ModelProto model){
         model.validation_frequency()/ngroups);
     model.set_test_frequency(model.test_frequency()/ngroups);
   }
+  Setup(0, model); //setup main executor
+
+  train_net_=SetupNeuralNet(model.neuralnet(), model.prefetch(), kTrain);
+  test_net_=SetupNeuralNet(model.neuralnet(), model.prefetch(), kTest);
+  if(test_net_!=nullptr)
+    test_net_->ShareWeights(train_net_);
+  validation_net_=SetupNeuralNet(model.neuralnet(),model.prefetch(), kValidation);
+  if(validation_net_!=nullptr)
+    validation_net_->ShareWeights(train_net_);
+
   ParamManager pm(train_net_, model.updater());
   if(cluster_->groupid()==0){
     pm.InitParams(); //init local params
@@ -39,7 +41,6 @@ void Worker::Start(ModelProto model){
   int nthreads=cluster_->nthreads_per_procs();
   vector<Executor*> executors(nthreads-1);
   vector<thread> threads;
-  Setup(0, model); //setup main executor
   for(size_t i=1;i<executors.size();i++){
     executors[i]=new Executor(i, model, cluster_, train_net_);
     threads.push_back(thread(&Executor::Run, executors[i], &pm, 0));
@@ -65,12 +66,19 @@ void Worker::Resume() {
   // TODO implement resume from snapshot
 }
 
-shared_ptr<NeuralNet> Worker::SetupNeuralNet(const NetProto& np, Phase phase){
+shared_ptr<NeuralNet> Worker::SetupNeuralNet(const NetProto& np, bool prefetch,
+    Phase phase){
   // only consider training phase now.
   // TODO reset the proto to config test and valdiation neuralnet.
   // diff nets should have diff layer objects,
   // but share parameter objects (by ptr).
   shared_ptr<NeuralNet> net(new NeuralNet(np));
+  for(auto& layer: net->parserlayers()){
+    layer->set_prefetch(prefetch);
+  }
+  for(auto& layer: net->datalayers()){
+    layer->set_prefetch(prefetch);
+  }
   return net;
 }
 
@@ -103,10 +111,10 @@ Executor::Executor(int local_threadid, const ModelProto& model,
 void Executor::Setup(int local_threadid, const ModelProto& model){
   modelproto_=model;
   local_threadid_=local_threadid;
+  if(local_threadid_==0&&modelproto_.prefetch())
+    prefetch_thread_=std::thread(Worker::PrefetchData, train_net_,
+        modelproto_.train_steps(), true);
   int gthreadid=cluster_->group_threadid(local_threadid);
-  if(modelproto_.prefetch()&&train_net_->datalayer()->locationid()==gthreadid)
-    prefetch_thread_=std::thread(Worker::PrefetchData, train_net_, true);
-
   // TODO create a message queue and network thread for send and recv
   for(auto& layer: train_net_->layers()){ //TODO check with PS
     if(layer->locationid()==gthreadid){
@@ -132,14 +140,22 @@ Executor::~Executor(){
     prefetch_thread_.join();
 }
 
-void Executor::PrefetchData(shared_ptr<NeuralNet> net, bool training){
-  auto& layers=net->layers();
-  CHECK(layers[0]->is_datalayer());
-  for(auto& layer: layers){
-    if(layer->is_datalayer())
+void Executor::PrefetchData(shared_ptr<NeuralNet> net, int steps, bool training){
+  vector<Layer*> localDataLayers;
+  auto cluster=Cluster::Get();
+  for(auto& layer: net->datalayers()){
+    int locid=layer->locationid();
+    if(cluster->procsidOfGroupThread(locid)==cluster->procsid())
+      localDataLayers.push_back(layer);
+  }
+  if(localDataLayers.size()==0)
+    return;
+  for(int i=0;i<steps;i++){
+    for(auto& layer: localDataLayers){
       layer->ComputeFeature(training);
-    else if(layer->is_parserlayer()){
-      (static_cast<ParserLayer*>(layer.get()))->Prefetching(training);
+      CHECK(layer->dstlayers()[0]->is_parserlayer());
+      auto parserlayer=static_cast<ParserLayer*>(layer->dstlayers()[0].get());
+      parserlayer->Prefetching(training);
     }
   }
 }
@@ -209,8 +225,10 @@ void Executor::Pull(zsock_t* pull, shared_ptr<NeuralNet> net){
 void Executor::Forward(shared_ptr<NeuralNet> net, bool training){
   auto& layers=net->layers();
   for(auto& layer: layers){
-    while(!layer->ready()){
-      Pull(pull_, train_net_);
+    if(layer->is_bridgedstlayer()){
+      auto* dst=static_cast<BridgeDstLayer*>(layer.get());
+      while(!dst->ready())
+        Pull(pull_, train_net_);
     }
     layer->ComputeFeature(training);
     if(layer->is_bridgesrclayer()){
@@ -227,8 +245,10 @@ void Executor::Backward(shared_ptr<NeuralNet> net){
   auto& layers=net->layers();
   for (auto it = layers.rbegin(); it != layers.rend(); it++){
     shared_ptr<Layer> layer=*it;
-    while(!layer->ready()){
-      Pull(pull_, train_net_);
+    if(layer->is_bridgesrclayer()){
+      auto* src=static_cast<BridgeSrcLayer*>(layer.get());
+      while(!src->ready())
+        Pull(pull_, train_net_);
     }
     layer->ComputeGradient();
     if(layer->is_bridgedstlayer()){
@@ -242,12 +262,6 @@ void Executor::Backward(shared_ptr<NeuralNet> net){
 }
 
 void Executor::TrainOneBatch(int step){
-  if(prefetch_thread_.joinable()){
-    prefetch_thread_.join();
-    for(auto* layer:train_net_->parserlayers())
-      layer->CompletePrefetching();
-    prefetch_thread_=std::thread(PrefetchData, train_net_, true);
-  }
   int64_t tick=zclock_mono();
   Forward(train_net_, true);
   tForward_+=zclock_mono()-tick;
@@ -258,15 +272,10 @@ void Executor::TrainOneBatch(int step){
 
 void Executor::Test(shared_ptr<NeuralNet> net, int nsteps, bool disperf){
   std::thread prefetch;
-  prefetch=std::thread(Worker::PrefetchData, net, false);
+  if(modelproto_.prefetch()&&local_threadid_==0)
+   prefetch=std::thread(Worker::PrefetchData, net, nsteps, false);
   Performance perf(net);
   for(int b=0;b<nsteps;b++){
-    if(prefetch.joinable()){
-      prefetch.join();
-      for(auto& layer:net->parserlayers())
-        layer->CompletePrefetching();
-      prefetch=std::thread(Worker::PrefetchData, net, false);
-    }
     Forward(net, false);
     if(disperf)
       perf.Update();

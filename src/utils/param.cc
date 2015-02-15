@@ -8,6 +8,10 @@ using namespace mshadow;
 using std::vector;
 using std::string;
 namespace singa {
+Param::Param(){
+  owner_=this;
+}
+Param::~Param(){}
   /*
 void Param::FromProto(const ParamProto &proto){
   if(proto.ary_size()>=1){
@@ -32,6 +36,22 @@ void Param::ToProto(ParamProto *proto, bool copyData) {
   //history_.ToProto(history, copyData);
 }
 */
+void Param::ParseSyncMsgFromWorker(zmsg_t* msg){
+
+}
+zmsg_t *Param::GenSyncMsgFromWorker(){
+  zmsg_t* msg=zmsg_new();
+  return msg;
+}
+
+void Param::ParseSyncMsgFromPS(zmsg_t* msg){
+
+}
+
+zmsg_t *Param::GenSyncMsgFromPS(){
+  zmsg_t* msg=zmsg_new();
+  return msg;
+}
 
 void Param::Setup(const ParamProto& proto, const vector<int>& shape){
   data_.Reshape(shape);

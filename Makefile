@@ -2,19 +2,16 @@
 # third-party library installation folder
 HOME_DIR := /home/wangwei/install
 # Lib folder for system and external libs. You may need to change it.
-LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib $(HOME_DIR)/mpich/lib\
+LIBRARY_DIRS := $(HOME_DIR)/lib64 $(HOME_DIR)/lib
 # Header folder for system and external libs. You may need to change it.
-INCLUDE_DIRS := $(HOME_DIR)/include $(HOME_DIR)/mpich/include ./include
+INCLUDE_DIRS := $(HOME_DIR)/include ./include
 # g++ location, should support c++11, tested with 4.8.1
 CXX := g++
 
 ######################Setting Varialbes#######################################
-LIBRARIES := glog gflags protobuf rt opencv_highgui opencv_imgproc\
-							opencv_core openblas gtest zmq czmq
+LIBRARIES := glog gflags protobuf rt opencv_highgui opencv_imgproc opencv_core openblas gtest zmq czmq
 
-LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) \
-						$(foreach library, $(LIBRARIES), -l$(library)) $(MPI_LDFLAGS)
-
+LDFLAGS := $(foreach librarydir, $(LIBRARY_DIRS), -L$(librarydir)) $(foreach library, $(LIBRARIES), -l$(library))
 # Folder to store compiled files
 BUILD_DIR := build
 MSHADOW_FLAGS :=-DMSHADOW_USE_CUDA=0 -DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_MKL=0
@@ -44,7 +41,11 @@ TEST_SRCS := src/test/test_mnistlayer.cc src/test/test_main.cc
 TEST_OBJS := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_SRCS:.cc=.o)) $(SINGA_OBJS))
 -include $(TEST_OBJS:%.o=%.P)
 
-OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS))
+TEST_Router_Src := src/test/dist_test/test_router.cc
+TEST_Router_Obj := $(sort $(addprefix $(BUILD_DIR)/, $(TEST_Router_Src:.cc=.o)) $(SINGA_OBJS))
+-include $(TEST_Router_Obj:%.o=%.P)
+
+OBJS := $(sort $(SINGA_OBJS) $(LOADER_OBJS) $(TEST_OBJS) $(TEST_Router_Obj))
 
 ########################Compilation Section###################################
 .PHONY: all proto init loader singa
@@ -63,6 +64,9 @@ test: init proto $(TEST_OBJS)
 	$(CXX) $(TEST_OBJS) -o $(BUILD_DIR)/test $(CXXFLAGS) $(LDFLAGS)
 	@echo
 
+router: init proto $(TEST_Router_Obj)
+	$(CXX) $(TEST_Router_Obj) -o $(BUILD_DIR)/router $(CXXFLAGS) $(LDFLAGS)
+	@echo
 
 # compile all files
 $(OBJS):$(BUILD_DIR)/%.o : %.cc

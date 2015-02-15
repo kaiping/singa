@@ -5,15 +5,26 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <czmq.h>
 #include "proto/model.pb.h"
 #include "utils/blob.h"
 // Base paramter class.
 namespace singa {
 class Param {
  public:
-   Param(){
-    owner_=this;
-   }
+   Param();
+   virtual ~Param();
+  /**
+   * for syn between worker and PS
+   */
+   virtual void ParseSyncMsgFromWorker(zmsg_t* msg);
+   virtual zmsg_t *GenSyncMsgFromWorker();
+
+   /**
+    * for sync between PS
+    */
+   virtual void ParseSyncMsgFromPS(zmsg_t* msg);
+   virtual zmsg_t *GenSyncMsgFromPS();
   /**
    * Set properties of this parameter from ParamProto, allocate
    * corresponding memory and initialize the parameter. Copy data, history and

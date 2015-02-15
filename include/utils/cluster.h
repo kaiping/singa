@@ -92,6 +92,7 @@ class Cluster {
   const string pub_port() const {
     return std::to_string(cluster_.start_port());
   }
+
   /**
    * pull port of ParameterManager
    */

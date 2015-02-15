@@ -38,11 +38,12 @@ class Executor{
   Executor(int local_threadid,
       const ModelProto& model,
       shared_ptr<Cluster> cluster,
+      shared_ptr<ParamManager> pm,
       shared_ptr<NeuralNet> train_net,
       shared_ptr<NeuralNet> test_net=nullptr,
       shared_ptr<NeuralNet> validation_net=nullptr);
   void Setup(int local_threadid, const ModelProto& model);
-  virtual void Run(ParamManager*pm, int start_step=0);
+  virtual void Run(int start_step=0);
   /**
     * Fetchdata by calling DataLayer and ParserLayer of the net.
     * This function is usually called by launcing a new thread as prefetching.
@@ -140,6 +141,8 @@ class Executor{
   int local_threadid_;
   ModelProto modelproto_;
   shared_ptr<Cluster> cluster_;
+  shared_ptr<ParamManager> pm_;
+  shared_ptr<NeuralNet> train_net_, test_net_, validation_net_;
   //!< thread for prefetching training data.
   std::thread prefetch_thread_;
   int step_;
@@ -149,7 +152,6 @@ class Executor{
 
   zsock_t* pull_;
   map<int, zsock_t*> push_;
-  shared_ptr<NeuralNet> train_net_, test_net_, validation_net_;
   vector<DataLayer*> localDataLayers_;
 };
 
@@ -182,7 +184,7 @@ class Worker : public Executor{
     * @param net, neural network
     * @param start_step start the training from this step.
     */
-  virtual void Run(ParamManager*pm, int start_step=0);
+  virtual void Run(int start_step=0);
   /**
    * Setup the neural network for training, test or validation.
    * Weights for test/validation net can share those from training after

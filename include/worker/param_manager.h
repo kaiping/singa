@@ -29,6 +29,22 @@ class ParamManager{
   ParamManager(shared_ptr<NeuralNet> net, const UpdaterProto& updater);
 
   /**
+   * called by local worker threads;
+   * can be implemented in hogwild way, i.e., done asynchornously; or in batch
+   * mode, i.e., wait until all threads update for this param is ready.
+   * can be done by the stub thread or the calling thread
+   */
+  void UpdateParam(Param* param, int step, int threadid);
+  /**
+   * call UpdateParam to update all params used by the calling thread
+   * blocked until all params are updated.
+  void UpdateParams(int step, int threadid);
+   */
+  /**
+   * will be blocked if the param is not updated.
+   */
+  void WaitUpdate(Param* param, int step, int threadid);
+  /**
     * Initialize neural network parameters and put them to
     * distributed parameter table on parameter servers.
     * @param net, neural network
@@ -36,8 +52,7 @@ class ParamManager{
   void SendParamsToServers(){}
   void GetParamsFromServers(){} // will be blocked until recv all parameters.
   /**
-   * randomlly init allocated parameters and set them ready
-   */
+   * randomlly init allocated parameters and set them ready */
   void InitParams();
 
     /**
@@ -52,9 +67,15 @@ class ParamManager{
     running_=false;
   }
   void SyncWithPS(int step);
+
+  void HandleParamUpdate(zmsg_t* msg){}
+  void HandleLocalMsg(int paramid, zmsg_t* msg){}
+  void HandlePSMsg(int paramid){}
+
  protected:
   bool hogwild_;
   bool running_;
+  int sync_frequency_;
   shared_ptr<NeuralNet> net_;
   //!< sgd updater
   shared_ptr<ParamUpdater> updater_;
@@ -67,30 +88,13 @@ class ParamManager{
   //map<int, Param*> paramid2param_;
   map<int, vector<Param*>> ownerid2Params_;
   //!< aggregated updates for one param
-  //map<int, int> aggregatedUpdates_;
+  map<int, int> aggregatedUpdates_;
   map<int, int> paramid2Offset_;
-  // for leader PM to publish new parameters;
-  // for worker PM to sub parameters from leader PM and;
-  // for leader PM to pull grad from worker nodes;
-  // for worker PM to push grad to leader PM;
-
-  //!< publish param ready signal with param id
-  //zsock_t pub_;
-  //!< pull grad ready signal with param id (or addr?)
-  //zsock_t pull_;
+  map<Param*, int> param2version_;
   std::mutex mtx_;
-  std::condition_variable cv_;
-  int step_;
+  //std::condition_variable cv_;
 
-  //!< sub updates/grad from PS
-  zsock_t*sub_;
-  //!< push updates/grad to PS
-  zsock_t*push_;
-  zpoller_t *poller_;
 
-  int timeout_;
-  int updateLimit_;
-  int syncfreq_;
 };
 }
 #endif // INCLUDE_WORKER_PARAM_MANAGER_H_

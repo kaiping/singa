@@ -31,29 +31,28 @@ void Worker::Start(ModelProto model){
   if(validation_net_!=nullptr)
     validation_net_->ShareWeights(train_net_);
 
-  ParamManager pm(train_net_, model.updater());
+  auto pm=make_shared<ParamManager>(train_net_, model.updater());
   if(cluster_->groupid()==0){
-    pm.InitParams(); //init local params
+    pm->InitParams(); //init local params
   }else{
-    pm.GetParamsFromServers(); // will be blocked until recv all parameters.
+    pm->GetParamsFromServers(); // will be blocked until recv all parameters.
   }
 
   int nthreads=cluster_->nthreads_per_procs();
   vector<Executor*> executors(nthreads-1);
   vector<thread> threads;
   for(size_t i=1;i<executors.size();i++){
-    executors[i]=new Executor(i, model, cluster_, train_net_);
-    threads.push_back(thread(&Executor::Run, executors[i], &pm, 0));
+    executors[i]=new Executor(i, model,  cluster_,pm, train_net_);
+    threads.push_back(thread(&Executor::Run, executors[i], 0));
   }
   if(cluster_->groupid()==0){
     Performance perf(train_net_);
     for(int i=0;i<model.warmup_steps();i++){
       RunOneBatch(i, &perf);
-      pm.Update(i, local_threadid_);
     }
-    pm.SendParamsToServers();
+    pm->SendParamsToServers();
   }
-  Run(&pm, model.warmup_steps());
+  Run(model.warmup_steps());
   for(auto& th: threads)
     th.join();
   for(size_t i=1;i<executors.size();i++){
@@ -82,12 +81,11 @@ shared_ptr<NeuralNet> Worker::SetupNeuralNet(const NetProto& np, bool prefetch,
   return net;
 }
 
-void Worker::Run(ParamManager* pm, const int start_step){
+void Worker::Run(const int start_step){
   step_=start_step;
   Performance perf(train_net_);
   while(!StopNow(step_)){
     RunOneBatch(step_, &perf);
-    pm->Update(step_, local_threadid_);
     // communicate with others
     step_++;
   }
@@ -97,10 +95,12 @@ void Worker::Run(ParamManager* pm, const int start_step){
 /**************************Executor***********************************/
 Executor::Executor(int local_threadid, const ModelProto& model,
     shared_ptr<Cluster> cluster,
+    shared_ptr<ParamManager> pm,
     shared_ptr<NeuralNet> train_net,
     shared_ptr<NeuralNet> test_net,
     shared_ptr<NeuralNet> validation_net):
       cluster_(cluster),
+      pm_(pm),
       train_net_(train_net),
       test_net_(test_net),
       validation_net_(validation_net){
@@ -162,11 +162,10 @@ void Executor::PrefetchData(const vector<DataLayer*>& datalayers,  bool training
   }
 }
 
-void Executor::Run(ParamManager*pm, int step){
+void Executor::Run(int step){
   step_=step;
   while(!StopNow(step_)){
     RunOneBatch(step_);
-    pm->Update(step_, local_threadid_);
     step_++;
   }
 }
@@ -232,6 +231,9 @@ void Executor::Forward(shared_ptr<NeuralNet> net, bool training){
       while(!dst->ready())
         Pull(pull_, train_net_);
     }
+    for(Param* p: layer->GetParams()){
+      pm_->WaitUpdate(p, step_, local_threadid_);
+    }
     layer->ComputeFeature(training);
     if(layer->is_bridgesrclayer()){
       zframe_t* frame=zframe_new(layer->data().cpu_data(),
@@ -253,6 +255,9 @@ void Executor::Backward(shared_ptr<NeuralNet> net){
         Pull(pull_, train_net_);
     }
     layer->ComputeGradient();
+    for(Param* p: layer->GetParams()){
+      pm_->UpdateParam(p, step_, local_threadid_);
+    }
     if(layer->is_bridgedstlayer()){
       zframe_t* frame=zframe_new(layer->grad().cpu_data(),
           layer->data().count()*sizeof(float));

@@ -4,10 +4,10 @@
 namespace singa{
 
 ParamManager::ParamManager(shared_ptr<NeuralNet> net,
-    const UpdaterProto& updater){
-  step_=-1;
-  net_=net;
-  hogwild_=updater.hogwild();
+    const UpdaterProto& updater):net_(net){
+  shared_ptr<Cluster> cluster=Cluster::Get();
+  hogwild_=cluster->nthreads_per_procs()==1||updater.hogwild()?true:false;
+  sync_frequency_=updater.sync_frequency();
   if(updater.type()==UpdaterProto_Type_kAdaGrad){
     updater_=make_shared<AdaGradUpdater>();
     updater_->Init(updater);
@@ -15,7 +15,6 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
     LOG(FATAL)<<"Only support AdaGradUpdater now";
 
   int count=0;
-  shared_ptr<Cluster> cluster=Cluster::Get();
   for(shared_ptr<Layer> layer: net->layers()){
     if(cluster->group_procsid(layer->locationid())==cluster->group_procsid()){
       for(Param* p: layer->GetParams()){
@@ -28,10 +27,13 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
           paramid2Offset_[p->id()]=paramid2Offset_[ownerid];
         }
         ownerid2Params_[ownerid].push_back(p);
-        //paramid2param_[p->id()]=p;
+        if(ownerid2Params_[ownerid].size()>1)
+          aggregatedUpdates_[ownerid]=0;
+        param2version_[p]=0;
       }
     }
   }
+
   ParamProto pp;
   param_.Setup(pp, vector<int> {count});
   float* dptr=param_.mutable_cpu_data();
@@ -39,18 +41,8 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
     entry.second.at(0)->data().data()->set_cpu_data(
         dptr+paramid2Offset_[entry.first]);
   }
+
   if(cluster->nservers()>0){ // sync with parameter server
-    string ps= cluster->server_addr(cluster->group_procsid());
-    string endpoint=">tcp://"+ps+":"+cluster->pub_port();
-    sub_=zsock_new_sub(endpoint.c_str(),"");
-    CHECK(sub_!=nullptr);
-    endpoint=">tcp://"+ps+":"+cluster->pull_port();
-    push_=zsock_new_push(endpoint.c_str());
-    CHECK(push_!=nullptr);
-    poller_=zpoller_new(sub_, NULL);
-    CHECK(poller_!= nullptr);
-  }else{
-    sub_=push_=nullptr;
   }
 }
 
@@ -59,64 +51,48 @@ void ParamManager::InitParams(){
     entry.second.at(0)->Init();
   }
 }
-void ParamManager::Run(int step){
-  running_=true;
-  while(running_){
-    Update(step++,0);
-  }
-}
 
-void ParamManager::SyncWithPS(int step){
-  if(sub_!=nullptr){
-    zsock_t *which=static_cast<zsock_t*> (zpoller_wait(poller_,timeout_));
-    int npull=0;
-    int type, offset;
-    while(which==sub_){
-      zframe_t *frame=zframe_new_empty();
-      CHECK_EQ(0, zsock_recv(sub_, "iif", &type, &offset, &frame));
-      CHECK_EQ(type, kDataFrame);
-      float* dptr=param_.mutable_cpu_data()+offset;
-      float* inc=reinterpret_cast<float*>(zframe_data(frame));
-      for(size_t j=0;j<zframe_size(frame)/sizeof(float);j++)
-        dptr[j]+=inc[j];
-      zframe_destroy(&frame);
-      if(++npull>updateLimit_){
-        LOG(ERROR)<<"Too many updates from parameter server, limit:"
-          <<updateLimit_;
-        break;
-      }
-      which=static_cast<zsock_t*>(zpoller_wait(poller_,timeout_));
-    }
-  }
-  // TODO syn with parameter server
-  if(step%syncfreq_==0){
-
-  }
-}
-
-void ParamManager::Update(int step, int threadid){
-  if(hogwild_){
-    int gThreadid=Cluster::Get()->group_threadid(threadid);
-    for(auto& layer: net_->layers()){
-      if(layer->locationid()==gThreadid){
-        for(Param* p: layer->GetParams())
-          updater_->Update(step, p);
-      }
-    }
+void ParamManager::UpdateParam(Param* param, int step, int local_threadid){
+  bool sync=true;
+  if(hogwild_||ownerid2Params_[param->owner()->id()].size()==1){
+    updater_->Update( step, param);
+    param2version_[param]=step+1;
   }else{
-    if(threadid==0){//main thread does update job
-      for(auto& entry: ownerid2Params_){
-        if(entry.second.size()>1){
-          int len=entry.second.at(0)->data().count();
-          float* accumgrad=entry.second.at(0)->mutable_cpu_grad();
-          for(size_t k=1;k<entry.second.size();k++){
-            float* grad=entry.second.at(k)->mutable_cpu_grad();
-            for(int i=0;i<len;i++)
-              accumgrad[i]+=grad[i];
-          }
-        }
-        updater_->Update(step, entry.second.at(0), 1.0f/entry.second.size());
+    const vector<Param*>& shares=ownerid2Params_[param->owner()->id()];
+    {
+      std::unique_lock<std::mutex> lck(mtx_);
+      aggregatedUpdates_[param->owner()->id()]++;
+      sync=aggregatedUpdates_[param->owner()->id()] == shares.size();
+    }
+    if(sync){
+      param2version_[shares.at(0)]=step+1;
+      float* accumgrad=shares.at(0)->mutable_cpu_grad();
+      int len=shares.at(0)->data().count();
+      for(size_t k=1;k<shares.size();k++){
+        param2version_[shares.at(k)]=step+1;
+        float* grad=shares.at(k)->mutable_cpu_grad();
+        for(int i=0;i<len;i++)
+          accumgrad[i]+=grad[i];
       }
+      updater_->Update(step,shares.at(0), 1.0f/shares.size());
+      aggregatedUpdates_[param->owner()->id()]=0;
+    }
+  }
+  if(sync&&Cluster::Get()->nservers()&&(step+1)%sync_frequency_==0){
+    zmsg_t *msg=param->GenSyncMsgFromWorker();
+    // send msg;
+  }
+}
+
+void ParamManager::WaitUpdate(Param* param, int step, int local_threadid){
+  if(Cluster::Get()->nservers()&&step%sync_frequency_==0){
+
+  }
+    // wait to recv param ready singal
+  while(param2version_[param]<step)
+    Sleep(5);
+}
+/*
       std::unique_lock<std::mutex> lck(mtx_);
       step_=step;
       cv_.notify_all();
@@ -125,6 +101,5 @@ void ParamManager::Update(int step, int threadid){
       std::unique_lock<std::mutex> lck(mtx_);
       while(step_<step) cv_.wait(lck);
     }
-  }
-}
+*/
 }

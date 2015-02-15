@@ -316,6 +316,7 @@ message UpdaterProto {
     kStep = 5;
   }
   optional ChangeProto learning_rate_change_method = 16 [default = kFixed];
+  optional int32 sync_frequency=17 [default=1];
 }
 message BlobProto {
   optional int32 num = 1 [default = 0];

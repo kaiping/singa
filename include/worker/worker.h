@@ -47,7 +47,8 @@ class Executor{
     * Fetchdata by calling DataLayer and ParserLayer of the net.
     * This function is usually called by launcing a new thread as prefetching.
     */
-  static void PrefetchData(shared_ptr<NeuralNet> net, int steps, bool training);
+  static void PrefetchData(const vector<DataLayer*>& datalayers, bool training,
+      int steps=1);
 
   /**
     * check validation/test firstly, then TrainOneBatch
@@ -149,6 +150,7 @@ class Executor{
   zsock_t* pull_;
   map<int, zsock_t*> push_;
   shared_ptr<NeuralNet> train_net_, test_net_, validation_net_;
+  vector<DataLayer*> localDataLayers_;
 };
 
 /**

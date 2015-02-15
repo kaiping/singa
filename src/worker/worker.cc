@@ -111,9 +111,17 @@ Executor::Executor(int local_threadid, const ModelProto& model,
 void Executor::Setup(int local_threadid, const ModelProto& model){
   modelproto_=model;
   local_threadid_=local_threadid;
-  if(local_threadid_==0&&modelproto_.prefetch())
-    prefetch_thread_=std::thread(Worker::PrefetchData, train_net_,
-        modelproto_.train_steps(), true);
+  if(model.prefetch()){
+    auto cluster=Cluster::Get();
+    for(auto& layer: train_net_->datalayers()){
+      int locid=layer->locationid();
+      if(cluster->group_threadid(local_threadid_)==locid)
+        localDataLayers_.push_back(layer);
+    }
+    if(localDataLayers_.size())
+      prefetch_thread_=std::thread(Executor::PrefetchData,
+          std::ref(localDataLayers_), true,1);
+  }
   int gthreadid=cluster_->group_threadid(local_threadid);
   // TODO create a message queue and network thread for send and recv
   for(auto& layer: train_net_->layers()){ //TODO check with PS
@@ -140,18 +148,12 @@ Executor::~Executor(){
     prefetch_thread_.join();
 }
 
-void Executor::PrefetchData(shared_ptr<NeuralNet> net, int steps, bool training){
-  vector<Layer*> localDataLayers;
-  auto cluster=Cluster::Get();
-  for(auto& layer: net->datalayers()){
-    int locid=layer->locationid();
-    if(cluster->procsidOfGroupThread(locid)==cluster->procsid())
-      localDataLayers.push_back(layer);
-  }
-  if(localDataLayers.size()==0)
+void Executor::PrefetchData(const vector<DataLayer*>& datalayers,  bool training,
+    int steps){
+  if(datalayers.size()==0)
     return;
   for(int i=0;i<steps;i++){
-    for(auto& layer: localDataLayers){
+    for(auto& layer: datalayers){
       layer->ComputeFeature(training);
       CHECK(layer->dstlayers()[0]->is_parserlayer());
       auto parserlayer=static_cast<ParserLayer*>(layer->dstlayers()[0].get());
@@ -263,6 +265,11 @@ void Executor::Backward(shared_ptr<NeuralNet> net){
 
 void Executor::TrainOneBatch(int step){
   int64_t tick=zclock_mono();
+  if(prefetch_thread_.joinable()){
+      prefetch_thread_.join();
+      prefetch_thread_=std::thread(Executor::PrefetchData,
+          std::ref(localDataLayers_), false,1);
+  }
   Forward(train_net_, true);
   tForward_+=zclock_mono()-tick;
   tick=zclock_mono();
@@ -272,10 +279,21 @@ void Executor::TrainOneBatch(int step){
 
 void Executor::Test(shared_ptr<NeuralNet> net, int nsteps, bool disperf){
   std::thread prefetch;
-  if(modelproto_.prefetch()&&local_threadid_==0)
-   prefetch=std::thread(Worker::PrefetchData, net, nsteps, false);
+  vector<DataLayer*> localDataLayers;
+  auto cluster=Cluster::Get();
+  for(auto& layer: net->datalayers()){
+    int locid=layer->locationid();
+    if(cluster->group_threadid(local_threadid_)==locid)
+      localDataLayers.push_back(layer);
+  }
+  if(modelproto_.prefetch())
+   prefetch=std::thread(Executor::PrefetchData,  std::ref(localDataLayers), false,1);
   Performance perf(net);
   for(int b=0;b<nsteps;b++){
+    if(prefetch.joinable()){
+      prefetch.join();
+      prefetch=std::thread(Executor::PrefetchData, std::ref(localDataLayers), false,1);
+    }
     Forward(net, false);
     if(disperf)
       perf.Update();

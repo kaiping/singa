@@ -8,7 +8,7 @@ namespace singa {
 
 std::shared_ptr<Cluster> Cluster::instance_;
 Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsid) {
-  procsid_=procsid;
+  global_procsid_=procsid;
 	cluster_ = cluster;
   SetupFolders(cluster);
   char hostname[256];

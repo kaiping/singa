@@ -134,7 +134,7 @@ void Executor::Setup(int local_threadid, const ModelProto& model){
       if(pushloc!=-1&&push_.find(pushloc)==push_.end()){
         string endpoint="@tcp://*:"+cluster_->pull_port(local_threadid);
         pull_=zsock_new_pull(endpoint.c_str());
-        string pushaddr=cluster_->addr(cluster_->global_procsid(pushloc));
+        string pushaddr=cluster_->group_thread_addr(pushloc);
         endpoint=">tcp://"+pushaddr
             +":"+cluster_->pull_port(pushloc%cluster_->nthreads_per_procs());
         push_[pushloc]= zsock_new_push(endpoint.c_str());

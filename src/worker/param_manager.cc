@@ -17,9 +17,7 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
   int count=0;
   shared_ptr<Cluster> cluster=Cluster::Get();
   for(shared_ptr<Layer> layer: net->layers()){
-    int threadid=layer->locationid();
-    int procsid=threadid/cluster->nthreads_per_procs();
-    if(procsid==cluster->group_procsid(cluster->procsid())){
+    if(cluster->group_procsid(layer->locationid())==cluster->group_procsid()){
       for(Param* p: layer->GetParams()){
         int ownerid=p->owner()->id();
         if(paramid2Offset_.find(ownerid)==paramid2Offset_.end()){
@@ -42,8 +40,7 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
         dptr+paramid2Offset_[entry.first]);
   }
   if(cluster->nservers()>0){ // sync with parameter server
-    string ps= cluster->server_addr(
-        cluster->group_procsid(cluster->procsid()));
+    string ps= cluster->server_addr(cluster->group_procsid());
     string endpoint=">tcp://"+ps+":"+cluster->pub_port();
     sub_=zsock_new_sub(endpoint.c_str(),"");
     CHECK(sub_!=nullptr);
@@ -101,7 +98,7 @@ void ParamManager::Update(int step, int threadid){
   if(hogwild_){
     int gThreadid=Cluster::Get()->group_threadid(threadid);
     for(auto& layer: net_->layers()){
-      if(layer->locationid()==-1||layer->locationid()==gThreadid){
+      if(layer->locationid()==gThreadid){
         for(Param* p: layer->GetParams())
           updater_->Update(step, p);
       }

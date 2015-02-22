@@ -48,49 +48,6 @@ inline void Sleep(int millisec=1){
 inline float rand_real(){
   return  static_cast<float>(rand())/(RAND_MAX+1.0f);
 }
-template<typename T>
-class SafeQueue{
- public:
-  SafeQueue():q(),m(){}
-  void push(const T& e){
-    std::lock_guard<std::mutex> lock(m);
-    q.push(e);
-  }
-
-  T front() {
-    T ret;
-    std::unique_lock<std::mutex> lock(m);
-    if(q.size()>0){
-      ret = q.front();
-    }else{
-      LOG(FATAL)<<"The queue is empty";
-    }
-    return ret;
-  }
-
-  void pop(){
-    std::unique_lock<std::mutex> lock(m);
-    q.pop();
-  }
-
-  bool pop(T* ret) {
-    std::unique_lock<std::mutex> lock(m);
-    if(q.size()>0){
-      *ret = q.front();
-      q.pop();
-      return true;
-    }else{
-      return false;
-    }
-  }
-  int size(){
-    return q.size();
-  }
-
- private:
-  std::queue<T> q;
-  mutable std::mutex m;
-};
 
 } /* singa */
 #endif  // INCLUDE_UTILS_COMMON_H_

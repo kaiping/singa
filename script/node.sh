@@ -1,5 +1,5 @@
 #!/bin/bash
-folder="/data1/wangwei/singa/data/mnist/"
+folder="/data1/wangwei/singa/data/mnist/train"
 hostfile="examples/mnist/hostfile"
 if [ $# -eq 0 ]
 then

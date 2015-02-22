@@ -6,30 +6,40 @@
 #include "utils/factory.h"
 #include "utils/graph.h"
 
-#define CreateLayer(id) CreateInstance(id, Layer)
 
 namespace singa {
+#define CreateLayer(id) CreateInstance(id, Layer)
+
+void NeuralNet::RegistryLayers(){
+  Factory<Layer>* factory=Singleton<Factory<Layer>>::Instance();
+  factory->Register("kConvolution", CreateLayer(ConvolutionLayer));
+  factory->Register("kConcate", CreateLayer(ConcateLayer));
+  factory->Register("kDropout", CreateLayer(DropoutLayer));
+  factory->Register("kInnerProduct", CreateLayer(InnerProductLayer));
+  factory->Register("kRGBImage", CreateLayer(RGBImageLayer));
+  factory->Register("kLabel", CreateLayer(LabelLayer));
+  factory->Register("kLRN", CreateLayer(LRNLayer));
+  factory->Register("kMnistImage", CreateLayer(MnistImageLayer));
+  factory->Register("kBridgeDst", CreateLayer(BridgeDstLayer));
+  factory->Register("kBridgeSrc", CreateLayer(BridgeSrcLayer));
+  factory->Register("kPooling", CreateLayer(PoolingLayer));
+  factory->Register("kReLU", CreateLayer(ReLULayer));
+  factory->Register("kShardData", CreateLayer(ShardDataLayer));
+  factory->Register("kSlice", CreateLayer(SliceLayer));
+  factory->Register("kSoftmaxLoss", CreateLayer(SoftmaxLossLayer));
+  factory->Register("kSplit", CreateLayer(SplitLayer));
+  factory->Register("kTanh", CreateLayer(TanhLayer));
+}
+
+void NeuralNet::RegistryParam(string param_type){
+  Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
+  if(param_type=="RandomSync")
+    factory->Register("Param",
+        CreateInstance(RandomSyncParam, Param));
+  else LOG(ERROR)<<"Unkown parameter type "<<param_type;
+}
 NeuralNet::NeuralNet(NetProto net_proto, int group_size) {
   group_size_=group_size;
-  factory_=Singleton<Factory<Layer>>::Instance();
-  factory_->Register("kConvolution", CreateLayer(ConvolutionLayer));
-  factory_->Register("kConcate", CreateLayer(ConcateLayer));
-  factory_->Register("kDropout", CreateLayer(DropoutLayer));
-  factory_->Register("kInnerProduct", CreateLayer(InnerProductLayer));
-  factory_->Register("kRGBImage", CreateLayer(RGBImageLayer));
-  factory_->Register("kLabel", CreateLayer(LabelLayer));
-  factory_->Register("kLRN", CreateLayer(LRNLayer));
-  factory_->Register("kMnistImage", CreateLayer(MnistImageLayer));
-  factory_->Register("kBridgeDst", CreateLayer(BridgeDstLayer));
-  factory_->Register("kBridgeSrc", CreateLayer(BridgeSrcLayer));
-  factory_->Register("kPooling", CreateLayer(PoolingLayer));
-  factory_->Register("kReLU", CreateLayer(ReLULayer));
-  factory_->Register("kShardData", CreateLayer(ShardDataLayer));
-  factory_->Register("kSlice", CreateLayer(SliceLayer));
-  factory_->Register("kSoftmaxLoss", CreateLayer(SoftmaxLossLayer));
-  factory_->Register("kSplit", CreateLayer(SplitLayer));
-  factory_->Register("kTanh", CreateLayer(TanhLayer));
-
   for(int i=0;i<net_proto.layer_size();i++){
     LayerProto * layer_proto=net_proto.mutable_layer(i);
     if(!layer_proto->has_partition_type())
@@ -38,15 +48,20 @@ NeuralNet::NeuralNet(NetProto net_proto, int group_size) {
 
   LOG(INFO)<<"Construct Neural Net...";
   ConstructNeuralNet(net_proto);
-  // currently only support partition among procs.
-  // TODO support partition within single procs, e.g., multiple threads.
   if(group_size_>1)
     PartitionNeuralNet();
   for(auto layer: layers_){
     DLOG(INFO)<<layer->name();
-    //layer->CollectParams(&params_);
   }
-  // the softmax loss layer
+  // assign id for params;
+  int paramid=0;
+  for(auto& layer: layers_){
+    for(shared_ptr<Param> p: layer->GetParams()){
+      params_.push_back(p);
+      p->set_id(paramid++);
+    }
+  }
+
   LOG(INFO)<<"Neural Net constructed";
 }
 
@@ -66,9 +81,10 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
   graph_.Sort();
   //DLOG(INFO)<<"pure graph without partition\n"<< graph_.ToString();
 
+  auto* factory=Singleton<Factory<Layer>>::Instance();
   // create Layers according to topology order
   for(SNode node: graph_.nodes()){
-    shared_ptr<Layer> layer(factory_->Create(protos[node->name()].type()));
+    shared_ptr<Layer> layer(factory->Create(protos[node->name()].type()));
     layer->Init(protos[node->name()]);
     name2layer_[node->name()]=layer;
     layers_.push_back(layer);
@@ -83,12 +99,8 @@ void NeuralNet::ConstructNeuralNet(const NetProto& net_proto){
       layer->AddSrcLayer(name2layer_[src->name()]);
   }
   // setup layer properties, e.g., shapes
-  int paramid=0;
   for(auto& layer: layers_){
       layer->Setup();
-      for(Param* p: layer->GetParams()){
-        p->set_id(paramid++);
-      }
   }
   LOG(INFO)<<"network graph witout partition\n"<<ToString();
 }
@@ -100,6 +112,7 @@ void NeuralNet::PartitionNeuralNet(){
   name2layer_.clear();
   layers_.clear();
   int gsize=group_size_;
+  auto* factory=Singleton<Factory<Layer>>::Instance();
   // create Layers according to topology order
   for(SNode node: graph_.nodes()){
     LayerProto proto;
@@ -130,7 +143,7 @@ void NeuralNet::PartitionNeuralNet(){
     shared_ptr<Layer> newlayer;
     if(proto.has_type()){
       // layers added due to partition
-      shared_ptr<Layer> layer(factory_->Create(proto.type()));
+      shared_ptr<Layer> layer(factory->Create(proto.type()));
       layer->Init(proto);
       newlayer=layer;
     }else{
@@ -143,7 +156,7 @@ void NeuralNet::PartitionNeuralNet(){
         int pdim=oldlayer->partition_dimension();
         shape[pdim]=shape[pdim]/gsize+
           ((node->val().partitionid==gsize-1)?shape[pdim]%gsize:0);
-        shared_ptr<Layer> layer(factory_->Create(oldlayer->type()));
+        shared_ptr<Layer> layer(factory->Create(oldlayer->type()));
         layer->Init(*oldlayer, shape);
         layer->set_name(node->name());
         newlayer=layer;
@@ -349,7 +362,7 @@ string NeuralNet::DebugInfo(){
     }
   }
   for(auto& layer: layers_){
-    for(auto* param: layer->GetParams()){
+    for(auto param: layer->GetParams()){
       sprintf(display, "Layer %10s, param id %2d, name %10s,\
           value norm1 %13.9f, grad norm1 %13.9f\n",
           layer->name().c_str(), param->id(), param->name().c_str(),
@@ -358,6 +371,19 @@ string NeuralNet::DebugInfo(){
     }
   }
   return ret;
+}
+void NeuralNet::ShareWeights(shared_ptr<NeuralNet> other){
+  for(auto& layer: layers_){
+    auto otherlayer=other->name2layer(layer->name());
+    if(otherlayer!=nullptr){
+      const auto& otherparams=otherlayer->GetParams();
+      const auto& params=layer->GetParams();
+      CHECK_EQ(params.size(), otherparams.size());
+      for(size_t i=0;i<params.size();i++){
+        params[i]->ShareData(otherparams[i]);
+      }
+    }
+  }
 }
 
 }  // namespace singa

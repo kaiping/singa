@@ -8,8 +8,11 @@ using std::vector;
 using std::string;
 namespace singa {
 
-#define HEADER "singa"
+#define HEADER "singa\0"
 
+/**
+ * for communicating between Server and ParameterManager.
+ */
 class Router{
  public:
   explicit Router(int port);
@@ -20,7 +23,7 @@ class Router{
    */
   bool Connect(std::string addr);
 
-  bool Bind(std::string addr, int expected_connections);
+  bool Bind(std::string addr, size_t expected_connections);
 
   /**
    * push identifier, header and signature of sender
@@ -32,6 +35,8 @@ class Router{
    * reply to last sender, push identifier, header and signature
    */
   void Reply(zmsg_t* msg);
+  void Reply(zmsg_t* msg, string endpoint);
+  void Reply(zmsg_t* msg, zframe_t* identity);
 
   /**
    * pop identifier, header and signature
@@ -39,12 +44,16 @@ class Router{
    */
   zmsg_t* Recv();
 
+  zsock_t* router() const {
+    return router_;
+  }
+
  protected:
   int port_;
   zsock_t *router_;
+  zframe_t* last_recv_node_;
   // endpoint, sequence
   std::vector<std::pair<string, int64_t>> nodes_;
-  char* last_recv_node_;
 };
 } /* singa */
 #endif // INCLUDE_UTILS_ROUTER_H_

@@ -1,6 +1,5 @@
 #ifndef INCLUDE_MODEL_PARAM_H_
 #define INCLUDE_MODEL_PARAM_H_
-
 #include <vector>
 #include <string>
 #include <map>
@@ -10,33 +9,79 @@
 #include "utils/blob.h"
 // Base paramter class.
 namespace singa {
+enum kMsgType{
+kGet=0,
+kPut=1,
+kSync=2,
+kStop
+};
 class Param {
  public:
    Param();
    virtual ~Param();
   /**
-   * for syn between worker and PS
+   * handle put msg by server
    */
-   virtual void ParseSyncMsgFromWorker(zmsg_t* msg);
-   virtual zmsg_t *GenSyncMsgFromWorker();
-
-   /**
-    * for sync between PS
-    */
-   virtual void ParseSyncMsgFromPS(zmsg_t* msg);
-   virtual zmsg_t *GenSyncMsgFromPS();
+  virtual zmsg_t* HandlePutMsg(zmsg_t* msg);
   /**
-   * Set properties of this parameter from ParamProto, allocate
-   * corresponding memory and initialize the parameter. Copy data, history and
-   * grad from ParamProto if available.
-  void FromProto(const ParamProto &proto);
+   * handle get msg by server
    */
+  virtual zmsg_t* HandleGetMsg(zmsg_t* msg);
   /**
-   * Marshal properties, content and history gradient of this parameter into
-   * ParamProto
-  void ToProto(ParamProto *proto, bool copyData);
+   * handle sync msg by server
    */
+  virtual zmsg_t* HandleSyncMsg(zmsg_t* msg)=0;
+  /**
+   * gen sync msg by worker
+   */
+  virtual zmsg_t *GenSyncMsgFromWorker(float sample_ratio)=0;
+  /**
+   * parse sync msg by worker
+   */
+  virtual void ParseSyncMsgFromPS(zmsg_t* msg)=0;
 
+  /**
+   * setup param shape
+   */
+  virtual void Setup(const ParamProto& proto, const std::vector<int>& shape);
+  /*
+   * fill the data according to initmethod, i.e., random/gaussian/fixed value
+   */
+  virtual void Init();
+  /**
+   * if the Param shares data with others, then point to the owner.
+   * otherwise points to itself.
+   */
+  const Param* owner() const{
+    return owner_;
+  }
+  const std::string& name() {
+    return proto_.name();
+  }
+
+  int id() const{
+    return proto_.id();
+  }
+  void set_id(int id){
+    proto_.set_id(id);
+  }
+  void ShareData(shared_ptr<Param> other){
+    owner_=other.get();
+    CHECK(std::equal(data_.shape().begin(), data_.shape().end(),
+          other->data_.shape().begin()));
+    data_.ShareData(other->data_);
+  }
+  float learning_rate_multiplier() {
+    return proto_.learning_rate_multiplier();
+  }
+  float weight_decay_multiplier() {
+    return proto_.weight_decay_multiplier();
+  }
+  /*
+  const int split_threshold(){
+    return proto_.split_threshold();
+  }
+  */
    /**
     * @return num of floats.
     */
@@ -72,77 +117,52 @@ class Param {
   float* mutable_cpu_data(){
     return data_.mutable_cpu_data();
   }
-  const float* cpu_data(){
-    return data_.cpu_data();
-  }
   float* mutable_cpu_grad(){
     return grad_.mutable_cpu_data();
   }
-  const float* cpu_grad(){
-    return grad_.cpu_data();
+  float* mutable_cpu_history(){
+    return history_.mutable_cpu_data();
   }
-  void Setup(const ParamProto& proto, const std::vector<int>& shape);
-  /*
-   * fill the data according to initmethod, i.e., random/gaussian/fixed value
-   */
-  void Init();
-
-  const std::string& name() {
-    return param_proto_.name();
+  float* mutable_cpu_update(){
+    return update_.mutable_cpu_data();
   }
-
-  int id() const{
-    return param_proto_.id();
-  }
-  void set_id(int id){
-    param_proto_.set_id(id);
-  }
-  void ShareData(Param* other){
-    owner_=other;
-    data_.ShareData(other->data_);
-  }
-  float learning_rate_multiplier() {
-    return param_proto_.learning_rate_multiplier();
-  }
-  float weight_decay_multiplier() {
-    return param_proto_.weight_decay_multiplier();
-  }
-  const int split_threshold(){
-    return param_proto_.split_threshold();
-  }
-  const Param* owner() const{
-    return owner_;
-  }
-  /*
-  const bool ready() const {
-    return ready_;
-  }
-  void set_ready(bool r) {
-    ready_=r;
-  }
-  */
+ static int64_t ps_handle_sync, worker_gen_sync, worker_handle_sync;
  protected:
   /**
-   * name of the parameter used to identify the ParamProto configed in
-   * EdgeProto by users. Currently there are two kinds of parameters, 'weight'
-   * and 'bias'.
+   * name of the parameter used to share wights between neuralnets
    */
   std::string name_;
-  //bool ready_;
-  /**
-   * identifier of this parameter, will be used by ModelController
-   */
-  //! content, gradient and history gradient of this parameter
-  Blob<float> data_, grad_, history_;
-
+  //! content, gradient, history gradient and snapshot of this parameter
+  Blob<float> data_, grad_, history_, update_, snapshot_;
   Param* owner_;
-  /**
-   * Currently support 5 init methods. May change to ParamInitFactory later to
-   * support user defined init method.
-   */
-  ParamProto param_proto_;
+
+  ParamProto proto_;
 };
 
+/**
+ * Sync with server by randomly sampling some parameters for every sync.
+ */
+class RandomSyncParam: public Param{
+ public:
+  virtual zmsg_t* HandleSyncMsg(zmsg_t* msg);
+  virtual zmsg_t *GenSyncMsgFromWorker(float sample_ratio);
+  virtual void ParseSyncMsgFromPS(zmsg_t* msg);
+  virtual void Setup(const ParamProto& proto, const vector<int>& shape);
+  virtual void Init();
+
+  float* mutable_cpu_snapshot(){
+    return snapshot_.mutable_cpu_data();
+  }
+  const float* cpu_snapshot(){
+    return snapshot_.cpu_data();
+  }
+
+ protected:
+  const vector<int> RandomSample(int seed, int m, int n);
+
+
+  Blob<float> snapshot_;
+};
 
 }  // namespace singa
 

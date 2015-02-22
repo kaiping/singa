@@ -4,7 +4,7 @@
 #include "utils/common.h"
 #include "proto/model.pb.h"
 #include "proto/cluster.pb.h"
-//#include "server.h"
+#include "server/server.h"
 #include "worker/worker.h"
 
 /**
@@ -16,6 +16,15 @@ DEFINE_string(cluster_conf, "examples/imagenet12/cluster.conf",
     "configuration file for the cluster");
 DEFINE_string(model_conf, "examples/imagenet12/model.conf",
     "Deep learning model configuration file");
+
+/**
+ * Registry Layer sub-classes and Param sub-classes.
+ * User implemented Layer or Param sub-classes should be registryed here.
+ */
+void RegistryClasses(const singa::NetProto& proto){
+  singa::NeuralNet::RegistryLayers();
+  singa::NeuralNet::RegistryParam(proto.param_type());
+}
 
 // for debug use
 #ifndef FLAGS_v
@@ -36,14 +45,14 @@ int main(int argc, char **argv) {
   LOG(INFO)<<"The cluster config is\n"<<pcluster.DebugString()
     <<"\nThe model config is\n"<<model.DebugString();
 
+  RegistryClasses(model.neuralnet());
   if(cluster->AmIServer()) {
-    //singa::Server server;
-    //server.Start();
-    //    singa::Debug();
+    singa::Server server(cluster);
+    server.Run();
   }else {
     singa::Worker worker(cluster);
     worker.Start(model);
   }
-  //LOG(ERROR)<<"SINA has shutdown successfully";
+  LOG(ERROR)<<cluster->hostname()<<" has shut down";
   return 0;
 }

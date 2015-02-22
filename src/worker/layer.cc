@@ -6,6 +6,7 @@
 #include "mshadow/tensor.h"
 #include "worker/layer.h"
 #include "utils/singleton.h"
+#include "utils/factory.h"
 
 using namespace mshadow;
 using namespace mshadow::expr;
@@ -41,8 +42,12 @@ void ConvolutionLayer::Setup(const LayerProto& proto,
   grad_.Reshape(shape);
   col_data_.Reshape(vector<int>{col_height_, col_width_});
   col_grad_.Reshape(vector<int>{col_height_, col_width_});
-  weight_.Setup(proto.param(0), vector<int>{num_filters_, col_height_});
-  bias_.Setup(proto.param(1), vector<int>{num_filters_});
+
+  Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
+  weight_=shared_ptr<Param>(factory->Create("Param"));
+  weight_->Setup(proto.param(0), vector<int>{num_filters_, col_height_});
+  bias_=shared_ptr<Param>(factory->Create("Param"));
+  bias_->Setup(proto.param(1), vector<int>{num_filters_});
 }
 
 void ConvolutionLayer::SetupAfterPartition(const LayerProto& proto,
@@ -61,9 +66,9 @@ void ConvolutionLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
       Shape3(batchsize_, num_filters_, conv_height_* conv_width_));
   Tensor<cpu, 2> col(col_data_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
-  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(),
+  Tensor<cpu, 2> weight(weight_->mutable_cpu_data(),
       Shape2(num_filters_, col_height_));
-  Tensor<cpu, 1> bias(bias_.mutable_cpu_data(),
+  Tensor<cpu, 1> bias(bias_->mutable_cpu_data(),
       Shape1(num_filters_));
 
   for(int n=0;n<batchsize_;n++){
@@ -80,7 +85,7 @@ void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
       Shape4(batchsize_, channels_, height_, width_));
   Tensor<cpu, 2> col(col_data_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
-  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(),
+  Tensor<cpu, 2> weight(weight_->mutable_cpu_data(),
       Shape2(num_filters_, col_height_));
 
   Blob<float>* gsrcblob=srclayers[0]->mutable_grad(this);
@@ -91,9 +96,9 @@ void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
       Shape3(batchsize_, num_filters_, conv_height_* conv_width_));
   Tensor<cpu, 2> gcol(col_grad_.mutable_cpu_data(),
       Shape2(col_height_, col_width_));
-  Tensor<cpu, 2> gweight(weight_.mutable_cpu_grad(),
+  Tensor<cpu, 2> gweight(weight_->mutable_cpu_grad(),
       Shape2(num_filters_, col_height_));
-  Tensor<cpu, 1> gbias(bias_.mutable_cpu_grad(),
+  Tensor<cpu, 1> gbias(bias_->mutable_cpu_grad(),
       Shape1(num_filters_));
 
   gweight=0.0f;
@@ -160,8 +165,11 @@ void InnerProductLayer::Setup(const LayerProto& proto,
   hdim_=proto.inner_product_param().num_output();
   data_.Reshape(vector<int>{batchsize_, hdim_});
   grad_.ReshapeLike(data_);
-  weight_.Setup(proto.param(0), vector<int>{vdim_, hdim_});
-  bias_.Setup(proto.param(1), vector<int>{hdim_});
+  Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
+  weight_=shared_ptr<Param>(factory->Create("Param"));
+  bias_=shared_ptr<Param>(factory->Create("Param"));
+  weight_->Setup(proto.param(0), vector<int>{vdim_, hdim_});
+  bias_->Setup(proto.param(1), vector<int>{hdim_});
 }
 void InnerProductLayer::SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
@@ -176,8 +184,8 @@ void InnerProductLayer::ComputeFeature(bool training, const vector<SLayer>& srcl
   Tensor<cpu, 2> data(data_.mutable_cpu_data(), Shape2(batchsize_,hdim_));
   Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
       Shape2(batchsize_,vdim_));
-  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(), Shape2(vdim_,hdim_));
-  Tensor<cpu, 1> bias(bias_.mutable_cpu_data(), Shape1(hdim_));
+  Tensor<cpu, 2> weight(weight_->mutable_cpu_data(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 1> bias(bias_->mutable_cpu_data(), Shape1(hdim_));
   data=dot(src, weight);
   // repmat: repeat bias vector into batchsize rows
   data+=repmat(bias, batchsize_);
@@ -191,9 +199,9 @@ void InnerProductLayer::ComputeGradient(const vector<SLayer>& srclayers) {
   if(gsrcblob!=nullptr)
     gsrc.dptr=gsrcblob->mutable_cpu_data();
   Tensor<cpu, 2> grad(grad_.mutable_cpu_data(),Shape2(batchsize_,hdim_));
-  Tensor<cpu, 2> weight(weight_.mutable_cpu_data(), Shape2(vdim_,hdim_));
-  Tensor<cpu, 2> gweight(weight_.mutable_cpu_grad(), Shape2(vdim_,hdim_));
-  Tensor<cpu, 1> gbias(bias_.mutable_cpu_grad(), Shape1(hdim_));
+  Tensor<cpu, 2> weight(weight_->mutable_cpu_data(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 2> gweight(weight_->mutable_cpu_grad(), Shape2(vdim_,hdim_));
+  Tensor<cpu, 1> gbias(bias_->mutable_cpu_grad(), Shape1(hdim_));
 
   gbias=sum_rows(grad);
   gweight=dot(src.T(), grad);
@@ -537,7 +545,8 @@ void RGBImageLayer::Setup(const LayerProto& proto,
 void ShardDataLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
   if(random_skip_){
     int nskip=rand()%random_skip_;
-    LOG(INFO)<<"Random Skip "<<nskip<<" records";
+    LOG(INFO)<<"Random Skip "<<nskip<<" records, there are "<<shard_->Count()
+      <<" records in total";
     string key;
     for(int i=0;i<nskip;i++){
       shard_->Next(&key, &sample_);

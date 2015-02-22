@@ -41,20 +41,14 @@ class Cluster {
   }
   int nprocs_per_group()const {return cluster_.nprocs_per_group();}
   int nthreads_per_procs()const{return cluster_.nthreads_per_procs();}
+  int nthreads_per_server()const{return cluster_.nthreads_per_server();}
   int global_procsid()const {return global_procsid_;}
-  //int procsid() {return global_procsid_%nprocs_per_group();}
   /**
-   * Return the id of the worker within his group.
+   * Return the id of the worker thread within his group.
    */
   int groupid() const{return global_procsid_/nprocs_per_group();}
   int ngroups() const{return cluster_.nworkers()/nprocs_per_group();}
   int nthreads_per_group() const{return nthreads_per_procs()*nprocs_per_group();}
-  //int groupid_of_procs(int procsid) {return procsid/nprocs_per_group();}
-  //int procsid_of_thread(int threadid) {return threadid/nthreads_per_thread();}
-    /**
-   * thread id within a workring group, there are
-   * procs_per_group()*nthreads_per_procs threads in one group.
-   */
   int group_threadid(int local_threadid)const{
     return group_procsid()*nthreads_per_procs()+local_threadid;
   }
@@ -64,17 +58,11 @@ class Cluster {
   int group_procsid(int group_threadid)const{
     return group_threadid/nthreads_per_procs();
   }
-  /*
-  int global_procsid(int local_threadid){
-    return (procsid()/nprocs_per_group())*nprocs_per_group()+
-      local_threadid/nthreads_per_procs();
-  }
 
-  int procsidOfGroupThread(int local_threadid){
-    return local_threadid/nthreads_per_procs();
+  const string server_addr() const{
+    CHECK(AmIServer());
+    return addr_.at(global_procsid());
   }
-  */
-
   /**
    * procsid for the server that manages param for the worker of group_procsid
    */
@@ -96,8 +84,8 @@ class Cluster {
   /**
    * pull port of ParameterManager
    */
-  const string pull_port() const {
-    return std::to_string(cluster_.start_port()+1);
+  const int router_port() const {
+    return cluster_.start_port()+1;
   }
   /**
    * pull port of Bridge layers.
@@ -109,6 +97,13 @@ class Cluster {
   const string workerspace() {return cluster_.workspace();}
   const string visualization_folder(){
     return cluster_.workspace()+"/"+cluster_.vis_subfolder();
+  }
+
+  /**
+   * bandwidth MB/s
+   */
+  float bandwidth() const {
+    return cluster_.bandwidth();
   }
   const string hostname() const{return hostname_;}
  private:

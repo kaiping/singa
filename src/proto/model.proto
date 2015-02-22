@@ -31,8 +31,6 @@ message ModelProto{
   optional int32 validation_steps=21;
   // total num of steps for test
   optional int32 test_steps=22;
-  // warmup the parameters and then send to parameter servers.
-  optional int32 warmup_steps=25 [default=0];
   // last snapshot step
   optional int32 step=29 [default=0];
 
@@ -50,6 +48,7 @@ message ModelProto{
 message NetProto{
   repeated LayerProto layer=1;
   optional PartitionType partition_type=3 [default=kNone];
+  optional string param_type=4[default="RandomSync"];
 }
 
 message ParamProto {
@@ -294,19 +293,23 @@ message SingleLabelImageRecord{
 message UpdaterProto {
   enum Type{
     kAdaGrad=1;
-    kSGD=2;
+    kAdaDelta=2;
+    kNesterov=3;
+    kSGD=4;
+    kRMSProp=5;
   }
   optional Type type=1 [default=kAdaGrad];
   optional bool hogwild=2 [default=true];
-  optional float base_learning_rate=3;
   optional float momentum=4 [default=0];
   optional float weight_decay=5 [default=0];
   // used in changing learning rate
   optional float gamma = 6 [default=1];
   optional float pow=7 [default=0];
-  optional float delta=8 [default=0.000000001];
-  optional float final_learning_rate=9;
-  optional int32 learning_rate_change_frequency = 15;
+  optional float delta=8 [default=0.0000001];
+  optional float rho=9 [default=0.9];
+  optional float base_learning_rate=12;
+  optional float final_learning_rate=13;
+  optional int32 learning_rate_change_frequency = 14;
   enum ChangeProto {
     kFixed = 0;
     kInverse_t= 1;
@@ -317,6 +320,9 @@ message UpdaterProto {
   }
   optional ChangeProto learning_rate_change_method = 16 [default = kFixed];
   optional int32 sync_frequency=17 [default=1];
+  // warmup the parameters and then send to parameter servers.
+  optional int32 warmup_steps=25 [default=10];
+  optional float sample_ratio=26;
 }
 message BlobProto {
   optional int32 num = 1 [default = 0];

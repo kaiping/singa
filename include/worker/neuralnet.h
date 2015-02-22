@@ -21,32 +21,40 @@ namespace singa {
  * protocol buffer. TODO support constructing neural network by adding layers
  * explicitly. E.g., users create layers and connect them manually in the code.
  *
- * Some layers, e.g., SplitLayer and NetSrcLayer/NetDstLayer will be added
+ * Some layers, e.g., SplitLayer and BridgeSrcLayer/BridgeDstLayer will be added
  * implicitly to partition the neural network.
  */
 class NeuralNet {
+ public:
+  /**
+   * Register Layers
+   */
+  static void RegistryLayers();
+  /**
+   * Register Params
+   */
+  static void RegistryParam(string param_type);
  public:
   /**
    * construct the net structure from protocol buffer.
    */
   NeuralNet(NetProto net_proto, int group_size=1);
   /**
-   * construct a string for describing the layers and parameters, including
-   * shape info.
+   * construct a json string representing the neuralnet graph.
+   * The json string can be used by other graph engine to draw a figure for
+   * displaying the neuralnet structure.
    */
   std::string ToString();
-  string DebugInfo();
-
-  std::string ToAdjacency();
   /**
-   * print the DOT string for drawing a graph for the neural net
-   */
-  void DisplayNeuralNet(const vector<shared_ptr<Layer>>& layers);
-/**
    * Print Norm1 of data and grad of each Layer and parameter.
    * @param net, neural network
    */
+  string DebugInfo();
 
+  /**
+   * to display the adjacency layers
+   */
+  std::string ToAdjacency();
   /**
    * Add layer explicitly used in manually programming/constructing neural net.
    */
@@ -56,13 +64,16 @@ class NeuralNet {
    */
   void AddLayer(const Layer* layer){};
   /**
-   * serialize the net.
+   * share weights from other neuralnet
    */
-  void ShareWeights(shared_ptr<NeuralNet> net){}
+  void ShareWeights(shared_ptr<NeuralNet> other);
   void ToProto(NetProto *net_proto, bool copyData=false);
   const std::vector<shared_ptr<Layer>>& layers() {
     return layers_;
   }
+  /**
+   * return ParserLayer of the neuralnet.
+   */
   const std::vector<ParserLayer*>& parserlayers() {
     if(parserlayers_.size()==0){
       for(auto& layer: layers_)
@@ -87,23 +98,19 @@ class NeuralNet {
     }
     return datalayers_;
   }
-
-
-    /*
-  const std::vector<Param *> &params() {
+  const std::vector<shared_ptr<Param>> &params()const {
     return params_;
   }
-  */
   shared_ptr<Layer> name2layer(string name){
     if (name2layer_.find(name)!=name2layer_.end())
       return name2layer_[name];
-    else return NULL;
+    else return nullptr;
   }
 
-  Param* paramid2param(int id) {
+  shared_ptr<Param> paramid2param(int id) {
     if(paramid2param_.size()==0){
       for(auto& layer: layers_){
-        for(Param* p: layer->GetParams()){
+        for(shared_ptr<Param> p: layer->GetParams()){
           paramid2param_[p->id()]=p;
         }
       }
@@ -125,50 +132,17 @@ class NeuralNet {
    */
   map<string, vector<shared_ptr<Layer>>> PartitionLayers(
       const vector<shared_ptr<Layer>>& layers);
-  /**
-   * connect partitioned layers by adding helper layers, e.g., ConcateLayer
-   * and SliceLayer.
-   * TODO distinguish kOneToMany from kOneToOne. Now kOnetoMany is
-   * processed the same as kOneToOne.
-  vector<shared_ptr<Layer>> ConnectPartitionedLayers(
-      const map<string, vector<shared_ptr<Layer>>>& partitioned_layers,
-      const vector<shared_ptr<Layer>>& layers);
-   */
 
-  /**
-   * Add SliceLayer to connect src_layer and dst_layers.
-  void InsertSliceLayer(const int slice_dimension, shared_ptr<Layer> src_layer,
-    const vector<shared_ptr<Layer>> dst_layers,
-    vector<shared_ptr<Layer>> *layers);
-   */
-  /**
-   * add ConcateLayer to connect src_layers and dst_layer
-  void InsertConcateLayer(const int concate_dimension,
-    const vector<shared_ptr<Layer>>& src_layers,
-    shared_ptr<Layer> dst_layer, vector<shared_ptr<Layer>> *layers);
-   */
-  /**
-   * add a split layer for the layer which has multiple outgoing connected
-   * layers (exception SliceLayer).
- vector<shared_ptr<Layer>> InsertSplitLayers(
-     const vector<shared_ptr<Layer>> &layers);
-   */
-  /**
-   * add a NetSrcLayer and NetDstLayer between any connection whose ending
-   * layers resident on different machines.
- vector<shared_ptr<Layer>> InsertNetTransferLayers(
-     const vector<shared_ptr<Layer>> &layers);
-   */
- private:
+ protected:
   vector<shared_ptr<Layer>> layers_;
   vector<ParserLayer*> parserlayers_;
   vector<LossLayer*> losslayers_;
   vector<DataLayer*> datalayers_;
-  vector<Param*> params_;
+  vector<shared_ptr<Param>> params_;
   map<string, shared_ptr<Layer>> name2layer_;
-  map<int, Param*> paramid2param_;
+  map<int, shared_ptr<Param>> paramid2param_;
+
   map<string, LayerProto> name2layerproto_;
-  Factory<Layer>* factory_;
   int group_size_;
   Graph graph_;
 };

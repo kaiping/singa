@@ -39,8 +39,8 @@ class ConvolutionLayer: public Layer {
 
   virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
-  virtual vector<Param*> GetParams() {
-    return vector<Param*>{&weight_, &bias_};
+  virtual vector<shared_ptr<Param>> GetParams() {
+    return vector<shared_ptr<Param>>{weight_, bias_};
   }
   virtual ConnectionType connection_type(int k) const {
     CHECK_LT(k, srclayers_.size());
@@ -50,7 +50,7 @@ class ConvolutionLayer: public Layer {
   int kernel_, pad_,  stride_ ;
   int batchsize_,  channels_, height_,width_;
   int col_height_, col_width_, conv_height_, conv_width_, num_filters_;
-  Param weight_, bias_;
+  shared_ptr<Param> weight_, bias_;
   Blob<float> col_data_, col_grad_;
 };
 
@@ -96,8 +96,8 @@ class InnerProductLayer: public Layer {
   virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
   //virtual void ToProto(LayerProto *layer_proto, bool copyData);
-  virtual vector<Param*> GetParams() {
-    return vector<Param*>{&weight_, &bias_};
+  virtual vector<shared_ptr<Param>> GetParams() {
+    return vector<shared_ptr<Param>>{weight_, bias_};
   }
 
  private:
@@ -106,7 +106,7 @@ class InnerProductLayer: public Layer {
   //! dimension of the visible layer
   int vdim_;
   int batchsize_;
-  Param weight_, bias_;
+  shared_ptr<Param> weight_, bias_;
 };
 
 class LabelLayer: public ParserLayer {

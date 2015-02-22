@@ -7,6 +7,7 @@ message ClusterProto{
   // partition workers into groups based on ID,
   optional int32 nprocs_per_group=5 [default=1];
   optional int32 nthreads_per_procs=6 [default=1];
+  optional int32 nthreads_per_server=7 [default=1];
 
   // local workspace, train/val/test shards, checkpoint files
   required string workspace=10;
@@ -20,4 +21,5 @@ message ClusterProto{
 
   // message size limit, default 1MB
   optional int32 largest_message=20 [default=1048576];
+  optional float bandwidth=21 [default=100];//MB/s
 }

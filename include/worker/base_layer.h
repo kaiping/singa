@@ -85,17 +85,12 @@ class Layer {
    */
   virtual void SetupAfterPartition();
   /**
-   * collect parameters associated with this layer.
-   * Layers that have paramters must overload this function.
-   * parameter id is set in sequence order starting with 0.
-   * @param params parameters collected from previous layers.
-  virtual void CollectParams(vector<Param*> *params){};
-   */
-  /**
    * Layers that have paramters must overload this function.
    * @return parameters associated with this layer
    */
-  virtual vector<Param*> GetParams(){ return vector<Param*>(); }
+  virtual vector<shared_ptr<Param>> GetParams(){
+    return vector<shared_ptr<Param>>();
+  }
   /**
    * Compute features of this layer based on connected layers.
    * Implement forward propagation for BP; TODO Implement both postive phase
@@ -119,8 +114,8 @@ class Layer {
    */
   virtual void ComputeGradient();
   /**
-   * decide on which dimension of DArray to do the partitioning.
-   * @mode kModel, kData, kHybrid, kNone (no partition)
+   * decide on which dimension to do the partitioning.
+   * @mode kLayer, kData, kNone (no partition)
    * @return the partition dimension, -1 for no partition
    */
   virtual int partition_dimension() const {
@@ -132,19 +127,36 @@ class Layer {
     return ret;
   }
 
+  /**
+   * return connection type between two layers.
+   * Currently support two connections: kOneToOne, and kOneToAll.
+   * kOneToOne indicates the dst neuron depends on only one neuron from src
+   * layer. kOneToAll indicates the dst neuron depends on all neurons from src
+   * layer. TODO support kOneToMany.
+   */
   virtual ConnectionType connection_type(int k) const {
     CHECK_LT(k, srclayers_.size());
     return kOneToOne;
   }
+  /**
+   * return partition type of this layer.
+   * E.g., kNone, kLayer or kData
+   */
   virtual PartitionType partition_type() const {
     return layer_proto_.partition_type();
   }
+  /**
+   * location id is the execution unit (i.e., thread from the working group) ID.
+   */
   virtual void set_locationid(int id){
     layer_proto_.set_locationid(id);
   }
   virtual int locationid() const {
     return layer_proto_.locationid();
   }
+  /**
+   * partition id is the ID of the layer in the original layer.
+   */
   virtual void set_partitionid(int id){
     layer_proto_.set_partitionid(id);
   }
@@ -188,9 +200,15 @@ class Layer {
     return &grad_;
   }
 
+  /**
+   * return LayerS that connected to this layer
+   */
   virtual const vector< SLayer> srclayers() const {
     return srclayers_;
   }
+  /**
+   * return LayerS that this layer connected to
+   */
   virtual const vector<SLayer> dstlayers() const {
     return dstlayers_;
   }
@@ -230,12 +248,6 @@ class Layer {
   virtual bool is_bridgedstlayer() const {
     return false;
   }
-  /*
-  virtual bool is_neuronlayer() const {
-    return false;
-  }
-  */
-
 protected:
   string name_;
   //vector<shared_ptr<SyncedMem>> memblobs_;
@@ -245,6 +257,10 @@ protected:
   vector<SLayer> srclayers_, dstlayers_;
 };
 
+/**
+ * For sending data to layer on other threads which may resident on other nodes
+ * due to layer/data partition.
+ */
 class BridgeSrcLayer: public Layer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
@@ -268,6 +284,10 @@ class BridgeSrcLayer: public Layer {
  protected:
   bool ready_;
 };
+/**
+ * For recv data from layer on other threads which may resident on other nodes
+ * due to layer/data partiton
+ */
 class BridgeDstLayer: public Layer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
@@ -290,6 +310,10 @@ class BridgeDstLayer: public Layer {
  protected:
   bool ready_;
 };
+
+/**
+ * Concate src layers on one dimension
+ */
 class ConcateLayer: public Layer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
@@ -352,6 +376,11 @@ class DataLayer: public Layer{
       ComputeFeature(training, srclayers_);
   }
 
+  virtual void Prefetching(bool training){
+    CHECK(prefetch_);
+    ComputeFeature(training, srclayers_);
+  }
+
  protected:
   bool has_set_;
   bool prefetch_;
@@ -359,6 +388,10 @@ class DataLayer: public Layer{
   Record sample_;
   vector<Record> records_;
 };
+
+/**
+ * Slice this layer into multiple dst layers on one dimension
+ */
 class SliceLayer: public Layer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
@@ -380,7 +413,9 @@ class SliceLayer: public Layer {
   vector<Blob<float>> datavec_, gradvec_;
 };
 
-
+/**
+ * Replciate this layer into multiple dst layers
+ */
 class SplitLayer: public Layer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
@@ -392,8 +427,10 @@ class SplitLayer: public Layer {
   virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
   virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers);
 };
-/**********************Loss Layers************************/
 
+/**
+ * Loss layer to calculate loss and other metrics, e.g., precison.
+ */
 class LossLayer: public Layer{
  public:
   virtual void Setup(const LayerProto& proto,
@@ -421,7 +458,7 @@ class LossLayer: public Layer{
 };
 
 /**
- * parse the input blob/record into meaning full format.
+ * parse the input records into Blobs.
  */
 class ParserLayer: public Layer {
  public:

@@ -75,6 +75,9 @@ class Node{
 };
 
 
+/**
+ * For partition neuralnet and displaying the neuralnet structure
+ */
 class Graph{
  public:
   Graph(){}

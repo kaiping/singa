@@ -73,12 +73,7 @@ namespace mshadow {
                 return a * a;
             }
         };
-        struct sqrtop {
-            MSHADOW_XINLINE static real_t Map(real_t a) {
-                return sqrt(a);
-            }
-        };
-        /*! \brief scaled tanh, hard code the scale factor*/
+       /*! \brief scaled tanh, hard code the scale factor*/
         struct stanh {
             MSHADOW_XINLINE static real_t Map(real_t a) {
               return  1.7159047*tanhf(0.66666667 *a);
@@ -108,6 +103,11 @@ namespace mshadow {
         struct power {
             MSHADOW_XINLINE static real_t Map(real_t a, real_t b) {
                 return powf( a, b );
+            }
+        };
+        struct sqrtop {
+            MSHADOW_XINLINE static real_t Map(real_t a, real_t b) {
+                return sqrt(a+b);
             }
         };
     }; // namespace op

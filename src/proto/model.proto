@@ -48,7 +48,6 @@ message ModelProto{
 message NetProto{
   repeated LayerProto layer=1;
   optional PartitionType partition_type=3 [default=kNone];
-  optional string param_type=4[default="RandomSync"];
 }
 
 message ParamProto {
@@ -92,7 +91,7 @@ message ParamProto {
   }
   optional InitMethod init_method = 7 [default = kConstant];
   // constant init
-  optional float value = 8 [default = 1.0];
+  optional float value = 8 [default = 0.0];
   // for uniform sampling
   optional float low = 9 [default = -1];
   optional float high = 10 [default = 1];
@@ -177,7 +176,7 @@ message SoftmaxLossProto {
   // When computing accuracy, count as correct by comparing the true label to
   // the top k scoring classes.
   optional int32 topk = 1 [default=1] ;
-  optional float scale=2 [default=1.0];
+  optional float scale=2 [default=1];
 }
 // Message that stores parameters used by ConvolutionLayer
 message ConvolutionProto {
@@ -220,7 +219,8 @@ message MnistProto {
   // scale to this size as input for deformation
   optional int32 resize=6 [default=0] ;
   optional int32 elastic_freq=7 [default=0];
-  optional bool normalize=8 [default=true];
+  optional float norm_a=8 [default=1];
+  optional float norm_b=9 [default=0];
 }
 // Message that stores parameters used by DropoutLayer
 message DropoutProto {
@@ -283,6 +283,19 @@ message Record {
   optional SingleLabelImageRecord image=2;
 }
 
+// to import caffe's lmdb dataset
+message Datum {
+  optional int32 channels = 1;
+  optional int32 height = 2;
+  optional int32 width = 3;
+  // the actual image data, in bytes
+  optional bytes data = 4;
+  optional int32 label = 5;
+  // Optionally, the datum could also hold float data.
+  repeated float float_data = 6;
+  // If true data contains an encoded image that need to be decoded
+  optional bool encoded = 7 [default = false];
+}
 message SingleLabelImageRecord{
   repeated int32 shape=1;
   optional int32 label=2;
@@ -322,7 +335,8 @@ message UpdaterProto {
   optional int32 sync_frequency=17 [default=1];
   // warmup the parameters and then send to parameter servers.
   optional int32 warmup_steps=25 [default=10];
-  optional float sample_ratio=26;
+  optional float moving_rate=26 [default=0];
+  optional string param_type=27[default="Elastic"];
 }
 message BlobProto {
   optional int32 num = 1 [default = 0];

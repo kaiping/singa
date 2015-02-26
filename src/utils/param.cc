@@ -16,6 +16,7 @@ int64_t Param::worker_handle_sync=0;
 Param::Param(){
   owner_=this;
 }
+
 Param::~Param(){}
 
 // msg is destroyed by whom recv it.
@@ -118,7 +119,6 @@ zmsg_t* RandomSyncParam::HandleSyncMsg(zmsg_t* msg){
   float* syncptr=(float*)zframe_data(syncframe);
   float* dptr=data_.mutable_cpu_data();
   int k=0;
-  /*
   if(count==data_.count()){
     for(int idx=0;idx<count;idx++){
       float x=dptr[idx];
@@ -126,7 +126,7 @@ zmsg_t* RandomSyncParam::HandleSyncMsg(zmsg_t* msg){
       syncptr[k]=x;
       k++;
     }
-  }else*/{
+  }else{
     for(int idx: RandomSample(seed, count, data_.count())){
       float x=dptr[idx];
       dptr[idx]+=syncptr[k];
@@ -151,11 +151,10 @@ zmsg_t *RandomSyncParam::GenSyncMsgFromWorker(float sample_ratio){
   float* dptr=data_.mutable_cpu_data();
   float* sdptr=snapshot_.mutable_cpu_data();
   int k=0;
-  /*
   if(m==data_.count()){
     for(int idx=0;idx<m;idx++)
       updateptr[k++]=dptr[idx]-sdptr[idx];
-  }else*/{
+  }else{
     const vector<int> samples=RandomSample(seed, m, data_.count());
     for(int idx:samples){
       updateptr[k++]=dptr[idx]-sdptr[idx];
@@ -183,13 +182,12 @@ void RandomSyncParam::ParseSyncMsgFromPS(zmsg_t* msg){
   float* dptr=data_.mutable_cpu_data();
   float* sdptr=snapshot_.mutable_cpu_data();
   int k=0;
-  /*
   if(count==data_.count()){
     for(int idx=0;idx<count;idx++){
       dptr[idx]+=psdptr[k++]-sdptr[idx];
       sdptr[idx]=dptr[idx];
     }
-  }else*/{
+  }else{
     for(int idx: RandomSample(seed, count, data_.count())){
       dptr[idx]+=psdptr[k++]-sdptr[idx];
       sdptr[idx]=dptr[idx];
@@ -210,4 +208,47 @@ void RandomSyncParam::Init(){
   memcpy(snapshot_.mutable_cpu_data(), data_.mutable_cpu_data(),
       sizeof(float)*data_.count());
 }
+
+/***************************ElasticParam************************************/
+zmsg_t* ElasticParam::HandleSyncMsg(zmsg_t* msg){
+  int64_t start=zclock_mono();
+  char* control=zframe_strdup(zmsg_first(msg));
+  float alpha;int count;
+  sscanf(control, "%f-%d", &alpha,&count);
+  delete control;
+  zframe_t* syncframe=zmsg_next(msg);
+  CHECK_EQ(size(), count);
+  Tensor<cpu, 1> server(data_.mutable_cpu_data(), Shape1(count));
+  Tensor<cpu, 1> worker((float*)zframe_data(syncframe), Shape1(count));
+  worker=(worker-server)*alpha;
+  server+=worker;
+  ps_handle_sync+=zclock_mono()-start;
+  return msg;
+}
+
+zmsg_t *ElasticParam::GenSyncMsgFromWorker(float alpha){
+  int64_t start=zclock_mono();
+  zmsg_t* msg=zmsg_new();
+  zmsg_addstrf(msg, "%f-%d", alpha, size());
+  zmsg_addmem(msg, mutable_cpu_grad(), sizeof(float)*size());
+  worker_gen_sync+=zclock_mono()-start;
+  return msg;
+}
+
+void ElasticParam::ParseSyncMsgFromPS(zmsg_t* msg){
+  int64_t start=zclock_mono();
+  //LOG(ERROR)<<"worker sync "<<id();
+  char* control=zmsg_popstr(msg);
+  float alpha;int count;
+  sscanf(control, "%f-%d", &alpha, &count);
+  delete control;
+  zframe_t* frame=zmsg_pop(msg);
+  CHECK_EQ(zframe_size(frame), count*sizeof(float));
+  Tensor<cpu, 1> diff((float*)zframe_data(frame), Shape1(count));
+  Tensor<cpu, 1> data(mutable_cpu_data(), Shape1(count));
+  data-=diff;
+  zframe_destroy(&frame);
+  worker_handle_sync+=zclock_mono()-start;
+}
+
 }  // namespace singa

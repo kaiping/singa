@@ -223,16 +223,6 @@ namespace mshadow {
         /*! \brief constructor from data pointer and shape  */
         MSHADOW_XINLINE Tensor(real_t *dptr, const Shape<dimension> &shape): dptr((real_t*)dptr), shape(shape) {}
         /*!
-         * \brief return size of i-th dimension, start counting from highest dimension
-         *  This meets the habit of normal usage of size of matrix. Note that mat.shape[0] gives lowest dimension,
-         *  while mat.size(0) returns the highest dimension
-         * \param the dimension count from the highest dimensin
-         * \return the size
-         */
-        MSHADOW_XINLINE index_t size(index_t i) const {
-            return shape[dimension - 1 - i];
-        }
-        /*!
          * \brief flatten the tensor to 2 dimension, collapse the higher dimensions together
          * \return tensor after flatten
          */
@@ -301,9 +291,6 @@ namespace mshadow {
             s[0] = s.stride_ = end  - begin;
             return Tensor<Device, 1>(reinterpret_cast<real_t*> \
                                      (dptr) + begin, s);
-        }
-        MSHADOW_XINLINE index_t size(index_t i) const {
-            return shape[0];
         }
         MSHADOW_XINLINE real_t &operator[](index_t idx) { return dptr[ idx ]; }
         MSHADOW_XINLINE const real_t &operator[](index_t idx)const { return dptr[ idx ]; }
@@ -476,12 +463,10 @@ namespace mshadow{
 #include "tensor_gpu-inl.hpp"
 // extension of expressions
 #include "tensor_expr_ext.h"
-// io
+// io 
 #include "tensor_io.h"
 // container
 #include "tensor_container.h"
 // random number generator
 #include "tensor_random.h"
-
-#include "cxxnet_op.h"
 #endif // TENSOR_H

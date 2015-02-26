@@ -15,10 +15,12 @@ Cluster::Cluster(const ClusterProto &cluster, string hostfile, int procsid) {
   gethostname(hostname, sizeof(hostname));
   hostname_=string(hostname);
 
-  std::ifstream ifs(hostfile, std::ifstream::in);
-  std::string line;
-  while(std::getline(ifs, line)){
-    addr_.push_back(line);
+  if(cluster_.nworkers()>1&&cluster_.nservers()>0){
+    std::ifstream ifs(hostfile, std::ifstream::in);
+    std::string line;
+    while(std::getline(ifs, line)){
+      addr_.push_back(line);
+    }
   }
   //CHECK_EQ(addr_.size(), cluster_.nservers()+cluster_.nworkers());
 }

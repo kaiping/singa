@@ -8,7 +8,6 @@ Router::Router(int port):port_(port), last_recv_node_(nullptr){
   router_=zsock_new(ZMQ_ROUTER);
 }
 Router::~Router(){
-  zsock_destroy(&router_);
   if(last_recv_node_)
     zframe_destroy(&last_recv_node_);
   zsock_destroy(&router_);

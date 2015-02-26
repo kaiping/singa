@@ -1,6 +1,7 @@
 
 #include "utils/updater.h"
 #include "mshadow/tensor.h"
+#include "mshadow/cxxnet_op.h"
 #include "proto/model.pb.h"
 using namespace mshadow;
 using namespace mshadow::expr;

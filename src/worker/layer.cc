@@ -4,6 +4,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "mshadow/tensor.h"
+#include "mshadow/cxxnet_op.h"
 #include "worker/layer.h"
 #include "utils/singleton.h"
 #include "utils/factory.h"
@@ -73,11 +74,14 @@ void ConvolutionLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
 
   for(int n=0;n<batchsize_;n++){
     Tensor<cpu, 3> srcn=src[n];
-    col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
+    if(pad_>0)
+      col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
+    else
+      col=unpack_patch2col(srcn, kernel_, stride_);
     Tensor<cpu, 2> datan=data[n];
     datan=dot(weight, col);
   }
-  data+=broadcast<2>(bias, data.shape);
+  data+=broadcast<1>(bias, data.shape);
 }
 
 void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
@@ -102,7 +106,7 @@ void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
       Shape1(num_filters_));
 
   gweight=0.0f;
-  gbias=sumall_except_dim<2>(grad);
+  gbias=sumall_except_dim<1>(grad);
   Shape<3> padshape(gsrc.shape.SubShape());
   padshape[0]+=2*pad_;padshape[1]+=2*pad_;
   Shape<2> imgshape=Shape2(height_, width_);
@@ -182,6 +186,7 @@ void InnerProductLayer::SetupAfterPartition(const LayerProto& proto,
 
 void InnerProductLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers) {
   Tensor<cpu, 2> data(data_.mutable_cpu_data(), Shape2(batchsize_,hdim_));
+  CHECK_EQ(srclayers[0]->data().count(), batchsize_*vdim_);
   Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
       Shape2(batchsize_,vdim_));
   Tensor<cpu, 2> weight(weight_->mutable_cpu_data(), Shape2(vdim_,hdim_));
@@ -225,9 +230,105 @@ void LabelLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
   int rid=0;
   for(const Record& record: datalayer->records()){
     label[rid++]=record.image().label();
+    CHECK_LT(record.image().label(),10);
   }
   CHECK_EQ(rid, data_.shape()[0]);
 }
+
+
+/*********************LMDBDataLayer**********************************/
+void LMDBDataLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
+  if(random_skip_){
+    int nskip=rand()%random_skip_;
+    int n=0;
+    CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
+          &mdb_value_, MDB_FIRST), MDB_SUCCESS);
+    while (mdb_cursor_get(mdb_cursor_, &mdb_key_,
+          &mdb_value_, MDB_NEXT) == MDB_SUCCESS)
+      n++;
+    LOG(INFO)<<"Random Skip "<<nskip<<" records of total "<<n<<"records";
+    // We have reached the end. Restart from the first.
+    CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
+          &mdb_value_, MDB_FIRST), MDB_SUCCESS);
+    for(int i=0;i<nskip;i++){
+      if (mdb_cursor_get(mdb_cursor_, &mdb_key_,
+            &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
+        // We have reached the end. Restart from the first.
+        DLOG(INFO) << "Restarting data prefetching from start.";
+        CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
+              &mdb_value_, MDB_FIRST), MDB_SUCCESS);
+      }
+    }
+    random_skip_=0;
+  }
+  Datum datum;
+  for(auto& record: records_){
+    SingleLabelImageRecord* image=record.mutable_image();
+    CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
+          &mdb_value_, MDB_GET_CURRENT), MDB_SUCCESS);
+    datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
+    ConvertDatumToSingleLableImageRecord(datum, image);
+    if (mdb_cursor_get(mdb_cursor_, &mdb_key_,
+          &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
+      // We have reached the end. Restart from the first.
+      DLOG(INFO) << "Restarting data prefetching from start.";
+      CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
+            &mdb_value_, MDB_FIRST), MDB_SUCCESS);
+    }
+  }
+}
+
+void LMDBDataLayer::ConvertDatumToSingleLableImageRecord(const Datum& datum,
+    SingleLabelImageRecord* record){
+  record->set_label(datum.label());
+  if(datum.has_channels())
+    record->add_shape(datum.channels());
+  if(datum.has_height())
+    record->add_shape(datum.height());
+  if(datum.has_width())
+    record->add_shape(datum.width());
+  if(datum.has_data())
+    record->set_pixel(datum.data());
+  if(datum.float_data_size()){
+    record->clear_data();
+    for(float x: datum.float_data())
+      record->add_data(x);
+  }
+}
+
+void LMDBDataLayer::Setup(const LayerProto& proto,
+    const vector<SLayer>& srclayers){
+  CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS) << "mdb_env_create failed";
+  CHECK_EQ(mdb_env_set_mapsize(mdb_env_, 1099511627776), MDB_SUCCESS); // 1TB
+  CHECK_EQ(mdb_env_open(mdb_env_,
+        proto.data_param().path().c_str(),
+        MDB_RDONLY|MDB_NOTLS, 0664), MDB_SUCCESS) << "cannot open lmdb "
+    << proto.data_param().path();
+  CHECK_EQ(mdb_txn_begin(mdb_env_, NULL, MDB_RDONLY, &mdb_txn_), MDB_SUCCESS)
+    << "mdb_txn_begin failed";
+  CHECK_EQ(mdb_open(mdb_txn_, NULL, 0, &mdb_dbi_), MDB_SUCCESS)
+    << "mdb_open failed";
+  CHECK_EQ(mdb_cursor_open(mdb_txn_, mdb_dbi_, &mdb_cursor_), MDB_SUCCESS)
+    << "mdb_cursor_open failed";
+  LOG(INFO) << "Opening lmdb " << proto.data_param().path();
+  CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_FIRST),
+      MDB_SUCCESS) << "mdb_cursor_get failed";
+
+  if (mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_NEXT)
+      != MDB_SUCCESS) {
+    CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_,
+          MDB_FIRST), MDB_SUCCESS);
+  }
+  Datum datum;
+  datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
+  SingleLabelImageRecord* record=sample_.mutable_image();
+  ConvertDatumToSingleLableImageRecord(datum, record);
+
+  batchsize_=proto.data_param().batchsize();
+  records_.resize(batchsize_);
+  random_skip_=proto.data_param().random_skip();
+}
+
 /***************** Implementation for LRNLayer *************************/
 void LRNLayer::Setup(const LayerProto& proto,
       const vector<SLayer>& srclayers){
@@ -282,13 +383,10 @@ void LRNLayer::ComputeGradient(const vector<SLayer>& srclayers) {
 
 void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
   DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
-  int inputsize =datalayer->sample().image().shape(0);
+  int ndim=datalayer->sample().image().shape_size();
+  int inputsize =datalayer->sample().image().shape(ndim-1);
 
   float* dptr=data_.mutable_cpu_data();
-  float a=1.0f, b=0.0f;
-  if(normalize_){
-    a=127.5f;b=1.0f;
-  }
   for(const Record& record: datalayer->records()){
     // copy from record to cv::Mat
     cv::Mat input(inputsize, inputsize, CV_32FC1);
@@ -303,6 +401,8 @@ void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclay
         for(int j=0;j<inputsize;j++)
           input.at<float>(i,j)=imagerecord.data(k++);
     }
+    int size=data_.shape()[1];
+    /*
     cv::Mat resizeMat=input;
     // affine transform, scaling, rotation and shearing
     if(gamma_){
@@ -333,16 +433,17 @@ void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclay
           warpmat.at<float>(0,1)/=2.0;
       }
     }
-    int size=data_.shape()[1];
     cv::warpAffine(resizeMat, betaMat, warpmat, cv::Size(size, size));
+    */
 
     for(int i=0;i<size;i++){
       for(int j=0;j<size;j++){
-        *dptr=betaMat.at<float>(i,j)/a-b;
+        *dptr=input.at<float>(i,j)/norm_a_-norm_b_;
         dptr++;
       }
     }
   }
+  CHECK_EQ(dptr, data_.mutable_cpu_data()+data_.count());
 }
 void MnistImageLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
@@ -355,15 +456,17 @@ void MnistImageLayer::Setup(const LayerProto& proto,
   beta_=proto.mnist_param().beta();
   gamma_=proto.mnist_param().gamma();
   resize_=proto.mnist_param().resize();
-  normalize_=proto.mnist_param().normalize();
+  norm_a_=proto.mnist_param().norm_a();
+  norm_b_=proto.mnist_param().norm_b();
   elastic_freq_=proto.mnist_param().elastic_freq();
 
-  CHECK_EQ(sample.image().shape_size(),2);
+  int ndim=sample.image().shape_size();
+  CHECK_GE(ndim,2);
   if(resize_)
     data_.Reshape(vector<int>{batchsize, resize_, resize_});
   else{
-    int s=sample.image().shape(0);
-    CHECK_EQ(s,sample.image().shape(1));
+    int s=sample.image().shape(ndim-1);
+    CHECK_EQ(s,sample.image().shape(ndim-2));
     data_.Reshape(vector<int>{batchsize, s, s });
   }
 }
@@ -374,7 +477,6 @@ void PoolingLayer::Setup(const LayerProto& proto,
   CHECK_EQ(srclayers.size(),1);
   PoolingProto pool_param = proto.pooling_param();
   kernel_=pool_param.kernel();
-  pad_=pool_param.pad();
   stride_=pool_param.stride();
   CHECK_LT(pad_, kernel_);
   pool_=proto.pooling_param().pool();
@@ -393,9 +495,9 @@ void PoolingLayer::Setup(const LayerProto& proto,
     channels_=1;
   batchsize_=srcshape[0];
   pooled_height_ = static_cast<int>(ceil(static_cast<float>(
-          height_ + 2 * pad_ - kernel_) / stride_)) + 1;
+          height_ - kernel_) / stride_)) + 1;
   pooled_width_ = static_cast<int>(ceil(static_cast<float>(
-          width_ + 2 * pad_ - kernel_) / stride_)) + 1;
+          width_ - kernel_) / stride_)) + 1;
   data_.Reshape(vector<int>{batchsize_, channels_, pooled_height_, pooled_width_});
   grad_.ReshapeLike(data_);
 }
@@ -407,14 +509,14 @@ void PoolingLayer::SetupAfterPartition(const LayerProto& proto,
 }
 
 void PoolingLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
-  Shape<2> pshape=Shape2(pooled_height_, pooled_width_);
-  Shape<4> s= Shape4(batchsize_, channels_, height_, width_);
-  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),s);
-  Tensor<cpu, 4> data(data_.mutable_cpu_data(), s);
+  Tensor<cpu, 4> src(srclayers[0]->mutable_data(this)->mutable_cpu_data(),
+      Shape4(batchsize_, channels_, height_, width_));
+  Tensor<cpu, 4> data(data_.mutable_cpu_data(),
+      Shape4(batchsize_, channels_, pooled_height_, pooled_width_));
   if(pool_ == PoolingProto_PoolMethod_MAX)
-    data=pool<red::maximum>(src, pshape, kernel_, stride_);
+    data=pool<red::maximum>(src, kernel_, stride_);
   else if(pool_ == PoolingProto_PoolMethod_AVE)
-    data=pool<red::sum>(src, pshape, kernel_, stride_)
+    data=pool<red::sum>(src, kernel_, stride_)
       *(1.0f/(kernel_*kernel_));
 }
 
@@ -482,8 +584,8 @@ void RGBImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayer
   int rid=0;
   for(const Record& record: datalayer->records()){
     auto image=images[rid];
-    bool do_crop=cropsize_>0;
-    bool do_mirror=mirror_&&rand()%2;
+    bool do_crop=cropsize_>0&&training;
+    bool do_mirror=mirror_&&rand()%2&&training;
     float* dptr=nullptr;
     if(do_crop||do_mirror)
       dptr=raw_image.dptr;
@@ -499,12 +601,10 @@ void RGBImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayer
     }
 
     if(cropsize_){
-      int hoff=rand()%(raw_image.size(1)-cropsize_);
-      int woff=rand()%(raw_image.size(2)-cropsize_);
+      int hoff=rand()%(r.shape(1)-cropsize_);
+      int woff=rand()%(r.shape(2)-cropsize_);
       Shape<2> cropshape=Shape2(cropsize_, cropsize_);
-      // TODO training or test
-      for(size_t c=0; c<raw_image.size(0);c++)
-        croped_image[c]=crop(raw_image[c], cropshape, hoff, woff);
+        croped_image=crop(raw_image, cropshape, hoff, woff);
     }else
       croped_image=raw_image;
 
@@ -513,7 +613,6 @@ void RGBImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayer
     }
     rid++;
   }
-  CHECK_EQ(rid, images.size(0));
   if(scale_)
     images=images*scale_;
 
@@ -623,7 +722,10 @@ void SoftmaxLossLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
   const float* probptr=prob.dptr;
   float loss=0, precision=0;
   for(int n=0;n<batchsize_;n++){
-    float prob_of_truth=probptr[static_cast<int>(label[n])];
+    int ilabel=static_cast<int>(label[n]);
+    CHECK_LT(ilabel,10);
+    CHECK_GE(ilabel,0);
+    float prob_of_truth=probptr[ilabel];
     loss-=log(std::max(prob_of_truth, FLT_MIN));
     vector<std::pair<float, int> > probvec;
     for (int j = 0; j < dim_; ++j) {
@@ -641,6 +743,7 @@ void SoftmaxLossLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
     }
     probptr+=dim_;
   }
+  CHECK_EQ(probptr, prob.dptr+prob.shape.Size());
   float *metric=metric_.mutable_cpu_data();
   metric[0]=loss*scale_/(1.0f*batchsize_);
   metric[1]=precision*scale_/(1.0f*batchsize_);

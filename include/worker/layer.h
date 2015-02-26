@@ -9,6 +9,7 @@
 #include <memory>
 #include <chrono>
 #include <random>
+#include <lmdb.h>
 
 #include "proto/model.pb.h"
 #include "utils/shard.h"
@@ -158,9 +159,8 @@ class MnistImageLayer: public ParserLayer {
   // conv height and conv width
   // gauss kernel values, displacements, column image and tmp buffer
   //float* gauss_, *displacementx_, *displacementy_, *colimg_, *tmpimg_;
-  float  gamma_, beta_, sigma_, kernel_, alpha_;
+  float  gamma_, beta_, sigma_, kernel_, alpha_, norm_a_, norm_b_;
   int resize_, elastic_freq_;
-  bool normalize_;
 };
 
 class PoolingLayer: public Layer {
@@ -249,6 +249,21 @@ class ShardDataLayer: public DataLayer{
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
  private:
   shared_ptr<shard::Shard> shard_;
+};
+class LMDBDataLayer: public DataLayer{
+ public:
+  virtual void ComputeFeature(bool training, const vector<shared_ptr<Layer>>& srclayers);
+  virtual void ComputeGradient(const vector<shared_ptr<Layer>>& srclayers){};
+  virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
+  void ConvertDatumToSingleLableImageRecord(const Datum& datum,
+    SingleLabelImageRecord* record);
+
+ private:
+  MDB_env* mdb_env_;
+  MDB_dbi mdb_dbi_;
+  MDB_txn* mdb_txn_;
+  MDB_cursor* mdb_cursor_;
+  MDB_val mdb_key_, mdb_value_;
 };
 
 /**

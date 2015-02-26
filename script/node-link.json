@@ -1,24 +1,20 @@
 {"directed":1,
   "nodes":[
   {"id":"data()", "color":"red","shape":"box"}
-  ,{"id":"mnist(100, 29, 29, )", "color":"red","shape":"box"}
-  ,{"id":"fc1(100, 2500, )", "color":"red","shape":"box"}
-  ,{"id":"tanh1(100, 2500, )", "color":"red","shape":"box"}
-  ,{"id":"fc2(100, 2000, )", "color":"red","shape":"box"}
-  ,{"id":"tanh2(100, 2000, )", "color":"red","shape":"box"}
-  ,{"id":"fc3(100, 1500, )", "color":"red","shape":"box"}
-  ,{"id":"tanh3(100, 1500, )", "color":"red","shape":"box"}
-  ,{"id":"fc4(100, 1000, )", "color":"red","shape":"box"}
-  ,{"id":"tanh4(100, 1000, )", "color":"red","shape":"box"}
-  ,{"id":"fc5(100, 500, )", "color":"red","shape":"box"}
-  ,{"id":"tanh5(100, 500, )", "color":"red","shape":"box"}
-  ,{"id":"fc6(100, 10, )", "color":"red","shape":"box"}
+  ,{"id":"mnist(100, 28, 28, )", "color":"red","shape":"box"}
+  ,{"id":"conv1(100, 20, 24, 24, )", "color":"red","shape":"box"}
+  ,{"id":"pool1(100, 20, 12, 12, )", "color":"red","shape":"box"}
+  ,{"id":"conv2(100, 50, 8, 8, )", "color":"red","shape":"box"}
+  ,{"id":"pool2(100, 50, 4, 4, )", "color":"red","shape":"box"}
+  ,{"id":"ip1(100, 500, )", "color":"red","shape":"box"}
+  ,{"id":"relu1(100, 500, )", "color":"red","shape":"box"}
+  ,{"id":"ip2(100, 10, )", "color":"red","shape":"box"}
   ,{"id":"label(100, )", "color":"red","shape":"box"}
   ,{"id":"loss(100, 10, )", "color":"red","shape":"box"}
   ]
     ,"links":[
     {"source":0, "target":1, "color":"black"}
-  ,{"source":0, "target":13, "color":"black"}
+  ,{"source":0, "target":9, "color":"black"}
   ,{"source":1, "target":2, "color":"black"}
   ,{"source":2, "target":3, "color":"black"}
   ,{"source":3, "target":4, "color":"black"}
@@ -26,12 +22,9 @@
   ,{"source":5, "target":6, "color":"black"}
   ,{"source":6, "target":7, "color":"black"}
   ,{"source":7, "target":8, "color":"black"}
-  ,{"source":8, "target":9, "color":"black"}
+  ,{"source":8, "target":10, "color":"black"}
   ,{"source":9, "target":10, "color":"black"}
-  ,{"source":10, "target":11, "color":"black"}
-  ,{"source":11, "target":12, "color":"black"}
-  ,{"source":12, "target":14, "color":"black"}
-  ,{"source":13, "target":14, "color":"black"}
   ]
 }
+
 

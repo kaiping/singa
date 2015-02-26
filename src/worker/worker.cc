@@ -1,6 +1,7 @@
 #include <glog/logging.h>
 #include <thread>
 #include <memory>
+#include <iostream>
 #include "worker/worker.h"
 #include "proto/model.pb.h"
 #include "utils/cluster.h"
@@ -78,7 +79,6 @@ shared_ptr<NeuralNet> Worker::SetupNeuralNet(const NetProto& np, bool prefetch,
     Phase phase){
   NetProto proto;
   proto.set_partition_type(np.partition_type());
-  proto.set_param_type(np.param_type());
   // exclude layers if necessary
   for(auto& layer:np.layer()){
     bool include=true;
@@ -217,9 +217,9 @@ void Executor::RunOneBatch(int step, Performance* perf){
     if(DisplayNow(step)){
       LOG(ERROR)<<"Training at step "<<step;
       LOG(ERROR)<<perf->ToString();
+      perf->Reset();
       LOG(ERROR)<<TimerInfo();
       DLOG(INFO)<<train_net_->DebugInfo();
-      perf->Reset();
     }
   }
 }
@@ -262,6 +262,10 @@ void Executor::Forward(shared_ptr<NeuralNet> net, int step,  bool training){
           pm_->WaitUpdate(p, step, local_threadid_);
         }
       }
+      /*
+      if(layer->srclayers().size())
+        std::cout<<layer->srclayers()[0]->name()<<std::endl;
+        */
       layer->ComputeFeature(training);
       if(layer->is_bridgesrclayer()){
         zframe_t* frame=zframe_new(layer->data().cpu_data(),

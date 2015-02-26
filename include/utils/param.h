@@ -163,6 +163,16 @@ class RandomSyncParam: public Param{
 
   Blob<float> snapshot_;
 };
+/**
+ * Sync with server by elastic SGD.
+ */
+class ElasticParam: public Param{
+ public:
+  virtual zmsg_t* HandleSyncMsg(zmsg_t* msg);
+  virtual zmsg_t *GenSyncMsgFromWorker(float moving_rate);
+  virtual void ParseSyncMsgFromPS(zmsg_t* msg);
+};
+
 
 }  // namespace singa
 

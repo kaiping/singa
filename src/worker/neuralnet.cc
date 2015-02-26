@@ -18,6 +18,7 @@ void NeuralNet::RegistryLayers(){
   factory->Register("kInnerProduct", CreateLayer(InnerProductLayer));
   factory->Register("kRGBImage", CreateLayer(RGBImageLayer));
   factory->Register("kLabel", CreateLayer(LabelLayer));
+  factory->Register("kLMDBData", CreateLayer(LMDBDataLayer));
   factory->Register("kLRN", CreateLayer(LRNLayer));
   factory->Register("kMnistImage", CreateLayer(MnistImageLayer));
   factory->Register("kBridgeDst", CreateLayer(BridgeDstLayer));
@@ -36,6 +37,9 @@ void NeuralNet::RegistryParam(string param_type){
   if(param_type=="RandomSync")
     factory->Register("Param",
         CreateInstance(RandomSyncParam, Param));
+  else if(param_type=="Elastic")
+    factory->Register("Param",
+        CreateInstance(ElasticParam, Param));
   else LOG(ERROR)<<"Unkown parameter type "<<param_type;
 }
 NeuralNet::NeuralNet(NetProto net_proto, int group_size) {

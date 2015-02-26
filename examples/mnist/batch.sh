@@ -2,7 +2,7 @@
 
 for nservers in 1
 do
-  for nthreads in 1 2 4
+  for nthreads in 2 4
   do
     for nworkers in 1 2 4 8 16
     do
@@ -15,7 +15,7 @@ do
       log=log1k/${nworkers}w${nservers}s${nthreads}t
       echo  $log $nprocs
       ./examples/mnist/run.sh start $nprocs >$log 2>&1
-      sleep 2
+      sleep 4
 
       while true
       do

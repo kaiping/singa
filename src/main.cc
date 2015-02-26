@@ -21,9 +21,9 @@ DEFINE_string(model_conf, "examples/imagenet12/model.conf",
  * Registry Layer sub-classes and Param sub-classes.
  * User implemented Layer or Param sub-classes should be registryed here.
  */
-void RegistryClasses(const singa::NetProto& proto){
+void RegistryClasses(const singa::ModelProto& proto){
   singa::NeuralNet::RegistryLayers();
-  singa::NeuralNet::RegistryParam(proto.param_type());
+  singa::NeuralNet::RegistryParam(proto.updater().param_type());
 }
 
 // for debug use
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   LOG(INFO)<<"The cluster config is\n"<<pcluster.DebugString()
     <<"\nThe model config is\n"<<model.DebugString();
 
-  RegistryClasses(model.neuralnet());
+  RegistryClasses(model);
   if(cluster->AmIServer()) {
     singa::Server server(cluster);
     server.Run();

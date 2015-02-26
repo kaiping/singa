@@ -83,7 +83,7 @@ class ParamManager{
   bool hogwild_;
   bool running_;
   int warmup_steps_;
-  float sample_ratio_;
+  float sample_ratio_, moving_rate_;
   int sync_frequency_;
   shared_ptr<NeuralNet> net_;
   //!< sgd updater

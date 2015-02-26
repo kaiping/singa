@@ -12,7 +12,7 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
   hogwild_=cluster->nthreads_per_procs()==1||updater.hogwild()?true:false;
   sync_frequency_=updater.sync_frequency();
   warmup_steps_=updater.warmup_steps();
-  sample_ratio_=updater.sample_ratio();
+  moving_rate_=updater.moving_rate()/cluster->ngroups();
   switch(updater.type()){
     case UpdaterProto_Type_kAdaGrad:
     updater_=make_shared<AdaGradUpdater>();
@@ -55,6 +55,7 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
     }
   }
 
+  /*
   ParamProto pp;
   Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
   param_=shared_ptr<Param>(factory->Create("Param"));
@@ -64,6 +65,7 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
     entry.second.at(0)->data().data()->set_cpu_data(
         dptr+paramid2Offset_[entry.first]);
   }
+  */
 
   if(cluster->nservers()>0){ // sync with parameter server
     router_=make_shared<Router>(cluster->router_port());
@@ -83,6 +85,7 @@ ParamManager::~ParamManager(){
 
 
 void ParamManager::SyncConfig(float compute_time){
+  /*
   float modelsize=param_->size()*1.0f*sizeof(float)/1024/1024; //MB
   auto cluster=Cluster::Get();
   float cputhroughput=1.0f*modelsize*cluster->nworkers()/compute_time; //MB/s
@@ -90,6 +93,7 @@ void ParamManager::SyncConfig(float compute_time){
   if(sample_ratio_>1.0f)
     sample_ratio_=1.0f;
   LOG(ERROR)<<"Sample Ratio "<<sample_ratio_;
+  */
 }
 
 void ParamManager::InitParams(){
@@ -187,7 +191,11 @@ void ParamManager::UpdateParam(shared_ptr<Param> param, int step, int local_thre
       sync=false;
   }
   if(sync){
-    zmsg_t *msg=param->GenSyncMsgFromWorker(sample_ratio_);
+    zmsg_t *msg=nullptr;
+    if(moving_rate_)
+      msg=param->GenSyncMsgFromWorker(moving_rate_);
+    else
+      msg=param->GenSyncMsgFromWorker(sample_ratio_);
     zmsg_pushstrf(msg, "%d", param->id());
     zmsg_pushstrf(msg, "%d", kSync);
     router_->Send(msg, param->id()%Cluster::Get()->nservers());

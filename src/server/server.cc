@@ -116,7 +116,7 @@ void Server::Run(){
               int64_t now=zclock_mono();
               if(now-start>10000){
                 LOG(ERROR)<<"server recv speed "
-                  <<dsize*sizeof(float)/1024/1024/(now-start)*1000<<"MB/s";
+                  <<dsize*1.0f*sizeof(float)/1024/1024/(now-start)*1000<<"MB/s";
                 start=now;
                 dsize=0;
               }

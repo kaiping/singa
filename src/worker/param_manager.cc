@@ -55,17 +55,15 @@ ParamManager::ParamManager(shared_ptr<NeuralNet> net,
     }
   }
 
-  /*
   ParamProto pp;
   Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
   param_=shared_ptr<Param>(factory->Create("Param"));
-  param_->Setup(pp, vector<int> {count});
+  param_->Setup(pp, vector<int> {count}, 0);
   float* dptr=param_->mutable_cpu_data();
   for(auto& entry: ownerid2Params_){
     entry.second.at(0)->data().data()->set_cpu_data(
         dptr+paramid2Offset_[entry.first]);
   }
-  */
 
   if(cluster->nservers()>0){ // sync with parameter server
     router_=make_shared<Router>(cluster->router_port());
@@ -85,7 +83,6 @@ ParamManager::~ParamManager(){
 
 
 void ParamManager::SyncConfig(float compute_time){
-  /*
   float modelsize=param_->size()*1.0f*sizeof(float)/1024/1024; //MB
   auto cluster=Cluster::Get();
   float cputhroughput=1.0f*modelsize*cluster->nworkers()/compute_time; //MB/s
@@ -93,7 +90,6 @@ void ParamManager::SyncConfig(float compute_time){
   if(sample_ratio_>1.0f)
     sample_ratio_=1.0f;
   LOG(ERROR)<<"Sample Ratio "<<sample_ratio_;
-  */
 }
 
 void ParamManager::InitParams(){
@@ -233,14 +229,4 @@ void ParamManager::WaitUpdate(shared_ptr<Param> param, int step, int local_threa
   while(paramid2version_[param->id()]<step)
     Sleep(5);
 }
-/*
-      std::unique_lock<std::mutex> lck(mtx_);
-      step_=step;
-      cv_.notify_all();
-    }else{
-      // other threads wait
-      std::unique_lock<std::mutex> lck(mtx_);
-      while(step_<step) cv_.wait(lck);
-    }
-*/
 }

@@ -43,6 +43,7 @@ message ModelProto{
   }
   optional GradCalcAlg alg= 32 [default = kBackPropagation];
   optional NetProto neuralnet = 40;
+  optional bool debug=41 [default=false];
 }
 
 message NetProto{
@@ -91,7 +92,7 @@ message ParamProto {
   }
   optional InitMethod init_method = 7 [default = kConstant];
   // constant init
-  optional float value = 8 [default = 0.0];
+  optional float value = 8 [default = 1];
   // for uniform sampling
   optional float low = 9 [default = -1];
   optional float high = 10 [default = 1];

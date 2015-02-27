@@ -135,8 +135,7 @@ void Executor::Setup(int local_threadid, const ModelProto& model){
   local_threadid_=local_threadid;
   if(model.prefetch()){
     for(auto& layer: train_net_->datalayers()){
-      int locid=layer->locationid();
-      if(cluster_->group_threadid(local_threadid_)==locid)
+      if(cluster_->group_threadid(local_threadid_)==layer->locationid())
         localDataLayers_.push_back(layer);
     }
     if(localDataLayers_.size())
@@ -216,10 +215,9 @@ void Executor::RunOneBatch(int step, Performance* perf){
     perf->Update();
     if(DisplayNow(step)){
       LOG(ERROR)<<"Training at step "<<step;
-      LOG(ERROR)<<perf->ToString();
+      LOG(ERROR)<<"\t"<<perf->ToString();
       perf->Reset();
-      LOG(ERROR)<<TimerInfo();
-      DLOG(INFO)<<train_net_->DebugInfo();
+      LOG(ERROR)<<"\t"<<TimerInfo();
     }
   }
 }
@@ -262,10 +260,6 @@ void Executor::Forward(shared_ptr<NeuralNet> net, int step,  bool training){
           pm_->WaitUpdate(p, step, local_threadid_);
         }
       }
-      /*
-      if(layer->srclayers().size())
-        std::cout<<layer->srclayers()[0]->name()<<std::endl;
-        */
       layer->ComputeFeature(training);
       if(layer->is_bridgesrclayer()){
         zframe_t* frame=zframe_new(layer->data().cpu_data(),
@@ -273,6 +267,10 @@ void Executor::Forward(shared_ptr<NeuralNet> net, int step,  bool training){
         zsock_send(push_[layer->locationid()], "isf",
             kDataFrame, layer->dstlayers()[0]->name().c_str(), frame);
         zframe_destroy(&frame);
+      }
+      if(training&&DisplayDebugInfo(step)&&layer->mutable_data()!=nullptr){
+        LOG(INFO)<<StringPrintf("Forward layer  %10s data norm1 %13.9f",
+            layer->name().c_str(), layer->data().asum_data());
       }
     }
   }
@@ -282,21 +280,32 @@ void Executor::Backward(shared_ptr<NeuralNet> net, int step){
   auto& layers=net->layers();
   for (auto it = layers.rbegin(); it != layers.rend(); it++){
     shared_ptr<Layer> layer=*it;
-    if(layer->is_bridgesrclayer()){
-      auto* src=static_cast<BridgeSrcLayer*>(layer.get());
-      while(!src->ready())
-        Pull(pull_, train_net_);
-    }
-    layer->ComputeGradient();
-    for(shared_ptr<Param> p: layer->GetParams()){
-      pm_->UpdateParam(p, step, local_threadid_);
-    }
-    if(layer->is_bridgedstlayer()){
-      zframe_t* frame=zframe_new(layer->grad().cpu_data(),
-          layer->data().count()*sizeof(float));
-      zsock_send(push_[layer->locationid()], "isf",
-          kGradFrame, layer->srclayers()[0]->name().c_str(), frame);
-      zframe_destroy(&frame);
+    if(cluster_->group_procsid(layer->locationid())==cluster_->group_procsid()){
+      if(layer->is_bridgesrclayer()){
+        auto* src=static_cast<BridgeSrcLayer*>(layer.get());
+        while(!src->ready())
+          Pull(pull_, train_net_);
+      }
+      layer->ComputeGradient();
+      if(DisplayDebugInfo(step)&&layer->mutable_grad()!=nullptr){
+        LOG(INFO)<<StringPrintf("Backward layer %10s grad norm1 %13.9f\t",
+            layer->name().c_str(), layer->grad().asum_data());
+        for(shared_ptr<Param> p: layer->GetParams())
+          LOG(INFO)<<StringPrintf("param id %2d, name %10s,\
+              value norm1 %13.9f, grad norm1 %13.9f",
+              p->id(), p->name().c_str(),
+              p->data().asum_data(), p->grad().asum_data());
+      }
+      for(shared_ptr<Param> p: layer->GetParams()){
+        pm_->UpdateParam(p, step, local_threadid_);
+      }
+      if(layer->is_bridgedstlayer()){
+        zframe_t* frame=zframe_new(layer->grad().cpu_data(),
+            layer->data().count()*sizeof(float));
+        zsock_send(push_[layer->locationid()], "isf",
+            kGradFrame, layer->srclayers()[0]->name().c_str(), frame);
+        zframe_destroy(&frame);
+      }
     }
   }
 }
@@ -318,15 +327,17 @@ void Executor::TrainOneBatch(int step){
 void Executor::Test(shared_ptr<NeuralNet> net, int nsteps, bool disperf){
   std::thread prefetch;
   vector<DataLayer*> localDataLayers;
-  auto cluster=Cluster::Get();
-  for(auto& layer: net->datalayers()){
-    int locid=layer->locationid();
-    if(cluster->group_threadid(local_threadid_)==locid)
-      localDataLayers.push_back(layer);
+  if(modelproto_.prefetch()){
+    auto cluster=Cluster::Get();
+    for(auto& layer: net->datalayers()){
+      int locid=layer->locationid();
+      if(cluster->group_threadid(local_threadid_)==locid)
+        localDataLayers.push_back(layer);
+    }
+    if(localDataLayers.size())
+      prefetch=std::thread(Executor::PrefetchData,  std::ref(localDataLayers),
+          false,1);
   }
-  if(modelproto_.prefetch())
-    prefetch=std::thread(Executor::PrefetchData,  std::ref(localDataLayers),
-       false,1);
   Performance perf(net);
   for(int b=0;b<nsteps;b++){
     if(prefetch.joinable()){
@@ -342,7 +353,7 @@ void Executor::Test(shared_ptr<NeuralNet> net, int nsteps, bool disperf){
   if(prefetch.joinable())
     prefetch.join();
   if(disperf)
-    LOG(ERROR)<<perf.ToString();
+    LOG(ERROR)<<"\t"<<perf.ToString();
 }
 /*********************Implementation for Performance class*******************/
 Performance::Performance(shared_ptr<NeuralNet> net):net_(net), counter_(0){

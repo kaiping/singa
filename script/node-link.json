@@ -1,16 +1,16 @@
 {"directed":1,
   "nodes":[
   {"id":"data()", "color":"red","shape":"box"}
-  ,{"id":"mnist(100, 28, 28, )", "color":"red","shape":"box"}
-  ,{"id":"conv1(100, 20, 24, 24, )", "color":"red","shape":"box"}
-  ,{"id":"pool1(100, 20, 12, 12, )", "color":"red","shape":"box"}
-  ,{"id":"conv2(100, 50, 8, 8, )", "color":"red","shape":"box"}
-  ,{"id":"pool2(100, 50, 4, 4, )", "color":"red","shape":"box"}
-  ,{"id":"ip1(100, 500, )", "color":"red","shape":"box"}
-  ,{"id":"relu1(100, 500, )", "color":"red","shape":"box"}
-  ,{"id":"ip2(100, 10, )", "color":"red","shape":"box"}
-  ,{"id":"label(100, )", "color":"red","shape":"box"}
-  ,{"id":"loss(100, 10, )", "color":"red","shape":"box"}
+  ,{"id":"mnist(64, 28, 28, )", "color":"red","shape":"box"}
+  ,{"id":"conv1(64, 20, 24, 24, )", "color":"red","shape":"box"}
+  ,{"id":"pool1(64, 20, 12, 12, )", "color":"red","shape":"box"}
+  ,{"id":"conv2(64, 50, 8, 8, )", "color":"red","shape":"box"}
+  ,{"id":"pool2(64, 50, 4, 4, )", "color":"red","shape":"box"}
+  ,{"id":"ip1(64, 500, )", "color":"red","shape":"box"}
+  ,{"id":"relu1(64, 500, )", "color":"red","shape":"box"}
+  ,{"id":"ip2(64, 10, )", "color":"red","shape":"box"}
+  ,{"id":"label(64, )", "color":"red","shape":"box"}
+  ,{"id":"loss(64, 10, )", "color":"red","shape":"box"}
   ]
     ,"links":[
     {"source":0, "target":1, "color":"black"}
@@ -26,5 +26,4 @@
   ,{"source":9, "target":10, "color":"black"}
   ]
 }
-
 

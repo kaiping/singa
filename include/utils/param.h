@@ -43,7 +43,7 @@ class Param {
   /**
    * setup param shape
    */
-  virtual void Setup(const ParamProto& proto, const std::vector<int>& shape);
+  virtual void Setup(const ParamProto& proto, const std::vector<int>& shape, int fan_in);
   /*
    * fill the data according to initmethod, i.e., random/gaussian/fixed value
    */
@@ -137,6 +137,7 @@ class Param {
   Param* owner_;
 
   ParamProto proto_;
+  int fan_in_;
 };
 
 /**
@@ -147,7 +148,7 @@ class RandomSyncParam: public Param{
   virtual zmsg_t* HandleSyncMsg(zmsg_t* msg);
   virtual zmsg_t *GenSyncMsgFromWorker(float sample_ratio);
   virtual void ParseSyncMsgFromPS(zmsg_t* msg);
-  virtual void Setup(const ParamProto& proto, const vector<int>& shape);
+  virtual void Setup(const ParamProto& proto, const vector<int>& shape, int fan_in);
   virtual void Init();
 
   float* mutable_cpu_snapshot(){

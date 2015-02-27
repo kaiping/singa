@@ -113,7 +113,8 @@ class InnerProductLayer: public Layer {
 class LabelLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
+  virtual void ParseRecords(bool training, const vector<Record>& records,
+      Blob<float>* blob);
 };
 
 class LRNLayer: public Layer {
@@ -150,7 +151,8 @@ class LRNLayer: public Layer {
 class MnistImageLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
+  virtual void ParseRecords(bool training, const vector<Record>& records,
+      Blob<float>* blob);
 
  protected:
   // height and width of the image after deformation
@@ -234,7 +236,8 @@ class SoftmaxLossLayer: public LossLayer {
 class RGBImageLayer: public ParserLayer {
  public:
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers);
-  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers);
+  virtual void ParseRecords(bool training, const vector<Record>& records,
+      Blob<float>* blob);
 
  private:
   float scale_;

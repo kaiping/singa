@@ -39,6 +39,7 @@
  */
 #include <utility>
 #include <math.h>
+#include <cblas.h>
 #include "utils/blob.h"
 /*********************SyncedMemory implementation************************/
 
@@ -250,11 +251,16 @@ void Blob<Dtype>::ShareData(const Blob& other) {
 template <> float Blob<float>::asum_data() const {
   if(count()==0)
     return 0.f;
+  return cblas_sasum(count(), cpu_data(), 1)/count();
+}
+template <> float Blob<float>::sum_data() const {
+  if(count()==0)
+    return 0.f;
   float sum=0.f;
-  const float* dptr=cpu_data();
+  const float *dptr=cpu_data();
   for(int i=0;i<count();i++)
-    sum+=fabs(dptr[i]);
-  return sum/(1.0e-10+count());
+    sum+=dptr[i];
+  return sum/count();
 }
 template <> unsigned int Blob<unsigned int>::asum_data() const {
   NOT_IMPLEMENTED;

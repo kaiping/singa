@@ -122,6 +122,10 @@ class Executor{
           % modelproto_.display_frequency() == 0));
   }
 
+  const bool DisplayDebugInfo(const int step) const {
+    return DisplayNow(step)&&modelproto_.debug()&&cluster_->groupid()==0;
+  }
+
   /**
    * return true if the stop condition is satisfied, e.g., the maximum number
    * of steps have been reached.

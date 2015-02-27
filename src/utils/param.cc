@@ -15,6 +15,7 @@ int64_t Param::worker_gen_sync=0;
 int64_t Param::worker_handle_sync=0;
 Param::Param(){
   owner_=this;
+  fan_in_=0;
 }
 
 Param::~Param(){}
@@ -27,7 +28,7 @@ zmsg_t* Param::HandlePutMsg(zmsg_t* msg){
   delete name;
 
   zframe_t* dataframe=zmsg_pop(msg);
-  data_.Reshape(vector<int>{zframe_size(dataframe)/sizeof(float)});
+  data_.Reshape(vector<int>{(int)(zframe_size(dataframe)/sizeof(float))});
   memcpy(data_.mutable_cpu_data(), zframe_data(dataframe),
           zframe_size(dataframe));
   zframe_destroy(&dataframe);
@@ -46,12 +47,14 @@ zmsg_t* Param::HandleGetMsg(zmsg_t* msg){
 }
 
 
-void Param::Setup(const ParamProto& proto, const vector<int>& shape){
+void Param::Setup(const ParamProto& proto, const vector<int>& shape,
+    int fan_in){
   data_.Reshape(shape);
   grad_.Reshape(shape);
   history_.Reshape(shape);
   update_.Reshape(shape);
   proto_=proto;
+  fan_in_=fan_in;
 }
 
 void Param::Init(){
@@ -68,9 +71,10 @@ void Param::Init(){
       data*= proto_.value();
     break;
   case ParamProto::kUniformSqrtFanIn:
+    CHECK_GT(fan_in_,0);
     random->SampleUniform(data, proto_.low(), proto_.high());
     if(proto_.value())
-      data*= proto_.value()/ sqrt(data_.shape()[0] / 3.0f);
+      data*= proto_.value()/ sqrt(fan_in_ / 3.0f);
     break;
   case ParamProto::kUniformSqrtFanInOut:
     random->SampleUniform(data, proto_.low(), proto_.high());
@@ -198,8 +202,9 @@ void RandomSyncParam::ParseSyncMsgFromPS(zmsg_t* msg){
 }
 
 
-void RandomSyncParam::Setup(const ParamProto& proto, const vector<int>& shape){
-  Param::Setup(proto, shape);
+void RandomSyncParam::Setup(const ParamProto& proto, const vector<int>& shape,
+    int fan_in){
+  Param::Setup(proto, shape, fan_in);
   snapshot_.Reshape(shape);
 }
 

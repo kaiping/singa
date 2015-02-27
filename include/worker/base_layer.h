@@ -367,6 +367,12 @@ class DataLayer: public Layer{
     return sample_;
   }
 
+  virtual Blob<float>* mutable_data(const Layer* layer=nullptr) {
+    return nullptr;
+  }
+  virtual Blob<float>* mutable_grad(const Layer* layer=nullptr) {
+    return nullptr;
+  }
   void set_prefetch(bool prefetch){
     prefetch_=prefetch;
   }
@@ -439,7 +445,7 @@ class LossLayer: public Layer{
   virtual void SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
       const vector<SLayer>& srclayers)=0;
-  virtual Blob<float>* mutable_grad(Layer* layer=nullptr){
+  virtual Blob<float>* mutable_grad(const Layer* layer=nullptr){
     return nullptr;
   }
   virtual const Blob<float>& grad(const Layer* from=nullptr) const {
@@ -462,17 +468,25 @@ class LossLayer: public Layer{
  */
 class ParserLayer: public Layer {
  public:
-  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers)=0;
   virtual void Setup(const LayerProto& proto, const vector<SLayer>& srclayers)=0;
+  /**
+   * Parse records from DataLayer into blob.
+   * This function is called by
+   * ComputeFeature(bool, const vector<SLayer>& srclayers)  or Prefetch(bool).
+   */
+  virtual void ParseRecords(bool training, const vector<Record>& records, Blob<float>* blob)=0;
   virtual bool is_parserlayer() const {
     return true;
   }
+  /**
+   * Dummy function. ParserLayer does not compute gradients.
+   */
   virtual void ComputeGradient(const vector<SLayer>& srclayers){};
   virtual void Setup(){
     Setup(layer_proto_,srclayers_);
     has_set_=true;
+    ready_=true;
     prefetch_=false;
-    ready_=false;
   }
   virtual void SetupAfterPartition(){
     if(!has_set_)
@@ -485,19 +499,6 @@ class ParserLayer: public Layer {
   virtual PartitionType partition_type () const{
     return kNone;
   }
-  virtual const Blob<float>& data(const Layer* layer=nullptr) {
-    if(prefetch_){
-      return prefetch_data_;
-    }else
-      return data_;
-  }
-  virtual Blob<float>* mutable_data(const Layer* layer=nullptr) {
-    if(prefetch_){
-      return &prefetch_data_;
-    }else{
-      return &data_;
-    }
-  }
   virtual Blob<float>* mutable_grad(const Layer* layer=nullptr) {
     return nullptr;
   }
@@ -506,46 +507,46 @@ class ParserLayer: public Layer {
     return grad_;
   }
 
+  virtual void ComputeFeature(bool training, const vector<SLayer>& srclayers){
+    if(!prefetch_){
+      DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
+      ParseRecords(training, datalayer->records(), &data_);
+    }else{
+      std::unique_lock<std::mutex> lck(mtx_);
+      while(!ready_) cv_.wait(lck);
+      data_.CopyFrom(prefetch_data_);
+      ready_=false;
+      cv_.notify_all();
+    }
+  }
   /**
    * prefetching is transparent to parsing logics.
-   * users implement parsing logics in ComputeFeature(const vector<SLayer>&)
+   * users implement parsing logics in ParseRecords
    * worker/training algorithm calls this function to do prefetching in a
-   * thread. data is in fact parsed into prefetch_data_.
+   * separate thread. Records are in fact parsed into prefetch_data_, and later
+   * copied into data_.
    */
   void Prefetching(bool training){
-    if(prefetch_data_.count()==0)
-      prefetch_data_.ReshapeLike(data_);
     std::unique_lock<std::mutex> lck(mtx_);
     while(ready_) cv_.wait(lck);
     //data_.Swap(prefetch_data_);
-    ComputeFeature(training, srclayers_);
+    DataLayer* datalayer=static_cast<DataLayer*>(srclayers_[0].get());
+    ParseRecords(training, datalayer->records(), &prefetch_data_);
     ready_=true;
     cv_.notify_all();
   }
 
   /**
-   * must be called before calling ComputeFeature() if Prefetching runs in a
+   * must be called before calling ComputeFeature(bool) if Prefetching runs in a
    * separate thread
    */
   void set_prefetch(bool prefetch) {
-    prefetch_=prefetch;
-    ready_=false;
-  }
-
-  /**
-   * if prefetching, then swap data and prefetch data;
-   * otherwise conduct normal ComputeFeature
-   */
-  virtual void ComputeFeature(bool training){
-    if(!prefetch_)
-      ComputeFeature(training, srclayers_);
-    else{
-      std::unique_lock<std::mutex> lck(mtx_);
-      while(!ready_) cv_.wait(lck);
-      data_.Swap(prefetch_data_);
+    if(prefetch){
+      if(prefetch_data_.count()==0)
+        prefetch_data_.ReshapeLike(data_);
       ready_=false;
-      cv_.notify_all();
     }
+    prefetch_=prefetch;
   }
 
  private:

@@ -46,9 +46,9 @@ void ConvolutionLayer::Setup(const LayerProto& proto,
 
   Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
   weight_=shared_ptr<Param>(factory->Create("Param"));
-  weight_->Setup(proto.param(0), vector<int>{num_filters_, col_height_});
+  weight_->Setup(proto.param(0), vector<int>{num_filters_, col_height_}, col_height_);
   bias_=shared_ptr<Param>(factory->Create("Param"));
-  bias_->Setup(proto.param(1), vector<int>{num_filters_});
+  bias_->Setup(proto.param(1), vector<int>{num_filters_},0);
 }
 
 void ConvolutionLayer::SetupAfterPartition(const LayerProto& proto,
@@ -73,13 +73,11 @@ void ConvolutionLayer::ComputeFeature(bool training, const vector<SLayer>& srcla
       Shape1(num_filters_));
 
   for(int n=0;n<batchsize_;n++){
-    Tensor<cpu, 3> srcn=src[n];
     if(pad_>0)
-      col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
+      col=unpack_patch2col(pad(src[n], pad_), kernel_, stride_);
     else
-      col=unpack_patch2col(srcn, kernel_, stride_);
-    Tensor<cpu, 2> datan=data[n];
-    datan=dot(weight, col);
+      col=unpack_patch2col(src[n], kernel_, stride_);
+    data[n]=dot(weight, col);
   }
   data+=broadcast<1>(bias, data.shape);
 }
@@ -111,14 +109,15 @@ void ConvolutionLayer::ComputeGradient(const vector<SLayer>& srclayers) {
   padshape[0]+=2*pad_;padshape[1]+=2*pad_;
   Shape<2> imgshape=Shape2(height_, width_);
   for(int n=0;n<batchsize_;n++){
-    Tensor<cpu, 3> srcn=src[n];
-    col=unpack_patch2col(pad(srcn, pad_), kernel_, stride_);
+    if(pad_>0)
+      col=unpack_patch2col(pad(src[n], pad_), kernel_, stride_);
+    else
+      col=unpack_patch2col(src[n], kernel_, stride_);
     gweight+=dot(grad[n], col.T());
 
     if(gsrcblob!=nullptr){
       gcol=dot(weight.T(), grad[n]);
-      Tensor<cpu, 3> gsrcn=gsrc[n];
-      gsrcn=crop(pack_col2patch(gcol, padshape, kernel_, stride_), imgshape);
+      gsrc[n]=crop(pack_col2patch(gcol, padshape, kernel_, stride_), imgshape);
     }
   }
 }
@@ -172,8 +171,8 @@ void InnerProductLayer::Setup(const LayerProto& proto,
   Factory<Param>* factory=Singleton<Factory<Param>>::Instance();
   weight_=shared_ptr<Param>(factory->Create("Param"));
   bias_=shared_ptr<Param>(factory->Create("Param"));
-  weight_->Setup(proto.param(0), vector<int>{vdim_, hdim_});
-  bias_->Setup(proto.param(1), vector<int>{hdim_});
+  weight_->Setup(proto.param(0), vector<int>{vdim_, hdim_}, vdim_*hdim_);
+  bias_->Setup(proto.param(1), vector<int>{hdim_},0);
 }
 void InnerProductLayer::SetupAfterPartition(const LayerProto& proto,
       const vector<int> &shape,
@@ -199,10 +198,6 @@ void InnerProductLayer::ComputeFeature(bool training, const vector<SLayer>& srcl
 void InnerProductLayer::ComputeGradient(const vector<SLayer>& srclayers) {
   Tensor<cpu, 2> src(srclayers[0]->mutable_data()->mutable_cpu_data(),
       Shape2(batchsize_,vdim_));
-  Tensor<cpu, 2> gsrc(Shape2(batchsize_,vdim_));
-  Blob<float>* gsrcblob=srclayers[0]->mutable_grad(this);
-  if(gsrcblob!=nullptr)
-    gsrc.dptr=gsrcblob->mutable_cpu_data();
   Tensor<cpu, 2> grad(grad_.mutable_cpu_data(),Shape2(batchsize_,hdim_));
   Tensor<cpu, 2> weight(weight_->mutable_cpu_data(), Shape2(vdim_,hdim_));
   Tensor<cpu, 2> gweight(weight_->mutable_cpu_grad(), Shape2(vdim_,hdim_));
@@ -210,9 +205,11 @@ void InnerProductLayer::ComputeGradient(const vector<SLayer>& srclayers) {
 
   gbias=sum_rows(grad);
   gweight=dot(src.T(), grad);
-
-  if(gsrcblob!=nullptr)
+  if(srclayers[0]->mutable_grad(this)!=nullptr){
+    Tensor<cpu, 2> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),
+        Shape2(batchsize_,vdim_));
     gsrc=dot(grad, weight.T());
+  }
 }
 /*****************************************************************************
  * Implementation for LabelLayer
@@ -223,16 +220,16 @@ void LabelLayer::Setup(const LayerProto& proto,
   int batchsize=static_cast<DataLayer*>(srclayers[0].get())->batchsize();
   data_.Reshape(vector<int>{batchsize});
 }
-void LabelLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
-  DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
 
-  float *label= data_.mutable_cpu_data() ;
+void LabelLayer::ParseRecords(bool training, const vector<Record>& records, Blob<float>* blob){
+  LOG_IF(ERROR, records.size()==0)<<"Empty records to parse";
+  float *label= blob->mutable_cpu_data() ;
   int rid=0;
-  for(const Record& record: datalayer->records()){
+  for(const Record& record: records){
     label[rid++]=record.image().label();
     CHECK_LT(record.image().label(),10);
   }
-  CHECK_EQ(rid, data_.shape()[0]);
+  CHECK_EQ(rid, blob->shape()[0]);
 }
 
 
@@ -281,6 +278,7 @@ void LMDBDataLayer::ComputeFeature(bool training, const vector<SLayer>& srclayer
 void LMDBDataLayer::ConvertDatumToSingleLableImageRecord(const Datum& datum,
     SingleLabelImageRecord* record){
   record->set_label(datum.label());
+  record->clear_shape();
   if(datum.has_channels())
     record->add_shape(datum.channels());
   if(datum.has_height())
@@ -381,13 +379,14 @@ void LRNLayer::ComputeGradient(const vector<SLayer>& srclayers) {
 
 /**************** Implementation for MnistImageLayer******************/
 
-void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
-  DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
-  int ndim=datalayer->sample().image().shape_size();
-  int inputsize =datalayer->sample().image().shape(ndim-1);
+void MnistImageLayer::ParseRecords(bool training, const vector<Record>& records,
+    Blob<float>* blob){
+  LOG_IF(ERROR, records.size()==0)<<"Empty records to parse";
+  int ndim=records.at(0).image().shape_size();
+  int inputsize =records.at(0).image().shape(ndim-1);
 
-  float* dptr=data_.mutable_cpu_data();
-  for(const Record& record: datalayer->records()){
+  float* dptr=blob->mutable_cpu_data();
+  for(const Record& record: records){
     // copy from record to cv::Mat
     cv::Mat input(inputsize, inputsize, CV_32FC1);
     const SingleLabelImageRecord& imagerecord=record.image();
@@ -395,13 +394,15 @@ void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclay
       string pixel=imagerecord.pixel();
       for(int i=0,k=0;i<inputsize;i++)
         for(int j=0;j<inputsize;j++)
-          input.at<float>(i,j)=static_cast<float>(pixel[k++]);
+          // NOTE!!! must cast pixel to uint8_t then to float!!! waste a lot of
+          // time to debug this
+          input.at<float>(i,j)=static_cast<float>(static_cast<uint8_t>(pixel[k++]));
     }else{
       for(int i=0,k=0;i<inputsize;i++)
         for(int j=0;j<inputsize;j++)
           input.at<float>(i,j)=imagerecord.data(k++);
     }
-    int size=data_.shape()[1];
+    int size=blob->shape()[1];
     /*
     cv::Mat resizeMat=input;
     // affine transform, scaling, rotation and shearing
@@ -443,7 +444,7 @@ void MnistImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclay
       }
     }
   }
-  CHECK_EQ(dptr, data_.mutable_cpu_data()+data_.count());
+  CHECK_EQ(dptr, blob->mutable_cpu_data()+blob->count());
 }
 void MnistImageLayer::Setup(const LayerProto& proto,
     const vector<SLayer>& srclayers){
@@ -560,8 +561,8 @@ void ReLULayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
 }
 
 void ReLULayer::ComputeGradient(const vector<SLayer>& srclayers) {
-  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
   Tensor<cpu, 1> grad(grad_.mutable_cpu_data(), Shape1(grad_.count()));
+  Tensor<cpu, 1> data(data_.mutable_cpu_data(), Shape1(data_.count()));
   Tensor<cpu, 1> gsrc(srclayers[0]->mutable_grad(this)->mutable_cpu_data(),
       Shape1(data_.count()));
   gsrc=F<op::relu_grad>(data)*grad;
@@ -569,11 +570,12 @@ void ReLULayer::ComputeGradient(const vector<SLayer>& srclayers) {
 
 /*************** Implementation for RGBImageLayer *************************/
 
-void RGBImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayers){
-  DataLayer* datalayer=static_cast<DataLayer*>(srclayers[0].get());
-  const vector<int>& s=data_.shape();
-  Tensor<cpu, 4> images(data_.mutable_cpu_data(), Shape4(s[0],s[1],s[2],s[3]));
-  const SingleLabelImageRecord& r=datalayer->sample().image();
+void RGBImageLayer::ParseRecords(bool training, const vector<Record>& records,
+    Blob<float>* blob){
+  LOG_IF(ERROR, records.size()==0)<<"Empty records to parse";
+  const vector<int>& s=blob->shape();
+  Tensor<cpu, 4> images(blob->mutable_cpu_data(), Shape4(s[0],s[1],s[2],s[3]));
+  const SingleLabelImageRecord& r=records.at(0).image();
   Tensor<cpu, 3> raw_image(Shape3(r.shape(0),r.shape(1),r.shape(2)));
   AllocSpace(raw_image);
 
@@ -582,7 +584,7 @@ void RGBImageLayer::ComputeFeature(bool training, const vector<SLayer>& srclayer
     AllocSpace(croped_image);
     //CHECK(std::equal(croped_image.shape(), raw_image.shape());
   int rid=0;
-  for(const Record& record: datalayer->records()){
+  for(const Record& record: records){
     auto image=images[rid];
     bool do_crop=cropsize_>0&&training;
     bool do_mirror=mirror_&&rand()%2&&training;

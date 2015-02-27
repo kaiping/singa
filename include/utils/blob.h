@@ -143,6 +143,7 @@ class Blob {
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
   Dtype asum_data() const;
+  Dtype sum_data() const;
 
   /**
    * @brief Set the data_ shared_ptr to point to the SyncedMemory holding the
@@ -154,8 +155,8 @@ class Blob {
    */
   void ShareData(const Blob& other);
   void Swap(Blob& other);
- protected:
   shared_ptr<SyncedMemory> data_;
+ protected:
   vector<int> shape_;
   int count_;
   int capacity_;
